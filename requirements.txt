@@ -9,4 +9,5 @@ bcrypt
 sendgrid==6.9.7
 gunicorn==20.1.0
 Flask-Markdown==0.3
+gunicorn
 redis==4.5.1
