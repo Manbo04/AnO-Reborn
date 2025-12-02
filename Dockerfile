@@ -8,4 +8,7 @@ COPY . /app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-CMD gunicorn wsgi:app --bind 0.0.0.0:$PORT
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
