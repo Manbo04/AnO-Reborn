@@ -10,12 +10,14 @@ from psycopg2.extras import RealDictCursor
 from celery.schedules import crontab
 import math
 load_dotenv()
+import config  # Parse Railway environment variables
 
-celery = Celery("tasks", broker=os.getenv("broker_url"))
+redis_url = config.get_redis_url()
+celery = Celery("tasks", broker=redis_url)
 celery.conf.update(
-    broker_url=os.getenv("broker_url"),
-    result_backend=os.getenv("broker_url"),
-    CELERY_BROKER_URL=os.getenv("broker_url")
+    broker_url=redis_url,
+    result_backend=redis_url,
+    CELERY_BROKER_URL=redis_url
 )
 
 celery_beat_schedule = {

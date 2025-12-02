@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional, Tuple
 import logging
 
 load_dotenv()
+import config  # Parse Railway DATABASE_URL
 
 logger = logging.getLogger(__name__)
 

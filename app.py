@@ -58,16 +58,20 @@ class RequestsHandler(logging.Handler):
 
 Markdown(app)
 
+import config  # Parse Railway environment variables
+
 try:
     environment = os.getenv("ENVIRONMENT")
 except:
     environment = "DEV"
 
 if environment == "PROD":
-    app.secret_key = os.getenv("SECRET_KEY")
+    app.secret_key = config.get_secret_key()
 
     handler = RequestsHandler()
     logger.addHandler(handler)
+else:
+    app.secret_key = config.get_secret_key()
 
 # Import written packages
 # Don't put these above app = Flask(__name__), because it will cause a circular import error
