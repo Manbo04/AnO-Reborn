@@ -23,60 +23,54 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 Mb limit
 
 # TODO: rewrite this function for fucks sake
 def get_econ_statistics(cId):
-
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    dbdict = conn.cursor(cursor_factory=RealDictCursor)
-
-    # TODO: less loc
-    try:
-        dbdict.execute(
-        """
-        SELECT
-        SUM(proInfra.coal_burners) AS coal_burners,
-        SUM(proInfra.oil_burners) AS oil_burners,
-        SUM(proInfra.hydro_dams) AS hydro_dams ,
-        SUM(proInfra.nuclear_reactors) AS nuclear_reactors,
-        SUM(proInfra.solar_fields) AS solar_fields,
-        SUM(proInfra.gas_stations) AS gas_stations,
-        SUM(proInfra.general_stores) AS general_stores,
-        SUM(proInfra.farmers_markets) AS farmers_markets,
-        SUM(proInfra.malls) AS malls,
-        SUM(proInfra.banks) AS banks,
-        SUM(proInfra.city_parks) AS city_parks,
-        SUM(proInfra.hospitals) AS hospitals,
-        SUM(proInfra.libraries) AS libraries,
-        SUM(proInfra.universities) AS universities,
-        SUM(proInfra.monorails) AS monorails,
-        SUM(proInfra.army_bases) AS army_bases,
-        SUM(proInfra.harbours) AS harbours,
-        SUM(proInfra.aerodomes) AS aerodomes,
-        SUM(proInfra.admin_buildings) AS admin_buildings,
-        SUM(proInfra.silos) AS silos,
-        SUM(proInfra.farms) AS farms,
-        SUM(proInfra.pumpjacks) AS pumpjacks,
-        SUM(proInfra.coal_mines) AS coal_mines,
-        SUM(proInfra.bauxite_mines) AS bauxite_mines,
-        SUM(proInfra.copper_mines) AS copper_mines,
-        SUM(proInfra.uranium_mines) AS uranium_mines,
-        SUM(proInfra.lead_mines) AS lead_mines,
-        SUM(proInfra.iron_mines) AS iron_mines,
-        SUM(proInfra.lumber_mills) AS lumber_mills,
-        SUM(proInfra.component_factories) AS component_factories,
-        SUM(proInfra.steel_mills) AS steel_mills,
-        SUM(proInfra.ammunition_factories) AS ammunition_factories,
-        SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
-        SUM(proInfra.oil_refineries) AS oil_refineries
-        FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id WHERE provinces.userId=%s;
-        """, (cId,))
-        total = dict(dbdict.fetchone())
-    except:
-        total = {}
+    from database import get_db_cursor
+    from psycopg2.extras import RealDictCursor
+    
+    with get_db_cursor(cursor_factory=RealDictCursor) as dbdict:
+        # TODO: less loc
+        try:
+            dbdict.execute(
+            """
+            SELECT
+            SUM(proInfra.coal_burners) AS coal_burners,
+            SUM(proInfra.oil_burners) AS oil_burners,
+            SUM(proInfra.hydro_dams) AS hydro_dams ,
+            SUM(proInfra.nuclear_reactors) AS nuclear_reactors,
+            SUM(proInfra.solar_fields) AS solar_fields,
+            SUM(proInfra.gas_stations) AS gas_stations,
+            SUM(proInfra.general_stores) AS general_stores,
+            SUM(proInfra.farmers_markets) AS farmers_markets,
+            SUM(proInfra.malls) AS malls,
+            SUM(proInfra.banks) AS banks,
+            SUM(proInfra.city_parks) AS city_parks,
+            SUM(proInfra.hospitals) AS hospitals,
+            SUM(proInfra.libraries) AS libraries,
+            SUM(proInfra.universities) AS universities,
+            SUM(proInfra.monorails) AS monorails,
+            SUM(proInfra.army_bases) AS army_bases,
+            SUM(proInfra.harbours) AS harbours,
+            SUM(proInfra.aerodomes) AS aerodomes,
+            SUM(proInfra.admin_buildings) AS admin_buildings,
+            SUM(proInfra.silos) AS silos,
+            SUM(proInfra.farms) AS farms,
+            SUM(proInfra.pumpjacks) AS pumpjacks,
+            SUM(proInfra.coal_mines) AS coal_mines,
+            SUM(proInfra.bauxite_mines) AS bauxite_mines,
+            SUM(proInfra.copper_mines) AS copper_mines,
+            SUM(proInfra.uranium_mines) AS uranium_mines,
+            SUM(proInfra.lead_mines) AS lead_mines,
+            SUM(proInfra.iron_mines) AS iron_mines,
+            SUM(proInfra.lumber_mills) AS lumber_mills,
+            SUM(proInfra.component_factories) AS component_factories,
+            SUM(proInfra.steel_mills) AS steel_mills,
+            SUM(proInfra.ammunition_factories) AS ammunition_factories,
+            SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
+            SUM(proInfra.oil_refineries) AS oil_refineries
+            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id WHERE provinces.userId=%s;
+            """, (cId,))
+            total = dict(dbdict.fetchone())
+        except:
+            total = {}
 
     expenses = {}
     expenses = defaultdict(lambda: defaultdict(lambda: 0), expenses)
@@ -142,21 +136,16 @@ def format_econ_statistics(statistics):
 
 
 def get_revenue(cId):
+    from database import get_db_cursor
+    from psycopg2.extras import RealDictCursor
+    
+    with get_db_cursor() as db:
+        dbdict_cursor = db.connection.cursor(cursor_factory=RealDictCursor)
+        
+        cg_needed = cg_need(cId)
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = conn.cursor()
-    dbd = conn.cursor(cursor_factory=RealDictCursor)
-
-    cg_needed = cg_need(cId)
-
-    db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-    provinces = db.fetchall()
+        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+        provinces = db.fetchall()
 
     revenue = {
         "gross": {},

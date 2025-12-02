@@ -247,15 +247,19 @@ def coalition(colId):
         db.execute("SELECT message FROM requests WHERE colId=(%s) ORDER BY reqId ASC", (colId,))
         requestMessages = db.fetchall()
         db.execute("SELECT reqId FROM requests WHERE colId=(%s) ORDER BY reqId ASC", (colId,))
-        requestIds = db.fetchall()
-        requestNames = []
-
-        for request_id in requestIds:
-
-            request_id = request_id[0]
-            db.execute("SELECT username FROM users WHERE id=%s", (request_id,))
-            requestName = db.fetchone()[0]
-            requestNames.append(requestName)
+        # Use JOIN query to fetch request IDs and names together
+        db.execute(
+            """SELECT r.userId, u.username, r.message 
+               FROM requests r
+               INNER JOIN users u ON r.userId = u.id
+               WHERE r.colId=%s""",
+            (colId,)
+        )
+        request_data = db.fetchall()
+        
+        requestIds = [(r[0],) for r in request_data]
+        requestNames = [r[1] for r in request_data]
+        requestMessages = [r[2] for r in request_data]
 
         requests = zip(requestIds, requestNames, requestMessages)
     else:
@@ -264,20 +268,15 @@ def coalition(colId):
 
     ### BANK STUFF
     if user_role == "leader" and userInCurCol:
-
-        db.execute("SELECT reqId, amount, resource, id FROM colBanksRequests WHERE colId=(%s)", (colId,))
+        # Use JOIN query to fetch bank requests with usernames
+        db.execute(
+            """SELECT br.reqId, br.amount, br.resource, br.id, u.username
+               FROM colBanksRequests br
+               INNER JOIN users u ON br.reqId = u.id
+               WHERE br.colId=(%s)""",
+            (colId,)
+        )
         bankRequests = db.fetchall()
-
-        banks = []
-        for reqId, amount, resource, bankId in bankRequests:
-
-            db.execute("SELECT username FROM users WHERE id=(%s)", (reqId,))
-            username = db.fetchone()[0]
-
-            data_tuple = (reqId, amount, resource, bankId, username)
-            banks.append(data_tuple)
-
-        bankRequests = banks
     else:
         bankRequests = []
 

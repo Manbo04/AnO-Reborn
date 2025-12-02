@@ -61,76 +61,60 @@ def handle_exception(e):
 
 # Returns how many rations a player needs
 def rations_needed(cId):
-
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = conn.cursor()
-
-    db.execute("SELECT population, id FROM provinces WHERE userId=%s", (cId,))
-    provinces = db.fetchall()
-
-    total_rations = 0
-    for population, _ in provinces:
-        rations_needed = population // variables.RATIONS_PER
-        total_rations += rations_needed
-    return total_rations
+    from database import get_db_cursor
+    
+    with get_db_cursor() as db:
+        # Use aggregated query instead of loop
+        db.execute(
+            "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s",
+            (cId,)
+        )
+        total_population = db.fetchone()[0]
+        return total_population // variables.RATIONS_PER
 
 # Returns energy production and consumption from a certain province
-def energy_info(province_id): # TODO: Rewrite this function
-
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
-    production = 0
-    consumption = 0
-
-    consumers = variables.ENERGY_CONSUMERS
-    producers = variables.ENERGY_UNITS
+def energy_info(province_id):
+    from database import get_db_cursor
     
-    infra = variables.NEW_INFRA
+    with get_db_cursor() as db:
+        production = 0
+        consumption = 0
 
-    consumer_query = f"SELECT {'+'.join(consumers)}" + " FROM proInfra WHERE id=%s"
-    db.execute(consumer_query, (province_id,))
-    consumption = db.fetchone()[0]
+        consumers = variables.ENERGY_CONSUMERS
+        producers = variables.ENERGY_UNITS
+    
+        infra = variables.NEW_INFRA
 
-    for producer in producers:
-        producer_query = f"SELECT {producer}" + " FROM proInfra WHERE id=%s"
-        db.execute(producer_query, (province_id,))
-        producer_count = db.fetchone()[0]
+        # Fetch all data in a single query
+        all_fields = consumers + producers
+        query = f"SELECT {', '.join(all_fields)} FROM proInfra WHERE id=%s"
+        db.execute(query, (province_id,))
+        result = db.fetchone()
+        
+        if not result:
+            return 0, 0
+        
+        # Calculate consumption from first N fields
+        consumption = sum(result[:len(consumers)])
+        
+        # Calculate production from remaining fields
+        for idx, producer in enumerate(producers):
+            producer_count = result[len(consumers) + idx]
+            production += producer_count * infra[producer]["plus"]["energy"]
 
-        production += producer_count * infra[producer]["plus"]["energy"]
-
-    return consumption, production
+        return consumption, production
 
 # Returns a rations score for a user, from -1 to -1.4
 # -1 = Enough or more than enough rations
 # -1.4 = No rations at all
 def food_stats(user_id):
+    from database import get_db_cursor
+    
+    with get_db_cursor() as db:
+        needed_rations = rations_needed(user_id)
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = conn.cursor()
-
-    needed_rations = rations_needed(user_id)
-
-    db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-    current_rations = db.fetchone()[0]
+        db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
+        current_rations = db.fetchone()[0]
 
     if needed_rations == 0: needed_rations = 1
 
@@ -144,29 +128,23 @@ def food_stats(user_id):
 # Returns an energy score for a user, from -1 to -1.6
 # -1 = Enough or more than enough energy
 # -1.6 = No energy at all
-def energy_stats(user_id): 
+def energy_stats(user_id):
+    from database import get_db_cursor
+    
+    with get_db_cursor() as db:
+        # Get all province IDs in one query
+        db.execute("SELECT id FROM provinces WHERE userId=%s", (user_id,))
+        provinces = db.fetchall()
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        total_energy_consumption = 0
+        total_energy_production = 0
 
-    db = conn.cursor()
+        for province_id in provinces:
+            province_id = province_id[0]
 
-    db.execute("SELECT id FROM provinces WHERE userId=%s", (user_id,))
-    provinces = db.fetchall()
-
-    total_energy_consumption = 0
-    total_energy_production = 0
-
-    for province_id in provinces:
-        province_id = province_id[0]
-
-        consumption, production = energy_info(province_id)
-        total_energy_consumption += consumption
-        total_energy_production += production
+            consumption, production = energy_info(province_id)
+            total_energy_consumption += consumption
+            total_energy_production += production
 
     if total_energy_consumption == 0: total_energy_consumption = 1
 
@@ -179,28 +157,21 @@ def energy_stats(user_id):
 
 # Function for calculating tax income
 def calc_ti(user_id):
+    from database import get_db_cursor
+    
+    with get_db_cursor() as db:
+        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
+        consumer_goods = db.fetchone()[0]
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
+            policies = db.fetchone()[0]
+        except: 
+            policies = []
 
-    db = conn.cursor()
-
-    db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
-    consumer_goods = db.fetchone()[0]
-
-    try:
-        db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
-        policies = db.fetchone()[0]
-    except: 
-        policies = []
-
-    try:
-        db.execute("SELECT population, land FROM provinces WHERE userId=%s", (user_id,))
-        provinces = db.fetchall()
+        try:
+            db.execute("SELECT population, land FROM provinces WHERE userId=%s", (user_id,))
+            provinces = db.fetchall()
 
         if provinces == []: # User doesn't have any provinces
             return False, False
@@ -250,53 +221,52 @@ print(calc_ti(8))
 
 # Function for actually giving money to players
 def tax_income():
+    from database import get_db_connection, BatchOperations
+    
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        
+        db.execute("SELECT id FROM users")
+        users = db.fetchall()
 
-    conn = psycopg2.connect(
-    database=os.getenv("PG_DATABASE"),
-    user=os.getenv("PG_USER"),
-    password=os.getenv("PG_PASSWORD"),
-    host=os.getenv("PG_HOST"),
-    port=os.getenv("PG_PORT"))
+        # Prepare batch updates
+        money_updates = []
+        cg_updates = []
+        
+        for user_id in users:
+            user_id = user_id[0]
 
-    db = conn.cursor()
+            db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
+            result = db.fetchone()
+            if not result:
+                continue
+            current_money = result[0]
 
-    db.execute("SELECT id FROM users")
-    users = db.fetchall()
+            money, consumer_goods = calc_ti(user_id)
+            if not money and not consumer_goods:
+                continue
 
-    for user_id in users:
-
-        user_id = user_id[0]
-
-        db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
-        current_money = db.fetchone()[0]
-
-        money, consumer_goods = calc_ti(user_id)
-        if not money and not consumer_goods: # Error while calculating or user doesn't have any provinces
-            continue
-
-        print(f"Updated money for user id: {user_id}. Set {current_money} money to {money} money. ({money-current_money})")
-
-        db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, user_id))
-        db.execute("UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s", (consumer_goods, user_id))
-
-        conn.commit()
-
-    conn.close()
+            print(f"Updated money for user id: {user_id}. Set {current_money} money to {current_money + money} money. (+{money})")
+            
+            money_updates.append((money, user_id))
+            if consumer_goods != 0:
+                cg_updates.append((consumer_goods, user_id))
+        
+        # Execute batch updates
+        if money_updates:
+            from psycopg2.extras import execute_batch
+            execute_batch(db, "UPDATE stats SET gold=gold+%s WHERE id=%s", money_updates)
+        if cg_updates:
+            from psycopg2.extras import execute_batch
+            execute_batch(db, "UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s", cg_updates)
 
 # Function for calculating population growth for a given province
 def calc_pg(pId, rations):
-
-    conn = psycopg2.connect(
-    database=os.getenv("PG_DATABASE"),
-    user=os.getenv("PG_USER"),
-    password=os.getenv("PG_PASSWORD"),
-    host=os.getenv("PG_HOST"),
-    port=os.getenv("PG_PORT"))
-
-    db = conn.cursor()
-
-    db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
-    curPop = db.fetchone()[0]
+    from database import get_db_cursor
+    
+    with get_db_cursor() as db:
+        db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
+        curPop = db.fetchone()[0]
 
     maxPop = variables.DEFAULT_MAX_POPULATION # Base max population: 1 million
 
@@ -392,44 +362,44 @@ def calc_pg(pId, rations):
 
 # Seems to be working as expected
 def population_growth(): # Function for growing population
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch
+    
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        
+        db.execute("SELECT id FROM provinces ORDER BY userId ASC")
+        provinces = db.fetchall()
 
-    conn = psycopg2.connect(
-    database=os.getenv("PG_DATABASE"),
-    user=os.getenv("PG_USER"),
-    password=os.getenv("PG_PASSWORD"),
-    host=os.getenv("PG_HOST"),
-    port=os.getenv("PG_PORT"))
+        rations_updates = []
+        population_updates = []
+        
+        for province_id in provinces:
+            province_id = province_id[0]
+            try:
+                db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
+                user_id = db.fetchone()[0]
 
-    db = conn.cursor()
+                db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
+                current_rations = db.fetchone()[0]
 
-    db.execute("SELECT id FROM provinces ORDER BY userId ASC")
-    provinces = db.fetchall()
+                rations, population = calc_pg(province_id, current_rations)
 
-    for province_id in provinces:
-        province_id = province_id[0]
-        try:
+                print(f"Updated rations for province id: {province_id}, user id: {user_id}")
+                print(f"Set {current_rations} to {rations} ({rations - current_rations})")
+                
+                rations_updates.append((rations, user_id))
+                population_updates.append((population, province_id))
 
-            db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
-            user_id = db.fetchone()[0]
-
-            db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-            current_rations = db.fetchone()[0]
-
-            rations, population = calc_pg(province_id, current_rations)
-
-            print(f"Updated rations for province id: {province_id}, user id: {user_id}")
-            print(f"Set {current_rations} to {rations} ({rations - current_rations})")
-            db.execute("UPDATE resources SET rations=%s WHERE id=%s", (rations, user_id))
-            db.execute("UPDATE provinces SET population=%s WHERE id=%s", (population, province_id))
-
-            conn.commit()
-
-        except Exception as e: 
-            conn.rollback()
-            handle_exception(e)
-            continue
-
-    conn.close()
+            except Exception as e:
+                handle_exception(e)
+                continue
+        
+        # Batch execute updates
+        if rations_updates:
+            execute_batch(db, "UPDATE resources SET rations=%s WHERE id=%s", rations_updates)
+        if population_updates:
+            execute_batch(db, "UPDATE provinces SET population=%s WHERE id=%s", population_updates)
 
 def find_unit_category(unit):
     categories = variables.INFRA_TYPE_BUILDINGS
@@ -448,31 +418,27 @@ Tested features:
 """
 
 def generate_province_revenue(): # Runs each hour
+    from database import get_db_connection
+    from psycopg2.extras import RealDictCursor
+    
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        columns = variables.BUILDINGS
 
-    db = conn.cursor()
-    dbdict = conn.cursor(cursor_factory=RealDictCursor)
+        province_resources = ["energy", "population", "happiness", "pollution", "productivity", "consumer_spending"]
+        percentage_based = ["happiness", "productivity", "consumer_spending", "pollution"]
 
-    columns = variables.BUILDINGS
+        energy_consumers = variables.ENERGY_CONSUMERS
+        user_resources = variables.RESOURCES
+        infra = variables.NEW_INFRA
 
-    province_resources = ["energy", "population", "happiness", "pollution", "productivity", "consumer_spending"]
-    percentage_based = ["happiness", "productivity", "consumer_spending", "pollution"]
-
-    energy_consumers = variables.ENERGY_CONSUMERS
-    user_resources = variables.RESOURCES
-    infra = variables.NEW_INFRA
-
-    try:
-        db.execute("SELECT proInfra.id, provinces.userId, provinces.land FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC")
-        infra_ids = db.fetchall()
-    except:
-        infra_ids = []
+        try:
+            db.execute("SELECT proInfra.id, provinces.userId, provinces.land FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC")
+            infra_ids = db.fetchall()
+        except:
+            infra_ids = []
 
     for province_id, user_id, land in infra_ids:
         db.execute("UPDATE provinces SET energy=0 WHERE id=%s", (province_id,)) # So energy would reset each turn
