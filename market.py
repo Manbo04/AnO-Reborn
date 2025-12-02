@@ -126,11 +126,56 @@ def market():
 
         if filter_resource is not None:
 
-            resources = variables.RESOURCES
+            resources_list = variables.RESOURCES
 
-            if filter_resource not in resources:  # Checks if the resource the user selected actually exists
+            if filter_resource not in resources_list:  # Checks if the resource the user selected actually exists
                 return error(400, "No such resource")
 
+        # Use JOIN query instead of loop to fetch all data at once
+        if filter_resource is not None:
+            query = """
+                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                FROM offers o
+                INNER JOIN users u ON o.user_id = u.id
+                WHERE o.resource = %s
+                ORDER BY o.price ASC
+            """
+            params = (filter_resource,)
+        elif offer_type is not None and price_type is not None:
+            query = """
+                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                FROM offers o
+                INNER JOIN users u ON o.user_id = u.id
+                WHERE o.type = %s
+                ORDER BY o.price " + ("ASC" if price_type == "ascending" else "DESC") + "
+            """
+            params = (offer_type,)
+        elif offer_type is not None:
+            query = """
+                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                FROM offers o
+                INNER JOIN users u ON o.user_id = u.id
+                WHERE o.type = %s
+                ORDER BY o.price ASC
+            """
+            params = (offer_type,)
+        else:
+            query = """
+                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                FROM offers o
+                INNER JOIN users u ON o.user_id = u.id
+                ORDER BY o.price ASC
+            """
+            params = None
+        
+        if params:
+            db.execute(query, params)
+        else:
+            db.execute(query)
+        
+        offers_data = db.fetchall()
+        
+        # Process results
         ids = []
         types = []
         names = []
@@ -139,35 +184,16 @@ def market():
         prices = []
         total_prices = []
         offer_ids = []
-
-        for i in offer_ids_list:
-
-            offer_id = i[0]
-
-            db.execute("SELECT resource FROM offers WHERE offer_id=(%s)", (offer_id,))
-            resource = db.fetchone()[0]
-
-            if filter_resource is not None:
-                if filter_resource == resource:
-                    pass
-                else:
-                    continue
-
-            offer_ids.append(offer_id)
-
-            db.execute("SELECT user_id, type, resource, amount, price FROM offers WHERE offer_id=(%s)", (offer_id,))
-            user_id, offer_type, resource, amount, price = db.fetchone()
-
+        
+        for user_id, offer_type, resource, amount, price, offer_id, username in offers_data:
             ids.append(user_id)
             types.append(offer_type)
             resources.append(resource)
             amounts.append(amount)
             prices.append(price)
             total_prices.append(price * amount)
-
-            db.execute("SELECT username FROM users WHERE id=(%s)", (user_id,))
-            name = db.fetchone()[0]
-            names.append(name)
+            offer_ids.append(offer_id)
+            names.append(username)
 
         connection.close() # Closes the connection
 

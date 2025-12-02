@@ -7,3 +7,6 @@ Flask==1.1.2
 python-dotenv==0.14.0
 bcrypt
 sendgrid==6.9.7
+gunicorn==20.1.0
+Flask-Markdown==0.3
+redis==4.5.1

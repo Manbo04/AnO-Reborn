@@ -261,26 +261,20 @@ class Nation:
     # Get everything from proInfra table which is in the "public works" category
     @classmethod
     def get_public_works(self, province_id):
-
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
-
-        db = connection.cursor()
-        public_works_string = ",".join(self.public_works)
-
-        infra_sel_stat = F"SELECT {public_works_string} FROM proInfra " + "WHERE id=%s"
-        db.execute(infra_sel_stat, (province_id,))
-        fetch_public = db.fetchone()
-        public_works_dict = {}
-
-        for public in range(0, len(self.public_works)):
-            public_works_dict[self.public_works[public]] = fetch_public[public]
-
-        return public_works_dict
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
+        
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            public_works_string = ",".join(self.public_works)
+            
+            infra_sel_stat = F"SELECT {public_works_string} FROM proInfra " + "WHERE id=%s"
+            db.execute(infra_sel_stat, (province_id,))
+            result = db.fetchone()
+            
+            if not result:
+                return {pw: 0 for pw in self.public_works}
+            
+            return dict(result)
 
     # set the peace_date in wars table for a particular war
     @staticmethod
@@ -299,28 +293,23 @@ class Nation:
     # Get the list of owned upgrades like supply amount increaser from 200 to 210, etc.
     @classmethod
     def get_upgrades(cls, upgrade_type, user_id):
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
+        
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            upgrades = {}
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+            if upgrade_type == "supplies":
+                upgrade_fields = list(cls.supply_related_upgrades.keys())
+                if upgrade_fields:
+                    upgrade_query = f"SELECT {', '.join(upgrade_fields)} FROM upgrades WHERE user_id=%s"
+                    db.execute(upgrade_query, (user_id,))
+                    result = db.fetchone()
+                    if result:
+                        upgrades = dict(result)
 
-        db = connection.cursor()
-        upgrades = {}
-
-        if upgrade_type == "supplies":
-            for upgrade in cls.supply_related_upgrades.keys():
-
-                upgrade_sel_stat = f"SELECT {upgrade} FROM upgrades " + "WHERE user_id=%s"
-                db.execute(upgrade_sel_stat, (user_id,))
-
-                count = db.fetchone()[0]
-                upgrades[upgrade] = count
-
-        # returns the bonus given by the upgrade
-        return upgrades
+            # returns the bonus given by the upgrade
+            return upgrades
 
 class Military(Nation):
     allUnits = ["soldiers", "tanks", "artillery",
@@ -333,82 +322,73 @@ class Military(Nation):
     # note: also could use this for population damage when attack happens
     @staticmethod
     def infrastructure_damage(damage, particular_infra, province_id):
+        from database import get_db_connection
+        
         available_buildings = []
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_connection() as connection:
+            db = connection.cursor()
+            
+            for building in particular_infra.keys():
+                amount = particular_infra[building]
+                if amount > 0:
 
-        db = connection.cursor()
+                    # If there are multiple of the same building add those multiple times
+                    for i in range(0, amount):
+                        available_buildings.append(building)
 
-        for building in particular_infra.keys():
-            amount = particular_infra[building]
-            if amount > 0:
+            # Damage logic (might include population damage)
+            # health is the damage required to destroy a building
+            health = 1500
 
-                # If there are multiple of the same building add those multiple times
-                for i in range(0, amount):
-                    available_buildings.append(building)
+            damage_effects = {}
 
-        # Damage logic (might include population damage)
-        # health is the damage required to destroy a building
-        health = 1500
+            while damage > 0:
+                if not len(available_buildings):
+                    break
 
-        damage_effects = {}
+                max_range = len(available_buildings)-1
+                random_building = random.randint(0, max_range)
 
-        while damage > 0:
-            if not len(available_buildings):
-                break
+                target = available_buildings[random_building]
 
-            max_range = len(available_buildings)-1
-            random_building = random.randint(0, max_range)
+                # destroy target
+                if (damage-health) >= 0:
+                    particular_infra[target] -= 1
 
-            target = available_buildings[random_building]
+                    infra_update_stat = f"UPDATE proInfra SET {target}" + "=%s WHERE id=(%s)"
+                    db.execute(infra_update_stat, (particular_infra[target], province_id))
 
-            # destroy target
-            if (damage-health) >= 0:
-                particular_infra[target] -= 1
+                    available_buildings.pop(random_building)
 
-                infra_update_stat = f"UPDATE proInfra SET {target}" + "=%s WHERE id=(%s)"
-                db.execute(infra_update_stat, (particular_infra[target], province_id))
+                    if damage_effects.get(target, 0):
+                        damage_effects[target][1] += 1
+                    else:
+                        damage_effects[target] = ["destroyed", 1]
 
-                connection.commit()
+                # NOTE: possible feature, when a building not destroyed but could be unusable (the reparation cost lower than rebuying it)
+                else: max_damage = abs(damage-health)
 
-                available_buildings.pop(random_building)
+                damage -= health
 
-                if damage_effects.get(target, 0):
-                    damage_effects[target][1] += 1
-                else:
-                    damage_effects[target] = ["destroyed", 1]
-
-            # NOTE: possible feature, when a building not destroyed but could be unusable (the reparation cost lower than rebuying it)
-            else: max_damage = abs(damage-health)
-
-            damage -= health
-
-        # will return: how many buildings are damaged or destroyed
-        # format: {building_name: ["effect name", affected_amount]}
-        return damage_effects
+            # will return: how many buildings are damaged or destroyed
+            # format: {building_name: ["effect name", affected_amount]}
+            return damage_effects
 
     # Returns the morale either for the attacker or the defender, and with the war_id
     @staticmethod
     def get_morale(column, attacker, defender):
-
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
-
-        db = connection.cursor()
-        db.execute(f"SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))", (attacker.user_id, defender.user_id, attacker.user_id, defender.user_id))
-        war_id = db.fetchall()[-1][0]
-        db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
-        morale = db.fetchone()[0]
-        return (war_id, morale)
+        from database import get_db_cursor
+        
+        with get_db_cursor() as db:
+            db.execute(
+                f"SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+                (attacker.user_id, defender.user_id, attacker.user_id, defender.user_id)
+            )
+            war_id = db.fetchall()[-1][0]
+            db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
+            morale = db.fetchone()[0]
+            return (war_id, morale)
 
     # Reparation tax
     # parameter description:
@@ -786,87 +766,39 @@ class Military(Nation):
 
     @staticmethod
     def get_military(cId): # int -> dict
-
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
-
-        db = connection.cursor()
-        db.execute("SELECT tanks FROM military WHERE id=%s", (cId,))
-        tanks = db.fetchone()[0]
-
-        db.execute("SELECT soldiers FROM military WHERE id=%s", (cId,))
-        soldiers = db.fetchone()[0]
-
-        db.execute("SELECT artillery FROM military WHERE id=%s", (cId,))
-        artillery = db.fetchone()[0]
-
-        db.execute("SELECT bombers FROM military WHERE id=%s", (cId,))
-        bombers = db.fetchone()[0]
-
-        db.execute("SELECT fighters FROM military WHERE id=%s", (cId,))
-        fighters = db.fetchone()[0]
-
-        db.execute("SELECT apaches FROM military WHERE id=%s", (cId,))
-        apaches = db.fetchone()[0]
-
-        db.execute("SELECT destroyers FROM military WHERE id=%s", (cId,))
-        destroyers = db.fetchone()[0]
-
-        db.execute("SELECT cruisers FROM military WHERE id=%s", (cId,))
-        cruisers = db.fetchone()[0]
-
-        db.execute("SELECT submarines FROM military WHERE id=%s", (cId,))
-        submarines = db.fetchone()[0]
-
-        connection.close()
-
-        return {
-            "tanks": tanks,
-            "soldiers": soldiers,
-            "artillery": artillery,
-            "bombers": bombers,
-            "fighters": fighters,
-            "apaches": apaches,
-            "destroyers": destroyers,
-            "cruisers": cruisers,
-            "submarines": submarines
-        }
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
+        
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            db.execute(
+                """SELECT tanks, soldiers, artillery, bombers, fighters, apaches,
+                   destroyers, cruisers, submarines 
+                   FROM military WHERE id=%s""",
+                (cId,)
+            )
+            result = db.fetchone()
+            return dict(result) if result else {}
 
     @staticmethod
     def get_limits(cId): # int -> dict
-        connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-        db = connection.cursor()
-
-        # find number of each military production building the user has
-        db.execute("SELECT id FROM provinces WHERE userID=%s", (cId,))
-        provinceids = db.fetchall()
-        army_bases = 0
-        harbours = 0
-        aerodomes = 0
-        admin_buildings = 0
-        silos = 0
-        for provinceid in provinceids:
-
-            db.execute("SELECT army_bases FROM proinfra WHERE id=%s", (provinceid,))
-            army_bases += db.fetchone()[0]
-            db.execute("SELECT harbours FROM proinfra WHERE id=%s", (provinceid,))
-            harbours += db.fetchone()[0]
-            db.execute("SELECT aerodomes FROM proinfra WHERE id=%s", (provinceid,))
-            aerodomes += db.fetchone()[0]
-            db.execute("SELECT admin_buildings FROM proinfra WHERE id=%s", (provinceid,))
-            admin_buildings += db.fetchone()[0]
-            db.execute("SELECT silos FROM proInfra WHERE id=%s", (provinceid,))
-            silos = db.fetchone()[0]
+        from database import get_db_cursor
+        
+        with get_db_cursor() as db:
+            # Use aggregated query instead of loop
+            db.execute(
+                """SELECT 
+                    COALESCE(SUM(pi.army_bases), 0) as army_bases,
+                    COALESCE(SUM(pi.harbours), 0) as harbours,
+                    COALESCE(SUM(pi.aerodomes), 0) as aerodomes,
+                    COALESCE(SUM(pi.admin_buildings), 0) as admin_buildings,
+                    COALESCE(SUM(pi.silos), 0) as silos
+                FROM proinfra pi
+                INNER JOIN provinces p ON pi.id = p.id
+                WHERE p.userID=%s""",
+                (cId,)
+            )
+            result = db.fetchone()
+            army_bases, harbours, aerodomes, admin_buildings, silos = result
 
         # db.execute("SELECT SUM(population) FROM provinces WHERE userid=(%s)", (cId,))
         # capable_population = int(db.fetchone()[0]*(0.3))
@@ -979,31 +911,16 @@ class Military(Nation):
 
     @staticmethod
     def get_special(cId): # int -> dict
-
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
-
-        db = connection.cursor()
-
-        db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
-        spies = db.fetchone()[0]
-
-        db.execute("SELECT ICBMs FROM military WHERE id=%s", (cId,))
-        icbms = db.fetchone()[0]
-
-        db.execute("SELECT nukes FROM military WHERE id=%s", (cId,))
-        nukes = db.fetchone()[0]
-        connection.close()
-
-        return {
-            "spies": spies,
-            "icbms": icbms,
-            "nukes": nukes
-        }
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
+        
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            db.execute(
+                "SELECT spies, ICBMs, nukes FROM military WHERE id=%s",
+                (cId,)
+            )
+            result = db.fetchone()
+            return dict(result) if result else {"spies": 0, "icbms": 0, "nukes": 0}
 
     # Check and set default_defense in nation table
     def set_defense(self, defense_string): # str -> None
