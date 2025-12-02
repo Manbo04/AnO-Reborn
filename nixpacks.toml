@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python38", "postgresql"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["echo 'Build complete'"]
+
+[start]
+cmd = "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 4 --timeout 120"
