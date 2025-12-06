@@ -26,11 +26,12 @@ class DatabasePool:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DatabasePool, cls).__new__(cls)
-            cls._instance._initialize_pool()
         return cls._instance
 
     def _initialize_pool(self):
         """Initialize the connection pool"""
+        if self._pool is not None:
+            return  # Already initialized
         try:
             self._pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
@@ -48,6 +49,7 @@ class DatabasePool:
 
     def get_connection(self):
         """Get a connection from the pool"""
+        self._initialize_pool()  # Lazy init
         return self._pool.getconn()
 
     def return_connection(self, conn):

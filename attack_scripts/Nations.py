@@ -160,16 +160,22 @@ class Nation:
     supply_related_upgrades = {"lootingTeams": 10}
     economy_related_upgrades = {}
 
-    # Database management
-    # TODO: find a more effective way to handle database stuff
-    # path = ''.join([os.path.abspath('').split("AnO")[0], 'AnO/affo/aao.db'])
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-    db = connection.cursor()
+    # Database management - moved to get_db() method to avoid import-time connection
+    connection = None
+    db = None
+
+    @classmethod
+    def get_db(cls):
+        """Lazy database connection"""
+        if cls.connection is None:
+            cls.connection = psycopg2.connect(
+                database=os.getenv("PG_DATABASE"),
+                user=os.getenv("PG_USER"),
+                password=os.getenv("PG_PASSWORD"),
+                host=os.getenv("PG_HOST"),
+                port=os.getenv("PG_PORT"))
+            cls.db = cls.connection.cursor()
+        return cls.db
 
     def __init__(self, nationID, military=None, economy=None, provinces=None, current_wars=None):
         self.id = nationID  # integer ID
@@ -800,16 +806,14 @@ class Military(Nation):
             result = db.fetchone()
             army_bases, harbours, aerodomes, admin_buildings, silos = result
 
-        # db.execute("SELECT SUM(population) FROM provinces WHERE userid=(%s)", (cId,))
-        # capable_population = int(db.fetchone()[0]*(0.3))
+            # these numbers determine the upper limit of how many of each military unit can be built per day
+            db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
+            manpower = db.fetchone()[0]
 
-        # Currently this is a constant
-        # army_tradition = 0.2
-        # manpower = int(capable_population*army_tradition)
+            # fetch upgrade flag while cursor is open
+            db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
+            increased_funding = db.fetchone()[0]
 
-        # these numbers determine the upper limit of how many of each military unit can be built per day
-        db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
-        manpower = db.fetchone()[0]
         military = Military.get_military(cId)
 
         # TODO: maybe clear this mess a bit up
@@ -889,8 +893,6 @@ class Military(Nation):
         else:
             nukes = 0
 
-        db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
-        increased_funding = db.fetchone()[0]
         if increased_funding:
             spies *= 1.4
 
