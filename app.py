@@ -34,6 +34,7 @@ import string
 import random
 import os
 from helpers import login_required
+from database import get_db_cursor
 import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
@@ -191,7 +192,7 @@ def milres(unit):
 
 
 def get_resources():
-    with get_db_cursor(dict_cursor=True) as db:
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
         try:
@@ -221,7 +222,7 @@ def robots():
 @app.route("/account", methods=["GET"])
 @login_required
 def account():
-    with get_db_cursor(dict_cursor=True) as db:
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
 
         cId = session["user_id"]
 
@@ -311,12 +312,16 @@ def admin_init_database():
     Visit this URL once, then remove this route.
     """
     import psycopg2
-    
+
+    results = []
     try:
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
-            return "ERROR: DATABASE_URL not set", 500
-        
+            return "<pre>ERROR: DATABASE_URL not set</pre>", 200
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        schema_dir = os.path.join(base_dir, "affo", "postgres")
+
         connection = psycopg2.connect(database_url)
         db = connection.cursor()
 
@@ -328,11 +333,10 @@ def admin_init_database():
             "revenue", "reset_codes", "policies"
         ]
 
-        results = []
         for table_name in tables:
-            table_file = f"affo/postgres/{table_name}.txt"
+            table_file = os.path.join(schema_dir, f"{table_name}.txt")
             try:
-                with open(table_file, 'r') as file:
+                with open(table_file, "r") as file:
                     sql = file.read()
                     db.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
                     db.execute(sql)
@@ -353,11 +357,11 @@ def admin_init_database():
             results.append(f"✗ Failed to insert keys: {str(e)}")
 
         connection.close()
-        
-        return "<pre>" + "\n".join(results) + "\n\nDATABASE INITIALIZED! Now remove this route from app.py</pre>"
-        
+
     except Exception as e:
-        return f"<pre>ERROR: {str(e)}</pre>", 500
+        results.append(f"✗ Route error: {str(e)}")
+
+    return "<pre>" + "\n".join(results) + "\n\nDATABASE INITIALIZATION ATTEMPTED. If any ✗ remain, rerun after fixing.</pre>", 200
 
 
 if __name__ == "__main__":
