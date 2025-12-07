@@ -11,14 +11,17 @@ bp = Blueprint("upgrades", __name__)
 def get_upgrades(cId): 
     with get_db_cursor() as db:
         db.execute("SELECT * FROM upgrades WHERE user_id=%s", (cId,))
-        upgrades = db.fetchone()
-        return upgrades
+        row = db.fetchone()
+        if not row:
+            return {}
+        colnames = [desc[0] for desc in db.description]
+        return dict(zip(colnames, row))
 
 @bp.route("/upgrades", methods=["GET"])
 @login_required
 def upgrades():
     cId = session["user_id"]
-    upgrades = dict(get_upgrades(cId)) # upgrades['betterEngineering'] = 0
+    upgrades = get_upgrades(cId) # already a dict keyed by column name
     return render_template("upgrades.html", upgrades=upgrades)
 
 @bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
