@@ -269,97 +269,93 @@ def calc_pg(pId, rations):
         db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
         curPop = db.fetchone()[0]
 
-    maxPop = variables.DEFAULT_MAX_POPULATION # Base max population: 1 million
+        maxPop = variables.DEFAULT_MAX_POPULATION # Base max population: 1 million
 
-    try:
-        db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
-        cities = db.fetchone()[0]
-    except TypeError:
-        conn.rollback()
-        cities = 0
+        try:
+            db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
+            cities = db.fetchone()[0]
+        except TypeError:
+            cities = 0
 
-    maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION # Each city adds 750,000 population
-        
-    try:
-        db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
-        land = db.fetchone()[0]
-    except TypeError:
-        conn.rollback()
-        land = 0
+        maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION # Each city adds 750,000 population
+            
+        try:
+            db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
+            land = db.fetchone()[0]
+        except TypeError:
+            land = 0
 
-    maxPop += land * variables.LAND_MAX_POPULATION_ADDITION # Each land slot adds 120,000 population
+        maxPop += land * variables.LAND_MAX_POPULATION_ADDITION # Each land slot adds 120,000 population
 
-    try:
-        db.execute("SELECT happiness FROM provinces WHERE id=%s", (pId,))
-        happiness = int(db.fetchone()[0])
-    except TypeError:
-        conn.rollback()
-        happiness = 0
+        try:
+            db.execute("SELECT happiness FROM provinces WHERE id=%s", (pId,))
+            happiness = int(db.fetchone()[0])
+        except TypeError:
+            happiness = 0
 
-    try:
-        db.execute("SELECT pollution FROM provinces WHERE id=%s", (pId,))
-        pollution = db.fetchone()[0]
-    except TypeError:
-        conn.rollback()
-        pollution = 0
+        try:
+            db.execute("SELECT pollution FROM provinces WHERE id=%s", (pId,))
+            pollution = db.fetchone()[0]
+        except TypeError:
+            pollution = 0
 
-    try:
-        db.execute("SELECT productivity FROM provinces WHERE id=%s", (pId,))
-        productivity = db.fetchone()[0]
-    except TypeError:
-        conn.rollback()
+        try:
+            db.execute("SELECT productivity FROM provinces WHERE id=%s", (pId,))
+            productivity = db.fetchone()[0]
+        except TypeError:
+            productivity = 0
         productivity = 0
 
-    # Each % increases / decreases max population by 
-    happiness = round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2) # The more you have the better
+        # Each % increases / decreases max population by 
+        happiness = round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2) # The more you have the better
 
-    # Each % increases / decreases max population by 
-    pollution = round((pollution - 50) * - variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2) # The less you have the better
+        # Each % increases / decreases max population by 
+        pollution = round((pollution - 50) * - variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2) # The less you have the better
 
-    # Each % increases / decreases resource output by 
-    productivity = round((productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER, 2) # The more you have the better
+        # Each % increases / decreases resource output by 
+        productivity = round((productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER, 2) # The more you have the better
 
-    maxPop += (maxPop * happiness) + (maxPop * pollution)
-    maxPop = round(maxPop)
+        maxPop += (maxPop * happiness) + (maxPop * pollution)
+        maxPop = round(maxPop)
 
-    if maxPop < variables.DEFAULT_MAX_POPULATION:
-        maxPop = variables.DEFAULT_MAX_POPULATION
+        if maxPop < variables.DEFAULT_MAX_POPULATION:
+            maxPop = variables.DEFAULT_MAX_POPULATION
 
-    rations_increase = 0 # Default rations increase. If user has no rations it will decrease by 1% of maxPop 
-    rations_needed = curPop // variables.RATIONS_PER
+        rations_increase = 0 # Default rations increase. If user has no rations it will decrease by 1% of maxPop 
+        rations_needed = curPop // variables.RATIONS_PER
 
-    if rations_needed < 1: rations_needed = 1 # Trying to not get division by zero error
+        if rations_needed < 1: rations_needed = 1 # Trying to not get division by zero error
 
-    rations_needed_percent = rations / rations_needed
-    if rations_needed_percent > 1:
-        rations_needed_percent = 1
-        
-    rations_increase += round(rations_needed_percent * 2, 2)
+        rations_needed_percent = rations / rations_needed
+        if rations_needed_percent > 1:
+            rations_needed_percent = 1
+            
+        rations_increase += round(rations_needed_percent * 2, 2)
 
-    # Calculates the new rations of the player
-    new_rations = rations - rations_needed
-    if new_rations < 0:
-        new_rations = 0
+        # Calculates the new rations of the player
+        new_rations = rations - rations_needed
+        if new_rations < 0:
+            new_rations = 0
 
-    newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
+        newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
 
-    db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
-    owner = db.fetchone()[0]
+        db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
+        owner = db.fetchone()[0]
 
-    try:
-        db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
-        policies = db.fetchone()[0]
-    except:
-        policies = []
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
+            policies = db.fetchone()[0]
+        except:
+            policies = []
 
-    if 5 in policies:
-        newPop *= 1.16 # 16% increase
+        if 5 in policies:
+            newPop *= 1.16 # 16% increase
 
-    fullPop = curPop + newPop
+        fullPop = curPop + newPop
 
-    if fullPop < 0: fullPop = 0
+        if fullPop < 0: fullPop = 0
 
-    return new_rations, fullPop
+        return new_rations, fullPop
 
 # Seems to be working as expected
 def population_growth(): # Function for growing population
