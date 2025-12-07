@@ -307,17 +307,18 @@ def mass_purchase():
 
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
 def admin_init_database():
-    """
-    TEMPORARY ROUTE: Initialize database tables.
-    Visit this URL once, then remove this route.
-    """
+    """TEMP route to init DB. Always returns plain text."""
     import psycopg2
+    from flask import Response
 
     results = []
+    status = 200
     try:
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
-            return "<pre>ERROR: DATABASE_URL not set</pre>", 200
+            results.append("ERROR: DATABASE_URL not set")
+            status = 500
+            return Response("\n".join(results), status=status, mimetype="text/plain")
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         schema_dir = os.path.join(base_dir, "affo", "postgres")
@@ -348,7 +349,6 @@ def admin_init_database():
                 results.append(f"✗ Failed {table_name}: {str(e)}")
                 connection.rollback()
 
-        # Insert keys
         try:
             db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
             connection.commit()
@@ -359,9 +359,11 @@ def admin_init_database():
         connection.close()
 
     except Exception as e:
+        status = 500
         results.append(f"✗ Route error: {str(e)}")
 
-    return "<pre>" + "\n".join(results) + "\n\nDATABASE INITIALIZATION ATTEMPTED. If any ✗ remain, rerun after fixing.</pre>", 200
+    body = "\n".join(results) + "\n\nDATABASE INITIALIZATION ATTEMPTED. If any ✗ remain, rerun after fixing."
+    return Response(body, status=status, mimetype="text/plain")
 
 
 if __name__ == "__main__":
