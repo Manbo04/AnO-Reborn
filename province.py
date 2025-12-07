@@ -7,12 +7,13 @@ import variables
 from tasks import energy_info
 from helpers import get_date
 from upgrades import get_upgrades
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 import math
 load_dotenv()
 
 @app.route("/provinces", methods=["GET"])
 @login_required
+@cache_response(ttl_seconds=30)
 def provinces():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -25,6 +26,7 @@ def provinces():
 
 @app.route("/province/<pId>", methods=["GET"])
 @login_required
+@cache_response(ttl_seconds=30)
 def province(pId):
     with get_db_cursor() as db:
         cId = session["user_id"]
