@@ -107,27 +107,42 @@ def discord_register():
 
     elif request.method == "POST":
         try:
+            print("\n=== DISCORD SIGNUP START ===")
+            print(f"Token in session: {bool(session.get('oauth2_token'))}")
+            
             app.config["SESSION_PERMANENT"] = True
             app.permanent_session_lifetime = datetime.timedelta(days=365)
 
             # Get Discord user info from session token
-            discord = make_session(token=session.get('oauth2_token'))
-            if not discord or not session.get('oauth2_token'):
+            token = session.get('oauth2_token')
+            discord = make_session(token=token)
+            if not discord or not token:
+                print("ERROR: No token")
                 return error(400, "Discord authentication failed - no token")
 
-            discord_user = discord.get(API_BASE_URL + '/users/@me').json()
+            print(f"Fetching Discord user...")
+            response = discord.get(API_BASE_URL + '/users/@me')
+            print(f"Response code: {response.status_code}")
+            discord_user = response.json()
+            print(f"Discord user: {discord_user}")
             
             discord_user_id = discord_user.get('id')
             email = discord_user.get('email')
 
             if not discord_user_id:
-                return error(400, f"Discord API error: {discord_user}")
+                err = f"Discord API error: {discord_user}"
+                print(f"ERROR: {err}")
+                return error(400, err)
 
             # Get form data
             username = request.form.get("username", "").strip()
             continent_str = request.form.get("continent", "")
             
+            print(f"Form username: {username}")
+            print(f"Form continent_str: {continent_str}")
+            
             if not username:
+                print("ERROR: No username")
                 return error(400, "Country name is required")
             
             if not continent_str:
@@ -141,19 +156,25 @@ def discord_register():
                 return error(400, "Invalid biome selection")
 
             discord_auth = str(discord_user_id)
+            
+            print(f"Creating account - username: {username}, discord_id: {discord_auth}")
 
             # Create account
             with get_db_cursor() as db:
+                print("Database cursor acquired")
                 # Check if username exists
                 db.execute("SELECT id FROM users WHERE username=%s", (username,))
                 if db.fetchone():
+                    print(f"Username already taken: {username}")
                     return error(400, "Country name already taken")
 
-                # Check if Discord user already has account
+                print("Username available, checking Discord ID...")
                 db.execute("SELECT id FROM users WHERE hash=%s AND auth_type='discord'", (discord_auth,))
                 if db.fetchone():
+                    print(f"Discord ID already linked: {discord_auth}")
                     return error(400, "This Discord account is already linked to another country")
 
+                print(f"Creating user: {username}")
                 # Create user
                 date = str(datetime.date.today())
                 db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", 
