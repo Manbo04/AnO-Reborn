@@ -316,18 +316,18 @@ def country(cId):
         db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
         spy["count"] = db.fetchone()[0]
 
-    # News page
-    idd = int(cId)
-    news = []
-    news_amount = 0
-    if idd == session["user_id"]:
-        # TODO: handle this as country/id=<int:cId>
-        db.execute("SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,))
-        # data order in the tuple appears as in the news schema (notice this when work with this data using jija)
-        news = db.fetchall()
-        news_amount = len(news)
+        # News page
+        idd = int(cId)
+        news = []
+        news_amount = 0
+        if idd == session["user_id"]:
+            # TODO: handle this as country/id=<int:cId>
+            db.execute("SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,))
+            # data order in the tuple appears as in the news schema (notice this when work with this data using jija)
+            news = db.fetchall()
+            news_amount = len(news)
 
-    # Revenue stuff
+        # Revenue stuff
         if status:
             revenue = get_revenue(cId)
             db.execute("SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s", (cId,))
