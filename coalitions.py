@@ -3,7 +3,6 @@ from helpers import login_required, error
 from helpers import get_coalition_influence
 from app import app
 import os
-import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
 import variables
