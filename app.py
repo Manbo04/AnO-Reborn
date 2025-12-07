@@ -12,6 +12,30 @@ from flask import Flask, request, render_template, session, redirect, send_from_
 import traceback
 app = Flask(__name__)
 
+# Performance: Enable gzip compression for responses
+try:
+    from flask_compress import Compress
+    Compress(app)
+except ImportError:
+    # Flask-Compress not installed, continue without it
+    pass
+
+# Performance: Add caching headers for static files
+@app.after_request
+def add_cache_headers(response):
+    # Cache static assets for 1 month (2592000 seconds)
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=2592000, immutable'
+    # Cache images for 1 month
+    elif request.path.endswith(('.jpg', '.png', '.gif', '.ico')):
+        response.headers['Cache-Control'] = 'public, max-age=2592000'
+    # Don't cache HTML pages (they might change)
+    else:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 import upgrades
 import intelligence
 import tasks

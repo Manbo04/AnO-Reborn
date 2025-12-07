@@ -11,11 +11,45 @@ from contextlib import contextmanager
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Tuple
 import logging
+from functools import lru_cache
+from time import time
 
 load_dotenv()
 import config  # Parse Railway DATABASE_URL
 
 logger = logging.getLogger(__name__)
+
+
+# Simple query result cache for frequently accessed, slowly-changing data
+class QueryCache:
+    """Simple in-memory cache with TTL for database query results"""
+    def __init__(self, ttl_seconds=300):  # 5 minute default TTL
+        self.cache = {}
+        self.ttl = ttl_seconds
+    
+    def get(self, key):
+        """Get cached value if not expired"""
+        if key in self.cache:
+            value, timestamp = self.cache[key]
+            if time() - timestamp < self.ttl:
+                return value
+            else:
+                del self.cache[key]  # Expired
+        return None
+    
+    def set(self, key, value):
+        """Cache a value with current timestamp"""
+        self.cache[key] = (value, time())
+    
+    def invalidate(self, pattern=None):
+        """Clear cache or clear entries matching pattern"""
+        if pattern is None:
+            self.cache.clear()
+        else:
+            self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
+
+# Global query cache (5-minute TTL for slower-changing data)
+query_cache = QueryCache(ttl_seconds=300)
 
 
 class DatabasePool:
