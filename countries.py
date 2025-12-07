@@ -22,8 +22,14 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 Mb limit
 
 # TODO: rewrite this function for fucks sake
 def get_econ_statistics(cId):
-    from database import get_db_cursor
+    from database import get_db_cursor, query_cache
     from psycopg2.extras import RealDictCursor
+    
+    # Check cache first
+    cache_key = f"econ_stats_{cId}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
     
     with get_db_cursor(cursor_factory=RealDictCursor) as dbdict:
         # TODO: less loc
@@ -105,6 +111,8 @@ def get_econ_statistics(cId):
             check_for_resource_upkeep(unit, amount)
             check_for_monetary_upkeep(unit, amount)
 
+    # Cache the result
+    query_cache.set(cache_key, expenses)
     return expenses
 
 
@@ -262,7 +270,6 @@ def my_country():
 
 @app.route("/country/id=<cId>")
 @login_required
-@cache_response(ttl_seconds=30)
 def country(cId):
 
     with get_db_cursor() as db:
