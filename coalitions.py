@@ -3,6 +3,7 @@ from helpers import login_required, error
 from helpers import get_coalition_influence
 from app import app
 import os
+import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
 import variables
@@ -295,26 +296,26 @@ def establish_coalition():
             except:
                 pass
 
-        cType = request.form.get("type")
-        name = request.form.get("name")
-        desc = request.form.get("description")
+            cType = request.form.get("type")
+            name = request.form.get("name")
+            desc = request.form.get("description")
 
-        if len(str(name)) > 40:
-            return error(400, "Name too long! the coalition name needs to be under 40 characters")
-        else:
-            date = str(datetime.date.today())
-            db.execute("INSERT INTO colNames (name, type, description, date) VALUES (%s, %s, %s, %s)", (name, cType, desc, date))
+            if len(str(name)) > 40:
+                return error(400, "Name too long! the coalition name needs to be under 40 characters")
+            else:
+                date = str(datetime.date.today())
+                db.execute("INSERT INTO colNames (name, type, description, date) VALUES (%s, %s, %s, %s)", (name, cType, desc, date))
 
-            db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
-            colId = db.fetchone()[0] # Gets the coalition id of the just inserted coalition
+                db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
+                colId = db.fetchone()[0] # Gets the coalition id of the just inserted coalition
 
-            # Inserts the user as the leader of the coalition
-            db.execute("INSERT INTO coalitions (colId, userId, role) VALUES (%s, %s, %s)", (colId, session["user_id"], "leader"))
+                # Inserts the user as the leader of the coalition
+                db.execute("INSERT INTO coalitions (colId, userId, role) VALUES (%s, %s, %s)", (colId, session["user_id"], "leader"))
 
-            # Inserts the coalition into the table for coalition banks
-            db.execute("INSERT INTO colBanks (colId) VALUES (%s)", (colId,))
+                # Inserts the coalition into the table for coalition banks
+                db.execute("INSERT INTO colBanks (colId) VALUES (%s)", (colId,))
 
-            return redirect(f"/coalition/{colId}") # Redirects to the new coalition's page
+                return redirect(f"/coalition/{colId}") # Redirects to the new coalition's page
     else:
         return render_template("establish_coalition.html")
 
