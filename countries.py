@@ -13,7 +13,7 @@ from operator import itemgetter
 from datetime import datetime
 from wars import target_data
 import math
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 from psycopg2.extras import RealDictCursor
 load_dotenv()
 
@@ -262,6 +262,7 @@ def my_country():
 
 @app.route("/country/id=<cId>")
 @login_required
+@cache_response(ttl_seconds=30)
 def country(cId):
 
     with get_db_cursor() as db:
