@@ -195,3 +195,4 @@ Copy the output and use it as your SECRET_KEY in Railway.
 Just push to GitHub and follow the Railway deployment steps. Your game will be live in minutes! 🎮
 
 **Good luck with your deployment!** 🚀
+# Deployment fix
