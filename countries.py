@@ -270,6 +270,7 @@ def my_country():
 
 @app.route("/country/id=<cId>")
 @login_required
+@cache_response(ttl_seconds=30)
 def country(cId):
 
     with get_db_cursor() as db:
