@@ -165,17 +165,21 @@ def calc_ti(user_id):
         db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
         consumer_goods = db.fetchone()[0]
 
+        # Education policies (may not exist yet)
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
             policies = db.fetchone()[0]
-        except: 
+        except Exception:
             policies = []
 
+        # Provinces (may not exist yet)
         try:
             db.execute("SELECT population, land FROM provinces WHERE userId=%s", (user_id,))
             provinces = db.fetchall()
+        except Exception:
+            provinces = []
 
-        if provinces == []: # User doesn't have any provinces
+        if not provinces:  # User doesn't have any provinces
             return False, False
 
         income = 0
@@ -208,11 +212,6 @@ def calc_ti(user_id):
                 new_consumer_goods -= consumer_goods
             
         return math.floor(income), new_consumer_goods
-    except Exception as e:
-        handle_exception(e)
-        return False, False
-
-print(calc_ti(8))
 
 # (x, y) - (income, removed_consumer_goods)
 # * Tested no provinces
