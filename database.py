@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Tuple
 import logging
-from functools import lru_cache
+from functools import lru_cache, wraps
 from time import time
 
 load_dotenv()
@@ -47,6 +47,45 @@ class QueryCache:
             self.cache.clear()
         else:
             self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
+
+
+def cache_response(ttl_seconds=60):
+    """
+    Decorator to cache full page responses
+    Useful for read-only pages that don't change frequently
+    
+    Usage:
+        @cache_response(ttl_seconds=120)
+        def my_page():
+            # expensive DB queries
+            return render_template(...)
+    """
+    def decorator(f):
+        cache = {}
+        
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Create cache key from function name and user session
+            from flask import session, request
+            user_id = session.get('user_id', 'anon')
+            page_id = request.path if hasattr(request, 'path') else ''
+            cache_key = f"{f.__name__}_{user_id}_{page_id}"
+            
+            # Check if response is cached
+            if cache_key in cache:
+                response, timestamp = cache[cache_key]
+                if time() - timestamp < ttl_seconds:
+                    return response
+            
+            # Call actual function
+            response = f(*args, **kwargs)
+            
+            # Cache the response
+            cache[cache_key] = (response, time())
+            return response
+        
+        return decorated_function
+    return decorator
 
 # Global query cache (5-minute TTL for slower-changing data)
 query_cache = QueryCache(ttl_seconds=300)

@@ -12,6 +12,9 @@ from flask import Flask, request, render_template, session, redirect, send_from_
 import traceback
 app = Flask(__name__)
 
+# Import cache_response decorator
+from database import cache_response
+
 # Performance: Enable gzip compression for responses
 try:
     from flask_compress import Compress
@@ -247,6 +250,7 @@ def robots():
 
 @app.route("/account", methods=["GET"])
 @login_required
+@cache_response(ttl_seconds=60)
 def account():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
 
