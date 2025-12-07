@@ -1,6 +1,5 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required, error
-import psycopg2
 from app import app
 from dotenv import load_dotenv
 import os
@@ -8,161 +7,133 @@ import variables
 from tasks import energy_info
 from helpers import get_date
 from upgrades import get_upgrades
-from psycopg2.extras import RealDictCursor
+from database import get_db_cursor
 import math
 load_dotenv()
 
 @app.route("/provinces", methods=["GET"])
 @login_required
 def provinces():
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        db.execute("""SELECT cityCount, population, provinceName, id, land, happiness, productivity, energy
+        FROM provinces WHERE userId=(%s) ORDER BY id ASC""", (cId,))
+        provinces = db.fetchall()
 
-    db = connection.cursor()
-
-    cId = session["user_id"]
-
-    db.execute("""SELECT cityCount, population, provinceName, id, land, happiness, productivity, energy
-    FROM provinces WHERE userId=(%s) ORDER BY id ASC""", (cId,))
-    provinces = db.fetchall()
-
-    connection.close()
-
-    return render_template("provinces.html", provinces=provinces)
+        return render_template("provinces.html", provinces=provinces)
 
 @app.route("/province/<pId>", methods=["GET"])
 @login_required
 def province(pId):
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-        cursor_factory=RealDictCursor)
+        upgrades = get_upgrades(cId)
 
-    db = connection.cursor()
-    cId = session["user_id"]
+        # Object under which the data about a province is stored
 
-    upgrades = get_upgrades(cId)
+        try:
+            db.execute("""SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
+            consumer_spending, cityCount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
+            province_data = db.fetchone()
+            province = {}
+            columns = ["id", "user", "name", "population", "pollution", "happiness", "productivity", "consumer_spending", "cityCount", "land", "electricity"]
+            for i, col in enumerate(columns):
+                province[col] = province_data[i]
+        except:
+            return error(404, "Province doesn't exist")
 
-    # Object under which the data about a province is stored
+        db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
+        location_data = db.fetchone()
+        province["location"] = location_data[0] if location_data else None
+        
+        province["free_cityCount"] = province["cityCount"] - get_free_slots(pId, "city")
+        province["free_land"] = province["land"] - get_free_slots(pId, "land")
+        province["own"] = province["user"] == cId
 
-    try:
-        db.execute("""SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-        consumer_spending, cityCount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
-        province = dict(db.fetchone())
-    except:
-        return error(404, "Province doesn't exist")
+        # Selects values for province buildings from the database and assigns them to vars
+        db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
+        proinfra_data = db.fetchone()
+        proinfra_columns = ["id", "pumpjacks", "coal_mines", "bauxite_mines", "copper_mines", "uranium_mines", 
+                           "lead_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
+                           "nuclear_reactors", "solar_fields", "gas_stations", "general_stores", "farmers_markets",
+                           "malls", "banks", "city_parks", "hospitals", "libraries", "universities", "monorails",
+                           "army_bases", "harbours", "aerodomes", "admin_buildings", "silos", "farms", 
+                           "component_factories", "steel_mills", "ammunition_factories", "aluminium_refineries", "oil_refineries"]
+        units = dict(zip(proinfra_columns, proinfra_data))
 
-    db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
-    province["location"] = dict(db.fetchone())["location"]
-    province["free_cityCount"] = province["citycount"] - get_free_slots(pId, "city")
-    province["free_land"] = province["land"] - get_free_slots(pId, "land")
-    province["own"] = province["user"] == cId
+        def has_enough_cg(user_id):
+            db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
+            consumer_goods_data = db.fetchone()
+            consumer_goods = consumer_goods_data[0] if consumer_goods_data else 0
+            max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
+            return consumer_goods >= max_cg
 
-    # Selects values for province buildings from the database and assigns them to vars
-    db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
-    units = dict(db.fetchone())
+        enough_consumer_goods = has_enough_cg(province["user"])
 
-    def has_enough_cg(user_id):
-        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
-        consumer_goods = dict(db.fetchone())["consumer_goods"]
-        max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
-        return consumer_goods >= max_cg
+        def has_enough_rations(user_id):
+            db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
+            rations_data = db.fetchone()
+            rations = rations_data[0] if rations_data else 0
+            rations_minus = province["population"] // variables.RATIONS_PER
+            return rations - rations_minus > 1
+        
+        def has_enough_power(province_id):
+            db.execute("SELECT energy FROM provinces WHERE id=%s", (province_id,))
+            energy_data = db.fetchone()
+            energy = energy_data[0] if energy_data else 0
+            return energy > 0
 
-    enough_consumer_goods = has_enough_cg(province["user"])
+        enough_rations = has_enough_rations(province["user"])
 
-    def has_enough_rations(user_id):
-        db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-        rations = dict(db.fetchone())["rations"]
-        rations_minus = province["population"] // variables.RATIONS_PER
-        return rations - rations_minus > 1
-    
-    def has_enough_power(province_id):
-        db.execute("SELECT energy FROM provinces WHERE id=%s", (province_id,))
-        energy = (dict(db.fetchone()))["energy"]
-        return energy > 0
+        energy = {}
 
-    enough_rations = has_enough_rations(province["user"])
+        energy["consumption"], energy["production"] = energy_info(pId)
+        has_power = has_enough_power(pId)
 
-    energy = {}
+        infra = variables.INFRA
+        new_infra = variables.NEW_INFRA
+        prices = variables.PROVINCE_UNIT_PRICES
 
-    energy["consumption"], energy["production"] = energy_info(pId)
-    has_power = has_enough_power(pId)
-
-    infra = variables.INFRA
-    new_infra = variables.NEW_INFRA
-    prices = variables.PROVINCE_UNIT_PRICES
-
-    connection.close()
-
-    return render_template("province.html", province=province, units=units,
-    enough_consumer_goods=enough_consumer_goods, enough_rations=enough_rations, has_power=has_power,
-    energy=energy, infra=infra, upgrades=upgrades, prices=prices, new_infra=new_infra)
+        return render_template("province.html", province=province, units=units,
+        enough_consumer_goods=enough_consumer_goods, enough_rations=enough_rations, has_power=has_power,
+        energy=energy, infra=infra, upgrades=upgrades, prices=prices, new_infra=new_infra)
 
 def get_province_price(user_id):
+    with get_db_cursor() as db:
+        db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (user_id,))
+        current_province_amount = db.fetchone()[0]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        multiplier = 1 + (0.16 * current_province_amount)
+        price = int(8000000 * multiplier)
 
-    db = connection.cursor()
-
-    db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (user_id,))
-    current_province_amount = db.fetchone()[0]
-
-    multiplier = 1 + (0.16 * current_province_amount)
-    price = int(8000000 * multiplier)
-
-    return price
+        return price
 
 @app.route("/createprovince", methods=["GET", "POST"])
 @login_required
 def createprovince():
-
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     if request.method == "POST":
+        with get_db_cursor() as db:
+            pName = request.form.get("name")
 
-        pName = request.form.get("name")
+            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            current_user_money = int(db.fetchone()[0])
 
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        current_user_money = int(db.fetchone()[0])
+            province_price = get_province_price(cId)
 
-        province_price = get_province_price(cId)
+            if province_price > current_user_money:
+                return error(400, "You don't have enough money.")
 
-        if province_price > current_user_money:
-            return error(400, "You don't have enough money.")
+            db.execute("INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id", (cId, pName))
+            province_id = db.fetchone()[0]
 
-        db.execute("INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id", (cId, pName))
-        province_id = db.fetchone()[0]
+            db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
 
-        db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
-
-        new_user_money = current_user_money - province_price
-        db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId))
-
-        connection.commit()
-        connection.close()
+            new_user_money = current_user_money - province_price
+            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId))
 
         return redirect("/provinces")
     else:
@@ -170,279 +141,258 @@ def createprovince():
         return render_template("createprovince.html", price=price)
 
 def get_free_slots(pId, slot_type): # pId = province id
+    with get_db_cursor() as db:
+        if slot_type == "city":
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+            db.execute(
+            """
+            SELECT
+            coal_burners + oil_burners + hydro_dams + nuclear_reactors + solar_fields +
+            gas_stations + general_stores + farmers_markets + malls + banks +
+            city_parks + hospitals + libraries + universities + monorails
+            FROM proInfra WHERE id=%s
+            """, (pId,))
+            used_slots = int(db.fetchone()[0])
 
-    db = connection.cursor()
+            db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
+            all_slots = int(db.fetchone()[0])
 
-    if slot_type == "city":
+            free_slots = all_slots - used_slots
 
-        db.execute(
-        """
-        SELECT
-        coal_burners + oil_burners + hydro_dams + nuclear_reactors + solar_fields +
-        gas_stations + general_stores + farmers_markets + malls + banks +
-        city_parks + hospitals + libraries + universities + monorails
-        FROM proInfra WHERE id=%s
-        """, (pId,))
-        used_slots = int(db.fetchone()[0])
+        elif slot_type == "land":
 
-        db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
-        all_slots = int(db.fetchone()[0])
+            db.execute(
+            """
+            SELECT
+            army_bases + harbours + aerodomes + admin_buildings + silos +
+            farms + pumpjacks + coal_mines + bauxite_mines +
+            copper_mines + uranium_mines + lead_mines + iron_mines +
+            lumber_mills + component_factories + steel_mills + ammunition_factories +
+            aluminium_refineries + oil_refineries FROM proInfra WHERE id=%s
+            """, (pId,))
+            used_slots = int(db.fetchone()[0])
 
-        free_slots = all_slots - used_slots
+            db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
+            all_slots = int(db.fetchone()[0])
 
-    elif slot_type == "land":
+            free_slots = all_slots - used_slots
 
-        db.execute(
-        """
-        SELECT
-        army_bases + harbours + aerodomes + admin_buildings + silos +
-        farms + pumpjacks + coal_mines + bauxite_mines +
-        copper_mines + uranium_mines + lead_mines + iron_mines +
-        lumber_mills + component_factories + steel_mills + ammunition_factories +
-        aluminium_refineries + oil_refineries FROM proInfra WHERE id=%s
-        """, (pId,))
-        used_slots = int(db.fetchone()[0])
-
-        db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
-        all_slots = int(db.fetchone()[0])
-
-        free_slots = all_slots - used_slots
-
-    return free_slots
+        return free_slots
 
 @app.route("/<way>/<units>/<province_id>", methods=["POST"])
 @login_required
 def province_sell_buy(way, units, province_id):
-
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        try:
+            db.execute("SELECT id FROM provinces WHERE id=%s AND userId=%s", (province_id, cId,))
+            ownProvince = db.fetchone()[0]
+            ownProvince = True
+        except TypeError:
+            ownProvince = False
 
-    db = connection.cursor()
+        if not ownProvince:
+            return error(400, "You don't own this province")
 
-    try:
-        db.execute("SELECT id FROM provinces WHERE id=%s AND userId=%s", (province_id, cId,))
-        ownProvince = db.fetchone()[0]
-        ownProvince = True
-    except TypeError:
-        ownProvince = False
+        allUnits = [
+            "land", "cityCount",
 
-    if not ownProvince:
-        return error(400, "You don't own this province")
+            "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
+            "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
+            "city_parks", "hospitals", "libraries", "universities", "monorails",
 
-    allUnits = [
-        "land", "cityCount",
+            "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
 
-        "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
-        "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
-        "city_parks", "hospitals", "libraries", "universities", "monorails",
+            "farms", "pumpjacks", "coal_mines", "bauxite_mines",
+            "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
+            "lumber_mills",
 
-        "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
+            "component_factories", "steel_mills", "ammunition_factories",
+            "aluminium_refineries", "oil_refineries"
+        ]
 
-        "farms", "pumpjacks", "coal_mines", "bauxite_mines",
-        "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
-        "lumber_mills",
+        city_units = [
+            "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
+            "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
+            "city_parks", "hospitals", "libraries", "universities", "monorails",
+        ]
 
-        "component_factories", "steel_mills", "ammunition_factories",
-        "aluminium_refineries", "oil_refineries"
-    ]
+        land_units = [
+            "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
+            "farms", "pumpjacks", "coal_mines", "bauxite_mines",
+            "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
+            "lumber_mills", "component_factories", "steel_mills",
+            "ammunition_factories", "aluminium_refineries", "oil_refineries"
+        ]
 
-    city_units = [
-        "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
-        "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
-        "city_parks", "hospitals", "libraries", "universities", "monorails",
-    ]
+        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+        gold = db.fetchone()[0]
 
-    land_units = [
-        "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
-        "farms", "pumpjacks", "coal_mines", "bauxite_mines",
-        "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
-        "lumber_mills", "component_factories", "steel_mills",
-        "ammunition_factories", "aluminium_refineries", "oil_refineries"
-    ]
+        try:
+            wantedUnits = int(request.form.get(units))
+        except:
+            return error(400, "You have to enter a unit amount")
 
-    db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-    gold = db.fetchone()[0]
+        if wantedUnits < 1:
+            return error(400, "Units cannot be less than 1")
 
-    try:
-        wantedUnits = int(request.form.get(units))
-    except:
-        return error(400, "You have to enter a unit amount")
+        def sum_cost_exp(starting_value, rate_of_growth, current_owned, num_purchased):
+            M = (starting_value * (1 - pow(rate_of_growth, (current_owned + num_purchased)))) / (1 - rate_of_growth)
+            N = (starting_value * (1 - pow(rate_of_growth, (current_owned)))) / (1 - rate_of_growth)
+            total_cost = M - N
+            return round(total_cost)
 
-    if wantedUnits < 1:
-        return error(400, "Units cannot be less than 1")
+        if units == "cityCount":
+            db.execute("SELECT cityCount FROM provinces WHERE id=(%s)", (province_id,))
+            current_cityCount = db.fetchone()[0]
 
-    def sum_cost_exp(starting_value, rate_of_growth, current_owned, num_purchased):
-        M = (starting_value * (1 - pow(rate_of_growth, (current_owned + num_purchased)))) / (1 - rate_of_growth)
-        N = (starting_value * (1 - pow(rate_of_growth, (current_owned)))) / (1 - rate_of_growth)
-        total_cost = M - N
-        return round(total_cost)
+            cityCount_price = sum_cost_exp(750000, 1.09, current_cityCount, wantedUnits)
+        else:
+            cityCount_price = 0
 
-    if units == "cityCount":
-        db.execute("SELECT cityCount FROM provinces WHERE id=(%s)", (province_id,))
-        current_cityCount = db.fetchone()[0]
+        if units == "land":
+            
+            db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
+            current_land = db.fetchone()[0]
 
-        cityCount_price = sum_cost_exp(750000, 1.09, current_cityCount, wantedUnits)
-    else:
-        cityCount_price = 0
+            land_price = sum_cost_exp(520000, 1.07, current_land, wantedUnits)
+        else:
+            land_price = 0
 
-    if units == "land":
-        
-        db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
-        current_land = db.fetchone()[0]
+        # All the unit prices in this format:
+        """
+        unit_price: <the of the unit>,
+        unit_resource (optional): {resource_name: amount} (how many of what resources it takes to build)
+        unit_resource2 (optional): same as one, just for second resource
+        """
+        # TODO: change the unit_resource and unit_resource2 into list based system
+        unit_prices = variables.PROVINCE_UNIT_PRICES
+        unit_prices["land_price"] = land_price
+        unit_prices["cityCount_price"] = cityCount_price
 
-        land_price = sum_cost_exp(520000, 1.07, current_land, wantedUnits)
-    else:
-        land_price = 0
+        if units not in allUnits:
+            return error("No such unit exists.", 400)
 
-    # All the unit prices in this format:
-    """
-    unit_price: <the of the unit>,
-    unit_resource (optional): {resource_name: amount} (how many of what resources it takes to build)
-    unit_resource2 (optional): same as one, just for second resource
-    """
-    # TODO: change the unit_resource and unit_resource2 into list based system
-    unit_prices = variables.PROVINCE_UNIT_PRICES
-    unit_prices["land_price"] = land_price
-    unit_prices["cityCount_price"] = cityCount_price
+        table = "proInfra"
+        if units in ["land", "cityCount"]:
+            table = "provinces"
 
-    if units not in allUnits:
-        return error("No such unit exists.", 400)
+        price = unit_prices[f"{units}_price"]
 
-    table = "proInfra"
-    if units in ["land", "cityCount"]:
-        table = "provinces"
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
+            policies = db.fetchone()[0]
+        except:
+            policies = []
 
-    price = unit_prices[f"{units}_price"]
+        if 2 in policies:
+            price *= 0.96
+        if 6 in policies and units == "universities":
+            price *= 0.93
+        if 1 in policies and units == "universities":
+            price *= 1.14
 
-    try:
-        db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
-        policies = db.fetchone()[0]
-    except:
-        policies = []
+        if units not in ["cityCount", "land"]:
+            totalPrice = wantedUnits * price
+        else:
+            totalPrice = price
 
-    if 2 in policies:
-        price *= 0.96
-    if 6 in policies and units == "universities":
-        price *= 0.93
-    if 1 in policies and units == "universities":
-        price *= 1.14
+        print(totalPrice, wantedUnits, price)
 
-    if units not in ["cityCount", "land"]:
-        totalPrice = wantedUnits * price
-    else:
-        totalPrice = price
+        try:
+            resources_data = unit_prices[f'{units}_resource'].items()
+        except KeyError:
+            resources_data = {}
 
-    print(totalPrice, wantedUnits, price)
+        curUnStat = f"SELECT {units} FROM {table} " +  "WHERE id=%s"
+        db.execute(curUnStat, (province_id,))
+        currentUnits = db.fetchone()[0]
 
-    try:
-        resources_data = unit_prices[f'{units}_resource'].items()
-    except KeyError:
-        resources_data = {}
+        if units in city_units: slot_type = "city"
+        elif units in land_units: slot_type = "land"
+        else: # If unit is cityCount or land
+            free_slots = 0
+            slot_type = None
 
-    curUnStat = f"SELECT {units} FROM {table} " +  "WHERE id=%s"
-    db.execute(curUnStat, (province_id,))
-    currentUnits = db.fetchone()[0]
+        if slot_type is not None:
+            free_slots = get_free_slots(province_id, slot_type)
 
-    if units in city_units: slot_type = "city"
-    elif units in land_units: slot_type = "land"
-    else: # If unit is cityCount or land
-        free_slots = 0
-        slot_type = None
+        def resource_stuff(resources_data, way):
 
-    if slot_type is not None:
-        free_slots = get_free_slots(province_id, slot_type)
+            for resource, amount in resources_data:
 
-    def resource_stuff(resources_data, way):
+                if way == "buy":
 
-        for resource, amount in resources_data:
+                    current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    db.execute(current_resource_stat, (cId,))
+                    current_resource = int(db.fetchone()[0])
 
-            if way == "buy":
+                    new_resource = current_resource - (amount * wantedUnits)
 
-                current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
-                db.execute(current_resource_stat, (cId,))
-                current_resource = int(db.fetchone()[0])
+                    if new_resource < 0:
+                        return {
+                            "fail": True,
+                            "resource": resource,
+                            "current_amount": current_resource,
+                            "difference": current_resource - (amount * wantedUnits)
+                        }
 
-                new_resource = current_resource - (amount * wantedUnits)
+                    resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
+                    db.execute(resource_update_stat, (new_resource, cId,))
 
-                if new_resource < 0:
-                    return {
-                        "fail": True,
-                        "resource": resource,
-                        "current_amount": current_resource,
-                        "difference": current_resource - (amount * wantedUnits)
-                    }
+                elif way == "sell":
 
-                resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                db.execute(resource_update_stat, (new_resource, cId,))
+                    current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    db.execute(current_resource_stat, (cId,))
+                    current_resource = db.fetchone()[0]
 
-            elif way == "sell":
+                    new_resource = current_resource + (amount * wantedUnits)
 
-                current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
-                db.execute(current_resource_stat, (cId,))
-                current_resource = db.fetchone()[0]
+                    resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
+                    db.execute(resource_update_stat, (new_resource, cId,))
 
-                new_resource = current_resource + (amount * wantedUnits)
+        if way == "sell":
 
-                resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                db.execute(resource_update_stat, (new_resource, cId,))
+            if wantedUnits > currentUnits:  # Checks if user has enough units to sell
+                return error("You don't have enough units.", 400)
 
-    if way == "sell":
+            unitUpd = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
+            db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
 
-        if wantedUnits > currentUnits:  # Checks if user has enough units to sell
-            return error("You don't have enough units.", 400)
+            new_money = gold + (wantedUnits * price)
 
-        unitUpd = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
-        db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
+            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
 
-        new_money = gold + (wantedUnits * price)
+            resource_stuff(resources_data, way)
 
-        db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
+        elif way == "buy":
 
-        resource_stuff(resources_data, way)
+            if totalPrice > gold: # Checks if user wants to buy more units than he has gold
+                return error("You don't have enough money.", 400)
 
-    elif way == "buy":
+            print(totalPrice)
 
-        if totalPrice > gold: # Checks if user wants to buy more units than he has gold
-            return error("You don't have enough money.", 400)
+            if free_slots < wantedUnits and units not in ["cityCount", "land"]:
+                return error(400, f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem")
 
-        print(totalPrice)
+            res_error = resource_stuff(resources_data, way)
+            if res_error:
+                print(res_error)
+                return error(400, f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.")
 
-        if free_slots < wantedUnits and units not in ["cityCount", "land"]:
-            return error(400, f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem")
+            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId,))
 
-        res_error = resource_stuff(resources_data, way)
-        if res_error:
-            print(res_error)
-            return error(400, f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.")
+            updStat = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
+            db.execute(updStat, ((currentUnits + wantedUnits), province_id))
 
-        db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId,))
+        if way == "buy": rev_type = "expense"
+        elif way == "sell": rev_type = "revenue"
 
-        updStat = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
-        db.execute(updStat, ((currentUnits + wantedUnits), province_id))
+        name = f"{way.capitalize()}ing {wantedUnits} {units} in a province."
+        description = ""
 
-    if way == "buy": rev_type = "expense"
-    elif way == "sell": rev_type = "revenue"
-
-    name = f"{way.capitalize()}ing {wantedUnits} {units} in a province."
-    description = ""
-
-    db.execute("INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
-    (cId, rev_type, name, description, get_date(), units, wantedUnits,))
-
-    connection.commit()
-    connection.close()
+        db.execute("INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+        (cId, rev_type, name, description, get_date(), units, wantedUnits,))
 
     return redirect(f"/province/{province_id}")
