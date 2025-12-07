@@ -22,7 +22,8 @@ except:
     environment = "DEV"
 
 if environment == "PROD":
-    OAUTH2_REDIRECT_URI = 'https://www.affairsandorder.com/callback'
+    # Use Railway domain or custom domain
+    OAUTH2_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", 'https://web-production-55d7b.up.railway.app/callback')
 else:
     OAUTH2_REDIRECT_URI = 'http://127.0.0.1:5000/callback'
 
