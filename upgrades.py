@@ -1,49 +1,34 @@
-from flask import render_template, session, redirect
+from flask import Blueprint, render_template, session, redirect
 from helpers import login_required, error
-import psycopg2
+from database import get_db_cursor
 import os
 # Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
 from dotenv import load_dotenv
 load_dotenv()
-from psycopg2.extras import RealDictCursor
+
+bp = Blueprint("upgrades", __name__)
 
 def get_upgrades(cId): 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-        cursor_factory=RealDictCursor)
-    db = conn.cursor()
+    with get_db_cursor() as db:
+        db.execute("SELECT * FROM upgrades WHERE user_id=%s", (cId,))
+        upgrades = db.fetchone()
+        return upgrades
 
-    db.execute("SELECT * FROM upgrades WHERE user_id=%s", (cId,))
-    upgrades = db.fetchone()
-
-    return upgrades
-
-@app.route("/upgrades", methods=["GET"])
+@bp.route("/upgrades", methods=["GET"])
 @login_required
 def upgrades():
     cId = session["user_id"]
     upgrades = dict(get_upgrades(cId)) # upgrades['betterEngineering'] = 0
     return render_template("upgrades.html", upgrades=upgrades)
 
-@app.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
+@bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
 @login_required
 def upgrade_sell_buy(ttype, thing):
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-    db = conn.cursor()
-    cId = session["user_id"]
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    prices = {
+        prices = {
         'betterEngineering': {
             "money": 254000000,
             "resources": {
@@ -168,8 +153,5 @@ def upgrade_sell_buy(ttype, thing):
 
         upgrade_statement = f"UPDATE upgrades SET {thing}=0 " +  "WHERE user_id=%s"
         db.execute(upgrade_statement, (cId,))
-
-    conn.commit()
-    conn.close()
 
     return redirect("/upgrades")
