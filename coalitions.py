@@ -288,12 +288,12 @@ def establish_coalition():
 
             # Checks if a user is already in a coalition
             try:
-            db.execute("SELECT userId FROM coalitions WHERE userId=(%s)", (session["user_id"],))
-            db.fetchone()[0]
+                db.execute("SELECT userId FROM coalitions WHERE userId=(%s)", (session["user_id"],))
+                db.fetchone()[0]
 
-            return error(403, "You are already in a coalition")
-        except:
-            pass
+                return error(403, "You are already in a coalition")
+            except:
+                pass
 
         cType = request.form.get("type")
         name = request.form.get("name")
@@ -327,54 +327,54 @@ def coalitions():
         sort = request.values.get("sort")
         sortway = request.values.get("sortway")
 
-    db.execute("""SELECT colNames.id, colNames.type, colNames.name, COUNT(coalitions.userId) AS members, date
+        db.execute("""SELECT colNames.id, colNames.type, colNames.name, COUNT(coalitions.userId) AS members, date
 FROM colNames
 INNER JOIN coalitions
 ON colNames.id=coalitions.colId
 GROUP BY colNames.id;
 """)
-    coalitionsDb = db.fetchall()
+        coalitionsDb = db.fetchall()
 
-    coalitions = []
-    for col in coalitionsDb:
-        col = list(col)
-        addCoalition = True
-        col_id = col[0]
-        col_type = col[1]
-        name = col[2]
-        col_date = col[4]
+        coalitions = []
+        for col in coalitionsDb:
+            col = list(col)
+            addCoalition = True
+            col_id = col[0]
+            col_type = col[1]
+            name = col[2]
+            col_date = col[4]
 
-        influence = get_coalition_influence(col_id)
-        col.append(influence)
+            influence = get_coalition_influence(col_id)
+            col.append(influence)
 
-        date = datetime.datetime.fromisoformat(col_date)
-        unix = int((date - datetime.datetime(1970, 1, 1)).total_seconds())
-        col.append(unix)
+            date = datetime.datetime.fromisoformat(col_date)
+            unix = int((date - datetime.datetime(1970, 1, 1)).total_seconds())
+            col.append(unix)
 
-        if search and search not in name:
-            addCoalition = False
+            if search and search not in name:
+                addCoalition = False
 
-        if sort == "invite_only" and col_type == "Open":
-            addCoalition = False
-        if sort == "open" and col_type == "Invite Only":
-            addCoalition = False
+            if sort == "invite_only" and col_type == "Open":
+                addCoalition = False
+            if sort == "open" and col_type == "Invite Only":
+                addCoalition = False
 
-        if addCoalition:
-            coalitions.append(col)
+            if addCoalition:
+                coalitions.append(col)
 
-    reverse = False
-    if not sort or sort in ["open", "invite_only"]: # Default sort by influence for invite only and open
-        if not sortway: sortway = "desc"
-        sort = "influence"
-    if sortway == "desc": reverse = True
-    if sort == "influence":
-        coalitions = sorted(coalitions, key=itemgetter(4), reverse=reverse)
-    elif sort == "members":
-        coalitions = sorted(coalitions, key=itemgetter(3), reverse=reverse)
-    elif sort == "age":
-        coalitions = sorted(coalitions, key=itemgetter(5), reverse=not reverse)
+        reverse = False
+        if not sort or sort in ["open", "invite_only"]: # Default sort by influence for invite only and open
+            if not sortway: sortway = "desc"
+            sort = "influence"
+        if sortway == "desc": reverse = True
+        if sort == "influence":
+            coalitions = sorted(coalitions, key=itemgetter(4), reverse=reverse)
+        elif sort == "members":
+            coalitions = sorted(coalitions, key=itemgetter(3), reverse=reverse)
+        elif sort == "age":
+            coalitions = sorted(coalitions, key=itemgetter(5), reverse=not reverse)
 
-    return render_template("coalitions.html", coalitions=coalitions)
+        return render_template("coalitions.html", coalitions=coalitions)
 
 # Route for joining a coalition
 @app.route("/join/<colId>", methods=["POST"])
@@ -449,49 +449,49 @@ def give_position():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-    try:
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-        colId = db.fetchone()[0]
-    except:
-        return error(400, "You are not a part of any coalition")
+        try:
+            db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+            colId = db.fetchone()[0]
+        except:
+            return error(400, "You are not a part of any coalition")
 
-    user_role = get_user_role(cId)
+        user_role = get_user_role(cId)
 
-    if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
-        return error(400, "You're not a leader")
+        if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
+            return error(400, "You're not a leader")
 
-    # DO NOT EDIT LIST. USED FOR RANKS
-    roles = ["leader", "deputy_leader", "domestic_minister", "banker", "tax_collector", "foreign_ambassador", "general", "member"]
+        # DO NOT EDIT LIST. USED FOR RANKS
+        roles = ["leader", "deputy_leader", "domestic_minister", "banker", "tax_collector", "foreign_ambassador", "general", "member"]
 
-    role = request.form.get("role")
+        role = request.form.get("role")
 
-    if role not in roles:
-        return error(400, "No such role exists")
+        if role not in roles:
+            return error(400, "No such role exists")
 
-    username = request.form.get("username")
+        username = request.form.get("username")
 
-    # The user id for the person being given the role
-    try:
-        db.execute("SELECT users.id, coalitions.colid, coalitions.role FROM users INNER JOIN coalitions ON users.id=coalitions.userid WHERE users.username=%s", (username,))
-        roleer, roleer_col, current_roleer_role = db.fetchone()
+        # The user id for the person being given the role
+        try:
+            db.execute("SELECT users.id, coalitions.colid, coalitions.role FROM users INNER JOIN coalitions ON users.id=coalitions.userid WHERE users.username=%s", (username,))
+            roleer, roleer_col, current_roleer_role = db.fetchone()
 
-        if roleer_col != colId:
-            return error(400, "User isn't in your coalition.")
+            if roleer_col != colId:
+                return error(400, "User isn't in your coalition.")
 
-        if roleer == cId:
-            return error(400, "You can't change your own position.")
+            if roleer == cId:
+                return error(400, "You can't change your own position.")
 
-    except TypeError:
-        return error(400, "No such user found")
+        except TypeError:
+            return error(400, "No such user found")
 
-    # If the user role is lower up the hierarchy than the giving role
-    # Or if the current role of the person being given the role is higher up the hierarchy than the user giving the role
+        # If the user role is lower up the hierarchy than the giving role
+        # Or if the current role of the person being given the role is higher up the hierarchy than the user giving the role
         if roles.index(role) < roles.index(user_role) or roles.index(current_roleer_role) < roles.index(user_role): 
             return error(400, "Can't edit role for a person higher rank than you.")
 
         db.execute("UPDATE coalitions SET role=%s WHERE userId=%s", (role, roleer))
 
-    return redirect("/my_coalition")
+        return redirect("/my_coalition")
 
 # Route for accepting a coalition join request
 @app.route("/add/<uId>", methods=["POST"])
@@ -501,14 +501,13 @@ def adding(uId):
     with get_db_cursor() as db:
 
         try:
-        db.execute("SELECT colId FROM requests WHERE reqId=(%s)", (uId,))
-        colId = db.fetchone()[0]
-    except TypeError:
-        return error(400, "User hasn't posted a request to join")
+            db.execute("SELECT colId FROM requests WHERE reqId=(%s)", (uId,))
+            colId = db.fetchone()[0]
+        except TypeError:
+            return error(400, "User hasn't posted a request to join")
 
-    cId = session["user_id"]
-
-    user_role = get_user_role(cId)
+        cId = session["user_id"]
+        user_role = get_user_role(cId)
 
         if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
             return error(400, "You are not a leader of the coalition")
@@ -516,7 +515,7 @@ def adding(uId):
         db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
         db.execute("INSERT INTO coalitions (colId, userId) VALUES (%s, %s)", (colId, uId))
 
-    return redirect(f"/coalition/{colId}")
+        return redirect(f"/coalition/{colId}")
 
 
 # Route for removing a join request
@@ -528,22 +527,20 @@ def removing_requests(uId):
 
         try:
             db.execute("SELECT colId FROM requests WHERE reqId=%s", (uId,))
-        colId = db.fetchone()[0]
-    except TypeError:
-        return error(400, "User hasn't posted a request to join this coalition.")
+            colId = db.fetchone()[0]
+        except TypeError:
+            return error(400, "User hasn't posted a request to join this coalition.")
 
-    cId = session["user_id"]
+        cId = session["user_id"]
 
-    user_role = get_user_role(cId)
+        user_role = get_user_role(cId)
 
-    if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
-        return error(400, "You are not the leader of the coalition")
+        if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
+            return error(400, "You are not the leader of the coalition")
 
-    db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
+        db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
 
-    connection.commit()
-
-    return redirect(f"/coalition/{ colId }")
+        return redirect(f"/coalition/{colId}")
 
 # Route for deleting a coalition
 @app.route("/delete_coalition/<colId>", methods=["POST"])
