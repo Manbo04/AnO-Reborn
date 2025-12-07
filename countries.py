@@ -432,101 +432,90 @@ HAVING COUNT(provinces.id) >= %s;""", (cId, province_range,))
 @ app.route("/update_country_info", methods=["POST"])
 @ login_required
 def update_info():
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        # Description changing
+        description = request.form["description"]
 
-    db = connection.cursor()
-    cId = session["user_id"]
+        if description not in ["None", ""]:
+            db.execute("UPDATE users SET description=%s WHERE id=%s", (description, cId))
 
-    # Description changing
-    description = request.form["description"]
+        # Flag changing
+        ALLOWED_EXTENSIONS = ['png', 'jpg']
 
-    if description not in ["None", ""]:
-        db.execute("UPDATE users SET description=%s WHERE id=%s", (description, cId))
+        def allowed_file(filename):
+            return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    # Flag changing
-    ALLOWED_EXTENSIONS = ['png', 'jpg']
+        flag = request.files["flag_input"]
+        if flag:
 
-    def allowed_file(filename):
-        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+            if not allowed_file(flag.filename):
+                return error(400, "Bad flag file format")
 
-    flag = request.files["flag_input"]
-    if flag:
+            current_filename = flag.filename
 
-        if not allowed_file(flag.filename):
-            return error(400, "Bad flag file format")
+            try:
+                db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
+                current_flag = db.fetchone()[0]
 
-        current_filename = flag.filename
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_flag))
+            except:
+                pass
 
-        try:
-            db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
-            current_flag = db.fetchone()[0]
+            # Save the file & shit
+            if allowed_file(current_filename):
+                extension = current_filename.rsplit('.', 1)[1].lower()
+                filename = f"flag_{cId}" + '.' + extension
+                new_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                flag.save(new_path)
+                db.execute("UPDATE users SET flag=(%s) WHERE id=(%s)",
+                           (filename, cId))
 
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_flag))
-        except:
-            pass
+        """
+        bg_flag = request.files["bg_flag_input"]
+        if bg_flag and allowed_file(bg_flag.filename):
 
-        # Save the file & shit
-        if allowed_file(current_filename):
-            extension = current_filename.rsplit('.', 1)[1].lower()
-            filename = f"flag_{cId}" + '.' + extension
-            new_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            flag.save(new_path)
-            db.execute("UPDATE users SET flag=(%s) WHERE id=(%s)",
-                       (filename, cId))
+            print("bg flag")
 
-    """
-    bg_flag = request.files["bg_flag_input"]
-    if bg_flag and allowed_file(bg_flag.filename):
+            # Check if the user already has a flag
+            try:
+                db.execute("SELECT bg_flag FROM users WHERE id=(%s)", (cId,))
+                current_bg_flag = db.fetchone()[0]
 
-        print("bg flag")
+                os.remove(os.path.join(
+                    app.config['UPLOAD_FOLDER'], current_bg_flag))
+            except FileNotFoundError:
+                pass
 
-        # Check if the user already has a flag
-        try:
-            db.execute("SELECT bg_flag FROM users WHERE id=(%s)", (cId,))
-            current_bg_flag = db.fetchone()[0]
+            # Save the file & shit
+            current_filename = bg_flag.filename
+            if allowed_file(current_filename):
+                extension = current_filename.rsplit('.', 1)[1].lower()
+                filename = f"bg_flag_{cId}" + '.' + extension
+                flag.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                db.execute("UPDATE users SET bg_flag=(%s) WHERE id=(%s)",
+                           (filename, cId))
+        """
 
-            os.remove(os.path.join(
-                app.config['UPLOAD_FOLDER'], current_bg_flag))
-        except FileNotFoundError:
-            pass
+        # Location changing
+        new_location = request.form.get("countryLocation")
 
-        # Save the file & shit
-        current_filename = bg_flag.filename
-        if allowed_file(current_filename):
-            extension = current_filename.rsplit('.', 1)[1].lower()
-            filename = f"bg_flag_{cId}" + '.' + extension
-            flag.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            db.execute("UPDATE users SET bg_flag=(%s) WHERE id=(%s)",
-                       (filename, cId))
-    """
+        continents = ["Tundra", "Savanna", "Desert", "Jungle",
+                      "Boreal Forest", "Grassland", "Mountain Range"]
 
-    # Location changing
-    new_location = request.form.get("countryLocation")
+        if new_location not in continents and new_location not in ["", "none"]:
+            return error(400, "No such continent")
 
-    continents = ["Tundra", "Savanna", "Desert", "Jungle",
-                  "Boreal Forest", "Grassland", "Mountain Range"]
+        if new_location not in ["", "none"]:
 
-    if new_location not in continents and new_location not in ["", "none"]:
-        return error(400, "No such continent")
+            db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+            provinces = db.fetchall()
 
-    if new_location not in ["", "none"]:
-
-        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-        provinces = db.fetchall()
-
-        for province_id in provinces:
-            province_id = province_id[0]
-            db.execute("UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id=%s", (province_id,))
-        db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
-
-    connection.commit() 
-    connection.close() 
+            for province_id in provinces:
+                province_id = province_id[0]
+                db.execute("UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id=%s", (province_id,))
+            db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
 
     return redirect(f"/country/id={cId}")  # Redirects the user to his country
 
@@ -534,68 +523,57 @@ def update_info():
 @app.route("/delete_own_account", methods=["POST"])
 @login_required
 def delete_own_account():
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        # Deletes all the info from database created upon signup
+        db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
+        db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
+        db.execute("DELETE FROM military WHERE id=(%s)", (cId,))
+        db.execute("DELETE FROM resources WHERE id=(%s)", (cId,))
+        # Deletes all market things the user is associated with
+        db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
+        db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
 
-    db = connection.cursor()
-    cId = session["user_id"]
+        # Deletes all the users provinces and their infrastructure
+        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+        province_ids = db.fetchall()
+        for province_id in province_ids:
+            province_id = province_id[0]
+            db.execute("DELETE FROM provinces WHERE id=(%s)", (province_id,))
+            db.execute("DELETE FROM proInfra WHERE id=(%s)", (province_id,))
 
-    # Deletes all the info from database created upon signup
-    db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
-    db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
-    db.execute("DELETE FROM military WHERE id=(%s)", (cId,))
-    db.execute("DELETE FROM resources WHERE id=(%s)", (cId,))
-    # Deletes all market things the user is associated with
-    db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
-    db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
+        db.execute("DELETE FROM upgrades WHERE user_id=%s", (cId,))
+        db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
+        db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
+        db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
+        db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
+        db.execute("DELETE FROM peace WHERE author=%s", (cId,))
 
-    # Deletes all the users provinces and their infrastructure
-    db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-    province_ids = db.fetchall()
-    for province_id in province_ids:
-        province_id = province_id[0]
-        db.execute("DELETE FROM provinces WHERE id=(%s)", (province_id,))
-        db.execute("DELETE FROM proInfra WHERE id=(%s)", (province_id,))
-
-    db.execute("DELETE FROM upgrades WHERE user_id=%s", (cId,))
-    db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
-    db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
-    db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
-    db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
-    db.execute("DELETE FROM peace WHERE author=%s", (cId,))
-
-    try:
-        coalition_role = get_user_role(cId)
-    except:
-        coalition_role = None
-    if coalition_role != "leader":
-        pass
-    else:
-
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-        user_coalition = db.fetchone()[0]
-
-        db.execute("SELECT COUNT(userId) FROM coalitions WHERE role='leader' AND colId=%s", (user_coalition,))
-        leader_count = db.fetchone()[0]
-
-        if leader_count != 1:
+        try:
+            coalition_role = get_user_role(cId)
+        except:
+            coalition_role = None
+        if coalition_role != "leader":
             pass
         else:
-            db.execute("DELETE FROM coalitions WHERE colId=%s", (user_coalition,))
-            db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-            db.execute("DELETE FROM colBanks WHERE colid=%s", (user_coalition,))
-            db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
-    db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
-    db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
+            db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+            user_coalition = db.fetchone()[0]
 
-    connection.commit()
-    connection.close()
+            db.execute("SELECT COUNT(userId) FROM coalitions WHERE role='leader' AND colId=%s", (user_coalition,))
+            leader_count = db.fetchone()[0]
+
+            if leader_count != 1:
+                pass
+            else:
+                db.execute("DELETE FROM coalitions WHERE colId=%s", (user_coalition,))
+                db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
+                db.execute("DELETE FROM colBanks WHERE colid=%s", (user_coalition,))
+                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+
+        db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
     session.clear()
 
