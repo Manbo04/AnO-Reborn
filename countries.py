@@ -1,6 +1,5 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
-import psycopg2
 from helpers import get_influence, error
 from tasks import calc_pg, calc_ti, rations_needed
 from app import app
@@ -14,9 +13,9 @@ from operator import itemgetter
 from datetime import datetime
 from wars import target_data
 import math
-load_dotenv()
-
+from database import get_db_cursor
 from psycopg2.extras import RealDictCursor
+load_dotenv()
 
 app.config['UPLOAD_FOLDER'] = 'static/flags'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 Mb limit
@@ -140,117 +139,68 @@ def get_revenue(cId):
     from psycopg2.extras import RealDictCursor
     
     with get_db_cursor() as db:
-        dbdict_cursor = db.connection.cursor(cursor_factory=RealDictCursor)
+        dbd = db.connection.cursor(cursor_factory=RealDictCursor)
         
         cg_needed = cg_need(cId)
 
         db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
         provinces = db.fetchall()
 
-    revenue = {
-        "gross": {},
-        "net": {}
-    }
+        revenue = {
+            "gross": {},
+            "net": {}
+        }
 
-    """
-    infra = variables.NEW_INFRA
-    resources = variables.RESOURCES
-    resources.append("money")
-    for resource in resources:
-        revenue["gross"][resource] = 0
-        revenue["net"][resource] = 0
+        infra = variables.NEW_INFRA
+        resources = variables.RESOURCES
+        resources.extend(["money", "energy"])
+        for resource in resources:
+            revenue["gross"][resource] = 0
+            revenue["net"][resource] = 0
+        for province in provinces:
+            province = province[0]
 
-    for province_id in provinces_list:
-        province_id = province_id[0]
+            dbd.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
+            buildings = dict(dbd.fetchone())
 
-        buildings = variables.BUILDINGS
-        
+            for building, build_count in buildings.items():
+                if building == "id": continue
 
-        for building in buildings:
-            building_query = f"SELECT {building}" + " FROM proInfra WHERE id=%s"
-            db.execute(building_query, (province_id,))
-            building_count = db.fetchone()[0]
+                operating_costs = infra[building]["money"] * build_count
+                revenue["net"]["money"] -= operating_costs
 
-            # Gross and initial net calculations
-            plus = infra[building]["plus"]
-            presource = list(plus.keys())[0]
-            pamount = plus[resource]
+                plus = infra[building].get("plus", {})
+                for resource, amount in plus.items():
+                    if building == "farms":
+                        db.execute("SELECT land FROM provinces WHERE id=%s", (province,))
+                        land = db.fetchone()[0]
+                        amount += (land * variables.LAND_FARM_PRODUCTION_ADDITION)
 
-            if building == "farms":
-                db.execute("SELECT land FROM provinces WHERE id=%s", (province_id,))
-                land = db.fetchone()[0]
-                pamount *= land
+                    total = build_count * amount
+                    revenue["gross"][resource] += total
+                    revenue["net"][resource] += total
 
-            total = building_count * pamount
-            revenue["gross"][presource] += total
-            revenue["net"][presource] += total
-
-            operating_costs = infra[building]["money"] * building_count
-            revenue["net"]["money"] -= operating_costs
-
-            # Net removal from initial net
-            minus = infra[building]["minus"]
-            mresource = list(minus.keys())[0]
-            mamount = minus[mresource]
-
-            total = building_count * mamount
-            revenue["net"][presource] -= total
-    """
-    infra = variables.NEW_INFRA
-    resources = variables.RESOURCES
-    resources.extend(["money", "energy"])
-    for resource in resources:
-        revenue["gross"][resource] = 0
-        revenue["net"][resource] = 0
-    for province in provinces:
-        province = province[0]
-
-        dbd.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
-        buildings = dict(dbd.fetchone())
-
-        for building, build_count in buildings.items():
-            if building == "id": continue
-
-            operating_costs = infra[building]["money"] * build_count
-            revenue["net"]["money"] -= operating_costs
-
-            try:
-                plus = infra[building]["plus"]
-            except KeyError:
-                plus = {}
-            for resource, amount in plus.items():
-                if building == "farms":
-                    db.execute("SELECT land FROM provinces WHERE id=%s", (province,))
-                    land = db.fetchone()[0]
-                    amount += (land * variables.LAND_FARM_PRODUCTION_ADDITION)
-
-                total = build_count * amount
-                revenue["gross"][resource] += total
-                revenue["net"][resource] += total
-            try:
-                minus = infra[building]["minus"]
-            except KeyError:
-                minus = {}
-            for resource, amount in minus.items():
-                total = build_count * amount
-                revenue["net"][resource] -= total
+                minus = infra[building].get("minus", {})
+                for resource, amount in minus.items():
+                    total = build_count * amount
+                    revenue["net"][resource] -= total
                 
-    db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-    current_rations = db.fetchone()[0]
+        db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
+        current_rations = db.fetchone()[0]
 
-    ti_money, ti_cg = calc_ti(cId)
+        ti_money, ti_cg = calc_ti(cId)
 
-    # Updates money
-    revenue["gross"]["money"] += ti_money
-    revenue["net"]["money"] += ti_money
+        # Updates money
+        revenue["gross"]["money"] += ti_money
+        revenue["net"]["money"] += ti_money
 
-    revenue["net"]["consumer_goods"] += ti_cg
+        revenue["net"]["consumer_goods"] += ti_cg
 
-    prod_rations = revenue["gross"]["rations"]
-    new_rations = next_turn_rations(cId, prod_rations)
-    revenue["net"]["rations"] = new_rations - current_rations
+        prod_rations = revenue["gross"]["rations"]
+        new_rations = next_turn_rations(cId, prod_rations)
+        revenue["net"]["rations"] = new_rations - current_rations
 
-    return revenue
+        return revenue
 
 
 def next_turn_rations(cId, prod_rations):
@@ -332,47 +282,39 @@ def my_country():
 @login_required
 def country(cId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        try:
+            db.execute("SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s", (cId,))
+            username, location, description, dateCreated, flag = db.fetchall()[0]
+        except:
+            return error(404, "Country doesn't exit")
 
-    db = connection.cursor()
+        policies = get_user_policies(cId)
+        influence = get_influence(cId)
 
-    try:
-        db.execute("SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s", (cId,))
-        username, location, description, dateCreated, flag = db.fetchall()[0]
-    except:
-        return error(404, "Country doesn't exit")
+        db.execute("SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s", (cId,))
+        population, happiness, productivity, provinceCount = db.fetchall()[0]
 
-    policies = get_user_policies(cId)
-    influence = get_influence(cId)
+        db.execute("SELECT provinceName, id, population, cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC", (cId,))
+        provinces = db.fetchall()
 
-    db.execute("SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s", (cId,))
-    population, happiness, productivity, provinceCount = db.fetchall()[0]
+        cg_needed = cg_need(cId)
 
-    db.execute("SELECT provinceName, id, population, cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC", (cId,))
-    provinces = db.fetchall()
+        try:
+            status = cId == str(session["user_id"])
+        except:
+            status = False
 
-    cg_needed = cg_need(cId)
+        try:
+            db.execute("SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s", (cId,))
+            colId, colRole, colName, colFlag = db.fetchall()[0]
+        except:
+            colId = 0; colRole = None; colName = ""; colFlag = None
 
-    try:
-        status = cId == str(session["user_id"])
-    except:
-        status = False
-
-    try:
-        db.execute("SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s", (cId,))
-        colId, colRole, colName, colFlag = db.fetchall()[0]
-    except:
-        colId = 0; colRole = None; colName = ""; colFlag = None
-
-    spy = {}
-    uId = session["user_id"]
-    db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
-    spy["count"] = db.fetchone()[0]
+        spy = {}
+        uId = session["user_id"]
+        db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
+        spy["count"] = db.fetchone()[0]
 
     # News page
     idd = int(cId)
@@ -386,21 +328,20 @@ def country(cId):
         news_amount = len(news)
 
     # Revenue stuff
-    if status:
-        revenue = get_revenue(cId)
-        db.execute("SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s", (cId,))
-        expenses = db.fetchall()
+        if status:
+            revenue = get_revenue(cId)
+            db.execute("SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s", (cId,))
+            expenses = db.fetchall()
 
-        statistics = get_econ_statistics(cId)
-        statistics = format_econ_statistics(statistics)
-    else:
-        revenue = {}
-        expenses = []
-        statistics = {}
+            statistics = get_econ_statistics(cId)
+            statistics = format_econ_statistics(statistics)
+        else:
+            revenue = {}
+            expenses = []
+            statistics = {}
 
-    rations_need = rations_needed(cId)
+        rations_need = rations_needed(cId)
 
-    connection.close()
     return render_template("country.html", username=username, cId=cId, description=description,
                            happiness=happiness, population=population, location=location, status=status,
                            provinceCount=provinceCount, colName=colName, dateCreated=dateCreated, influence=influence,
@@ -413,34 +354,26 @@ def country(cId):
 @login_required
 def countries():
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    db = connection.cursor()
+        search = request.values.get("search")
+        lowerinf = request.values.get("lowerinf")
+        upperinf = request.values.get("upperinf")
+        province_range = request.values.get("province_range")
+        sort = request.values.get("sort")
+        sortway = request.values.get("sortway")
 
-    cId = session["user_id"]
+        if sort == "war_range":
+            target = target_data(cId)
+            lowerinf = target["lower"]
+            upperinf = target["upper"]
+            province_range = target["province_range"]
 
-    search = request.values.get("search")
-    lowerinf = request.values.get("lowerinf")
-    upperinf = request.values.get("upperinf")
-    province_range = request.values.get("province_range")
-    sort = request.values.get("sort")
-    sortway = request.values.get("sortway")
+        if not province_range:
+            province_range = 0
 
-    if sort == "war_range":
-        target = target_data(cId)
-        lowerinf = target["lower"]
-        upperinf = target["upper"]
-        province_range = target["province_range"]
-
-    if not province_range:
-        province_range = 0
-
-    db.execute("""SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
+        db.execute("""SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
 coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
 FROM USERS
 LEFT JOIN provinces ON users.id = provinces.userId
@@ -449,9 +382,7 @@ LEFT JOIN colNames ON colNames.id = coalitions.colId
 WHERE users.id != %s
 GROUP BY users.id, coalitions.colId, colNames.name
 HAVING COUNT(provinces.id) >= %s;""", (cId, province_range,))
-    dbResults = db.fetchall()
-
-    connection.close()
+        dbResults = db.fetchall()
 
     # Hack to add influence into the query, filter influence, province range, etc.
     results = []
