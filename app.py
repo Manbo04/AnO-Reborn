@@ -191,24 +191,16 @@ def milres(unit):
 
 
 def get_resources():
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-        cursor_factory=RealDictCursor)
-    db = conn.cursor()
-    cId = session["user_id"]
+    with get_db_cursor(dict_cursor=True) as db:
+        cId = session["user_id"]
 
-    try:
-        db.execute(
-            "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s", (cId,))
-        resources = dict(db.fetchone())
-        conn.close()
-        return resources
-    except TypeError:
-        return {}
+        try:
+            db.execute(
+                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s", (cId,))
+            resources = dict(db.fetchone())
+            return resources
+        except TypeError:
+            return {}
 
 
 @app.context_processor
@@ -229,20 +221,12 @@ def robots():
 @app.route("/account", methods=["GET"])
 @login_required
 def account():
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-        cursor_factory=RealDictCursor)
-    db = conn.cursor()
+    with get_db_cursor(dict_cursor=True) as db:
 
-    cId = session["user_id"]
+        cId = session["user_id"]
 
-    db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
-    user = dict(db.fetchone())
-    conn.close()
+        db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
+        user = dict(db.fetchone())
 
     return render_template("account.html", user=user)
 
@@ -318,6 +302,62 @@ def warresult():
 @app.route("/mass_purchase", methods=["GET"])
 def mass_purchase():
     return render_template("mass_purchase.html")
+
+
+@app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
+def admin_init_database():
+    """
+    TEMPORARY ROUTE: Initialize database tables.
+    Visit this URL once, then remove this route.
+    """
+    import psycopg2
+    
+    try:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return "ERROR: DATABASE_URL not set", 500
+        
+        connection = psycopg2.connect(database_url)
+        db = connection.cursor()
+
+        tables = [
+            "coalitions", "colBanks", "colBanksRequests", "colNames",
+            "keys", "military", "offers", "proInfra", "provinces", "upgrades",
+            "requests", "resources", "spyinfo", "stats", "trades",
+            "treaties", "users", "peace", "wars", "reparation_tax", "news",
+            "revenue", "reset_codes", "policies"
+        ]
+
+        results = []
+        for table_name in tables:
+            table_file = f"affo/postgres/{table_name}.txt"
+            try:
+                with open(table_file, 'r') as file:
+                    sql = file.read()
+                    db.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+                    db.execute(sql)
+                    connection.commit()
+                    results.append(f"✓ Created table: {table_name}")
+            except FileNotFoundError:
+                results.append(f"✗ File not found: {table_file}")
+            except Exception as e:
+                results.append(f"✗ Failed {table_name}: {str(e)}")
+                connection.rollback()
+
+        # Insert keys
+        try:
+            db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
+            connection.commit()
+            results.append("✓ Inserted registration keys: a, b, c")
+        except Exception as e:
+            results.append(f"✗ Failed to insert keys: {str(e)}")
+
+        connection.close()
+        
+        return "<pre>" + "\n".join(results) + "\n\nDATABASE INITIALIZED! Now remove this route from app.py</pre>"
+        
+    except Exception as e:
+        return f"<pre>ERROR: {str(e)}</pre>", 500
 
 
 if __name__ == "__main__":
