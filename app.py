@@ -118,6 +118,7 @@ def invalid_server_error(error):
     error_message = "Invalid Server Error. Sorry about that."
     error_code = generate_error_code()
     print(f"[ERROR! ^^^] [{error_code}] [{error}")
+        traceback.print_exc()
     return render_template("error.html", code=500, message=error_message, error_code=error_code)
 
 # Jinja2 filter to add commas to numbers
@@ -307,63 +308,7 @@ def mass_purchase():
 
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
 def admin_init_database():
-    """TEMP route to init DB. Always returns plain text."""
-    import psycopg2
-    from flask import Response
-
-    results = []
-    status = 200
-    try:
-        database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            results.append("ERROR: DATABASE_URL not set")
-            status = 500
-            return Response("\n".join(results), status=status, mimetype="text/plain")
-
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        schema_dir = os.path.join(base_dir, "affo", "postgres")
-
-        connection = psycopg2.connect(database_url)
-        db = connection.cursor()
-
-        tables = [
-            "coalitions", "colBanks", "colBanksRequests", "colNames",
-            "keys", "military", "offers", "proInfra", "provinces", "upgrades",
-            "requests", "resources", "spyinfo", "stats", "trades",
-            "treaties", "users", "peace", "wars", "reparation_tax", "news",
-            "revenue", "reset_codes", "policies"
-        ]
-
-        for table_name in tables:
-            table_file = os.path.join(schema_dir, f"{table_name}.txt")
-            try:
-                with open(table_file, "r") as file:
-                    sql = file.read()
-                    db.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
-                    db.execute(sql)
-                    connection.commit()
-                    results.append(f"✓ Created table: {table_name}")
-            except FileNotFoundError:
-                results.append(f"✗ File not found: {table_file}")
-            except Exception as e:
-                results.append(f"✗ Failed {table_name}: {str(e)}")
-                connection.rollback()
-
-        try:
-            db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
-            connection.commit()
-            results.append("✓ Inserted registration keys: a, b, c")
-        except Exception as e:
-            results.append(f"✗ Failed to insert keys: {str(e)}")
-
-        connection.close()
-
-    except Exception as e:
-        status = 500
-        results.append(f"✗ Route error: {str(e)}")
-
-    body = "\n".join(results) + "\n\nDATABASE INITIALIZATION ATTEMPTED. If any ✗ remain, rerun after fixing."
-    return Response(body, status=status, mimetype="text/plain")
+    return "Database already initialized. Remove this route from app.py", 200
 
 
 if __name__ == "__main__":
