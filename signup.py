@@ -11,6 +11,7 @@ from requests_oauthlib import OAuth2Session
 import os
 from dotenv import load_dotenv
 import requests
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 load_dotenv()
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
