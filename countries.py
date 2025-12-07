@@ -139,7 +139,6 @@ def get_revenue(cId):
     from psycopg2.extras import RealDictCursor
     
     with get_db_cursor() as db:
-        dbd = db.connection.cursor(cursor_factory=RealDictCursor)
         
         cg_needed = cg_need(cId)
 
@@ -160,8 +159,16 @@ def get_revenue(cId):
         for province in provinces:
             province = province[0]
 
-            dbd.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
-            buildings = dict(dbd.fetchone())
+            db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
+            buildings = db.fetchone()
+            # Convert tuple to dict by matching column names
+            proinfra_columns = ["id", "pumpjacks", "coal_mines", "bauxite_mines", "copper_mines", "uranium_mines", 
+                               "lead_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
+                               "nuclear_reactors", "solar_fields", "gas_stations", "general_stores", "farmers_markets",
+                               "malls", "banks", "city_parks", "hospitals", "libraries", "universities", "monorails",
+                               "army_bases", "harbours", "aerodomes", "admin_buildings", "silos", "farms", 
+                               "component_factories", "steel_mills", "ammunition_factories", "aluminium_refineries", "oil_refineries"]
+            buildings = dict(zip(proinfra_columns, buildings))
 
             for building, build_count in buildings.items():
                 if building == "id": continue
@@ -204,71 +211,46 @@ def get_revenue(cId):
 
 
 def next_turn_rations(cId, prod_rations):
+    with get_db_cursor() as db:
+        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+        provinces = db.fetchall()
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
+        current_rations = db.fetchone()[0] + prod_rations
 
-    db = conn.cursor()
+        for pId in provinces:
+            rations, _ = calc_pg(pId, current_rations)
+            current_rations = rations
 
-    db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-    provinces = db.fetchall()
-
-    db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-    current_rations = db.fetchone()[0] + prod_rations
-
-    for pId in provinces:
-        rations, _ = calc_pg(pId, current_rations)
-        current_rations = rations
-
-    return current_rations
+        return current_rations
 
 
 @app.route("/delete_news/<int:id>", methods=["POST"])
 @login_required
 def delete_news(id):
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-    db = conn.cursor()
-    db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
-    destination_id = db.fetchone()[0]
-    if destination_id == session["user_id"]:
-        db.execute("DELETE FROM news WHERE id=(%s)", (id,))
-        conn.commit()
-        return "200"
-    else:
-        return "403"
+    with get_db_cursor() as db:
+        db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
+        destination_id = db.fetchone()[0]
+        if destination_id == session["user_id"]:
+            db.execute("DELETE FROM news WHERE id=(%s)", (id,))
+            return "200"
+        else:
+            return "403"
 
 # The amount of consumer goods a player needs to fill up fully
 
 
 def cg_need(user_id):
+    with get_db_cursor() as db:
+        db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (user_id,))
+        population = db.fetchone()[0]
+        if population is None:
+            population = 0
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        # How many consumer goods are needed to feed a nation
+        cg_needed = math.ceil(population / variables.CONSUMER_GOODS_PER)
 
-    db = conn.cursor()
-
-    db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (user_id,))
-    population = db.fetchone()[0]
-    if population is None:
-        population = 0
-
-    # How many consumer goods are needed to feed a nation
-    cg_needed = math.ceil(population / variables.CONSUMER_GOODS_PER)
-
-    return cg_needed
+        return cg_needed
 
 
 @app.route("/my_country")
