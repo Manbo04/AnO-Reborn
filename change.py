@@ -1,6 +1,5 @@
 from flask import request, render_template, session, redirect, flash
 from helpers import login_required, error
-import psycopg2
 from app import app
 import os
 from dotenv import load_dotenv
@@ -8,6 +7,7 @@ import bcrypt
 from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
+from database import get_db_cursor
 load_dotenv()
 
 import os
@@ -47,43 +47,37 @@ def sendEmail(recipient, code):
         print(response.body)
         print(response.headers)
     except Exception as e:
-        print(e.message)
+        print(str(e))
 
 # Route for requesting the reset of a password, after which the user can reset his password.
 @app.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
-
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
-    try:
-        cId = session["user_id"]
-    except KeyError:
-        cId = False
-
     code = generateResetCode()
-    if cId: # User is logged in
-        db.execute("SELECT email FROM users WHERE id=%s", (cId,))
-        email = db.fetchone()[0]
-    else:
-        email = request.form.get("email")
-        try:
-            db.execute("SELECT id FROM users WHERE email=%s", (email,))
-            cId = db.fetchone()[0]
-        except:
-            return error(400, "No account with the provided email exists.")
-        
-    db.execute("INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)", (code, cId, int(datetime.now().timestamp())))
-    sendEmail(email, code)
 
-    connection.commit()
-    connection.close()
+    with get_db_cursor() as db:
+        try:
+            cId = session["user_id"]
+        except KeyError:
+            cId = None
+
+        if cId:  # User is logged in
+            db.execute("SELECT email FROM users WHERE id=%s", (cId,))
+            email = db.fetchone()[0]
+        else:
+            email = request.form.get("email")
+            try:
+                db.execute("SELECT id FROM users WHERE email=%s", (email,))
+                cId = db.fetchone()[0]
+            except Exception:
+                return error(400, "No account with the provided email exists.")
+
+            db.execute(
+                "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
+                (code, cId, int(datetime.now().timestamp())),
+            )
+
+    if not cId:
+        sendEmail(email, code)
 
     return redirect("/")
 
@@ -94,30 +88,19 @@ def reset_password(code):
     if request.method == "GET":
         return render_template("reset_password.html", code=code)
     else:
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_cursor() as db:
 
-        db = connection.cursor()
+            new_password = request.form.get("password").encode("utf-8")
+            print(f"Received URL code: {code}")
+            try:
+                db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
+                user_id = db.fetchone()[0]
+            except Exception:
+                return error(400, "No such code exists.")
 
-        new_password = request.form.get("password").encode("utf-8")
-        print(f"Received URL code: {code}")
-        try:
-            db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
-            user_id = db.fetchone()[0]
-        except:
-            return error(400, "No such code exists.")
-
-        hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
-        db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
-
-        db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
-
-        connection.commit()
-        connection.close()
+            hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
+            db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
+            db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
 
         return redirect("/")
 
@@ -125,35 +108,25 @@ def reset_password(code):
 @login_required
 def change():
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-    db = connection.cursor()
-    cId = session["user_id"]
+        password = request.form.get("current_password").encode("utf-8")
+        email = request.form.get("email")
+        name = request.form.get("name")
 
-    password = request.form.get("current_password").encode("utf-8")
-    email = request.form.get("email")
-    name = request.form.get("name")
+        if not password:
+            return error(400, "No password provided")
 
-    if not password:
-        return error(400, "No password provided")
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        hash_value = db.fetchone()[0].encode("utf-8")
 
-    db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
-    hash = db.fetchone()[0].encode("utf-8")
-
-    if bcrypt.checkpw(password, hash):
-        if email:
-            db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
-        if name:
-            db.execute("UPDATE users SET username=%s WHERE id=%s", (name, cId))
-    else:
-        return error(401, "Incorrect password")
-
-    connection.commit()
-    connection.close()
+        if bcrypt.checkpw(password, hash_value):
+            if email:
+                db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
+            if name:
+                db.execute("UPDATE users SET username=%s WHERE id=%s", (name, cId))
+        else:
+            return error(401, "Incorrect password")
 
     return redirect("/account")

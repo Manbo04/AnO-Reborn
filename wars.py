@@ -11,7 +11,6 @@ from helpers import get_influence, check_required
 from dotenv import load_dotenv
 load_dotenv()
 import os
-from market import give_resource
 
 """
 war page: choose a war
@@ -309,6 +308,7 @@ def peace_offers():
 
                     print(f"Transfer: {resources[count], int(amounts[count]), author_id, cId}")
 
+                    from market import give_resource  # delayed import to avoid circular dependency
                     successful = give_resource(cId, author_id, resources[count], int(amounts[count]))
                     if successful != True:
                         return error(400, successful)
