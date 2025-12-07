@@ -1,0 +1,12 @@
+2025-12-05 23:12:17.331 CET [34424] LOG:  starting PostgreSQL 14.20 (Homebrew) on aarch64-apple-darwin25.1.0, compiled by Apple clang version 17.0.0 (clang-1700.4.4.1), 64-bit
+2025-12-05 23:12:17.332 CET [34424] LOG:  listening on IPv6 address "::1", port 5433
+2025-12-05 23:12:17.332 CET [34424] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2025-12-05 23:12:17.333 CET [34424] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5433"
+2025-12-05 23:12:17.335 CET [34425] LOG:  database system was shut down at 2025-12-05 23:12:12 CET
+2025-12-05 23:12:17.338 CET [34424] LOG:  database system is ready to accept connections
+2025-12-05 23:12:20.652 CET [34546] FATAL:  database "ano" does not exist
+2025-12-05 23:22:10.969 CET [39878] FATAL:  role "dede" does not exist
+2025-12-05 23:34:11.642 CET [42010] LOG:  unexpected EOF on client connection with an open transaction
+2025-12-05 23:34:11.642 CET [42016] LOG:  unexpected EOF on client connection with an open transaction
+2025-12-05 23:36:38.395 CET [42484] LOG:  unexpected EOF on client connection with an open transaction
+2025-12-05 23:36:38.395 CET [42491] LOG:  unexpected EOF on client connection with an open transaction
