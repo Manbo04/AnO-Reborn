@@ -1,28 +1,37 @@
+import ast
+if not hasattr(ast, "Str"):
+    ast.Str = ast.Constant
+if not hasattr(ast, "Num"):
+    ast.Num = ast.Constant
+if not hasattr(ast, "NameConstant"):
+    ast.NameConstant = ast.Constant
+if not hasattr(ast, "Ellipsis"):
+    ast.Ellipsis = ast.Constant
+
 from flask import Flask, request, render_template, session, redirect, send_from_directory
 app = Flask(__name__)
 
-from upgrades import upgrades
-from intelligence import intelligence
-from tasks import tax_income, population_growth, generate_province_revenue, war_reparation_tax
-from market import market, buy_market_offer, marketoffer, my_offers
-from province import createprovince, province, provinces, province_sell_buy
-from military import military, military_sell_buy
-from change import request_password_reset
-from coalitions import leave_col, join_col, coalitions, coalition, establish_coalition, my_coalition, removing_requests, adding
-from countries import country, countries, update_info
-from signup import signup
-from login import login
-from wars import wars, find_targets
-from policies import policies
+import upgrades
+import intelligence
+import tasks
+import market
+import province
+import military
+import change
+import coalitions
+import countries
+import signup
+import login
+import wars
+import policies
 import requests
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
+from datetime import datetime as dt
 import string
 import random
-import datetime
 import os
 from helpers import login_required
 import psycopg2
@@ -39,9 +48,11 @@ logger = logging.getLogger(__name__)
 
 class RequestsHandler(logging.Handler):
     def send_discord_webhook(self, record):
+        url = os.getenv("DISCORD_WEBHOOK_URL")
+        if not url:
+            return  # Skip if webhook not configured
         formatter = logging.Formatter(logging_format)
         message = formatter.format(record)
-        url = os.getenv("DISCORD_WEBHOOK_URL")
         data = {
             "content": message,
             "username": "A&O ERROR"
@@ -57,6 +68,10 @@ class RequestsHandler(logging.Handler):
 
 
 Markdown(app)
+
+# register blueprints
+app.register_blueprint(upgrades.bp)
+app.register_blueprint(intelligence.bp)
 
 import config  # Parse Railway environment variables
 
@@ -81,7 +96,7 @@ def generate_error_code():
     numbers = 20
     code = ''.join(random.choice(string.ascii_lowercase + string.digits)
                    for _ in range(numbers))
-    time = int(datetime.now().timestamp())
+    time = int(dt.now().timestamp())
     full = f"{code}-{time}"
     return full
 
@@ -244,6 +259,13 @@ def businesses():
     return render_template("businesses.html")
 
 
+# Redirect bare /country to the user's own country page
+@app.route("/country", methods=["GET"])
+@login_required
+def country_redirect():
+    return redirect("/my_country")
+
+
 """
 @login_required
 @app.route("/assembly", methods=["GET"])
@@ -299,4 +321,5 @@ def mass_purchase():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', use_reloader=False)
+    port = int(os.getenv("PORT", 5001))
+    app.run(host='0.0.0.0', port=port, use_reloader=False)

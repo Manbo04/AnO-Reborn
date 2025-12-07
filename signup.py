@@ -206,16 +206,7 @@ def verify_captcha(response):
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
-
-        # Creates a cursor to the database
-        db = connection.cursor()
+        from database import get_db_cursor
 
         # Gets user's form inputs
         username = request.form.get("username")
@@ -230,47 +221,47 @@ def signup():
         continent = continents[continent_number]
 
         key = request.form.get("key")
-        try:
-            db.execute("SELECT key FROM keys WHERE key=%s", (key,))
-            db.fetchone()[0]
-        except:
-            return error(400, "Key not found")
 
-        try:
-            db.execute("SELECT username FROM users WHERE username=%s", (username,))
-            db.fetchone()[0]
-            return error(400, "Duplicate name, choose another one")
-        except:
-            pass
-        
-        # Checks if password is equal to the confirmation password
-        if password != confirmation:  
-            return error(400, "Passwords must match.")
+        with get_db_cursor() as db:
+            try:
+                db.execute("SELECT key FROM keys WHERE key=%s", (key,))
+                db.fetchone()[0]
+            except:
+                return error(400, "Key not found")
 
-        # Hashes the inputted password
-        hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
+            try:
+                db.execute("SELECT username FROM users WHERE username=%s", (username,))
+                db.fetchone()[0]
+                return error(400, "Duplicate name, choose another one")
+            except:
+                pass
+            
+            # Checks if password is equal to the confirmation password
+            if password != confirmation:  
+                return error(400, "Passwords must match.")
 
-        # Inserts the user and his data to the main table for users
-        db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", (username, email, hashed, str(datetime.date.today()), "normal"))  # creates a new user || added account creation date
+            # Hashes the inputted password
+            hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
 
-        # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
-        db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
-        user_id = db.fetchone()[0]
+            # Inserts the user and his data to the main table for users
+            db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", (username, email, hashed, str(datetime.date.today()), "normal"))  # creates a new user || added account creation date
 
-        # Stores the user's 
-        session["user_id"] = user_id
+            # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
+            db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
+            user_id = db.fetchone()[0]
 
-        # Inserts the user's id into the needed database tables
-        db.execute("INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent))
-        db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+            # Stores the user's 
+            session["user_id"] = user_id
 
-        db.execute("DELETE FROM keys WHERE key=(%s)", (key,)) # Deletes the key used for signup
+            # Inserts the user's id into the needed database tables
+            db.execute("INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent))
+            db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
+            db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
+            db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
+            db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
-        connection.commit()
-        connection.close()
+            db.execute("DELETE FROM keys WHERE key=(%s)", (key,)) # Deletes the key used for signup
+
         return redirect("/")
     elif request.method == "GET":
         return render_template("signup.html", way="normal")
