@@ -2,7 +2,7 @@
 import random
 from app import app
 from flask import request, render_template, session, redirect
-import psycopg2
+from database import get_db_cursor
 from helpers import login_required, error, get_flagname
 from attack_scripts import Nation, Military, Economy
 from units import Units
@@ -42,72 +42,56 @@ def update_supply(war_id):
 
     MAX_SUPPLY = 2000
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
 
-    db = connection.cursor()
+        db.execute("SELECT attacker_supplies,defender_supplies,last_visited FROM wars WHERE id=%s", (war_id,))
+        attacker_supplies, defender_supplies, supply_date = db.fetchall()[0]
 
-    db.execute("SELECT attacker_supplies,defender_supplies,last_visited FROM wars WHERE id=%s", (war_id,))
-    attacker_supplies, defender_supplies, supply_date = db.fetchall()[0]
+        current_time = time.time()
 
-    current_time = time.time()
+        if current_time < int(supply_date):
+            return "TIME STAMP IS CORRUPTED"
 
-    if current_time < int(supply_date):
-        return "TIME STAMP IS CORRUPTED"
+        time_difference = current_time - supply_date
+        hours_count = time_difference//3600
+        supply_by_hours = hours_count*50 # 50 supply in every hour
 
-    time_difference = current_time - supply_date
-    hours_count = time_difference//3600
-    supply_by_hours = hours_count*50 # 50 supply in every hour
+        # TODO: give bonus supplies if there is specific infrastructure for it
+        # if supply_bonus: xy
+        if supply_by_hours > 0:
 
-    # TODO: give bonus supplies if there is specific infrastructure for it
-    # if supply_bonus: xy
-    if supply_by_hours > 0:
+            db.execute("SELECT attacker,defender FROM wars where id=(%s)", (war_id,))
+            attacker_id, defender_id = db.fetchone()
 
-        db.execute("SELECT attacker,defender FROM wars where id=(%s)", (war_id,))
-        attacker_id, defender_id = db.fetchone()
+            # TODO: this isn't tested yet until the END TODO, so test it
+            attacker_upgrades = Nation.get_upgrades("supplies", attacker_id)
+            defender_upgrades = Nation.get_upgrades("supplies", defender_id)
 
-        # TODO: this isn't tested yet until the END TODO, so test it
-        attacker_upgrades = Nation.get_upgrades("supplies", attacker_id)
-        defender_upgrades = Nation.get_upgrades("supplies", defender_id)
+            for i in attacker_upgrades.values():
+                attacker_supplies += i
 
-        for i in attacker_upgrades.values():
-            attacker_supplies += i
+            for i in defender_upgrades.values():
+                defender_supplies += i
+            # END TODO
 
-        for i in defender_upgrades.values():
-            defender_supplies += i
-        # END TODO
+            # Limit supplies amount to MAX_SUPPLY
+            if (supply_by_hours+attacker_supplies) > MAX_SUPPLY:
+                db.execute("UPDATE wars SET attacker_supplies=(%s) WHERE id=(%s)", (MAX_SUPPLY, war_id))
+            else:
+                db.execute("UPDATE wars SET attacker_supplies=(%s) WHERE id=(%s)", (supply_by_hours+attacker_supplies, war_id))
 
-        # Limit supplies amount to MAX_SUPPLY
-        if (supply_by_hours+attacker_supplies) > MAX_SUPPLY:
-            db.execute("UPDATE wars SET attacker_supplies=(%s) WHERE id=(%s)", (MAX_SUPPLY, war_id))
-        else:
-            db.execute("UPDATE wars SET attacker_supplies=(%s) WHERE id=(%s)", (supply_by_hours+attacker_supplies, war_id))
+            if (supply_by_hours+defender_supplies) > MAX_SUPPLY:
+                db.execute("UPDATE wars SET defender_supplies=(%s) WHERE id=(%s)", (MAX_SUPPLY, war_id))
+            else:
+                db.execute("UPDATE wars SET defender_supplies=(%s) WHERE id=(%s)", (supply_by_hours+defender_supplies, war_id))
 
-        if (supply_by_hours+defender_supplies) > MAX_SUPPLY:
-            db.execute("UPDATE wars SET defender_supplies=(%s) WHERE id=(%s)", (MAX_SUPPLY, war_id))
-        else:
-            db.execute("UPDATE wars SET defender_supplies=(%s) WHERE id=(%s)", (supply_by_hours+defender_supplies, war_id))
-
-        db.execute("UPDATE wars SET last_visited=(%s) WHERE id=(%s)", (time.time(), war_id))
-        connection.commit()
+            db.execute("UPDATE wars SET last_visited=(%s) WHERE id=(%s)", (time.time(), war_id))
 
 # so this is page 0, war menu, choose a war
 @app.route("/wars", methods=["GET", "POST"])
 @login_required
 def wars():
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
     cId = session["user_id"]
 
     if request.method == "GET":
@@ -117,58 +101,59 @@ def wars():
         units.update(special_units)
 
         # obtain the user's country from sql table
-        db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
-        yourCountry = db.fetchone()[0]
+        with get_db_cursor() as db:
+            db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
+            yourCountry = db.fetchone()[0]
 
-        try:
-            db.execute("SELECT id, defender, attacker FROM wars WHERE (attacker=%s OR defender=%s) AND peace_date IS NULL", (cId, cId))
-            war_attacker_defender_ids = db.fetchall()
-            war_info = {}
-            for war_id,defender,attacker in war_attacker_defender_ids:
+            try:
+                db.execute("SELECT id, defender, attacker FROM wars WHERE (attacker=%s OR defender=%s) AND peace_date IS NULL", (cId, cId))
+                war_attacker_defender_ids = db.fetchall()
+                war_info = {}
+                for war_id,defender,attacker in war_attacker_defender_ids:
 
-                update_supply(war_id)
+                    update_supply(war_id)
 
-                attacker_info = {}
-                defender_info = {}
+                    attacker_info = {}
+                    defender_info = {}
 
-                # fetch attacker wars
-                db.execute("SELECT username FROM users WHERE id=%s", (attacker,))
-                att_name = db.fetchone()[0]
-                attacker_info["name"] = att_name
-                attacker_info["id"] = attacker
+                    # fetch attacker wars
+                    db.execute("SELECT username FROM users WHERE id=%s", (attacker,))
+                    att_name = db.fetchone()[0]
+                    attacker_info["name"] = att_name
+                    attacker_info["id"] = attacker
 
-                db.execute("SELECT attacker_morale, attacker_supplies FROM wars WHERE id=%s", (war_id,))
-                att_morale_and_supplies = db.fetchone()
+                    db.execute("SELECT attacker_morale, attacker_supplies FROM wars WHERE id=%s", (war_id,))
+                    att_morale_and_supplies = db.fetchone()
 
-                attacker_info["morale"] = att_morale_and_supplies[0]
-                attacker_info["supplies"] = att_morale_and_supplies[1]
+                    attacker_info["morale"] = att_morale_and_supplies[0]
+                    attacker_info["supplies"] = att_morale_and_supplies[1]
 
-                # fetch defender wars
-                db.execute("SELECT username FROM users WHERE id=%s", (defender,))
-                def_name = db.fetchone()[0]
-                defender_info["name"] = def_name
+                    # fetch defender wars
+                    db.execute("SELECT username FROM users WHERE id=%s", (defender,))
+                    def_name = db.fetchone()[0]
+                    defender_info["name"] = def_name
 
-                db.execute("SELECT defender_morale,defender_supplies FROM wars WHERE id=%s", (war_id,))
-                def_morale_and_supplies = db.fetchone()
+                    db.execute("SELECT defender_morale,defender_supplies FROM wars WHERE id=%s", (war_id,))
+                    def_morale_and_supplies = db.fetchone()
 
-                defender_info["morale"] = def_morale_and_supplies[0]
-                defender_info["supplies"] = def_morale_and_supplies[1]
+                    defender_info["morale"] = def_morale_and_supplies[0]
+                    defender_info["supplies"] = def_morale_and_supplies[1]
 
-                defender_info["id"] = defender
+                    defender_info["id"] = defender
 
-                attacker_info["flag"] = get_flagname(attacker)
-                defender_info["flag"] = get_flagname(defender)
+                    attacker_info["flag"] = get_flagname(attacker)
+                    defender_info["flag"] = get_flagname(defender)
 
-                war_info[war_id] = {"att": attacker_info, "def": defender_info}
-        except:
-            war_attacker_defender_ids = []
-            war_info = {}
+                    war_info[war_id] = {"att": attacker_info, "def": defender_info}
+            except:
+                war_attacker_defender_ids = []
+                war_info = {}
 
-        try:
-            db.execute("SELECT COUNT(attacker) FROM wars WHERE (defender=%s OR attacker=%s) AND peace_date IS NULL", (cId, cId))
-            warsCount = db.fetchone()[0]
-        except:
-            warsCount = 0
+            try:
+                db.execute("SELECT COUNT(attacker) FROM wars WHERE (defender=%s OR attacker=%s) AND peace_date IS NULL", (cId, cId))
+                warsCount = db.fetchone()[0]
+            except:
+                warsCount = 0
 
         return render_template("wars.html", units=units, warsCount=warsCount, war_info=war_info)
 
@@ -178,49 +163,40 @@ def wars():
 def peace_offers():
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        db.execute("SELECT peace_offer_id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (cId, cId))
+        peace_offers = db.fetchall()
+        offers = {}
+        incoming_counter=0
+        outgoing_counter=0
 
-    db = connection.cursor()
+        incoming={}
+        outgoing={}
 
-    # FETCH PEACE OFFER DATA AND PARSE IT
-    db.execute("SELECT peace_offer_id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (cId, cId))
-    peace_offers = db.fetchall()
-    offers = {}
-    incoming_counter=0
-    outgoing_counter=0
+        resources = []
 
-    incoming={}
-    outgoing={}
+        try:
+            if peace_offers:
 
-    resources = []
+                for offer in peace_offers:
+                    offer_id = offer[0]
+                    if offer_id is not None:
 
-    try:
-        if peace_offers:
+                        # Every offer has a different subset
+                        # offers[offer_id] = {}
 
-            for offer in peace_offers:
-                offer_id = offer[0]
-                if offer_id is not None:
+                        db.execute("SELECT demanded_resources FROM peace WHERE id=(%s)", (offer_id,))
+                        resources_fetch = db.fetchone()
+                        db.execute("SELECT author FROM peace WHERE id=(%s)", (offer_id,))
+                        author_id = db.fetchone()[0]
+                        if author_id == cId:
+                            offer = outgoing
+                            outgoing_counter+=1
+                        else:
+                            offer = incoming
+                            incoming_counter+=1
 
-                    # Every offer has a different subset
-                    # offers[offer_id] = {}
-
-                    db.execute("SELECT demanded_resources FROM peace WHERE id=(%s)", (offer_id,))
-                    resources_fetch = db.fetchone()
-                    db.execute("SELECT author FROM peace WHERE id=(%s)", (offer_id,))
-                    author_id = db.fetchone()[0]
-                    if author_id == cId:
-                        offer = outgoing
-                        outgoing_counter+=1
-                    else:
-                        offer = incoming
-                        incoming_counter+=1
-
-                    offer[offer_id] = {}
+                        offer[offer_id] = {}
 
                     if resources_fetch:
                         resources = resources_fetch[0]
@@ -258,8 +234,8 @@ def peace_offers():
 
                         offer[offer_id]["receiver_id"] = receiver_id
                         offer[offer_id]["receiver"] = receiver_name
-    except:
-        return "Something went wrong."
+        except:
+            return "Something went wrong."
 
     if request.method == "POST":
 
@@ -284,7 +260,6 @@ def peace_offers():
         if decision == "0":
             db.execute("UPDATE wars SET peace_offer_id=NULL WHERE peace_offer_id=(%s)", (offer_id,))
             db.execute("DELETE FROM peace WHERE id=(%s)", (offer_id,))
-            connection.commit()
 
         elif author_id != cId:
 
@@ -333,14 +308,6 @@ def peace_offers():
 @login_required
 def send_peace_offer(war_id, enemy_id):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
     cId = session["user_id"]
 
     if request.method == "POST":
@@ -358,138 +325,127 @@ def send_peace_offer(war_id, enemy_id):
         except:
             return "Invalid offer!"
 
-        # Input validation
-        # try:
-        if not war_id:
-            raise Exception("War id is invalid")
+        with get_db_cursor() as db:
+            # try:
+            if not war_id:
+                raise Exception("War id is invalid")
 
-        resources_string = ""
-        amount_string = ""
+            resources_string = ""
+            amount_string = ""
 
-        validResources = list(Economy.resources)
-        validResources.append("money")
+            validResources = list(Economy.resources)
+            validResources.append("money")
 
-        if len(resources) and len(resources_amount):
-            for res, amo in zip(resources, resources_amount):
-                if res not in validResources:
-                    raise Exception("Invalid resource")
+            if len(resources) and len(resources_amount):
+                for res, amo in zip(resources, resources_amount):
+                    if res not in validResources:
+                        raise Exception("Invalid resource")
 
-                resources_string+=res+","
-                amount_string+=str(amo)+","
+                    resources_string+=res+","
+                    amount_string+=str(amo)+","
 
-        # TODO: Made peace offer where can offer to give resources and not just demand
-        # if enemy_id is None:
-        #     return "Selected target is invalid!"
+            # TODO: Made peace offer where can offer to give resources and not just demand
+            # if enemy_id is None:
+            #     return "Selected target is invalid!"
 
-        db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
-        peace_offer_id = db.fetchone()[0]
+            db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
+            peace_offer_id = db.fetchone()[0]
 
-        # Only one peace offer could be attached to one war
-        if not peace_offer_id:
-            db.execute("INSERT INTO peace (author,demanded_resources,demanded_amount) VALUES ((%s),(%s),(%s))", (cId, resources_string[:-1], amount_string[:-1]))
-            db.execute("SELECT CURRVAL('peace_id_seq')")
-            lastrowid = db.fetchone()[0]
-            db.execute("UPDATE wars SET peace_offer_id=(%s) WHERE id=(%s)", (lastrowid, war_id))
+            # Only one peace offer could be attached to one war
+            if not peace_offer_id:
+                db.execute("INSERT INTO peace (author,demanded_resources,demanded_amount) VALUES ((%s),(%s),(%s))", (cId, resources_string[:-1], amount_string[:-1]))
+                db.execute("SELECT CURRVAL('peace_id_seq')")
+                lastrowid = db.fetchone()[0]
+                db.execute("UPDATE wars SET peace_offer_id=(%s) WHERE id=(%s)", (lastrowid, war_id))
 
-        # If peace offer is already associated with war then just update it
-        else:
-            db.execute("UPDATE peace SET author=(%s),demanded_resources=(%s),demanded_amount=(%s)", (cId, resources_string[:-1], amount_string[:-1]))
+            # If peace offer is already associated with war then just update it
+            else:
+                db.execute("UPDATE peace SET author=(%s),demanded_resources=(%s),demanded_amount=(%s)", (cId, resources_string[:-1], amount_string[:-1]))
 
-        connection.commit()
-
-        # Send white peace (won't lose or gain anything)
+            # Send white peace (won't lose or gain anything)
         return redirect("/peace_offers")
 
 # page 0, kind of a pseudo page where you can click attack vs special
 @app.route("/war/<int:war_id>", methods=["GET"])
 @login_required
 def war_with_id(war_id):
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        # Check if war_exist
+        db.execute("SELECT * FROM wars WHERE id=(%s) AND peace_date IS NULL",(war_id,))
+        valid_war = db.fetchone()
+        if not valid_war:
+            return error(404, "This war doesn't exist")
 
-    db = connection.cursor()
+        # Check if peace already made
+        db.execute("SELECT peace_date FROM wars WHERE id=(%s)", (war_id,))
+        peace_made = db.fetchone()[0]
+        if peace_made:
+            return "This war already ended"
 
-    # Check if war_exist
-    db.execute("SELECT * FROM wars WHERE id=(%s) AND peace_date IS NULL",(war_id,))
-    valid_war = db.fetchone()
-    if not valid_war:
-        return error(404, "This war doesn't exist")
+        update_supply(war_id)
 
-    # Check if peace already made
-    db.execute("SELECT peace_date FROM wars WHERE id=(%s)", (war_id,))
-    peace_made = db.fetchone()[0]
-    if peace_made:
-        return "This war already ended"
+        cId = session["user_id"]
 
-    update_supply(war_id)
+        # defender meaning the one who got declared on
+        db.execute("SELECT defender FROM wars WHERE id=(%s)", (war_id,))
+        defender = db.fetchone()[0]
+        db.execute("SELECT username FROM users WHERE id=(%s)", (defender,))
+        defender_name = db.fetchone()[0]
+        db.execute("SELECT defender_supplies,defender_morale FROM wars WHERE id=(%s)",(war_id,))
+        info = db.fetchone()
+        defender_info={"morale": info[1], "supplies": info[0]}
 
-    cId = session["user_id"]
+        # # attacker meaning the one who intially declared war, nothing to do with the current user (who is obviously currently attacking)
+        db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
+        attacker = db.fetchone()[0]
+        db.execute("SELECT username FROM users WHERE id=(%s)", (attacker,))
+        attacker_name = db.fetchone()[0]
+        db.execute("SELECT attacker_supplies,attacker_morale FROM wars WHERE id=(%s)",(war_id,))
+        info = db.fetchone()
+        attacker_info={"morale": info[1], "supplies": info[0]}
 
-    # defender meaning the one who got declared on
-    db.execute("SELECT defender FROM wars WHERE id=(%s)", (war_id,))
-    defender = db.fetchone()[0]
-    db.execute("SELECT username FROM users WHERE id=(%s)", (defender,))
-    defender_name = db.fetchone()[0]
-    db.execute("SELECT defender_supplies,defender_morale FROM wars WHERE id=(%s)",(war_id,))
-    info = db.fetchone()
-    defender_info={"morale": info[1], "supplies": info[0]}
+        # The current enemy from our perspective (not neccessarily the one who declared war)
+        if attacker==cId:
+            enemy_id=defender
+        else:
+            enemy_id=attacker
 
-    # # attacker meaning the one who intially declared war, nothing to do with the current user (who is obviously currently attacking)
-    db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-    attacker = db.fetchone()[0]
-    db.execute("SELECT username FROM users WHERE id=(%s)", (attacker,))
-    attacker_name = db.fetchone()[0]
-    db.execute("SELECT attacker_supplies,attacker_morale FROM wars WHERE id=(%s)",(war_id,))
-    info = db.fetchone()
-    attacker_info={"morale": info[1], "supplies": info[0]}
+        db.execute("SELECT war_type FROM wars WHERE id=(%s)", (war_id,))
+        war_type = db.fetchone()[0]
+        db.execute("SELECT agressor_message FROM wars WHERE id=(%s)", (war_id,))
+        agressor_message = db.fetchone()[0]
 
-    # The current enemy from our perspective (not neccessarily the one who declared war)
-    if attacker==cId:
-        enemy_id=defender
-    else:
-        enemy_id=attacker
+        if cId == attacker:
+            session["enemy_id"] = defender
+        else:
+            session["enemy_id"] = attacker
+        if cId == defender:
+            cId_type = "defender"
+        elif cId == attacker:
+            cId_type = "attacker"
+        else:
+            cId_type = "spectator"
 
-    db.execute("SELECT war_type FROM wars WHERE id=(%s)", (war_id,))
-    war_type = db.fetchone()[0]
-    db.execute("SELECT agressor_message FROM wars WHERE id=(%s)", (war_id,))
-    agressor_message = db.fetchone()[0]
+        if cId_type == "spectator":
+            return error(400, "You can't view this war")
 
-    if cId == attacker:
-        session["enemy_id"] = defender
-    else:
-        session["enemy_id"] = attacker
-    if cId == defender:
-        cId_type = "defender"
-    elif cId == attacker:
-        cId_type = "attacker"
-    else:
-        cId_type = "spectator"
+        db.execute("SELECT spies FROM military WHERE id=(%s)", (cId,))
+        spyCount = db.fetchone()[0]
+        spyPrep = 1 # this is an integer from 1 to 5
+        eSpyCount = 0 # this is an integer from 0 to 100
+        eDefcon = 1 # this is an integer from 1 to 5
 
-    if cId_type == "spectator":
-        return error(400, "You can't view this war")
+        if eSpyCount == 0:
+            successChance = 100
+        else:
+            successChance = spyCount * spyPrep / eSpyCount / eDefcon
 
-    db.execute("SELECT spies FROM military WHERE id=(%s)", (cId,))
-    spyCount = db.fetchone()[0]
-    spyPrep = 1 # this is an integer from 1 to 5
-    eSpyCount = 0 # this is an integer from 0 to 100
-    eDefcon = 1 # this is an integer from 1 to 5
+        attacker_flag = get_flagname(attacker)
+        defender_flag = get_flagname(defender)
 
-    if eSpyCount == 0:
-        successChance = 100
-    else:
-        successChance = spyCount * spyPrep / eSpyCount / eDefcon
-    connection.close()
-
-    attacker_flag = get_flagname(attacker)
-    defender_flag = get_flagname(defender)
-
-    return render_template("war.html",attacker_flag=attacker_flag, defender_flag=defender_flag, defender_info=defender_info, defender=defender, attacker_info=attacker_info, attacker=attacker,
-    war_id=war_id, attacker_name=attacker_name, defender_name=defender_name, war_type=war_type,
-    agressor_message=agressor_message, cId_type=cId_type, spyCount=spyCount, successChance=successChance, peace_to_send=enemy_id)
+        return render_template("war.html",attacker_flag=attacker_flag, defender_flag=defender_flag, defender_info=defender_info, defender=defender, attacker_info=attacker_info, attacker=attacker,
+        war_id=war_id, attacker_name=attacker_name, defender_name=defender_name, war_type=war_type,
+        agressor_message=agressor_message, cId_type=cId_type, spyCount=spyCount, successChance=successChance, peace_to_send=enemy_id)
 
 # the flask route that activates when you click attack on a nation in your wars page.
 # check if you have enough supplies.
@@ -559,33 +515,21 @@ def warAmount():
 
     if request.method == "GET":
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_cursor() as db:
+            # grab supplies amount
+            # if the user is the attacker in the war
+            # if cId == db.execute("SELECT attacker FROM wars WHERE ")
+            # db.execute("SELECT attacker_supplies FROM wars WHERE id=(%s)", (cId,))
+            # supplies = db.fetchone()[0]
 
-        db = connection.cursor()
+            # find the max amount of units of each of those 3 the user can attack with to send to the waramount page on first load
+            unitamounts = Military.get_particular_units_list(cId, attack_units.selected_units_list)
 
-        # grab supplies amount
-        # if the user is the attacker in the war
-        # if cId == db.execute("SELECT attacker FROM wars WHERE ")
-        # db.execute("SELECT attacker_supplies FROM wars WHERE id=(%s)", (cId,))
-        # supplies = db.fetchone()[0]
-
-        # find the max amount of units of each of those 3 the user can attack with to send to the waramount page on first load
-        unitamounts = Military.get_particular_units_list(cId, attack_units.selected_units_list)
-
-        # turn this dictionary into a list of its values
-        connection.commit()
-        db.close()
-        connection.close()
-
-        # if the user comes to this page by bookmark, it might crash because session["attack_units"] wouldn"t exist
-        # TODO: rename *.jpg file related to units because not load in (or create a list of image name with the corresponding unit)
-        return render_template("waramount.html", available_supplies=attack_units.available_supplies, selected_units=attack_units.selected_units_list,
-        unit_range=len(unitamounts), unitamounts=unitamounts, unit_interfaces=Units.allUnitInterfaces)
+            # turn this dictionary into a list of its values
+            # if the user comes to this page by bookmark, it might crash because session["attack_units"] wouldn"t exist
+            # TODO: rename *.jpg file related to units because not load in (or create a list of image name with the corresponding unit)
+            return render_template("waramount.html", available_supplies=attack_units.available_supplies, selected_units=attack_units.selected_units_list,
+            unit_range=len(unitamounts), unitamounts=unitamounts, unit_interfaces=Units.allUnitInterfaces)
 
     elif request.method == "POST":
 
@@ -652,15 +596,9 @@ def warTarget():
 
     if request.method == "GET":
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_cursor() as db:
 
-        db = connection.cursor()
-        db.execute("SELECT * FROM spyinfo WHERE spyer=(%s) AND spyee=(%s)", (cId, eId,))
+            db.execute("SELECT * FROM spyinfo WHERE spyer=(%s) AND spyee=(%s)", (cId, eId,))
         revealed_info = db.fetchall()
         needed_types = ["soldiers", "tanks", "artillery", "fighters",
                         "bombers", "apaches", "destroyers", "cruisers", "submarines"]
@@ -711,137 +649,121 @@ def warResult():
     # print(eId, "| eId") # 10 | eId
     # print(defensestring, "| defense units")  # soldiers,tanks,artillery | defense units
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
 
-    db = connection.cursor()
+        db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
+        attacker_name = db.fetchone()[0]
+        db.execute("SELECT username FROM users WHERE id=(%s)", (session["enemy_id"],))
+        defender_name = db.fetchone()[0]
 
-    db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
-    attacker_name = db.fetchone()[0]
-    db.execute("SELECT username FROM users WHERE id=(%s)", (session["enemy_id"],))
-    defender_name = db.fetchone()[0]
+        attacker_result = {"nation_name": attacker_name}
+        defender_result = {"nation_name": defender_name}
 
-    attacker_result = {"nation_name": attacker_name}
-    defender_result = {"nation_name": defender_name}
+        win_condition = None
+        winner = None
 
-    win_condition = None
-    winner = None
+        # If user came from /wartarget only then they have from_wartarget
+        result = session.get("from_wartarget", None)
+        if result is None:
+            db.execute("SELECT default_defense FROM military WHERE id=(%s)", (eId,))
+            defensestring = db.fetchone()[0]  # this is in the form of a string soldiers,tanks,artillery
 
-    # If user came from /wartarget only then they have from_wartarget
-    result = session.get("from_wartarget", None)
-    if result is None:
-        db.execute("SELECT default_defense FROM military WHERE id=(%s)", (eId,))
-        defensestring = db.fetchone()[0]  # this is in the form of a string soldiers,tanks,artillery
+            defenselst = defensestring.split(",")  # will give something like: [soldiers, tanks, artillery]
+            defenseunits = {}
 
-        defenselst = defensestring.split(",")  # will give something like: [soldiers, tanks, artillery]
-        defenseunits = {}
+            for unit in defenselst:
+                db.execute(f"SELECT {unit} FROM military WHERE id=(%s)", (eId,))
+                defenseunits[unit] = db.fetchone()[0]
 
-        for unit in defenselst:
-            db.execute(f"SELECT {unit} FROM military WHERE id=(%s)", (eId,))
-            defenseunits[unit] = db.fetchone()[0]
+            defender = Units(eId, defenseunits, selected_units_list=defenselst)
 
-        defender = Units(eId, defenseunits, selected_units_list=defenselst)
+            # Save the stats before the fight which used to calculate the lost amount from unit
+            prev_defender = dict(defender.selected_units)
+            prev_attacker = dict(attacker.selected_units)
 
-        # Save the stats before the fight which used to calculate the lost amount from unit
-        prev_defender = dict(defender.selected_units)
-        prev_attacker = dict(attacker.selected_units)
+            # TODO: error because there isn't even one province make error handler
+            # TODO: enforce war type like raze,etc.
+            # example for the above line: if war_type is raze then attack_effects[0]*10
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+            # WAR TYPES
+            # The war_type which the attacker choose hit back if lose the war
+            # "raze" --> no loot, no reparation tax, destroy 10x more buildings, destroys money/res
+            # "sustained" --> 1x loot, 1x infra destruction, 1x building destroy
+            # "loot" --> 2x loot, 0.1x infra destruction, buildings cannot be destroyed
+            db.execute("SELECT war_type FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.user_id, defender.user_id, attacker.user_id, defender.user_id))
+            war_type = db.fetchall()[-1][0]
 
-        # TODO: error because there isn't even one province make error handler
-        db = connection.cursor()
+            # attack_effects = sum of 3 attack effect in fight() method
+            winner, win_condition, attack_effects = Military.fight(attacker, defender)
 
-        # TODO: enforce war type like raze,etc.
-        # example for the above line: if war_type is raze then attack_effects[0]*10
+            if len(war_type) > 0:
+                if war_type == "Raze":
 
-        # WAR TYPES
-        # The war_type which the attacker choose hit back if lose the war
-        # "raze" --> no loot, no reparation tax, destroy 10x more buildings, destroys money/res
-        # "sustained" --> 1x loot, 1x infra destruction, 1x building destroy
-        # "loot" --> 2x loot, 0.1x infra destruction, buildings cannot be destroyed
-        db.execute("SELECT war_type FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.user_id, defender.user_id, attacker.user_id, defender.user_id))
-        war_type = db.fetchall()[-1][0]
+                    # infrastructure damage
+                    attack_effects[0] = attack_effects[0]*10
 
-        # attack_effects = sum of 3 attack effect in fight() method
-        winner, win_condition, attack_effects = Military.fight(attacker, defender)
+                elif war_type == "Loot":
 
-        if len(war_type) > 0:
-            if war_type == "Raze":
+                    # infrastructure damage
+                    attack_effects[0] = attack_effects[0]*0.2
 
-                # infrastructure damage
-                attack_effects[0] = attack_effects[0]*10
+                    # resource loot amount
+                    if winner == attacker.user_id:
 
-            elif war_type == "Loot":
+                      # TODO: maybe include all resources here
+                      lootable_resource = "gold"
+                      db.execute("SELECT gold FROM stats WHERE id=(%s)", (defender.user_id,))
+                      available_resource = db.fetchone()[0]
 
-                # infrastructure damage
-                attack_effects[0] = attack_effects[0]*0.2
+                      print(available_resource*0.1)
+                      # max lootable is 10% of available resources
+                      loot = random.randint(0, available_resource*0.1)
+                      attacker_result["loot"] = {"money": loot}
 
-                # resource loot amount
-                if winner == attacker.user_id:
+                elif war_type == "Sustained":
+                    pass
 
-                  # TODO: maybe include all resources here
-                  lootable_resource = "gold"
-                  db.execute("SELECT gold FROM stats WHERE id=(%s)", (defender.user_id,))
-                  available_resource = db.fetchone()[0]
+                # Invalid war type
+                else: return error(400, "Something went wrong")
 
-                  print(available_resource*0.1)
-                  # max lootable is 10% of available resources
-                  loot = random.randint(0, available_resource*0.1)
-                  attacker_result["loot"] = {"money": loot}
+            else:
+                # it could mean invalid user id
+                return error(500, "Something went wrong")
 
-            elif war_type == "Sustained":
-                pass
+            db.execute("SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC", (defender.user_id,))
+            province_id_fetch = db.fetchall()
+            if len(province_id_fetch) > 0:
+                random_province = province_id_fetch[random.randint(0, len(province_id_fetch)-1)][0]
 
-            # Invalid war type
-            else: return error(400, "Something went wrong")
+                # Currently units only affect public works
+                public_works = Nation.get_public_works(random_province)
+                infra_damage_effects = Military.infrastructure_damage(attack_effects[0], public_works, random_province)
+            else:
+                infra_damage_effects = {}
 
+            defender_result["infra_damage"] = infra_damage_effects
+
+            if winner == defender.user_id:
+                winner = defender_name
+            else: winner = attacker_name
+
+            defender_loss = {}
+            attacker_loss = {}
+
+            for unit in defender.selected_units_list:
+                defender_loss[unit] = prev_defender[unit]-defender.selected_units[unit]
+
+            for unit in attacker.selected_units_list:
+                attacker_loss[unit] = prev_attacker[unit]-attacker.selected_units[unit]
+
+            defender_result["unit_loss"] = defender_loss
+            attacker_result["unit_loss"] = attacker_loss
         else:
-            # it could mean invalid user id
-            return error(500, "Something went wrong")
+            defender_result["unit_loss"] = result[0]
+            defender_result["infra_damage"] = result[1]
 
-        db.execute("SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC", (defender.user_id,))
-        province_id_fetch = db.fetchall()
-        if len(province_id_fetch) > 0:
-            random_province = province_id_fetch[random.randint(0, len(province_id_fetch)-1)][0]
-
-            # Currently units only affect public works
-            public_works = Nation.get_public_works(random_province)
-            infra_damage_effects = Military.infrastructure_damage(attack_effects[0], public_works, random_province)
-        else:
-            infra_damage_effects = {}
-
-        defender_result["infra_damage"] = infra_damage_effects
-
-        if winner == defender.user_id:
-            winner = defender_name
-        else: winner = attacker_name
-
-        defender_loss = {}
-        attacker_loss = {}
-
-        for unit in defender.selected_units_list:
-            defender_loss[unit] = prev_defender[unit]-defender.selected_units[unit]
-
-        for unit in attacker.selected_units_list:
-            attacker_loss[unit] = prev_attacker[unit]-attacker.selected_units[unit]
-
-        defender_result["unit_loss"] = defender_loss
-        attacker_result["unit_loss"] = attacker_loss
-    else:
-        defender_result["unit_loss"] = result[0]
-        defender_result["infra_damage"] = result[1]
-
-        # unlink the session values so user can't just reattack when reload or revisit this page
-        del session["from_wartarget"]
+            # unlink the session values so user can't just reattack when reload or revisit this page
+            del session["from_wartarget"]
 
     # possible war policies:
     # "empire builder"--> winning gives no loot 2x reparation tax
@@ -874,83 +796,65 @@ def declare_war():
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
 
     try:
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_cursor() as db:
+            # Selects the country that the user is attacking
+            defender = request.form.get("defender") # the problem is that declaring war through /country/id does not have a defender tag, but declaring war normally does
+            war_message = request.form.get("description")
+            war_type = request.form.get("warType")
 
-        db = connection.cursor()
+            attacker = Nation(int(session["user_id"]))
+            defender = Nation(int(defender))
 
-        # Selects the country that the user is attacking
-        defender = request.form.get("defender") # the problem is that declaring war through /country/id does not have a defender tag, but declaring war normally does
-        war_message = request.form.get("description")
-        war_type = request.form.get("warType")
+            if attacker.id == defender.id:
+                return error(400, "Can't declare war on yourself")
 
-        attacker = Nation(int(session["user_id"]))
-        defender = Nation(int(defender))
+            db.execute("SELECT attacker, defender FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.id, attacker.id,))
+            already_war_with = db.fetchall()
 
-        if attacker.id == defender.id:
-            return error(400, "Can't declare war on yourself")
+            if ((attacker.id, defender.id) in already_war_with) or ((defender.id, attacker.id) in already_war_with):
+                return error(400, "You're already in a war with this country!")
 
-        db.execute("SELECT attacker, defender FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.id, attacker.id,))
-        already_war_with = db.fetchall()
+            # Check province difference
+            attacker_provinces = attacker.get_provinces()["provinces_number"]
+            defender_provinces = defender.get_provinces()["provinces_number"]
 
-        if ((attacker.id, defender.id) in already_war_with) or ((defender.id, attacker.id) in already_war_with):
-            return error(400, "You're already in a war with this country!")
+            # TODO: might put this into abs() because if defender_provinces > attacker_provinces then the > 1 won't be true
+            if (attacker_provinces - defender_provinces > 1):
+                return error(400, "That country has too few provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.")
+            if (defender_provinces - attacker_provinces > 3):
+                return error(400, "That country has too many provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.")
 
-        # Check province difference
-        attacker_provinces = attacker.get_provinces()["provinces_number"]
-        defender_provinces = defender.get_provinces()["provinces_number"]
+            # Check if nation currently at peace with another nation
+            db.execute("SELECT MAX(peace_date) FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND (attacker=(%s) OR defender=(%s))", (attacker.id, attacker.id, defender.id, defender.id))
+            current_peace = db.fetchone()
 
-        # TODO: might put this into abs() because if defender_provinces > attacker_provinces then the > 1 won't be true
-        if (attacker_provinces - defender_provinces > 1):
-            return error(400, "That country has too few provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.")
-        if (defender_provinces - attacker_provinces > 3):
-            return error(400, "That country has too many provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.")
+            # 259200 = 3 days
+            if current_peace[0]:
+                if (current_peace[0]+259200) > time.time():
+                    return error(403, "You can't declare war because truce has not expired!")
 
-        # Check if nation currently at peace with another nation
-        db.execute("SELECT MAX(peace_date) FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND (attacker=(%s) OR defender=(%s))", (attacker.id, attacker.id, defender.id, defender.id))
-        current_peace = db.fetchone()
+            if war_type not in WAR_TYPES:
+                return error(400, "Invalid war type!")
 
-        # 259200 = 3 days
-        if current_peace[0]:
-            if (current_peace[0]+259200) > time.time():
-                return error(403, "You can't declare war because truce has not expired!")
+            start_dates = time.time()
+            db.execute("INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",(attacker.id, defender.id, war_type, war_message, start_dates, start_dates))
+            # current_peace = db.fetchone()
 
-        if war_type not in WAR_TYPES:
-            return error(400, "Invalid war type!")
+            # War declaration notification
+            db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
+            attacker_name = db.fetchone()[0]
+            Nation.send_news(defender.id, f"{attacker_name} declared war!")
 
     except Exception:
         return error(500, "Something went wrong")
-
-    start_dates = time.time()
-    db.execute("INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",(attacker.id, defender.id, war_type, war_message, start_dates, start_dates))
-    # current_peace = db.fetchone()
-
-    # War declaration notification
-    db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
-    attacker_name = db.fetchone()[0]
-    Nation.send_news(defender.id, f"{attacker_name} declared war!")
-
-    connection.commit()
-    connection.close()
 
     return redirect("/wars")
 
 def target_data(cId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
 
-    db = connection.cursor()
-
-    influence = get_influence(cId)
+        influence = get_influence(cId)
     db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
     province_range = db.fetchone()[0]
 
@@ -982,15 +886,9 @@ def defense():
 
     elif request.method == "POST":
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+        with get_db_cursor() as db:
 
-        db = connection.cursor()
-        defense_units = list(request.form.values())
+            defense_units = list(request.form.values())
 
         # defense_units = ["soldier", "tank", "apache"]
 
@@ -1003,11 +901,9 @@ def defense():
             defense_units = ",".join(defense_units)
             db.execute("UPDATE military SET default_defense=(%s) WHERE id=(%s)", (defense_units, cId))
 
-            connection.commit()
         else:
             return error(400, "Invalid number of units selected!")
 
         # should be a back button on this page to go back to wars so dw about some infinite loop
-        connection.close()
 
         return redirect("/wars")
