@@ -130,12 +130,12 @@ def discord_register():
         key = request.form.get("key")
 
         try:
-            db.execute("SELECT key FROM keys WHERE key=(%s)", (key,))
+            db.execute("SELECT key FROM keys WHERE key=(%s) AND used=FALSE", (key,))
             correct_key = db.fetchone()[0]
             correct_key = True
         except TypeError:
             correct_key = False
-            return error(400, "Key not found")
+            return error(400, "Beta key not found or already used")
 
         # Turns the continent number into 0-indexed
         continent_number = int(request.form.get("continent")) - 1
@@ -166,10 +166,11 @@ def discord_register():
 
             db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", (username, email, discord_auth, date, "discord"))
 
-            db.execute("DELETE FROM keys WHERE key=(%s)", (key,))  # deletes the used key
-
             db.execute("SELECT id FROM users WHERE hash=(%s)", (discord_auth,))
             user_id = db.fetchone()[0]
+
+            # Mark the beta key as used
+            db.execute("UPDATE keys SET used=TRUE, user_id=%s, used_at=CURRENT_TIMESTAMP WHERE key=%s", (user_id, key))
 
             session["user_id"] = user_id
 
@@ -178,6 +179,9 @@ def discord_register():
             db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+
+            # Mark the beta key as used
+            db.execute("UPDATE keys SET used=TRUE, user_id=%s, used_at=CURRENT_TIMESTAMP WHERE key=%s", (user_id, key))
 
             # Clears session variables from oauth
             try:
@@ -224,10 +228,10 @@ def signup():
 
         with get_db_cursor() as db:
             try:
-                db.execute("SELECT key FROM keys WHERE key=%s", (key,))
+                db.execute("SELECT key FROM keys WHERE key=%s AND used=FALSE", (key,))
                 db.fetchone()[0]
             except:
-                return error(400, "Key not found")
+                return error(400, "Beta key not found or already used")
 
             try:
                 db.execute("SELECT username FROM users WHERE username=%s", (username,))
@@ -260,7 +264,8 @@ def signup():
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
-            db.execute("DELETE FROM keys WHERE key=(%s)", (key,)) # Deletes the key used for signup
+            # Mark the beta key as used
+            db.execute("UPDATE keys SET used=TRUE, user_id=%s, used_at=CURRENT_TIMESTAMP WHERE key=%s", (user_id, key))
 
         return redirect("/")
     elif request.method == "GET":
