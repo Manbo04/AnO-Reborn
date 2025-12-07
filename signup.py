@@ -101,73 +101,94 @@ def callback():
 @app.route('/discord_signup', methods=["GET", "POST"])
 def discord_register():
     from database import get_db_cursor
-    from psycopg2.extras import RealDictCursor
     
     if request.method == "GET":
         return render_template('signup.html', way="discord")
 
     elif request.method == "POST":
-        app.config["SESSION_PERMANENT"] = True
-        app.permanent_session_lifetime = datetime.timedelta(days=365)
-
         try:
+            app.config["SESSION_PERMANENT"] = True
+            app.permanent_session_lifetime = datetime.timedelta(days=365)
+
+            # Get Discord user info from session token
             discord = make_session(token=session.get('oauth2_token'))
+            if not discord or not session.get('oauth2_token'):
+                return error(400, "Discord authentication failed - no token")
+
             discord_user = discord.get(API_BASE_URL + '/users/@me').json()
-
-            username = request.form.get("username")
             
-            # Turns the continent number into 0-indexed
-            continent_number = int(request.form.get("continent")) - 1
-            # Ordered list, DO NOT EDIT
-            continents = ["Tundra", "Savanna", "Desert", "Jungle", "Boreal Forest", "Grassland", "Mountain Range"]
-            continent = continents[continent_number]
-
             discord_user_id = discord_user.get('id')
             email = discord_user.get('email')
 
-            if not discord_user_id or not email:
-                return error(400, "Failed to get Discord user info")
+            if not discord_user_id:
+                return error(400, f"Discord API error: {discord_user}")
 
-            discord_auth = discord_user_id
+            # Get form data
+            username = request.form.get("username", "").strip()
+            continent_str = request.form.get("continent", "")
+            
+            if not username:
+                return error(400, "Country name is required")
+            
+            if not continent_str:
+                return error(400, "Biome selection is required")
 
+            try:
+                continent_number = int(continent_str) - 1
+                continents = ["Tundra", "Savanna", "Desert", "Jungle", "Boreal Forest", "Grassland", "Mountain Range"]
+                continent = continents[continent_number]
+            except (ValueError, IndexError):
+                return error(400, "Invalid biome selection")
+
+            discord_auth = str(discord_user_id)
+
+            # Create account
             with get_db_cursor() as db:
-                try:
-                    db.execute("SELECT username FROM users WHERE username=(%s)", (username,))
-                    db.fetchone()[0]
-                    return error(400, "Duplicate name, choose another one")
-                except TypeError:
-                    pass
+                # Check if username exists
+                db.execute("SELECT id FROM users WHERE username=%s", (username,))
+                if db.fetchone():
+                    return error(400, "Country name already taken")
 
+                # Check if Discord user already has account
+                db.execute("SELECT id FROM users WHERE hash=%s AND auth_type='discord'", (discord_auth,))
+                if db.fetchone():
+                    return error(400, "This Discord account is already linked to another country")
+
+                # Create user
                 date = str(datetime.date.today())
-
                 db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", 
                           (username, email, discord_auth, date, "discord"))
 
-                db.execute("SELECT id FROM users WHERE hash=(%s)", (discord_auth,))
+                # Get the new user ID
+                db.execute("SELECT id FROM users WHERE hash=%s", (discord_auth,))
                 user_id = db.fetchone()[0]
 
                 session["user_id"] = user_id
 
+                # Create all user tables
                 db.execute("INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent))
                 db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
                 db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
                 db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
                 db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
-            # Clears session variables from oauth
+            # Clean up session
             try:
-                session.pop('oauth2_state')
-            except KeyError:
+                session.pop('oauth2_state', None)
+                session.pop('oauth2_token', None)
+            except:
                 pass
 
-            session.pop('oauth2_token')
-
             return redirect("/")
-            
+
         except Exception as e:
             import traceback
-            traceback.print_exc()
-            return error(500, f"Discord signup failed: {str(e)}")
+            error_msg = str(e)
+            print(f"\n!!! DISCORD SIGNUP ERROR !!!")
+            print(f"Error: {error_msg}")
+            print(traceback.format_exc())
+            print("!!! END ERROR !!!\n")
+            return error(500, f"Signup failed: {error_msg}")
 
 # Function for verifying that the captcha token is correct
 def verify_captcha(response):
