@@ -68,15 +68,7 @@ def discord():
 
 @app.route('/callback')
 def callback():
-
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
+    from database import get_db_cursor
 
     if request.values.get('error'):
         return request.values['error']
@@ -93,12 +85,13 @@ def callback():
 
     discord_auth = discord_user_id
 
-    try:
-        db.execute("SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'", (discord_auth,))
-        duplicate = db.fetchone()[0]
-        duplicate = True
-    except TypeError:
-        duplicate = False
+    with get_db_cursor() as db:
+        try:
+            db.execute("SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'", (discord_auth,))
+            duplicate = db.fetchone()[0]
+            duplicate = True
+        except TypeError:
+            duplicate = False
 
     if duplicate:
         return redirect("/discord_login")
