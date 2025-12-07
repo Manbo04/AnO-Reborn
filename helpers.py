@@ -2,10 +2,10 @@
 
 import os
 from flask import redirect, render_template, session
-from functools import wraps
+from functools import wraps, lru_cache
 from dotenv import load_dotenv
 from datetime import date
-from database import get_db_cursor
+from database import get_db_cursor, query_cache
 load_dotenv()
 
 def get_date():
@@ -13,13 +13,22 @@ def get_date():
     return today.strftime("%Y-%m-%d")
 
 def get_flagname(user_id):
+    # Check cache first
+    cache_key = f"flag_{user_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
+    # Query if not cached
     with get_db_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
         flag_name = db.fetchone()[0]
 
         if flag_name == None:
             flag_name = "default_flag.jpg"
-
+        
+        # Cache the result
+        query_cache.set(cache_key, flag_name)
         return flag_name
 
 def login_required(f):
