@@ -62,6 +62,12 @@ def error(code, message):
     return render_template("error.html", code=code, message=message)
 
 def get_influence(country_id):
+    # Check cache first
+    cache_key = f"influence_{country_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
     cId = country_id
     
     with get_db_cursor() as db:
@@ -142,6 +148,9 @@ def get_influence(country_id):
         spies_score + cities_score + land_score + resources_score + money_score
 
     influence = round(influence)
+    
+    # Cache the result
+    query_cache.set(cache_key, influence)
 
     return influence
 def get_coalition_influence(coalition_id):
