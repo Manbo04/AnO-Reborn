@@ -548,29 +548,18 @@ def removing_requests(uId):
 @login_required
 def delete_coalition(colId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
     user_role = get_user_role(cId)
 
     if user_role != "leader":
         return error(400, "You aren't the leader of this coalition")
 
-    db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
-    coalition_name = db.fetchone()[0]
+    with get_db_cursor() as db:
+        db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
+        coalition_name = db.fetchone()[0]
 
-    db.execute("DELETE FROM colNames WHERE id=(%s)", (colId,))
-    db.execute("DELETE FROM coalitions WHERE colId=(%s)", (colId,))
-
-    connection.commit()
-    connection.close()
+        db.execute("DELETE FROM colNames WHERE id=(%s)", (colId,))
+        db.execute("DELETE FROM coalitions WHERE colId=(%s)", (colId,))
 
     flash(f"{coalition_name} coalition was deleted.")
 
@@ -580,15 +569,6 @@ def delete_coalition(colId):
 @app.route("/update_col_info/<colId>", methods=["POST"])
 @login_required
 def update_col_info(colId):
-
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
 
     cId = session["user_id"]
 
@@ -607,40 +587,40 @@ def update_col_info(colId):
         if allowed_file(flag.filename):
 
             # Check if the user already has a flag
-            try:
-                db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
-                current_flag = db.fetchone()[0]
+            with get_db_cursor() as db:
+                try:
+                    db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
+                    current_flag = db.fetchone()[0]
 
-                # If he does, delete the flag
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_flag))
+                    # If he does, delete the flag
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_flag))
 
-            except:
-                pass
+                except:
+                    pass
 
             # Save the file
             current_filename = flag.filename
             extension = current_filename.rsplit('.', 1)[1].lower()
             filename = f"col_flag_{colId}" + '.' + extension
             flag.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            db.execute("UPDATE colNames SET flag=(%s) WHERE id=(%s)", (filename, colId))
+            with get_db_cursor() as db:
+                db.execute("UPDATE colNames SET flag=(%s) WHERE id=(%s)", (filename, colId))
         else:
             return error(400, "File format not supported")
 
-    # Application type
-    application_type = request.form.get("application_type")
-    if application_type not in ["", "Open", "Invite Only"]:
-        return error(400, "No such type")
+    with get_db_cursor() as db:
+        # Application type
+        application_type = request.form.get("application_type")
+        if application_type not in ["", "Open", "Invite Only"]:
+            return error(400, "No such type")
 
-    if application_type != "":
-        db.execute("UPDATE colNames SET type=%s WHERE id=%s", (application_type, colId))
+        if application_type != "":
+            db.execute("UPDATE colNames SET type=%s WHERE id=%s", (application_type, colId))
 
-    # Description
-    description = request.form.get("description")
-    if description not in [None, "None", ""]:
-        db.execute("UPDATE colNames SET description=%s WHERE id=%s", (description, colId))
-
-    connection.commit()
-    connection.close()
+        # Description
+        description = request.form.get("description")
+        if description not in [None, "None", ""]:
+            db.execute("UPDATE colNames SET description=%s WHERE id=%s", (description, colId))
 
     return redirect("/my_coalition")
 
@@ -651,20 +631,12 @@ def update_col_info(colId):
 @login_required
 def deposit_into_bank(colId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
     try:
-        db.execute("SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)", (cId, colId))
-        db.fetchone()[0]
+        with get_db_cursor() as db:
+            db.execute("SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)", (cId, colId))
+            db.fetchone()[0]
     except TypeError:
         return redirect(400, "You aren't in this coalition")
 
@@ -684,7 +656,7 @@ def deposit_into_bank(colId):
                 res_tuple = (res, int(resource))
                 deposited_resources.append(res_tuple)
 
-    def deposit(resource, amount):
+    def deposit(resource, amount, db):
 
         # Removes the resource from the giver
 
@@ -730,70 +702,56 @@ def deposit_into_bank(colId):
         update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
         db.execute(update_statement, (new_resource, colId))
 
-    for resource in deposited_resources:
-        name = resource[0]
-        amount = resource[1]
-        deposit(name, amount)
-
-    connection.commit()
-    connection.close()
+    with get_db_cursor() as db:
+        for resource in deposited_resources:
+            name = resource[0]
+            amount = resource[1]
+            deposit(name, amount, db)
 
     return redirect(f"/coalition/{colId}")
 
 # Function for withdrawing a resource from the bank
 def withdraw(resource, amount, user_id, colId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+    with get_db_cursor() as db:
+        # Removes the resource from the coalition bank
 
-    db = connection.cursor()
-
-    # Removes the resource from the coalition bank
-
-    current_resource_statement = f"SELECT {resource}" + " FROM colBanks WHERE colId=%s"
-    db.execute(current_resource_statement, (colId,))
-    current_resource = db.fetchone()[0]
-
-    if amount < 1:
-        return error(400, "Amount cannot be less than 1")
-
-    if current_resource < amount:
-        return error(400, f"Your coalition doesn't have enough {resource}")
-
-    new_resource = current_resource - amount
-
-    update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
-    db.execute(update_statement, (new_resource, colId))
-
-    # Gives the leader his resource
-    # If the resource is money, gives him money
-    if resource == "money":
-
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (user_id,))
-        current_money = int(db.fetchone()[0])
-
-        new_money = current_money + amount
-
-        db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
-
-    # If the resource is not money, gives him that resource
-    else:
-
-        current_resource_statement = f"SELECT {resource}" +  " FROM resources WHERE id=%s"
-        db.execute(current_resource_statement, (user_id,))
+        current_resource_statement = f"SELECT {resource}" + " FROM colBanks WHERE colId=%s"
+        db.execute(current_resource_statement, (colId,))
         current_resource = db.fetchone()[0]
 
-        new_resource = current_resource + amount
+        if amount < 1:
+            return error(400, "Amount cannot be less than 1")
 
-        update_statement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-        db.execute(update_statement, (new_resource, user_id))
+        if current_resource < amount:
+            return error(400, f"Your coalition doesn't have enough {resource}")
 
-    connection.commit()
-    connection.close()
+        new_resource = current_resource - amount
+
+        update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
+        db.execute(update_statement, (new_resource, colId))
+
+        # Gives the leader his resource
+        # If the resource is money, gives him money
+        if resource == "money":
+            db.execute("SELECT gold FROM stats WHERE id=(%s)", (user_id,))
+            current_money = int(db.fetchone()[0])
+
+            new_money = current_money + amount
+
+            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
+
+        # If the resource is not money, gives him that resource
+        else:
+            current_resource_statement = f"SELECT {resource}" +  " FROM resources WHERE id=%s"
+            db.execute(current_resource_statement, (user_id,))
+            current_resource = db.fetchone()[0]
+
+            new_resource = current_resource + amount
+
+            update_statement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
+            db.execute(update_statement, (new_resource, user_id))
+
 
 # Route from withdrawing from the bank
 @app.route("/withdraw_from_bank/<colId>", methods=["POST"])
@@ -833,49 +791,38 @@ def withdraw_from_bank(colId):
 @login_required
 def request_from_bank(colId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
-    try:
-        db.execute("SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)", (cId, colId))
-        db.fetchone()[0]
-    except TypeError:
-        return redirect(400, "You aren't in this coalition")
+    with get_db_cursor() as db:
+        try:
+            db.execute("SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)", (cId, colId))
+            db.fetchone()[0]
+        except TypeError:
+            return redirect(400, "You aren't in this coalition")
 
-    resources = variables.RESOURCES
+        resources = variables.RESOURCES
 
-    requested_resources = []
+        requested_resources = []
 
-    for res in resources:
-        resource = request.form.get(res)
-        if resource != "":
-            res_tuple = (res, int(resource))
-            requested_resources.append(res_tuple)
+        for res in resources:
+            resource = request.form.get(res)
+            if resource != "":
+                res_tuple = (res, int(resource))
+                requested_resources.append(res_tuple)
 
-    if len(requested_resources) > 1:
-        return error(400, "You can only request one resource at a time")
+        if len(requested_resources) > 1:
+            return error(400, "You can only request one resource at a time")
 
-    requested_resources = tuple(requested_resources[0])
+        requested_resources = tuple(requested_resources[0])
 
-    amount = requested_resources[1]
+        amount = requested_resources[1]
 
-    if amount < 1:
-        return error(400, "Amount cannot be 0 or less")
+        if amount < 1:
+            return error(400, "Amount cannot be 0 or less")
 
-    resource = requested_resources[0]
+        resource = requested_resources[0]
 
-    db.execute("INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)", (cId, colId, amount, resource))
-
-    connection.commit()
-    connection.close()
+        db.execute("INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)", (cId, colId, amount, resource))
 
     return redirect(f"/coalition/{colId}")
 
@@ -884,15 +831,6 @@ def request_from_bank(colId):
 @login_required
 def remove_bank_request(bankId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
     user_role = get_user_role(cId)
@@ -900,10 +838,9 @@ def remove_bank_request(bankId):
     if user_role not in ["leader", "deputy_leader", "banker"]:
         return error(400, "You aren't the leader of this coalition")
 
-    db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
+    with get_db_cursor() as db:
+        db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
-    connection.commit()
-    connection.close()
     return redirect("/my_coalition")
 
 
@@ -912,37 +849,26 @@ def remove_bank_request(bankId):
 @login_required
 def accept_bank_request(bankId):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
-    db.execute("SELECT colId FROM colBanksRequests WHERE id=(%s)", (bankId,))
-    colId = db.fetchone()[0]
+    with get_db_cursor() as db:
+        db.execute("SELECT colId FROM colBanksRequests WHERE id=(%s)", (bankId,))
+        colId = db.fetchone()[0]
 
-    user_role = get_user_role(cId)
+        user_role = get_user_role(cId)
 
-    if user_role not in  ["leader", "deputy_leader", "banker"]:
-        return error(400, "You aren't the leader of this coalition")
+        if user_role not in  ["leader", "deputy_leader", "banker"]:
+            return error(400, "You aren't the leader of this coalition")
 
-    db.execute("SELECT resource FROM colBanksRequests WHERE id=(%s)", (bankId,))
-    resource = db.fetchone()[0]
-    db.execute("SELECT amount FROM colBanksRequests WHERE id=(%s)", (bankId,))
-    amount = db.fetchone()[0]
-    db.execute("SELECT reqId FROM colBanksRequests WHERE id=(%s)", (bankId,))
-    user_id = db.fetchone()[0]
+        db.execute("SELECT resource FROM colBanksRequests WHERE id=(%s)", (bankId,))
+        resource = db.fetchone()[0]
+        db.execute("SELECT amount FROM colBanksRequests WHERE id=(%s)", (bankId,))
+        amount = db.fetchone()[0]
+        db.execute("SELECT reqId FROM colBanksRequests WHERE id=(%s)", (bankId,))
+        user_id = db.fetchone()[0]
 
-    withdraw(resource, amount, user_id, colId)
-    db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
-
-    connection.commit()
-    connection.close()
+        withdraw(resource, amount, user_id, colId)
+        db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
     return redirect("/my_coalition")
 
@@ -951,55 +877,44 @@ def accept_bank_request(bankId):
 @login_required
 def offer_treaty():
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
     
     col2_name = request.form.get("coalition_name")
     if col2_name == "":
         return error(400, "Please enter a coalition name")
 
-    try:
-        db.execute("SELECT id FROM colNames WHERE name=(%s)", (col2_name,))
-        col2_id = db.fetchone()[0]
-    except:
-        return error(400, f"No such coalition: {col2_name}")
+    with get_db_cursor() as db:
+        try:
+            db.execute("SELECT id FROM colNames WHERE name=(%s)", (col2_name,))
+            col2_id = db.fetchone()[0]
+        except:
+            return error(400, f"No such coalition: {col2_name}")
 
-    try:
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
-        user_coalition = db.fetchone()[0]
-    except:
-        return error(400, "You are not in a coalition")
+        try:
+            db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+            user_coalition = db.fetchone()[0]
+        except:
+            return error(400, "You are not in a coalition")
 
-    if col2_id == user_coalition:
-        return error(400, "Cannot declare treaty on your own coalition")
+        if col2_id == user_coalition:
+            return error(400, "Cannot declare treaty on your own coalition")
 
-    user_role = get_user_role(cId)
+        user_role = get_user_role(cId)
 
-    if user_role not in  ["leader", "deputy_leader", "foreign_ambassador"]:
-        return error(400, "You aren't the leader of this coalition")
+        if user_role not in  ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(400, "You aren't the leader of this coalition")
 
-    treaty_name = request.form.get("treaty_name")
-    if treaty_name == "":
-        return error(400, "Please enter a treaty name")
+        treaty_name = request.form.get("treaty_name")
+        if treaty_name == "":
+            return error(400, "Please enter a treaty name")
 
-    treaty_message = request.form.get("treaty_message")
-    if treaty_message == "":
-        return error(400, "Please enter a treaty description")
-    try:
-        db.execute("INSERT INTO treaties (col1_id, col2_id, treaty_name, treaty_description) VALUES (%s, %s, %s, %s)", (user_coalition, col2_id, treaty_name, treaty_message))
-    except:
-        return error(400, "Error inserting into database. Please contact the website admins")
-
-    connection.commit()
-    connection.close()
+        treaty_message = request.form.get("treaty_message")
+        if treaty_message == "":
+            return error(400, "Please enter a treaty description")
+        try:
+            db.execute("INSERT INTO treaties (col1_id, col2_id, treaty_name, treaty_description) VALUES (%s, %s, %s, %s)", (user_coalition, col2_id, treaty_name, treaty_message))
+        except:
+            return error(400, "Error inserting into database. Please contact the website admins")
 
     return redirect("/my_coalition")
 
@@ -1008,42 +923,31 @@ def offer_treaty():
 @login_required
 def accept_treaty(offer_id):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
     offer_id = int(offer_id)
 
-    try:
+    with get_db_cursor() as db:
+        try:
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
-        user_coalition = db.fetchone()[0]
+            db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+            user_coalition = db.fetchone()[0]
 
-        db.execute("SELECT id FROM treaties WHERE col2_id=%s AND id=%s", (user_coalition, offer_id))
-        permission_offer_id = db.fetchone()[0]
+            db.execute("SELECT id FROM treaties WHERE col2_id=%s AND id=%s", (user_coalition, offer_id))
+            permission_offer_id = db.fetchone()[0]
 
-    except:
-        return error(400, "You do not have such an offer")
+        except:
+            return error(400, "You do not have such an offer")
 
-    if permission_offer_id != offer_id:
-        return error(400, "You do not have an offer for this id. Please report this bug if you're using the web ui and not testing for permission vulns haha")
+        if permission_offer_id != offer_id:
+            return error(400, "You do not have an offer for this id. Please report this bug if you're using the web ui and not testing for permission vulns haha")
 
-    user_role = get_user_role(cId)
+        user_role = get_user_role(cId)
 
-    if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
-        return error(400, "You aren't the leader of this coalition")
+        if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(400, "You aren't the leader of this coalition")
 
-    db.execute("UPDATE treaties SET status='Active' WHERE id=(%s)", (offer_id,))
-
-    connection.commit()
-    connection.close()
+        db.execute("UPDATE treaties SET status='Active' WHERE id=(%s)", (offer_id,))
 
     return redirect("/my_coalition")
 
@@ -1052,15 +956,6 @@ def accept_treaty(offer_id):
 @login_required
 def break_treaty(offer_id):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
     user_role = get_user_role(cId)
@@ -1068,10 +963,8 @@ def break_treaty(offer_id):
     if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
         return error(400, "You aren't the leader of this coalition")
 
-    db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
-
-    connection.commit()
-    connection.close()
+    with get_db_cursor() as db:
+        db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
 
     return redirect("/my_coalition")
 
@@ -1079,15 +972,6 @@ def break_treaty(offer_id):
 @login_required
 def decline_treaty(offer_id):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
     user_role = get_user_role(cId)
@@ -1095,9 +979,7 @@ def decline_treaty(offer_id):
     if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
         return error(400, "You aren't the leader of this coalition")
 
-    db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
-
-    connection.commit()
-    connection.close()
+    with get_db_cursor() as db:
+        db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
 
     return redirect("/my_coalition")
