@@ -257,9 +257,15 @@ def milres(unit):
 # Jinja2 filter to format resource names (replace underscores with spaces)
 @app.template_filter()
 def formatname(value):
-    """Convert snake_case to Title Case"""
+    """Convert snake_case to Title Case, with special handling for certain terms"""
     if not isinstance(value, str):
         return value
+    
+    # Special cases
+    if value.lower() == "citycount":
+        return "City"
+    
+    # Replace underscores and capitalize
     return value.replace("_", " ").title()
 
 def get_resources():
