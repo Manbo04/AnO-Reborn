@@ -37,10 +37,10 @@ def province(pId):
 
         try:
             db.execute("""SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-            consumer_spending, cityCount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
+            consumer_spending, citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
             province_data = db.fetchone()
             province = {}
-            columns = ["id", "user", "name", "population", "pollution", "happiness", "productivity", "consumer_spending", "cityCount", "land", "electricity"]
+            columns = ["id", "user", "name", "population", "pollution", "happiness", "productivity", "consumer_spending", "citycount", "land", "electricity"]
             for i, col in enumerate(columns):
                 province[col] = province_data[i]
         except:
@@ -50,7 +50,7 @@ def province(pId):
         location_data = db.fetchone()
         province["location"] = location_data[0] if location_data else None
         
-        province["free_cityCount"] = province["cityCount"] - get_free_slots(pId, "city")
+        province["free_cityCount"] = province["citycount"] - get_free_slots(pId, "city")
         province["free_land"] = province["land"] - get_free_slots(pId, "land")
         province["own"] = province["user"] == cId
 
