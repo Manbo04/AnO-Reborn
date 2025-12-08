@@ -26,7 +26,6 @@ def provinces():
 
 @app.route("/province/<pId>", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=30)
 def province(pId):
     with get_db_cursor() as db:
         cId = session["user_id"]
