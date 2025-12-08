@@ -19,6 +19,16 @@ app = Flask(__name__)
 # Configure trusted hosts for domain setup
 # This allows Flask to work with custom domains via reverse proxy
 app.config['PREFERRED_URL_SCHEME'] = 'https'
+app.config['SERVER_NAME'] = None  # Allow dynamic hostnames via proxy headers
+app.config['ALLOWED_HOSTS'] = ['affairsandorder.com', 'www.affairsandorder.com', 'web-production-55d7b.up.railway.app']
+
+# Trust X-Forwarded-* headers from Railway reverse proxy
+@app.before_request
+def before_request():
+    # Ensure HTTPS is used
+    if not request.is_secure and os.getenv('RAILWAY_ENVIRONMENT_NAME'):
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
 # Import cache_response decorator
 from database import cache_response
