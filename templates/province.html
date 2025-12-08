@@ -230,8 +230,8 @@
                             <div class="tooltip">Electricity allows for certain infrastructure to function, and affects tax income</div><span class="material-icons-outlined">
                             power
                             </span>Electricity:</strong></td>
-                                <td>{{ energy['consumption'] | commas }} / {{ energy['production'] | commas }}</td>
-                                <!-- how much you have out of how much you need -->
+                                <td>{{ energy['production'] | commas }} produced / {{ energy['consumption'] | commas }} needed</td>
+                                <!-- production / consumption for clarity -->
                             </tr>
                 </table>
 
