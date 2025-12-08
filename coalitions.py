@@ -53,7 +53,20 @@ def coalition(colId):
             leaders = []
 
         try:
-            db.execute("SELECT coalitions.userId, users.username, coalitions.role, COALESCE(stats.influence, 0) as influence, (SELECT COUNT(*) FROM provinces WHERE userId=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id LEFT JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
+            # stats table has no influence column; keep list lightweight and avoid bad column reference
+            db.execute(
+                """
+                SELECT coalitions.userId,
+                       users.username,
+                       coalitions.role,
+                       0 AS influence,
+                       (SELECT COUNT(*) FROM provinces WHERE userId = coalitions.userId) AS province_count
+                FROM coalitions
+                INNER JOIN users ON coalitions.userId = users.id
+                WHERE coalitions.colId = %s
+                """,
+                (colId,),
+            )
             members = db.fetchall()
         except (TypeError, AttributeError, IndexError):
             members = []
@@ -219,9 +232,9 @@ def coalition(colId):
             db.execute("SELECT reqId FROM requests WHERE colId=(%s) ORDER BY reqId ASC", (colId,))
             # Use JOIN query to fetch request IDs and names together
             db.execute(
-                """SELECT r.userId, u.username, r.message 
+                """SELECT r.reqId, u.username, r.message 
                    FROM requests r
-                   INNER JOIN users u ON r.userId = u.id
+                   INNER JOIN users u ON r.reqId = u.id
                    WHERE r.colId=%s""",
                 (colId,)
             )

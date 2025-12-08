@@ -99,25 +99,24 @@
                                 </span>General</th>
                         </tr>
                         <tr>
-                            {% if leaders|length == 0%}
-                            <td>Leaders:</td>
-                            <td>0</td>
-                            {% endif %}
-                            {% if leaders|length < 2%}
+                            {% if leaders|length == 0 %}
+                                <td>Leader:</td>
+                                <td>None</td>
+                            {% elif leaders|length == 1 %}
                                 <td>Leader:</td>
                                 <td><a href="/country/id={{ leaders[0][0] }}">{{ leaders[0][1] }}</a></td>
-                                {% else %}
+                            {% else %}
                                 <td>Leaders:</td>
                                 <td>
                                     {% for leader_id, username in leaders %}
-                                        {% if leader_id == leaders[leaders|length-1][0] %}
-                                        <a href="/country/id={{ leader_id }}">{{ username }}</a>
+                                        {% if loop.last %}
+                                            <a href="/country/id={{ leader_id }}">{{ username }}</a>
                                         {% else %}
-                                        <a href="/country/id={{ leader_id }}">{{ username }}, </a>
+                                            <a href="/country/id={{ leader_id }}">{{ username }}, </a>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
-                                {% endif %}
+                            {% endif %}
                         </tr>
                         <!--
                         <tr>
