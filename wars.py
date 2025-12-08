@@ -855,8 +855,8 @@ def target_data(cId):
     with get_db_cursor() as db:
 
         influence = get_influence(cId)
-    db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
-    province_range = db.fetchone()[0]
+        db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
+        province_range = db.fetchone()[0]
 
     data = {
         "upper": influence * 2,
