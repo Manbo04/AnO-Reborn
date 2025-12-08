@@ -57,12 +57,13 @@ def province(pId):
         # Selects values for province buildings from the database and assigns them to vars
         db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
         proinfra_data = db.fetchone()
-        proinfra_columns = ["id", "pumpjacks", "coal_mines", "bauxite_mines", "copper_mines", "uranium_mines", 
-                           "lead_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
-                           "nuclear_reactors", "solar_fields", "gas_stations", "general_stores", "farmers_markets",
-                           "malls", "banks", "city_parks", "hospitals", "libraries", "universities", "monorails",
-                           "army_bases", "harbours", "aerodomes", "admin_buildings", "silos", "farms", 
-                           "component_factories", "steel_mills", "ammunition_factories", "aluminium_refineries", "oil_refineries"]
+        proinfra_columns = ["id", "coal_burners", "oil_burners", "solar_fields", "hydro_dams", "nuclear_reactors",
+                           "gas_stations", "general_stores", "farmers_markets", "malls", "banks", "city_parks",
+                           "hospitals", "libraries", "universities", "monorails", "army_bases", "aerodomes",
+                           "harbours", "admin_buildings", "silos", "farms", "pumpjacks", "coal_mines",
+                           "bauxite_mines", "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
+                           "lumber_mills", "component_factories", "steel_mills", "ammunition_factories",
+                           "aluminium_refineries", "oil_refineries"]
         units = dict(zip(proinfra_columns, proinfra_data))
 
         def has_enough_cg(user_id):
