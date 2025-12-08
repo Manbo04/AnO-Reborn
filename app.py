@@ -116,6 +116,23 @@ class RequestsHandler(logging.Handler):
 
 Markdown(app)
 
+# Initialize database with proper defaults for existing provinces
+def _init_province_defaults():
+    """Ensure all provinces have proper default values for stats"""
+    try:
+        from database import get_db_connection
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            # Update provinces with 0 happiness/productivity to have neutral 50% defaults
+            db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
+            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")  
+            db.execute("UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0")
+            conn.commit()
+    except Exception as e:
+        print(f"Note: Province defaults initialization skipped (may be normal): {e}")
+
+_init_province_defaults()
+
 # register blueprints
 app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
