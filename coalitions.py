@@ -361,16 +361,24 @@ GROUP BY colNames.id;
                 coalitions.append(col)
 
         reverse = False
-        if not sort or sort in ["open", "invite_only"]: # Default sort by influence for invite only and open
-            if not sortway: sortway = "desc"
+        # Default to influence descending if no sort specified
+        if not sort:
             sort = "influence"
-        if sortway == "desc": reverse = True
+            sortway = "desc"
+        elif sort in ["open", "invite_only"]:  # Also default to influence for filter-only sorts
+            sort = "influence"
+            if not sortway:
+                sortway = "desc"
+        
+        if sortway == "desc": 
+            reverse = True
+        
         if sort == "influence":
-            coalitions = sorted(coalitions, key=itemgetter(4), reverse=reverse)
+            coalitions = sorted(coalitions, key=itemgetter(5), reverse=reverse)
         elif sort == "members":
             coalitions = sorted(coalitions, key=itemgetter(3), reverse=reverse)
         elif sort == "age":
-            coalitions = sorted(coalitions, key=itemgetter(5), reverse=not reverse)
+            coalitions = sorted(coalitions, key=itemgetter(6), reverse=not reverse)
 
         return render_template("coalitions.html", coalitions=coalitions)
 
