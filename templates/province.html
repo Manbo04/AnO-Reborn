@@ -161,14 +161,14 @@
                         </td>
                         <td>{{ province['population'] | commas }}</td>
                     </tr>
-                    {% if province['happiness']
-                    < 50 %} <tr>
+                    {% if province['happiness'] < 50 %}
+                    <tr>
                         <td><strong class="tooltipparent">
                             <div class="tooltip">Each percent of happiness increases max population by 1.2%</div><span class="material-icons-outlined">
                                  sentiment_dissatisfied
                             </span>Happiness:</strong></td>
                         <td>{{ province['happiness'] }}%</td>
-                        </tr>
+                    </tr>
                         {% else %}
                         <tr>
                             <td><strong class="tooltipparent">
@@ -176,8 +176,10 @@
                                     sentiment_satisfied
                                 </span>Happiness:</strong></td>
                             <td>{{ province['happiness'] }}%</td>
-                        </tr> {% endif %} {% if province['productivity']
-                        < 50 %} <tr>
+                        </tr>
+                    {% endif %}
+                    {% if province['productivity'] < 50 %}
+                    <tr>
                             <td><strong class="tooltipparent">
                             <div class="tooltip">Each percent of productivity increases resource output by 0.9%</div><span class="material-icons-outlined">
                                  arrow_circle_down
@@ -191,7 +193,8 @@
                                     arrow_circle_up
                                 </span>Productivity:</strong></td>
                                 <td>{{ province['productivity'] }}%</td>
-                            </tr>{% endif %}
+                            </tr>
+                        {% endif %}
                             <tr>
                                 <td><strong class="tooltipparent">
                             <div class="tooltip">When consumer spending is 100%, tax income is increased by 150%</div><span class="material-icons-outlined">
