@@ -10,7 +10,15 @@ if not hasattr(ast, "Ellipsis"):
 
 from flask import Flask, request, render_template, session, redirect, send_from_directory
 import traceback
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 app = Flask(__name__)
+
+# Configure trusted hosts for domain setup
+# This allows Flask to work with custom domains via reverse proxy
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Import cache_response decorator
 from database import cache_response
