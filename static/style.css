@@ -2163,6 +2163,13 @@ button {
     display: table-cell;
 }
 
+/* Narrow width for ranking number column */
+.templatetable2 td:first-child,
+.templatetable2 th:first-child {
+    width: 50px;
+    max-width: 50px;
+}
+
 .templatetable2 td:nth-child(even) {
     text-align: center;
     float: none;
