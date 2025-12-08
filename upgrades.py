@@ -32,96 +32,25 @@ def upgrade_sell_buy(ttype, thing):
         cId = session["user_id"]
 
         prices = {
-        'betterEngineering': {
-            "money": 254000000,
-            "resources": {
-                "steel": 500,
-                "aluminium": 420
-            }
-        },
-        'cheaperMaterials': {
-            "money": 22000000,
-            "resources": {
-                "lumber": 220
-            }
-        },
-        'onlineShopping': {
-            "money": 184000000,
-            "resources": {
-                "steel": 600,
-                "aluminium": 450,
-                "lumber": 800
-            }
-        },
-        'governmentRegulation': {
-            "money": 112000000,
-            "resources": {
-                "steel": 980,
-                "aluminium": 750,
-            }
-        },
-        'nationalHealthInstitution': {
-            "money": 95000000,
-            "resources": {
-                "steel": 320,
-                "aluminium": 80,
-                "lumber": 675
-            }
-        },
-        'highSpeedRail': {
-            "money": 220000000,
-            "resources": {
-                "steel": 1350,
-                "aluminium": 450,
-            }
-        },
-        'advancedMachinery': {
-            "money": 180000000,
-            "resources": {
-                "steel": 1400,
-                "aluminium": 320,
-                "lumber": 850
-            }
-        },
-        'strongerExplosives': {
-            "money": 65000000,
-            "resources": {}
-        },
-        'widespreadPropaganda': {
-            "money": 150000000,
-            "resources": {}
-        },
-        'increasedFunding': {
-            "money": 225000000,
-            "resources": {
-                "steel": 950,
-                "aluminium": 450
-            }
-        },
-        'automationIntegration': {
-            "money": 420000000,
-            "resources": {
-                "steel": 2200,
-                "aluminium": 1150
-            }
-        },
-        'largerForges': {
-            "money": 320000000,
-            "resources":  {
-                "steel": 1850,
-                "aluminium": 650
-            }
+            'betterEngineering': {"money": 254000000, "resources": {"steel": 500, "aluminium": 420}},
+            'cheaperMaterials': {"money": 22000000, "resources": {"lumber": 220}},
+            'onlineShopping': {"money": 184000000, "resources": {"steel": 600, "aluminium": 450, "lumber": 800}},
+            'governmentRegulation': {"money": 112000000, "resources": {"steel": 980, "aluminium": 750}},
+            'nationalHealthInstitution': {"money": 95000000, "resources": {"steel": 320, "aluminium": 80, "lumber": 675}},
+            'highSpeedRail': {"money": 220000000, "resources": {"steel": 1350, "aluminium": 450}},
+            'advancedMachinery': {"money": 180000000, "resources": {"steel": 1400, "aluminium": 320, "lumber": 850}},
+            'strongerExplosives': {"money": 65000000, "resources": {}},
+            'widespreadPropaganda': {"money": 150000000, "resources": {}},
+            'increasedFunding': {"money": 225000000, "resources": {"steel": 950, "aluminium": 450}},
+            'automationIntegration': {"money": 420000000, "resources": {"steel": 2200, "aluminium": 1150}},
+            'largerForges': {"money": 320000000, "resources": {"steel": 1850, "aluminium": 650}},
+            'lootingTeams': {"money": 140000000, "resources": {"steel": 800, "aluminium": 350}},
+            'organizedSupplyLines': {"money": 200000000, "resources": {"steel": 1100, "aluminium": 550}},
+            'largeStoreHouses': {"money": 315000000, "resources": {"steel": 1600, "aluminium": 900}},
+            'ballisticMissileSilo': {"money": 280000000, "resources": {"steel": 1200, "aluminium": 450}},
+            'ICBMsilo': {"money": 355000000, "resources": {"steel": 1550, "aluminium": 700}},
+            'nuclearTestingFacility': {"money": 575000000, "resources": {"steel": 2250, "aluminium": 1050}}
         }
-    }
-    """
-        'lootingTeams': 500,
-        'organizedSupplyLines': 500,
-        'largeStoreHouses': 500,
-        'ballisticMissileSilo': 500,
-        'ICBMsilo': 500,
-        'nuclearTestingFacility': 500
-    }
-    """    
 
     if thing not in prices:
         return error(400, f"Upgrade type '{thing}' does not exist.")
