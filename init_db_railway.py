@@ -48,7 +48,21 @@ def create_database():
             print(f"✗ Failed to create table {table_name}: {e}")
             connection.rollback()
 
-    # Insert initial keys for registration
+    print(f"\n✓ Database initialization complete!")
+    print(f"Created {success_count} out of {len(tables)} tables")
+    
+    # Fix existing provinces with better defaults
+    try:
+        db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
+        db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
+        db.execute("UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0")
+        connection.commit()
+        print(f"✓ Fixed existing provinces with default values")
+    except Exception as e:
+        print(f"Note: Could not fix existing provinces (may be normal on first run): {e}")
+    
+    db.close()
+    connection.close()    # Insert initial keys for registration
     try:
         db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
         connection.commit()
