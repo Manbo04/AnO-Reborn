@@ -66,9 +66,10 @@ def coalition(colId):
             leaders = []
 
         try:
-            db.execute("SELECT coalitions.userId, users.username, coalitions.role, stats.influence, (SELECT COUNT(*) FROM provinces WHERE user_id=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id INNER JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
+            db.execute("SELECT coalitions.userId, users.username, coalitions.role, COALESCE(stats.influence, 0) as influence, (SELECT COUNT(*) FROM provinces WHERE user_id=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id LEFT JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
             members = db.fetchall() # All coalition members with influence and provinces
-        except:
+        except Exception as e:
+            print(f"Error fetching members: {e}")
             members = []
 
         try:
