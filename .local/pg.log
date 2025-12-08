@@ -10,3 +10,7 @@
 2025-12-05 23:34:11.642 CET [42016] LOG:  unexpected EOF on client connection with an open transaction
 2025-12-05 23:36:38.395 CET [42484] LOG:  unexpected EOF on client connection with an open transaction
 2025-12-05 23:36:38.395 CET [42491] LOG:  unexpected EOF on client connection with an open transaction
+2025-12-08 03:15:40.163 CET [34424] LOG:  received smart shutdown request
+2025-12-08 03:15:40.168 CET [34424] LOG:  background worker "logical replication launcher" (PID 34431) exited with exit code 1
+2025-12-08 03:15:40.169 CET [34426] LOG:  shutting down
+2025-12-08 03:15:40.192 CET [34424] LOG:  database system is shut down
