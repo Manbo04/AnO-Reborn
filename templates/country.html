@@ -584,7 +584,7 @@
                     </tr>
                     {% for name, type, resource, amount, date in expenses %}
                     <tr>
-                        <td>{{ name }}</td>
+                        <td>{{ name | formatname }}</td>
                         <td>{{ type }}</td>
                         <td>{{ resource | formatname }}</td>
                         <td>{{ amount }}</td>
