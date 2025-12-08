@@ -17,6 +17,19 @@ from time import time
 load_dotenv()
 import config  # Parse Railway DATABASE_URL
 
+# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL) for pool creation (force override)
+from urllib.parse import urlparse
+db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
+if db_url:
+    parsed = urlparse(db_url)
+    os.environ["PG_HOST"] = parsed.hostname or "localhost"
+    os.environ["PG_PORT"] = str(parsed.port or "5432")
+    os.environ["PG_USER"] = parsed.username or "postgres"
+    os.environ["PG_PASSWORD"] = parsed.password or ""
+    os.environ["PG_DATABASE"] = parsed.path[1:] if parsed.path else "postgres"
+else:
+    config.parse_database_url()  # fallback to original behavior
+
 logger = logging.getLogger(__name__)
 
 

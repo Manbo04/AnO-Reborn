@@ -370,9 +370,8 @@ FROM USERS
 LEFT JOIN provinces ON users.id = provinces.userId
 LEFT JOIN coalitions ON users.id = coalitions.userId
 LEFT JOIN colNames ON colNames.id = coalitions.colId
-WHERE users.id != %s
 GROUP BY users.id, coalitions.colId, colNames.name
-HAVING COUNT(provinces.id) >= %s;""", (cId, province_range,))
+HAVING COUNT(provinces.id) >= %s;""", (province_range,))
         dbResults = db.fetchall()
 
     # Hack to add influence into the query, filter influence, province range, etc.
@@ -417,7 +416,7 @@ HAVING COUNT(provinces.id) >= %s;""", (cId, province_range,))
     if sort == "provinces":
         results = sorted(results, key=itemgetter(7), reverse=reverse)
 
-    return render_template("countries.html", countries=results)
+    return render_template("countries.html", countries=results, current_user_id=cId)
 
 
 @ app.route("/update_country_info", methods=["POST"])
