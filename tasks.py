@@ -304,7 +304,6 @@ def calc_pg(pId, rations):
             productivity = db.fetchone()[0]
         except TypeError:
             productivity = 0
-        productivity = 0
 
         # Each % increases / decreases max population by 
         happiness = round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2) # The more you have the better
