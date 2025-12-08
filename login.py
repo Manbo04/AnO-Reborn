@@ -49,7 +49,6 @@ def login():
                 except Exception:
                     db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user[0],))
 
-                print('User has succesfully logged in.')
                 return redirect("/")  # redirects user to homepage
             else:
                 return error(400, "Wrong password")
@@ -61,10 +60,7 @@ def login():
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 
-try:
-    environment = os.getenv("ENVIRONMENT")
-except:
-    environment = "DEV"
+environment = os.getenv("ENVIRONMENT", "DEV")
 
 if environment == "PROD":
     OAUTH2_REDIRECT_URI = 'https://www.affairsandorder.com/callback'

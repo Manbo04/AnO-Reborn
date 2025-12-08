@@ -20,13 +20,12 @@ def generateResetCode():
     return code
 
 def generateUrlFromCode(code):
-    try:
-        environment = os.getenv("ENVIRONMENT") # PROD
-    except:
-        environment = "DEV"
+    environment = os.getenv("ENVIRONMENT", "DEV")
 
-    if environment == "PROD": url = "https://affairsandorder.com"
-    else: url = "http://localhost:5000"
+    if environment == "PROD":
+        url = "https://affairsandorder.com"
+    else:
+        url = "http://localhost:5000"
 
     url += f"/reset_password/{code}"
 
@@ -34,6 +33,8 @@ def generateUrlFromCode(code):
 
 def sendEmail(recipient, code):
     url = generateUrlFromCode(code)
+    import logging
+    logger = logging.getLogger(__name__)
     
     message = Mail(
         from_email=os.getenv("MAIL_USERNAME"),
@@ -43,11 +44,9 @@ def sendEmail(recipient, code):
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
+        logger.info(f"Email sent: {response.status_code}")
     except Exception as e:
-        print(str(e))
+        logger.error(f"Failed to send email: {str(e)}")
 
 # Route for requesting the reset of a password, after which the user can reset his password.
 @app.route("/request_password_reset", methods=["POST"])
@@ -56,20 +55,21 @@ def request_password_reset():
 
     with get_db_cursor() as db:
         try:
-            cId = session["user_id"]
+            cId = session.get("user_id")
         except KeyError:
             cId = None
 
         if cId:  # User is logged in
             db.execute("SELECT email FROM users WHERE id=%s", (cId,))
-            email = db.fetchone()[0]
+            result = db.fetchone()
+            email = result[0] if result else None
         else:
             email = request.form.get("email")
-            try:
-                db.execute("SELECT id FROM users WHERE email=%s", (email,))
-                cId = db.fetchone()[0]
-            except Exception:
+            db.execute("SELECT id FROM users WHERE email=%s", (email,))
+            result = db.fetchone()
+            if not result:
                 return error(400, "No account with the provided email exists.")
+            cId = result[0]
 
             db.execute(
                 "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
@@ -89,14 +89,16 @@ def reset_password(code):
         return render_template("reset_password.html", code=code)
     else:
         with get_db_cursor() as db:
+            import logging
+            logger = logging.getLogger(__name__)
 
             new_password = request.form.get("password").encode("utf-8")
-            print(f"Received URL code: {code}")
-            try:
-                db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
-                user_id = db.fetchone()[0]
-            except Exception:
+            logger.debug(f"Received URL code: {code}")
+            db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
+            result = db.fetchone()
+            if not result:
                 return error(400, "No such code exists.")
+            user_id = result[0]
 
             hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
             db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))

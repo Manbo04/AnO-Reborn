@@ -234,7 +234,7 @@ def peace_offers():
 
                         offer[offer_id]["receiver_id"] = receiver_id
                         offer[offer_id]["receiver"] = receiver_name
-        except:
+        except (TypeError, AttributeError, IndexError, KeyError):
             return "Something went wrong."
 
     if request.method == "POST":
@@ -242,17 +242,17 @@ def peace_offers():
         offer_id = request.form.get("peace_offer", None)
 
         # Validate inputs
-        # try:
-        offer_id = int(offer_id)
+        try:
+            offer_id = int(offer_id)
+        except ValueError:
+            return error(400, "Invalid offer ID")
 
         # Make sure that others can't accept,delete,etc. the peace offer other than the participants
         db.execute("SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) AND peace_date IS NULL", (cId, cId, offer_id))
-        check_validity = db.fetchone()[0]
-
-        try:
-            int(check_validity)
-        except:
-            raise TypeError
+        result = db.fetchone()
+        if not result:
+            raise TypeError("Invalid peace offer")
+        check_validity = result[0]
 
         decision = request.form.get("decision", None)
 
