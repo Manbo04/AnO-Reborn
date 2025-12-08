@@ -382,31 +382,23 @@ def post_offer(offer_type):
 @login_required
 def my_offers():
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = conn.cursor()
     cId = session["user_id"]
-
     offers = {}
 
-    db.execute("""
+    with get_db_cursor() as db:
+        db.execute("""
 SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
 FROM trades INNER JOIN users ON trades.offeree=users.id
 WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
 """, (cId,))
-    offers["outgoing"] = db.fetchall()
+        offers["outgoing"] = db.fetchall()
 
-    db.execute("""
+        db.execute("""
 SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
 FROM trades INNER JOIN users ON trades.offerer=users.id
 WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
 """, (cId,))
-    offers["incoming"] = db.fetchall()
+        offers["incoming"] = db.fetchall()
 
     db.execute("SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC", (cId,))
     offers["market"] = db.fetchall()
@@ -419,23 +411,18 @@ WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
 @login_required
 def delete_offer(offer_id):
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
-
-    db = connection.cursor()
-
     cId = session["user_id"]
 
-    db.execute("SELECT user_id FROM offers WHERE offer_id=(%s)", (offer_id,))
-    offer_owner = db.fetchone()[0]
+    with get_db_cursor() as db:
+        db.execute("SELECT user_id FROM offers WHERE offer_id=(%s)", (offer_id,))
+        result = db.fetchone()
+        if not result:
+            return error(400, "Offer not found")
+        offer_owner = result[0]
 
-    # Checks if user owns the offer
-    if cId != offer_owner:
-        return error(400, "You didn't post that offer")
+        # Checks if user owns the offer
+        if cId != offer_owner:
+            return error(400, "You didn't post that offer")
 
     db.execute("SELECT type FROM offers WHERE offer_id=(%s)", (offer_id,))
     offer_type = db.fetchone()[0]
