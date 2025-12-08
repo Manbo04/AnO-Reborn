@@ -60,7 +60,7 @@
                     <th>Provinces</th>
 
                     {% for id, username, date, flag, province_population, colId, colName, province_count, influence, unix in countries %}
-                    <tr>
+                    <tr {% if id == current_user_id %}class="highlight-row"{% endif %}>
 
                         <!--
                         {% if flag != None %}
