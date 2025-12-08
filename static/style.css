@@ -2166,9 +2166,11 @@ button {
 /* Narrow width for ranking number column */
 .templatetable2 td:first-child,
 .templatetable2 th:first-child {
-    width: 30px;
-    max-width: 30px;
-    padding: 5px;
+    width: 16px;
+    max-width: 16px;
+    padding: 2px;
+    font-size: 14px;
+    line-height: 1.2;
 }
 
 .templatetable2 td:nth-child(even) {
