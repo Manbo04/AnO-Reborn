@@ -204,6 +204,21 @@ def commas(value):
         returned = value
     return returned
 
+# Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
+
+
+@app.template_filter()
+def days_old(date_string):
+    from datetime import datetime
+    try:
+        date_obj = datetime.strptime(str(date_string), "%Y-%m-%d")
+        today = datetime.today()
+        delta = today - date_obj
+        days = delta.days
+        return f"{date_string} ({days} Days Old)"
+    except (ValueError, TypeError):
+        return date_string
+
 # Jinja2 filter to render province building resource strings
 
 
