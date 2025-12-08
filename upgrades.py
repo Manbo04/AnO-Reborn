@@ -123,38 +123,37 @@ def upgrade_sell_buy(ttype, thing):
     }
     """    
 
+    if thing not in prices:
+        return error(400, f"Upgrade type '{thing}' does not exist.")
     money = prices[thing]["money"]
     resources = prices[thing]["resources"]
 
-    if ttype == "buy": # TODO Make resources and gold into one update query.
-
+    if ttype == "buy":
         # Removal of money for purchase and error handling
         try:
             db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (money, cId,))
-        except psycopg2.errors.lookup("23514"): # CheckViolation error
-            return error(400, "You don't have enough money to buy this upgrade.")
+        except Exception as e:
+            return error(400, f"You don't have enough money to buy this upgrade.")
 
         # Removal of resources for purchase and error handling
         for resource, amount in resources.items():
             try:
-                resource_statement = f"UPDATE resources SET {resource}={resource}" + "-%s WHERE id=%s"
+                resource_statement = f"UPDATE resources SET {resource}={resource}-%%s WHERE id=%%s"
                 db.execute(resource_statement, (amount, cId,))
-            except psycopg2.errors.lookup("23514") as e: # CheckViolation error
-                estr = str(e)
-                check_failed = (estr[:estr.index("_check")]).partition("_")[2]
-                return error(400, f"You don't have enough {check_failed.upper()} to buy this upgrade.")
-        
-        upgrade_statement = f"UPDATE upgrades SET {thing}=1 " +  "WHERE user_id=%s"
+            except Exception as e:
+                return error(400, f"You don't have enough {resource.upper()} to buy this upgrade.")
+
+        upgrade_statement = f"UPDATE upgrades SET {thing}=1 WHERE user_id=%s"
         db.execute(upgrade_statement, (cId,))
 
     elif ttype == "sell":
-
         db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
         for resource, amount in resources.items():
-            resource_statement = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
+            resource_statement = f"UPDATE resources SET {resource}={resource}+%%s WHERE id=%%s"
             db.execute(resource_statement, (amount, cId,))
 
-        upgrade_statement = f"UPDATE upgrades SET {thing}=0 " +  "WHERE user_id=%s"
+        upgrade_statement = f"UPDATE upgrades SET {thing}=0 WHERE user_id=%s"
         db.execute(upgrade_statement, (cId,))
 
+    # Always reload upgrades after transaction
     return redirect("/upgrades")
