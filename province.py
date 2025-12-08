@@ -82,10 +82,8 @@ def province(pId):
             return rations - rations_minus > 1
         
         def has_enough_power(province_id):
-            db.execute("SELECT energy FROM provinces WHERE id=%s", (province_id,))
-            energy_data = db.fetchone()
-            energy = energy_data[0] if energy_data else 0
-            return energy > 0
+            consumption, production = energy_info(province_id)
+            return production > consumption
 
         enough_rations = has_enough_rations(province["user"])
 
