@@ -53,6 +53,7 @@
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Influence</th>
                     <th>Date Created</th>
@@ -67,6 +68,7 @@
                         {% endif %}
                         -->
 
+                        <td>{{ loop.index }})</td>
                         <td><a href="/country/id={{ id }}">{{ username }}</a></td>
                         <td>{{ influence }}</td>
                         <td>{{ date }}</td>

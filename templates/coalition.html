@@ -256,6 +256,7 @@
 
             <div class="templateoutertablediv inverttable">
                 <table class="templatetable templatetable2">
+                    <th>#</th>
                     <th><span class="material-icons-outlined">
                     outlined_flag
                     </span>Name</th>
@@ -266,8 +267,9 @@
                     <th><span class="material-icons-outlined">
                         account_balance
                         </span>Provinces</th>
-                    {% for member_id, username, role, influence, provinces in members %}
+                    {% for member_id, username, role, influence, provinces in members|sort(attribute=3, reverse=True) %}
                     <tr>
+                        <td>{{ loop.index }})</td>
                         <td>
                             <a href="/country/id={{ member_id }}">{{ username }}</a>
                         </td>

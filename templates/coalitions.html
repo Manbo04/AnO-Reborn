@@ -73,6 +73,7 @@
             <div class="templateoutertablediv">
                 <table class="templatetable templatetable2">
                     <tr>
+                        <th>#</th>
                         <th>Name</th>
                         <th>Influence</th>
                         <th>Members</th>
@@ -81,6 +82,7 @@
                     </tr>
                     {% for id, type, name, members, date, influence, unix in coalitions %}
                     <tr>
+                        <td>{{ loop.index }})</td>
                         <td><a href="/coalition/{{ id }}">{{ name }}</a></td>
                         <td>{{ influence }}</td>
                         <td>{{ members }}</td>
