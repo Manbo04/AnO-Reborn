@@ -1786,50 +1786,53 @@
 
         </div>
         </div>
-        <form method="POST" action="/transfer/{{ cId }}">
-            <h2 class="templatecontentheaderleft ">Transfer</h2>
+        <h2 class="templatecontentheaderleft ">Transfer Resources</h2>
 
+        <form method="POST">
             <div class="infodiv ">
+                <p style="margin-bottom: 15px; color: #666;">Transfer resources to another nation</p>
+                
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left flexchildvanilla ">
-
-                        <select name="resource" class="templateselect ">
-
-                        <option disabled="true" selected="selected ">Choose one</option>
-
-                        <option value="gold" class="templateoption ">Money</option>
-
-                        <option disabled="true" class="templateoption ">---------</option>
-
-                        <option value="rations" class="templateoption ">Rations</option>
-                        <option value="oil" class="templateoption ">Oil</option>
-                        <option value="coal" class="templateoption ">Coal</option>
-                        <option value="uranium" class="templateoption ">Uranium</option>
-                        <option value="bauxite" class="templateoption ">Bauxite</option>
-                        <option value="iron" class="templateoption ">Iron</option>
-                        <option value="lead" class="templateoption ">Lead</option>
-                        <option value="copper" class="templateoption ">Copper</option>
-                        <option value="lumber" class="templateoption ">Lumber</option>
-                        <option value="components" class="templateoption ">Components</option>
-                        <option value="steel" class="templateoption ">Steel</option>
-                        <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
-                        <option value="aluminium" class="templateoption ">Aluminium</option>
-                        <option value="gasoline" class="templateoption ">Gasoline</option>
-                        <option value="ammunition" class="templateoption ">Ammunition</option>
-                        </select>
-
-
+                        <label for="transferTarget">Target Nation ID:</label>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" required/>
                     </div>
+
+                    <div class="templatedivflex2left flexchildvanilla ">
+                        <label for="transferResource">Resource:</label>
+                        <select name="resource" class="templateselect ">
+                            <option disabled="true" selected="selected ">Choose one</option>
+                            <option value="gold" class="templateoption ">Money</option>
+                            <option disabled="true" class="templateoption ">---------</option>
+                            <option value="rations" class="templateoption ">Rations</option>
+                            <option value="oil" class="templateoption ">Oil</option>
+                            <option value="coal" class="templateoption ">Coal</option>
+                            <option value="uranium" class="templateoption ">Uranium</option>
+                            <option value="bauxite" class="templateoption ">Bauxite</option>
+                            <option value="iron" class="templateoption ">Iron</option>
+                            <option value="lead" class="templateoption ">Lead</option>
+                            <option value="copper" class="templateoption ">Copper</option>
+                            <option value="lumber" class="templateoption ">Lumber</option>
+                            <option value="components" class="templateoption ">Components</option>
+                            <option value="steel" class="templateoption ">Steel</option>
+                            <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
+                            <option value="aluminium" class="templateoption ">Aluminium</option>
+                            <option value="gasoline" class="templateoption ">Gasoline</option>
+                            <option value="ammunition" class="templateoption ">Ammunition</option>
+                        </select>
+                    </div>
+
                     <div class="templatedivflex2left flexchildvanilla">
-
-                        <input class="loginsignupinput" autocomplete="off" name="amount" placeholder="Amount" required/>
-
+                        <label for="transferAmount">Amount:</label>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="amount" placeholder="Amount" required/>
                     </div>
                 </div>
 
-                <button class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                            check
-                            </span>Confirm</button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton" onclick="this.form.action='/transfer/'+document.querySelector('input[name=transferee]').value"><span class="material-icons-outlined">
+                        send
+                    </span>Transfer</button>
+                </div>
 
             </div>
         </form>

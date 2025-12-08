@@ -267,7 +267,7 @@
                     <th><span class="material-icons-outlined">
                         account_balance
                         </span>Provinces</th>
-                    {% for member_id, username, role in members %}
+                    {% for member_id, username, role, influence, provinces in members %}
                     <tr>
                         <td>
                             <a href="/country/id={{ member_id }}">{{ username }}</a>
@@ -275,10 +275,10 @@
                         <td>{{ role.capitalize() }}</td>
                         <td><span class="material-icons-outlined">
                             people_alt
-                            </span>[[ Influence ]]</td>
+                            </span>{{ influence if influence else 0 }}</td>
                         <td><span class="material-icons-outlined">
                             account_balance
-                            </span>[[ Provinces ]]</td>
+                            </span>{{ provinces if provinces else 0 }}</td>
                     </tr>
                     {% endfor %}
                 </table>

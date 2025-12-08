@@ -66,8 +66,8 @@ def coalition(colId):
             leaders = []
 
         try:
-            db.execute("SELECT coalitions.userId, users.username, coalitions.role FROM coalitions INNER JOIN users ON coalitions.userId=users.id AND coalitions.colId=%s", (colId,))
-            members = db.fetchall() # All coalition leaders ids
+            db.execute("SELECT coalitions.userId, users.username, coalitions.role, stats.influence, (SELECT COUNT(*) FROM provinces WHERE user_id=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id INNER JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
+            members = db.fetchall() # All coalition members with influence and provinces
         except:
             members = []
 
