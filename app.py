@@ -254,6 +254,13 @@ def milres(unit):
         full = f"{unit.capitalize()} cost { commas(price) } each"
     return full
 
+# Jinja2 filter to format resource names (replace underscores with spaces)
+@app.template_filter()
+def formatname(value):
+    """Convert snake_case to Title Case"""
+    if not isinstance(value, str):
+        return value
+    return value.replace("_", " ").title()
 
 def get_resources():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
