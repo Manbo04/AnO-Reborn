@@ -39,6 +39,24 @@ def add_cache_headers(response):
         response.headers['Expires'] = '0'
     return response
 
+# Helper to get minified asset path in production
+def asset(filename):
+    """Returns minified version of asset in production, original in development"""
+    import os
+    is_production = os.getenv('FLASK_ENV') == 'production' or os.getenv('RAILWAY_ENVIRONMENT_NAME') is not None
+    
+    if is_production and (filename.endswith('.css') or filename.endswith('.js')):
+        base, ext = filename.rsplit('.', 1)
+        minified = f"{base}.min.{ext}"
+        min_path = f"static/{minified}"
+        if os.path.exists(min_path):
+            return minified
+    
+    return filename
+
+# Make asset helper available in templates
+app.jinja_env.globals['asset'] = asset
+
 import upgrades
 import intelligence
 import tasks
