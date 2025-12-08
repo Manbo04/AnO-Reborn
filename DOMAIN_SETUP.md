@@ -1,10 +1,10 @@
 # Domain Setup Guide
 
-## Quick Start
+## ✅ Domain Configured
 
-Your game is currently hosted at: `web-production-55d7b.up.railway.app`
+Your game is now running on: **`affairsandorder.com`**
 
-To use your own domain, follow these steps:
+Previous host: `web-production-55d7b.up.railway.app` (still available as fallback)
 
 ---
 
