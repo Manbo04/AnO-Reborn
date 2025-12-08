@@ -23,15 +23,15 @@ celery.conf.update(
 celery_beat_schedule = {
     "population_growth": {
         "task": "tasks.task_population_growth",
-        "schedule": crontab(minute=0, hour='*/1'),  # Run hourly
+        "schedule": crontab(minute=0, hour='*/3'),  # Run every 3 hours (reduced from hourly)
     },
     "generate_province_revenue": {
         "task": "tasks.task_generate_province_revenue",
-        "schedule": crontab(minute=0, hour='*/1'),  # Run hourly
+        "schedule": crontab(minute=0, hour='*/3'),  # Run every 3 hours (reduced from hourly)
     },
     "tax_income": {
         "task": "tasks.task_tax_income",
-        "schedule": crontab(minute=0, hour='*/1'),  # Run hourly
+        "schedule": crontab(minute=0, hour='*/3'),  # Run every 3 hours (reduced from hourly)
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
