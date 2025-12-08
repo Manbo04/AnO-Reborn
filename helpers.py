@@ -101,7 +101,9 @@ def get_influence(country_id):
             spies_score = 0
             icbms_score = 0
             nukes_score = 0
-            print(f"Couldn't get military data for user id: {cId}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Couldn't get military data for user id: {cId}")
 
         try:
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))

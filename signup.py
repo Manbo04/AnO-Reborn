@@ -243,12 +243,10 @@ def signup():
 
         with get_db_cursor() as db:
 
-            try:
-                db.execute("SELECT username FROM users WHERE username=%s", (username,))
-                db.fetchone()[0]
+            db.execute("SELECT username FROM users WHERE username=%s", (username,))
+            result = db.fetchone()
+            if result:
                 return error(400, "Duplicate name, choose another one")
-            except:
-                pass
             
             # Checks if password is equal to the confirmation password
             if password != confirmation:  

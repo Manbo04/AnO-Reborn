@@ -163,7 +163,7 @@ def method_not_allowed(error):
 def invalid_server_error(error):
     error_message = "Invalid Server Error. Sorry about that."
     error_code = generate_error_code()
-    print(f"[ERROR! ^^^] [{error_code}] [{error}]")
+    logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
     return render_template("error.html", code=500, message=error_message, error_code=error_code)
 
@@ -175,7 +175,7 @@ def commas(value):
     try:
         rounded = round(value)
         returned = "{:,}".format(rounded)
-    except:
+    except (TypeError, ValueError):
         returned = value
     return returned
 

@@ -29,66 +29,50 @@ def coalition(colId):
         cId = session["user_id"]
 
         try:
-            db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
-            name = db.fetchone()[0]
-        except:
+            db.execute("SELECT name, type, description FROM colNames WHERE id=(%s)", (colId,))
+            result = db.fetchone()
+            if not result:
+                return error(404, "This coalition doesn't exist")
+            name, colType, description = result
+        except (TypeError, AttributeError, IndexError):
             return error(404, "This coalition doesn't exist")
 
         try:
-            db.execute("SELECT type FROM colNames WHERE id=(%s)", (colId,))
-            colType = db.fetchone()[0]
-        except:
-            colType = "Open"
-
-        try:
             db.execute("SELECT COUNT(userId) FROM coalitions WHERE colId=(%s)", (colId,))
-            members_count = db.fetchone()[0]
-        except:
+            members_count = db.fetchone()[0] or 0
+        except (TypeError, AttributeError, IndexError):
             members_count = 0
 
         total_influence = get_coalition_influence(colId)
+        average_influence = total_influence // members_count if members_count > 0 else 0
 
         try:
-            average_influence = total_influence // members_count
-        except:
-            average_influence = 0
-
-        try:
-            db.execute("SELECT description FROM colNames WHERE id=(%s)", (colId,))
-            description = db.fetchone()[0]
-        except:
-            description = ""
-
-        try:
-            db.execute("SELECT coalitions.userId, users.username FROM coalitions INNER JOIN users ON coalitions.userId=users.id AND coalitions.role='leader' AND coalitions.colId=%s", (colId,))
-            leaders = db.fetchall() # All coalition leaders ids
-        except:
+            db.execute("SELECT coalitions.userId, users.username FROM coalitions INNER JOIN users ON coalitions.userId=users.id WHERE coalitions.role='leader' AND coalitions.colId=%s", (colId,))
+            leaders = db.fetchall()
+        except (TypeError, AttributeError, IndexError):
             leaders = []
 
         try:
-            db.execute("SELECT coalitions.userId, users.username, coalitions.role, COALESCE(stats.influence, 0) as influence, (SELECT COUNT(*) FROM provinces WHERE user_id=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id LEFT JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
-            members = db.fetchall() # All coalition members with influence and provinces
-        except Exception as e:
-            print(f"Error fetching members: {e}")
+            db.execute("SELECT coalitions.userId, users.username, coalitions.role, COALESCE(stats.influence, 0) as influence, (SELECT COUNT(*) FROM provinces WHERE userId=coalitions.userId) as province_count FROM coalitions INNER JOIN users ON coalitions.userId=users.id LEFT JOIN stats ON coalitions.userId=stats.id WHERE coalitions.colId=%s", (colId,))
+            members = db.fetchall()
+        except (TypeError, AttributeError, IndexError):
             members = []
 
         try:
             db.execute("SELECT userId FROM coalitions WHERE userId=(%s)", (cId,))
-            userInCol = db.fetchone()[0]
-            userInCol = True
-        except:
+            userInCol = db.fetchone() is not None
+        except (TypeError, AttributeError, IndexError):
             userInCol = False
 
         try:
             db.execute("SELECT userId FROM coalitions WHERE userId=(%s) AND colId=(%s)", (cId, colId))
-            userInCurCol = db.fetchone()[0]
-            userInCurCol = True
-        except:
+            userInCurCol = db.fetchone() is not None
+        except (TypeError, AttributeError, IndexError):
             userInCurCol = False
 
         try:
             user_role = get_user_role(cId)
-        except:
+        except (TypeError, AttributeError, IndexError):
             user_role = None
 
         if user_role in ["leader", "deputy_leader", "domestic_minister"] and userInCurCol:
@@ -266,7 +250,7 @@ def coalition(colId):
         else:
             bankRequests = []
 
-        print(members)
+        # Members list is now logged elsewhere for debugging if needed
 
         return render_template("coalition.html", name=name, colId=colId, user_role=user_role,
             description=description, colType=colType, userInCol=userInCol,
@@ -852,20 +836,17 @@ def accept_bank_request(bankId):
     cId = session["user_id"]
 
     with get_db_cursor() as db:
-        db.execute("SELECT colId FROM colBanksRequests WHERE id=(%s)", (bankId,))
-        colId = db.fetchone()[0]
+        db.execute("SELECT colId, resource, amount, reqId FROM colBanksRequests WHERE id=(%s)", (bankId,))
+        result = db.fetchone()
+        if not result:
+            return error(400, "Bank request not found")
+        
+        colId, resource, amount, user_id = result
 
         user_role = get_user_role(cId)
 
-        if user_role not in  ["leader", "deputy_leader", "banker"]:
+        if user_role not in ["leader", "deputy_leader", "banker"]:
             return error(400, "You aren't the leader of this coalition")
-
-        db.execute("SELECT resource FROM colBanksRequests WHERE id=(%s)", (bankId,))
-        resource = db.fetchone()[0]
-        db.execute("SELECT amount FROM colBanksRequests WHERE id=(%s)", (bankId,))
-        amount = db.fetchone()[0]
-        db.execute("SELECT reqId FROM colBanksRequests WHERE id=(%s)", (bankId,))
-        user_id = db.fetchone()[0]
 
         withdraw(resource, amount, user_id, colId)
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
