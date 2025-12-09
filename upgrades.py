@@ -27,62 +27,63 @@ def upgrades():
 @bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
 @login_required
 def upgrade_sell_buy(ttype, thing):
-
     with get_db_cursor() as db:
         cId = session["user_id"]
 
         prices = {
-            'betterEngineering': {"money": 254000000, "resources": {"steel": 500, "aluminium": 420}},
-            'cheaperMaterials': {"money": 22000000, "resources": {"lumber": 220}},
-            'onlineShopping': {"money": 184000000, "resources": {"steel": 600, "aluminium": 450, "lumber": 800}},
-            'governmentRegulation': {"money": 112000000, "resources": {"steel": 980, "aluminium": 750}},
-            'nationalHealthInstitution': {"money": 95000000, "resources": {"steel": 320, "aluminium": 80, "lumber": 675}},
-            'highSpeedRail': {"money": 220000000, "resources": {"steel": 1350, "aluminium": 450}},
-            'advancedMachinery': {"money": 180000000, "resources": {"steel": 1400, "aluminium": 320, "lumber": 850}},
-            'strongerExplosives': {"money": 65000000, "resources": {}},
-            'widespreadPropaganda': {"money": 150000000, "resources": {}},
-            'increasedFunding': {"money": 225000000, "resources": {"steel": 950, "aluminium": 450}},
-            'automationIntegration': {"money": 420000000, "resources": {"steel": 2200, "aluminium": 1150}},
-            'largerForges': {"money": 320000000, "resources": {"steel": 1850, "aluminium": 650}},
-            'lootingTeams': {"money": 140000000, "resources": {"steel": 800, "aluminium": 350}},
-            'organizedSupplyLines': {"money": 200000000, "resources": {"steel": 1100, "aluminium": 550}},
-            'largeStoreHouses': {"money": 315000000, "resources": {"steel": 1600, "aluminium": 900}},
-            'ballisticMissileSilo': {"money": 280000000, "resources": {"steel": 1200, "aluminium": 450}},
-            'ICBMsilo': {"money": 355000000, "resources": {"steel": 1550, "aluminium": 700}},
-            'nuclearTestingFacility': {"money": 575000000, "resources": {"steel": 2250, "aluminium": 1050}}
+            'betterengineering': {"money": 254000000, "resources": {"steel": 500, "aluminium": 420}},
+            'cheapermaterials': {"money": 22000000, "resources": {"lumber": 220}},
+            'onlineshopping': {"money": 184000000, "resources": {"steel": 600, "aluminium": 450, "lumber": 800}},
+            'governmentregulation': {"money": 112000000, "resources": {"steel": 980, "aluminium": 750}},
+            'nationalhealthinstitution': {"money": 95000000, "resources": {"steel": 320, "aluminium": 80, "lumber": 675}},
+            'highspeedrail': {"money": 220000000, "resources": {"steel": 1350, "aluminium": 450}},
+            'advancedmachinery': {"money": 180000000, "resources": {"steel": 1400, "aluminium": 320, "lumber": 850}},
+            'strongerexplosives': {"money": 65000000, "resources": {}},
+            'widespreadpropaganda': {"money": 150000000, "resources": {}},
+            'increasedfunding': {"money": 225000000, "resources": {"steel": 950, "aluminium": 450}},
+            'automationintegration': {"money": 420000000, "resources": {"steel": 2200, "aluminium": 1150}},
+            'largerforges': {"money": 320000000, "resources": {"steel": 1850, "aluminium": 650}},
+            'lootingteams': {"money": 140000000, "resources": {"steel": 800, "aluminium": 350}},
+            'organizedsupplylines': {"money": 200000000, "resources": {"steel": 1100, "aluminium": 550}},
+            'largestorehouses': {"money": 315000000, "resources": {"steel": 1600, "aluminium": 900}},
+            'ballisticmissilesilo': {"money": 280000000, "resources": {"steel": 1200, "aluminium": 450}},
+            'icbmsilo': {"money": 355000000, "resources": {"steel": 1550, "aluminium": 700}},
+            'nucleartestingfacility': {"money": 575000000, "resources": {"steel": 2250, "aluminium": 1050}}
         }
 
-    if thing not in prices:
-        return error(400, f"Upgrade type '{thing}' does not exist.")
-    money = prices[thing]["money"]
-    resources = prices[thing]["resources"]
+        thing_key = thing.lower()
+        if thing_key not in prices:
+            return error(400, f"Upgrade type '{thing}' does not exist.")
+        
+        money = prices[thing_key]["money"]
+        resources = prices[thing_key]["resources"]
 
-    if ttype == "buy":
-        # Removal of money for purchase and error handling
-        try:
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (money, cId,))
-        except Exception as e:
-            return error(400, f"You don't have enough money to buy this upgrade.")
-
-        # Removal of resources for purchase and error handling
-        for resource, amount in resources.items():
+        if ttype == "buy":
+            # Removal of money for purchase and error handling
             try:
-                resource_statement = f"UPDATE resources SET {resource}={resource}-%%s WHERE id=%%s"
-                db.execute(resource_statement, (amount, cId,))
+                db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (money, cId,))
             except Exception as e:
-                return error(400, f"You don't have enough {resource.upper()} to buy this upgrade.")
+                return error(400, f"You don't have enough money to buy this upgrade.")
 
-        upgrade_statement = f"UPDATE upgrades SET {thing}=1 WHERE user_id=%s"
-        db.execute(upgrade_statement, (cId,))
+            # Removal of resources for purchase and error handling
+            for resource, amount in resources.items():
+                try:
+                    resource_statement = f"UPDATE resources SET {resource}={resource}-%%s WHERE id=%%s"
+                    db.execute(resource_statement, (amount, cId,))
+                except Exception as e:
+                    return error(400, f"You don't have enough {resource.upper()} to buy this upgrade.")
 
-    elif ttype == "sell":
-        db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
-        for resource, amount in resources.items():
-            resource_statement = f"UPDATE resources SET {resource}={resource}+%%s WHERE id=%%s"
-            db.execute(resource_statement, (amount, cId,))
+            upgrade_statement = f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s"
+            db.execute(upgrade_statement, (cId,))
 
-        upgrade_statement = f"UPDATE upgrades SET {thing}=0 WHERE user_id=%s"
-        db.execute(upgrade_statement, (cId,))
+        elif ttype == "sell":
+            db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
+            for resource, amount in resources.items():
+                resource_statement = f"UPDATE resources SET {resource}={resource}+%%s WHERE id=%%s"
+                db.execute(resource_statement, (amount, cId,))
+
+            upgrade_statement = f"UPDATE upgrades SET {thing_key}=0 WHERE user_id=%s"
+            db.execute(upgrade_statement, (cId,))
 
     # Always reload upgrades after transaction
     return redirect("/upgrades")
