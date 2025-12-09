@@ -283,7 +283,7 @@ def province_sell_buy(way, units, province_id):
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
             policies = db.fetchone()[0]
-        except:
+        except (TypeError, IndexError):
             policies = []
 
         if 2 in policies:
@@ -298,14 +298,16 @@ def province_sell_buy(way, units, province_id):
         else:
             totalPrice = price
 
-        print(totalPrice, wantedUnits, price)
-
         try:
             resources_data = unit_prices[f'{units}_resource'].items()
         except KeyError:
             resources_data = {}
 
-        curUnStat = f"SELECT {units} FROM {table} " +  "WHERE id=%s"
+        # Use parameterized query - build statement safely without f-string for column name
+        if units in ["land", "cityCount"]:
+            curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
+        else:
+            curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
         db.execute(curUnStat, (province_id,))
         currentUnits = db.fetchone()[0]
 
@@ -371,14 +373,11 @@ def province_sell_buy(way, units, province_id):
             if totalPrice > gold: # Checks if user wants to buy more units than he has gold
                 return error("You don't have enough money.", 400)
 
-            print(totalPrice)
-
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
                 return error(400, f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem")
 
             res_error = resource_stuff(resources_data, way)
             if res_error:
-                print(res_error)
                 return error(400, f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.")
 
             db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId,))
