@@ -669,6 +669,13 @@ def warResult():
             defensestring = db.fetchone()[0]  # this is in the form of a string soldiers,tanks,artillery
 
             defenselst = defensestring.split(",")  # will give something like: [soldiers, tanks, artillery]
+            
+            # Validate units are legitimate (prevents SQL injection via stored data)
+            from units import Units as UnitsClass
+            for unit in defenselst:
+                if unit not in UnitsClass.allUnits:
+                    return error(400, "Invalid unit in default defense configuration.")
+            
             defenseunits = {}
 
             for unit in defenselst:
