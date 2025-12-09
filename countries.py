@@ -286,7 +286,7 @@ def country(cId):
         db.execute("SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s", (cId,))
         population, happiness, productivity, provinceCount = db.fetchall()[0]
 
-        db.execute("SELECT provinceName, id, population, cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC", (cId,))
+        db.execute("SELECT provinceName, id, population, CAST(cityCount AS INTEGER) as cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC", (cId,))
         provinces = db.fetchall()
 
         cg_needed = cg_need(cId)
