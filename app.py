@@ -414,8 +414,24 @@ def warresult():
 
 
 @app.route("/mass_purchase", methods=["GET"])
+@login_required
 def mass_purchase():
-    return render_template("mass_purchase.html")
+    cId = session["user_id"]
+    with get_db_cursor() as db:
+        db.execute(
+            "SELECT id, name, cityCount, land FROM provinces WHERE user_id=%s ORDER BY name",
+            (cId,)
+        )
+        provinces = db.fetchall()
+        
+        # Convert to list of dicts for template
+        province_list = []
+        if provinces:
+            colnames = [desc[0] for desc in db.description]
+            for row in provinces:
+                province_list.append(dict(zip(colnames, row)))
+    
+    return render_template("mass_purchase.html", provinces=province_list)
 
 
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])

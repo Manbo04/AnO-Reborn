@@ -1,4 +1,4 @@
-{% extends "layout.html" %} {% block title %} Market Offer {% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Mass Purchase {% endblock %} {% block body %}
 <div class="templatediv">
 
     <div class="templatedivtopper provincestopper">
@@ -9,93 +9,46 @@
 
     <div class="templatedivcontent">
 
-        <h3 class="templatecontentheadercenter">Sorry, this page is not currently functional</h3>
-        <!--
         <p class="templatecontentpleft landingpagecontent">
-            Here you can purchase infrastructure and land in every province you own. The "Add amount" option adds a certain amount of cities or land to every single province. The "Purchase up to" option makes all provinces have at least a certain amount of cities
-            of land.
+            You can purchase infrastructure and land for each of your provinces individually. Visit the <a href="/provinces">Provinces</a> page to manage purchases for each province.
         </p>
 
-        <form method="POST">
-            <div class="infodiv">
-
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <label>Purchase type</label>
-
-                        <select name="resource" class="templateselect">
-
-                    <option selected="selected">Add Amount</option>
-                    <option class="templateoption">Purchase up to</option>
-
-                            </select>
-
-                    </div>
-                </div>
-
-                <label class="vanilla mediumsmall">Purchase Cities</label>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" autocomplete="off" name="cityCount" placeholder="City Amount" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <button type="submit" formaction="/buy/cityCount/{{ pId }}" class="templatedivbutton templatecenteredbutton"><span
-                                class="material-icons-outlined">
-                                business
-                            </span>Purchase</button>
-
-                    </div>
-                </div>
-                <label class="vanilla mediumsmall">Purchase Land</label>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" autocomplete="off" name="land" placeholder="Land Amount" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <button type="submit" formaction="/buy/land/{{ pId }}" class="templatedivbutton templatecenteredbutton"><span
-                                class="material-icons-outlined">
-                                landscape
-                            </span>Purchase</button>
-
-                    </div>
-                </div>
-            </div>
-        </form>
+        {% if provinces %}
+        <h3 class="templatecontentheadercenter">Your Provinces</h3>
 
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
                     <th><span class="material-icons-outlined">
                             account_balance
-                                </span>Name</th>
+                                </span>Province Name</th>
                     <th><span class="material-icons-outlined">
                             business
                                 </span>Cities</th>
                     <th><span class="material-icons-outlined">
                             landscape
                                 </span>Land</th>
+                    <th>Action</th>
                 </tr>
+                {% for province in provinces %}
                 <tr>
                     <td><span class="material-icons-outlined">
                             account_balance
-                            </span>[[ name ]]</td>
+                            </span>{{ province['name'] }}</td>
                     <td><span class="material-icons-outlined">
                             business
-                            </span>[[ cities ]]</td>
+                            </span>{{ province['cityCount'] }}</td>
                     <td><span class="material-icons-outlined">
                             landscape
-                            </span>[[ land ]]</td>
+                            </span>{{ province['land'] }}</td>
+                    <td><a href="/province/{{ province['id'] }}" class="templatedivbutton templatecenteredbutton">Manage</a></td>
                 </tr>
+                {% endfor %}
             </table>
         </div>
-        -->
+        {% else %}
+        <p class="templatecontentpleft">You don't have any provinces yet. <a href="/createprovince">Create a province</a> to get started.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
