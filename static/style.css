@@ -1107,7 +1107,7 @@ label {
     margin: 50px auto;
     margin-top: 180px;
     padding-bottom: 25px;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 4px;
     box-shadow: rgba(0, 0, 0, 0.1) 0 20px 50px 0px;
 }
@@ -2090,6 +2090,7 @@ button {
 .templatetable td {
     margin: 0px 2%;
     width: 46%;
+    min-width: 40px;
     text-align: left;
     display: table;
     font-weight: normal;
@@ -2099,6 +2100,8 @@ button {
     float: left;
     line-height: 30px;
     height: 0;
+    white-space: normal;
+    overflow: visible;
 }
 
 .templatetable td:nth-child(even) {
