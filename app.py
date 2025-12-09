@@ -25,10 +25,12 @@ app.config['ALLOWED_HOSTS'] = ['affairsandorder.com', 'www.affairsandorder.com',
 # Trust X-Forwarded-* headers from Railway reverse proxy
 @app.before_request
 def before_request():
-    # Ensure HTTPS is used
-    if not request.is_secure and os.getenv('RAILWAY_ENVIRONMENT_NAME'):
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
+    # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
+    if os.getenv('RAILWAY_ENVIRONMENT_NAME'):
+        forwarded_proto = request.headers.get('X-Forwarded-Proto', 'http')
+        if forwarded_proto != 'https' and not request.is_secure:
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
 
 # Import cache_response decorator
 from database import cache_response
