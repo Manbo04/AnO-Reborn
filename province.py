@@ -231,7 +231,7 @@ def province_sell_buy(way, units, province_id):
 
         try:
             wantedUnits = int(request.form.get(units))
-        except:
+        except (ValueError, TypeError):
             return error(400, "You have to enter a unit amount")
 
         if wantedUnits < 1:
