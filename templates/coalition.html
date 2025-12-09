@@ -588,14 +588,14 @@
                                     <div class="templatedivflex2 menuflex">
                                         <div class="templatedivflex2left">
 
-                                            <button formaction="/accept_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconblue">
+                                            <button type="submit" formaction="/accept_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconblue">
                                             check_circle_outline
                                         </span></button>
 
                                         </div>
                                         <div class="templatedivflex2left">
 
-                                            <button formaction="/remove_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconred">
+                                            <button type="submit" formaction="/remove_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconred">
                                             remove_circle_outline
                                             </span></button>
 
@@ -650,10 +650,10 @@
                             <td>{{ treaty_description }}</td>
                             <form method="POST">
                                 <td>
-                                    <button formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">
+                                    <button type="submit" formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">
                                 check_circle_outline
                                             </span></button>
-                                    <button formaction="/decline_treaty/{{ id[0] }}"><span class="material-icons iconred">
+                                    <button type="submit" formaction="/decline_treaty/{{ id[0] }}"><span class="material-icons iconred">
                                 remove_circle_outline
                                             </span></button>
                                 </td>
@@ -685,7 +685,7 @@
                             <td>{{ treaty_name }}</td>
                             <td>{{ treaty_description }}</td>
                             <form method="POST">
-                                <td><button formaction="/break_treaty/{{ id }}"><span class="material-icons iconred">
+                                <td><button type="submit" formaction="/break_treaty/{{ id }}"><span class="material-icons iconred">
                                                 remove_circle_outline
                                                     </span></button></td>
                             </form>
@@ -870,7 +870,7 @@
                                         <!-- plus sign-->
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button formaction="/add/{{ id[0] }}"><span class="material-icons iconblue">
+                                            <button type="submit" formaction="/add/{{ id[0] }}"><span class="material-icons iconblue">
                                                 check_circle_outline
                                                     </span></button>
 
@@ -878,7 +878,7 @@
                                         <!-- minus sign-->
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button formaction="/remove/{{ id[0] }}"><span class="material-icons iconred">
+                                            <button type="submit" formaction="/remove/{{ id[0] }}"><span class="material-icons iconred">
                                                     highlight_off
                                                     </span></button>
 
