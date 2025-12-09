@@ -18,7 +18,7 @@ def provinces():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("""SELECT cityCount, population, provinceName, id, land, happiness, productivity, energy
+        db.execute("""SELECT CAST(cityCount AS INTEGER) as cityCount, population, provinceName, id, land, happiness, productivity, energy
         FROM provinces WHERE userId=(%s) ORDER BY id ASC""", (cId,))
         provinces = db.fetchall()
 
@@ -36,7 +36,7 @@ def province(pId):
 
         try:
             db.execute("""SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-            consumer_spending, citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
+            consumer_spending, CAST(citycount AS INTEGER) as citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
             province_data = db.fetchone()
             province = {}
             columns = ["id", "user", "name", "population", "pollution", "happiness", "productivity", "consumer_spending", "citycount", "land", "electricity"]
