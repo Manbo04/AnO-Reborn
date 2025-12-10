@@ -134,13 +134,23 @@ class DatabasePool:
             raise
 
     def get_connection(self):
-        """Get a connection from the pool"""
-        self._initialize_pool()  # Lazy init
-        return self._pool.getconn()
 
-    def return_connection(self, conn):
-        """Return a connection to the pool"""
-        self._pool.putconn(conn)
+        """Get a connection from the pool"""
+
+        self._initialize_pool()  # Lazy init
+
+        conn = self._pool.getconn()
+
+        if conn.closed:
+
+            logger.warning("Retrieved closed connection from pool, getting new one")
+
+            self._pool.putconn(conn)
+
+            conn = self._pool.getconn()
+
+        return conn
+
 
     def close_all(self):
         """Close all connections in the pool"""
