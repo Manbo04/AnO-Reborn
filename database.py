@@ -207,6 +207,12 @@ def get_db_cursor(cursor_factory=None):
             results = cursor.fetchall()
     """
     conn = db_pool.get_connection()
+    if conn.closed:
+        try:
+            conn.close()
+        except:
+            pass
+        conn = db_pool.get_connection()
     cursor = conn.cursor(cursor_factory=cursor_factory)
     try:
         yield cursor
