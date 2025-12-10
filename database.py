@@ -47,12 +47,7 @@ class QueryCache:
             if time() - timestamp < self.ttl:
                 return value
             else:
-            logger.warning("Attempted to return connection but pool is not initialized")
-            # Close the connection to avoid leaks
-            try:
-                conn.close()
-            except:
-                pass
+                del self.cache[key]  # Expired
                 del self.cache[key]  # Expired
         return None
     
