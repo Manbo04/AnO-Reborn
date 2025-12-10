@@ -656,47 +656,45 @@ def war_reparation_tax():
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-    port=os.getenv("PG_PORT"))
-    db = conn.cursor()
-    db.execute("SELECT id,peace_date,attacker,attacker_morale,defender,defender_morale FROM wars WHERE (peace_date IS NOT NULL) AND (peace_offer_id IS NULL)")
-    truces = db.fetchall()
-
-    for state in truces:
-        war_id,peace_date,attacker,a_morale,defender,d_morale = state
-
-        # For now we simply delete war record if no longer needed for reparation tax (NOTE: if we want history table for wars then move these peace redords to other table or reuse not needed wars table column -- marter )
-        # If peace is made longer than a week (604800 = one week in seconds)
-        if peace_date < (time.time()-604800):
-            db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
-
-        # Transfer resources to attacker (winner)
-        else:
-            if d_morale <= 0:
-                winner = attacker
-                loser = defender
+        db.execute("SELECT id,peace_date,attacker,attacker_morale,defender,defender_morale FROM wars WHERE (peace_date IS NOT NULL) AND (peace_offer_id IS NULL)")
+        truces = db.fetchall()
+    
+        for state in truces:
+            war_id,peace_date,attacker,a_morale,defender,d_morale = state
+    
+            # For now we simply delete war record if no longer needed for reparation tax (NOTE: if we want history table for wars then move these peace redords to other table or reuse not needed wars table column -- marter )
+            # If peace is made longer than a week (604800 = one week in seconds)
+            if peace_date < (time.time()-604800):
+                db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
+    
+            # Transfer resources to attacker (winner)
             else:
-                winner = defender
-                loser = attacker
-
-            eco = Economy(loser)
-            for resource in Economy.resources:
-                resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
-                db.execute(resource_sel_stat, (loser,))
-                resource_amount = db.fetchone()[0]
-
-                db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
-                war_type = db.fetchone()
-
-                # This condition lower or doesn't give reparation_tax at all
-                # NOTE: for now it lowers to only 5% (the basic is 20%)
-                if war_type == "Raze":
-                    eco.transfer_resources(resource, resource_amount*(1/20), winner)
+                if d_morale <= 0:
+                    winner = attacker
+                    loser = defender
                 else:
-                    # transfer 20% of all resource (TODO: implement if and alliance won how to give it)
-                    eco.transfer_resources(resource, resource_amount*(1/5), winner)
-
-
-
+                    winner = defender
+                    loser = attacker
+    
+                eco = Economy(loser)
+                for resource in Economy.resources:
+                    resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
+                    db.execute(resource_sel_stat, (loser,))
+                    resource_amount = db.fetchone()[0]
+    
+                    db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
+                    war_type = db.fetchone()
+    
+                    # This condition lower or doesn't give reparation_tax at all
+                    # NOTE: for now it lowers to only 5% (the basic is 20%)
+                    if war_type == "Raze":
+                        eco.transfer_resources(resource, resource_amount*(1/20), winner)
+                    else:
+                        # transfer 20% of all resource (TODO: implement if and alliance won how to give it)
+                        eco.transfer_resources(resource, resource_amount*(1/5), winner)
+    
+    
+    
 @celery.task()
 def task_population_growth(): population_growth()
 
@@ -721,10 +719,7 @@ def task_manpower_increase():
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        port=os.getenv("PG_PORT"))
-    db = conn.cursor()
-
-    db.execute("SELECT id FROM users")
+        db.execute("SELECT id FROM users")
     user_ids = db.fetchall()
     for id in user_ids:
         db.execute(
