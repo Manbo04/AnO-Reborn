@@ -121,7 +121,7 @@ class DatabasePool:
         try:
             self._pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
-                maxconn=20,
+                maxconn=50,
                 database=os.getenv("PG_DATABASE"),
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
