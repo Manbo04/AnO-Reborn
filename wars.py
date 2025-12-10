@@ -726,6 +726,7 @@ def warResult():
                       # max lootable is 10% of available resources
                       loot = random.randint(0, available_resource*0.1)
                       attacker_result["loot"] = {"money": loot}
+                      db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (loot, attacker.user_id))
 
                 elif war_type == "Sustained":
                     pass
