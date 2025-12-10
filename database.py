@@ -47,6 +47,12 @@ class QueryCache:
             if time() - timestamp < self.ttl:
                 return value
             else:
+            logger.warning("Attempted to return connection but pool is not initialized")
+            # Close the connection to avoid leaks
+            try:
+                conn.close()
+            except:
+                pass
                 del self.cache[key]  # Expired
         return None
     
@@ -59,6 +65,12 @@ class QueryCache:
         if pattern is None:
             self.cache.clear()
         else:
+            logger.warning("Attempted to return connection but pool is not initialized")
+            # Close the connection to avoid leaks
+            try:
+                conn.close()
+            except:
+                pass
             self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
 
 
@@ -140,8 +152,23 @@ class DatabasePool:
 
     def return_connection(self, conn):
         """Return a connection to the pool"""
-        self._pool.putconn(conn)
-
+        if self._pool is not None:
+            try:
+                self._pool.putconn(conn)
+            except Exception as e:
+                logger.error(f"Error returning connection to pool: {e}")
+                # Try to close the connection if it can't be returned
+                try:
+                    conn.close()
+                except:
+                    pass
+        else:
+            logger.warning("Attempted to return connection but pool is not initialized")
+            # Close the connection to avoid leaks
+            try:
+                conn.close()
+            except:
+                pass
     def close_all(self):
         """Close all connections in the pool"""
         if self._pool:
