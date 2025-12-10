@@ -13,7 +13,7 @@ load_dotenv()
 import config  # Parse Railway environment variables
 
 redis_url = config.get_redis_url()
-celery = Celery("tasks", broker=redis_url)
+celery = Celery("app", broker=redis_url)
 celery.conf.update(
     broker_url=redis_url,
     result_backend=redis_url,
