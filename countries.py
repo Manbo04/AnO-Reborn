@@ -180,6 +180,7 @@ def get_revenue(cId):
 
             for building, build_count in buildings.items():
                 if building == "id": continue
+                if build_count is None or build_count == 0: continue
 
                 operating_costs = infra[building]["money"] * build_count
                 revenue["net"]["money"] -= operating_costs
