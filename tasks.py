@@ -39,7 +39,7 @@ celery_beat_schedule = {
         "schedule": crontab(minute=0, hour=0)
     },
     "manpower_increase": {
-        "task": "app.task_manpower_increase",
+        "task": "tasks.task_manpower_increase",
         "schedule": crontab(minute=0, hour=0) # Run everyday at midnight (UTC)
     }
 }
@@ -644,7 +644,6 @@ def generate_province_revenue(): # Runs each hour
                 if 2 in policies:
                     db.execute("UPDATE provinces SET happiness=happiness*0.89 WHERE id=%s", (province_id,))
 
-                conn.commit() # Commits the changes
 
             except Exception as e:
                 conn.rollback()
@@ -654,11 +653,9 @@ def generate_province_revenue(): # Runs each hour
     conn.close() # Closes the connection
 
 def war_reparation_tax():
-    conn = psycopg2.connect(
-    database=os.getenv("PG_DATABASE"),
-    user=os.getenv("PG_USER"),
-    password=os.getenv("PG_PASSWORD"),
-    host=os.getenv("PG_HOST"),
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
     port=os.getenv("PG_PORT"))
     db = conn.cursor()
     db.execute("SELECT id,peace_date,attacker,attacker_morale,defender,defender_morale FROM wars WHERE (peace_date IS NOT NULL) AND (peace_offer_id IS NULL)")
@@ -698,7 +695,6 @@ def war_reparation_tax():
                     # transfer 20% of all resource (TODO: implement if and alliance won how to give it)
                     eco.transfer_resources(resource, resource_amount*(1/5), winner)
 
-    conn.commit()
 
 
 @celery.task()
@@ -722,11 +718,9 @@ def task_war_reparation_tax(): war_reparation_tax()
 
 @celery.task()
 def task_manpower_increase():
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
         port=os.getenv("PG_PORT"))
     db = conn.cursor()
 
@@ -752,5 +746,3 @@ def task_manpower_increase():
             db.execute("UPDATE military SET manpower=manpower+(%s) WHERE id=(%s)",
                        (produced_manpower, id[0]))
 
-    conn.commit()
-    conn.close()
