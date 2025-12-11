@@ -6,15 +6,6 @@ from helpers import error
 import psycopg2
 # Game.ping() # temporarily removed this line because it might make celery not work
 from app import app
-                            return error(400, "Invalid biome selection")
-# FULLY MIGRATED
-
-from flask import request, render_template, session, redirect
-import datetime
-from helpers import error
-import psycopg2
-# Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
 import bcrypt
 from requests_oauthlib import OAuth2Session
 import os
