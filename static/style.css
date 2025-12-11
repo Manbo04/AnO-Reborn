@@ -3597,6 +3597,25 @@ button {
 }
 
 
+.tutorialfooter {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(0, 167, 225, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #00a7e1;
+    text-align: center;
+}
+
+.tutorialfooter .templatelink {
+    color: #00a7e1;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.tutorialfooter .templatelink:hover {
+    text-decoration: underline;
+}
+
 /*ERROR*/
 
 .errordiv {
