@@ -34,8 +34,15 @@ def main():
                 successful BOOLEAN DEFAULT FALSE
             );
         ''')
+        # Also guard against older tables missing columns by adding them if absent
+        cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);")
+        cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;")
+        cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);")
+        cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+        cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;")
+
         conn.commit()
-        print('✅ signup_attempts table ensured')
+        print('✅ signup_attempts table ensured (columns added if missing)')
         return 0
     except Exception as e:
         conn.rollback()
