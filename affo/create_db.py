@@ -18,7 +18,7 @@ def create_database(database, user, password, host, port):
         "keys", "military", "offers", "proInfra", "provinces", "upgrades",
         "requests", "resources", "spyinfo", "stats", "trades",
         "treaties", "users", "peace", "wars", "reparation_tax", "news",
-        "revenue", "reset_codes", "policies"
+        "revenue", "reset_codes", "policies", "signup_attempts"
     ]
 
     for i in tables:
