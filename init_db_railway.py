@@ -25,7 +25,7 @@ def create_database():
         "keys", "military", "offers", "proInfra", "provinces", "upgrades",
         "requests", "resources", "spyinfo", "stats", "trades",
         "treaties", "users", "peace", "wars", "reparation_tax", "news",
-        "revenue", "reset_codes", "policies"
+        "revenue", "reset_codes", "policies", "signup_attempts"
     ]
 
     print(f"Initializing database...")
