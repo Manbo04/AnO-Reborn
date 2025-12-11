@@ -356,8 +356,11 @@ GROUP BY colNames.id;
             influence = get_coalition_influence(col_id)
             col.append(influence)
 
-            date = datetime.datetime.fromisoformat(col_date)
-            unix = int((date - datetime.datetime(1970, 1, 1)).total_seconds())
+            try:
+                date = datetime.datetime.fromisoformat(col_date)
+                unix = int((date - datetime.datetime(1970, 1, 1)).total_seconds())
+            except (ValueError, TypeError):
+                unix = 0  # Default to epoch if date is invalid
             col.append(unix)
 
             if search and search not in name:
