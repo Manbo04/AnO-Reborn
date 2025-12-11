@@ -160,6 +160,17 @@ app.register_blueprint(intelligence.bp)
 
 import config  # Parse Railway environment variables
 
+# Attempt to ensure critical tables exist at startup. This helps avoid
+# import-time UndefinedTable errors in production when the DB hasn't
+# been migrated yet. It's safe to call (idempotent) and failures are
+# non-fatal.
+try:
+    if hasattr(signup, 'ensure_signup_attempts_table'):
+        signup.ensure_signup_attempts_table()
+except Exception as _e:
+    # Don't raise here; just log to stdout so deployment logs capture it.
+    print(f"Startup: could not ensure signup_attempts table: {_e}")
+
 try:
     environment = os.getenv("ENVIRONMENT")
 except (AttributeError, TypeError):
