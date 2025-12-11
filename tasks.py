@@ -724,24 +724,24 @@ def task_manpower_increase():
 
     with get_db_cursor() as db:
         db.execute("SELECT id FROM users")
-    user_ids = db.fetchall()
-    for id in user_ids:
-        db.execute(
-            "SELECT SUM(population) FROM provinces WHERE userid=(%s)", (id[0],))
-        population = db.fetchone()[0]
-        if population:
-            capable_population = population*0.2
+        user_ids = db.fetchall()
+        for id in user_ids:
+            db.execute(
+                "SELECT SUM(population) FROM provinces WHERE userid=(%s)", (id[0],))
+            population = db.fetchone()[0]
+            if population:
+                capable_population = population*0.2
 
-            # Currently this is a constant
-            army_tradition = 0.5  # Increased for faster regeneration
-            produced_manpower = int(capable_population*army_tradition)
+                # Currently this is a constant
+                army_tradition = 0.5  # Increased for faster regeneration
+                produced_manpower = int(capable_population*army_tradition)
 
-            db.execute("SELECT manpower FROM military WHERE id=(%s)", (id[0],))
-            manpower = db.fetchone()[0]
+                db.execute("SELECT manpower FROM military WHERE id=(%s)", (id[0],))
+                manpower = db.fetchone()[0]
 
-            if manpower+produced_manpower >= population:
-                produced_manpower = 0
+                if manpower+produced_manpower >= population:
+                    produced_manpower = 0
 
-            db.execute("UPDATE military SET manpower=manpower+(%s) WHERE id=(%s)",
-                       (produced_manpower, id[0]))
+                db.execute("UPDATE military SET manpower=manpower+(%s) WHERE id=(%s)",
+                           (produced_manpower, id[0]))
 
