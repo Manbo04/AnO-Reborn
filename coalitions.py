@@ -297,6 +297,17 @@ def establish_coalition():
             name = request.form.get("name")
             desc = request.form.get("description")
 
+            if not name or not cType:
+                return error(400, "Name and type are required")
+
+            if cType not in ["Open", "Invite Only"]:
+                return error(400, "Invalid coalition type")
+
+            # Check if coalition name already exists
+            db.execute("SELECT id FROM colNames WHERE name = %s", (name,))
+            if db.fetchone():
+                return error(400, "A coalition with this name already exists")
+
             if len(str(name)) > 40:
                 return error(400, "Name too long! the coalition name needs to be under 40 characters")
             else:
