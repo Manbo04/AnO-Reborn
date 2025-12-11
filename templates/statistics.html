@@ -56,10 +56,6 @@
                                         </span>Average Price</th>
                     </tr>
                     <tr>
-                        <td>Money:</td>
-                        <td>{{ market_stats.get('money', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
                         <td>Rations:</td>
                         <td>{{ market_stats.get('rations', {}).get('avg', 'N/A') }}</td>
                     </tr>
@@ -78,9 +74,7 @@
                 </table>
             </div>
             <div class="templatedivflex2left">
-
-                chart of prices over last 100 days
-
+                <p class="templatecontentheadercenter">Chart of prices over last 100 days</p>
             </div>
         </div>
 
@@ -92,10 +86,6 @@
                         <th><span class="material-icons-outlined">
                                         arrow_circle_up
                                         </span>Highest Price</th>
-                    </tr>
-                    <tr>
-                        <td>Money:</td>
-                        <td>{{ market_stats.get('money', {}).get('max', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Rations:</td>
@@ -122,10 +112,6 @@
                         <th><span class="material-icons-outlined">
                                         arrow_circle_down
                                         </span>Lowest Price</th>
-                    </tr>
-                    <tr>
-                        <td>Money:</td>
-                        <td>{{ market_stats.get('money', {}).get('min', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Rations:</td>
