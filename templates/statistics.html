@@ -12,10 +12,41 @@
         <h2 class="templatecontentheadercenter">Stats are stored for 100 days</h2>
 
         <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">
-                        local_grocery_store
-                        </span>Market Prices</h2>
+                        public
+                        </span>Nation Statistics</h2>
 
         <div class="templatedivflex2 menuflex">
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th><span class="material-icons-outlined">
+                                        groups
+                                        </span>Global Stats</th>
+                    </tr>
+                    <tr>
+                        <td>Total Nations:</td>
+                        <td>{{ total_nations | commas }}</td>
+                    </tr>
+                    <tr>
+                        <td>Average Influence:</td>
+                        <td>{{ avg_influence | commas }}</td>
+                    </tr>
+                    <tr>
+                        <td>Highest Influence:</td>
+                        <td>{{ max_influence | commas }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <div class="infodiv">
+                    <p class="templatecontentpleft">Track global market trends and nation statistics to make informed decisions about trading, warfare, and economic planning.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">
+                        local_grocery_store
+                        </span>Market Prices</h2>
             <div class="templatedivflex2left">
 
                 <table class="templatetable">
@@ -26,15 +57,23 @@
                     </tr>
                     <tr>
                         <td>Money:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('money', {}).get('avg', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Rations:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('rations', {}).get('avg', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Oil:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('oil', {}).get('avg', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Steel:</td>
+                        <td>{{ market_stats.get('steel', {}).get('avg', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Aluminium:</td>
+                        <td>{{ market_stats.get('aluminium', {}).get('avg', 'N/A') }}</td>
                     </tr>
                 </table>
             </div>
@@ -56,15 +95,23 @@
                     </tr>
                     <tr>
                         <td>Money:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('money', {}).get('max', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Rations:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('rations', {}).get('max', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Oil:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('oil', {}).get('max', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Steel:</td>
+                        <td>{{ market_stats.get('steel', {}).get('max', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Aluminium:</td>
+                        <td>{{ market_stats.get('aluminium', {}).get('max', 'N/A') }}</td>
                     </tr>
                 </table>
             </div>
@@ -78,15 +125,23 @@
                     </tr>
                     <tr>
                         <td>Money:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('money', {}).get('min', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Rations:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('rations', {}).get('min', 'N/A') }}</td>
                     </tr>
                     <tr>
                         <td>Oil:</td>
-                        <td></td>
+                        <td>{{ market_stats.get('oil', {}).get('min', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Steel:</td>
+                        <td>{{ market_stats.get('steel', {}).get('min', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Aluminium:</td>
+                        <td>{{ market_stats.get('aluminium', {}).get('min', 'N/A') }}</td>
                     </tr>
                 </table>
 
