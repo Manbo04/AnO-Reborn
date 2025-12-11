@@ -52,4 +52,7 @@ def reset_user(cId):
             db.execute("DELETE FROM provinces WHERE id=%s", (id,))
 
 if __name__ == "__main__":
-    reset_user(20)
+    # Add 100 billion gold to nation ID 20
+    with get_db_cursor() as db:
+        db.execute("UPDATE stats SET gold = gold + 100000000000 WHERE id = 20")
+    print("Added 100 billion gold to nation ID 20")
