@@ -6,6 +6,15 @@ from helpers import error
 import psycopg2
 # Game.ping() # temporarily removed this line because it might make celery not work
 from app import app
+                            return error(400, "Invalid biome selection")
+# FULLY MIGRATED
+
+from flask import request, render_template, session, redirect
+import datetime
+from helpers import error
+import psycopg2
+# Game.ping() # temporarily removed this line because it might make celery not work
+from app import app
 import bcrypt
 from requests_oauthlib import OAuth2Session
 import os
@@ -16,7 +25,6 @@ load_dotenv()
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-
 try:
     environment = os.getenv("ENVIRONMENT")
 except:
@@ -32,10 +40,9 @@ API_BASE_URL = os.environ.get('API_BASE_URL', 'https://discordapp.com/api')
 AUTHORIZATION_BASE_URL = API_BASE_URL + '/oauth2/authorize'
 TOKEN_URL = API_BASE_URL + '/oauth2/token'
 
-# app.config['SECRET_KEY'] = OAUTH2_CLIENT_SECRET
 
 def verify_recaptcha(response):
-    """Verify reCAPTCHA response with Google"""
+
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
         return True  # Skip verification if no secret key
@@ -48,8 +55,10 @@ def verify_recaptcha(response):
     result = r.json()
     return result.get('success', False)
 
+
 def token_updater(token):
     session['oauth2_token'] = token
+
 
 def make_session(token=None, state=None, scope=None):
     return OAuth2Session(
@@ -65,6 +74,32 @@ def make_session(token=None, state=None, scope=None):
         auto_refresh_url=TOKEN_URL,
         token_updater=token_updater)
 
+
+def ensure_signup_attempts_table():
+    """Idempotent helper: ensure the signup_attempts table exists with expected columns.
+
+    This is safe to call on every request; failures are logged but do not raise.
+    """
+    try:
+        from database import get_db_cursor
+        with get_db_cursor() as db:
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS signup_attempts (
+                    id SERIAL PRIMARY KEY,
+                    ip_address VARCHAR(45) NOT NULL,
+                    fingerprint TEXT,
+                    email VARCHAR(255),
+                    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    successful BOOLEAN DEFAULT FALSE
+                )
+            ''')
+    except Exception as e:
+        try:
+            print(f"ensure_signup_attempts_table: failed to ensure table: {e}")
+        except:
+            pass
+
+
 @app.route('/discord', methods=["GET", "POST"])
 def discord():
 
@@ -77,6 +112,7 @@ def discord():
     session['oauth2_state'] = state
 
     return redirect(authorization_url) # oauth2/authorize
+
 
 @app.route('/callback')
 def callback():
@@ -93,7 +129,7 @@ def callback():
     session['oauth2_token'] = token
 
     discord = make_session(token=token)
-    discord_user_id = discord.get(API_BASE_URL + '/users/@me').json()['id']
+    discord_user_id = discord.get(API_BASE_URL + '/users/@me').json().get('id')
 
     discord_auth = discord_user_id
 
@@ -110,6 +146,7 @@ def callback():
     else:
         return redirect("/discord_signup")
 
+
 @app.route('/discord_signup', methods=["GET", "POST"])
 def discord_register():
     from database import get_db_cursor
@@ -122,7 +159,10 @@ def discord_register():
         try:
             print("\n=== DISCORD SIGNUP START ===")
             print(f"Token in session: {bool(session.get('oauth2_token'))}")
-            
+
+            # Defensive: ensure signup_attempts exists
+            ensure_signup_attempts_table()
+
             # IP rate limiting: max 3 attempts per IP per day
             client_ip = request.remote_addr
             with get_db_cursor() as db:
@@ -263,22 +303,14 @@ def discord_register():
             print("!!! END ERROR !!!\n")
             return error(500, f"Signup failed: {error_msg}")
 
-# Function for verifying that the captcha token is correct
-def verify_captcha(response):
-
-    form_data = {
-        "secret": os.getenv("RECAPTCHA_SECRET"),
-        "response": response,
-    }
-    r = requests.post("https://www.google.com/recaptcha/api/siteverify", data=form_data)
-    r = r.json()
-
-    return r["success"]
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         from database import get_db_cursor
+
+        # Defensive: ensure signup_attempts exists
+        ensure_signup_attempts_table()
 
         # IP rate limiting: max 3 attempts per IP per day
         client_ip = request.remote_addr
@@ -364,3 +396,90 @@ def signup():
     elif request.method == "GET":
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         return render_template("signup.html", way="normal", recaptcha_site_key=recaptcha_site_key)
+                    # Ensure the signup_attempts table exists (defensive)
+                    ensure_signup_attempts_table()
+
+                    # IP rate limiting: max 3 attempts per IP per day
+                    client_ip = request.remote_addr
+                    with get_db_cursor() as db:
+                        db.execute("""
+                            SELECT COUNT(*) FROM signup_attempts 
+                            WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'
+                        """, (client_ip,))
+                        attempt_count = db.fetchone()[0]
+                        if attempt_count >= 3:
+                            return error(429, "Too many signup attempts from this IP address. Please try again tomorrow.")
+            
+                        # Record this attempt
+                        db.execute("""
+                            INSERT INTO signup_attempts (ip_address, attempt_time, successful) 
+                            VALUES (%s, NOW(), FALSE)
+                        """, (client_ip,))
+
+                    # Gets user's form inputs
+                    username = request.form.get("username")
+                    email = request.form.get("email")
+                    password = request.form.get("password").encode('utf-8')
+                    confirmation = request.form.get("confirmation").encode('utf-8')
+
+                    # Verify reCAPTCHA
+                    recaptcha_response = request.form.get("g-recaptcha-response")
+                    if not verify_recaptcha(recaptcha_response):
+                        return error(400, "reCAPTCHA verification failed")
+
+                    # Turns the continent number into 0-indexed
+                    continent_number = int(request.form.get("continent")) - 1
+                    # Ordered list, DO NOT EDIT
+                    continents = ["Tundra", "Savanna", "Desert", "Jungle", "Boreal Forest", "Grassland", "Mountain Range"]
+                    continent = continents[continent_number]
+
+                    with get_db_cursor() as db:
+
+                        db.execute("SELECT username FROM users WHERE username=%s", (username,))
+                        result = db.fetchone()
+                        if result:
+                            return error(400, "Duplicate name, choose another one")
+            
+                        db.execute("SELECT email FROM users WHERE email=%s", (email,))
+                        result = db.fetchone()
+                        if result:
+                            return error(400, "An account with this email already exists")
+            
+                        # Checks if password is equal to the confirmation password
+                        if password != confirmation:  
+                            return error(400, "Passwords must match.")
+
+                        # Hashes the inputted password
+                        hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
+
+                        # Inserts the user and his data to the main table for users
+                        db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", (username, email, hashed, str(datetime.date.today()), "normal"))  # creates a new user || added account creation date
+
+                        # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
+                        db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
+                        user_id = db.fetchone()[0]
+
+                        # Stores the user's 
+                        session["user_id"] = user_id
+
+                        # Inserts the user's id into the needed database tables
+                        db.execute("INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent))
+                        db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
+                        db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
+                        db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
+                        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+
+                    # Mark attempt as successful
+                    with get_db_cursor() as db:
+                        db.execute("""
+                            UPDATE signup_attempts 
+                            SET successful = TRUE 
+                            WHERE ip_address = %s 
+                            ORDER BY attempt_time DESC 
+                            LIMIT 1
+                        """, (client_ip,))
+
+                    return redirect("/")
+                elif request.method == "GET":
+                    recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
+                    return render_template("signup.html", way="normal", recaptcha_site_key=recaptcha_site_key)
