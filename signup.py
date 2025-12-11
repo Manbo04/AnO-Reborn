@@ -74,16 +74,19 @@ def ensure_signup_attempts_table():
     try:
         from database import get_db_cursor
         with get_db_cursor() as db:
+            # Create table if it doesn't exist (minimal primary key), then add expected columns.
             db.execute('''
                 CREATE TABLE IF NOT EXISTS signup_attempts (
-                    id SERIAL PRIMARY KEY,
-                    ip_address VARCHAR(45) NOT NULL,
-                    fingerprint TEXT,
-                    email VARCHAR(255),
-                    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    successful BOOLEAN DEFAULT FALSE
+                    id SERIAL PRIMARY KEY
                 )
             ''')
+
+            # Ensure expected columns exist (no-op if already present)
+            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);")
+            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;")
+            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);")
+            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;")
     except Exception as e:
         try:
             print(f"ensure_signup_attempts_table: failed to ensure table: {e}")
