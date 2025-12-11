@@ -28,7 +28,12 @@ def military():
         # The info of which proinfra tables belong to a user is in provinces table
         limits = Military.get_limits(cId)
 
-        return render_template("military.html", units=units, limits=limits, upgrades=upgrades, mildict=MILDICT)
+        # Get current manpower
+        with get_db_cursor() as db:
+            db.execute("SELECT manpower FROM military WHERE id=%s", (cId,))
+            manpower = db.fetchone()[0]
+
+        return render_template("military.html", units=units, limits=limits, upgrades=upgrades, mildict=MILDICT, manpower=manpower)
 
 @app.route("/<way>/<units>", methods=["POST"])
 @login_required
