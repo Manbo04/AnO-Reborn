@@ -221,8 +221,8 @@ def get_revenue(cId):
 
         # Filter to only show resources with positive gross production or non-zero net (for special cases like rations)
         filtered_revenue = {
-            "gross": {k: v for k, v in revenue["gross"].items() if v > 0},
-            "net": {k: v for k, v in revenue["net"].items() if k in revenue["gross"] and revenue["gross"][k] > 0 or (k == "rations" and v != 0)}
+            "gross": revenue["gross"],
+            "net": revenue["net"]
         }
 
         return filtered_revenue
