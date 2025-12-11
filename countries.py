@@ -172,8 +172,8 @@ def get_revenue(cId):
             if buildings is None:
                 buildings = [0] * len(proinfra_columns)
             # Convert tuple to dict by matching column names
-            proinfra_columns = ["id", "pumpjacks", "coal_mines", "bauxite_mines", "copper_mines", "uranium_mines", 
-                               "lead_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
+            proinfra_columns = ["id", "pumpjacks", "coal_mines", "lead_mines", "copper_mines", "uranium_mines", 
+                               "bauxite_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
                                "nuclear_reactors", "solar_fields", "gas_stations", "general_stores", "farmers_markets",
                                "malls", "banks", "city_parks", "hospitals", "libraries", "universities", "monorails",
                                "army_bases", "harbours", "aerodomes", "admin_buildings", "silos", "farms", 
