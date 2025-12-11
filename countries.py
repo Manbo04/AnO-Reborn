@@ -169,6 +169,8 @@ def get_revenue(cId):
 
             db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
             buildings = db.fetchone()
+            if buildings is None:
+                buildings = [0] * len(proinfra_columns)
             # Convert tuple to dict by matching column names
             proinfra_columns = ["id", "pumpjacks", "coal_mines", "bauxite_mines", "copper_mines", "uranium_mines", 
                                "lead_mines", "iron_mines", "lumber_mills", "coal_burners", "oil_burners", "hydro_dams",
