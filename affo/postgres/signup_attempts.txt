@@ -1,0 +1,8 @@
+CREATE TABLE signup_attempts (
+    id SERIAL PRIMARY KEY,
+    ip VARCHAR(45) NOT NULL,
+    fingerprint TEXT,
+    email VARCHAR(255),
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    successful BOOLEAN DEFAULT FALSE
+);
