@@ -189,7 +189,10 @@ def get_db_connection(cursor_factory=None):
         yield conn
         conn.commit()
     except Exception as e:
-        conn.rollback()
+        try:
+            conn.rollback()
+        except Exception:
+            pass  # Ignore rollback errors if connection is closed
         logger.error(f"Database error: {e}")
         raise
     finally:
