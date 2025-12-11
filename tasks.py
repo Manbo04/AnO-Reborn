@@ -40,7 +40,7 @@ celery_beat_schedule = {
     },
     "manpower_increase": {
         "task": "tasks.task_manpower_increase",
-        "schedule": crontab(minute=0, hour=0) # Run everyday at midnight (UTC)
+        "schedule": crontab(minute=0, hour='*/4') # Run every 4 hours
     }
 }
 
@@ -733,7 +733,7 @@ def task_manpower_increase():
             capable_population = population*0.2
 
             # Currently this is a constant
-            army_tradition = 0.1
+            army_tradition = 0.5  # Increased for faster regeneration
             produced_manpower = int(capable_population*army_tradition)
 
             db.execute("SELECT manpower FROM military WHERE id=(%s)", (id[0],))
