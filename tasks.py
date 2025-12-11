@@ -224,42 +224,46 @@ def calc_ti(user_id):
 def tax_income():
     from database import get_db_connection, BatchOperations
     
-    with get_db_connection() as conn:
-        db = conn.cursor()
-        
-        db.execute("SELECT id FROM users")
-        users = db.fetchall()
-
-        # Prepare batch updates
-        money_updates = []
-        cg_updates = []
-        
-        for user_id in users:
-            user_id = user_id[0]
-
-            db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
-            result = db.fetchone()
-            if not result:
-                continue
-            current_money = result[0]
-
-            money, consumer_goods = calc_ti(user_id)
-            if not money and not consumer_goods:
-                continue
-
-            print(f"Updated money for user id: {user_id}. Set {current_money} money to {current_money + money} money. (+{money})")
+    try:
+        with get_db_connection() as conn:
+            db = conn.cursor()
             
-            money_updates.append((money, user_id))
-            if consumer_goods != 0:
-                cg_updates.append((consumer_goods, user_id))
-        
-        # Execute batch updates
-        if money_updates:
-            from psycopg2.extras import execute_batch
-            execute_batch(db, "UPDATE stats SET gold=gold+%s WHERE id=%s", money_updates)
-        if cg_updates:
-            from psycopg2.extras import execute_batch
-            execute_batch(db, "UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s", cg_updates)
+            db.execute("SELECT id FROM users")
+            users = db.fetchall()
+
+            # Prepare batch updates
+            money_updates = []
+            cg_updates = []
+            
+            for user_id in users:
+                user_id = user_id[0]
+
+                db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
+                result = db.fetchone()
+                if not result:
+                    continue
+                current_money = result[0]
+
+                money, consumer_goods = calc_ti(user_id)
+                if not money and not consumer_goods:
+                    continue
+
+                print(f"Updated money for user id: {user_id}. Set {current_money} money to {current_money + money} money. (+{money})")
+                
+                money_updates.append((money, user_id))
+                if consumer_goods != 0:
+                    cg_updates.append((consumer_goods, user_id))
+            
+            # Execute batch updates
+            if money_updates:
+                from psycopg2.extras import execute_batch
+                execute_batch(db, "UPDATE stats SET gold=gold+%s WHERE id=%s", money_updates)
+            if cg_updates:
+                from psycopg2.extras import execute_batch
+                execute_batch(db, "UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s", cg_updates)
+    except psycopg2.InterfaceError as e:
+        print(f"Database connection error in tax_income: {e}. Skipping tax income update.")
+        return
 
 # Function for calculating population growth for a given province
 def calc_pg(pId, rations):
