@@ -306,7 +306,7 @@ def establish_coalition():
             # Check if coalition name already exists
             db.execute("SELECT id FROM colNames WHERE name = %s", (name,))
             if db.fetchone():
-                return error(400, "A coalition with this name already exists")
+                return error(400, "The coalition name is already taken. Please choose a different name.")
 
             if len(str(name)) > 40:
                 return error(400, "Name too long! the coalition name needs to be under 40 characters")
