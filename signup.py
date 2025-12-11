@@ -34,8 +34,19 @@ TOKEN_URL = API_BASE_URL + '/oauth2/token'
 
 # app.config['SECRET_KEY'] = OAUTH2_CLIENT_SECRET
 
-if 'http://' in OAUTH2_REDIRECT_URI:
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
+def verify_recaptcha(response):
+    """Verify reCAPTCHA response with Google"""
+    secret = os.getenv("RECAPTCHA_SECRET_KEY")
+    if not secret:
+        return True  # Skip verification if no secret key
+    
+    payload = {
+        'secret': secret,
+        'response': response
+    }
+    r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload)
+    result = r.json()
+    return result.get('success', False)
 
 def token_updater(token):
     session['oauth2_token'] = token
@@ -104,12 +115,30 @@ def discord_register():
     from database import get_db_cursor
     
     if request.method == "GET":
-        return render_template('signup.html', way="discord")
+        recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
+        return render_template('signup.html', way="discord", recaptcha_site_key=recaptcha_site_key)
 
     elif request.method == "POST":
         try:
             print("\n=== DISCORD SIGNUP START ===")
             print(f"Token in session: {bool(session.get('oauth2_token'))}")
+            
+            # IP rate limiting: max 3 attempts per IP per day
+            client_ip = request.remote_addr
+            with get_db_cursor() as db:
+                db.execute("""
+                    SELECT COUNT(*) FROM signup_attempts 
+                    WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'
+                """, (client_ip,))
+                attempt_count = db.fetchone()[0]
+                if attempt_count >= 3:
+                    return error(429, "Too many signup attempts from this IP address. Please try again tomorrow.")
+                
+                # Record this attempt
+                db.execute("""
+                    INSERT INTO signup_attempts (ip_address, attempt_time, successful) 
+                    VALUES (%s, NOW(), FALSE)
+                """, (client_ip,))
             
             app.config["SESSION_PERMANENT"] = True
             app.permanent_session_lifetime = datetime.timedelta(days=365)
@@ -138,6 +167,11 @@ def discord_register():
             # Get form data
             username = request.form.get("username", "").strip()
             continent_str = request.form.get("continent", "")
+            
+            # Verify reCAPTCHA
+            recaptcha_response = request.form.get("g-recaptcha-response")
+            if not verify_recaptcha(recaptcha_response):
+                return error(400, "reCAPTCHA verification failed")
             
             print(f"Form username: {username}")
             print(f"Form continent_str: {continent_str}")
@@ -201,6 +235,16 @@ def discord_register():
                 db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
                 db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
+            # Mark attempt as successful
+            with get_db_cursor() as db:
+                db.execute("""
+                    UPDATE signup_attempts 
+                    SET successful = TRUE 
+                    WHERE ip_address = %s 
+                    ORDER BY attempt_time DESC 
+                    LIMIT 1
+                """, (client_ip,))
+
             # Clean up session
             try:
                 session.pop('oauth2_state', None)
@@ -236,11 +280,33 @@ def signup():
     if request.method == "POST":
         from database import get_db_cursor
 
+        # IP rate limiting: max 3 attempts per IP per day
+        client_ip = request.remote_addr
+        with get_db_cursor() as db:
+            db.execute("""
+                SELECT COUNT(*) FROM signup_attempts 
+                WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'
+            """, (client_ip,))
+            attempt_count = db.fetchone()[0]
+            if attempt_count >= 3:
+                return error(429, "Too many signup attempts from this IP address. Please try again tomorrow.")
+            
+            # Record this attempt
+            db.execute("""
+                INSERT INTO signup_attempts (ip_address, attempt_time, successful) 
+                VALUES (%s, NOW(), FALSE)
+            """, (client_ip,))
+
         # Gets user's form inputs
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password").encode('utf-8')
         confirmation = request.form.get("confirmation").encode('utf-8')
+
+        # Verify reCAPTCHA
+        recaptcha_response = request.form.get("g-recaptcha-response")
+        if not verify_recaptcha(recaptcha_response):
+            return error(400, "reCAPTCHA verification failed")
 
         # Turns the continent number into 0-indexed
         continent_number = int(request.form.get("continent")) - 1
@@ -284,6 +350,17 @@ def signup():
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
+        # Mark attempt as successful
+        with get_db_cursor() as db:
+            db.execute("""
+                UPDATE signup_attempts 
+                SET successful = TRUE 
+                WHERE ip_address = %s 
+                ORDER BY attempt_time DESC 
+                LIMIT 1
+            """, (client_ip,))
+
         return redirect("/")
     elif request.method == "GET":
-        return render_template("signup.html", way="normal")
+        recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
+        return render_template("signup.html", way="normal", recaptcha_site_key=recaptcha_site_key)
