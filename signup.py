@@ -169,6 +169,13 @@ def discord_register():
                     print(f"Username already taken: {username}")
                     return error(400, "Country name already taken")
 
+                # Check if email exists
+                if email:
+                    db.execute("SELECT id FROM users WHERE email=%s", (email,))
+                    if db.fetchone():
+                        print(f"Email already used: {email}")
+                        return error(400, "An account with this email already exists")
+
                 print("Username available, checking Discord ID...")
                 db.execute("SELECT id FROM users WHERE hash=%s AND auth_type='discord'", (discord_auth,))
                 if db.fetchone():
@@ -247,6 +254,11 @@ def signup():
             result = db.fetchone()
             if result:
                 return error(400, "Duplicate name, choose another one")
+            
+            db.execute("SELECT email FROM users WHERE email=%s", (email,))
+            result = db.fetchone()
+            if result:
+                return error(400, "An account with this email already exists")
             
             # Checks if password is equal to the confirmation password
             if password != confirmation:  
