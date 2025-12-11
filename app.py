@@ -90,6 +90,7 @@ import signup
 import login
 import wars
 import policies
+import statistics
 import requests
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
