@@ -74,7 +74,7 @@
             </div>
             <div class="templatedivflex2left">
                 <h2 class="templatecontentheadercenter">#3 Build Your Military</h2>
-                <p class="templatecontentpleft landingpagecontent">Military units are essential for defense and conquest. Use your manpower and resources to recruit infantry, tanks, aircraft, and naval vessels. Your military strength determines your position in the world.</p>
+                <p class="templatecontentpleft landingpagecontent">Military units are essential for defense and conquest. Use your manpower and resources to recruit infantry, tanks, aircraft, and naval vessels. Your military strength determines your position in the world. Remember that each unit type has a supply cost for attacks, and you'll need at least 200 supplies to launch an offensive.</p>
                 <div class="templatedivflex2 divflex2center">
                     <div class="templatedivflex2left">
                         <a href="/military" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
@@ -128,7 +128,7 @@
             </div>
             <div class="templatedivflex2left">
                 <h2 class="templatecontentheadercenter">#5 Research Upgrades</h2>
-                <p class="templatecontentpleft landingpagecontent">Upgrades improve your nation's capabilities. Research better military technology, economic boosts, and infrastructure improvements. Each upgrade requires resources and time to complete.</p>
+                <p class="templatecontentpleft landingpagecontent">Upgrades improve your nation's capabilities. Research better military technology, economic boosts, and infrastructure improvements. Each upgrade requires resources and time to complete. Some upgrades can increase your supply regeneration rate or capacity, helping sustain longer wars.</p>
                 <div class="templatedivflex2 divflex2center">
                     <div class="templatedivflex2left">
                         <a href="/upgrades" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
@@ -157,25 +157,15 @@
                 <h2 class="templatecontentheadercenter">#6 War & Combat Mechanics</h2>
                 <p class="templatecontentpleft landingpagecontent">Combat has been updated: morale loss and damage are now calculated per-unit and scaled proportionally to opposing forces, so a matched fight will not wipe morale instantly.</p>
 
-                <h3 class="templatecontentheadercenter">Supplies</h3>
-                <p class="templatecontentpleft landingpagecontent">Every attack consumes supplies. Each unit type has an attack supply cost (shown on the military page). You need at least <strong>200 supplies</strong> to start an attack. Supplies regenerate over time for both sides and are capped per war.</p>
-
                 <h3 class="templatecontentheadercenter">How Morale Loss Is Calculated</h3>
-                <p class="templatecontentpleft landingpagecontent">Instead of a flat morale hit, the game computes a morale impact using three factors:</p>
-                <ul class="templatelist">
-                    <li><strong>Unit weight:</strong> each unit type contributes a small weight (e.g. tanks, aircraft count more than infantry).</li>
-                    <li><strong>Relative strength:</strong> attacker vs defender strength is computed from unit counts × weights. The stronger side gains an advantage factor.</li>
-                    <li><strong>Win intensity:</strong> the fight's win_type scales the final delta (how decisive the win was).</li>
-                </ul>
-                <p class="templatecontentpleft landingpagecontent">These are combined into a per-attack <em>morale delta</em> for the losing side. Deltas are scaled down and capped so wars require multiple engagements to finish a nation.</p>
+                <p class="templatecontentpleft landingpagecontent">Morale impact depends on unit weights (e.g., tanks count more than infantry), relative strength of forces, and win intensity. The losing side takes a scaled morale delta, ensuring wars last multiple engagements.</p>
 
                 <h3 class="templatecontentheadercenter">Damage & Loot</h3>
-                <p class="templatecontentpleft landingpagecontent">Casualties are applied proportionally to the units involved. If the war type is <em>Loot</em> and the attacker wins, they may seize up to 10% of the defender's gold (a random integer between 0 and floor(10%)).</p>
+                <p class="templatecontentpleft landingpagecontent">Casualties are applied proportionally to the units involved. If the war type is <em>Loot</em> and the attacker wins, they may seize up to 10% of the defender's gold.</p>
 
                 <h3 class="templatecontentheadercenter">Tips</h3>
                 <ul class="templatelist">
                     <li>Bring a balanced force: counters reduce effective damage from specific unit types.</li>
-                    <li>Don't attack without enough supplies — attacks require a minimum pool and will fail if supplies run out.</li>
                     <li>Spy and scout to reveal default defenses before committing large forces.</li>
                 </ul>
 
