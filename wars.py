@@ -1,5 +1,6 @@
 # FULLY MIGRATED
 import random
+import math
 from app import app
 from flask import request, render_template, session, redirect
 from database import get_db_cursor
@@ -697,8 +698,13 @@ def warResult():
             # "raze" --> no loot, no reparation tax, destroy 10x more buildings, destroys money/res
             # "sustained" --> 1x loot, 1x infra destruction, 1x building destroy
             # "loot" --> 2x loot, 0.1x infra destruction, buildings cannot be destroyed
-            db.execute("SELECT war_type FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.user_id, defender.user_id, attacker.user_id, defender.user_id))
-            war_type = db.fetchall()[-1][0]
+            db.execute("SELECT war_type FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) AND peace_date IS NULL", (attacker.user_id, defender.user_id, defender.user_id, attacker.user_id))
+            war_rows = db.fetchall()
+            if not war_rows:
+                # no matching war row found — treat as server error (shouldn't happen)
+                return error(500, "Something went wrong")
+
+            war_type = war_rows[-1][0]
 
             # attack_effects = sum of 3 attack effect in fight() method
             winner, win_condition, attack_effects = Military.fight(attacker, defender)
@@ -720,11 +726,22 @@ def warResult():
                       # TODO: maybe include all resources here
                       lootable_resource = "gold"
                       db.execute("SELECT gold FROM stats WHERE id=(%s)", (defender.user_id,))
-                      available_resource = db.fetchone()[0]
+                      fetched = db.fetchone()
+                      available_resource = 0
+                      if fetched and fetched[0] is not None:
+                          try:
+                              # ensure numeric
+                              available_resource = float(fetched[0])
+                          except Exception:
+                              available_resource = 0
 
-                      print(available_resource*0.1)
-                      # max lootable is 10% of available resources
-                      loot = random.randint(0, available_resource*0.1)
+                      # max lootable is 10% of available resources (integer)
+                      max_loot = int(math.floor(max(0, available_resource * 0.1)))
+                      # randint requires integer bounds; ensure at least 0
+                      if max_loot < 0:
+                          max_loot = 0
+
+                      loot = random.randint(0, max_loot)
                       attacker_result["loot"] = {"money": loot}
                       db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (loot, attacker.user_id))
 

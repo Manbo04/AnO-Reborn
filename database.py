@@ -47,8 +47,11 @@ class QueryCache:
             if time() - timestamp < self.ttl:
                 return value
             else:
-                del self.cache[key]  # Expired
-                del self.cache[key]  # Expired
+                # expired: remove once and return None
+                try:
+                    del self.cache[key]
+                except KeyError:
+                    pass
         return None
     
     def set(self, key, value):
@@ -60,13 +63,9 @@ class QueryCache:
         if pattern is None:
             self.cache.clear()
         else:
-            logger.warning("Attempted to return connection but pool is not initialized")
-            # Close the connection to avoid leaks
-            try:
-                conn.close()
-            except:
-                pass
-            self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
+            # remove entries whose key contains the pattern
+            keys_to_keep = {k: v for k, v in self.cache.items() if pattern not in k}
+            self.cache = keys_to_keep
 
 
 def cache_response(ttl_seconds=60):
