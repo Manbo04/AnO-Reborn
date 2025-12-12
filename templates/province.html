@@ -1059,9 +1059,7 @@
 
                                 <p class="templatecontentpleft">Hospitals are equiped with advanced medical equipment and staff, allowing for the drastic increase in people who survive childbirth and deadly illnesses. People live longer and such are happier.</p>
 
-                                <ul>Hospitals cost {{ infra["hospitals_money"] | commas }} per hour and {% if upgrades["nationalhealthinstitution"] %} contribute +{{ infra["hospitals_effect"]["happiness"] * 1.3 }}% happiness</ul>
-                                {% else %} contribute +{{ new_infra["hospitals"]["eff"]["happiness"] }}% happiness</ul>
-                                {% endif %}
+                                <ul>Hospitals cost {{ infra["hospitals_money"] | commas }} per hour and {% if upgrades["nationalhealthinstitution"] %} contribute +{{ (infra["hospitals_effect"][0]["happiness"] * 1.3) | round(2) }}% happiness {% else %} contribute +{{ infra["hospitals_effect"][0]["happiness"] }}% happiness {% endif %}</ul>
                                 <ul>{{ "hospitals" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
