@@ -11,6 +11,7 @@ import variables
 import random as rand
 import time
 from database import get_db_cursor
+from psycopg2.extras import RealDictCursor
 load_dotenv()
 
 bp = Blueprint("intelligence", __name__)
@@ -22,12 +23,12 @@ def intelligence():
     if request.method == "GET":
         cId = session["user_id"]
 
-        with get_db_cursor(dict_cursor=True) as db:
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
             db.execute("DELETE FROM spyentries WHERE date<%s", ((int(time.time()))-86400*7),)
 
         data = []
         try:
-            with get_db_cursor(dict_cursor=True) as db:
+            with get_db_cursor(cursor_factory=RealDictCursor) as db:
                 db.execute("SELECT spyinfo.*, users.username FROM spyinfo LEFT JOIN users ON spyinfo.spyee=users.id WHERE spyinfo.spyer=%s ORDER BY date ASC", (cId, ))
                 info = db.fetchall()
 
