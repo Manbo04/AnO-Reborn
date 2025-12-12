@@ -879,7 +879,21 @@ def target_data(cId):
 def find_targets():
     cId = session["user_id"]
     target = target_data(cId)
-    url = f"/countries?lowerinf={target['lower']}&upperinf={target['upper']}&province_range={target['province_range']}"
+    # Coerce values to safe integers/strings so query params are valid
+    try:
+        lower = int(round(float(target.get('lower') or 0)))
+    except Exception:
+        lower = 0
+    try:
+        upper = int(round(float(target.get('upper') or 0)))
+    except Exception:
+        upper = 0
+    try:
+        province_range = int(target.get('province_range') or 0)
+    except Exception:
+        province_range = 0
+
+    url = f"/countries?lowerinf={lower}&upperinf={upper}&province_range={province_range}"
     return redirect(url)
 
 @app.route("/defense", methods=["GET", "POST"])
