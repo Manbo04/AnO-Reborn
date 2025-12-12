@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}DNS Troubleshooting{% endblock %}
+{% block body %}
+<div class="templatediv">
+  <div class="templatedivtopper noboxshadowtopper">
+    <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">support_agent</span>DNS Troubleshooting</h1>
+  </div>
+  <div class="templatedivcontent">
+    <h2 class="templatecontentheadercenter">Can’t reach the site? Try these steps</h2>
+    <ul class="templatelist">
+      <li>Switch networks: try toggling Wi‑Fi and mobile data.</li>
+      <li>Use a different DNS resolver: set DNS to <strong>1.1.1.1</strong> (Cloudflare) or <strong>8.8.8.8</strong> (Google).</li>
+      <li>Restart the browser or device to clear DNS cache.</li>
+      <li>Disable VPNs or corporate proxies that may block resolution.</li>
+      <li>If the problem persists, open this page and paste the error text in a support ticket so we can investigate (include time and your ISP/mobile operator).</li>
+    </ul>
+    <p class="templatecontentpleft">I checked the site from our server and it is resolving and serving pages via Cloudflare. This error usually means the player's device or their ISP can't resolve the domain. If you continue to get reports, I can check WHOIS / registrar and Cloudflare settings with you.</p>
+  </div>
+</div>
+{% endblock %}
