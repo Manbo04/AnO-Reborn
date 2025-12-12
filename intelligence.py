@@ -24,7 +24,9 @@ def intelligence():
         cId = session["user_id"]
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            db.execute("DELETE FROM spyentries WHERE date<%s", ((int(time.time()))-86400*7),)
+            # cleanup old spyinfo rows (use spyinfo table)
+            cutoff = int(time.time()) - 86400 * 7
+            db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
 
         data = []
         try:
@@ -35,7 +37,8 @@ def intelligence():
                 for row in info:
                     data.append(dict(row))
 
-        except TypeError:
+        except Exception:
+            # If anything unexpected happens reading spyinfo, return an empty page
             return render_template("intelligence.html", info={})
 
 
@@ -64,9 +67,10 @@ def intelligence():
         required_data = variables.RESOURCES + variables.UNITS
         for resource in required_data:
             for user, data in fully_sorted.items():
-                if resource not in data: fully_sorted[user][resource] = "?"
+                if resource not in data:
+                    fully_sorted[user][resource] = "?"
 
-            return render_template("intelligence.html", info=fully_sorted)
+        return render_template("intelligence.html", info=fully_sorted)
 
 
 @bp.route("/spyAmount", methods=["GET", "POST"])
@@ -76,7 +80,14 @@ def spyAmount():
     if request.method == "GET":
         with get_db_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=%s", (cId,))
-            yourCountry = db.fetchone()[0]
+            yourCountry_row = db.fetchone()
+            yourCountry = yourCountry_row[0] if yourCountry_row else ""
+
+            # fetch current spies count for this user to display in the form
+            db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
+            spies_row = db.fetchone()
+            spies = spies_row[0] if spies_row else 0
+
         return render_template("spyAmount.html", yourCountry=yourCountry, spies=spies)
 
     # make the spy entry here
@@ -126,8 +137,15 @@ def spyAmount():
 @login_required
 def spyResult():
     if request.method == "GET":
-        spyEntry = session["spyEntry"]
-        # You've conducted a spy operation on {{enemyNation}} and revealed the following information {{spyEntry}}.
+        spyEntry = session.get("spyEntry", {})
+        eId = session.get("eId")
+        enemyNation = None
+        if eId:
+            with get_db_cursor() as db:
+                db.execute("SELECT username FROM users WHERE id=%s", (eId,))
+                row = db.fetchone()
+                enemyNation = row[0] if row else None
+
         return render_template("spyResult.html", enemyNation=enemyNation, spyEntry=spyEntry)
     if request.method == "POST":
 
