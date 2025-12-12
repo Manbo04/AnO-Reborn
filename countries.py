@@ -284,17 +284,24 @@ def my_country():
 def country(cId):
 
     with get_db_cursor() as db:
-        try:
-            db.execute("SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s", (cId,))
-            username, location, description, dateCreated, flag = db.fetchall()[0]
-        except:
-            return error(404, "Country doesn't exit")
+        db.execute("SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s", (cId,))
+        row = db.fetchone()
+        if not row:
+            return error(404, "Country doesn't exist")
+        username, location, description, dateCreated, flag = row
 
         policies = get_user_policies(cId)
         influence = get_influence(cId)
 
         db.execute("SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s", (cId,))
-        population, happiness, productivity, provinceCount = db.fetchall()[0]
+        stats_row = db.fetchone()
+        if stats_row:
+            population, happiness, productivity, provinceCount = stats_row
+        else:
+            population = 0
+            happiness = 0
+            productivity = 0
+            provinceCount = 0
 
         db.execute("SELECT provinceName, id, population, CAST(cityCount AS INTEGER) as cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC", (cId,))
         provinces = db.fetchall()
@@ -306,10 +313,11 @@ def country(cId):
         except:
             status = False
 
-        try:
-            db.execute("SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s", (cId,))
-            colId, colRole, colName, colFlag = db.fetchall()[0]
-        except:
+        db.execute("SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s", (cId,))
+        col_row = db.fetchone()
+        if col_row:
+            colId, colRole, colName, colFlag = col_row
+        else:
             colId = 0; colRole = None; colName = ""; colFlag = None
 
         spy = {}
