@@ -110,72 +110,70 @@ class Economy:
         if resource not in self.resources:
             return "Invalid resource"
 
-        # get amount of resource
-        resource_sel_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
+        @staticmethod
+        def morale_change(column, win_type, winner, loser):
 
-        db.execute(resource_sel_stat, (self.nationID,))
-        originalUser = int(db.fetchone()[0])
-        db.execute(resource_sel_stat, (destinationID,))
-        destinationUser = int(db.fetchone()[0])
-
-        # subtracts the resource from one nation to another
-        if amount > originalUser:
-            amount = originalUser
-
-        originalUser -= amount
-        destinationUser += amount
-
-        # writes changes in db
-        try:
-            removeStatement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-            db.execute(removeStatement, (originalUser, self.nationID))
-        except: 
-            connection.rollback()
-            setToZero = f"UPDATE resources SET {resource}=0" + " WHERE id=%s"
-            db.execute(setToZero, (self.nationID,))
-
-        db.execute(f"UPDATE resources SET {resource}=(%s) WHERE id=(%s)", (destinationUser, destinationID))
-
-        connection.commit()
-
-class Nation:
-
-    # TODO: someone should update this docs -- marter
-    """
-    Description of properties:
-
-        If values aren't passed to the parameters then should fetch from the database
-
-        - nationID: represents the nation identifier, type: integer
-        - military: represents the ...., type: unknown
-        - economy: re...., type:
-        - provinces: represents the provinces that belongs to the nation, type: dictionary
-          -- structure: provinces_number -> number of provinces, type: integer
-                        provinces_stats -> the actual information about the provinces, type: dictionary -> provinceId, type: integer
-    """
-
-    public_works = ["libraries", "universities", "hospitals", "city_parks", "monorails"]
-
-    # structure of upgrade dictionaries is "name_of_upgrade": "bonus gived by upgrade"
-    supply_related_upgrades = {"lootingTeams": 10}
-    economy_related_upgrades = {}
-
-    # Database management - moved to get_db() method to avoid import-time connection
-    connection = None
-    db = None
-
-    @classmethod
-    def get_db(cls):
-        """Lazy database connection"""
-        if cls.connection is None:
-            cls.connection = psycopg2.connect(
+            # Updated morale change: accept a computed morale delta passed through the caller
+            # The caller should compute a morale delta based on units involved. We still keep
+            # the win_type -> human-readable win_condition mapping, but morale is adjusted
+            # by the provided delta to allow per-unit impacts.
+            connection = psycopg2.connect(
                 database=os.getenv("PG_DATABASE"),
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"))
-            cls.db = cls.connection.cursor()
-        return cls.db
+
+            db = connection.cursor()
+
+            db.execute("SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))", (winner.user_id, loser.user_id, winner.user_id, loser.user_id))
+            war_id = db.fetchall()[-1][0]
+
+            war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
+            db.execute(war_column_stat, (war_id,))
+            morale = db.fetchone()[0]
+
+            # Determine win_condition label from win_type (keeps semantics for other logic)
+            if win_type >= 3:
+                win_condition = "annihilation"
+            elif win_type >= 2:
+                win_condition = "definite victory"
+            else:
+                win_condition = "close victory"
+
+            # If the caller attached a morale_delta attribute on the loser object (preferred),
+            # use it. Otherwise fall back to a conservative fixed decrease based on win_type.
+            morale_delta = getattr(loser, "_computed_morale_delta", None)
+            if morale_delta is None:
+                # conservative fallback (small penalties)
+                if win_type >= 3:
+                    morale_delta = 15
+                elif win_type >= 2:
+                    morale_delta = 10
+                else:
+                    morale_delta = 5
+
+            # Apply morale delta and persist
+            morale = morale - int(morale_delta)
+
+            # Win the war if morale drops to zero or below
+            if morale <= 0:
+                Nation.set_peace(db, connection, war_id)
+                eco = Economy(winner.user_id)
+
+                for resource in Economy.resources:
+                    resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
+                    db.execute(resource_sel_stat, (loser.user_id,))
+                    resource_amount = db.fetchone()[0]
+                    # transfer 20% of resource on hand
+                    eco.transfer_resources(resource, resource_amount*(1/5), winner.user_id)
+
+            db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
+
+            connection.commit()
+            connection.close()
+
+            return win_condition
 
     def __init__(self, nationID, military=None, economy=None, provinces=None, current_wars=None):
         self.id = nationID  # integer ID
@@ -459,20 +457,20 @@ class Military(Nation):
 
         # annihilation
         # 50 morale change
+        # Morale change tiers (reduced severity so wars require sustained action)
+        # annihilation: large defeat
         if win_type >= 3:
-            morale = morale-50
+            morale = morale - 15
             win_condition = "annihilation"
 
-        # definite victory
-        # 35 morale change
+        # definite victory: moderate defeat
         elif win_type >= 2:
-            morale = morale-35
+            morale = morale - 10
             win_condition = "definite victory"
 
-        # close victory
-        # 25 morale change
+        # close victory: minor defeat
         else:
-            morale = morale-25
+            morale = morale - 5
             win_condition = "close victory"
 
         # Win the war
@@ -699,7 +697,62 @@ class Military(Nation):
         # print("MORALE COLUMN", morale_column, "WINNER FROM FIGHT MEHTOD", winner.user_id)
         # print("ATTC", attacker.user_id, defender.user_id)
 
-        # win_condition = Military.morale_change(war_id, morale, morale_column, win_type)
+        # Compute a per-unit morale delta based on the loser's unit composition and the win_type.
+        # We attach the computed delta to the loser object so `morale_change` can consume it.
+        unit_morale_weights = {
+            "soldiers": 0.0002,
+            "artillery": 0.01,
+            "tanks": 0.02,
+            "bombers": 0.03,
+            "fighters": 0.03,
+            "apaches": 0.025,
+            "destroyers": 0.03,
+            "cruisers": 0.04,
+            "submarines": 0.04,
+            "spies": 0.0,
+            "icbms": 5,
+            "nukes": 12
+        }
+
+        # Compute attacker and defender strengths using the unit morale weights
+        attacker_strength = 0.0
+        defender_strength = 0.0
+        try:
+            for unit_name, count in attacker.selected_units.items():
+                attacker_strength += (count or 0) * unit_morale_weights.get(unit_name, 0.01)
+            for unit_name, count in defender.selected_units.items():
+                defender_strength += (count or 0) * unit_morale_weights.get(unit_name, 0.01)
+        except Exception:
+            # fallback small strengths to avoid zero division
+            attacker_strength = max(attacker_strength, 1.0)
+            defender_strength = max(defender_strength, 1.0)
+
+        # Advantage factor ranges (0..1). If attacker and defender are equal, advantage ~ 0.5
+        advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
+
+        # If defender actually won, invert advantage for purposes of computing loser impact
+        if winner is defender:
+            advantage_factor = 1.0 - advantage
+        else:
+            advantage_factor = advantage
+
+        # Base value derived from the loser's own units (their potential to suffer morale loss)
+        base_loser_value = 0.0
+        try:
+            for unit_name, count in loser.selected_units.items():
+                base_loser_value += (count or 0) * unit_morale_weights.get(unit_name, 0.01)
+        except Exception:
+            base_loser_value = 1.0
+
+        # Compute the morale delta proportional to base_loser_value, advantage_factor and win_type.
+        # Scale down to keep deltas reasonable; cap to prevent instant annihilation.
+        computed_morale_delta = int(round(base_loser_value * advantage_factor * win_type * 0.1))
+        computed_morale_delta = max(1, computed_morale_delta)
+        computed_morale_delta = min(200, computed_morale_delta)
+
+        # attach to loser for morale_change to pick up
+        setattr(loser, "_computed_morale_delta", computed_morale_delta)
+
         win_condition = Military.morale_change(morale_column, win_type, winner, loser)
 
         # Maybe use the damage property also in unit loss
