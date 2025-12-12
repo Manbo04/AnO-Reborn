@@ -315,6 +315,25 @@ class Economy:
             # returns the bonus given by the upgrade
             return upgrades
 
+
+class Nation:
+    """Minimal Nation class to provide static helpers required at import time.
+    This preserves the original `set_peace` behavior used by other modules.
+    """
+    @staticmethod
+    def set_peace(db, connection, war_id=None, options=None):
+        print("Setting war peace")
+        print(war_id, options)
+        if war_id is not None:
+            db.execute("UPDATE wars SET peace_date=(%s) WHERE id=(%s)", (time.time(), war_id))
+        else:
+            option = options["option"]
+            query = "UPDATE wars SET peace_date=(%s)" + f"WHERE {option}" + "=(%s)"
+            db.execute(query, (time.time(), options["value"]))
+
+        connection.commit()
+
+
 class Military(Nation):
     allUnits = ["soldiers", "tanks", "artillery",
                 "bombers", "fighters", "apaches",
