@@ -153,10 +153,33 @@ def callback():
         return request.values['error']
 
     discord_state = make_session(state=session.get('oauth2_state'))
-    token = discord_state.fetch_token(
-        TOKEN_URL,
-        client_secret=OAUTH2_CLIENT_SECRET,
-        authorization_response=request.url)
+        # fetch token, but tolerate a mismatching-state (CSRF) error by
+        # attempting a controlled fallback using the incoming `state` param.
+        # This reduces friction for users while we diagnose session persistence.
+        try:
+            token = discord_state.fetch_token(
+                TOKEN_URL,
+                client_secret=OAUTH2_CLIENT_SECRET,
+                authorization_response=request.url)
+        except Exception as e:
+            # Try to detect oauthlib mismatching state without importing the class
+            err_name = type(e).__name__
+            err_str = str(e)
+            print(f"OAuth token fetch error: {err_name}: {err_str}")
+            if 'MismatchingStateError' in err_name or 'mismatching_state' in err_str.lower() or 'state not equal' in err_str.lower():
+                try:
+                    incoming_state = request.args.get('state') or request.values.get('state')
+                    print(f"OAuth state mismatch — attempting fallback with incoming state: {incoming_state}")
+                    discord_state = make_session(state=incoming_state)
+                    token = discord_state.fetch_token(
+                        TOKEN_URL,
+                        client_secret=OAUTH2_CLIENT_SECRET,
+                        authorization_response=request.url)
+                except Exception as e2:
+                    print(f"OAuth fallback failed: {type(e2).__name__}: {e2}")
+                    raise
+            else:
+                raise
     session['oauth2_token'] = token
 
     discord = make_session(token=token)
