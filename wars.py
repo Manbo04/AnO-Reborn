@@ -175,6 +175,7 @@ def peace_offers():
         outgoing={}
 
         resources = []
+        resources_fetch = None
 
         try:
             if peace_offers:
