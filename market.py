@@ -385,26 +385,25 @@ def my_offers():
 
     cId = session["user_id"]
     offers = {}
-
-        with get_db_cursor() as db:
+    with get_db_cursor() as db:
         db.execute("""
-    SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
-    FROM trades INNER JOIN users ON trades.offeree=users.id
-    WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
-    """, (cId,))
+SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
+FROM trades INNER JOIN users ON trades.offeree=users.id
+WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
+""", (cId,))
         offers["outgoing"] = db.fetchall()
 
         db.execute("""
-    SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
-    FROM trades INNER JOIN users ON trades.offerer=users.id
-    WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
-    """, (cId,))
+SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
+FROM trades INNER JOIN users ON trades.offerer=users.id
+WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
+""", (cId,))
         offers["incoming"] = db.fetchall()
 
         db.execute("SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC", (cId,))
         offers["market"] = db.fetchall()
 
-        return render_template("my_offers.html", cId=cId, offers=offers)
+    return render_template("my_offers.html", cId=cId, offers=offers)
 
 @app.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
