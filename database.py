@@ -209,24 +209,77 @@ def get_db_cursor(cursor_factory=None):
             cursor.execute("SELECT ...")
             results = cursor.fetchall()
     """
-    conn = db_pool.get_connection()
-    if conn.closed:
-        try:
-            conn.close()
-        except:
-            pass
-        conn = db_pool.get_connection()
-    cursor = conn.cursor(cursor_factory=cursor_factory)
+    # Try to use a pooled connection when possible, but fall back to
+    # creating a dedicated connection if the pool isn't available or
+    # if an error occurs. Using a dedicated connection for the cursor
+    # prevents accidental reuse/closure races where a cursor from the
+    # pool could be closed by another context.
+    conn = None
+    used_pool = False
     try:
-        yield cursor
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Database error: {e}")
-        raise
+        try:
+            conn = db_pool.get_connection()
+            used_pool = True
+        except Exception:
+            # Pool might not be initialized or available; create a fresh connection
+            conn = psycopg2.connect(
+                database=os.getenv("PG_DATABASE"),
+                user=os.getenv("PG_USER"),
+                password=os.getenv("PG_PASSWORD"),
+                host=os.getenv("PG_HOST"),
+                port=os.getenv("PG_PORT")
+            )
+
+        # If the connection appears closed for any reason, create a fresh one
+        if getattr(conn, 'closed', 0):
+            try:
+                conn.close()
+            except Exception:
+                pass
+            conn = psycopg2.connect(
+                database=os.getenv("PG_DATABASE"),
+                user=os.getenv("PG_USER"),
+                password=os.getenv("PG_PASSWORD"),
+                host=os.getenv("PG_HOST"),
+                port=os.getenv("PG_PORT")
+            )
+
+        cursor = conn.cursor(cursor_factory=cursor_factory)
+        try:
+            yield cursor
+            conn.commit()
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            logger.error(f"Database error: {e}")
+            raise
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
     finally:
-        cursor.close()
-        db_pool.return_connection(conn)
+        # Return or close the connection depending on how it was acquired
+        try:
+            if conn is not None:
+                if used_pool:
+                    try:
+                        db_pool.return_connection(conn)
+                    except Exception:
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                else:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+        except Exception:
+            # Best-effort cleanup; don't let cleanup issues mask original errors
+            pass
 
 
 class QueryHelper:
