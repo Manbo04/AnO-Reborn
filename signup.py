@@ -82,29 +82,48 @@ def ensure_signup_attempts_table():
             ''')
 
             # Ensure expected columns exist (no-op if already present)
-            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);")
-                        # Also tolerate older schema that used `ip` column name and ensure it's nullable
-                        db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip VARCHAR(45);")
-                        # Attempt to drop NOT NULL on `ip` if it exists (wrapped in DO block to avoid errors)
-                        db.execute("""
-                                DO $$
-                                BEGIN
-                                    IF EXISTS (
-                                        SELECT 1 FROM information_schema.columns
-                                        WHERE table_name='signup_attempts' AND column_name='ip'
-                                    ) THEN
-                                        BEGIN
-                                            EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
-                                        EXCEPTION WHEN others THEN
-                                            -- ignore any error dropping NOT NULL (e.g., if it's already nullable)
-                                        END;
-                                    END IF;
-                                END$$;
-                        """)
-            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;")
-            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);")
-            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-            db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;")
+            try:
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);")
+                print('ensure: ip_address ensured')
+            except Exception as e:
+                print('ensure: ip_address error', e)
+
+            # Also tolerate older schema that used `ip` column name and ensure it's nullable
+            try:
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip VARCHAR(45);")
+                print('ensure: ip column ensured')
+            except Exception as e:
+                print('ensure: ip add error', e)
+
+            # Attempt to drop NOT NULL on `ip` if it exists (wrapped in DO block to avoid errors)
+            try:
+                db.execute("""
+                    DO $$
+                    BEGIN
+                      IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='signup_attempts' AND column_name='ip'
+                      ) THEN
+                        BEGIN
+                          EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
+                        EXCEPTION WHEN others THEN
+                          -- ignore any error dropping NOT NULL (e.g., if it's already nullable)
+                        END;
+                      END IF;
+                    END$$;
+                """)
+                print('ensure: attempted drop NOT NULL on ip (if existed)')
+            except Exception as e:
+                print('ensure: ip drop-not-null error', e)
+
+            try:
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;")
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);")
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+                db.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;")
+                print('ensure: other columns ensured')
+            except Exception as e:
+                print('ensure: other columns error', e)
     except Exception as e:
         try:
             print(f"ensure_signup_attempts_table: failed to ensure table: {e}")
