@@ -537,17 +537,21 @@ class Units(Military):
             db = connection.cursor()
 
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,))
-            attacker_id = db.fetchone()
+            row = db.fetchone()
 
-            # If the user is the attacker (maybe optimize this to store the user role in the war)
-            if attacker_id:
+            # Resolve attacker id safely and compare to this object's user id.
+            attacker_id = row[0] if row else None
+
+            # If the current Units object belongs to the attacker side, read attacker_supplies,
+            # otherwise read defender_supplies. Fall back to 0 if values are missing.
+            if attacker_id is not None and attacker_id == self.user_id:
                 db.execute("SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,))
-                self.available_supplies = db.fetchone()[0]
-
-            # the user is defender
+                fetched = db.fetchone()
+                self.available_supplies = fetched[0] if fetched and fetched[0] is not None else 0
             else:
                 db.execute("SELECT defender_supplies FROM wars WHERE id=(%s)", (self.war_id,))
-                self.available_supplies = db.fetchone()[0]
+                fetched = db.fetchone()
+                self.available_supplies = fetched[0] if fetched and fetched[0] is not None else 0
 
         if self.available_supplies < 200:
             return "The minimum supply amount is 200"
