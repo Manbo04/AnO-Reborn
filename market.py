@@ -1,5 +1,6 @@
 from app import app
 from helpers import login_required, error
+from database import get_db_cursor
 import psycopg2
 from flask import request, render_template, session, redirect, flash
 import os
@@ -385,27 +386,25 @@ def my_offers():
     cId = session["user_id"]
     offers = {}
 
-    with get_db_cursor() as db:
+        with get_db_cursor() as db:
         db.execute("""
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
-FROM trades INNER JOIN users ON trades.offeree=users.id
-WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
-""", (cId,))
+    SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
+    FROM trades INNER JOIN users ON trades.offeree=users.id
+    WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
+    """, (cId,))
         offers["outgoing"] = db.fetchall()
 
         db.execute("""
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
-FROM trades INNER JOIN users ON trades.offerer=users.id
-WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
-""", (cId,))
+    SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
+    FROM trades INNER JOIN users ON trades.offerer=users.id
+    WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
+    """, (cId,))
         offers["incoming"] = db.fetchall()
 
-    db.execute("SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC", (cId,))
-    offers["market"] = db.fetchall()
+        db.execute("SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC", (cId,))
+        offers["market"] = db.fetchall()
 
-    conn.close()
-
-    return render_template("my_offers.html", cId=cId, offers=offers)
+        return render_template("my_offers.html", cId=cId, offers=offers)
 
 @app.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
@@ -424,28 +423,24 @@ def delete_offer(offer_id):
         if cId != offer_owner:
             return error(400, "You didn't post that offer")
 
-    db.execute("SELECT type FROM offers WHERE offer_id=(%s)", (offer_id,))
-    offer_type = db.fetchone()[0]
+        db.execute("SELECT type FROM offers WHERE offer_id=(%s)", (offer_id,))
+        row = db.fetchone()
+        if not row:
+            return error(400, "Offer not found")
+        offer_type = row[0]
 
-    if offer_type == "buy":
+        if offer_type == "buy":
+            db.execute("SELECT amount, price FROM offers WHERE offer_id=(%s)", (offer_id,))
+            amount, price = db.fetchone()
+            give_resource("bank", cId, "money", price * amount)
 
-        db.execute("SELECT amount, price FROM offers WHERE offer_id=(%s)", (offer_id,))
-        amount, price = db.fetchone()
+        elif offer_type == "sell":
+            db.execute("SELECT amount, resource FROM offers WHERE offer_id=(%s)", (offer_id,))
+            amount, resource = db.fetchone()
+            give_resource("bank", cId, resource, amount)
 
-        give_resource("bank", cId, "money", price * amount)
+        db.execute("DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)) # Deletes the offer
 
-    elif offer_type == "sell":
-
-        db.execute("SELECT amount, resource FROM offers WHERE offer_id=(%s)", (offer_id,))
-        amount, resource = db.fetchone()
-
-        give_resource("bank", cId, resource, amount)
-
-    db.execute("DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)) # Deletes the offer
-
-    connection.commit()
-    connection.close()
-    
     return redirect("/my_offers")
 
 @app.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
