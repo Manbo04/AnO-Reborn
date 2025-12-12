@@ -152,21 +152,30 @@ def callback():
     if request.values.get('error'):
         return request.values['error']
 
+    # Create an OAuth session using the stored state (may be None)
     discord_state = make_session(state=session.get('oauth2_state'))
-    # fetch token, but tolerate a mismatching-state (CSRF) error by
-    # attempting a controlled fallback using the incoming `state` param.
-    # This reduces friction for users while we diagnose session persistence.
+
+    # Fetch the token. If a state mismatch occurs, attempt a controlled
+    # fallback by re-creating the session with the incoming `state` value
+    # from the request and retrying once.
     try:
         token = discord_state.fetch_token(
             TOKEN_URL,
             client_secret=OAUTH2_CLIENT_SECRET,
-            authorization_response=request.url)
+            authorization_response=request.url,
+        )
     except Exception as e:
-        # Try to detect oauthlib mismatching state without importing the class
         err_name = type(e).__name__
         err_str = str(e)
         print(f"OAuth token fetch error: {err_name}: {err_str}")
-        if 'MismatchingStateError' in err_name or 'mismatching_state' in err_str.lower() or 'state not equal' in err_str.lower():
+
+        is_state_error = (
+            'MismatchingStateError' in err_name
+            or 'mismatching_state' in err_str.lower()
+            or 'state not equal' in err_str.lower()
+        )
+
+        if is_state_error:
             try:
                 incoming_state = request.args.get('state') or request.values.get('state')
                 print(f"OAuth state mismatch — attempting fallback with incoming state: {incoming_state}")
@@ -174,12 +183,14 @@ def callback():
                 token = discord_state.fetch_token(
                     TOKEN_URL,
                     client_secret=OAUTH2_CLIENT_SECRET,
-                    authorization_response=request.url)
+                    authorization_response=request.url,
+                )
             except Exception as e2:
                 print(f"OAuth fallback failed: {type(e2).__name__}: {e2}")
                 raise
         else:
             raise
+
     session['oauth2_token'] = token
 
     discord = make_session(token=token)
@@ -189,16 +200,18 @@ def callback():
 
     with get_db_cursor() as db:
         try:
-            db.execute("SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'", (discord_auth,))
+            db.execute(
+                "SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'",
+                (discord_auth,),
+            )
             duplicate = db.fetchone()[0]
             duplicate = True
         except TypeError:
             duplicate = False
 
     if duplicate:
-        return redirect("/discord_login")
-    else:
-        return redirect("/discord_signup")
+        return redirect('/discord_login')
+    return redirect('/discord_signup')
 
 
 @app.route('/discord_signup', methods=["GET", "POST"])
@@ -332,11 +345,14 @@ def discord_register():
             # Mark attempt as successful
             with get_db_cursor() as db:
                 db.execute("""
-                    UPDATE signup_attempts 
-                    SET successful = TRUE 
-                    WHERE ip_address = %s 
-                    ORDER BY attempt_time DESC 
-                    LIMIT 1
+                    UPDATE signup_attempts
+                    SET successful = TRUE
+                    WHERE id = (
+                        SELECT id FROM signup_attempts
+                        WHERE ip_address = %s
+                        ORDER BY attempt_time DESC
+                        LIMIT 1
+                    )
                 """, (client_ip,))
 
             # Clean up session
@@ -439,11 +455,14 @@ def signup():
         # Mark attempt as successful
         with get_db_cursor() as db:
             db.execute("""
-                UPDATE signup_attempts 
-                SET successful = TRUE 
-                WHERE ip_address = %s 
-                ORDER BY attempt_time DESC 
-                LIMIT 1
+                UPDATE signup_attempts
+                SET successful = TRUE
+                WHERE id = (
+                    SELECT id FROM signup_attempts
+                    WHERE ip_address = %s
+                    ORDER BY attempt_time DESC
+                    LIMIT 1
+                )
             """, (client_ip,))
 
         return redirect("/")
