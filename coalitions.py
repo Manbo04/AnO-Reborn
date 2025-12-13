@@ -659,7 +659,7 @@ def deposit_into_bank(colId):
     except TypeError:
         return redirect(400, "You aren't in this coalition")
 
-    resources = variables.RESOURCES
+    resources = ["money"] + variables.RESOURCES
 
     deposited_resources = []
 
@@ -789,8 +789,12 @@ def withdraw_from_bank(colId):
     withdrew_resources = []
 
     for res in resources:
-        resource = request.form.get(res)
-        if resource != "":
+        try:
+            resource = request.form.get(res)
+        except:
+            resource = ""
+
+        if resource is not None and resource != "":
             res_tuple = (res, int(resource))
             withdrew_resources.append(res_tuple)
 
@@ -819,13 +823,17 @@ def request_from_bank(colId):
         except TypeError:
             return redirect(400, "You aren't in this coalition")
 
-        resources = variables.RESOURCES
+        resources = ["money"] + variables.RESOURCES
 
         requested_resources = []
 
         for res in resources:
-            resource = request.form.get(res)
-            if resource != "":
+            try:
+                resource = request.form.get(res)
+            except:
+                resource = ""
+
+            if resource is not None and resource != "":
                 res_tuple = (res, int(resource))
                 requested_resources.append(res_tuple)
 
