@@ -6,6 +6,27 @@ from flask import request, render_template, session, redirect
 from database import get_db_cursor
 from helpers import login_required, error, get_flagname
 from attack_scripts import Nation, Military, Economy
+import inspect
+
+# Some deployments include a minimal `Nation` class in `attack_scripts.Nations`
+# that does not accept an ID argument (causing `Nation(int(...))` to raise
+# `TypeError: Nation() takes no arguments`). The fuller implementation
+# (with `__init__(self, nationID, ...)`, `get_provinces`, `send_news`, etc.)
+# ended up attached to `Economy` in that module due to historical layout.
+# If the imported `Nation` is the minimal one (no __init__ params beyond
+# `self`), prefer using `Economy` as the runtime `Nation` implementation
+# so routes like `/declare_war` keep working while we clean up the module.
+try:
+    params = inspect.signature(Nation.__init__).parameters
+    # parameters include 'self' when present; if there are no other params
+    # the constructor takes no required arguments and will fail when called
+    # with an ID. In that case swap in `Economy` which contains the
+    # expected implementation in this codebase.
+    if len(params) <= 1:
+        Nation = Economy
+except Exception:
+    # If anything goes wrong inspecting, prefer the safer, fuller class.
+    Nation = Economy
 from units import Units
 import time
 from helpers import get_influence, check_required
@@ -839,8 +860,12 @@ def declare_war():
 
     try:
         with get_db_cursor() as db:
-            attacker = Nation(int(session.get("user_id")))
-            defender = Nation(defender_id)
+            # Use `Economy` here because some deployments include a
+            # minimal `Nation` class in `attack_scripts.Nations` which
+            # doesn't accept an ID parameter. `Economy` provides the
+            # fuller implementation we rely on (get_provinces, send_news, etc.).
+            attacker = Economy(int(session.get("user_id")))
+            defender = Economy(defender_id)
 
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
@@ -877,7 +902,7 @@ def declare_war():
             # War declaration notification
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
             attacker_name = db.fetchone()[0]
-            Nation.send_news(defender.id, f"{attacker_name} declared war!")
+            Economy.send_news(defender.id, f"{attacker_name} declared war!")
 
     except Exception as e:
         print("Error in declare_war:")
