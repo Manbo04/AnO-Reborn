@@ -731,13 +731,19 @@ def deposit_into_bank(colId):
 
 # Function for withdrawing a resource from the bank
 def withdraw(resource, amount, user_id, colId):
-
     with get_db_cursor() as db:
         # Removes the resource from the coalition bank
 
-        current_resource_statement = f"SELECT {resource}" + " FROM colBanks WHERE colId=%s"
+        current_resource_statement = f"SELECT {resource} FROM colBanks WHERE colId=%s"
         db.execute(current_resource_statement, (colId,))
-        current_resource = db.fetchone()[0]
+        row = db.fetchone()
+        current_resource = row[0] if row and row[0] is not None else 0
+
+        # Normalize types
+        try:
+            current_resource = int(current_resource)
+        except Exception:
+            current_resource = 0
 
         if amount < 1:
             return error(400, "Amount cannot be less than 1")
@@ -747,29 +753,35 @@ def withdraw(resource, amount, user_id, colId):
 
         new_resource = current_resource - amount
 
-        update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
+        update_statement = f"UPDATE colBanks SET {resource}=%s WHERE colId=%s"
         db.execute(update_statement, (new_resource, colId))
+
+        app.logger.info(f"withdraw: colId={colId} resource={resource} amount={amount} bank_before={current_resource} bank_after={new_resource}")
 
         # Gives the leader his resource
         # If the resource is money, gives him money
         if resource == "money":
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (user_id,))
-            current_money = int(db.fetchone()[0])
+            row = db.fetchone()
+            current_money = int(row[0]) if row and row[0] is not None else 0
 
             new_money = current_money + amount
 
             db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
+            app.logger.info(f"withdraw: user_id={user_id} gold_before={current_money} gold_after={new_money}")
 
         # If the resource is not money, gives him that resource
         else:
-            current_resource_statement = f"SELECT {resource}" +  " FROM resources WHERE id=%s"
+            current_resource_statement = f"SELECT {resource} FROM resources WHERE id=%s"
             db.execute(current_resource_statement, (user_id,))
-            current_resource = db.fetchone()[0]
+            row = db.fetchone()
+            user_current = int(row[0]) if row and row[0] is not None else 0
 
-            new_resource = current_resource + amount
+            new_resource = user_current + amount
 
-            update_statement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
+            update_statement = f"UPDATE resources SET {resource}=%s WHERE id=%s"
             db.execute(update_statement, (new_resource, user_id))
+            app.logger.info(f"withdraw: user_id={user_id} {resource}_before={user_current} {resource}_after={new_resource}")
 
 
 # Route from withdrawing from the bank
@@ -795,7 +807,11 @@ def withdraw_from_bank(colId):
             resource = ""
 
         if resource is not None and resource != "":
-            res_tuple = (res, int(resource))
+            try:
+                amt = int(resource)
+            except Exception:
+                return error(400, f"Invalid amount for {res}")
+            res_tuple = (res, amt)
             withdrew_resources.append(res_tuple)
 
     for resource in withdrew_resources:
