@@ -14,6 +14,9 @@ load_dotenv()
 def login():
 
     if request.method == "POST":
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error("[DEBUG] POST /login/ called")
         app.config["SESSION_PERMANENT"] = True
         app.permanent_session_lifetime = datetime.timedelta(days=365)
 
@@ -21,25 +24,30 @@ def login():
         password = request.form.get("password")
         # gets the username input from the forms
         username = request.form.get("username")
+        logger.error(f"[DEBUG] username: {username}, password: {password}")
 
         if not username or not password:  # checks if inputs are blank
+            logger.error("[DEBUG] Missing username or password")
             return error(400, "No Password or Username")
 
         password = password.encode("utf-8")
 
         with get_db_cursor() as db:
             # selects data about user, from users
-            # to run locally remove "AND auth_type='normal'", type it back in before pushing to github
             db.execute("SELECT * FROM users WHERE username=(%s) AND auth_type='normal'", (username,))
             user = db.fetchone()
+            logger.error(f"[DEBUG] DB user row: {user}")
 
             try:
                 hashed_pw = user[4].encode("utf-8")
-            except Exception:
+                logger.error(f"[DEBUG] hashed_pw: {hashed_pw}")
+            except Exception as e:
+                logger.error(f"[DEBUG] Exception getting hashed_pw: {e}")
                 return error(403, "Wrong password or user doesn't exist")
 
             # checks if user exists and if the password is correct
             if bcrypt.checkpw(password, hashed_pw):
+                logger.error("[DEBUG] Password matches, logging in user.")
                 # sets session's user_id to current user's id
                 session["user_id"] = user[0]
 
@@ -51,6 +59,7 @@ def login():
 
                 return redirect("/")  # redirects user to homepage
             else:
+                logger.error("[DEBUG] Password does not match.")
                 return error(400, "Wrong password")
 
     else:

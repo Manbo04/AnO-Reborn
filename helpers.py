@@ -39,11 +39,13 @@ def login_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[DEBUG] login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}")
         if not session.get('user_id', None):
+            logger.error("[DEBUG] login_required: user_id missing, redirecting to /login")
             return redirect("/login")
-
         return f(*args, **kwargs)
-
     return decorated_function
 
 # Check for neccessary values without them user can't access a page
