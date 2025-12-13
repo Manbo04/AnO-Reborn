@@ -821,7 +821,11 @@ def withdraw_from_bank(colId):
         if amount < 1:
             return error(400, "Amount has to be greater than 1")
 
-        withdraw(name, amount, cId, colId)
+        result = withdraw(name, amount, cId, colId)
+        # `withdraw` may return an error Response (via `error()`); if so,
+        # propagate it to the client instead of silently continuing.
+        if result is not None:
+            return result
 
     return redirect(f"/coalition/{colId}")
 
@@ -907,7 +911,9 @@ def accept_bank_request(bankId):
         if user_role not in ["leader", "deputy_leader", "banker"]:
             return error(400, "You aren't the leader of this coalition")
 
-        withdraw(resource, amount, user_id, colId)
+        result = withdraw(resource, amount, user_id, colId)
+        if result is not None:
+            return result
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
     return redirect("/my_coalition")

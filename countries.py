@@ -11,7 +11,7 @@ from collections import defaultdict
 from policies import get_user_policies
 from operator import itemgetter
 from datetime import datetime
-from wars import target_data
+from wars.service import target_data
 import math
 from database import get_db_cursor, cache_response
 from psycopg2.extras import RealDictCursor

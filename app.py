@@ -1,4 +1,17 @@
 import ast
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+if not hasattr(ast, "Str"):
+    ast.Str = ast.Constant
+if not hasattr(ast, "Num"):
+    ast.Num = ast.Constant
+if not hasattr(ast, "NameConstant"):
+    ast.NameConstant = ast.Constant
+if not hasattr(ast, "Ellipsis"):
+    ast.Ellipsis = ast.Constant
+import ast
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 if not hasattr(ast, "Str"):
     ast.Str = ast.Constant
 if not hasattr(ast, "Num"):
@@ -14,7 +27,22 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+
 app = Flask(__name__)
+
+
+
+
+# Debug test route for logging verification (must be after app is defined)
+## Only one debugtest route should exist, after app = Flask(__name__)
+
+# Add global 403 error handler after app is defined
+@app.errorhandler(403)
+def forbidden_error(error):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"[DEBUG] 403 error handler triggered: {error}")
+    return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
 
 # Configure trusted hosts for domain setup
 # This allows Flask to work with custom domains via reverse proxy
@@ -88,7 +116,7 @@ import coalitions
 import countries
 import signup
 import login
-import wars
+from wars.routes import wars_bp
 import policies
 import statistics
 import requests
@@ -157,6 +185,7 @@ _init_province_defaults()
 # register blueprints
 app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
+app.register_blueprint(wars_bp)
 
 import config  # Parse Railway environment variables
 
