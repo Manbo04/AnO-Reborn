@@ -12,6 +12,7 @@ from helpers import get_influence, check_required
 from dotenv import load_dotenv
 load_dotenv()
 import os
+import traceback
 
 """
 war page: choose a war
@@ -820,16 +821,26 @@ def declare_war():
 
     # CONSTANT VALUE
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
+    # Validate inputs early to return clear errors instead of a 500
+    defender_raw = request.form.get("defender")
+    war_message = request.form.get("description")
+    war_type = request.form.get("warType")
+
+    if not defender_raw:
+        return error(400, "Missing defender")
+
+    try:
+        defender_id = int(defender_raw)
+    except (TypeError, ValueError):
+        return error(400, "Invalid defender id")
+
+    if war_type not in WAR_TYPES:
+        return error(400, "Invalid war type")
 
     try:
         with get_db_cursor() as db:
-            # Selects the country that the user is attacking
-            defender = request.form.get("defender") # the problem is that declaring war through /country/id does not have a defender tag, but declaring war normally does
-            war_message = request.form.get("description")
-            war_type = request.form.get("warType")
-
-            attacker = Nation(int(session["user_id"]))
-            defender = Nation(int(defender))
+            attacker = Nation(int(session.get("user_id")))
+            defender = Nation(defender_id)
 
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
@@ -859,9 +870,6 @@ def declare_war():
                 if (current_peace[0]+259200) > time.time():
                     return error(403, "You can't declare war because truce has not expired!")
 
-            if war_type not in WAR_TYPES:
-                return error(400, "Invalid war type!")
-
             start_dates = time.time()
             db.execute("INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",(attacker.id, defender.id, war_type, war_message, start_dates, start_dates))
             # current_peace = db.fetchone()
@@ -871,8 +879,10 @@ def declare_war():
             attacker_name = db.fetchone()[0]
             Nation.send_news(defender.id, f"{attacker_name} declared war!")
 
-    except Exception:
-        return error(500, "Something went wrong")
+    except Exception as e:
+        print("Error in declare_war:")
+        print(traceback.format_exc())
+        return error(400, "Could not declare war; check server logs for details")
 
     return redirect("/wars")
 
