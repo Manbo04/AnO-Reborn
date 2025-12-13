@@ -703,7 +703,28 @@ def war_reparation_tax():
     
     
 @celery.task()
-def task_population_growth(): population_growth()
+def task_population_growth():
+    try:
+        population_growth()
+    except psycopg2.InterfaceError as e:
+        # Connection was closed (likely due to forked workers sharing pool).
+        # Try to recover by closing/reinitializing the pool and retrying once.
+        print(f"population_growth: caught InterfaceError: {e}. Reinitializing pool and retrying.")
+        try:
+            # Attempt to close pooled connections so child process will reinit
+            from database import db_pool
+            try:
+                db_pool.close_all()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # Retry once
+        try:
+            population_growth()
+        except Exception as e2:
+            print(f"population_growth: retry failed: {e2}")
 
 
 @celery.task()

@@ -114,6 +114,7 @@ class DatabasePool:
     """Singleton database connection pool"""
     _instance = None
     _pool = None
+    _pid = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -122,8 +123,18 @@ class DatabasePool:
 
     def _initialize_pool(self):
         """Initialize the connection pool"""
-        if self._pool is not None:
-            return  # Already initialized
+        # If pool exists and is owned by this process pid, nothing to do
+        current_pid = os.getpid()
+        if self._pool is not None and self._pid == current_pid:
+            return  # Already initialized in this process
+
+        # If pool exists but belongs to a different (forked) process, close it
+        if self._pool is not None and self._pid != current_pid:
+            try:
+                self._pool.closeall()
+            except Exception:
+                pass
+            self._pool = None
         try:
             self._pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
@@ -134,14 +145,15 @@ class DatabasePool:
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT")
             )
-            logger.info("Database connection pool initialized")
+            self._pid = os.getpid()
+            logger.info("Database connection pool initialized (pid=%s)", self._pid)
         except Exception as e:
             logger.error(f"Failed to initialize database pool: {e}")
             raise
 
     def get_connection(self):
         """Get a connection from the pool"""
-        self._initialize_pool()  # Lazy init
+        self._initialize_pool()  # Lazy init and fork-safe reinit
         return self._pool.getconn()
 
     def return_connection(self, conn):
