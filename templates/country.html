@@ -1731,7 +1731,7 @@
 
         <form action="/declare_war" method="post" class="infodiv">
 
-            <textarea name="defender" class="hidden">{{ cId }}</textarea>
+            <input type="hidden" name="defender" value="{{ cId }}" />
 
             <div class="nomarg nopad center">
                 <label for="warType">Pick war type</label>
@@ -1749,7 +1749,7 @@
                 <textarea class="templatetextarea" name="description" placeholder="War declaration message" maxlength="240"></textarea>
             </div>
 
-            <button class="templatedivbutton templatecenteredbutton">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton">
                     <span class="material-icons-outlined">
                     military_tech
                   </span>Declare
