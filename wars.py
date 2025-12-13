@@ -870,10 +870,12 @@ def declare_war():
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
 
-            db.execute("SELECT attacker, defender FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (attacker.id, attacker.id,))
-            already_war_with = db.fetchall()
-
-            if ((attacker.id, defender.id) in already_war_with) or ((defender.id, attacker.id) in already_war_with):
+            # Check if there's an active war between these two nations (either direction)
+            db.execute(
+                "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) AND peace_date IS NULL",
+                (attacker.id, defender.id, defender.id, attacker.id),
+            )
+            if db.fetchone():
                 return error(400, "You're already in a war with this country!")
 
             # Check province difference
@@ -887,12 +889,16 @@ def declare_war():
                 return error(400, "That country has too many provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.")
 
             # Check if nation currently at peace with another nation
-            db.execute("SELECT MAX(peace_date) FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND (attacker=(%s) OR defender=(%s))", (attacker.id, attacker.id, defender.id, defender.id))
+            # Check most recent peace between these two nations (either ordering)
+            db.execute(
+                "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s))",
+                (attacker.id, defender.id, defender.id, attacker.id),
+            )
             current_peace = db.fetchone()
 
             # 259200 = 3 days
-            if current_peace[0]:
-                if (current_peace[0]+259200) > time.time():
+            if current_peace and current_peace[0]:
+                if (current_peace[0] + 259200) > time.time():
                     return error(403, "You can't declare war because truce has not expired!")
 
             start_dates = time.time()
