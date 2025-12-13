@@ -342,8 +342,11 @@ def calc_pg(pId, rations):
         new_rations = rations - rations_needed
         if new_rations < 0:
             new_rations = 0
+        new_rations = int(new_rations)
 
         newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
+        # Population must be an integer
+        newPop = int(round(newPop))
 
         db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
         owner = db.fetchone()[0]
@@ -355,9 +358,9 @@ def calc_pg(pId, rations):
             policies = []
 
         if 5 in policies:
-            newPop *= 1.16 # 16% increase
+            newPop = int(round(newPop * 1.16)) # 16% increase
 
-        fullPop = curPop + newPop
+        fullPop = int(curPop + newPop)
 
         if fullPop < 0: fullPop = 0
 
@@ -585,6 +588,9 @@ def generate_province_revenue(): # Runs each hour
                     amount += plus_amount
                     amount *= unit_amount
                     amount *= plus_amount_multiplier
+                    # Normalize production to integer units so we don't persist fractional
+                    # resources (e.g., 0.5 rations). Use ceil to avoid losing tiny outputs.
+                    amount = math.ceil(amount)
                     if resource in province_resources:
 
                         # TODO: make this optimized
@@ -657,7 +663,7 @@ def generate_province_revenue(): # Runs each hour
                 handle_exception(e)
                 continue
 
-    conn.close() # Closes the connection
+    
 
 def war_reparation_tax():
     from database import get_db_cursor
