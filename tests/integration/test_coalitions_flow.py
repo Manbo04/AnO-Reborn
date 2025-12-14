@@ -17,16 +17,15 @@ def make_or_get_user(db, username, email):
     return db.fetchone()[0]
 
 
-def test_coalition_establish_and_bank_request(db_connection, client, set_session):
+def test_coalition_establish_and_bank_request(db_cursor, client, set_session):
     # This is a DB-integration test (skipped by default). It verifies
     # establishing a coalition and creating a bank request.
-    db = db_connection.cursor()
+    db = db_cursor
 
     # Create a leader user and log them in
     leader = make_or_get_user(
         db, f"coal_leader_{int(time.time())}", "leader@example.com"
     )
-    db_connection.commit()
 
     set_session("user_id", leader)
 
@@ -52,7 +51,4 @@ def test_coalition_establish_and_bank_request(db_connection, client, set_session
     )
     assert resp.status_code in (200, 302)
 
-    # Clean up
-    db.execute("DELETE FROM colNames WHERE id=%s", (col_id,))
-    db.execute("DELETE FROM coalitions WHERE userId=%s", (leader,))
-    db_connection.commit()
+    # Changes are rolled back by `db_cursor` fixture; no cleanup required.
