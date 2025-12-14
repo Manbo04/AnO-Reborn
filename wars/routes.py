@@ -618,7 +618,31 @@ def wars():
 def find_targets():
 	cId = session["user_id"]
 	if request.method == "GET":
-		return render_template("find_targets.html")
+		from helpers import get_influence
+		with get_db_cursor() as db:
+			db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
+			user_provinces = db.fetchone()[0]
+			min_provinces = max(0, user_provinces - 3)
+			max_provinces = user_provinces + 1
+			db.execute("""SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count
+FROM users
+LEFT JOIN provinces ON users.id = provinces.userId
+WHERE users.id != %s
+GROUP BY users.id, users.username, users.flag
+HAVING COUNT(provinces.id) BETWEEN %s AND %s""", (cId, min_provinces, max_provinces))
+			targets = db.fetchall()
+		targets_list = []
+		for target in targets:
+			tid, tname, tflag, tprovinces = target
+			tinfluence = get_influence(tid)
+			targets_list.append({
+				'id': tid,
+				'username': tname,
+				'flag': tflag,
+				'provinces': tprovinces,
+				'influence': tinfluence
+			})
+		return render_template("find_targets.html", targets=targets_list)
 	# POST - find a target by id or username and redirect
 	defender_raw = request.form.get("defender")
 	if not defender_raw:
