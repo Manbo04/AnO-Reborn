@@ -11,13 +11,14 @@ Usage:
 """
 
 import os
+import logging
 import psycopg2
 
 
 def main():
     database_url = os.getenv('DATABASE_URL')
     if not database_url:
-        print('ERROR: DATABASE_URL not set. Run with: DATABASE_URL="<url>" python create_signup_table.py')
+        logging.getLogger(__name__).error('ERROR: DATABASE_URL not set. Run with: DATABASE_URL="<url>" python create_signup_table.py')
         return 1
 
     conn = psycopg2.connect(database_url)
@@ -42,11 +43,11 @@ def main():
         cur.execute("ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;")
 
         conn.commit()
-        print('✅ signup_attempts table ensured (columns added if missing)')
+        logging.getLogger(__name__).info('signup_attempts table ensured (columns added if missing)')
         return 0
     except Exception as e:
         conn.rollback()
-        print('✗ Failed to create signup_attempts table:', e)
+        logging.getLogger(__name__).exception('Failed to create signup_attempts table')
         return 2
     finally:
         cur.close()
