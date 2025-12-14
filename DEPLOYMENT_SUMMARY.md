@@ -39,7 +39,7 @@ git push origin master
 
 If you get authentication errors, you may need to:
 - Set up SSH keys, OR
-- Use a personal access token, OR  
+- Use a personal access token, OR
 - Configure GitHub CLI
 
 ### Step 2: Railway Deployment
@@ -49,7 +49,7 @@ Once pushed to GitHub, Railway will automatically detect the changes.
 **In Railway Dashboard:**
 
 1. **Click "Apply Changes"** or **"Deploy"** button you see in the screenshot
-   
+
 2. **Add PostgreSQL:**
    - Click "+ New" → "Database" → "PostgreSQL"
 

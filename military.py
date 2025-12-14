@@ -4,20 +4,20 @@ from database import get_db_cursor
 from app import app
 from attack_scripts import Military
 from dotenv import load_dotenv
+
 load_dotenv()
 import os
 from helpers import get_date
 from upgrades import get_upgrades
 from variables import MILDICT
 
+
 @app.route("/military", methods=["GET", "POST"])
 @login_required
 def military():
-
     cId = session["user_id"]
 
     if request.method == "GET":  # maybe optimise this later with css anchors
-
         simple_units = Military.get_military(cId)
         special_units = Military.get_special(cId)
         units = simple_units.copy()
@@ -33,22 +33,37 @@ def military():
             db.execute("SELECT manpower FROM military WHERE id=%s", (cId,))
             manpower = db.fetchone()[0]
 
-        return render_template("military.html", units=units, limits=limits, upgrades=upgrades, mildict=MILDICT, manpower=manpower)
+        return render_template(
+            "military.html",
+            units=units,
+            limits=limits,
+            upgrades=upgrades,
+            mildict=MILDICT,
+            manpower=manpower,
+        )
+
 
 @app.route("/<way>/<units>", methods=["POST"])
 @login_required
 def military_sell_buy(way, units):  # WARNING: function used only for military
-
     if request.method == "POST":
-
         cId = session["user_id"]
 
         with get_db_cursor() as db:
-
-            allUnits = ["soldiers", "tanks", "artillery",
-                        "bombers", "fighters", "apaches",
-                        "destroyers", "cruisers", "submarines",
-                        "spies", "icbms", "nukes"]  # list of allowed units
+            allUnits = [
+                "soldiers",
+                "tanks",
+                "artillery",
+                "bombers",
+                "fighters",
+                "apaches",
+                "destroyers",
+                "cruisers",
+                "submarines",
+                "spies",
+                "icbms",
+                "nukes",
+            ]  # list of allowed units
 
             if units not in allUnits and units != "apaches":
                 return error("No such unit exists.", 400)
@@ -59,13 +74,15 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 return error(400, "You cannot buy or sell less than 1 unit")
 
             if units == "soldiers":
-                db.execute("SELECT widespreadpropaganda FROM upgrades WHERE user_id=%s", (cId,))
+                db.execute(
+                    "SELECT widespreadpropaganda FROM upgrades WHERE user_id=%s", (cId,)
+                )
                 wp = db.fetchone()[0]
                 if wp:
                     MILDICT["soldiers"]["price"] *= 0.65
 
             # TODO: clear this mess i called code once i get the time
-            # if you're reading this please excuse the messiness 
+            # if you're reading this please excuse the messiness
 
             price = MILDICT[units]["price"]
 
@@ -81,64 +98,122 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             resources = MILDICT[units]["resources"]
 
             if way == "sell":
-
-                if wantedUnits > currentUnits: 
-                    return error(400, f"You don't have enough {units} to sell ({wantedUnits}/{currentUnits})")
+                if wantedUnits > currentUnits:
+                    return error(
+                        400,
+                        f"You don't have enough {units} to sell ({wantedUnits}/{currentUnits})",
+                    )
 
                 for resource, amount in resources.items():
                     addResources = wantedUnits * amount
-                    updateResource = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
-                    db.execute(updateResource, (addResources, cId,))
+                    updateResource = (
+                        f"UPDATE resources SET {resource}={resource}"
+                        + "+%s WHERE id=%s"
+                    )
+                    db.execute(
+                        updateResource,
+                        (
+                            addResources,
+                            cId,
+                        ),
+                    )
 
                 unitUpd = f"UPDATE military SET {units}={units}" + "-%s WHERE id=%s"
-                db.execute(unitUpd, (wantedUnits, cId,))
-                db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (totalPrice, cId,))
-                db.execute("UPDATE military SET manpower=manpower+%s WHERE id=%s", (wantedUnits*MILDICT[units]["manpower"], cId))
+                db.execute(
+                    unitUpd,
+                    (
+                        wantedUnits,
+                        cId,
+                    ),
+                )
+                db.execute(
+                    "UPDATE stats SET gold=gold+%s WHERE id=%s",
+                    (
+                        totalPrice,
+                        cId,
+                    ),
+                )
+                db.execute(
+                    "UPDATE military SET manpower=manpower+%s WHERE id=%s",
+                    (wantedUnits * MILDICT[units]["manpower"], cId),
+                )
 
                 # flash(f"You sold {wantedUnits} {units}")
             elif way == "buy":
-
                 limits = Military.get_limits(cId)
 
                 if wantedUnits > limits[units]:
-                    return error(400, f"You exceeded the unit buy limit, you might want to buy more military buildings. You can buy {limits[units]}/{wantedUnits} {units}.")
+                    return error(
+                        400,
+                        f"You exceeded the unit buy limit, you might want to buy more military buildings. You can buy {limits[units]}/{wantedUnits} {units}.",
+                    )
 
-                if totalPrice > gold:  # checks if user wants to buy more units than he has gold
-                    return error(400, f"You don't have enough money for that ({gold}/{totalPrice}). You need {totalPrice-gold} more money.")
+                if (
+                    totalPrice > gold
+                ):  # checks if user wants to buy more units than he has gold
+                    return error(
+                        400,
+                        f"You don't have enough money for that ({gold}/{totalPrice}). You need {totalPrice-gold} more money.",
+                    )
 
                 for resource, amount in resources.items():
-                    selectResource = f"SELECT {resource} FROM resources WHERE id=" + "%s"
+                    selectResource = (
+                        f"SELECT {resource} FROM resources WHERE id=" + "%s"
+                    )
                     db.execute(selectResource, (cId,))
                     currentResources = db.fetchone()[0]
                     requiredResources = amount * wantedUnits
-                    
+
                     if requiredResources > currentResources:
-                        return error(400, f"You have {currentResources}/{requiredResources} {resource}, meaning you need {requiredResources-currentResources} more.")
+                        return error(
+                            400,
+                            f"You have {currentResources}/{requiredResources} {resource}, meaning you need {requiredResources-currentResources} more.",
+                        )
 
                 for resource, amount in resources.items():
                     requiredResources = amount * wantedUnits
-                    updateResource = f"UPDATE resources SET {resource}={resource}" + "-%s WHERE id=%s"
-                    db.execute(updateResource, (requiredResources, cId)) 
+                    updateResource = (
+                        f"UPDATE resources SET {resource}={resource}"
+                        + "-%s WHERE id=%s"
+                    )
+                    db.execute(updateResource, (requiredResources, cId))
 
                 print(totalPrice)
 
-                db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (totalPrice, cId))
+                db.execute(
+                    "UPDATE stats SET gold=gold-%s WHERE id=%s", (totalPrice, cId)
+                )
                 updMil = f"UPDATE military SET {units}={units}" + "+%s WHERE id=%s"
                 db.execute(updMil, (wantedUnits, cId))
 
-                db.execute("UPDATE military SET manpower=manpower-%s WHERE id=%s", (wantedUnits*MILDICT[units]["manpower"], cId))
+                db.execute(
+                    "UPDATE military SET manpower=manpower-%s WHERE id=%s",
+                    (wantedUnits * MILDICT[units]["manpower"], cId),
+                )
 
             else:
                 return error(404, "Page not found")
 
             ####### UPDATING REVENUE #############
-            if way == "buy": rev_type = "expense"
-            elif way == "sell": rev_type = "revenue"
+            if way == "buy":
+                rev_type = "expense"
+            elif way == "sell":
+                rev_type = "revenue"
             name = f"{way.capitalize()}ing {wantedUnits} {units} for your military."
             description = ""
 
-            db.execute("INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
-            (cId, rev_type, name, description, get_date(), units, wantedUnits,))
+            db.execute(
+                "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (
+                    cId,
+                    rev_type,
+                    name,
+                    description,
+                    get_date(),
+                    units,
+                    wantedUnits,
+                ),
+            )
             #######################################
 
         return redirect("/military")

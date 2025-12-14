@@ -6,11 +6,14 @@ from functools import wraps, lru_cache
 from dotenv import load_dotenv
 from datetime import date
 from database import get_db_cursor, query_cache
+
 load_dotenv()
+
 
 def get_date():
     today = date.today()
     return today.strftime("%Y-%m-%d")
+
 
 def get_flagname(user_id):
     # Check cache first
@@ -18,7 +21,7 @@ def get_flagname(user_id):
     cached = query_cache.get(cache_key)
     if cached is not None:
         return cached
-    
+
     # Query if not cached
     with get_db_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
@@ -26,10 +29,11 @@ def get_flagname(user_id):
 
         if flag_name == None:
             flag_name = "default_flag.jpg"
-        
+
         # Cache the result
         query_cache.set(cache_key, flag_name)
         return flag_name
+
 
 def login_required(f):
     """
@@ -37,21 +41,26 @@ def login_required(f):
 
     http://flask.pocoo.org/docs/1.0/patterns/viewdecorators/
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         import logging
+
         logger = logging.getLogger(__name__)
-        if not session.get('user_id', None):
-            logger.debug(f"login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}")
+        if not session.get("user_id", None):
+            logger.debug(
+                f"login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}"
+            )
             logger.debug("login_required: user_id missing, redirecting to /login")
             return redirect("/login")
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 # Check for neccessary values without them user can't access a page
 # example: can't access /warchoose or /waramount without enemy_id
 def check_required(func):
-
     @wraps(func)
     def check_session(*args, **kwargs):
         if not session.get("enemy_id", None):
@@ -60,10 +69,12 @@ def check_required(func):
 
     return check_session
 
+
 def error(code, message):
     # Return the proper HTTP status code along with the error template to
     # ensure external clients receive the correct status for assertion checks
     return render_template("error.html", code=code, message=message), code
+
 
 def get_influence(country_id):
     # Check cache first
@@ -71,13 +82,16 @@ def get_influence(country_id):
     cached = query_cache.get(cache_key)
     if cached is not None:
         return cached
-    
+
     cId = country_id
-    
+
     with get_db_cursor() as db:
         try:
-            db.execute("""SELECT soldiers, artillery, tanks, fighters, bombers, apaches, submarines,
-            destroyers, cruisers, ICBMs, nukes, spies FROM military WHERE id=%s""", (cId,))
+            db.execute(
+                """SELECT soldiers, artillery, tanks, fighters, bombers, apaches, submarines,
+            destroyers, cruisers, ICBMs, nukes, spies FROM military WHERE id=%s""",
+                (cId,),
+            )
             military = db.fetchall()[0]
 
             soldiers_score = military[0] * 0.02
@@ -106,6 +120,7 @@ def get_influence(country_id):
             icbms_score = 0
             nukes_score = 0
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Couldn't get military data for user id: {cId}")
 
@@ -134,8 +149,11 @@ def get_influence(country_id):
             land_score = 0
 
         try:
-            db.execute("""SELECT oil + rations + coal + uranium + bauxite + iron + lead + copper + lumber + components + steel,
-            consumer_goods + aluminium + gasoline + ammunition FROM resources WHERE id=%s""", (cId,))
+            db.execute(
+                """SELECT oil + rations + coal + uranium + bauxite + iron + lead + copper + lumber + components + steel,
+            consumer_goods + aluminium + gasoline + ammunition FROM resources WHERE id=%s""",
+                (cId,),
+            )
             resources_score = db.fetchone()[0] * 0.001
         except:
             resources_score = 0
@@ -148,26 +166,42 @@ def get_influence(country_id):
     (total number of rss *0.001)+(total amount of money*0.00001)
     """
 
-    influence = provinces_score + soldiers_score + artillery_score + tanks_score + \
-        fighters_score + bombers_score + apaches_score + submarines_score + \
-        destroyers_score + cruisers_score + icbms_score + nukes_score + \
-        spies_score + cities_score + land_score + resources_score + money_score
+    influence = (
+        provinces_score
+        + soldiers_score
+        + artillery_score
+        + tanks_score
+        + fighters_score
+        + bombers_score
+        + apaches_score
+        + submarines_score
+        + destroyers_score
+        + cruisers_score
+        + icbms_score
+        + nukes_score
+        + spies_score
+        + cities_score
+        + land_score
+        + resources_score
+        + money_score
+    )
 
     influence = round(influence)
-    
+
     # Cache the result
     query_cache.set(cache_key, influence)
 
     return influence
+
+
 def get_coalition_influence(coalition_id):
-
-
     with get_db_cursor() as db:
-
         total_influence = 0
 
         try:
-            db.execute("SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,))
+            db.execute(
+                "SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,)
+            )
             members = db.fetchall()
         except:
             return 0

@@ -1,5 +1,6 @@
 import ast
 import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 if not hasattr(ast, "Str"):
     ast.Str = ast.Constant
@@ -11,6 +12,7 @@ if not hasattr(ast, "Ellipsis"):
     ast.Ellipsis = ast.Constant
 import ast
 import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 if not hasattr(ast, "Str"):
     ast.Str = ast.Constant
@@ -21,10 +23,19 @@ if not hasattr(ast, "NameConstant"):
 if not hasattr(ast, "Ellipsis"):
     ast.Ellipsis = ast.Constant
 
-from flask import Flask, request, render_template, session, redirect, send_from_directory, jsonify
+from flask import (
+    Flask,
+    request,
+    render_template,
+    session,
+    redirect,
+    send_from_directory,
+    jsonify,
+)
 import traceback
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -35,47 +46,60 @@ app = Flask(__name__)
 # non-development environments. Reintroduce behind a feature flag if needed.
 
 
-
-
 # Debug test route for logging verification (must be after app is defined)
 ## Only one debugtest route should exist, after app = Flask(__name__)
+
 
 # Add global 403 error handler after app is defined
 @app.errorhandler(403)
 def forbidden_error(error):
     import logging
+
     logger = logging.getLogger(__name__)
     logger.warning(f"403 error handler triggered: {error}")
-    return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
+    return (
+        render_template(
+            "error.html", code=403, message="Forbidden: 403 error handler triggered."
+        ),
+        403,
+    )
+
 
 # Configure trusted hosts for domain setup
 # This allows Flask to work with custom domains via reverse proxy
-app.config['PREFERRED_URL_SCHEME'] = 'https'
-app.config['SERVER_NAME'] = None  # Allow dynamic hostnames via proxy headers
-app.config['ALLOWED_HOSTS'] = ['affairsandorder.com', 'www.affairsandorder.com', 'web-production-55d7b.up.railway.app']
+app.config["PREFERRED_URL_SCHEME"] = "https"
+app.config["SERVER_NAME"] = None  # Allow dynamic hostnames via proxy headers
+app.config["ALLOWED_HOSTS"] = [
+    "affairsandorder.com",
+    "www.affairsandorder.com",
+    "web-production-55d7b.up.railway.app",
+]
 
 # Ensure session cookie behavior is permissive for local dev/testing
 # Keep default None in production but set explicit None to be safe
-app.config['SESSION_COOKIE_DOMAIN'] = None
-app.config['SESSION_COOKIE_SAMESITE'] = None
+app.config["SESSION_COOKIE_DOMAIN"] = None
+app.config["SESSION_COOKIE_SAMESITE"] = None
 # In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
 # For local development or test environments where HTTPS is not used, keep cookies
 # insecure so `requests` and `curl` clients can receive them.
-app.config['SESSION_COOKIE_SECURE'] = (
-    os.getenv('ENVIRONMENT') == 'PROD' and os.getenv('RAILWAY_ENVIRONMENT_NAME') is not None
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.getenv("ENVIRONMENT") == "PROD"
+    and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
 )
+
 
 # Trust X-Forwarded-* headers from Railway reverse proxy
 @app.before_request
 def before_request():
     # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
-    if os.getenv('RAILWAY_ENVIRONMENT_NAME'):
-        forwarded_proto = request.headers.get('X-Forwarded-Proto', 'http')
-        if forwarded_proto != 'https' and not request.is_secure:
-            url = request.url.replace('http://', 'https://', 1)
+    if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
+        if forwarded_proto != "https" and not request.is_secure:
+            url = request.url.replace("http://", "https://", 1)
             return redirect(url, code=301)
     # Keep this hook small and non-verbose; avoid emitting per-request debug logs
     # unless explicitly enabled in configuration.
+
 
 # Import cache_response decorator
 from database import cache_response
@@ -83,44 +107,52 @@ from database import cache_response
 # Performance: Enable gzip compression for responses
 try:
     from flask_compress import Compress
+
     Compress(app)
 except ImportError:
     # Flask-Compress not installed, continue without it
     pass
 
+
 # Performance: Add caching headers for static files
 @app.after_request
 def add_cache_headers(response):
     # Cache static assets for 1 month (2592000 seconds)
-    if request.path.startswith('/static/'):
-        response.headers['Cache-Control'] = 'public, max-age=2592000, immutable'
+    if request.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
     # Cache images for 1 month
-    elif request.path.endswith(('.jpg', '.png', '.gif', '.ico')):
-        response.headers['Cache-Control'] = 'public, max-age=2592000'
+    elif request.path.endswith((".jpg", ".png", ".gif", ".ico")):
+        response.headers["Cache-Control"] = "public, max-age=2592000"
     # Don't cache HTML pages (they might change)
     else:
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
+
 
 # Helper to get minified asset path in production
 def asset(filename):
     """Returns minified version of asset in production, original in development"""
     import os
-    is_production = os.getenv('FLASK_ENV') == 'production' or os.getenv('RAILWAY_ENVIRONMENT_NAME') is not None
-    
-    if is_production and (filename.endswith('.css') or filename.endswith('.js')):
-        base, ext = filename.rsplit('.', 1)
+
+    is_production = (
+        os.getenv("FLASK_ENV") == "production"
+        or os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
+    )
+
+    if is_production and (filename.endswith(".css") or filename.endswith(".js")):
+        base, ext = filename.rsplit(".", 1)
         minified = f"{base}.min.{ext}"
         min_path = f"static/{minified}"
         if os.path.exists(min_path):
             return minified
-    
+
     return filename
 
+
 # Make asset helper available in templates
-app.jinja_env.globals['asset'] = asset
+app.jinja_env.globals["asset"] = asset
 
 import upgrades
 import intelligence
@@ -149,13 +181,17 @@ from helpers import login_required
 from database import get_db_cursor
 import psycopg2
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 # LOGGING
-logging_format = '====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s'
-logging.basicConfig(level=logging.ERROR,
-                    format=logging_format, filename='errors.log',)
+logging_format = "====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+logging.basicConfig(
+    level=logging.ERROR,
+    format=logging_format,
+    filename="errors.log",
+)
 logger = logging.getLogger(__name__)
 
 
@@ -166,10 +202,7 @@ class RequestsHandler(logging.Handler):
             return  # Skip if webhook not configured
         formatter = logging.Formatter(logging_format)
         message = formatter.format(record)
-        data = {
-            "content": message,
-            "username": "A&O ERROR"
-        }
+        data = {"content": message, "username": "A&O ERROR"}
         requests.post(url, json=data)
 
     def emit(self, record):
@@ -177,25 +210,32 @@ class RequestsHandler(logging.Handler):
         the appropriate destination.
         """
         self.send_discord_webhook(record)
+
+
 ###
 
 
 Markdown(app)
+
 
 # Initialize database with proper defaults for existing provinces
 def _init_province_defaults():
     """Ensure all provinces have proper default values for stats"""
     try:
         from database import get_db_connection
+
         with get_db_connection() as conn:
             db = conn.cursor()
             # Update provinces with 0 happiness/productivity to have neutral 50% defaults
             db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
-            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")  
-            db.execute("UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0")
+            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
+            db.execute(
+                "UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0"
+            )
             conn.commit()
     except Exception as e:
         print(f"Note: Province defaults initialization skipped (may be normal): {e}")
+
 
 _init_province_defaults()
 
@@ -211,7 +251,7 @@ import config  # Parse Railway environment variables
 # been migrated yet. It's safe to call (idempotent) and failures are
 # non-fatal.
 try:
-    if hasattr(signup, 'ensure_signup_attempts_table'):
+    if hasattr(signup, "ensure_signup_attempts_table"):
         signup.ensure_signup_attempts_table()
 except Exception as _e:
     # Don't raise here; just log to stdout so deployment logs capture it.
@@ -236,8 +276,9 @@ else:
 
 def generate_error_code():
     numbers = 20
-    code = ''.join(random.choice(string.ascii_lowercase + string.digits)
-                   for _ in range(numbers))
+    code = "".join(
+        random.choice(string.ascii_lowercase + string.digits) for _ in range(numbers)
+    )
     time = int(dt.now().timestamp())
     full = f"{code}-{time}"
     return full
@@ -260,7 +301,10 @@ def invalid_server_error(error):
     error_code = generate_error_code()
     logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
-    return render_template("error.html", code=500, message=error_message, error_code=error_code)
+    return render_template(
+        "error.html", code=500, message=error_message, error_code=error_code
+    )
+
 
 # Jinja2 filter to add commas to numbers
 
@@ -274,12 +318,14 @@ def commas(value):
         returned = value
     return returned
 
+
 # Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
 
 
 @app.template_filter()
 def days_old(date_string):
     from datetime import datetime
+
     try:
         date_obj = datetime.strptime(str(date_string), "%Y-%m-%d")
         today = datetime.today()
@@ -288,6 +334,7 @@ def days_old(date_string):
         return f"{date_string} ({days} Days Old)"
     except (ValueError, TypeError):
         return date_string
+
 
 # Jinja2 filter to render province building resource strings
 
@@ -301,10 +348,7 @@ def prores(unit):
         unit = split_unit[0]
         change_price = float(split_unit[1])
 
-    renames = {
-        "Fulfillment centers": "malls",
-        "Bullet trains": "monorails"
-    }
+    renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
 
     print(unit)
     unit_name = unit.replace("_", " ").capitalize()
@@ -315,16 +359,18 @@ def prores(unit):
     except KeyError:
         ...
 
-    price = PROVINCE_UNIT_PRICES[f'{unit}_price']
+    price = PROVINCE_UNIT_PRICES[f"{unit}_price"]
     if change_price:
         price = price * change_price
     try:
         resources = ", ".join(
-            [f"{i[1]} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()])
+            [f"{i[1]} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
+        )
         full = f"{unit_name} cost { commas(price) }, { resources } each"
     except KeyError:
         full = f"{unit_name} cost { commas(price) } each"
     return full
+
 
 # Jinja2 filter to render military unit resource strings
 
@@ -336,16 +382,18 @@ def milres(unit):
         split_unit = unit.split(", ")
         unit = split_unit[0]
         change_price = float(split_unit[1])
-    price = MILDICT[unit]['price']
+    price = MILDICT[unit]["price"]
     if change_price:
         price = price * change_price
     try:
         resources = ", ".join(
-            [f"{i[1]} {i[0]}" for i in MILDICT[unit]["resources"].items()])
+            [f"{i[1]} {i[0]}" for i in MILDICT[unit]["resources"].items()]
+        )
         full = f"{unit.capitalize()} cost { commas(price) }, { resources } each"
     except KeyError:
         full = f"{unit.capitalize()} cost { commas(price) } each"
     return full
+
 
 # Jinja2 filter to format resource names (replace underscores with spaces)
 @app.template_filter()
@@ -353,13 +401,14 @@ def formatname(value):
     """Convert snake_case to Title Case, with special handling for certain terms"""
     if not isinstance(value, str):
         return value
-    
+
     # Special cases
     if value.lower() == "citycount":
         return "City"
-    
+
     # Replace underscores and capitalize
     return value.replace("_", " ").title()
+
 
 def get_resources():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
@@ -367,7 +416,9 @@ def get_resources():
 
         try:
             db.execute(
-                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s", (cId,))
+                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s",
+                (cId,),
+            )
             resources = dict(db.fetchone())
             return resources
         except TypeError:
@@ -386,6 +437,7 @@ def index():
     # behavior when following redirects (requests may follow redirects and
     # observe cookies set on the final response).
     from flask import make_response
+
     resp = make_response(render_template("index.html"))
     # In local development, tests can use direct cookie assertions if desired.
     # We intentionally don't set a global 'session_debug_home' cookie here to
@@ -410,7 +462,6 @@ def robots():
 @cache_response(ttl_seconds=60)
 def account():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
-
         cId = session["user_id"]
 
         db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
@@ -448,7 +499,7 @@ def assembly():
 
 @app.route("/logout")
 def logout():
-    if session.get('user_id') is not None:
+    if session.get("user_id") is not None:
         session.clear()
     else:
         pass
@@ -480,7 +531,7 @@ def myoffers():
 @app.route("/war", methods=["GET"])
 def war():
     # Redirect to the consolidated Wars page handled by the 'wars' blueprint
-    return redirect('/wars')
+    return redirect("/wars")
 
 
 ## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
@@ -488,7 +539,7 @@ def war():
 @app.route("/warresult", methods=["GET"])
 def warresult_deprecated():
     # Redirect to canonical /warResult route when accessed from legacy code
-    return redirect('/warResult')
+    return redirect("/warResult")
 
 
 @app.route("/mass_purchase", methods=["GET"])
@@ -498,17 +549,17 @@ def mass_purchase():
     with get_db_cursor() as db:
         db.execute(
             "SELECT id, provinceName as name, CAST(cityCount AS INTEGER) as cityCount, land FROM provinces WHERE userId=%s ORDER BY provinceName",
-            (cId,)
+            (cId,),
         )
         provinces = db.fetchall()
-        
+
         # Convert to list of dicts for template
         province_list = []
         if provinces:
             colnames = [desc[0] for desc in db.description]
             for row in provinces:
                 province_list.append(dict(zip(colnames, row)))
-    
+
     return render_template("mass_purchase.html", provinces=province_list)
 
 
@@ -520,4 +571,4 @@ def admin_init_database():
 if __name__ == "__main__":
     # Use port 5000 by default for local development/testing to match test suite expectations
     port = int(os.getenv("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, use_reloader=False)

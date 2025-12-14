@@ -74,7 +74,7 @@ grep -n "psycopg2.connect" coalitions.py military.py wars.py
 **Current issue**: Broad `except:` clauses without specific exceptions
 
 **Locations to check**:
-- Look for `except:` and `except Exception:` 
+- Look for `except:` and `except Exception:`
 - Replace with specific exceptions: `psycopg2.DatabaseError`, `psycopg2.IntegrityError`, `ValueError`, etc.
 - Add logging to error handlers using Python's `logging` module
 

@@ -24,7 +24,7 @@ This document outlines the optimizations made to run Affairs and Order on Railwa
 ---
 
 ### 2. **Asset Minification** 📦
-**Files Modified:** 
+**Files Modified:**
 - `static/style.css` (64KB) → `static/style.min.css`
 - `static/script.js` (21KB) → `static/script.min.js`
 - Other JS/CSS files

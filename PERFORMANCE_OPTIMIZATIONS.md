@@ -101,7 +101,7 @@ users = db.fetchall("SELECT id, name FROM users")
 from psycopg2.extras import execute_batch
 
 # Insert multiple rows efficiently
-execute_batch(cursor, 
+execute_batch(cursor,
     "INSERT INTO table (col1, col2) VALUES (%s, %s)",
     [(val1, val2), (val3, val4)])
 ```

@@ -549,7 +549,7 @@ def get_user(user_id):
                 return error(404, "User not found")
     except Exception as e:
         return error(500, "Database error")
-    
+
     return render_template("user.html", user=user)
 ```
 
@@ -598,7 +598,7 @@ slow_operation.delay(user_id)  # Queue the task, return immediately
 ### 7. Template Rendering
 
 ```python
-return render_template("page.html", 
+return render_template("page.html",
                       username=username,
                       user_level=user_level,
                       provinces=provinces)

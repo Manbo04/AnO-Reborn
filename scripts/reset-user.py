@@ -1,17 +1,31 @@
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 import psycopg2
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 from database import get_db_cursor
+
 
 def reset_user(cId):
     with get_db_cursor() as db:
         # Military
-        units = ["soldiers", "artillery", "tanks", "bombers",
-        "fighters", "apaches", "spies", "ICBMs", "nukes", "destroyers", "cruisers",
-        "submarines"]
+        units = [
+            "soldiers",
+            "artillery",
+            "tanks",
+            "bombers",
+            "fighters",
+            "apaches",
+            "spies",
+            "ICBMs",
+            "nukes",
+            "destroyers",
+            "cruisers",
+            "submarines",
+        ]
         for unit in units:
             mil_query = f"UPDATE military SET {unit}=0" + " WHERE id=%s"
             db.execute(mil_query, (cId,))
@@ -22,8 +36,17 @@ def reset_user(cId):
 
         # Player resources
         resources = [
-            "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-            "components", "consumer_goods", "gasoline", "ammunition"
+            "oil",
+            "coal",
+            "uranium",
+            "bauxite",
+            "lead",
+            "copper",
+            "iron",
+            "components",
+            "consumer_goods",
+            "gasoline",
+            "ammunition",
         ]
 
         for resource in resources:
@@ -50,6 +73,7 @@ def reset_user(cId):
             print(f"Deleting province ({id}), user - {cId}")
             db.execute("DELETE FROM proInfra WHERE id=%s", (id,))
             db.execute("DELETE FROM provinces WHERE id=%s", (id,))
+
 
 if __name__ == "__main__":
     # Add 100 billion gold to nation ID 20

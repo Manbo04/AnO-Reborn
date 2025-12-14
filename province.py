@@ -9,7 +9,9 @@ from helpers import get_date
 from upgrades import get_upgrades
 from database import get_db_cursor, cache_response
 import math
+
 load_dotenv()
+
 
 @app.route("/provinces", methods=["GET"])
 @login_required
@@ -18,11 +20,15 @@ def provinces():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("""SELECT CAST(cityCount AS INTEGER) as cityCount, population, provinceName, id, land, happiness, productivity, energy
-        FROM provinces WHERE userId=(%s) ORDER BY id ASC""", (cId,))
+        db.execute(
+            """SELECT CAST(cityCount AS INTEGER) as cityCount, population, provinceName, id, land, happiness, productivity, energy
+        FROM provinces WHERE userId=(%s) ORDER BY id ASC""",
+            (cId,),
+        )
         provinces = db.fetchall()
 
         return render_template("provinces.html", provinces=provinces)
+
 
 @app.route("/province/<pId>", methods=["GET"])
 @login_required
@@ -35,11 +41,26 @@ def province(pId):
         # Object under which the data about a province is stored
 
         try:
-            db.execute("""SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-            consumer_spending, CAST(citycount AS INTEGER) as citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""", (pId,))
+            db.execute(
+                """SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
+            consumer_spending, CAST(citycount AS INTEGER) as citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""",
+                (pId,),
+            )
             province_data = db.fetchone()
             province = {}
-            columns = ["id", "user", "name", "population", "pollution", "happiness", "productivity", "consumer_spending", "citycount", "land", "electricity"]
+            columns = [
+                "id",
+                "user",
+                "name",
+                "population",
+                "pollution",
+                "happiness",
+                "productivity",
+                "consumer_spending",
+                "citycount",
+                "land",
+                "electricity",
+            ]
             for i, col in enumerate(columns):
                 province[col] = province_data[i]
         except:
@@ -48,7 +69,7 @@ def province(pId):
         db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
         location_data = db.fetchone()
         province["location"] = location_data[0] if location_data else None
-        
+
         province["free_cityCount"] = province["citycount"] - get_free_slots(pId, "city")
         province["free_land"] = province["land"] - get_free_slots(pId, "land")
         province["own"] = province["user"] == cId
@@ -56,13 +77,43 @@ def province(pId):
         # Selects values for province buildings from the database and assigns them to vars
         db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
         proinfra_data = db.fetchone()
-        proinfra_columns = ["id", "coal_burners", "oil_burners", "solar_fields", "hydro_dams", "nuclear_reactors",
-                           "gas_stations", "general_stores", "farmers_markets", "malls", "banks", "city_parks",
-                           "hospitals", "libraries", "universities", "monorails", "army_bases", "aerodomes",
-                           "harbours", "admin_buildings", "silos", "farms", "pumpjacks", "coal_mines",
-                           "bauxite_mines", "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
-                           "lumber_mills", "component_factories", "steel_mills", "ammunition_factories",
-                           "aluminium_refineries", "oil_refineries"]
+        proinfra_columns = [
+            "id",
+            "coal_burners",
+            "oil_burners",
+            "solar_fields",
+            "hydro_dams",
+            "nuclear_reactors",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
+            "army_bases",
+            "aerodomes",
+            "harbours",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
+            "lumber_mills",
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
+        ]
         units = dict(zip(proinfra_columns, proinfra_data))
 
         def has_enough_cg(user_id):
@@ -80,7 +131,7 @@ def province(pId):
             rations = rations_data[0] if rations_data else 0
             rations_minus = province["population"] // variables.RATIONS_PER
             return rations - rations_minus > 1
-        
+
         def has_enough_power(province_id):
             consumption, production = energy_info(province_id)
             return production > consumption
@@ -96,9 +147,20 @@ def province(pId):
         new_infra = variables.NEW_INFRA
         prices = variables.PROVINCE_UNIT_PRICES
 
-        return render_template("province.html", province=province, units=units,
-        enough_consumer_goods=enough_consumer_goods, enough_rations=enough_rations, has_power=has_power,
-        energy=energy, infra=infra, upgrades=upgrades, prices=prices, new_infra=new_infra)
+        return render_template(
+            "province.html",
+            province=province,
+            units=units,
+            enough_consumer_goods=enough_consumer_goods,
+            enough_rations=enough_rations,
+            has_power=has_power,
+            energy=energy,
+            infra=infra,
+            upgrades=upgrades,
+            prices=prices,
+            new_infra=new_infra,
+        )
+
 
 def get_province_price(user_id):
     with get_db_cursor() as db:
@@ -109,6 +171,7 @@ def get_province_price(user_id):
         price = int(8000000 * multiplier)
 
         return price
+
 
 @app.route("/createprovince", methods=["GET", "POST"])
 @login_required
@@ -127,31 +190,38 @@ def createprovince():
             if province_price > current_user_money:
                 return error(400, "You don't have enough money.")
 
-            db.execute("INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id", (cId, pName))
+            db.execute(
+                "INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id",
+                (cId, pName),
+            )
             province_id = db.fetchone()[0]
 
             db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
 
             new_user_money = current_user_money - province_price
-            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId))
+            db.execute(
+                "UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId)
+            )
 
         return redirect("/provinces")
     else:
         price = get_province_price(cId)
         return render_template("createprovince.html", price=price)
 
-def get_free_slots(pId, slot_type): # pId = province id
+
+def get_free_slots(pId, slot_type):  # pId = province id
     with get_db_cursor() as db:
         if slot_type == "city":
-
             db.execute(
-            """
+                """
             SELECT
             coal_burners + oil_burners + hydro_dams + nuclear_reactors + solar_fields +
             gas_stations + general_stores + farmers_markets + malls + banks +
             city_parks + hospitals + libraries + universities + monorails
             FROM proInfra WHERE id=%s
-            """, (pId,))
+            """,
+                (pId,),
+            )
             used_slots = int(db.fetchone()[0])
 
             db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
@@ -160,16 +230,17 @@ def get_free_slots(pId, slot_type): # pId = province id
             free_slots = all_slots - used_slots
 
         elif slot_type == "land":
-
             db.execute(
-            """
+                """
             SELECT
             army_bases + harbours + aerodomes + admin_buildings + silos +
             farms + pumpjacks + coal_mines + bauxite_mines +
             copper_mines + uranium_mines + lead_mines + iron_mines +
             lumber_mills + component_factories + steel_mills + ammunition_factories +
             aluminium_refineries + oil_refineries FROM proInfra WHERE id=%s
-            """, (pId,))
+            """,
+                (pId,),
+            )
             used_slots = int(db.fetchone()[0])
 
             db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
@@ -179,6 +250,7 @@ def get_free_slots(pId, slot_type): # pId = province id
 
         return free_slots
 
+
 @app.route("/<way>/<units>/<province_id>", methods=["POST"])
 @login_required
 def province_sell_buy(way, units, province_id):
@@ -186,7 +258,13 @@ def province_sell_buy(way, units, province_id):
 
     with get_db_cursor() as db:
         try:
-            db.execute("SELECT id FROM provinces WHERE id=%s AND userId=%s", (province_id, cId,))
+            db.execute(
+                "SELECT id FROM provinces WHERE id=%s AND userId=%s",
+                (
+                    province_id,
+                    cId,
+                ),
+            )
             ownProvince = db.fetchone()[0]
             ownProvince = True
         except TypeError:
@@ -196,34 +274,82 @@ def province_sell_buy(way, units, province_id):
             return error(400, "You don't own this province")
 
         allUnits = [
-            "land", "cityCount",
-
-            "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
-            "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
-            "city_parks", "hospitals", "libraries", "universities", "monorails",
-
-            "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
-
-            "farms", "pumpjacks", "coal_mines", "bauxite_mines",
-            "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
+            "land",
+            "cityCount",
+            "coal_burners",
+            "oil_burners",
+            "hydro_dams",
+            "nuclear_reactors",
+            "solar_fields",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
+            "army_bases",
+            "harbours",
+            "aerodomes",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
             "lumber_mills",
-
-            "component_factories", "steel_mills", "ammunition_factories",
-            "aluminium_refineries", "oil_refineries"
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
         ]
 
         city_units = [
-            "coal_burners", "oil_burners", "hydro_dams", "nuclear_reactors", "solar_fields",
-            "gas_stations", "general_stores", "farmers_markets", "malls", "banks",
-            "city_parks", "hospitals", "libraries", "universities", "monorails",
+            "coal_burners",
+            "oil_burners",
+            "hydro_dams",
+            "nuclear_reactors",
+            "solar_fields",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
         ]
 
         land_units = [
-            "army_bases", "harbours", "aerodomes", "admin_buildings", "silos",
-            "farms", "pumpjacks", "coal_mines", "bauxite_mines",
-            "copper_mines", "uranium_mines", "lead_mines", "iron_mines",
-            "lumber_mills", "component_factories", "steel_mills",
-            "ammunition_factories", "aluminium_refineries", "oil_refineries"
+            "army_bases",
+            "harbours",
+            "aerodomes",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
+            "lumber_mills",
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
         ]
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
@@ -238,8 +364,13 @@ def province_sell_buy(way, units, province_id):
             return error(400, "Units cannot be less than 1")
 
         def sum_cost_exp(starting_value, rate_of_growth, current_owned, num_purchased):
-            M = (starting_value * (1 - pow(rate_of_growth, (current_owned + num_purchased)))) / (1 - rate_of_growth)
-            N = (starting_value * (1 - pow(rate_of_growth, (current_owned)))) / (1 - rate_of_growth)
+            M = (
+                starting_value
+                * (1 - pow(rate_of_growth, (current_owned + num_purchased)))
+            ) / (1 - rate_of_growth)
+            N = (starting_value * (1 - pow(rate_of_growth, (current_owned)))) / (
+                1 - rate_of_growth
+            )
             total_cost = M - N
             return round(total_cost)
 
@@ -252,7 +383,6 @@ def province_sell_buy(way, units, province_id):
             cityCount_price = 0
 
         if units == "land":
-            
             db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
             current_land = db.fetchone()[0]
 
@@ -299,7 +429,7 @@ def province_sell_buy(way, units, province_id):
             totalPrice = price
 
         try:
-            resources_data = unit_prices[f'{units}_resource'].items()
+            resources_data = unit_prices[f"{units}_resource"].items()
         except KeyError:
             resources_data = {}
 
@@ -311,9 +441,11 @@ def province_sell_buy(way, units, province_id):
         db.execute(curUnStat, (province_id,))
         currentUnits = db.fetchone()[0]
 
-        if units in city_units: slot_type = "city"
-        elif units in land_units: slot_type = "land"
-        else: # If unit is cityCount or land
+        if units in city_units:
+            slot_type = "city"
+        elif units in land_units:
+            slot_type = "land"
+        else:  # If unit is cityCount or land
             free_slots = 0
             slot_type = None
 
@@ -321,12 +453,11 @@ def province_sell_buy(way, units, province_id):
             free_slots = get_free_slots(province_id, slot_type)
 
         def resource_stuff(resources_data, way):
-
             for resource, amount in resources_data:
-
                 if way == "buy":
-
-                    current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    current_resource_stat = (
+                        f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    )
                     db.execute(current_resource_stat, (cId,))
                     current_resource = int(db.fetchone()[0])
 
@@ -337,25 +468,41 @@ def province_sell_buy(way, units, province_id):
                             "fail": True,
                             "resource": resource,
                             "current_amount": current_resource,
-                            "difference": current_resource - (amount * wantedUnits)
+                            "difference": current_resource - (amount * wantedUnits),
                         }
 
-                    resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    db.execute(resource_update_stat, (new_resource, cId,))
+                    resource_update_stat = (
+                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
+                    )
+                    db.execute(
+                        resource_update_stat,
+                        (
+                            new_resource,
+                            cId,
+                        ),
+                    )
 
                 elif way == "sell":
-
-                    current_resource_stat = f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    current_resource_stat = (
+                        f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    )
                     db.execute(current_resource_stat, (cId,))
                     current_resource = db.fetchone()[0]
 
                     new_resource = current_resource + (amount * wantedUnits)
 
-                    resource_update_stat = f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    db.execute(resource_update_stat, (new_resource, cId,))
+                    resource_update_stat = (
+                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
+                    )
+                    db.execute(
+                        resource_update_stat,
+                        (
+                            new_resource,
+                            cId,
+                        ),
+                    )
 
         if way == "sell":
-
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
                 return error("You don't have enough units.", 400)
 
@@ -369,29 +516,54 @@ def province_sell_buy(way, units, province_id):
             resource_stuff(resources_data, way)
 
         elif way == "buy":
-
-            if totalPrice > gold: # Checks if user wants to buy more units than he has gold
+            if (
+                totalPrice > gold
+            ):  # Checks if user wants to buy more units than he has gold
                 return error("You don't have enough money.", 400)
 
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
-                return error(400, f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem")
+                return error(
+                    400,
+                    f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem",
+                )
 
             res_error = resource_stuff(resources_data, way)
             if res_error:
-                return error(400, f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.")
+                return error(
+                    400,
+                    f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.",
+                )
 
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId,))
+            db.execute(
+                "UPDATE stats SET gold=gold-%s WHERE id=(%s)",
+                (
+                    totalPrice,
+                    cId,
+                ),
+            )
 
             updStat = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
             db.execute(updStat, ((currentUnits + wantedUnits), province_id))
 
-        if way == "buy": rev_type = "expense"
-        elif way == "sell": rev_type = "revenue"
+        if way == "buy":
+            rev_type = "expense"
+        elif way == "sell":
+            rev_type = "revenue"
 
         name = f"{way.capitalize()}ing {wantedUnits} {units} in a province."
         description = ""
 
-        db.execute("INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
-        (cId, rev_type, name, description, get_date(), units, wantedUnits,))
+        db.execute(
+            "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (
+                cId,
+                rev_type,
+                name,
+                description,
+                get_date(),
+                units,
+                wantedUnits,
+            ),
+        )
 
     return redirect(f"/province/{province_id}")

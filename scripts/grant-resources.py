@@ -53,9 +53,21 @@ conn = psycopg2.connect(**db_params)
 db = conn.cursor()
 
 resources = [
-    "rations", "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-    "lumber", "components", "steel", "consumer_goods", "aluminium",
-    "gasoline", "ammunition"
+    "rations",
+    "oil",
+    "coal",
+    "uranium",
+    "bauxite",
+    "lead",
+    "copper",
+    "iron",
+    "lumber",
+    "components",
+    "steel",
+    "consumer_goods",
+    "aluminium",
+    "gasoline",
+    "ammunition",
 ]
 
 try:
@@ -64,10 +76,15 @@ try:
 
     # Add each resource
     for res in resources:
-        db.execute(f"UPDATE resources SET {res} = {res} + %s WHERE id=%s", (resource_amount, user_id))
+        db.execute(
+            f"UPDATE resources SET {res} = {res} + %s WHERE id=%s",
+            (resource_amount, user_id),
+        )
 
     conn.commit()
-    print(f"Granted user {user_id}: +{gold_amount} gold, +{resource_amount} to each resource")
+    print(
+        f"Granted user {user_id}: +{gold_amount} gold, +{resource_amount} to each resource"
+    )
 except Exception as e:
     conn.rollback()
     print(f"Error: {e}")
