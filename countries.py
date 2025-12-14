@@ -143,10 +143,14 @@ def format_econ_statistics(statistics):
 
 
 def get_revenue(cId):
-    from database import get_db_cursor
+    from database import get_db_connection
     from psycopg2.extras import RealDictCursor
     
-    with get_db_cursor() as db:
+    # Use a dedicated connection for the lifetime of this function to
+    # prevent nested `get_db_cursor()` calls from accidentally reusing
+    # the same pooled connection (and closing a cursor prematurely).
+    with get_db_connection() as conn:
+        db = conn.cursor()
         
         cg_needed = cg_need(cId)
 
@@ -229,7 +233,9 @@ def get_revenue(cId):
 
 
 def next_turn_rations(cId, prod_rations):
-    with get_db_cursor() as db:
+    from database import get_db_connection
+    with get_db_connection() as conn:
+        db = conn.cursor()
         db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
         provinces = db.fetchall()
 
@@ -259,7 +265,9 @@ def delete_news(id):
 
 
 def cg_need(user_id):
-    with get_db_cursor() as db:
+    from database import get_db_connection
+    with get_db_connection() as conn:
+        db = conn.cursor()
         db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (user_id,))
         population = db.fetchone()[0]
         if population is None:
