@@ -32,7 +32,7 @@
                                 {% if value["peace_type"] == "white" %} No requests {% else %}
                                 <!--duplicate this for every resource they offer-->
                                 {% for index in range(0, value["resource_count"]) %}
-                                <img src="{{ url_for( 'static', filename='images/res' + value['resources'][index] + '.png ' ) }}" class="resource resourcesmall" /> {{ value["amounts"][index] }} {% endfor %}
+                                <img src="{{ url_for('static', filename='images/res' + value['resources'][index] + '.png') }}" class="resource resourcesmall" /> {{ value["amounts"][index] }} {% endfor %}
                                 <!--until here-->
                                 {% endif %}
                             </div>
@@ -74,7 +74,7 @@
                                 {% if value["peace_type"] == "white" %} No requests {% else %}
                                 <!--duplicate this for every resource they offer-->
                                 {% for index in range(0, value["resource_count"]) %}
-                                <img src="{{ url_for( 'static', filename='images/res' + value['resources'][index] + '.png ' ) }}" class="resource resourcesmall" /> {{ value["amounts"][index] }} {% endfor %}
+                                <img src="{{ url_for('static', filename='images/res' + value['resources'][index] + '.png') }}" class="resource resourcesmall" /> {{ value["amounts"][index] }} {% endfor %}
                                 <!--until here-->
                                 {% endif %}
                             </div>
