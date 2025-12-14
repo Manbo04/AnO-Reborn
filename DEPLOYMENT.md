@@ -10,7 +10,7 @@
    ```bash
    # Install Railway CLI (optional)
    npm i -g @railway/cli
-   
+
    # Or use web interface at railway.app
    ```
 
@@ -54,13 +54,13 @@
        env: python
        buildCommand: pip install -r requirements.txt
        startCommand: gunicorn wsgi:app --workers 4
-       
+
      - type: worker
        name: ano-worker
        env: python
        buildCommand: pip install -r requirements.txt
        startCommand: celery -A tasks.celery worker
-       
+
    databases:
      - name: ano-db
        databaseName: ano
@@ -88,10 +88,10 @@
          repo: YOUR-USERNAME/AnO
          branch: master
        run_command: gunicorn wsgi:app --workers 4
-       
+
      - name: worker
        run_command: celery -A tasks.celery worker
-       
+
    databases:
      - name: db
        engine: PG
@@ -115,18 +115,18 @@
    # Install dependencies
    sudo apt update
    sudo apt install python3-pip postgresql nginx redis-server
-   
+
    # Clone repo
    git clone https://github.com/YOUR-USERNAME/AnO.git
    cd AnO
-   
+
    # Install Python deps
    pip3 install -r requirements.txt
-   
+
    # Setup PostgreSQL
    sudo -u postgres createdb ano
    python3 affo/create_db.py
-   
+
    # Setup systemd services (see below)
    ```
 

@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Send Spies{% endblock %}
+
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle">Send Spies</h1>
+    </div>
+    <div class="templatedivcontent">
+        <p>Your country: {{ yourCountry }}</p>
+        <p>Available spies: {{ spies }}</p>
+        <form action="/spyResult" method="POST">
+            <label for="enemy">Target Country ID</label>
+            <input id="enemy" name="enemy" type="number" required>
+            <label for="amount">Amount</label>
+            <input id="amount" name="spies" type="number" min="1" required>
+            <label for="prep">Prep</label>
+            <input id="prep" name="prep" type="number" min="1" value="1">
+            <input type="hidden" name="spy_type" value="units">
+            <button type="submit">Send Spies</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

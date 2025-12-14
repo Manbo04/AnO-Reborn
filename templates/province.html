@@ -247,13 +247,13 @@
                                 <label>Purchase type</label>
 
                                 <select name="resource" class="templateselect">
-        
+
                             <option selected="selected">Add Amount</option>
                             <!--
                             <option class="templateoption">Purchase up to</option>
                             Temporarily disabled, will add after launch
-                            --> 
-        
+                            -->
+
                                     </select>
 
                             </div>
@@ -2022,7 +2022,7 @@
                                 <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Lumber mills cost {{ (7500 * 0.8) | commas }} per hour 
+                                <ul>Lumber mills cost {{ (7500 * 0.8) | commas }} per hour
                                 {% else %}
                                 <ul>Lumber mills cost 7,500 per hour {% endif %} and produce 32 lumber per hour, as well as +1% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>

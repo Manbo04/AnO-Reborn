@@ -39,7 +39,7 @@ def verify_recaptcha(response):
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
         return True  # Skip verification if no secret key
-    
+
     payload = {
         'secret': secret,
         'response': response
@@ -113,7 +113,7 @@ def callback():
 @app.route('/discord_signup', methods=["GET", "POST"])
 def discord_register():
     from database import get_db_cursor
-    
+
     if request.method == "GET":
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         return render_template('signup.html', way="discord", recaptcha_site_key=recaptcha_site_key)
@@ -122,24 +122,24 @@ def discord_register():
         try:
             print("\n=== DISCORD SIGNUP START ===")
             print(f"Token in session: {bool(session.get('oauth2_token'))}")
-            
+
             # IP rate limiting: max 3 attempts per IP per day
             client_ip = request.remote_addr
             with get_db_cursor() as db:
                 db.execute("""
-                    SELECT COUNT(*) FROM signup_attempts 
+                    SELECT COUNT(*) FROM signup_attempts
                     WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'
                 """, (client_ip,))
                 attempt_count = db.fetchone()[0]
                 if attempt_count >= 3:
                     return error(429, "Too many signup attempts from this IP address. Please try again tomorrow.")
-                
+
                 # Record this attempt
                 db.execute("""
-                    INSERT INTO signup_attempts (ip_address, attempt_time, successful) 
+                    INSERT INTO signup_attempts (ip_address, attempt_time, successful)
                     VALUES (%s, NOW(), FALSE)
                 """, (client_ip,))
-            
+
             app.config["SESSION_PERMANENT"] = True
             app.permanent_session_lifetime = datetime.timedelta(days=365)
 
@@ -155,7 +155,7 @@ def discord_register():
             print(f"Response code: {response.status_code}")
             discord_user = response.json()
             print(f"Discord user: {discord_user}")
-            
+
             discord_user_id = discord_user.get('id')
             email = discord_user.get('email')
 
@@ -167,19 +167,19 @@ def discord_register():
             # Get form data
             username = request.form.get("username", "").strip()
             continent_str = request.form.get("continent", "")
-            
+
             # Verify reCAPTCHA
             recaptcha_response = request.form.get("g-recaptcha-response")
             if not verify_recaptcha(recaptcha_response):
                 return error(400, "reCAPTCHA verification failed")
-            
+
             print(f"Form username: {username}")
             print(f"Form continent_str: {continent_str}")
-            
+
             if not username:
                 print("ERROR: No username")
                 return error(400, "Country name is required")
-            
+
             if not continent_str:
                 return error(400, "Biome selection is required")
 
@@ -191,7 +191,7 @@ def discord_register():
                 return error(400, "Invalid biome selection")
 
             discord_auth = str(discord_user_id)
-            
+
             print(f"Creating account - username: {username}, discord_id: {discord_auth}")
 
             # Create account
@@ -219,7 +219,7 @@ def discord_register():
                 print(f"Creating user: {username}")
                 # Create user
                 date = str(datetime.date.today())
-                db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)", 
+                db.execute("INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
                           (username, email, discord_auth, date, "discord"))
 
                 # Get the new user ID
@@ -238,10 +238,10 @@ def discord_register():
             # Mark attempt as successful
             with get_db_cursor() as db:
                 db.execute("""
-                    UPDATE signup_attempts 
-                    SET successful = TRUE 
-                    WHERE ip_address = %s 
-                    ORDER BY attempt_time DESC 
+                    UPDATE signup_attempts
+                    SET successful = TRUE
+                    WHERE ip_address = %s
+                    ORDER BY attempt_time DESC
                     LIMIT 1
                 """, (client_ip,))
 
@@ -284,16 +284,16 @@ def signup():
         client_ip = request.remote_addr
         with get_db_cursor() as db:
             db.execute("""
-                SELECT COUNT(*) FROM signup_attempts 
+                SELECT COUNT(*) FROM signup_attempts
                 WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'
             """, (client_ip,))
             attempt_count = db.fetchone()[0]
             if attempt_count >= 3:
                 return error(429, "Too many signup attempts from this IP address. Please try again tomorrow.")
-            
+
             # Record this attempt
             db.execute("""
-                INSERT INTO signup_attempts (ip_address, attempt_time, successful) 
+                INSERT INTO signup_attempts (ip_address, attempt_time, successful)
                 VALUES (%s, NOW(), FALSE)
             """, (client_ip,))
 
@@ -320,14 +320,14 @@ def signup():
             result = db.fetchone()
             if result:
                 return error(400, "Duplicate name, choose another one")
-            
+
             db.execute("SELECT email FROM users WHERE email=%s", (email,))
             result = db.fetchone()
             if result:
                 return error(400, "An account with this email already exists")
-            
+
             # Checks if password is equal to the confirmation password
-            if password != confirmation:  
+            if password != confirmation:
                 return error(400, "Passwords must match.")
 
             # Hashes the inputted password
@@ -340,7 +340,7 @@ def signup():
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
-            # Stores the user's 
+            # Stores the user's
             session["user_id"] = user_id
 
             # Inserts the user's id into the needed database tables
@@ -353,10 +353,10 @@ def signup():
         # Mark attempt as successful
         with get_db_cursor() as db:
             db.execute("""
-                UPDATE signup_attempts 
-                SET successful = TRUE 
-                WHERE ip_address = %s 
-                ORDER BY attempt_time DESC 
+                UPDATE signup_attempts
+                SET successful = TRUE
+                WHERE ip_address = %s
+                ORDER BY attempt_time DESC
                 LIMIT 1
             """, (client_ip,))
 
