@@ -1,5 +1,5 @@
 from flask import Blueprint, session, request, redirect, render_template
-from helpers import login_required, get_db_cursor, error
+from helpers import login_required, get_db_cursor, error, get_flagname, check_required
 # Add any other necessary imports here
 
 # Define the wars Blueprint
@@ -242,7 +242,6 @@ def war_with_id(war_id):
 		agressor_message=agressor_message, cId_type=cId_type, spyCount=spyCount, successChance=successChance, peace_to_send=enemy_id)
 # ...existing code...
 
-from helpers import check_required
 from units import Units
 import math, random, traceback
 
@@ -514,14 +513,9 @@ def defense():
 		else:
 			return error(400, "Invalid number of units selected!")
 		return redirect("/wars")
-from flask import Blueprint, request, render_template, session, redirect
-from helpers import login_required, error, get_flagname
-from database import get_db_cursor
 from attack_scripts import Nation, Military, Economy
 import time
 from .service import update_supply
-
-wars_bp = Blueprint('wars', __name__)
 
 @wars_bp.route("/wars", methods=["GET", "POST"])
 @login_required
@@ -571,6 +565,30 @@ def wars():
 			except:
 				warsCount = 0
 		return render_template("wars.html", units=units, warsCount=warsCount, war_info=war_info)
+
+
+@wars_bp.route("/find_targets", methods=["GET", "POST"])
+@login_required
+def find_targets():
+	cId = session["user_id"]
+	if request.method == "GET":
+		return render_template("find_targets.html")
+	# POST - find a target by id or username and redirect
+	defender_raw = request.form.get("defender")
+	if not defender_raw:
+		return error(400, "Missing defender")
+	defender_id = None
+	try:
+		defender_id = int(defender_raw)
+	except (TypeError, ValueError):
+		with get_db_cursor() as db:
+			db.execute("SELECT id FROM users WHERE username=%s", (defender_raw,))
+			row = db.fetchone()
+			if row:
+				defender_id = row[0]
+	if not defender_id:
+		return error(404, "Country not found")
+	return redirect(f"/country/id={defender_id}")
 
 # ...existing code for peace_offers and send_peace_offer will be moved here next...
 # War-related Flask routes will be moved here during refactor
