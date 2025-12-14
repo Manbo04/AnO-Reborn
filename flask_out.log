@@ -1,0 +1,77 @@
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/flask/cli.py:534: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+ * Serving Flask app 'app.py' (lazy loading)
+ * Environment: development
+ * Debug mode: on
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/flask/cli.py:534: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+ * Debugger is active!
+ * Debugger PIN: 120-499-859
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/bin/flask", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/flask/cli.py", line 995, in main
+    cli.main(args=sys.argv[1:])
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/flask/cli.py", line 601, in main
+    return super().main(*args, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/core.py", line 1873, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/decorators.py", line 93, in new_func
+    return ctx.invoke(f, obj, *args, **kwargs)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/flask/cli.py", line 854, in run_command
+    run_simple(
+    ~~~~~~~~~~^
+        host,
+        ^^^^^
+    ...<6 lines>...
+        extra_files=extra_files,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/werkzeug/serving.py", line 1097, in run_simple
+    run_with_reloader(
+    ~~~~~~~~~~~~~~~~~^
+        srv.serve_forever,
+        ^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        reloader_type=reloader_type,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/werkzeug/_reloader.py", line 446, in run_with_reloader
+    ensure_echo_on()
+    ~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/werkzeug/_reloader.py", line 426, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+termios.error: (4, 'Interrupted system call')
+ensure: ip_address ensured
+ensure: ip column ensured
+ensure: attempted drop NOT NULL on ip (if existed)
+ensure: other columns ensured
+ensure: ip_address ensured
+ensure: ip column ensured
+ensure: attempted drop NOT NULL on ip (if existed)
+ensure: other columns ensured
+ensure: ip_address ensured
+ensure: ip column ensured
+ensure: attempted drop NOT NULL on ip (if existed)
+ensure: other columns ensured
+ensure: ip_address ensured
+ensure: ip column ensured
+ensure: attempted drop NOT NULL on ip (if existed)
+ensure: other columns ensured

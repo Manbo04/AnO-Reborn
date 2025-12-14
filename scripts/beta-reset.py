@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 import psycopg2
 import sys
@@ -9,15 +10,28 @@ conn = psycopg2.connect(
     user=os.getenv("PG_USER"),
     password=os.getenv("PG_PASSWORD"),
     host=os.getenv("PG_HOST"),
-    port=os.getenv("PG_PORT"))
+    port=os.getenv("PG_PORT"),
+)
 
 db = conn.cursor()
 
 # Coalitions
 resources = [
-    "rations", "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-    "lumber", "components", "steel", "consumer_goods", "aluminium",
-    "gasoline", "ammunition"
+    "rations",
+    "oil",
+    "coal",
+    "uranium",
+    "bauxite",
+    "lead",
+    "copper",
+    "iron",
+    "lumber",
+    "components",
+    "steel",
+    "consumer_goods",
+    "aluminium",
+    "gasoline",
+    "ammunition",
 ]
 db.execute("UPDATE colBanks SET money=0")
 for resource in resources:
@@ -27,9 +41,20 @@ print("Removed resources and money from coalition banks")
 db.execute("DELETE FROM colBanksRequests")
 
 # Military
-units = ["soldiers", "artillery", "tanks", "bombers",
-"fighters", "apaches", "spies", "ICBMs", "nukes", "destroyers", "cruisers",
-"submarines"]
+units = [
+    "soldiers",
+    "artillery",
+    "tanks",
+    "bombers",
+    "fighters",
+    "apaches",
+    "spies",
+    "ICBMs",
+    "nukes",
+    "destroyers",
+    "cruisers",
+    "submarines",
+]
 for unit in units:
     mil_query = f"UPDATE military SET {unit}=0"
     db.execute(mil_query)
@@ -40,8 +65,17 @@ print("Reset military units, manpower, etc")
 
 # Player resources
 resources = [
-    "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-    "components", "consumer_goods", "gasoline", "ammunition"
+    "oil",
+    "coal",
+    "uranium",
+    "bauxite",
+    "lead",
+    "copper",
+    "iron",
+    "components",
+    "consumer_goods",
+    "gasoline",
+    "ammunition",
 ]
 
 for resource in resources:
@@ -73,7 +107,8 @@ print("Deleted war data")
 
 # TEMP
 db.execute("DROP TABLE spyinfo")
-db.execute("""CREATE TABLE spyinfo (
+db.execute(
+    """CREATE TABLE spyinfo (
         id      SERIAL PRIMARY KEY NOT NULL,
         spyer   INTEGER NOT NULL,
         spyee   INTEGER NOT NULL,
@@ -106,7 +141,8 @@ db.execute("""CREATE TABLE spyinfo (
         consumer_goods  TEXT NOT NULL DEFAULT 'false',
         money  TEXT NOT NULL DEFAULT 'false',
         defense TEXT NOT NULL DEFAULT 'false',
-        date    INTEGER NOT NULL);""")
+        date    INTEGER NOT NULL);"""
+)
 
 conn.commit()
 conn.close()

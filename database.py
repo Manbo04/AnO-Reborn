@@ -19,6 +19,7 @@ import config  # Parse Railway DATABASE_URL
 
 # Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL) for pool creation (force override)
 from urllib.parse import urlparse
+
 db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 if db_url:
     parsed = urlparse(db_url)
@@ -36,10 +37,11 @@ logger = logging.getLogger(__name__)
 # Simple query result cache for frequently accessed, slowly-changing data
 class QueryCache:
     """Simple in-memory cache with TTL for database query results"""
+
     def __init__(self, ttl_seconds=300):  # 5 minute default TTL
         self.cache = {}
         self.ttl = ttl_seconds
-    
+
     def get(self, key):
         """Get cached value if not expired"""
         if key in self.cache:
@@ -53,11 +55,11 @@ class QueryCache:
                 except KeyError:
                     pass
         return None
-    
+
     def set(self, key, value):
         """Cache a value with current timestamp"""
         self.cache[key] = (value, time())
-    
+
     def invalidate(self, pattern=None):
         """Clear cache or clear entries matching pattern"""
         if pattern is None:
@@ -72,39 +74,43 @@ def cache_response(ttl_seconds=60):
     """
     Decorator to cache full page responses
     Useful for read-only pages that don't change frequently
-    
+
     Usage:
         @cache_response(ttl_seconds=120)
         def my_page():
             # expensive DB queries
             return render_template(...)
     """
+
     def decorator(f):
         cache = {}
-        
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Create cache key from function name and user session
             from flask import session, request
-            user_id = session.get('user_id', 'anon')
-            page_id = request.path if hasattr(request, 'path') else ''
+
+            user_id = session.get("user_id", "anon")
+            page_id = request.path if hasattr(request, "path") else ""
             cache_key = f"{f.__name__}_{user_id}_{page_id}"
-            
+
             # Check if response is cached
             if cache_key in cache:
                 response, timestamp = cache[cache_key]
                 if time() - timestamp < ttl_seconds:
                     return response
-            
+
             # Call actual function
             response = f(*args, **kwargs)
-            
+
             # Cache the response
             cache[cache_key] = (response, time())
             return response
-        
+
         return decorated_function
+
     return decorator
+
 
 # Global query cache (5-minute TTL for slower-changing data)
 query_cache = QueryCache(ttl_seconds=300)
@@ -112,6 +118,7 @@ query_cache = QueryCache(ttl_seconds=300)
 
 class DatabasePool:
     """Singleton database connection pool"""
+
     _instance = None
     _pool = None
     _pid = None
@@ -143,7 +150,7 @@ class DatabasePool:
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT")
+                port=os.getenv("PG_PORT"),
             )
             self._pid = os.getpid()
             logger.info("Database connection pool initialized (pid=%s)", self._pid)
@@ -175,6 +182,7 @@ class DatabasePool:
                 conn.close()
             except:
                 pass
+
     def close_all(self):
         """Close all connections in the pool"""
         if self._pool:
@@ -189,7 +197,7 @@ db_pool = DatabasePool()
 def get_db_connection(cursor_factory=None):
     """
     Context manager for database connections
-    
+
     Usage:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -214,7 +222,7 @@ def get_db_connection(cursor_factory=None):
 def get_db_cursor(cursor_factory=None):
     """
     Context manager for database cursor
-    
+
     Usage:
         with get_db_cursor() as cursor:
             cursor.execute("SELECT ...")
@@ -238,11 +246,11 @@ def get_db_cursor(cursor_factory=None):
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT")
+                port=os.getenv("PG_PORT"),
             )
 
         # If the connection appears closed for any reason, create a fresh one
-        if getattr(conn, 'closed', 0):
+        if getattr(conn, "closed", 0):
             try:
                 conn.close()
             except Exception:
@@ -252,7 +260,7 @@ def get_db_cursor(cursor_factory=None):
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT")
+                port=os.getenv("PG_PORT"),
             )
 
         cursor = conn.cursor(cursor_factory=cursor_factory)
@@ -297,7 +305,9 @@ class QueryHelper:
     """Helper class for common database queries"""
 
     @staticmethod
-    def fetch_one(query: str, params: tuple = None, dict_cursor: bool = False) -> Optional[Any]:
+    def fetch_one(
+        query: str, params: tuple = None, dict_cursor: bool = False
+    ) -> Optional[Any]:
         """Execute a query and fetch one result"""
         cursor_factory = RealDictCursor if dict_cursor else None
         with get_db_cursor(cursor_factory=cursor_factory) as cursor:
@@ -305,7 +315,9 @@ class QueryHelper:
             return cursor.fetchone()
 
     @staticmethod
-    def fetch_all(query: str, params: tuple = None, dict_cursor: bool = False) -> List[Any]:
+    def fetch_all(
+        query: str, params: tuple = None, dict_cursor: bool = False
+    ) -> List[Any]:
         """Execute a query and fetch all results"""
         cursor_factory = RealDictCursor if dict_cursor else None
         with get_db_cursor(cursor_factory=cursor_factory) as cursor:
@@ -339,7 +351,7 @@ class UserQueries:
     def get_user_resources(user_id: int) -> Dict[str, int]:
         """Get all resources for a user in a single query"""
         query = """
-            SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper, 
+            SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper,
                    lumber, components, steel, consumer_goods, aluminium, gasoline, ammunition
             FROM resources WHERE id = %s
         """
@@ -363,7 +375,7 @@ class UserQueries:
         """Get user stats in a single query"""
         query = "SELECT gold FROM stats WHERE id = %s"
         result = QueryHelper.fetch_one(query, (user_id,))
-        return {'gold': result[0]} if result else {'gold': 0}
+        return {"gold": result[0]} if result else {"gold": 0}
 
     @staticmethod
     def get_all_user_ids() -> List[int]:
@@ -380,14 +392,14 @@ class ProvinceQueries:
     def get_user_provinces_summary(user_id: int) -> Dict[str, Any]:
         """Get aggregated province data for a user in a single query"""
         query = """
-            SELECT 
+            SELECT
                 COUNT(id) as province_count,
                 COALESCE(SUM(population), 0) as total_population,
                 COALESCE(SUM(land), 0) as total_land,
                 COALESCE(SUM(cityCount), 0) as total_cities,
                 COALESCE(AVG(happiness), 0) as avg_happiness,
                 COALESCE(AVG(productivity), 0) as avg_productivity
-            FROM provinces 
+            FROM provinces
             WHERE userId = %s
         """
         result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
@@ -397,7 +409,7 @@ class ProvinceQueries:
     def get_user_provinces_with_infrastructure(user_id: int) -> List[Dict[str, Any]]:
         """Get all provinces with their infrastructure in a single JOIN query"""
         query = """
-            SELECT 
+            SELECT
                 p.id, p.provinceName, p.population, p.land, p.cityCount,
                 p.energy, p.happiness, p.pollution, p.productivity, p.consumer_spending,
                 pi.*
@@ -474,7 +486,7 @@ class CoalitionQueries:
             FROM coalitions c
             JOIN users u ON c.userId = u.id
             WHERE c.colId = %s
-            ORDER BY 
+            ORDER BY
                 CASE c.role
                     WHEN 'leader' THEN 1
                     WHEN 'deputy_leader' THEN 2
@@ -494,7 +506,7 @@ class CoalitionQueries:
         """Calculate total coalition influence efficiently"""
         # This would need the influence calculation logic, but we can pre-aggregate much of it
         query = """
-            SELECT 
+            SELECT
                 c.userId,
                 COALESCE(SUM(p.cityCount), 0) * 10 as cities_score,
                 COALESCE(SUM(p.land), 0) * 10 as land_score,
@@ -513,7 +525,7 @@ class CoalitionQueries:
         """Get all coalition bank resources in a single query"""
         query = """
             SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper,
-                   lumber, components, steel, consumer_goods, aluminium, gasoline, 
+                   lumber, components, steel, consumer_goods, aluminium, gasoline,
                    ammunition, money
             FROM colBanks WHERE colId = %s
         """
@@ -528,17 +540,18 @@ class BatchOperations:
     def batch_update_resources(user_resources: List[Tuple[int, str, int]]) -> None:
         """
         Batch update resources for multiple users
-        
+
         Args:
             user_resources: List of tuples (user_id, resource_name, amount)
         """
         # Group updates by resource type for efficiency
         from collections import defaultdict
+
         grouped = defaultdict(list)
-        
+
         for user_id, resource, amount in user_resources:
             grouped[resource].append((amount, user_id))
-        
+
         for resource, updates in grouped.items():
             query = f"UPDATE resources SET {resource} = {resource} + %s WHERE id = %s"
             QueryHelper.execute_many(query, updates)
@@ -547,16 +560,17 @@ class BatchOperations:
     def batch_update_military(user_units: List[Tuple[int, str, int]]) -> None:
         """
         Batch update military units for multiple users
-        
+
         Args:
             user_units: List of tuples (user_id, unit_type, amount)
         """
         from collections import defaultdict
+
         grouped = defaultdict(list)
-        
+
         for user_id, unit_type, amount in user_units:
             grouped[unit_type].append((amount, user_id))
-        
+
         for unit_type, updates in grouped.items():
             query = f"UPDATE military SET {unit_type} = {unit_type} + %s WHERE id = %s"
             QueryHelper.execute_many(query, updates)
@@ -566,10 +580,10 @@ class BatchOperations:
 def get_user_full_data(user_id: int) -> Dict[str, Any]:
     """Get all user data in optimized queries"""
     return {
-        'resources': UserQueries.get_user_resources(user_id),
-        'military': UserQueries.get_user_military(user_id),
-        'stats': UserQueries.get_user_stats(user_id),
-        'provinces': ProvinceQueries.get_user_provinces_summary(user_id)
+        "resources": UserQueries.get_user_resources(user_id),
+        "military": UserQueries.get_user_military(user_id),
+        "stats": UserQueries.get_user_stats(user_id),
+        "provinces": ProvinceQueries.get_user_provinces_summary(user_id),
     }
 
 

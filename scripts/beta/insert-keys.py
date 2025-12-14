@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 import psycopg2
 import openpyxl
@@ -9,15 +10,16 @@ conn = psycopg2.connect(
     user=os.getenv("PG_USER"),
     password=os.getenv("PG_PASSWORD"),
     host=os.getenv("PG_HOST"),
-    port=os.getenv("PG_PORT"))
+    port=os.getenv("PG_PORT"),
+)
 
 db = conn.cursor()
 
 path = "./ano_betatesters.xlsx"
 wb = openpyxl.load_workbook(path)
-ws = wb['Sheet1']
+ws = wb["Sheet1"]
 idx = 1
-for cell in ws['D']: # key
+for cell in ws["D"]:  # key
     key = cell.value
     if key is not None and key != "Key":
         # I know this is a very bad practice, but for 88 rows the performance is negligible.

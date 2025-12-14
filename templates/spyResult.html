@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block title %}Spy Results{% endblock %}
+
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle">Spy Results</h1>
+    </div>
+    <div class="templatedivcontent">
+        <p>Enemy nation: {{ enemyNation or 'Unknown' }}</p>
+
+        <h3>Revealed</h3>
+        {% if spyEntry %}
+            <ul>
+            {% for k, v in spyEntry.items() %}
+                <li>{{ k }}: {{ v }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No intelligence gathered.</p>
+        {% endif %}
+
+        <a class="templatedivbutton" href="/intelligence">Back to Intelligence</a>
+    </div>
+</div>
+{% endblock %}

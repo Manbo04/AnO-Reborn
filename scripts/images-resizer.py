@@ -12,12 +12,14 @@ from PIL import Image
 from resizeimage import resizeimage
 import os
 
+
 def resize(filename):
-    fd_img = open(filename, 'rb')
+    fd_img = open(filename, "rb")
     img = Image.open(fd_img)
     img = resizeimage.resize_width(img, 1920)
     img.save(filename, img.format)
     fd_img.close()
+
 
 # Changes folder to the images folder
 cwd = os.getcwd()

@@ -37,23 +37,39 @@ amount = sys.argv[2]
 user_id = sys.argv[3]
 
 if resource == "all":
-
     resources = [
-        "rations", "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-        "lumber", "components", "steel", "consumer_goods", "aluminium",
-        "gasoline", "ammunition"
+        "rations",
+        "oil",
+        "coal",
+        "uranium",
+        "bauxite",
+        "lead",
+        "copper",
+        "iron",
+        "lumber",
+        "components",
+        "steel",
+        "consumer_goods",
+        "aluminium",
+        "gasoline",
+        "ammunition",
     ]
 
     for resource in resources:
+        resource_update = (
+            f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
+        )
+        db.execute(
+            resource_update,
+            (
+                amount,
+                user_id,
+            ),
+        )
 
-        resource_update = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
-        db.execute(resource_update, (amount, user_id,))
-
-    
     db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, user_id))
 
     conn.commit()
     conn.close()
 else:
     print("Unrecognized resource")
-

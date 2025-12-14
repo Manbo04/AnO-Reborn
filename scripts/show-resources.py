@@ -47,9 +47,21 @@ gold_row = db.fetchone()
 
 # Fetch resources
 resource_fields = [
-    "rations", "oil", "coal", "uranium", "bauxite", "lead", "copper", "iron",
-    "lumber", "components", "steel", "consumer_goods", "aluminium",
-    "gasoline", "ammunition"
+    "rations",
+    "oil",
+    "coal",
+    "uranium",
+    "bauxite",
+    "lead",
+    "copper",
+    "iron",
+    "lumber",
+    "components",
+    "steel",
+    "consumer_goods",
+    "aluminium",
+    "gasoline",
+    "ammunition",
 ]
 fields_sql = ", ".join(resource_fields)
 db.execute(f"SELECT {fields_sql} FROM resources WHERE id=%s", (user_id,))
