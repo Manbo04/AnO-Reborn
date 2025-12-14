@@ -1,9 +1,10 @@
 from helpers import get_influence
+from database import get_db_cursor
+from attack_scripts import Nation
+import time
 
 
 def target_data(cId):
-    from database import get_db_cursor
-
     with get_db_cursor() as db:
         influence = get_influence(cId)
         db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
@@ -16,16 +17,14 @@ def target_data(cId):
     return data
 
 
-from database import get_db_cursor
-from attack_scripts import Nation
-import time
-
-
 def update_supply(war_id):
     MAX_SUPPLY = 2000
     with get_db_cursor() as db:
         db.execute(
-            "SELECT attacker_supplies,defender_supplies,last_visited FROM wars WHERE id=%s",
+            (
+                "SELECT attacker_supplies,defender_supplies,last_visited "
+                "FROM wars WHERE id=%s"
+            ),
             (war_id,),
         )
         attacker_supplies, defender_supplies, supply_date = db.fetchall()[0]
@@ -65,7 +64,8 @@ def update_supply(war_id):
                     (supply_by_hours + defender_supplies, war_id),
                 )
             db.execute(
-                "UPDATE wars SET last_visited=(%s) WHERE id=(%s)", (time.time(), war_id)
+                ("UPDATE wars SET last_visited=(%s) " "WHERE id=(%s)"),
+                (time.time(), war_id),
             )
 
 
