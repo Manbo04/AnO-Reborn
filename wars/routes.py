@@ -624,8 +624,12 @@ def find_targets():
 			min_provinces = max(0, user_provinces - 3)
 			max_provinces = user_provinces + 1
 			user_influence = get_influence(cId)
-			min_influence = user_influence * 0.9
-			max_influence = user_influence * 2.0
+			# Choose a sensible search range around the player's influence.
+			# For very new/low-influence players, expand the max_influence so
+			# they still see potential targets (otherwise max would be 0 and
+			# filter out viable targets).
+			min_influence = max(0.0, user_influence * 0.9)
+			max_influence = max(user_influence * 2.0, 100.0)
 			db.execute("""SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count,
 COALESCE(SUM(military.soldiers * 0.02 + military.artillery * 1.6 + military.tanks * 0.8 + military.fighters * 3.5 + military.bombers * 2.5 + military.apaches * 3.2 + military.submarines * 4.5 + military.destroyers * 3 + military.cruisers * 5.5 + military.icbms * 250 + military.nukes * 500 + military.spies * 25), 0) as influence
 FROM users
