@@ -1,9 +1,10 @@
 import os
+
+import openpyxl
+import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
-import psycopg2
-import openpyxl
 
 conn = psycopg2.connect(
     database=os.getenv("PG_DATABASE"),
@@ -22,8 +23,9 @@ idx = 1
 for cell in ws["D"]:  # key
     key = cell.value
     if key is not None and key != "Key":
-        # I know this is a very bad practice, but for 88 rows the performance is negligible.
-        # Fix, if more keys required with one INSERT statement.
+        # I know this is a very bad practice, but for 88 rows
+        # the performance impact is negligible.
+        # Fix: switch to a single multi-row INSERT if more keys are required.
         db.execute("INSERT INTO keys (key) VALUES (%s)", (key,))
         print(f"{idx}. Inserted key - {key}")
         idx += 1

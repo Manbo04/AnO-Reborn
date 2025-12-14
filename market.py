@@ -1,14 +1,21 @@
-from app import app
-from helpers import login_required, error
-from database import get_db_cursor
-import psycopg2
-from flask import request, render_template, session, redirect, flash
 import os
+
+import psycopg2
+from flask import Blueprint, flash, redirect, render_template, request, session
+
 import variables
+from database import get_db_cursor
+from helpers import error, login_required
+from typing import Union
 
 
 # TODO: implement connection passing here.
-def give_resource(giver_id, taker_id, resource, amount):
+def give_resource(
+    giver_id: Union[int, str],
+    taker_id: Union[int, str],
+    resource: str,
+    amount: int,
+) -> Union[bool, str]:
     # If giver_id is bank, don't remove any resources from anyone
     # If taker_id is bank, just remove the resources from the player
 
@@ -75,7 +82,10 @@ def give_resource(giver_id, taker_id, resource, amount):
     return True
 
 
-@app.route("/market", methods=["GET", "POST"])
+market_bp = Blueprint("market", __name__)
+
+
+@market_bp.route("/market", methods=["GET", "POST"])
 @login_required
 def market():
     if request.method == "GET":
@@ -116,70 +126,68 @@ def market():
 
         if offer_type is not None and price_type is None:
             db.execute("SELECT offer_id FROM offers WHERE type=(%s)", (offer_type,))
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is None and price_type is not None:
             offer_ids_statement = (
-                f"SELECT offer_id FROM offers ORDER BY price {price_type}"
+                "SELECT offer_id FROM offers ORDER BY price " + price_type
             )
             db.execute(offer_ids_statement)
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is not None and price_type is not None:
+            direction = "ASC" if price_type == "ascending" else "DESC"
             offer_ids_statement = (
-                "SELECT offer_id FROM offers WHERE type=%s"
-                + f"ORDER by price {price_type}"
+                "SELECT offer_id FROM offers WHERE type=%s "
+                "ORDER by price " + direction
             )
             db.execute(offer_ids_statement, (offer_type,))
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is None and price_type is None:
             db.execute("SELECT offer_id FROM offers ORDER BY price ASC")
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         if filter_resource is not None:
             resources_list = variables.RESOURCES
 
-            if (
-                filter_resource not in resources_list
-            ):  # Checks if the resource the user selected actually exists
+            if filter_resource not in resources_list:
+                # Checks if the resource the user selected actually exists
                 return error(400, "No such resource")
 
         # Use JOIN query instead of loop to fetch all data at once
         if filter_resource is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.resource = %s
-                ORDER BY o.price ASC
-            """
+            query = (
+                "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                "o.offer_id, u.username "
+                "FROM offers o INNER JOIN users u ON o.user_id = u.id "
+                "WHERE o.resource = %s ORDER BY o.price ASC"
+            )
             params = (filter_resource,)
         elif offer_type is not None and price_type is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.type = %s
-                ORDER BY o.price " + ("ASC" if price_type == "ascending" else "DESC") + "
-            """
+            direction = "ASC" if price_type == "ascending" else "DESC"
+            query = (
+                "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                "o.offer_id, u.username "
+                "FROM offers o INNER JOIN users u ON o.user_id = u.id "
+                "WHERE o.type = %s ORDER BY o.price " + direction
+            )
             params = (offer_type,)
         elif offer_type is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.type = %s
-                ORDER BY o.price ASC
-            """
+            query = (
+                "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                "o.offer_id, u.username "
+                "FROM offers o INNER JOIN users u ON o.user_id = u.id "
+                "WHERE o.type = %s ORDER BY o.price ASC"
+            )
             params = (offer_type,)
         else:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                ORDER BY o.price ASC
-            """
+            query = (
+                "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                "o.offer_id, u.username "
+                "FROM offers o INNER JOIN users u ON o.user_id = u.id "
+                "ORDER BY o.price ASC"
+            )
             params = None
 
         if params:
@@ -228,7 +236,7 @@ def market():
         )
 
 
-@app.route("/buy_offer/<offer_id>", methods=["POST"])
+@market_bp.route("/buy_offer/<offer_id>", methods=["POST"])
 @login_required
 def buy_market_offer(offer_id):
     connection = psycopg2.connect(
@@ -283,7 +291,7 @@ def buy_market_offer(offer_id):
     return redirect("/market")
 
 
-@app.route("/sell_offer/<offer_id>", methods=["POST"])
+@market_bp.route("/sell_offer/<offer_id>", methods=["POST"])
 @login_required
 def sell_market_offer(offer_id):
     conn = psycopg2.connect(
@@ -319,7 +327,8 @@ def sell_market_offer(offer_id):
     if amount_wanted > total_amount:
         return error(
             400,
-            "The amount of resources you're selling is higher than what the buyer wants",
+            "The amount of resources you're selling is higher than what the "
+            "buyer wants",
         )
 
     # Checks if it's less than what the seller wants to sell
@@ -352,13 +361,13 @@ def sell_market_offer(offer_id):
     return redirect("/market")
 
 
-@app.route("/marketoffer/", methods=["GET"])
+@market_bp.route("/marketoffer/", methods=["GET"])
 @login_required
 def marketoffer():
     return render_template("marketoffer.html")
 
 
-@app.route("/post_offer/<offer_type>", methods=["POST"])
+@market_bp.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
 def post_offer(offer_type):
     cId = session["user_id"]
@@ -405,7 +414,8 @@ def post_offer(offer_type):
 
         # Creates a new offer
         db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO offers (user_id, type, resource, amount, price) "
+            "VALUES (%s, %s, %s, %s, %s)",
             (
                 cId,
                 offer_type,
@@ -417,7 +427,8 @@ def post_offer(offer_type):
 
     elif offer_type == "buy":
         db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO offers (user_id, type, resource, amount, price) "
+            "VALUES (%s, %s, %s, %s, %s)",
             (
                 cId,
                 offer_type,
@@ -442,34 +453,37 @@ def post_offer(offer_type):
     return redirect("/market")
 
 
-@app.route("/my_offers", methods=["GET"])
+@market_bp.route("/my_offers", methods=["GET"])
 @login_required
 def my_offers():
     cId = session["user_id"]
     offers = {}
     with get_db_cursor() as db:
         db.execute(
-            """
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
-FROM trades INNER JOIN users ON trades.offeree=users.id
-WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
-""",
+            (
+                "SELECT trades.offer_id, trades.price, trades.resource, trades.amount, "
+                "trades.type, trades.offeree, users.username "
+                "FROM trades INNER JOIN users ON trades.offeree = users.id "
+                "WHERE trades.offerer = (%s) ORDER BY trades.offer_id ASC"
+            ),
             (cId,),
         )
         offers["outgoing"] = db.fetchall()
 
         db.execute(
-            """
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
-FROM trades INNER JOIN users ON trades.offerer=users.id
-WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
-""",
+            (
+                "SELECT trades.offer_id, trades.price, trades.resource, trades.amount, "
+                "trades.type, trades.offerer, users.username "
+                "FROM trades INNER JOIN users ON trades.offerer = users.id "
+                "WHERE trades.offeree = (%s) ORDER BY trades.offer_id ASC"
+            ),
             (cId,),
         )
         offers["incoming"] = db.fetchall()
 
         db.execute(
-            "SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC",
+            "SELECT offer_id, price, resource, amount, type FROM offers "
+            "WHERE user_id=(%s) ORDER BY offer_id ASC",
             (cId,),
         )
         offers["market"] = db.fetchall()
@@ -477,7 +491,7 @@ WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
     return render_template("my_offers.html", cId=cId, offers=offers)
 
 
-@app.route("/delete_offer/<offer_id>", methods=["POST"])
+@market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
 def delete_offer(offer_id):
     cId = session["user_id"]
@@ -520,7 +534,7 @@ def delete_offer(offer_id):
     return redirect("/my_offers")
 
 
-@app.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
+@market_bp.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
 @login_required
 def trade_offer(offer_type, offeree_id):
     if request.method == "POST":
@@ -577,7 +591,8 @@ def trade_offer(offer_type, offeree_id):
 
             # Creates a new offer
             db.execute(
-                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
                 (cId, offer_type, resource, amount, price, offeree_id),
             )
 
@@ -585,7 +600,8 @@ def trade_offer(offer_type, offeree_id):
 
         elif offer_type == "buy":
             db.execute(
-                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
                 (cId, offer_type, resource, amount, price, offeree_id),
             )
 
@@ -606,7 +622,7 @@ def trade_offer(offer_type, offeree_id):
         return redirect(f"/country/id={offeree_id}")
 
 
-@app.route("/decline_trade/<trade_id>", methods=["POST"])
+@market_bp.route("/decline_trade/<trade_id>", methods=["POST"])
 @login_required
 def decline_trade(trade_id):
     if not trade_id.isnumeric():
@@ -625,7 +641,8 @@ def decline_trade(trade_id):
     db = connection.cursor()
 
     db.execute(
-        "SELECT offeree, offerer, type, resource, amount, price FROM trades WHERE offer_id=(%s)",
+        "SELECT offeree, offerer, type, resource, amount, price "
+        "FROM trades WHERE offer_id=(%s)",
         (trade_id,),
     )
     offeree, offerer, type, resource, amount, price = db.fetchone()
@@ -659,7 +676,7 @@ def decline_trade(trade_id):
     return redirect("/my_offers")
 
 
-@app.route("/accept_trade/<trade_id>", methods=["POST"])
+@market_bp.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
 def accept_trade(trade_id):
     cId = session["user_id"]
@@ -675,7 +692,8 @@ def accept_trade(trade_id):
     db = connection.cursor()
 
     db.execute(
-        "SELECT offeree, type, offerer, resource, amount, price FROM trades WHERE offer_id=(%s)",
+        "SELECT offeree, type, offerer, resource, amount, price "
+        "FROM trades WHERE offer_id=(%s)",
         (trade_id,),
     )
     offeree, trade_type, offerer, resource, amount, price = db.fetchone()
@@ -697,7 +715,7 @@ def accept_trade(trade_id):
     return redirect("/my_offers")
 
 
-@app.route("/transfer/<transferee>", methods=["POST"])
+@market_bp.route("/transfer/<transferee>", methods=["POST"])
 @login_required
 def transfer(transferee):
     cId = session["user_id"]
@@ -715,7 +733,7 @@ def transfer(transferee):
     resource = request.form.get("resource")
     amount = int(request.form.get("amount"))
 
-    ### DEFINITIONS ###
+    # DEFINITIONS
 
     # user - the user transferring the resource, whose id is 'cId'
     # transferee - the user upon whom the resource is transferred

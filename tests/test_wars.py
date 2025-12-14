@@ -1,11 +1,9 @@
+import os
+
+import psycopg2
 import pytest
 import requests
-import psycopg2
-import os
 from dotenv import load_dotenv
-import sys
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from init import BASE_URL
 
 load_dotenv()
@@ -44,8 +42,9 @@ def users():
         port=os.getenv("PG_PORT"),
     )
     db = conn.cursor()
-    import bcrypt
     import datetime
+
+    import bcrypt
 
     # Clean up users and keys before test
     for user in users:
@@ -58,15 +57,24 @@ def users():
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM resources WHERE id IN (SELECT id FROM users WHERE username=%s)",
+            (
+                "DELETE FROM resources WHERE id IN (SELECT id FROM users "
+                "WHERE username=%s)"
+            ),
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM upgrades WHERE user_id IN (SELECT id FROM users WHERE username=%s)",
+            (
+                "DELETE FROM upgrades WHERE user_id IN (SELECT id FROM users "
+                "WHERE username=%s)"
+            ),
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM policies WHERE user_id IN (SELECT id FROM users WHERE username=%s)",
+            (
+                "DELETE FROM policies WHERE user_id IN (SELECT id FROM users "
+                "WHERE username=%s)"
+            ),
             (user["username"],),
         )
         db.execute("DELETE FROM users WHERE username=%s", (user["username"],))
@@ -82,7 +90,10 @@ def users():
             user["password"].encode("utf-8"), bcrypt.gensalt(14)
         ).decode("utf-8")
         db.execute(
-            "INSERT INTO users (username, email, date, hash, auth_type) VALUES (%s, %s, %s, %s, %s)",
+            (
+                "INSERT INTO users (username, email, date, hash, auth_type) "
+                "VALUES (%s, %s, %s, %s, %s)"
+            ),
             (
                 user["username"],
                 user["email"],
@@ -146,7 +157,10 @@ def test_declare_war(login_session, users):
     r = login_session.post(f"{BASE_URL}/declare_war", data=data, allow_redirects=True)
     assert r.status_code == 200 or r.status_code == 302
     db.execute(
-        "SELECT * FROM wars WHERE attacker=(SELECT id FROM users WHERE username=%s) AND defender=%s AND peace_date IS NULL",
+        (
+            "SELECT * FROM wars WHERE attacker=(SELECT id FROM users "
+            "WHERE username=%s) AND defender=%s AND peace_date IS NULL"
+        ),
         (users[0]["username"], defender_id),
     )
     war = db.fetchone()

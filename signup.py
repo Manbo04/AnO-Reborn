@@ -1,17 +1,17 @@
 # FULLY MIGRATED
 
-from flask import request, render_template, session, redirect
 import datetime
-from helpers import error
-import psycopg2
+import os
+
+import bcrypt
+import requests
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+from requests_oauthlib import OAuth2Session
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 from app import app
-import bcrypt
-from requests_oauthlib import OAuth2Session
-import os
-from dotenv import load_dotenv
-import requests
+from helpers import error
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 load_dotenv()
@@ -20,7 +20,7 @@ OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 try:
     environment = os.getenv("ENVIRONMENT")
-except:
+except Exception:
     environment = "DEV"
 
 if environment == "PROD":
@@ -76,7 +76,8 @@ def ensure_signup_attempts_table():
         from database import get_db_cursor
 
         with get_db_cursor() as db:
-            # Create table if it doesn't exist (minimal primary key), then add expected columns.
+            # Create table if it doesn't exist (minimal primary key).
+            # Then add expected columns.
             db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS signup_attempts (
@@ -88,7 +89,10 @@ def ensure_signup_attempts_table():
             # Ensure expected columns exist (no-op if already present)
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT "
+                        "EXISTS ip_address VARCHAR(45);"
+                    )
                 )
                 import logging
 
@@ -98,10 +102,14 @@ def ensure_signup_attempts_table():
 
                 logging.getLogger(__name__).debug("ensure: ip_address error %s", e)
 
-            # Also tolerate older schema that used `ip` column name and ensure it's nullable
+            # Also tolerate older schema that used `ip` column name
+            # and ensure it's nullable
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip VARCHAR(45);"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT "
+                        "EXISTS ip VARCHAR(45);"
+                    )
                 )
                 import logging
 
@@ -111,25 +119,26 @@ def ensure_signup_attempts_table():
 
                 logging.getLogger(__name__).debug("ensure: ip add error %s", e)
 
-            # Attempt to drop NOT NULL on `ip` if it exists (wrapped in DO block to avoid errors)
+            # Attempt to drop NOT NULL on `ip` if it exists (wrapped in DO block)
             try:
-                db.execute(
-                    """
-                    DO $$
-                    BEGIN
-                      IF EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='signup_attempts' AND column_name='ip'
-                      ) THEN
-                        BEGIN
-                          EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
-                        EXCEPTION WHEN others THEN
-                          -- ignore any error dropping NOT NULL (e.g., if it's already nullable)
-                        END;
-                      END IF;
-                    END$$;
-                """
+                sql = (
+                    "DO $$\n"
+                    "BEGIN\n"
+                    "  IF EXISTS (\n"
+                    "    SELECT 1 FROM information_schema.columns\n"
+                    "    WHERE table_name='signup_attempts' AND column_name='ip'\n"
+                    "  ) THEN\n"
+                    "    BEGIN\n"
+                    "      EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip '"
+                    "DROP NOT NULL';\n"
+                    "    EXCEPTION WHEN others THEN\n"
+                    "      -- ignore any error dropping NOT NULL (e.g., if it's\n"
+                    "      already nullable)\n"
+                    "    END;\n"
+                    "  END IF;\n"
+                    "END$$;\n"
                 )
+                db.execute(sql)
                 import logging
 
                 logging.getLogger(__name__).debug(
@@ -144,16 +153,28 @@ def ensure_signup_attempts_table():
 
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS "
+                        "fingerprint TEXT;"
+                    )
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS "
+                        "email VARCHAR(255);"
+                    )
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS "
+                        "attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
+                    )
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;"
+                    (
+                        "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS "
+                        "successful BOOLEAN DEFAULT FALSE;"
+                    )
                 )
                 import logging
 
@@ -169,7 +190,7 @@ def ensure_signup_attempts_table():
             logging.getLogger(__name__).debug(
                 "ensure_signup_attempts_table: failed to ensure table: %s", e
             )
-        except:
+        except Exception:
             pass
 
 
@@ -206,7 +227,7 @@ def callback():
     except Exception as e:
         err_name = type(e).__name__
         err_str = str(e)
-        print(f"OAuth token fetch error: {err_name}: {err_str}")
+        print("OAuth token fetch error: %s: %s", err_name, err_str)
 
         is_state_error = (
             "MismatchingStateError" in err_name
@@ -220,7 +241,8 @@ def callback():
                     "state"
                 )
                 print(
-                    f"OAuth state mismatch — attempting fallback with incoming state: {incoming_state}"
+                    "OAuth state mismatch — attempting fallback with incoming state:",
+                    incoming_state,
                 )
                 discord_state = make_session(state=incoming_state)
                 token = discord_state.fetch_token(
@@ -289,18 +311,20 @@ def discord_register():
                 if attempt_count >= 3:
                     return error(
                         429,
-                        "Too many signup attempts from this IP address. Please try again tomorrow.",
+                        (
+                            "Too many signup attempts from this IP address. "
+                            "Please try again tomorrow."
+                        ),
                     )
 
                 # Record this attempt
                 db.execute(
-                    """
-                    INSERT INTO signup_attempts (ip_address, ip, attempt_time, successful)
-                    VALUES (%s, %s, NOW(), FALSE)
-                """,
+                    (
+                        "INSERT INTO signup_attempts (ip_address, ip, "
+                        "attempt_time, successful) VALUES (%s, %s, NOW(), FALSE)"
+                    ),
                     (client_ip, client_ip),
                 )
-
             app.config["SESSION_PERMANENT"] = True
             app.permanent_session_lifetime = datetime.timedelta(days=365)
 
@@ -311,7 +335,7 @@ def discord_register():
                 print("ERROR: No token")
                 return error(400, "Discord authentication failed - no token")
 
-            print(f"Fetching Discord user...")
+            print("Fetching Discord user...")
             response = discord.get(API_BASE_URL + "/users/@me")
             print(f"Response code: {response.status_code}")
             discord_user = response.json()
@@ -396,7 +420,10 @@ def discord_register():
                 # Create user
                 date = str(datetime.date.today())
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
+                    (
+                        "INSERT INTO users (username, email, hash, date, auth_type) "
+                        "VALUES (%s, %s, %s, %s, %s)"
+                    ),
                     (username, email, discord_auth, date, "discord"),
                 )
 
@@ -438,7 +465,7 @@ def discord_register():
             try:
                 session.pop("oauth2_state", None)
                 session.pop("oauth2_token", None)
-            except:
+            except Exception:
                 pass
 
             return redirect("/")
@@ -447,7 +474,7 @@ def discord_register():
             import traceback
 
             error_msg = str(e)
-            print(f"\n!!! DISCORD SIGNUP ERROR !!!")
+            print("\n!!! DISCORD SIGNUP ERROR !!!")
             print(f"Error: {error_msg}")
             print(traceback.format_exc())
             print("!!! END ERROR !!!\n")
@@ -471,7 +498,9 @@ def signup():
 
         logger = logging.getLogger(__name__)
         logger.debug(
-            f"signup request remote_addr={request.remote_addr} X-Forwarded-For={request.headers.get('X-Forwarded-For')}"
+            "signup request remote_addr=%s X-Forwarded-For=%s",
+            request.remote_addr,
+            request.headers.get("X-Forwarded-For"),
         )
 
         # IP rate limiting: max 3 attempts per IP per day
@@ -491,7 +520,8 @@ def signup():
             # test runs from 127.0.0.1 don't get rate limited.
             # In local development, skip rate-limiting for 127.0.0.1 to avoid
             # flaky failures caused by test runs or previous test artifacts.
-            # Treat local loopback and IPv4-mapped IPv6 addresses as exempt from rate-limits
+            # Treat local loopback and IPv4-mapped IPv6 addresses as exempt
+            # from rate-limits
             # Use substring checks because request.remote_addr can be in forms like
             # '::1' or '::ffff:127.0.0.1'. For local dev, disable rate-limiting.
             is_local = False
@@ -513,26 +543,39 @@ def signup():
                 max_attempts = None
             else:
                 max_attempts = 3
-            logger.debug(f"ENVIRONMENT={os.getenv('ENVIRONMENT', 'DEV')}")
+            logger.debug("ENVIRONMENT=%s", os.getenv("ENVIRONMENT", "DEV"))
             logger.debug(
-                f"signup rate check: ip={client_ip} attempt_count={attempt_count} max_attempts={max_attempts} is_local={is_local}"
+                "signup rate check: ip=%s attempt_count=%s max_attempts=%s is_local=%s",
+                client_ip,
+                attempt_count,
+                max_attempts,
+                is_local,
             )
 
             if max_attempts is not None and attempt_count >= max_attempts:
                 logger.debug(
-                    f"signup rate limit exceeded: ip={client_ip} attempt_count={attempt_count} max_attempts={max_attempts}"
+                    (
+                        "signup rate limit exceeded: ip=%s attempt_count=%s "
+                        "max_attempts=%s"
+                    ),
+                    client_ip,
+                    attempt_count,
+                    max_attempts,
                 )
                 return error(
                     429,
-                    "Too many signup attempts from this IP address. Please try again tomorrow.",
+                    (
+                        "Too many signup attempts from this IP address. "
+                        "Please try again tomorrow."
+                    ),
                 )
 
             # Record this attempt
             db.execute(
-                """
-                INSERT INTO signup_attempts (ip_address, ip, attempt_time, successful)
-                VALUES (%s, %s, NOW(), FALSE)
-            """,
+                (
+                    "INSERT INTO signup_attempts (ip_address, ip, "
+                    "attempt_time, successful) VALUES (%s, %s, NOW(), FALSE)"
+                ),
                 (client_ip, client_ip),
             )
 
@@ -547,7 +590,10 @@ def signup():
 
         logger = logging.getLogger(__name__)
         logger.debug(
-            f"signup form values: username={username} email={email} continent={request.form.get('continent')}"
+            "signup form values: username=%s email=%s continent=%s",
+            username,
+            email,
+            request.form.get("continent"),
         )
 
         # Verify reCAPTCHA
@@ -592,11 +638,15 @@ def signup():
 
             # Inserts the user and his data to the main table for users
             db.execute(
-                "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    "INSERT INTO users (username, email, hash, date, auth_type) "
+                    "VALUES (%s, %s, %s, %s, %s)"
+                ),
                 (username, email, hashed, str(datetime.date.today()), "normal"),
             )  # creates a new user || added account creation date
 
-            # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
+            # Selects the id of the user that was just registered.
+            # (Because id is AUTOINCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
@@ -606,8 +656,6 @@ def signup():
             session.modified = True
 
             # Return redirect; do not set developer-only cookies in normal flow.
-            from flask import make_response
-
             response = redirect("/")
             # Continue with DB setup and then return the response
 

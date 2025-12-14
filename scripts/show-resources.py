@@ -6,8 +6,9 @@ Use with `railway run python scripts/show-resources.py <id>` in production.
 import os
 import sys
 from urllib.parse import urlparse
-from dotenv import load_dotenv
+
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 

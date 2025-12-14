@@ -1,14 +1,14 @@
-from flask import request, render_template, session, redirect
-from helpers import login_required, error
-from app import app
-from dotenv import load_dotenv
-import os
-import variables
-from tasks import energy_info
-from helpers import get_date
-from upgrades import get_upgrades
-from database import get_db_cursor, cache_response
 import math
+
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+
+import variables
+from app import app
+from database import cache_response, get_db_cursor
+from helpers import error, get_date, login_required
+from tasks import energy_info
+from upgrades import get_upgrades
 
 load_dotenv()
 
@@ -21,8 +21,11 @@ def provinces():
         cId = session["user_id"]
 
         db.execute(
-            """SELECT CAST(cityCount AS INTEGER) as cityCount, population, provinceName, id, land, happiness, productivity, energy
-        FROM provinces WHERE userId=(%s) ORDER BY id ASC""",
+            (
+                "SELECT CAST(cityCount AS INTEGER) as cityCount, population, "
+                "provinceName, id, land, happiness, productivity, energy "
+                "FROM provinces WHERE userId=(%s) ORDER BY id ASC"
+            ),
             (cId,),
         )
         provinces = db.fetchall()
@@ -42,8 +45,12 @@ def province(pId):
 
         try:
             db.execute(
-                """SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-            consumer_spending, CAST(citycount AS INTEGER) as citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""",
+                (
+                    "SELECT id, userId AS user, provinceName AS name, population, "
+                    "pollution, happiness, productivity, consumer_spending, "
+                    "CAST(citycount AS INTEGER) as citycount, land, "
+                    "energy AS electricity FROM provinces WHERE id=(%s)"
+                ),
                 (pId,),
             )
             province_data = db.fetchone()
@@ -63,7 +70,7 @@ def province(pId):
             ]
             for i, col in enumerate(columns):
                 province[col] = province_data[i]
-        except:
+        except Exception:
             return error(404, "Province doesn't exist")
 
         db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
@@ -74,7 +81,8 @@ def province(pId):
         province["free_land"] = province["land"] - get_free_slots(pId, "land")
         province["own"] = province["user"] == cId
 
-        # Selects values for province buildings from the database and assigns them to vars
+        # Selects values for province buildings from the database
+        # and assigns them to vars
         db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
         proinfra_data = db.fetchone()
         proinfra_columns = [
@@ -191,7 +199,10 @@ def createprovince():
                 return error(400, "You don't have enough money.")
 
             db.execute(
-                "INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id",
+                (
+                    "INSERT INTO provinces (userId, provinceName) "
+                    "VALUES (%s, %s) RETURNING id"
+                ),
                 (cId, pName),
             )
             province_id = db.fetchone()[0]
@@ -390,12 +401,11 @@ def province_sell_buy(way, units, province_id):
         else:
             land_price = 0
 
-        # All the unit prices in this format:
-        """
-        unit_price: <the of the unit>,
-        unit_resource (optional): {resource_name: amount} (how many of what resources it takes to build)
-        unit_resource2 (optional): same as one, just for second resource
-        """
+        # All the unit prices are defined in variables.PROVINCE_UNIT_PRICES.
+        # Format example:
+        #   unit_price: <the price of the unit>
+        #   unit_resource (optional): {resource_name: amount}
+        #   unit_resource2 (optional): another resource mapping
         # TODO: change the unit_resource and unit_resource2 into list based system
         unit_prices = variables.PROVINCE_UNIT_PRICES
         unit_prices["land_price"] = land_price
@@ -433,7 +443,8 @@ def province_sell_buy(way, units, province_id):
         except KeyError:
             resources_data = {}
 
-        # Use parameterized query - build statement safely without f-string for column name
+        # Use parameterized query - build statement safely
+        # without f-string for column name
         if units in ["land", "cityCount"]:
             curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
         else:
@@ -524,14 +535,20 @@ def province_sell_buy(way, units, province_id):
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
                 return error(
                     400,
-                    f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem",
+                    (
+                        f"You don't have enough {slot_type} to buy {wantedUnits} "
+                        f"units. Buy more {slot_type} to fix this problem"
+                    ),
                 )
 
             res_error = resource_stuff(resources_data, way)
             if res_error:
                 return error(
                     400,
-                    f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.",
+                    (
+                        f"Not enough resources. Missing "
+                        f"{res_error['difference'] * -1} {res_error['resource']}."
+                    ),
                 )
 
             db.execute(
@@ -554,7 +571,10 @@ def province_sell_buy(way, units, province_id):
         description = ""
 
         db.execute(
-            "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (
+                "INSERT INTO revenue (user_id, type, name, description, "
+                "date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            ),
             (
                 cId,
                 rev_type,

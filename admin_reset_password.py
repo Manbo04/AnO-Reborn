@@ -4,12 +4,13 @@ Admin script to reset a user's password
 Usage: python3 admin_reset_password.py <username> <new_password>
 """
 
-import sys
-import bcrypt
 import os
-from dotenv import load_dotenv
+import sys
 from urllib.parse import urlparse
+
+import bcrypt
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 

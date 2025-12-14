@@ -3,12 +3,13 @@
 Direct database password reset - works without Flask import
 """
 
-import bcrypt
-import os
 import logging
-from dotenv import load_dotenv
+import os
 from urllib.parse import urlparse
+
+import bcrypt
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -85,7 +86,8 @@ try:
 except psycopg2.OperationalError as e:
     logging.getLogger(__name__).error("Cannot connect to database: %s", e)
     logging.getLogger(__name__).info(
-        "Troubleshooting: ensure DATABASE_URL is set or local DB is running and accessible"
+        "Troubleshooting: ensure DATABASE_URL is set or local DB is "
+        "running and accessible"
     )
     raise
 except Exception:
