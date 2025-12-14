@@ -635,6 +635,7 @@ LIMIT 20""", (cId, min_provinces, max_provinces))
 		targets_list = []
 		for target in targets:
 			tid, tname, tflag, tprovinces = target
+			tflag = tflag or 'default_flag.jpg'
 			tinfluence = get_influence(tid)
 			targets_list.append({
 				'id': tid,
