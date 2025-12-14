@@ -1,3 +1,10 @@
+from flask import Blueprint, session, request, redirect, render_template
+from helpers import login_required, get_db_cursor, error
+# Add any other necessary imports here
+
+# Define the wars Blueprint
+wars_bp = Blueprint('wars', __name__)
+
 # Peace offers show up here
 @wars_bp.route("/peace_offers", methods=["POST", "GET"])
 @login_required
