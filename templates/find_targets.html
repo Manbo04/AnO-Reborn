@@ -20,11 +20,35 @@
             </button>
         </form>
 
-        {% if targets %}
         <h2 class="templatecontentheaderleft">Potential War Targets</h2>
         <p class="templatecontentpleft landingpagecontent">
-            These are countries you can potentially declare war on, based on province count and influence differences.
+            Browse potential war targets filtered by province count and influence. Use the filters below to sort and search.
         </p>
+        <form action="/find_targets" method="GET">
+            <div class="templatedivflex2 divflex2full">
+                <div class="templatedivflex2left">
+                    <select name="sort" class="templateselect">
+                        <option value="influence">Influence</option>
+                        <option value="provinces">Provinces</option>
+                        <option value="username">Name</option>
+                    </select>
+                </div>
+                <div class="templatedivflex2right">
+                    <select name="sortway" class="templateselect">
+                        <option value="desc">Descending</option>
+                        <option value="asc">Ascending</option>
+                    </select>
+                </div>
+                <div class="templatedivflex2left">
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name" value="{{ request.args.get('search', '') }}" />
+                </div>
+                <div class="templatedivflex2right">
+                    <button class="center templatedivbutton smallactionbutton" type="submit"><span class="material-icons-outlined">arrow_forward</span>Filter</button>
+                </div>
+            </div>
+        </form>
+
+        {% if targets %}
         <div class="infodiv">
             {% for target in targets %}
             <div class="templatedivflex2" style="border-bottom: 1px solid #ccc; padding: 10px 0; align-items: center;">
@@ -53,6 +77,8 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="templatecontentpleft">No potential targets found.</p>
         {% endif %}
     </div>
 </div>
