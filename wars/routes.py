@@ -626,9 +626,11 @@ def find_targets():
 			user_influence = get_influence(cId)
 			min_influence = user_influence * 0.9
 			max_influence = user_influence * 2.0
-			db.execute("""SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count
+			db.execute("""SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count,
+COALESCE(SUM(military.soldiers * 0.02 + military.artillery * 1.6 + military.tanks * 0.8 + military.fighters * 3.5 + military.bombers * 2.5 + military.apaches * 3.2 + military.submarines * 4.5 + military.destroyers * 3 + military.cruisers * 5.5 + military.icbms * 250 + military.nukes * 500 + military.spies * 25), 0) as influence
 FROM users
 LEFT JOIN provinces ON users.id = provinces.userId
+LEFT JOIN military ON users.id = military.id
 WHERE users.id != %s
 GROUP BY users.id, users.username, users.flag
 HAVING COUNT(provinces.id) BETWEEN %s AND %s
@@ -637,9 +639,8 @@ LIMIT 50""", (cId, min_provinces, max_provinces))
 			targets = db.fetchall()
 		targets_list = []
 		for target in targets:
-			tid, tname, tflag, tprovinces = target
+			tid, tname, tflag, tprovinces, tinfluence = target
 			tflag = tflag or 'default_flag.jpg'
-			tinfluence = get_influence(tid)
 			if tinfluence >= min_influence and tinfluence <= max_influence:
 				targets_list.append({
 					'id': tid,
