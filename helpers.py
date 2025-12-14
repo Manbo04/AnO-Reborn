@@ -41,9 +41,9 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"[DEBUG] login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}")
         if not session.get('user_id', None):
-            logger.error("[DEBUG] login_required: user_id missing, redirecting to /login")
+            logger.debug(f"login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}")
+            logger.debug("login_required: user_id missing, redirecting to /login")
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
@@ -61,7 +61,9 @@ def check_required(func):
     return check_session
 
 def error(code, message):
-    return render_template("error.html", code=code, message=message)
+    # Return the proper HTTP status code along with the error template to
+    # ensure external clients receive the correct status for assertion checks
+    return render_template("error.html", code=code, message=message), code
 
 def get_influence(country_id):
     # Check cache first
