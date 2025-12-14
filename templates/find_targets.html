@@ -19,6 +19,39 @@
                 <span class="material-icons-outlined">search</span>Find
             </button>
         </form>
+
+        {% if targets %}
+        <h2 class="templatecontentheaderleft">Potential War Targets</h2>
+        <p class="templatecontentpleft landingpagecontent">
+            These are countries you can potentially declare war on, based on province count differences.
+        </p>
+        <div class="infodiv">
+            {% for target in targets %}
+            <div class="templatedivflex2 menuflex" style="border-bottom: 1px solid #ccc; padding: 10px 0;">
+                <div class="templatedivflex2left">
+                    <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+target.flag) }}" style="width: 50px; height: 30px;" />
+                    <a href="/country/id={{ target.id }}" class="templatelink">{{ target.username }}</a>
+                    <br>
+                    Provinces: {{ target.provinces }} | Influence: {{ "%.2f"|format(target.influence) }}
+                </div>
+                <div class="templatedivflex2right">
+                    <form action="/declare_war" method="post" style="display: inline;">
+                        <input type="hidden" name="defender" value="{{ target.id }}" />
+                        <select name="warType" class="templateselect" style="margin-right: 10px;">
+                            <option value="Raze">Raze</option>
+                            <option value="Sustained">Sustained</option>
+                            <option value="Loot">Loot</option>
+                        </select>
+                        <textarea name="description" placeholder="War message" maxlength="240" style="width: 200px; height: 40px;"></textarea>
+                        <button type="submit" class="templatedivbutton smallactionbutton">
+                            <span class="material-icons-outlined">military_tech</span>Declare War
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
