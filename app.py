@@ -21,7 +21,7 @@ if not hasattr(ast, "NameConstant"):
 if not hasattr(ast, "Ellipsis"):
     ast.Ellipsis = ast.Constant
 
-from flask import Flask, request, render_template, session, redirect, send_from_directory
+from flask import Flask, request, render_template, session, redirect, send_from_directory, jsonify
 import traceback
 import os
 from dotenv import load_dotenv
@@ -29,6 +29,10 @@ load_dotenv()
 
 
 app = Flask(__name__)
+
+# NOTE: Previously we instrumented session saving for debugging Set-Cookie
+# issues. That instrumentation has been removed to avoid verbose logs in
+# non-development environments. Reintroduce behind a feature flag if needed.
 
 
 
@@ -41,7 +45,7 @@ app = Flask(__name__)
 def forbidden_error(error):
     import logging
     logger = logging.getLogger(__name__)
-    logger.error(f"[DEBUG] 403 error handler triggered: {error}")
+    logger.warning(f"403 error handler triggered: {error}")
     return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
 
 # Configure trusted hosts for domain setup
@@ -49,6 +53,17 @@ def forbidden_error(error):
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.config['SERVER_NAME'] = None  # Allow dynamic hostnames via proxy headers
 app.config['ALLOWED_HOSTS'] = ['affairsandorder.com', 'www.affairsandorder.com', 'web-production-55d7b.up.railway.app']
+
+# Ensure session cookie behavior is permissive for local dev/testing
+# Keep default None in production but set explicit None to be safe
+app.config['SESSION_COOKIE_DOMAIN'] = None
+app.config['SESSION_COOKIE_SAMESITE'] = None
+# In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
+# For local development or test environments where HTTPS is not used, keep cookies
+# insecure so `requests` and `curl` clients can receive them.
+app.config['SESSION_COOKIE_SECURE'] = (
+    os.getenv('ENVIRONMENT') == 'PROD' and os.getenv('RAILWAY_ENVIRONMENT_NAME') is not None
+)
 
 # Trust X-Forwarded-* headers from Railway reverse proxy
 @app.before_request
@@ -59,6 +74,8 @@ def before_request():
         if forwarded_proto != 'https' and not request.is_secure:
             url = request.url.replace('http://', 'https://', 1)
             return redirect(url, code=301)
+    # Keep this hook small and non-verbose; avoid emitting per-request debug logs
+    # unless explicitly enabled in configuration.
 
 # Import cache_response decorator
 from database import cache_response
@@ -364,7 +381,23 @@ def inject_user():
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    # In local development/testing, ensure a visible debug cookie is set on the
+    # home page when a session exists or to help test clients detect cookie
+    # behavior when following redirects (requests may follow redirects and
+    # observe cookies set on the final response).
+    from flask import make_response
+    resp = make_response(render_template("index.html"))
+    # In local development, tests can use direct cookie assertions if desired.
+    # We intentionally don't set a global 'session_debug_home' cookie here to
+    # avoid leaving dev-only artifacts on responses. If you need such a
+    # cookie for debugging, add it behind a dev-only feature flag.
+    return resp
+
+
+# NOTE: developer-only endpoints `_debug_session` and `_test_set_session`
+# were removed during cleanup. If you need to inspect session/cookie settings
+# or set session values for troubleshooting, consider running the app in
+# a local-only debug mode and adding guarded handlers behind a config flag.
 
 
 @app.route("/robots.txt")
@@ -446,12 +479,16 @@ def myoffers():
 
 @app.route("/war", methods=["GET"])
 def war():
-    return render_template("war.html")
+    # Redirect to the consolidated Wars page handled by the 'wars' blueprint
+    return redirect('/wars')
 
 
+## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
+## compatibility by redirecting to the war result page for logged-in users in the blueprint.
 @app.route("/warresult", methods=["GET"])
-def warresult():
-    return render_template("warresult.html")
+def warresult_deprecated():
+    # Redirect to canonical /warResult route when accessed from legacy code
+    return redirect('/warResult')
 
 
 @app.route("/mass_purchase", methods=["GET"])
@@ -481,5 +518,6 @@ def admin_init_database():
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5001))
+    # Use port 5000 by default for local development/testing to match test suite expectations
+    port = int(os.getenv("PORT", 5000))
     app.run(host='0.0.0.0', port=port, use_reloader=False)
