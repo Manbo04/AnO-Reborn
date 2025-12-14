@@ -656,7 +656,7 @@ def generate_province_revenue():  # Runs each hour
                         msg = (
                             f"S | MINUS | USER: {user_id} | PROVINCE: {province_id} | "
                             f"{unit} ({unit_amount}) | {resource} {current_resource}="
-                            f"{new_resource} (-{current_resource-new_resource})"
+                            f"{new_resource} (-{current_resource - new_resource})"
                         )
                         print(msg)
                         db.execute(

@@ -40,10 +40,15 @@ class Economy:
         self.nationID = nationID
         self.id = nationID
         # Compose a Nation instance so Economy exposes nation-level helper methods
+        # `Nation` may not be available at import time; type as Optional
+        from typing import Optional
+
+        self.nation: Optional["Nation"] = None
         try:
             self.nation = Nation(nationID)
         except NameError:
-            # If `Nation` isn't defined at import time, delay composition until needed.
+            # If `Nation` isn't defined at import time, leave as None and
+            # lazily instantiate in `__getattr__`.
             self.nation = None
 
     def get_economy(self) -> None:
@@ -153,7 +158,6 @@ class Economy:
         if resource not in self.resources:
             return "Invalid resource"
 
-        @staticmethod
         def morale_change(column, win_type, winner, loser):
             # Updated morale change: accept a computed morale delta passed
             # through the caller. The caller should compute the delta based on
@@ -228,6 +232,9 @@ class Economy:
             connection.close()
 
             return win_condition
+
+        # No explicit error; return None on success.
+        return None
 
 
 class Nation:
