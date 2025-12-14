@@ -55,7 +55,21 @@ def db_connection():
     try:
         yield conn
     finally:
+        conn.rollback()
         conn.close()
+
+
+@pytest.fixture
+def db_cursor(db_connection):
+    """Yield a cursor wrapped in a transaction which will be rolled back
+    after the test to avoid leaving persistent state in the test database.
+    """
+    cur = db_connection.cursor()
+    try:
+        yield cur
+    finally:
+        db_connection.rollback()
+        cur.close()
 
 
 @pytest.fixture
