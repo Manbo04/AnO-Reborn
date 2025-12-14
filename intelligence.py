@@ -189,7 +189,7 @@ def spyResult():
                 return error(
                     400,
                     f"You don't have enough spies ({spies}/{actual_spies}). "
-                    f"Missing {actual_spies-spies} spies",
+                    f"Missing {actual_spies - spies} spies",
                 )
 
             db.execute("SELECT spies FROM military WHERE id=%s", (eId,))

@@ -155,7 +155,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                     msg = (
                         f"You don't have enough money for that ({gold}/"
                         f"{totalPrice}). "
-                        f"You need {totalPrice-gold} more money."
+                        f"You need {totalPrice - gold} more money."
                     )
                     return error(400, msg)
 
@@ -171,7 +171,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         msg = (
                             f"You have {currentResources}/{requiredResources}. "
                             f"{resource}: you need "
-                            f"{requiredResources-currentResources} more."
+                            f"{requiredResources - currentResources} more."
                         )
                         return error(400, msg)
 

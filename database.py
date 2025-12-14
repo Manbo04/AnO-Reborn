@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import psycopg2
 from dotenv import load_dotenv
 from psycopg2 import pool
+from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import RealDictCursor, execute_batch
 
 import config  # Parse Railway DATABASE_URL
@@ -123,7 +124,7 @@ class DatabasePool:
     """Singleton database connection pool"""
 
     _instance = None
-    _pool = None
+    _pool: Optional[ThreadedConnectionPool] = None
     _pid = None
 
     def __new__(cls):
@@ -169,6 +170,8 @@ class DatabasePool:
         context managers in this module.
         """
         self._initialize_pool()  # Lazy init and fork-safe reinit
+        # mypy: _pool may be Optional but we ensure initialization above
+        assert self._pool is not None
         return self._pool.getconn()
 
     def return_connection(self, conn):
@@ -314,7 +317,7 @@ class QueryHelper:
 
     @staticmethod
     def fetch_one(
-        query: str, params: tuple = None, dict_cursor: bool = False
+        query: str, params: Optional[Tuple[Any, ...]] = None, dict_cursor: bool = False
     ) -> Optional[Any]:
         """Execute a query and fetch one result"""
         cursor_factory = RealDictCursor if dict_cursor else None
@@ -324,7 +327,7 @@ class QueryHelper:
 
     @staticmethod
     def fetch_all(
-        query: str, params: tuple = None, dict_cursor: bool = False
+        query: str, params: Optional[Tuple[Any, ...]] = None, dict_cursor: bool = False
     ) -> List[Any]:
         """Execute a query and fetch all results"""
         cursor_factory = RealDictCursor if dict_cursor else None
@@ -333,7 +336,7 @@ class QueryHelper:
             return cursor.fetchall()
 
     @staticmethod
-    def execute(query: str, params: tuple = None) -> None:
+    def execute(query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
         """Execute a query without fetching results"""
         with get_db_cursor() as cursor:
             cursor.execute(query, params)
@@ -348,7 +351,9 @@ class QueryHelper:
             execute_batch(cursor, query, params_list)
 
     @staticmethod
-    def execute_returning(query: str, params: tuple = None) -> Optional[Any]:
+    def execute_returning(
+        query: str, params: Optional[Tuple[Any, ...]] = None
+    ) -> Optional[Any]:
         """
         Execute a query and return the result (useful for INSERT ...
         RETURNING)
@@ -533,8 +538,13 @@ class CoalitionQueries:
             GROUP BY c.userId
         """
         results = QueryHelper.fetch_all(query, (coalition_id,), dict_cursor=True)
-        # Would need to add military and resource scores
-        return results
+        total = 0
+        for row in results:
+            # rows are RealDictCursor rows -> dict-like
+            total += int(row.get("cities_score", 0))
+            total += int(row.get("land_score", 0))
+            total += int(row.get("provinces_score", 0))
+        return total
 
     @staticmethod
     def get_coalition_bank_resources(coalition_id: int) -> Dict[str, int]:
