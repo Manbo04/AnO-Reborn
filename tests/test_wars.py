@@ -67,19 +67,15 @@ def test_declare_war(login_session, users):
     db = conn.cursor()
     db.execute("SELECT * FROM users WHERE username=%s", (users[0]['username'],))
     user_row = db.fetchone()
-    print("USER ROW FROM DB:", user_row)
-    if user_row:
-        hash_from_db = user_row[4] if len(user_row) > 4 else None
-        print("HASH FROM DB:", hash_from_db)
-        print("LOGIN PASSWORD:", users[0]['password'])
-        import bcrypt
-        if hash_from_db:
-            match = bcrypt.checkpw(users[0]['password'].encode('utf-8'), hash_from_db.encode('utf-8'))
-            print("BCRYPT CHECK (should be True):", match)
+    # Use assertions rather than printing for test hygiene
+    assert user_row is not None
+    hash_from_db = user_row[4] if len(user_row) > 4 else None
+    assert hash_from_db is not None
+    import bcrypt
+    assert bcrypt.checkpw(users[0]['password'].encode('utf-8'), hash_from_db.encode('utf-8'))
     conn.close()
     login_resp = login_session.post(f"{BASE_URL}/login", data={'username': users[0]['username'], 'password': users[0]['password']})
-    print("LOGIN RESPONSE STATUS:", login_resp.status_code)
-    print("LOGIN RESPONSE TEXT:\n", login_resp.text)
+    assert login_resp.status_code in (200, 302)
     conn = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
