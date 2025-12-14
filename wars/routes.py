@@ -1,5 +1,5 @@
 from flask import Blueprint, session, request, redirect, render_template
-from helpers import login_required, get_db_cursor, error, get_flagname, check_required
+from helpers import login_required, get_db_cursor, error, get_flagname, check_required, get_influence
 from database import get_db_connection
 from attack_scripts.Nations import Economy as AttackEconomy, Nation as AttackNation
 # Add any other necessary imports here
@@ -618,7 +618,6 @@ def wars():
 def find_targets():
 	cId = session["user_id"]
 	if request.method == "GET":
-		from helpers import get_influence
 		with get_db_cursor() as db:
 			db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
 			user_provinces = db.fetchone()[0]
@@ -629,7 +628,9 @@ FROM users
 LEFT JOIN provinces ON users.id = provinces.userId
 WHERE users.id != %s
 GROUP BY users.id, users.username, users.flag
-HAVING COUNT(provinces.id) BETWEEN %s AND %s""", (cId, min_provinces, max_provinces))
+HAVING COUNT(provinces.id) BETWEEN %s AND %s
+ORDER BY users.username
+LIMIT 20""", (cId, min_provinces, max_provinces))
 			targets = db.fetchall()
 		targets_list = []
 		for target in targets:
