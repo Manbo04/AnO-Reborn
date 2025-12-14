@@ -8,16 +8,22 @@ from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
 from database import get_db_cursor
+
 load_dotenv()
 
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+
 def generateResetCode():
     length = 64
-    code = ''.join(SystemRandom().choice(ascii_uppercase + digits + ascii_lowercase) for _ in range(length))
+    code = "".join(
+        SystemRandom().choice(ascii_uppercase + digits + ascii_lowercase)
+        for _ in range(length)
+    )
     return code
+
 
 def generateUrlFromCode(code):
     environment = os.getenv("ENVIRONMENT", "DEV")
@@ -31,22 +37,26 @@ def generateUrlFromCode(code):
 
     return url
 
+
 def sendEmail(recipient, code):
     url = generateUrlFromCode(code)
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     message = Mail(
         from_email=os.getenv("MAIL_USERNAME"),
         to_emails=recipient,
-        subject='Affairs & Order | Password change request',
-        html_content=f'Click this URL and complete further steps to change your password. {url}. If you did not request a password change, ignore this email.')
+        subject="Affairs & Order | Password change request",
+        html_content=f"Click this URL and complete further steps to change your password. {url}. If you did not request a password change, ignore this email.",
+    )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
         logger.info(f"Email sent: {response.status_code}")
     except Exception as e:
         logger.error(f"Failed to send email: {str(e)}")
+
 
 # Route for requesting the reset of a password, after which the user can reset his password.
 @app.route("/request_password_reset", methods=["POST"])
@@ -81,15 +91,16 @@ def request_password_reset():
 
     return redirect("/")
 
+
 # Route for resetting password after request for changing password has been submitted.
 @app.route("/reset_password/<code>", methods=["GET", "POST"])
 def reset_password(code):
-
     if request.method == "GET":
         return render_template("reset_password.html", code=code)
     else:
         with get_db_cursor() as db:
             import logging
+
             logger = logging.getLogger(__name__)
 
             new_password = request.form.get("password").encode("utf-8")
@@ -106,10 +117,10 @@ def reset_password(code):
 
         return redirect("/")
 
+
 @app.route("/change", methods=["POST"])
 @login_required
 def change():
-
     with get_db_cursor() as db:
         cId = session["user_id"]
 

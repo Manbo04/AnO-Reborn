@@ -7,8 +7,10 @@ from random import randint
 from typing import Union
 import psycopg2
 from dotenv import load_dotenv
+
 load_dotenv()
 import os
+
 
 # Blueprint for units
 class BlueprintUnit(ABC):
@@ -38,15 +40,17 @@ class BlueprintUnit(ABC):
     buy method:
         return
     """
-    @abstractmethod
-    def attack(defending_units): pass
 
     @abstractmethod
-    def buy(amount): pass
+    def attack(defending_units):
+        pass
+
+    @abstractmethod
+    def buy(amount):
+        pass
 
 
 class SoldierUnit(BlueprintUnit):
-
     unit_type = "soldiers"
     damage = 1
     supply_cost = 1
@@ -61,13 +65,13 @@ class SoldierUnit(BlueprintUnit):
             self.bonus += 3 * self.amount
         if defending_units == "apaches":
             self.bonus += 2 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class TankUnit(BlueprintUnit):
-
     unit_type = "tanks"
     damage = 40
     supply_cost = 5
@@ -77,20 +81,19 @@ class TankUnit(BlueprintUnit):
         self.amount = amount
 
     def attack(self, defending_units):
-
         # One tank beats 4 soldiers (if one tank beat only 4 soldiers then soldiers really counter tanks because 1 tank costs the same as ~50 soldiers.)
         # One tank becomes 4x more effectiveness vs soldiers.
-        if defending_units == 'soldiers':
+        if defending_units == "soldiers":
             self.damage += 2
             self.bonus += 6 * self.amount
 
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class ArtilleryUnit(BlueprintUnit):
-
     unit_type = "artillery"
     damage = 80
     supply_cost = 5
@@ -100,17 +103,16 @@ class ArtilleryUnit(BlueprintUnit):
         self.amount = amount
 
     def attack(self, defending_units):
-
         # One artillery beats 3 tanks
         if defending_units == "tanks":
             self.bonus += 2 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(): pass
+    def buy():
+        pass
 
 
 class BomberUnit(BlueprintUnit):
-
     unit_type = "bombers"
     damage = 100
     supply_cost = 5
@@ -127,20 +129,20 @@ class BomberUnit(BlueprintUnit):
         # One bomber beats random number of tanks (where they drop the bombs)
         # between 2 and 6
         if defending_units == "tanks":
-            self.bonus += randint(2, 6)*self.amount
+            self.bonus += randint(2, 6) * self.amount
             # self.bonus += 2 * self.amount
 
         if defending_units == "destroyers":
             self.bonus += 2 * self.amount
         if defending_units == "submarines":
             self.bonus += 2 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class FighterUnit(BlueprintUnit):
-
     unit_type = "fighters"
     damage = 100
     supply_cost = 5
@@ -153,13 +155,13 @@ class FighterUnit(BlueprintUnit):
         if defending_units == "bombers":
             # self.damage += 55
             self.bonus += 4 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class ApacheUnit(BlueprintUnit):
-
     unit_type = "apaches"
     damage = 100
     supply_cost = 5
@@ -177,13 +179,13 @@ class ApacheUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         elif defending_units == "fighter":
             self.bonus += 2 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(): pass
+    def buy():
+        pass
 
 
 class DestroyerUnit(BlueprintUnit):
-
     unit_type = "destroyers"
     damage = 100
     supply_cost = 5
@@ -195,13 +197,13 @@ class DestroyerUnit(BlueprintUnit):
     def attack(self, defending_units):
         if defending_units == "submarines":
             self.bonus += 1.6 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class CruiserUnit(BlueprintUnit):
-
     unit_type = "cruisers"
     damage = 200
     supply_cost = 5
@@ -217,13 +219,13 @@ class CruiserUnit(BlueprintUnit):
             self.bonus += 0.1 * self.amount
         elif defending_units == "apaches":
             self.bonus += 0.4 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(amount): pass
+    def buy(amount):
+        pass
 
 
 class SubmarineUnit(BlueprintUnit):
-
     unit_type = "submarines"
     damage = 100
     supply_cost = 5
@@ -235,14 +237,14 @@ class SubmarineUnit(BlueprintUnit):
     def attack(self, defending_units):
         if defending_units == "cruisers":
             self.bonus += 0.2 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(): pass
+    def buy():
+        pass
 
 
 # Special units attack method handeled differently (not using the fight method)
 class IcbmUnit(BlueprintUnit):
-
     unit_type = "icbms"
     damage = 1000
     supply_cost = 500
@@ -253,13 +255,13 @@ class IcbmUnit(BlueprintUnit):
     def attack(self, defending_units):
         if defending_units == "submarines":
             self.bonus -= 5 * self.amount
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(): pass
+    def buy():
+        pass
 
 
 class NukeUnit(BlueprintUnit):
-
     unit_type = "nukes"
     damage = 3000
     supply_cost = 1000
@@ -272,32 +274,54 @@ class NukeUnit(BlueprintUnit):
             self.bonus -= 5 * self.amount
         else:
             pass
-        return [self.damage*self.amount, self.bonus]
+        return [self.damage * self.amount, self.bonus]
 
-    def buy(): pass
+    def buy():
+        pass
 
 
 # does not have attack method, their functionality is coded separately in intelligence.py
 class SpyUnit(BlueprintUnit):
-
     unit_type = "spies"
     damage = 0  # does not attack anyway
 
     def __init__(self, amount):
         self.amount = amount
 
-    def buy(): pass
+    def buy():
+        pass
+
 
 # make an instance of this object with Units(cId)
 class Units(Military):
-
-    allUnits = ["soldiers", "tanks", "artillery",
-                "bombers", "fighters", "apaches",
-                "destroyers", "cruisers", "submarines",
-                "spies", "icbms", "nukes"]
+    allUnits = [
+        "soldiers",
+        "tanks",
+        "artillery",
+        "bombers",
+        "fighters",
+        "apaches",
+        "destroyers",
+        "cruisers",
+        "submarines",
+        "spies",
+        "icbms",
+        "nukes",
+    ]
     # spyunit not included because it has no interactions with other units, so it doesnt need to run inside the Units.attack method.
-    allUnitInterfaces = [SoldierUnit, TankUnit, ArtilleryUnit, BomberUnit, FighterUnit,
-                         ApacheUnit, DestroyerUnit, CruiserUnit, SubmarineUnit, IcbmUnit, NukeUnit]
+    allUnitInterfaces = [
+        SoldierUnit,
+        TankUnit,
+        ArtilleryUnit,
+        BomberUnit,
+        FighterUnit,
+        ApacheUnit,
+        DestroyerUnit,
+        CruiserUnit,
+        SubmarineUnit,
+        IcbmUnit,
+        NukeUnit,
+    ]
 
     """
     When you want the data to be validated call object.attach_units(selected_units)
@@ -308,7 +332,14 @@ class Units(Military):
         - bonuses: bonus gained from general or something like this, type: integer (i don't know if this will be implemented or not)
     """
 
-    def __init__(self, user_id, selected_units: dict=None, bonuses: int=None, selected_units_list: list=None, war_id=None):
+    def __init__(
+        self,
+        user_id,
+        selected_units: dict = None,
+        bonuses: int = None,
+        selected_units_list: list = None,
+        war_id=None,
+    ):
         self.user_id = user_id
         self.selected_units = selected_units
         self.bonuses = bonuses
@@ -323,7 +354,6 @@ class Units(Military):
     # this is needed because we can't store object in server side cache :(
     @classmethod
     def rebuild_from_dict(cls, sess_dict):
-
         # if you modify the sess_dict it'll affect the actual session, that is why I recomend to create a copy
         dic = dict(sess_dict)
         sort_out = ["supply_costs", "available_supplies"]
@@ -365,17 +395,21 @@ class Units(Military):
 
         try:
             while units_count:
-                current_unit = unit_types[units_count-1]
+                current_unit = unit_types[units_count - 1]
                 if current_unit not in self.allUnits:
                     return "Invalid unit type!"
 
-                if (selected_units[current_unit] > available_units[current_unit]) or (selected_units[current_unit] < 0) :
+                if (selected_units[current_unit] > available_units[current_unit]) or (
+                    selected_units[current_unit] < 0
+                ):
                     return "Invalid amount selected!"
 
                 # Check for attack cost
                 for interface in self.allUnitInterfaces:
                     if interface.unit_type == current_unit:
-                        supply_check = self.attack_cost(interface.supply_cost*selected_units[current_unit])
+                        supply_check = self.attack_cost(
+                            interface.supply_cost * selected_units[current_unit]
+                        )
 
                         if supply_check:
                             return supply_check
@@ -393,11 +427,9 @@ class Units(Military):
     # Attack with all units contained in selected_units
     def attack(self, attacker_unit: str, target: str) -> Union[str, tuple, None]:
         if self.selected_units:
-
             # Call interface to unit type
             for interface in self.allUnitInterfaces:
                 if interface.unit_type == attacker_unit:
-
                     # Check unit amount validity
                     unit_amount = self.selected_units.get(attacker_unit, None)
 
@@ -407,7 +439,7 @@ class Units(Military):
                     # interface.supply_cost*self.selected_units[attacker_unit] - calculates the supply cost based on unit amount
                     # supply = self.attack_cost(interface.supply_cost*self.selected_units[attacker_unit])
                     # if supply:
-                        # return supply
+                    # return supply
 
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)
@@ -422,13 +454,13 @@ class Units(Military):
             return "Units are not attached!"
 
     def save(self):
-
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
             password=os.getenv("PG_PASSWORD"),
             host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+            port=os.getenv("PG_PORT"),
+        )
 
         db = connection.cursor()
 
@@ -437,13 +469,18 @@ class Units(Military):
             if save_type == "casualties":
                 # The casualties method sets a suffered_casualties
                 for unit_type, amount in self.suffered_casualties.items():
-
-                    mil_statement = f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
+                    mil_statement = (
+                        f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
+                    )
                     db.execute(mil_statement, (self.user_id,))
                     available_unit_amount = db.fetchone()[0]
 
-                    mil_update = f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
-                    db.execute(mil_update, (available_unit_amount-amount, self.user_id))
+                    mil_update = (
+                        f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
+                    )
+                    db.execute(
+                        mil_update, (available_unit_amount - amount, self.user_id)
+                    )
 
             # Save supplies
             elif save_type == "supplies":
@@ -455,13 +492,13 @@ class Units(Military):
     # NOTE: to save the data to the db later on put it to the save method
     # unit_type -> name of the unit type, amount -> used to decreate by it
     def casualties(self, unit_type: str, amount: int) -> None:
-
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
             password=os.getenv("PG_PASSWORD"),
             host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+            port=os.getenv("PG_PORT"),
+        )
 
         db = connection.cursor()
 
@@ -474,7 +511,7 @@ class Units(Military):
         if amount > unit_amount:
             amount = unit_amount
 
-        self.selected_units[unit_type] = unit_amount-amount
+        self.selected_units[unit_type] = unit_amount - amount
 
         # Save records to the database
         mil_statement = f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
@@ -482,23 +519,26 @@ class Units(Military):
         available_unit_amount = db.fetchone()[0]
 
         mil_update = f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
-        db.execute(mil_update, (available_unit_amount-amount, self.user_id))
+        db.execute(mil_update, (available_unit_amount - amount, self.user_id))
         connection.commit()
 
     def save(self):
-
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
             password=os.getenv("PG_PASSWORD"),
             host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"))
+            port=os.getenv("PG_PORT"),
+        )
 
         db = connection.cursor()
 
         # Save supplies
         try:
-            db.execute("SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL", (self.user_id, self.user_id))
+            db.execute(
+                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+                (self.user_id, self.user_id),
+            )
             war_id = db.fetchall()[-1][0]
         except:
             return "War is already over!"
@@ -517,7 +557,7 @@ class Units(Military):
             current_supplies = db.fetchone()[0]
 
             sign_update = f"UPDATE wars SET {sign}" + "=(%s) WHERE id=(%s)"
-            db.execute(sign_update, (current_supplies-self.supply_costs, war_id))
+            db.execute(sign_update, (current_supplies - self.supply_costs, war_id))
 
             connection.commit()
         else:
@@ -533,7 +573,8 @@ class Units(Military):
                 user=os.getenv("PG_USER"),
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"))
+                port=os.getenv("PG_PORT"),
+            )
             db = connection.cursor()
 
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,))
@@ -545,13 +586,21 @@ class Units(Military):
             # If the current Units object belongs to the attacker side, read attacker_supplies,
             # otherwise read defender_supplies. Fall back to 0 if values are missing.
             if attacker_id is not None and attacker_id == self.user_id:
-                db.execute("SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,))
+                db.execute(
+                    "SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,)
+                )
                 fetched = db.fetchone()
-                self.available_supplies = fetched[0] if fetched and fetched[0] is not None else 0
+                self.available_supplies = (
+                    fetched[0] if fetched and fetched[0] is not None else 0
+                )
             else:
-                db.execute("SELECT defender_supplies FROM wars WHERE id=(%s)", (self.war_id,))
+                db.execute(
+                    "SELECT defender_supplies FROM wars WHERE id=(%s)", (self.war_id,)
+                )
                 fetched = db.fetchone()
-                self.available_supplies = fetched[0] if fetched and fetched[0] is not None else 0
+                self.available_supplies = (
+                    fetched[0] if fetched and fetched[0] is not None else 0
+                )
 
         if self.available_supplies < 200:
             return "The minimum supply amount is 200"
@@ -559,6 +608,7 @@ class Units(Military):
         self.supply_costs += cost
         if self.supply_costs > self.available_supplies:
             return "Not enough supplies available"
+
 
 # DEBUGGING
 if __name__ == "__main__":
@@ -571,21 +621,28 @@ if __name__ == "__main__":
         user=os.getenv("PG_USER"),
         password=os.getenv("PG_PASSWORD"),
         host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"))
+        port=os.getenv("PG_PORT"),
+    )
     db = connection.cursor()
     import time
 
-    db.execute(f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)")
+    db.execute(
+        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
+    )
     connection.commit()
 
-    attack_units = Units(attacker, war_id=war_id, selected_units_list=["soldiers", "cruisers", "tanks"],
-    selected_units={"soldiers": 1000, "cruisers": 100, "tanks": 50})
+    attack_units = Units(
+        attacker,
+        war_id=war_id,
+        selected_units_list=["soldiers", "cruisers", "tanks"],
+        selected_units={"soldiers": 1000, "cruisers": 100, "tanks": 50},
+    )
 
-    defender_units = Units(defender, {
-    "tanks": 544,
-    "soldiers": 64,
-    "artillery": 55
-    }, selected_units_list=["tanks", "soldiers", "artillery"])
+    defender_units = Units(
+        defender,
+        {"tanks": 544, "soldiers": 64, "artillery": 55},
+        selected_units_list=["tanks", "soldiers", "artillery"],
+    )
 
     # defender_units = Units(defender, {
     # "tanks": 0,
