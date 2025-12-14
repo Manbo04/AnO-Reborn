@@ -1,5 +1,7 @@
 from flask import Blueprint, session, request, redirect, render_template
 from helpers import login_required, get_db_cursor, error, get_flagname, check_required
+from database import get_db_connection
+from attack_scripts.Nations import Economy as AttackEconomy, Nation as AttackNation
 # Add any other necessary imports here
 
 # Define the wars Blueprint
@@ -89,47 +91,75 @@ def peace_offers():
 		# Validate inputs
 		try:
 			offer_id = int(offer_id)
-		except ValueError:
+		except (ValueError, TypeError):
 			return error(400, "Invalid offer ID")
-
-		# Make sure that others can't accept,delete,etc. the peace offer other than the participants
-		db.execute("SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) AND peace_date IS NULL", (cId, cId, offer_id))
-		result = db.fetchone()
-		if not result:
-			raise TypeError("Invalid peace offer")
-		check_validity = result[0]
 
 		decision = request.form.get("decision", None)
 
-		# Offer rejected or revoked
-		if decision == "0":
-			db.execute("UPDATE wars SET peace_offer_id=NULL WHERE peace_offer_id=(%s)", (offer_id,))
-			db.execute("DELETE FROM peace WHERE id=(%s)", (offer_id,))
+		# operate using a db connection (we need both cursor and connection for set_peace)
+		with get_db_connection() as connection:
+			db = connection.cursor()
 
-		elif author_id != cId:
+			# Make sure that others can't accept,delete,etc. the peace offer other than the participants
+			db.execute("SELECT id, attacker, defender FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) AND peace_date IS NULL", (cId, cId, offer_id))
+			result = db.fetchone()
+			if not result:
+				return error(400, "Invalid peace offer")
+
+			# load the offer author and desired resources
+			db.execute("SELECT author, demanded_resources, demanded_amount FROM peace WHERE id=(%s)", (offer_id,))
+			row = db.fetchone()
+			if not row:
+				return error(400, "Invalid peace offer data")
+			author_id = row[0]
+			demanded_resources = row[1] or ""
+			demanded_amount = row[2] or ""
+
+			# Offer rejected or revoked
+			if decision == "0":
+				db.execute("UPDATE wars SET peace_offer_id=NULL WHERE peace_offer_id=(%s)", (offer_id,))
+				db.execute("DELETE FROM peace WHERE id=(%s)", (offer_id,))
+				return redirect("/peace_offers")
+
+			# Make sure user is not author
+			if author_id == cId:
+				return error(403, "You can't accept your own offer.")
 
 			# Offer accepted
 			if decision == "1":
-				eco = Economy(cId)
-				resource_dict = eco.get_particular_resources(resources)
-				print(resource_dict)
-				count = 0
-				for value in resource_dict.values():
-					if int(amounts[count]) > value:
-						return error(400, f"Can't accept peace offer because you don't have the required resources!. {int(amounts[count])} > {value}")
-					print(f"Transfer: {resources[count], int(amounts[count]), author_id, cId}")
-					from market import give_resource
-					successful = give_resource(cId, author_id, resources[count], int(amounts[count]))
-					if successful != True:
-						return error(400, successful)
-					count += 1
-				Nation.set_peace(db, None, None, {"option": "peace_offer_id", "value": offer_id})
-			else:
-				return error(400, "No decision was made.")
-		else:
-			return error(403, "You can't accept your own offer.")
+				# Parse resources/amounts into lists
+				resources = [r for r in demanded_resources.split(",") if r] if demanded_resources else []
+				amounts = [a for a in demanded_amount.split(",") if a] if demanded_amount else []
 
-		return redirect("/peace_offers")
+				eco = AttackEconomy(cId)
+				try:
+					resource_dict = eco.get_particular_resources(resources)
+				except Exception as e:
+					return error(400, "Invalid resource requested in peace offer")
+
+				# If function returned a non-dict (e.g. empty or invalid result), normalize it to dict
+				if not isinstance(resource_dict, dict):
+					resource_dict = {}
+
+				# Validate amounts and process transfers
+				for idx, res in enumerate(resources):
+					try:
+						required = int(amounts[idx]) if idx < len(amounts) else 0
+					except (ValueError, IndexError):
+						return error(400, "Invalid requested resource amount")
+					available = resource_dict.get(res, 0)
+					if required > available:
+						return error(400, f"Can't accept peace offer because you don't have the required resources: {required} > {available}")
+					from market import give_resource
+					successful = give_resource(cId, author_id, res, required)
+					if successful is not True:
+						return error(400, successful)
+
+				# commit peace (we pass the DB cursor and real connection)
+				AttackNation.set_peace(db, connection, None, {"option": "peace_offer_id", "value": offer_id})
+				return redirect("/peace_offers")
+
+			return error(400, "No decision was made.")
 
 	return render_template(
 	"peace/peace_offers.html", cId=cId,
@@ -346,9 +376,22 @@ def warTarget():
 @wars_bp.route("/warResult", methods=["GET"])
 @login_required
 def warResult():
+	import logging
+	logger = logging.getLogger(__name__)
+	logger.debug("Entering warResult")
 	attack_unit_session = session.get("attack_units", None)
+	logger.debug("attack_units present in session: %s", bool(attack_unit_session))
 	if attack_unit_session is None:
-		return redirect("/wars")
+		# If no attack units are set in session, render a neutral war result
+		# page indicating there is no winner.
+		logger.debug("Rendering neutral warResult page (no attack_units)")
+		return render_template(
+			"warResult.html",
+			winner=None,
+			win_condition=None,
+			defender_result={"nation_name": ""},
+			attacker_result={"nation_name": ""},
+		)
 	attacker = Units.rebuild_from_dict(attack_unit_session)
 	eId = session["enemy_id"]
 	with get_db_cursor() as db:
@@ -489,9 +532,12 @@ def declare_war():
 			attacker_name = db.fetchone()[0]
 			Economy.send_news(defender.id, f"{attacker_name} declared war!")
 	except Exception as e:
-		print("Error in declare_war:")
-		print(traceback.format_exc())
-		return error(400, "Could not declare war; check server logs for details")
+		import logging
+		logger = logging.getLogger(__name__)
+		logger.error("Error in declare_war: %s", e)
+		logger.error(traceback.format_exc())
+		# Return a detailed 500 response for test environments so tests can see the issue
+		return error(500, f"Could not declare war; exception: {str(e)}")
 	return redirect("/wars")
 
 @wars_bp.route("/defense", methods=["GET", "POST"])
