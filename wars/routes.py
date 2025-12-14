@@ -623,6 +623,9 @@ def find_targets():
 			user_provinces = db.fetchone()[0]
 			min_provinces = max(0, user_provinces - 3)
 			max_provinces = user_provinces + 1
+			user_influence = get_influence(cId)
+			min_influence = user_influence * 0.9
+			max_influence = user_influence * 2.0
 			db.execute("""SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count
 FROM users
 LEFT JOIN provinces ON users.id = provinces.userId
@@ -630,20 +633,23 @@ WHERE users.id != %s
 GROUP BY users.id, users.username, users.flag
 HAVING COUNT(provinces.id) BETWEEN %s AND %s
 ORDER BY users.username
-LIMIT 20""", (cId, min_provinces, max_provinces))
+LIMIT 50""", (cId, min_provinces, max_provinces))
 			targets = db.fetchall()
 		targets_list = []
 		for target in targets:
 			tid, tname, tflag, tprovinces = target
 			tflag = tflag or 'default_flag.jpg'
 			tinfluence = get_influence(tid)
-			targets_list.append({
-				'id': tid,
-				'username': tname,
-				'flag': tflag,
-				'provinces': tprovinces,
-				'influence': tinfluence
-			})
+			if tinfluence >= min_influence and tinfluence <= max_influence:
+				targets_list.append({
+					'id': tid,
+					'username': tname,
+					'flag': tflag,
+					'provinces': tprovinces,
+					'influence': tinfluence
+				})
+			if len(targets_list) >= 20:
+				break
 		return render_template("find_targets.html", targets=targets_list)
 	# POST - find a target by id or username and redirect
 	defender_raw = request.form.get("defender")
