@@ -1,19 +1,19 @@
-from flask import request, render_template, session, redirect, flash
-from helpers import login_required, error
-from app import app
 import os
-from dotenv import load_dotenv
-import bcrypt
-from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
-from database import get_db_cursor
+from string import ascii_lowercase, ascii_uppercase, digits
 
-load_dotenv()
-
-import os
+import bcrypt
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+from app import app
+from database import get_db_cursor
+from helpers import error, login_required
+
+load_dotenv()
 
 
 def generateResetCode():
@@ -43,12 +43,15 @@ def sendEmail(recipient, code):
     import logging
 
     logger = logging.getLogger(__name__)
-
     message = Mail(
         from_email=os.getenv("MAIL_USERNAME"),
         to_emails=recipient,
         subject="Affairs & Order | Password change request",
-        html_content=f"Click this URL and complete further steps to change your password. {url}. If you did not request a password change, ignore this email.",
+        html_content=(
+            "Click this URL and complete further steps to change your password: "
+            + url
+            + ". If you did not request a password change, ignore this email."
+        ),
     )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
@@ -58,7 +61,7 @@ def sendEmail(recipient, code):
         logger.error(f"Failed to send email: {str(e)}")
 
 
-# Route for requesting the reset of a password, after which the user can reset his password.
+# Route for requesting a password reset; after request the user can reset the password.
 @app.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
     code = generateResetCode()
@@ -82,7 +85,8 @@ def request_password_reset():
             cId = result[0]
 
             db.execute(
-                "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
+                "INSERT INTO reset_codes (url_code, user_id, created_at) "
+                "VALUES (%s, %s, %s)",
                 (code, cId, int(datetime.now().timestamp())),
             )
 

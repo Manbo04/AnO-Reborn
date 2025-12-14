@@ -1,9 +1,10 @@
-import requests
-import psycopg2
 import os
+
+import credentials
+import psycopg2
+import requests
 from dotenv import load_dotenv
 from init import BASE_URL
-import credentials
 
 load_dotenv()
 
@@ -26,11 +27,16 @@ def delete_user(username, email, session):
 
     try:
         db.execute(
-            "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
+            (
+                "SELECT id FROM users WHERE username=%s "
+                "AND email=%s AND auth_type='normal'"
+            ),
             (username, email),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if row is None:
+            return True
+    except Exception:
         return True
     return False
 
@@ -81,11 +87,16 @@ def register(session):
 
     try:
         db.execute(
-            "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
+            (
+                "SELECT id FROM users WHERE username=%s "
+                "AND email=%s AND auth_type='normal'"
+            ),
             (credentials.username, credentials.email),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if row is None:
+            return False
+    except Exception:
         return False
 
     return True
@@ -108,12 +119,12 @@ def logout(session):
 
 
 def test_register():
-    assert register(register_session) == True
+    assert register(register_session) is True
 
 
 def test_logout():
-    assert logout(register_session) == True
+    assert logout(register_session) is True
 
 
 def test_login():
-    assert login(login_session) == True
+    assert login(login_session) is True

@@ -1,9 +1,10 @@
 # Script for giving resources to players
 import os
-from urllib.parse import urlparse
-from dotenv import load_dotenv
-import psycopg2
 import sys
+from urllib.parse import urlparse
+
+import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 

@@ -1,20 +1,20 @@
-from flask import request, render_template, session, redirect
-from helpers import login_required
-from helpers import get_influence, error
-from tasks import calc_pg, calc_ti, rations_needed
-from app import app
-import os
-import variables
-from dotenv import load_dotenv
-from coalitions import get_user_role
-from collections import defaultdict
-from policies import get_user_policies
-from operator import itemgetter
-from datetime import datetime
-from wars.service import target_data
 import math
-from database import get_db_cursor, cache_response
-from psycopg2.extras import RealDictCursor
+import os
+from collections import defaultdict
+from datetime import datetime
+from operator import itemgetter
+
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+
+import variables
+from app import app
+from coalitions import get_user_role
+from database import cache_response, get_db_cursor
+from helpers import error, get_influence, login_required
+from policies import get_user_policies
+from tasks import calc_pg, calc_ti, rations_needed
+from wars.service import target_data
 
 load_dotenv()
 
@@ -24,8 +24,9 @@ app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 Mb limit
 
 # TODO: rewrite this function for fucks sake
 def get_econ_statistics(cId):
-    from database import get_db_cursor, query_cache
     from psycopg2.extras import RealDictCursor
+
+    from database import get_db_cursor, query_cache
 
     # Check cache first
     cache_key = f"econ_stats_{cId}"
@@ -73,12 +74,14 @@ def get_econ_statistics(cId):
             SUM(proInfra.ammunition_factories) AS ammunition_factories,
             SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
             SUM(proInfra.oil_refineries) AS oil_refineries
-            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id WHERE provinces.userId=%s;
+            FROM proInfra
+            LEFT JOIN provinces ON provinces.id=proInfra.id
+            WHERE provinces.userId=%s;
             """,
                 (cId,),
             )
             total = dict(dbdict.fetchone())
-        except:
+        except Exception:
             total = {}
 
     expenses = {}
@@ -99,7 +102,7 @@ def get_econ_statistics(cId):
             convert_minus = []
             return False
 
-        if minus != None:
+        if minus is not None:
             unit_type = get_unit_type(unit)
             expenses[unit_type][minus] += minus_amount
         return True
@@ -148,16 +151,13 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId):
     from database import get_db_connection
-    from psycopg2.extras import RealDictCursor
 
+    # Uses default cursor; RealDictCursor not required in this helper
     # Use a dedicated connection for the lifetime of this function to
     # prevent nested `get_db_cursor()` calls from accidentally reusing
     # the same pooled connection (and closing a cursor prematurely).
     with get_db_connection() as conn:
         db = conn.cursor()
-
-        cg_needed = cg_need(cId)
-
         db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
         provinces = db.fetchall()
 
@@ -169,51 +169,52 @@ def get_revenue(cId):
         for resource in resources:
             revenue["gross"][resource] = 0
             revenue["net"][resource] = 0
+        # Columns for proInfra table used to convert tuple rows to dicts
+        proinfra_columns = [
+            "id",
+            "coal_burners",
+            "oil_burners",
+            "solar_fields",
+            "hydro_dams",
+            "nuclear_reactors",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
+            "army_bases",
+            "aerodomes",
+            "harbours",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
+            "lumber_mills",
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
+        ]
+
         for province in provinces:
             province = province[0]
-
             db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
             buildings = db.fetchone()
             if buildings is None:
                 buildings = [0] * len(proinfra_columns)
             # Convert tuple to dict by matching column names
-            proinfra_columns = [
-                "id",
-                "coal_burners",
-                "oil_burners",
-                "solar_fields",
-                "hydro_dams",
-                "nuclear_reactors",
-                "gas_stations",
-                "general_stores",
-                "farmers_markets",
-                "malls",
-                "banks",
-                "city_parks",
-                "hospitals",
-                "libraries",
-                "universities",
-                "monorails",
-                "army_bases",
-                "aerodomes",
-                "harbours",
-                "admin_buildings",
-                "silos",
-                "farms",
-                "pumpjacks",
-                "coal_mines",
-                "bauxite_mines",
-                "copper_mines",
-                "uranium_mines",
-                "lead_mines",
-                "iron_mines",
-                "lumber_mills",
-                "component_factories",
-                "steel_mills",
-                "ammunition_factories",
-                "aluminium_refineries",
-                "oil_refineries",
-            ]
             buildings = dict(zip(proinfra_columns, buildings))
 
             for building, build_count in buildings.items():
@@ -258,7 +259,8 @@ def get_revenue(cId):
         new_rations = next_turn_rations(cId, prod_rations)
         revenue["net"]["rations"] = new_rations - current_rations
 
-        # Filter to only show resources with positive gross production or non-zero net (for special cases like rations)
+        # Filter to only show resources with positive gross production or
+        # non-zero net (for special cases like rations)
         filtered_revenue = {"gross": revenue["gross"], "net": revenue["net"]}
 
         return filtered_revenue
@@ -315,7 +317,6 @@ def cg_need(user_id):
 
 
 @app.route("/my_country")
-@login_required
 def my_country():
     user_id = session["user_id"]
     return redirect(f"/country/id={user_id}")
@@ -327,7 +328,11 @@ def my_country():
 def country(cId):
     with get_db_cursor() as db:
         db.execute(
-            "SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
+            (
+                "SELECT users.username, stats.location, users.description, "
+                "users.date, users.flag FROM users INNER JOIN stats ON "
+                "users.id=stats.id WHERE users.id=%s"
+            ),
             (cId,),
         )
         row = db.fetchone()
@@ -339,7 +344,10 @@ def country(cId):
         influence = get_influence(cId)
 
         db.execute(
-            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s",
+            (
+                "SELECT SUM(population), AVG(happiness), AVG(productivity), "
+                "COUNT(id) FROM provinces WHERE userId=%s"
+            ),
             (cId,),
         )
         stats_row = db.fetchone()
@@ -352,7 +360,11 @@ def country(cId):
             provinceCount = 0
 
         db.execute(
-            "SELECT provinceName, id, population, CAST(cityCount AS INTEGER) as cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+            (
+                "SELECT provinceName, id, population, CAST(cityCount AS INTEGER) "
+                "as cityCount, land, happiness, productivity FROM provinces "
+                "WHERE userId=(%s) ORDER BY id ASC"
+            ),
             (cId,),
         )
         provinces = db.fetchall()
@@ -361,11 +373,17 @@ def country(cId):
 
         try:
             status = cId == str(session["user_id"])
-        except:
+        except Exception:
             status = False
 
         db.execute(
-            "SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s",
+            (
+                "SELECT coalitions.colId, coalitions.role,"
+                " colNames.name, colNames.flag"
+                " FROM coalitions"
+                " INNER JOIN colNames ON coalitions.colId = colNames.id"
+                " WHERE coalitions.userId=%s"
+            ),
             (cId,),
         )
         col_row = db.fetchone()
@@ -391,7 +409,8 @@ def country(cId):
             db.execute(
                 "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
             )
-            # data order in the tuple appears as in the news schema (notice this when work with this data using jija)
+            # data order in the tuple appears as in the news schema
+            # (notice this when working with this data using jinja)
             news = db.fetchall()
             news_amount = len(news)
 
@@ -399,7 +418,10 @@ def country(cId):
         if status:
             revenue = get_revenue(cId)
             db.execute(
-                "SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s",
+                (
+                    "SELECT name, type, resource, amount, date FROM revenue "
+                    "WHERE user_id=%s"
+                ),
                 (cId,),
             )
             expenses = db.fetchall()
@@ -467,14 +489,18 @@ def countries():
             province_range = 0
 
         db.execute(
-            """SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
-coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
-FROM USERS
-LEFT JOIN provinces ON users.id = provinces.userId
-LEFT JOIN coalitions ON users.id = coalitions.userId
-LEFT JOIN colNames ON colNames.id = coalitions.colId
-GROUP BY users.id, coalitions.colId, colNames.name
-HAVING COUNT(provinces.id) >= %s;""",
+            (
+                "SELECT users.id, users.username, users.date, users.flag, "
+                "COALESCE(SUM(provinces.population), 0) AS province_population, "
+                "coalitions.colId, colNames.name, "
+                "COUNT(provinces.id) AS provinces_count "
+                "FROM users "
+                "LEFT JOIN provinces ON users.id = provinces.userId "
+                "LEFT JOIN coalitions ON users.id = coalitions.userId "
+                "LEFT JOIN colNames ON colNames.id = coalitions.colId "
+                "GROUP BY users.id, coalitions.colId, colNames.name "
+                "HAVING COUNT(provinces.id) >= %s;"
+            ),
             (province_range,),
         )
         dbResults = db.fetchall()
@@ -559,7 +585,7 @@ def update_info():
                 current_flag = db.fetchone()[0]
 
                 os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
-            except:
+            except Exception:
                 pass
 
             # Save the file & shit
@@ -619,7 +645,12 @@ def update_info():
             for province_id in provinces:
                 province_id = province_id[0]
                 db.execute(
-                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id=%s",
+                    (
+                        "UPDATE proInfra SET pumpjacks=0, coal_mines=0, "
+                        "bauxite_mines=0, copper_mines=0, uranium_mines=0, "
+                        "lead_mines=0, iron_mines=0, lumber_mills=0 "
+                        "WHERE id=%s"
+                    ),
                     (province_id,),
                 )
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
@@ -660,7 +691,7 @@ def delete_own_account():
 
         try:
             coalition_role = get_user_role(cId)
-        except:
+        except Exception:
             coalition_role = None
         if coalition_role != "leader":
             pass

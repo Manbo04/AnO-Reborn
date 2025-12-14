@@ -6,6 +6,7 @@
 - let t = tech score - between 1 - 30
 - let e = effectiveness - between 0-2
 """
+
 n1 = 50
 v1 = 1
 m1 = 50
@@ -18,14 +19,28 @@ m2 = 50
 t2 = 20
 e2 = 1.1
 
-x = lambda n, m, v, t, e: (n + v) * ((t * e) / 10 + m)
-# this script?
-# this is supposed to be a test script right? we are going to moce this into the attack script eventually
-# I thought we had an attack script already, this was just to figure out a formula, we don't need it, but we kept it for reference
-# we will move the formula into the attack script
-# We did, right?
-# go to the attack script
-# please open it, I need to follow you
-print("Group 1: {}".format(int(x(n1, v1, m1, t1, e1))))
-print("Group 2: {}".format(int(x(n2, v2, m2, t2, e2))))
-# lets keep this file, for future testing, although you might want to rename it to something other than test.py
+
+def x(n: int, v: float, m: float, t: float, e: float) -> float:
+    """Compute a simple battle score for a group.
+
+    Parameters are:
+    - n: number of units
+    - v: small advantage modifier (e.g., 0.5 - 1.5)
+    - m: morale (1-100)
+    - t: tech score (1-30)
+    - e: effectiveness (0-2)
+
+    Returns: numeric score (not rounded).
+    """
+
+    return (n + v) * ((t * e) / 10 + m)
+
+
+if __name__ == "__main__":
+    # Quick command-line demo for manual testing
+    print(f"Group 1: {int(x(n1, v1, m1, t1, e1))}")
+    print(f"Group 2: {int(x(n2, v2, m2, t2, e2))}")
+
+# Note: this file contains a small reference formula used for experimenting with
+# combat calculations. Consider moving the function into the attack module when
+# it's promoted for production use.

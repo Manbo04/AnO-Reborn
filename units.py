@@ -1,30 +1,34 @@
 # FULLY MIGRATED
 
+import os
 from abc import ABC, abstractmethod
-from attack_scripts import Military
-from math import floor, ceil
+from math import floor
 from random import randint
 from typing import Union
+
 import psycopg2
 from dotenv import load_dotenv
 
+from attack_scripts import Military
+
 load_dotenv()
-import os
 
 
 # Blueprint for units
 class BlueprintUnit(ABC):
-
     """
     Every Unit class should follow and inherit this Blueprint!
 
-    Neccessary variables:
-        - unit_type: used to identify interfaces (i.e. TankUnit, SoldierUnit) for particular units
-        - bonus: used to calculate the battle advantage
-        - damage: used to determine the damage dealt to a specific target (infra, other buildings), used for percentage calculation
-            * in case of nukes: damage in nuke is the pure damage to units and infrastructure (when nuke targeted to a single object/unit damage is dealt)
-        - resource_cost: the required resources per x amount unit to be able to attack
-            ex. {"ammunition": 1} <- means 1 ammunition is needed for one unit to attack
+    Necessary variables:
+            - unit_type: used to identify interfaces (e.g., TankUnit, SoldierUnit)
+                for particular units
+            - bonus: used to calculate the battle advantage
+            - damage: determines damage dealt to a specific target (infrastructure
+                or buildings) and is used for percentage calculations. For nukes,
+                damage is the raw damage to units and infrastructure (a nuke
+                targeted at a single object deals unit damage to that object).
+            - resource_cost: resources required per unit, e.g.:
+                {"ammunition": 1} means 1 ammunition is needed for one unit
     """
 
     damage = 0
@@ -81,8 +85,10 @@ class TankUnit(BlueprintUnit):
         self.amount = amount
 
     def attack(self, defending_units):
-        # One tank beats 4 soldiers (if one tank beat only 4 soldiers then soldiers really counter tanks because 1 tank costs the same as ~50 soldiers.)
-        # One tank becomes 4x more effectiveness vs soldiers.
+        # One tank beats 4 soldiers. If one tank beat only 4 soldiers then
+        # soldiers would heavily counter tanks because 1 tank costs roughly
+        # the same as ~50 soldiers.
+        # One tank becomes 4x more effective versus soldiers.
         if defending_units == "soldiers":
             self.damage += 2
             self.bonus += 6 * self.amount
@@ -280,7 +286,8 @@ class NukeUnit(BlueprintUnit):
         pass
 
 
-# does not have attack method, their functionality is coded separately in intelligence.py
+# Does not have an attack method; their functionality is implemented in
+# `intelligence.py`.
 class SpyUnit(BlueprintUnit):
     unit_type = "spies"
     damage = 0  # does not attack anyway
@@ -308,7 +315,8 @@ class Units(Military):
         "icbms",
         "nukes",
     ]
-    # spyunit not included because it has no interactions with other units, so it doesnt need to run inside the Units.attack method.
+    # SpyUnit not included because it has no interactions with other units,
+    # so it doesn't need to run inside the Units.attack method.
     allUnitInterfaces = [
         SoldierUnit,
         TankUnit,
@@ -326,10 +334,11 @@ class Units(Military):
     """
     When you want the data to be validated call object.attach_units(selected_units)
 
-    Description of properties:
-        - user_id: represents which user the units belongs to, type: integer
-        - selected_units: represents the unit_type and unit_amount, type: dictionary; example: {"unit_name1": unit_amount1}
-        - bonuses: bonus gained from general or something like this, type: integer (i don't know if this will be implemented or not)
+        Description of properties:
+                - user_id: which user the units belong to (type: int)
+                - selected_units: mapping of unit_type to unit_amount, e.g.,
+                    {"unit_name1": unit_amount1}
+                - bonuses: bonus gained from generals or other modifiers (type: int)
     """
 
     def __init__(
@@ -351,10 +360,11 @@ class Units(Military):
         # a list of selected_units keys
         self.selected_units_list = selected_units_list
 
-    # this is needed because we can't store object in server side cache :(
+    # This is needed because we can't store object in server-side cache :(
     @classmethod
     def rebuild_from_dict(cls, sess_dict):
-        # if you modify the sess_dict it'll affect the actual session, that is why I recomend to create a copy
+        # If you modify the `sess_dict` it will affect the actual session;
+        # create a copy to avoid side effects.
         dic = dict(sess_dict)
         sort_out = ["supply_costs", "available_supplies"]
         store_sort_values = []
@@ -369,7 +379,7 @@ class Units(Military):
 
         try:
             reb = cls(**dic)
-        except:
+        except Exception:
             print("ERROR BECAUSE REB CAN't be created")
             raise TypeError
 
@@ -381,10 +391,20 @@ class Units(Military):
     # Validate then attach units
     # Function parameter description:
     #    - selected_units read the Units class document above
-    #    - units_count how many selected_units should be given (will be validated)
-    #        example: units_count = 3 when 3 different unit_type should be selected (like from warchoose)
-    #        example: units_count = 1 when 1 unit_type sould be selected (like a special unit: nukes, icbms)
+    #    - units_count: how many selected_units should be provided (validated)
+    #        e.g., units_count = 3 when three different unit types are
+    #        selected (as in warchoose)
+    #        e.g., units_count = 1 when a single special unit is selected
+    #        (like nukes or icbms)
     def attach_units(self, selected_units: dict, units_count: int) -> Union[str, None]:
+        # Validate then attach units
+        # Function parameter description:
+        #    - selected_units: see the `Units` class docstring above
+        #    - units_count: how many different unit types should be given
+        #        e.g., units_count = 3 when three different unit types are
+        #        selected (as in warchoose)
+        #        e.g., units_count = 1 when a single special unit is selected
+        #        (like nukes or icbms)
         self.supply_costs = 0
         unit_types = list(selected_units.keys())
         normal_units = self.get_military(self.user_id)
@@ -436,10 +456,13 @@ class Units(Military):
                     if unit_amount is None:
                         return "Unit is not valid!"
 
-                    # interface.supply_cost*self.selected_units[attacker_unit] - calculates the supply cost based on unit amount
-                    # supply = self.attack_cost(interface.supply_cost*self.selected_units[attacker_unit])
+                    # Calculate supply cost based on unit amount, e.g.:
+                    # interface.supply_cost * self.selected_units[attacker_unit]
+                    # supply = self.attack_cost(
+                    #     interface.supply_cost * self.selected_units[attacker_unit]
+                    # )
                     # if supply:
-                    # return supply
+                    #     return supply
 
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)
@@ -453,7 +476,7 @@ class Units(Military):
         else:
             return "Units are not attached!"
 
-    def save(self):
+    def _save_casualties(self):
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -469,14 +492,12 @@ class Units(Military):
             if save_type == "casualties":
                 # The casualties method sets a suffered_casualties
                 for unit_type, amount in self.suffered_casualties.items():
-                    mil_statement = (
-                        f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
-                    )
+                    mil_statement = f"SELECT {unit_type} FROM military " "WHERE id=(%s)"
                     db.execute(mil_statement, (self.user_id,))
                     available_unit_amount = db.fetchone()[0]
 
                     mil_update = (
-                        f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
+                        f"UPDATE military SET {unit_type}=(%s) " "WHERE id=(%s)"
                     )
                     db.execute(
                         mil_update, (available_unit_amount - amount, self.user_id)
@@ -536,11 +557,12 @@ class Units(Military):
         # Save supplies
         try:
             db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) "
+                "AND peace_date IS NULL",
                 (self.user_id, self.user_id),
             )
             war_id = db.fetchall()[-1][0]
-        except:
+        except Exception:
             return "War is already over!"
 
         if war_id is not None:
@@ -552,11 +574,11 @@ class Units(Military):
             else:
                 sign = "defender_supplies"
 
-            sign_select = f"SELECT {sign} FROM wars " + " WHERE id=(%s)"
+            sign_select = f"SELECT {sign} FROM wars " "WHERE id=(%s)"
             db.execute(sign_select, (war_id,))
             current_supplies = db.fetchone()[0]
 
-            sign_update = f"UPDATE wars SET {sign}" + "=(%s) WHERE id=(%s)"
+            sign_update = f"UPDATE wars SET {sign}=(%s) " "WHERE id=(%s)"
             db.execute(sign_update, (current_supplies - self.supply_costs, war_id))
 
             connection.commit()
@@ -564,8 +586,9 @@ class Units(Military):
             print("ERROR DURING SAVE")
             return "ERROR DURING SAVE"
 
-    # Fetch the available supplies and resources which are required and compare it to unit attack cost
-    # It also saves the remaining morale to the database
+    # Fetch the available supplies and resources which are required and
+    # compare them to unit attack cost. It also saves the remaining morale
+    # to the database
     def attack_cost(self, cost: int) -> str:
         if self.available_supplies is None:
             connection = psycopg2.connect(
@@ -583,8 +606,9 @@ class Units(Military):
             # Resolve attacker id safely and compare to this object's user id.
             attacker_id = row[0] if row else None
 
-            # If the current Units object belongs to the attacker side, read attacker_supplies,
-            # otherwise read defender_supplies. Fall back to 0 if values are missing.
+            # If the current Units object belongs to the attacker side,
+            # read attacker_supplies; otherwise read defender_supplies.
+            # Fall back to 0 if values are missing.
             if attacker_id is not None and attacker_id == self.user_id:
                 db.execute(
                     "SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,)
@@ -627,7 +651,8 @@ if __name__ == "__main__":
     import time
 
     db.execute(
-        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
+        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze',"
+        f"'falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
     )
     connection.commit()
 

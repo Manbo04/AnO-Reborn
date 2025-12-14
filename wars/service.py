@@ -1,7 +1,8 @@
-from helpers import get_influence
-from database import get_db_cursor
-from attack_scripts import Nation
 import time
+
+from attack_scripts import Nation
+from database import get_db_cursor
+from helpers import get_influence
 
 
 def target_data(cId):

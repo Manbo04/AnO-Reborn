@@ -1,26 +1,28 @@
-from flask import Blueprint, session, request, redirect, render_template
-from helpers import (
-    login_required,
-    get_db_cursor,
-    error,
-    get_flagname,
-    check_required,
-    get_influence,
-)
-from database import get_db_connection
-from attack_scripts.Nations import (
-    Economy as AttackEconomy,
-    Economy,
-    Nation as AttackNation,
-    Military,
-)
-from attack_scripts import Nation
-import time
-from .service import update_supply
-from units import Units
 import math
 import random
+import time
 import traceback
+
+from flask import Blueprint, redirect, render_template, request, session
+from typing import Any
+
+from attack_scripts import Nation
+from attack_scripts.Nations import Economy
+from attack_scripts.Nations import Economy as AttackEconomy
+from attack_scripts.Nations import Military
+from attack_scripts.Nations import Nation as AttackNation
+from database import get_db_connection
+from helpers import (
+    check_required,
+    error,
+    get_db_cursor,
+    get_flagname,
+    get_influence,
+    login_required,
+)
+from units import Units
+
+from .service import update_supply
 
 # Add any other necessary imports here
 
@@ -253,7 +255,7 @@ def peace_offers():
 # Send peace offer
 @wars_bp.route("/send_peace_offer/<int:war_id>/<int:enemy_id>", methods=["POST"])
 @login_required
-def send_peace_offer(war_id, enemy_id):
+def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     cId = session["user_id"]
     if request.method == "POST":
         resources = []
@@ -672,7 +674,7 @@ def warResult():
 
 @wars_bp.route("/declare_war", methods=["POST"])
 @login_required
-def declare_war():
+def declare_war() -> Any:
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
     defender_raw = request.form.get("defender")
     war_message = request.form.get("description")

@@ -10,8 +10,9 @@ Usage:
   DATABASE_URL="<url>" python create_signup_table.py
 """
 
-import os
 import logging
+import os
+
 import psycopg2
 
 
@@ -19,7 +20,8 @@ def main():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         logging.getLogger(__name__).error(
-            'ERROR: DATABASE_URL not set. Run with: DATABASE_URL="<url>" python create_signup_table.py'
+            "ERROR: DATABASE_URL not set. Run with: "
+            'DATABASE_URL="<url>" python create_signup_table.py'
         )
         return 1
 
@@ -41,19 +43,24 @@ def main():
         )
         # Also guard against older tables missing columns by adding them if absent
         cur.execute(
-            "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"
+            "ALTER TABLE signup_attempts "
+            "ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"
         )
         cur.execute(
-            "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;"
+            "ALTER TABLE signup_attempts " "ADD COLUMN IF NOT EXISTS fingerprint TEXT;"
         )
         cur.execute(
-            "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);"
+            "ALTER TABLE signup_attempts "
+            "ADD COLUMN IF NOT EXISTS email VARCHAR(255);"
         )
         cur.execute(
-            "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
+            "ALTER TABLE signup_attempts "
+            "ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP "
+            "DEFAULT CURRENT_TIMESTAMP;"
         )
         cur.execute(
-            "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;"
+            "ALTER TABLE signup_attempts "
+            "ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;"
         )
 
         conn.commit()
@@ -61,8 +68,10 @@ def main():
             "signup_attempts table ensured (columns added if missing)"
         )
         return 0
-    except Exception as e:
+    except Exception:
         conn.rollback()
+        # We don't need the exception object here;
+        # logger.exception will include traceback information in the logs
         logging.getLogger(__name__).exception("Failed to create signup_attempts table")
         return 2
     finally:

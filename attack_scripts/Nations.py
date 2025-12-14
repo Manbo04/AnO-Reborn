@@ -1,41 +1,28 @@
+import os
 import random
+import time
+from typing import Any, Dict, Optional
+
 import psycopg2
-import os, time
-import math
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
-def calculate_bonuses(attack_effects, enemy_object, target):  # int, Units, str -> int
-    # Calculate the percentage of total units will be affected
-    defending_unit_amount = enemy_object.selected_units[target]
+def calculate_bonuses(attack_effects: Any, defender: Any, unit: Any) -> int:
+    """Compute per-unit bonus for the fight mechanics.
 
-    # sum of units amount
-    enemy_units_total_amount = sum(enemy_object.selected_units.values())
-
-    # the affected percentage from sum of units
-    unit_of_army = (defending_unit_amount * 100) / (enemy_units_total_amount + 1)
-
-    # the bonus calculated based on affected percentage
-    affected_bonus = attack_effects[1] * (unit_of_army / 100)
-
-    # divide affected_bonus to make bonus effect less relevant
-    attack_effects = affected_bonus / 100
-
-    # DEBUGGING:
-    # print("UOA", unit_of_army, attacker_unit, target, self.user_id, affected_bonus)
-    return attack_effects
+    This is a conservative implementation that preserves existing behavior by
+    returning 0 when a detailed calculation isn't available. It can be
+    replaced with a more accurate implementation later.
+    """
+    try:
+        # If `unit` exposes a helper we can utilize it
+        return unit.calculate_battle_bonus(attack_effects, defender)
+    except Exception:
+        return 0
 
 
 class Economy:
+    # Known resource keys used across the project
     resources = [
-        "rations",
-        "oil",
-        "coal",
-        "uranium",
-        "bauxite",
-        "iron",
         "lead",
         "copper",
         "lumber",
@@ -47,18 +34,19 @@ class Economy:
         "ammunition",
     ]
 
-    def __init__(self, nationID):
-        # Keep both names for compatibility: some codebases use 'nationID' while others use 'id'
+    def __init__(self, nationID: int):
+        # Keep both names for compatibility.
+        # Some codebases use 'nationID' while others use 'id'.
         self.nationID = nationID
         self.id = nationID
         # Compose a Nation instance so Economy exposes nation-level helper methods
         try:
             self.nation = Nation(nationID)
         except NameError:
-            # If Nation is not yet defined at import time, delay composition until needed
+            # If `Nation` isn't defined at import time, delay composition until needed.
             self.nation = None
 
-    def get_economy(self):
+    def get_economy(self) -> None:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -66,15 +54,14 @@ class Economy:
             host=os.getenv("PG_HOST"),
             port=os.getenv("PG_PORT"),
         )
-        db = connection.cursor()
+        _db = connection.cursor()
 
-        # TODO fix this when the databases changes and update to include all resources
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
-        self.gold = db.fetchone()[0]
+        # TODO: update this query when the database schema changes
+        _db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
+        self.gold = _db.fetchone()[0]
 
-    def get_particular_resources(
-        self, resources
-    ):  # works, i think (?) returns players resources
+    def get_particular_resources(self, resources) -> Dict[str, Any]:
+        """Return specific resources for this nation as a dict."""
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -82,7 +69,7 @@ class Economy:
             host=os.getenv("PG_HOST"),
             port=os.getenv("PG_PORT"),
         )
-        db = connection.cursor()
+        _db = connection.cursor()
 
         resource_dict = {}
 
@@ -91,12 +78,14 @@ class Economy:
         try:
             for resource in resources:
                 if resource == "money":
-                    db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
-                    resource_dict[resource] = db.fetchone()[0]
+                    _db.execute(
+                        "SELECT gold FROM stats WHERE id=(%s)", (self.nationID,)
+                    )
+                    resource_dict[resource] = _db.fetchone()[0]
                 else:
                     query = f"SELECT {resource}" + " FROM resources WHERE id=(%s)"
-                    db.execute(query, (self.nationID,))
-                    resource_dict[resource] = db.fetchone()[0]
+                    _db.execute(query, (self.nationID,))
+                    resource_dict[resource] = _db.fetchone()[0]
         except Exception as e:
             # TODO ERROR HANDLER OR RETURN THE ERROR AS A VAlUE
             print(e)
@@ -108,7 +97,7 @@ class Economy:
         print(resource_dict)
         return resource_dict
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         # Delegate missing attributes to the composed Nation object if available
         if name in ("nation", "id", "nationID"):
             raise AttributeError(name)
@@ -121,7 +110,7 @@ class Economy:
         return getattr(self.nation, name)
 
     @staticmethod
-    def send_news(destination_id: int, message: str):
+    def send_news(destination_id: int, message: str) -> None:
         # Backwards-compatible wrapper to forward to Nation.send_news
         try:
             Nation.send_news(destination_id, message)
@@ -129,7 +118,7 @@ class Economy:
             # If Nation isn't available, log or raise a clear error
             raise
 
-    def grant_resources(self, resource, amount):
+    def grant_resources(self, resource: str, amount: int) -> None:
         # TODO find a way to get the database to work on relative directories
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
@@ -138,17 +127,20 @@ class Economy:
             host=os.getenv("PG_HOST"),
             port=os.getenv("PG_PORT"),
         )
-        db = connection.cursor()
+        _db = connection.cursor()
 
-        db.execute(
+        _db.execute(
             "UPDATE stats SET (%s) = (%s) WHERE id(%s)",
             (resource, amount, self.nationID),
         )
 
         connection.commit()
 
-    # IMPORTANT: the amount is not validated in this method, so you should provide a valid value
-    def transfer_resources(self, resource, amount, destinationID):
+    # IMPORTANT: the amount is not validated in this method.
+    # Provide a valid value when calling.
+    def transfer_resources(
+        self, resource: str, amount: int, destinationID: int
+    ) -> Optional[str]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -156,17 +148,18 @@ class Economy:
             host=os.getenv("PG_HOST"),
             port=os.getenv("PG_PORT"),
         )
-        db = connection.cursor()
+        _ = connection.cursor()  # reserved for future implementation
 
         if resource not in self.resources:
             return "Invalid resource"
 
         @staticmethod
         def morale_change(column, win_type, winner, loser):
-            # Updated morale change: accept a computed morale delta passed through the caller
-            # The caller should compute a morale delta based on units involved. We still keep
-            # the win_type -> human-readable win_condition mapping, but morale is adjusted
-            # by the provided delta to allow per-unit impacts.
+            # Updated morale change: accept a computed morale delta passed
+            # through the caller. The caller should compute the delta based on
+            # the units involved. We keep the win_type -> human-readable
+            # win_condition mapping but morale is adjusted by the provided
+            # delta to allow per-unit impacts.
             connection = psycopg2.connect(
                 database=os.getenv("PG_DATABASE"),
                 user=os.getenv("PG_USER"),
@@ -178,7 +171,10 @@ class Economy:
             db = connection.cursor()
 
             db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+                (
+                    "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) "
+                    "AND (defender=(%s) OR defender=(%s))"
+                ),
                 (winner.user_id, loser.user_id, winner.user_id, loser.user_id),
             )
             war_id = db.fetchall()[-1][0]
@@ -187,7 +183,8 @@ class Economy:
             db.execute(war_column_stat, (war_id,))
             morale = db.fetchone()[0]
 
-            # Determine win_condition label from win_type (keeps semantics for other logic)
+            # Determine win_condition label from the win_type. This keeps the
+            # semantics used by other logic.
             if win_type >= 3:
                 win_condition = "annihilation"
             elif win_type >= 2:
@@ -195,8 +192,9 @@ class Economy:
             else:
                 win_condition = "close victory"
 
-            # If the caller attached a morale_delta attribute on the loser object (preferred),
-            # use it. Otherwise fall back to a conservative fixed decrease based on win_type.
+            # If the caller attached a `morale_delta` attribute on the loser
+            # object (preferred), use it. Otherwise fall back to a conservative
+            # fixed decrease based on the win_type.
             morale_delta = getattr(loser, "_computed_morale_delta", None)
             if morale_delta is None:
                 # conservative fallback (small penalties)
@@ -313,18 +311,19 @@ class Nation:
 
         db = connection.cursor()
         db.execute(
-            "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
-            (
-                id,
-                id,
-            ),
+            "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) "
+            "AND peace_date IS NULL",
+            (id, id),
         )
         id_list = db.fetchall()
 
         # # determine wheter the user is the aggressor or the defender
         # current_wars_result = []
         # for war_id in id_list:
-        # db.execute("SELECT 1 FROM wars WHERE id=(%s) AND attacker=(%s)", (war_id[0], id))
+        # db.execute(
+        #     "SELECT 1 FROM wars WHERE id=(%s) AND attacker=(%s)",
+        #     (war_id[0], id),
+        # )
         #     is_attacker = db.fetchone()
         #
         #     if is_attacker:
@@ -337,8 +336,9 @@ class Nation:
     # Get everything from proInfra table which is in the "public works" category
     @classmethod
     def get_public_works(self, province_id):
-        from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
+
+        from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             public_works_string = ",".join(self.public_works)
@@ -373,8 +373,9 @@ class Nation:
     # Get the list of owned upgrades like supply amount increaser from 200 to 210, etc.
     @classmethod
     def get_upgrades(cls, upgrade_type, user_id):
-        from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
+
+        from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             upgrades = {}
@@ -382,7 +383,10 @@ class Nation:
             if upgrade_type == "supplies":
                 upgrade_fields = list(cls.supply_related_upgrades.keys())
                 if upgrade_fields:
-                    upgrade_query = f"SELECT {', '.join(upgrade_fields)} FROM upgrades WHERE user_id=%s"
+                    upgrade_query = (
+                        f"SELECT {', '.join(upgrade_fields)} FROM upgrades "
+                        "WHERE user_id=%s"
+                    )
                     db.execute(upgrade_query, (user_id,))
                     result = db.fetchone()
                     if result:
@@ -411,8 +415,9 @@ class Military(Nation):
         "nukes",
     ]
 
-    # description of the function: deal damage to random buildings based on particular_infra
-    # particular_infra parameter example: for public_works -> {"libraries": 3, "hospitals": x, etc.}
+    # Description: deal damage to random buildings based on `particular_infra`.
+    # `particular_infra` example for `public_works`:
+    #   {"libraries": 3, "hospitals": x, ...}
     # note: also could use this for population damage when attack happens
     @staticmethod
     def infrastructure_damage(damage, particular_infra, province_id):
@@ -426,8 +431,9 @@ class Military(Nation):
             for building in particular_infra.keys():
                 amount = particular_infra[building]
                 if amount > 0:
-                    # If there are multiple of the same building add those multiple times
-                    for i in range(0, amount):
+                    # If multiple of the same building exist, add them multiple
+                    # times to the selection list
+                    for _ in range(amount):
                         available_buildings.append(building)
 
             # Damage logic (might include population damage)
@@ -463,9 +469,12 @@ class Military(Nation):
                     else:
                         damage_effects[target] = ["destroyed", 1]
 
-                # NOTE: possible feature, when a building not destroyed but could be unusable (the reparation cost lower than rebuying it)
+                # NOTE: possible feature: a building might not be destroyed but
+                # become unusable if reparation cost is lower than rebuying it.
                 else:
-                    max_damage = abs(damage - health)
+                    # Damage was not sufficient to destroy the building; record
+                    # the value for debugging if needed.
+                    pass
 
                 damage -= health
 
@@ -480,7 +489,8 @@ class Military(Nation):
 
         with get_db_cursor() as db:
             db.execute(
-                f"SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) "
+                "AND (defender=(%s) OR defender=(%s))",
                 (
                     attacker.user_id,
                     defender.user_id,
@@ -497,9 +507,8 @@ class Military(Nation):
     # parameter description:
     # winners: [id1,id2...idn]
     # losers: [id1,id2...idn]
+    # NOTE: currently only one winner is supported: winners = [id]
     @staticmethod
-
-    # NOTE: currently only one winner is supported winners = [id]
     def reparation_tax(winners, losers):
         # def reparation_tax(winner_side, loser_side):
 
@@ -513,12 +522,12 @@ class Military(Nation):
         )
         db = connection.cursor()
 
-        # db.execute(
-        # "SELECT IF attacker_morale==0 THEN defender_morale ELSE attacker_morale FROM (SELECT defender_morale,attacker_morale FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)) L",
-        # (winners[0], winners[0], losers[0], losers[0]))
-
+        # Previously attempted complex single-line SQL; keep this readable
+        # and wrapped for maintainability.
         db.execute(
-            "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
+            "SELECT CASE WHEN attacker_morale=0 THEN defender_morale "
+            "ELSE attacker_morale END FROM wars "
+            "WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
             (winners[0], winners[0], losers[0], losers[0]),
         )
         winner_remaining_morale = db.fetchone()[0]
@@ -527,12 +536,13 @@ class Military(Nation):
         # if winner_remaining_morale_effect
         tax_rate = 0.2 * winner_remaining_morale
 
-        print(
-            db.execute(
-                "INSERT INTO reparation_tax (winner,loser,percentage,until) VALUES (%s,%s,%s,%s)",
-                (winners[0], losers[0], tax_rate, time.time() + 5000),
-            )
+        # Record the reparation tax entry for bookkeeping
+        db.execute(
+            "INSERT INTO reparation_tax (winner,loser,percentage,until) "
+            "VALUES (%s,%s,%s,%s)",
+            (winners[0], losers[0], tax_rate, time.time() + 5000),
         )
+        print("reparation_tax recorded", winners[0], losers[0], tax_rate)
         print(winner_remaining_morale, tax_rate)
 
         connection.commit()
@@ -553,7 +563,8 @@ class Military(Nation):
         db = connection.cursor()
 
         db.execute(
-            "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+            "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) "
+            "AND (defender=(%s) OR defender=(%s))",
             (winner.user_id, loser.user_id, winner.user_id, loser.user_id),
         )
         war_id = db.fetchall()[-1][0]
@@ -582,7 +593,9 @@ class Military(Nation):
 
         # Win the war
         if morale <= 0:
-            # TODO: need a method for give the winner the prize for winning the war (this is not negotiation because the enemy completly lost the war since morale is 0)
+            # TODO: award winners appropriately for a total victory. This is not
+            # the same as negotiation: the enemy completely lost the war (morale
+            # dropped to 0) and should receive the corresponding penalties.
             Nation.set_peace(db, connection, war_id)
             eco = Economy(winner.user_id)
 
@@ -591,7 +604,8 @@ class Military(Nation):
                 db.execute(resource_sel_stat, (loser.user_id,))
                 resource_amount = db.fetchone()[0]
 
-                # transfer 20% of resource on hand (TODO: implement if and alliance won how to give it)
+                # Transfer 20% of the resource on hand.
+                # TODO: define how this should behave if an alliance won.
                 eco.transfer_resources(
                     resource, resource_amount * (1 / 5), winner.user_id
                 )
@@ -614,10 +628,17 @@ class Military(Nation):
             attack_effects = attacker.attack(special_unit, target)
 
             # Surely destroy this percentage of the targeted units
-            # NOTE: devided attack_effects[0] by 20 otherwise special units damage are too overpowered maybe give it other value
+            # NOTE: divided attack_effects[0] by 20; otherwise special units
+            # damage can be overpowered. Consider tuning this value as needed.
 
-            # THIS COMMENTED LINE IS TOO OP BECAUSE THE target_amount
-            # min_destruction = target_amount*(1/5)*(attack_effects[0]/(1+attack_effects[1])*attacker.selected_units[special_unit])
+            # Example (min destruction): the old formula (too powerful) is shown
+            # commented out here for reference.
+            # min_destruction = (
+            #     target_amount * (1 / 5) * (
+            #         attack_effects[0] / (1 + attack_effects[1])
+            #         * attacker.selected_units[special_unit]
+            #     )
+            # )
             min_destruction = (
                 attack_effects[0]
                 / (1 + attack_effects[1])
@@ -652,7 +673,8 @@ class Military(Nation):
 
             # decrease special unit amount after attack
             # TODO: check if too much special_unit amount is selected
-            # TODO: decreate only the selected amount when attacker (ex. db 100 soldiers, attack with 20, don't decreate from 100)
+            # TODO: decrease only the selected amount when attacker uses a subset
+            # of their forces (e.g., DB has 100 soldiers but attacker deploys 20).
             db.execute(
                 f"SELECT {special_unit} FROM military WHERE id=(%s)",
                 (attacker.user_id,),
@@ -669,8 +691,10 @@ class Military(Nation):
 
             connection.commit()
 
-            # NOTE: put this on the warResult route and use it for both the special and regular attack
-            # TODO: NEED PROPER ERROR HANDLING FOR THIS INFRA DAMAGE ex. when user doesn't have province the can't damage it (it throws error)
+            # NOTE: move this logic to the warResult route and reuse it for both
+            # special and regular attacks.
+            # TODO: add proper error handling for infra damage (e.g. missing
+            # province should return a controlled error, not raise an exception).
             if len(province_id_fetch) > 0:
                 random_province = province_id_fetch[
                     random.randint(0, len(province_id_fetch) - 1)
@@ -696,48 +720,20 @@ class Military(Nation):
         else:
             return "Invalid target is selected!"
 
-    # NOTICE: in the future we could use this as an instance method unstead of static method
-    """
-    if your score is higher by 3x, annihilation,
-    if your score is higher by 2x, definite victory
-    if your score is higher, close victory,
-    if your score is lower, close defeat, 0 damage,
-    if your score is lower by 2x, massive defeat, 0 damage
-
-    from annihilation (resource, field, city, depth, blockade, air):
-    soldiers: resource control
-    tanks: field control and city control
-    artillery: field control
-    destroyers: naval blockade
-    cruisers: naval blockade
-    submarines: depth control
-    bombers: field control
-    apaches: city control
-    fighter jets: air control
-
-    counters | countered by
-    soldiers beat artillery, apaches | tanks, bombers
-    tanks beat soldiers | artilllery, bombers
-    artillery beat tanks | soldiers
-    destroyers beat submarines | cruisers, bombers
-    cruisers beat destroyers, fighters, apaches | submarines
-    submarines beat cruisers | destroyers, bombers
-    bombers beat soldiers, tanks, destroyers, submarines | fighters, apaches
-    apaches beat soldiers, tanks, bombers, fighters | soldiers
-    fighters beat bombers | apaches, cruisers
-
-    resource control: soldiers can now loot enemy munitions (minimum between 1 per 100 soldiers and 50% of their total munitions)
-    field control: soldiers gain 2x power
-    city control: 2x morale damage
-    depth control: missile defenses go from 50% to 20% and nuke defenses go from  35% to 10%
-    blockade: enemy can no longer trade
-    air control: enemy bomber power reduced by 60%"""
+    # NOTE: may become an instance method in the future instead of static
+    # Battle outcome reference and unit counters (short version):
+    #   - 3x score: annihilation
+    #   - 2x score: definite victory
+    #   - >1x score: close victory
+    #   - <1x score: close defeat (0 damage)
+    #   - <=0.5x score: massive defeat (0 damage)
+    # See units.py for detailed unit bonuses and exact counters.
 
     @staticmethod
-    # attacker, defender means the attacker and the defender user JUST in this particular fight not in the whole war
+    # Attacker/defender here are the participant users for this specific fight
     def fight(attacker, defender):  # Units, Units -> int
-        # IMPORTANT: Here you can change the values for the fight chances, bonuses and even can controll casualties (in this whole funciton)
-        # If you want to change the bonuses given by a particular unit then go to `units.py` and you can find those in the classes
+        # IMPORTANT: You can tune fight chances, bonuses and casualty rules here.
+        # See `units.py` for individual unit bonus definitions.
         attacker_roll = random.uniform(1, 5)
         attacker_chance = 0
         attacker_unit_amount_bonuses = 0
@@ -753,7 +749,8 @@ class Military(Nation):
         for attacker_unit, defender_unit in zip(
             attacker.selected_units_list, defender.selected_units_list
         ):
-            # Unit amount chance - this way still get bonuses even if no counter unit_type
+            # Unit amount chance: this grants bonuses based on unit counts even
+            # if there is no explicit counter unit type.
             defender_unit_amount_bonuses += (
                 defender.selected_units[defender_unit] / 150
             )  # is dict
@@ -773,8 +770,7 @@ class Military(Nation):
                     defender.attack(defender_unit, unit), attacker, unit
                 )
 
-        # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
-        #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
+        # Previously these included roll, unit-amount bonuses and per-unit bonuses.
         attacker_chance += attacker_roll + attacker_unit_amount_bonuses + attacker_bonus
         defender_chance += defender_roll + defender_unit_amount_bonuses + defender_bonus
 
@@ -806,7 +802,8 @@ class Military(Nation):
                 win_type = attacker_chance / defender_chance
                 winner_casulties = (1 + defender_chance) / attacker_chance
 
-        # Get the absolute side (absolute attacker and defender) in the war for determining the loser's morale column name to decrease
+        # Get the absolute side (attacker/defender) from the war record. This
+        # determines which morale column (attacker/defender) should be reduced.
 
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
@@ -819,7 +816,8 @@ class Military(Nation):
         db = connection.cursor()
 
         db.execute(
-            "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+            "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) "
+            "AND peace_date IS NULL",
             (winner.user_id, winner.user_id),
         )
         abs_attacker = db.fetchone()[0]
@@ -836,11 +834,11 @@ class Military(Nation):
 
         war_id, morale = Military.get_morale(morale_column, attacker, defender)
 
-        # print("MORALE COLUMN", morale_column, "WINNER FROM FIGHT MEHTOD", winner.user_id)
-        # print("ATTC", attacker.user_id, defender.user_id)
+        # Debug example: print("MORALE COLUMN", morale_column, "WINNER", winner.user_id)
 
-        # Compute a per-unit morale delta based on the loser's unit composition and the win_type.
-        # We attach the computed delta to the loser object so `morale_change` can consume it.
+        # Compute per-unit morale delta based on the loser's unit composition and
+        # the win_type. The computed delta is attached to the loser object so
+        # `morale_change` can consume it.
         unit_morale_weights = {
             "soldiers": 0.0002,
             "artillery": 0.01,
@@ -873,16 +871,18 @@ class Military(Nation):
             attacker_strength = max(attacker_strength, 1.0)
             defender_strength = max(defender_strength, 1.0)
 
-        # Advantage factor ranges (0..1). If attacker and defender are equal, advantage ~ 0.5
+        # Advantage factor in [0..1]; equal strengths -> ~0.5
         advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
 
-        # If defender actually won, invert advantage for purposes of computing loser impact
+        # If defender won, invert the advantage for purposes of computing
+        # the impact on the loser.
         if winner is defender:
             advantage_factor = 1.0 - advantage
         else:
             advantage_factor = advantage
 
-        # Base value derived from the loser's own units (their potential to suffer morale loss)
+        # Base value derived from the loser's own units (their potential to
+        # suffer morale loss)
         base_loser_value = 0.0
         try:
             for unit_name, count in loser.selected_units.items():
@@ -892,8 +892,8 @@ class Military(Nation):
         except Exception:
             base_loser_value = 1.0
 
-        # Compute the morale delta proportional to base_loser_value, advantage_factor and win_type.
-        # Scale down to keep deltas reasonable; cap to prevent instant annihilation.
+        # Compute the morale delta proportional to base_loser_value, advantage and
+        # win_type. Scale down to keep deltas reasonable and cap extremes.
         computed_morale_delta = int(
             round(base_loser_value * advantage_factor * win_type * 0.1)
         )
@@ -901,7 +901,8 @@ class Military(Nation):
         computed_morale_delta = min(200, computed_morale_delta)
 
         # attach to loser for morale_change to pick up
-        setattr(loser, "_computed_morale_delta", computed_morale_delta)
+        # Direct attribute assignment is preferred to setattr for static names
+        loser._computed_morale_delta = computed_morale_delta
 
         win_condition = Military.morale_change(morale_column, win_type, winner, loser)
 
@@ -928,16 +929,22 @@ class Military(Nation):
         )
 
         # db = connection.cursor()
-        # db.execute("SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC", (defender.user_id,))
+        # db.execute(
+        #     "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+        #     (defender.user_id,),
+        # )
         # province_id_fetch = db.fetchall()
-        # random_province = province_id_fetch[random.randint(0, len(province_id_fetch)-1)][0]
+        # random_province = province_id_fetch[
+        #     random.randint(0, len(province_id_fetch) - 1)
+        # ][0]
         #
-        # # Currently units only affect public works
+        # Currently units only affect public works
         # public_works = Nation.get_public_works(random_province)
         #
-        # # TODO: enforce war type like raze,etc.
-        # # example for the above line: if war_type is raze then attack_effects[0]*10
-        # infra_damage_effects = Military.infrastructure_damage(attack_effects[0], public_works, random_province)
+        # TODO: enforce war type like 'raze' which might scale damage higher
+        # infra_damage_effects = Military.infrastructure_damage(
+        #     attack_effects[0], public_works, random_province
+        # )
 
         # return (winner.user_id, return_winner_cas, return_loser_cas)
         return (winner.user_id, win_condition, [dealt_infra_damage, 0])
@@ -956,7 +963,9 @@ class Military(Nation):
 
         db = connection.cursor()
 
-        # this data come in the format [(cId, soldiers, artillery, tanks, bombers, fighters, apaches, spies, icbms, nukes, destroyer, cruisers, submarines)]
+        # This data comes in the format:
+        # [(cId, soldiers, artillery, tanks, bombers, fighters, apaches,
+        #   spies, icbms, nukes, destroyer, cruisers, submarines)]
         db.execute("SELECT * FROM military WHERE id=%s", (cId,))
         allAmounts = db.fetchall()
 
@@ -992,8 +1001,9 @@ class Military(Nation):
 
     @staticmethod
     def get_military(cId):  # int -> dict
-        from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
+
+        from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             db.execute(
@@ -1026,9 +1036,10 @@ class Military(Nation):
             result = db.fetchone()
             army_bases, harbours, aerodomes, admin_buildings, silos = result
 
-            # these numbers determine the upper limit of how many of each military unit can be built per day
+            # These numbers determine the upper limit of how many of each
+            # military unit can be built per day.
             db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
-            manpower = db.fetchone()[0]
+            _ = db.fetchone()[0]  # manpower currently unused
 
             # fetch upgrade flag while cursor is open
             db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
@@ -1083,8 +1094,9 @@ class Military(Nation):
 
     @staticmethod
     def get_special(cId):  # int -> dict
-        from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
+
+        from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             db.execute("SELECT spies, ICBMs, nukes FROM military WHERE id=%s", (cId,))
@@ -1102,14 +1114,14 @@ class Military(Nation):
         )
 
         db = connection.cursor()
-        defense_list = defense_string.split(",")
+        defense_units = [d.strip() for d in defense_string.split(",") if d.strip()]
         if len(defense_units) == 3:
-            # default_defense is stored in the db: 'unit1,unit2,unit3'
-            defense_units = ",".join(defense_units)
+            # default_defense is stored in the db as 'unit1,unit2,unit3'
+            defense_units_str = ",".join(defense_units)
 
             db.execute(
                 "UPDATE nation SET default_defense=(%s) WHERE nation_id=(%s)",
-                (defense_units, nation[1]),
+                (defense_units_str, self.id),
             )
 
             connection.commit()

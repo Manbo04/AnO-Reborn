@@ -1,15 +1,14 @@
-from flask import request, render_template, session, redirect, flash
-from helpers import login_required, error
-from database import get_db_cursor
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+
 from app import app
 from attack_scripts import Military
-from dotenv import load_dotenv
-
-load_dotenv()
-import os
-from helpers import get_date
+from database import get_db_cursor
+from helpers import error, get_date, login_required
 from upgrades import get_upgrades
 from variables import MILDICT
+
+load_dotenv()
 
 
 @app.route("/military", methods=["GET", "POST"])
@@ -24,8 +23,8 @@ def military():
         units.update(special_units)
         upgrades = get_upgrades(cId)
 
-        # finding daily limits through finding number of each military building in proinfra tables that belong to a user
-        # The info of which proinfra tables belong to a user is in provinces table
+        # Finding daily limits by counting military buildings in the user's
+        # proinfra tables (the provinces table lists ownership)
         limits = Military.get_limits(cId)
 
         # Get current manpower
@@ -99,10 +98,11 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
             if way == "sell":
                 if wantedUnits > currentUnits:
-                    return error(
-                        400,
-                        f"You don't have enough {units} to sell ({wantedUnits}/{currentUnits})",
+                    msg = (
+                        f"You don't have enough {units} to sell "
+                        f"({wantedUnits}/{currentUnits})"
                     )
+                    return error(400, msg)
 
                 for resource, amount in resources.items():
                     addResources = wantedUnits * amount
@@ -143,18 +143,21 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 limits = Military.get_limits(cId)
 
                 if wantedUnits > limits[units]:
-                    return error(
-                        400,
-                        f"You exceeded the unit buy limit, you might want to buy more military buildings. You can buy {limits[units]}/{wantedUnits} {units}.",
+                    msg = (
+                        "You exceeded the unit buy limit; consider buying more "
+                        "military buildings. You can buy "
+                        f"{limits[units]}/{wantedUnits} {units}."
                     )
+                    return error(400, msg)
 
-                if (
-                    totalPrice > gold
-                ):  # checks if user wants to buy more units than he has gold
-                    return error(
-                        400,
-                        f"You don't have enough money for that ({gold}/{totalPrice}). You need {totalPrice-gold} more money.",
+                if totalPrice > gold:
+                    # Checks if user wants to buy more units than they have gold
+                    msg = (
+                        f"You don't have enough money for that ({gold}/"
+                        f"{totalPrice}). "
+                        f"You need {totalPrice-gold} more money."
                     )
+                    return error(400, msg)
 
                 for resource, amount in resources.items():
                     selectResource = (
@@ -165,10 +168,12 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                     requiredResources = amount * wantedUnits
 
                     if requiredResources > currentResources:
-                        return error(
-                            400,
-                            f"You have {currentResources}/{requiredResources} {resource}, meaning you need {requiredResources-currentResources} more.",
+                        msg = (
+                            f"You have {currentResources}/{requiredResources}. "
+                            f"{resource}: you need "
+                            f"{requiredResources-currentResources} more."
                         )
+                        return error(400, msg)
 
                 for resource, amount in resources.items():
                     requiredResources = amount * wantedUnits
@@ -194,7 +199,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             else:
                 return error(404, "Page not found")
 
-            ####### UPDATING REVENUE #############
+            # UPDATING REVENUE
             if way == "buy":
                 rev_type = "expense"
             elif way == "sell":
@@ -203,7 +208,8 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             description = ""
 
             db.execute(
-                "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                "INSERT INTO revenue (user_id, type, name, description, "
+                "date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (
                     cId,
                     rev_type,

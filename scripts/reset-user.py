@@ -1,15 +1,16 @@
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
-import psycopg2
-import sys
-
-sys.path.append(".")
-from database import get_db_cursor
 
 
 def reset_user(cId):
+    # Local import to avoid modifying sys.path at module import time.
+    # Keeps top-level imports clean and avoids modifying sys.path on import.
+    import sys
+
+    sys.path.append(".")
+    from database import get_db_cursor
+
     with get_db_cursor() as db:
         # Military
         units = [
@@ -77,6 +78,11 @@ def reset_user(cId):
 
 if __name__ == "__main__":
     # Add 100 billion gold to nation ID 20
+    import sys
+
+    sys.path.append(".")
+    from database import get_db_cursor
+
     with get_db_cursor() as db:
         db.execute("UPDATE stats SET gold = gold + 100000000000 WHERE id = 20")
     print("Added 100 billion gold to nation ID 20")

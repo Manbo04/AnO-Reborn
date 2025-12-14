@@ -1,7 +1,8 @@
-from flask import request, render_template, session
-from helpers import login_required
-from database import get_db_cursor
+from flask import render_template
+
 from app import app
+from database import get_db_cursor
+from helpers import login_required
 
 
 @app.route("/statistics")

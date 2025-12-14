@@ -3,22 +3,25 @@ Centralized Database Module for AnO
 Provides connection pooling, query helpers, and unified database access patterns
 """
 
-import psycopg2
-from psycopg2 import pool
-from psycopg2.extras import RealDictCursor, execute_batch
+import logging
 import os
 from contextlib import contextmanager
-from dotenv import load_dotenv
-from typing import List, Dict, Any, Optional, Tuple
-import logging
-from functools import lru_cache, wraps
+from functools import wraps
 from time import time
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
-load_dotenv()
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2 import pool
+from psycopg2.extras import RealDictCursor, execute_batch
+
 import config  # Parse Railway DATABASE_URL
 
-# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL) for pool creation (force override)
-from urllib.parse import urlparse
+load_dotenv()
+
+# Ensure PG_* env vars are populated from DATABASE_URL
+# (or DATABASE_PUBLIC_URL) for pool creation (force override)
 
 db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 if db_url:
@@ -88,7 +91,7 @@ def cache_response(ttl_seconds=60):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Create cache key from function name and user session
-            from flask import session, request
+            from flask import request, session
 
             user_id = session.get("user_id", "anon")
             page_id = request.path if hasattr(request, "path") else ""
@@ -143,7 +146,7 @@ class DatabasePool:
                 pass
             self._pool = None
         try:
-            self._pool = psycopg2.pool.ThreadedConnectionPool(
+            self._pool = pool.ThreadedConnectionPool(
                 minconn=1,
                 maxconn=50,
                 database=os.getenv("PG_DATABASE"),
@@ -158,8 +161,13 @@ class DatabasePool:
             logger.error(f"Failed to initialize database pool: {e}")
             raise
 
-    def get_connection(self):
-        """Get a connection from the pool"""
+    def get_connection(self) -> Any:
+        """Get a connection from the pool.
+
+        Returns a raw psycopg2 connection instance. Callers should return the
+        connection using :meth:`return_connection` or by using the provided
+        context managers in this module.
+        """
         self._initialize_pool()  # Lazy init and fork-safe reinit
         return self._pool.getconn()
 
@@ -173,14 +181,14 @@ class DatabasePool:
                 # Try to close the connection if it can't be returned
                 try:
                     conn.close()
-                except:
+                except Exception:
                     pass
         else:
             logger.warning("Attempted to return connection but pool is not initialized")
             # Close the connection to avoid leaks
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
 
     def close_all(self):
@@ -332,13 +340,19 @@ class QueryHelper:
 
     @staticmethod
     def execute_many(query: str, params_list: List[tuple]) -> None:
-        """Execute a query with multiple parameter sets using execute_batch for efficiency"""
+        """
+        Execute a query with multiple parameter sets using execute_batch
+        for efficiency
+        """
         with get_db_cursor() as cursor:
             execute_batch(cursor, query, params_list)
 
     @staticmethod
-    def execute_returning(query: str, params: tuple = None) -> Any:
-        """Execute a query and return the result (useful for INSERT ... RETURNING)"""
+    def execute_returning(query: str, params: tuple = None) -> Optional[Any]:
+        """
+        Execute a query and return the result (useful for INSERT ...
+        RETURNING)
+        """
         with get_db_cursor() as cursor:
             cursor.execute(query, params)
             return cursor.fetchone()
@@ -352,9 +366,10 @@ class UserQueries:
         """Get all resources for a user in a single query"""
         query = """
             SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper,
-                   lumber, components, steel, consumer_goods, aluminium, gasoline, ammunition
+                   lumber, components, steel, consumer_goods, aluminium,
+                   gasoline, ammunition
             FROM resources WHERE id = %s
-        """
+            """
         result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
         return dict(result) if result else {}
 
@@ -504,7 +519,8 @@ class CoalitionQueries:
     @staticmethod
     def get_coalition_influence(coalition_id: int) -> int:
         """Calculate total coalition influence efficiently"""
-        # This would need the influence calculation logic, but we can pre-aggregate much of it
+        # This would need the influence calculation logic, but we can
+        # pre-aggregate much of it
         query = """
             SELECT
                 c.userId,
