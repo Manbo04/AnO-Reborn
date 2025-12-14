@@ -36,7 +36,8 @@ def peace_offers():
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT peace_offer_id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+            "SELECT peace_offer_id FROM wars WHERE "
+            "(attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
             (cId, cId),
         )
         peace_offers = db.fetchall()
@@ -102,7 +103,8 @@ def peace_offers():
                         offer[offer_id]["author"] = [author_id, db.fetchone()[0]]
 
                         db.execute(
-                            "SELECT attacker,defender FROM wars WHERE peace_offer_id=(%s)",
+                            "SELECT attacker, defender FROM wars "
+                            "WHERE peace_offer_id=(%s)",
                             (offer_id,),
                         )
                         ids = db.fetchone()
@@ -135,13 +137,17 @@ def peace_offers():
 
         decision = request.form.get("decision", None)
 
-        # operate using a db connection (we need both cursor and connection for set_peace)
+        # operate using a db connection (we need both cursor and
+        # connection for set_peace)
         with get_db_connection() as connection:
             db = connection.cursor()
 
-            # Make sure that others can't accept,delete,etc. the peace offer other than the participants
+            # Make sure others can't accept/delete/etc. the peace
+            # offer other than the participants
             db.execute(
-                "SELECT id, attacker, defender FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) AND peace_date IS NULL",
+                "SELECT id, attacker, defender FROM wars WHERE "
+                "(attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) "
+                "AND peace_date IS NULL",
                 (cId, cId, offer_id),
             )
             result = db.fetchone()
@@ -150,7 +156,10 @@ def peace_offers():
 
             # load the offer author and desired resources
             db.execute(
-                "SELECT author, demanded_resources, demanded_amount FROM peace WHERE id=(%s)",
+                (
+                    "SELECT author, demanded_resources, demanded_amount "
+                    "FROM peace WHERE id=(%s)"
+                ),
                 (offer_id,),
             )
             row = db.fetchone()
@@ -193,7 +202,8 @@ def peace_offers():
                 except Exception:
                     return error(400, "Invalid resource requested in peace offer")
 
-                # If function returned a non-dict (e.g. empty or invalid result), normalize it to dict
+                # If function returned a non-dict (e.g. empty or invalid result),
+                # normalize it to a dict
                 if not isinstance(resource_dict, dict):
                     resource_dict = {}
 
@@ -207,7 +217,11 @@ def peace_offers():
                     if required > available:
                         return error(
                             400,
-                            f"Can't accept peace offer because you don't have the required resources: {required} > {available}",
+                            (
+                                "Can't accept peace offer because you don't have the "
+                                "required resources: "
+                                f"{required} > {available}"
+                            ),
                         )
                     from market import give_resource
 
@@ -271,18 +285,24 @@ def send_peace_offer(war_id, enemy_id):
             peace_offer_id = db.fetchone()[0]
             if not peace_offer_id:
                 db.execute(
-                    "INSERT INTO peace (author,demanded_resources,demanded_amount) VALUES ((%s),(%s),(%s))",
+                    (
+                        "INSERT INTO peace (author,demanded_resources,demanded_amount) "
+                        "VALUES ((%s),(%s),(%s))"
+                    ),
                     (cId, resources_string[:-1], amount_string[:-1]),
                 )
                 db.execute("SELECT CURRVAL('peace_id_seq')")
                 lastrowid = db.fetchone()[0]
                 db.execute(
-                    "UPDATE wars SET peace_offer_id=(%s) WHERE id=(%s)",
+                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE id=(%s)",
                     (lastrowid, war_id),
                 )
             else:
                 db.execute(
-                    "UPDATE peace SET author=(%s),demanded_resources=(%s),demanded_amount=(%s)",
+                    (
+                        "UPDATE peace SET author=(%s),demanded_resources=(%s),"
+                        "demanded_amount=(%s)"
+                    ),
                     (cId, resources_string[:-1], amount_string[:-1]),
                 )
         return redirect("/peace_offers")
@@ -417,13 +437,13 @@ def warAmount():
             cId, attack_units.selected_units_list
         )
         return render_template(
-                "waramount.html",
-                available_supplies=attack_units.available_supplies,
-                selected_units=attack_units.selected_units_list,
-                unit_range=len(unitamounts),
-                unitamounts=unitamounts,
-                unit_interfaces=Units.allUnitInterfaces,
-            )
+            "waramount.html",
+            available_supplies=attack_units.available_supplies,
+            selected_units=attack_units.selected_units_list,
+            unit_range=len(unitamounts),
+            unitamounts=unitamounts,
+            unit_interfaces=Units.allUnitInterfaces,
+        )
     elif request.method == "POST":
         selected_units = attack_units.selected_units_list
         selected_units = attack_units.selected_units.copy()
@@ -555,7 +575,10 @@ def warResult():
             prev_defender = dict(defender.selected_units)
             prev_attacker = dict(attacker.selected_units)
             db.execute(
-                "SELECT war_type FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) AND peace_date IS NULL",
+                (
+                    "SELECT war_type FROM wars WHERE ((attacker=%s AND defender=%s) "
+                    "OR (attacker=%s AND defender=%s)) AND peace_date IS NULL"
+                ),
                 (
                     attacker.user_id,
                     defender.user_id,
@@ -669,7 +692,10 @@ def declare_war():
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
             db.execute(
-                "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) AND peace_date IS NULL",
+                (
+                    "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) OR "
+                    "(attacker=%s AND defender=%s)) AND peace_date IS NULL"
+                ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
             if db.fetchone():
@@ -679,17 +705,28 @@ def declare_war():
             if attacker_provinces - defender_provinces > 1:
                 return error(
                     400,
-                    "That country has too few provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.",
+                    (
+                        "That country has too few provinces for you! You can only "
+                        "declare war on countries within 3 provinces more or 1 "
+                        "less province than you."
+                    ),
                 )
             if defender_provinces - attacker_provinces > 3:
                 return error(
                     400,
-                    "That country has too many provinces for you! You can only declare war on countries within 3 provinces more or 1 less province than you.",
+                    (
+                        "That country has too many provinces for you! You can only "
+                        "declare war on countries within 3 provinces more or 1 "
+                        "less province than you."
+                    ),
                 )
-            db.execute(
-                "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s))",
-                (attacker.id, defender.id, defender.id, attacker.id),
-            )
+                db.execute(
+                    (
+                        "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s "
+                        "AND defender=%s) OR (attacker=%s AND defender=%s))"
+                    ),
+                    (attacker.id, defender.id, defender.id, attacker.id),
+                )
             current_peace = db.fetchone()
             if current_peace and current_peace[0]:
                 if (current_peace[0] + 259200) > time.time():
@@ -698,7 +735,10 @@ def declare_war():
                     )
             start_dates = time.time()
             db.execute(
-                "INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",
+                (
+                    "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
+                    "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
+                ),
                 (
                     attacker.id,
                     defender.id,
@@ -717,7 +757,8 @@ def declare_war():
         logger = logging.getLogger(__name__)
         logger.error("Error in declare_war: %s", e)
         logger.error(traceback.format_exc())
-        # Return a detailed 500 response for test environments so tests can see the issue
+        # Return a detailed 500 response for test environments so
+        # tests can see the issue
         return error(500, f"Could not declare war; exception: {str(e)}")
     return redirect("/wars")
 
@@ -746,9 +787,6 @@ def defense():
         return redirect("/wars")
 
 
- 
-
-
 @wars_bp.route("/wars", methods=["GET", "POST"])
 @login_required
 def wars():
@@ -763,7 +801,10 @@ def wars():
             yourCountry = db.fetchone()[0]
             try:
                 db.execute(
-                    "SELECT id, defender, attacker FROM wars WHERE (attacker=%s OR defender=%s) AND peace_date IS NULL",
+                    (
+                        "SELECT id, defender, attacker FROM wars WHERE (attacker=%s "
+                        "OR defender=%s) AND peace_date IS NULL"
+                    ),
                     (cId, cId),
                 )
                 war_attacker_defender_ids = db.fetchall()
@@ -777,7 +818,10 @@ def wars():
                     attacker_info["name"] = att_name
                     attacker_info["id"] = attacker
                     db.execute(
-                        "SELECT attacker_morale, attacker_supplies FROM wars WHERE id=%s",
+                        (
+                            "SELECT attacker_morale, attacker_supplies "
+                            "FROM wars WHERE id=%s"
+                        ),
                         (war_id,),
                     )
                     att_morale_and_supplies = db.fetchone()
@@ -787,7 +831,10 @@ def wars():
                     def_name = db.fetchone()[0]
                     defender_info["name"] = def_name
                     db.execute(
-                        "SELECT defender_morale,defender_supplies FROM wars WHERE id=%s",
+                        (
+                            "SELECT defender_morale,defender_supplies "
+                            "FROM wars WHERE id=%s"
+                        ),
                         (war_id,),
                     )
                     def_morale_and_supplies = db.fetchone()
@@ -802,7 +849,10 @@ def wars():
                 war_info = {}
             try:
                 db.execute(
-                    "SELECT COUNT(attacker) FROM wars WHERE (defender=%s OR attacker=%s) AND peace_date IS NULL",
+                    (
+                        "SELECT COUNT(attacker) FROM wars WHERE (defender=%s "
+                        "OR attacker=%s) AND peace_date IS NULL"
+                    ),
                     (cId, cId),
                 )
                 warsCount = db.fetchone()[0]
@@ -815,6 +865,7 @@ def wars():
             war_info=war_info,
             yourCountry=yourCountry,
         )
+
 
 @wars_bp.route("/find_targets", methods=["GET", "POST"])
 @login_required
@@ -833,25 +884,35 @@ def find_targets():
             # filter out viable targets).
             min_influence = max(0.0, user_influence * 0.9)
             max_influence = max(user_influence * 2.0, 100.0)
-            db.execute(
-                """SELECT users.id, users.username, users.flag, COUNT(provinces.id) as provinces_count,
-COALESCE(SUM(military.soldiers * 0.02 + military.artillery * 1.6 + military.tanks * 0.8 + military.fighters * 3.5 + military.bombers * 2.5 + military.apaches * 3.2 + military.submarines * 4.5 + military.destroyers * 3 + military.cruisers * 5.5 + military.icbms * 250 + military.nukes * 500 + military.spies * 25), 0) as influence
-FROM users
-LEFT JOIN provinces ON users.id = provinces.userId
-LEFT JOIN military ON users.id = military.id
-WHERE users.id != %s
-GROUP BY users.id, users.username, users.flag
-HAVING COUNT(provinces.id) BETWEEN %s AND %s
-ORDER BY users.username
-LIMIT 50""",
-                (cId, min_provinces, max_provinces),
+            query = (
+                "SELECT users.id, users.username, users.flag, "
+                "COUNT(provinces.id) as provinces_count, "
+                "COALESCE(SUM(military.soldiers * 0.02 + military.artillery * 1.6 + "
+                "military.tanks * 0.8 + "
+                "military.fighters * 3.5 + "
+                "military.bombers * 2.5 + "
+                "military.apaches * 3.2 + "
+                "military.submarines * 4.5 + "
+                "military.destroyers * 3 + "
+                "military.cruisers * 5.5 + "
+                "military.icbms * 250 + military.nukes * 500 + "
+                "military.spies * 25), 0) as influence "
+                "FROM users "
+                "LEFT JOIN provinces ON users.id = provinces.userId "
+                "LEFT JOIN military ON users.id = military.id "
+                "WHERE users.id != %s "
+                "GROUP BY users.id, users.username, users.flag "
+                "HAVING COUNT(provinces.id) BETWEEN %s AND %s "
+                "ORDER BY users.username "
+                "LIMIT 50"
             )
+            db.execute(query, (cId, min_provinces, max_provinces))
             targets = db.fetchall()
         targets_list = []
         for target in targets:
             tid, tname, tflag, tprovinces, tinfluence = target
             tflag = tflag or "default_flag.jpg"
-            if tinfluence >= min_influence and tinfluence <= max_influence:
+            if min_influence <= tinfluence <= max_influence:
                 targets_list.append(
                     {
                         "id": tid,
