@@ -650,6 +650,22 @@ LIMIT 50""", (cId, min_provinces, max_provinces))
 				})
 			if len(targets_list) >= 20:
 				break
+		
+		# Handle filtering
+		search = request.args.get('search', '').strip()
+		sort = request.args.get('sort', 'influence')
+		sortway = request.args.get('sortway', 'desc')
+		
+		if search:
+			targets_list = [t for t in targets_list if search.lower() in t['username'].lower()]
+		
+		if sort == 'influence':
+			targets_list.sort(key=lambda x: x['influence'], reverse=(sortway == 'desc'))
+		elif sort == 'provinces':
+			targets_list.sort(key=lambda x: x['provinces'], reverse=(sortway == 'desc'))
+		elif sort == 'username':
+			targets_list.sort(key=lambda x: x['username'].lower(), reverse=(sortway == 'desc'))
+		
 		return render_template("find_targets.html", targets=targets_list)
 	# POST - find a target by id or username and redirect
 	defender_raw = request.form.get("defender")
