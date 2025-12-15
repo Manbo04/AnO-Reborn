@@ -20,23 +20,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # code continues to work.
 
 
-def _make_constant_wrapper():
+def _make_constant_wrapper() -> type[ast.Constant]:
     class _LegacyConstant(ast.Constant):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: object, **kwargs: object) -> None:
             # Accept legacy kwargs like s=.. or n=.. and map them to value
             value = kwargs.get("s") if "s" in kwargs else kwargs.get("n")
             # Fallback to positional first argument if provided
             if value is None and args:
                 value = args[0]
-            super().__init__(value=value)
+            # value may be of various types; suppress the strict arg-type check
+            super().__init__(value=value)  # type: ignore[arg-type]
             # Provide legacy attributes expected by older AST consumers
             try:
-                self.s = value
+                self.s = value  # type: ignore[assignment]
             except Exception:
                 # Guard for AST internals that may treat fields differently
                 pass
             try:
-                self.n = value
+                self.n = value  # type: ignore[assignment]
             except Exception:
                 pass
 
@@ -44,10 +45,11 @@ def _make_constant_wrapper():
 
 
 if not hasattr(ast, "Str"):
-    ast.Str = _make_constant_wrapper()  # type: ignore[misc]
+    # Assign directly instead of using setattr to avoid Flake8-B010 warnings
+    ast.Str = _make_constant_wrapper()
 if not hasattr(ast, "Num"):
-    ast.Num = _make_constant_wrapper()  # type: ignore[misc]
+    ast.Num = _make_constant_wrapper()
 if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = _make_constant_wrapper()  # type: ignore[misc]
+    ast.NameConstant = _make_constant_wrapper()
 if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = _make_constant_wrapper()  # type: ignore[misc]
+    ast.Ellipsis = _make_constant_wrapper()

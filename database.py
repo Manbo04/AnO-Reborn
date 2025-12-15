@@ -43,10 +43,10 @@ class QueryCache:
     """Simple in-memory cache with TTL for database query results"""
 
     def __init__(self, ttl_seconds=300):  # 5 minute default TTL
-        self.cache = {}
-        self.ttl = ttl_seconds
+        self.cache: dict[str, tuple[Any, float]] = {}
+        self.ttl: int = ttl_seconds
 
-    def get(self, key):
+    def get(self, key: str) -> Any | None:
         """Get cached value if not expired"""
         if key in self.cache:
             value, timestamp = self.cache[key]
@@ -60,11 +60,11 @@ class QueryCache:
                     pass
         return None
 
-    def set(self, key, value):
+    def set(self, key: str, value: Any) -> None:
         """Cache a value with current timestamp"""
         self.cache[key] = (value, time())
 
-    def invalidate(self, pattern=None):
+    def invalidate(self, pattern: str | None = None) -> None:
         """Clear cache or clear entries matching pattern"""
         if pattern is None:
             self.cache.clear()
