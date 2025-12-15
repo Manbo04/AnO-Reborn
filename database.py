@@ -8,7 +8,7 @@ import os
 from contextlib import contextmanager
 from functools import wraps
 from time import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar, Iterator, cast
 from urllib.parse import urlparse
 
 import psycopg2
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 class QueryCache:
     """Simple in-memory cache with TTL for database query results"""
 
-    def __init__(self, ttl_seconds=300):  # 5 minute default TTL
+    def __init__(self, ttl_seconds: int = 300) -> None:  # 5 minute default TTL
         self.cache: dict[str, tuple[Any, float]] = {}
         self.ttl: int = ttl_seconds
 
@@ -74,7 +74,9 @@ class QueryCache:
             self.cache = keys_to_keep
 
 
-def cache_response(ttl_seconds=60):
+def cache_response(
+    ttl_seconds: int = 60,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to cache full page responses
     Useful for read-only pages that don't change frequently
@@ -86,11 +88,11 @@ def cache_response(ttl_seconds=60):
             return render_template(...)
     """
 
-    def decorator(f):
-        cache = {}
+    def decorator(f: Callable[..., Any]) -> Callable[..., Any]:
+        cache: dict[str, tuple[Any, float]] = {}
 
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args: Any, **kwargs: Any) -> Any:
             # Create cache key from function name and user session
             from flask import request, session
 
@@ -119,6 +121,9 @@ def cache_response(ttl_seconds=60):
 # Global query cache (5-minute TTL for slower-changing data)
 query_cache = QueryCache(ttl_seconds=300)
 
+# Generic type for decorator wrappers
+T = TypeVar("T")
+
 
 class DatabasePool:
     """Singleton database connection pool"""
@@ -127,12 +132,17 @@ class DatabasePool:
     _pool: Optional[ThreadedConnectionPool] = None
     _pid = None
 
-    def __new__(cls):
+    def __new__(cls) -> "DatabasePool":
         if cls._instance is None:
             cls._instance = super(DatabasePool, cls).__new__(cls)
         return cls._instance
 
-    def _initialize_pool(self):
+    def __init__(self) -> None:
+        # Initialization is handled lazily in `_initialize_pool`; keep an
+        # explicit `__init__` so instantiation is typed for mypy.
+        pass
+
+    def _initialize_pool(self) -> None:
         """Initialize the connection pool"""
         # If pool exists and is owned by this process pid, nothing to do
         current_pid = os.getpid()
@@ -174,7 +184,7 @@ class DatabasePool:
         assert self._pool is not None
         return self._pool.getconn()
 
-    def return_connection(self, conn):
+    def return_connection(self, conn: Any) -> None:
         """Return a connection to the pool"""
         if self._pool is not None:
             try:
@@ -194,7 +204,7 @@ class DatabasePool:
             except Exception:
                 pass
 
-    def close_all(self):
+    def close_all(self) -> None:
         """Close all connections in the pool"""
         if self._pool:
             self._pool.closeall()
@@ -205,7 +215,7 @@ db_pool = DatabasePool()
 
 
 @contextmanager
-def get_db_connection(cursor_factory=None):
+def get_db_connection(cursor_factory: Any = None) -> Iterator[Any]:
     """
     Context manager for database connections
 
@@ -230,7 +240,7 @@ def get_db_connection(cursor_factory=None):
 
 
 @contextmanager
-def get_db_cursor(cursor_factory=None):
+def get_db_cursor(cursor_factory: Any = None) -> Iterator[Any]:
     """
     Context manager for database cursor
 
@@ -323,7 +333,7 @@ class QueryHelper:
         cursor_factory = RealDictCursor if dict_cursor else None
         with get_db_cursor(cursor_factory=cursor_factory) as cursor:
             cursor.execute(query, params)
-            return cursor.fetchone()
+            return cast(Optional[Any], cursor.fetchone())
 
     @staticmethod
     def fetch_all(
@@ -333,7 +343,7 @@ class QueryHelper:
         cursor_factory = RealDictCursor if dict_cursor else None
         with get_db_cursor(cursor_factory=cursor_factory) as cursor:
             cursor.execute(query, params)
-            return cursor.fetchall()
+            return cast(List[Any], cursor.fetchall())
 
     @staticmethod
     def execute(query: str, params: Optional[Tuple[Any, ...]] = None) -> None:
@@ -342,7 +352,7 @@ class QueryHelper:
             cursor.execute(query, params)
 
     @staticmethod
-    def execute_many(query: str, params_list: List[tuple]) -> None:
+    def execute_many(query: str, params_list: List[Tuple[Any, ...]]) -> None:
         """
         Execute a query with multiple parameter sets using execute_batch
         for efficiency
@@ -613,6 +623,6 @@ def get_user_full_data(user_id: int) -> Dict[str, Any]:
     }
 
 
-def close_database_pool():
+def close_database_pool() -> None:
     """Close all database connections (call on application shutdown)"""
     db_pool.close_all()
