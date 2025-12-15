@@ -1,4 +1,11 @@
-# Byte-compiled / optimized / DLL files
+*.coverage
+/.coverage
+coverage.xml
+.pytest_cache/
+__pycache__/
+*.py[cod]
+env/
+venv/# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
