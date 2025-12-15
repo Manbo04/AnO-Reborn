@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from math import floor
 from random import randint
-from typing import Union
+from typing import Union, Optional
 
 import psycopg2
 from dotenv import load_dotenv
@@ -31,8 +31,13 @@ class BlueprintUnit(ABC):
                 {"ammunition": 1} means 1 ammunition is needed for one unit
     """
 
+    unit_type: str = ""
+    supply_cost: int = 0
     damage = 0
     bonus = 0
+
+    def __init__(self, amount: int) -> None:
+        self.amount = amount
 
     """
     attack method:
@@ -46,12 +51,20 @@ class BlueprintUnit(ABC):
     """
 
     @abstractmethod
-    def attack(defending_units):
-        pass
+    def attack(self, defending_units: str) -> list:
+        """Calculate attack result vs defending unit type.
+
+        Returns a list [damage, bonus].
+        """
+        raise NotImplementedError
 
     @abstractmethod
-    def buy(amount):
-        pass
+    def buy(self, amount: int) -> None:
+        """Buy amount of this unit (stubbed).
+
+        Concrete implementations may update resources or state.
+        """
+        raise NotImplementedError
 
 
 class SoldierUnit(BlueprintUnit):
@@ -71,7 +84,7 @@ class SoldierUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -95,7 +108,7 @@ class TankUnit(BlueprintUnit):
 
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -114,7 +127,7 @@ class ArtilleryUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -144,7 +157,7 @@ class BomberUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -163,7 +176,7 @@ class FighterUnit(BlueprintUnit):
             self.bonus += 4 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -187,7 +200,7 @@ class ApacheUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -245,7 +258,7 @@ class SubmarineUnit(BlueprintUnit):
             self.bonus += 0.2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -263,7 +276,7 @@ class IcbmUnit(BlueprintUnit):
             self.bonus -= 5 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -282,7 +295,7 @@ class NukeUnit(BlueprintUnit):
             pass
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -295,7 +308,7 @@ class SpyUnit(BlueprintUnit):
     def __init__(self, amount):
         self.amount = amount
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -317,7 +330,7 @@ class Units(Military):
     ]
     # SpyUnit not included because it has no interactions with other units,
     # so it doesn't need to run inside the Units.attack method.
-    allUnitInterfaces = [
+    allUnitInterfaces: list[type[BlueprintUnit]] = [
         SoldierUnit,
         TankUnit,
         ArtilleryUnit,
@@ -343,17 +356,17 @@ class Units(Military):
 
     def __init__(
         self,
-        user_id,
-        selected_units: dict = None,
-        bonuses: int = None,
-        selected_units_list: list = None,
-        war_id=None,
-    ):
+        user_id: int,
+        selected_units: Optional[dict] = None,
+        bonuses: Optional[int] = None,
+        selected_units_list: Optional[list] = None,
+        war_id: Optional[int] = None,
+    ) -> None:
         self.user_id = user_id
         self.selected_units = selected_units
         self.bonuses = bonuses
         self.supply_costs = 0
-        self.available_supplies = None
+        self.available_supplies: Optional[int] = None
         self.war_id = war_id
 
         # selected_units_list is needed at: Nations.py/Military->fight();
@@ -443,10 +456,12 @@ class Units(Military):
         else:
             self.selected_units = selected_units
             self.selected_units_list = list(selected_units.keys())
+            return None
 
     # Attack with all units contained in selected_units
     def attack(self, attacker_unit: str, target: str) -> Union[str, tuple, None]:
         if self.selected_units:
+            assert self.selected_units is not None
             # Call interface to unit type
             for interface in self.allUnitInterfaces:
                 if interface.unit_type == attacker_unit:
@@ -473,6 +488,9 @@ class Units(Military):
                         return (0, 0)
 
                     return tuple(attack_effects)
+            # If the loop finishes with no matching interface or other fallthrough,
+            # return None to indicate no attack was performed.
+            return None
         else:
             return "Units are not attached!"
 
@@ -527,6 +545,7 @@ class Units(Military):
         # TODO: optimize this by creating integer at the user side
         amount = int(floor(amount))
         # print("LOSS AMOUNT", self.user_id, unit_type, amount)
+        assert self.selected_units is not None
         unit_amount = self.selected_units[unit_type]
 
         if amount > unit_amount:
@@ -543,7 +562,7 @@ class Units(Military):
         db.execute(mil_update, (available_unit_amount - amount, self.user_id))
         connection.commit()
 
-    def save(self):
+    def save(self) -> Union[str, None]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -582,6 +601,7 @@ class Units(Military):
             db.execute(sign_update, (current_supplies - self.supply_costs, war_id))
 
             connection.commit()
+            return None
         else:
             print("ERROR DURING SAVE")
             return "ERROR DURING SAVE"
@@ -589,7 +609,7 @@ class Units(Military):
     # Fetch the available supplies and resources which are required and
     # compare them to unit attack cost. It also saves the remaining morale
     # to the database
-    def attack_cost(self, cost: int) -> str:
+    def attack_cost(self, cost: int) -> Optional[str]:
         if self.available_supplies is None:
             connection = psycopg2.connect(
                 database=os.getenv("PG_DATABASE"),
@@ -632,6 +652,7 @@ class Units(Military):
         self.supply_costs += cost
         if self.supply_costs > self.available_supplies:
             return "Not enough supplies available"
+        return None
 
 
 # DEBUGGING

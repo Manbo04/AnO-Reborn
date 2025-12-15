@@ -28,7 +28,7 @@ def _set_session_cookie(client, app, key, value):
         cookie = http.cookies.SimpleCookie()
         cookie.load(set_cookie)
         for morsel in cookie.values():
-            client.set_cookie(key=morsel.key, value=morsel.value, domain="localhost")
+            client.set_cookie("localhost", morsel.key, morsel.value)
 
 
 def make_or_get_user(db, username, email):

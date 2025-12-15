@@ -29,10 +29,10 @@ def _set_session_cookie(client, app, key, value):
         cookie = http.cookies.SimpleCookie()
         cookie.load(set_cookie)
         for morsel in cookie.values():
-            # Install the session cookie using keyword args to avoid
-            # positional 'server_name' deprecation warnings in newer
+            # `werkzeug` requires `server_name` as the first arg; pass
+            # the host explicitly to ensure compatibility across
             # Werkzeug/Flask versions.
-            client.set_cookie(key=morsel.key, value=morsel.value, domain="localhost")
+            client.set_cookie("localhost", morsel.key, morsel.value)
 
 
 with app.test_client() as client:
