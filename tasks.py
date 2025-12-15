@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 import config  # Parse Railway environment variables
 import variables
+from typing import Any, Union, cast
 from attack_scripts import Economy
 
 load_dotenv()
@@ -55,9 +56,10 @@ celery.conf.update(
 
 
 # Handles exception for an error
-def handle_exception(e):
+def handle_exception(e: BaseException) -> None:
     filename = __file__
-    line = e.__traceback__.tb_lineno
+    tb = getattr(e, "__traceback__", None)
+    line = tb.tb_lineno if tb is not None else None
     print("\n-----------------START OF EXCEPTION-------------------")
     print(f"Filename: {filename}")
     print(f"Error: {e}")
@@ -66,47 +68,57 @@ def handle_exception(e):
 
 
 # Returns how many rations a player needs
-def rations_needed(cId):
+def rations_needed(cId: int) -> int:
+    from psycopg2.extras import RealDictCursor
     from database import get_db_cursor
 
-    with get_db_cursor() as db:
+    # Use a RealDictCursor so we get a mapping of column->value which is
+    # easier to work with for dynamic column lists and avoids indexing
+    # into opaque DB row objects.
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
         # Use aggregated query instead of loop
         db.execute(
             "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s", (cId,)
         )
-        total_population = db.fetchone()[0]
+        row = db.fetchone()
+        total_population = int(row[0]) if row else 0
         return total_population // variables.RATIONS_PER
 
 
 # Returns energy production and consumption from a certain province
-def energy_info(province_id):
+def energy_info(province_id: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        production = 0
-        consumption = 0
+        production: int = 0
+        consumption: int = 0
 
-        consumers = variables.ENERGY_CONSUMERS
-        producers = variables.ENERGY_UNITS
+        consumers: list[str] = variables.ENERGY_CONSUMERS
+        producers: list[str] = variables.ENERGY_UNITS
 
-        infra = variables.NEW_INFRA
+        infra: dict[str, dict[str, Any]] = cast(
+            dict[str, dict[str, Any]], variables.NEW_INFRA
+        )
 
         # Fetch all data in a single query
         all_fields = consumers + producers
         query = f"SELECT {', '.join(all_fields)} FROM proInfra WHERE id=%s"
         db.execute(query, (province_id,))
-        result = db.fetchone()
+        row = db.fetchone()
 
-        if not result:
+        if not row:
             return 0, 0
 
-        # Calculate consumption from first N fields
-        consumption = sum(result[: len(consumers)])
+        # Convert to a plain dict so mypy understands we can call `.get`
+        row_dict: dict[str, Any] = dict(row)
 
-        # Calculate production from remaining fields
-        for idx, producer in enumerate(producers):
-            producer_count = result[len(consumers) + idx]
-            production += producer_count * infra[producer]["plus"]["energy"]
+        consumption = 0
+        for c in consumers:
+            consumption += int(row_dict.get(c, 0))
+
+        for p in producers:
+            producer_count = int(row_dict.get(p, 0))
+            production += producer_count * infra[p]["plus"]["energy"]
 
         return consumption, production
 
@@ -114,14 +126,15 @@ def energy_info(province_id):
 # Returns a rations score for a user, from -1 to -1.4
 # -1 = Enough or more than enough rations
 # -1.4 = No rations at all
-def food_stats(user_id):
+def food_stats(user_id: int) -> float:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
         needed_rations = rations_needed(user_id)
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-        current_rations = db.fetchone()[0]
+        row = db.fetchone()
+        current_rations = int(row[0]) if row else 0
 
     if needed_rations == 0:
         needed_rations = 1
@@ -138,7 +151,7 @@ def food_stats(user_id):
 # Returns an energy score for a user, from -1 to -1.6
 # -1 = Enough or more than enough energy
 # -1.6 = No energy at all
-def energy_stats(user_id):
+def energy_stats(user_id: int) -> float:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
@@ -171,7 +184,7 @@ def energy_stats(user_id):
 
 
 # Function for calculating tax income
-def calc_ti(user_id):
+def calc_ti(user_id: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
@@ -179,6 +192,7 @@ def calc_ti(user_id):
         consumer_goods = db.fetchone()[0]
 
         # Education policies (may not exist yet)
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
             policies = db.fetchone()[0]
@@ -197,7 +211,7 @@ def calc_ti(user_id):
         if not provinces:  # User doesn't have any provinces
             return False, False
 
-        income = 0
+        income: float = 0.0
         for population, land in provinces:  # Base and land calculation
             land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
             if land_multiplier > 1:
@@ -239,7 +253,7 @@ def calc_ti(user_id):
 
 
 # Function for actually giving money to players
-def tax_income():
+def tax_income() -> None:
     from database import get_db_connection
 
     try:
@@ -302,14 +316,16 @@ def tax_income():
 
 
 # Function for calculating population growth for a given province
-def calc_pg(pId, rations):
+def calc_pg(pId: int, rations: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
         db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
         curPop = db.fetchone()[0]
 
-        maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
+        maxPop: float = float(
+            variables.DEFAULT_MAX_POPULATION
+        )  # Base max population: 1 million
 
         try:
             db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
@@ -331,47 +347,59 @@ def calc_pg(pId, rations):
             land * variables.LAND_MAX_POPULATION_ADDITION
         )  # Each land slot adds 120,000 population
 
+        # Initialize to float so later fractional modifiers don't cause
+        # type-inference conflicts with mypy.
+        happiness: float = 0.0
         try:
             db.execute("SELECT happiness FROM provinces WHERE id=%s", (pId,))
-            happiness = int(db.fetchone()[0])
+            happiness = float(db.fetchone()[0])
         except TypeError:
-            happiness = 0
+            happiness = 0.0
 
+        pollution: float = 0.0
         try:
             db.execute("SELECT pollution FROM provinces WHERE id=%s", (pId,))
-            pollution = db.fetchone()[0]
+            pollution = float(db.fetchone()[0])
         except TypeError:
-            pollution = 0
+            pollution = 0.0
 
+        productivity: float = 0.0
         try:
             db.execute("SELECT productivity FROM provinces WHERE id=%s", (pId,))
-            productivity = db.fetchone()[0]
+            productivity = float(db.fetchone()[0])
         except TypeError:
-            productivity = 0
+            productivity = 0.0
 
         # Each % increases / decreases max population by
-        happiness = round(
-            (happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2
+        happiness = float(
+            round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2)
         )  # The more you have the better
 
         # Each % increases / decreases max population by
-        pollution = round(
-            (pollution - 50) * -variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2
+        pollution = float(
+            round(
+                (pollution - 50)
+                * -variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER,
+                2,
+            )
         )  # The less you have the better
 
         # Each % increases / decreases resource output by
-        productivity = round(
-            (productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER,
-            2,
+        productivity = float(
+            round(
+                (productivity - 50)
+                * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER,
+                2,
+            )
         )  # The more you have the better
 
         maxPop += (maxPop * happiness) + (maxPop * pollution)
-        maxPop = round(maxPop)
+        maxPop = float(round(maxPop))
 
         if maxPop < variables.DEFAULT_MAX_POPULATION:
             maxPop = variables.DEFAULT_MAX_POPULATION
 
-        rations_increase = 0  # Default rations increase.
+        rations_increase: float = 0.0  # Default rations increase.
         # If user has no rations it will decrease by 1% of maxPop
         rations_needed = curPop // variables.RATIONS_PER
 
@@ -390,13 +418,14 @@ def calc_pg(pId, rations):
             new_rations = 0
         new_rations = int(new_rations)
 
-        newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
+        newPop: float = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
         # Population must be an integer
         newPop = int(round(newPop))
 
         db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
         owner = db.fetchone()[0]
 
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
             policies = db.fetchone()[0]
@@ -415,7 +444,7 @@ def calc_pg(pId, rations):
 
 
 # Seems to be working as expected
-def population_growth():  # Function for growing population
+def population_growth() -> None:  # Function for growing population
     from psycopg2.extras import execute_batch
 
     from database import get_db_connection
@@ -469,7 +498,7 @@ def population_growth():  # Function for growing population
             )
 
 
-def find_unit_category(unit):
+def find_unit_category(unit: str) -> Union[str, bool]:
     categories = variables.INFRA_TYPE_BUILDINGS
     for name, list in categories.items():
         if unit in list:
@@ -487,7 +516,7 @@ Tested features:
 """
 
 
-def generate_province_revenue():  # Runs each hour
+def generate_province_revenue() -> None:  # Runs each hour
     from psycopg2.extras import RealDictCursor
 
     from database import get_db_connection
@@ -515,7 +544,7 @@ def generate_province_revenue():  # Runs each hour
 
         energy_consumers = variables.ENERGY_CONSUMERS
         user_resources = variables.RESOURCES
-        infra = variables.NEW_INFRA
+        infra = cast(dict[str, dict[str, Any]], variables.NEW_INFRA)
 
         try:
             db.execute(
@@ -523,7 +552,7 @@ def generate_province_revenue():  # Runs each hour
                 "FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id "
                 "ORDER BY id ASC"
             )
-            infra_ids = db.fetchall()
+            infra_ids = list(db.fetchall())
         except Exception:
             infra_ids = []
 
@@ -533,8 +562,10 @@ def generate_province_revenue():  # Runs each hour
         )  # So energy would reset each turn
 
         dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-        upgrades = dict(dbdict.fetchone())
+        upgrades_row = dbdict.fetchone()
+        upgrades: dict[str, Any] = dict(upgrades_row) if upgrades_row else {}
 
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
             policies = db.fetchone()[0]
@@ -542,7 +573,8 @@ def generate_province_revenue():  # Runs each hour
             policies = []
 
         dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
-        units = dict(dbdict.fetchone())
+        units_row = dbdict.fetchone()
+        units: dict[str, int] = dict(units_row) if units_row else {}
 
         for unit in columns:
             unit_amount = units[unit]
@@ -556,8 +588,8 @@ def generate_province_revenue():  # Runs each hour
                 minus = infra[unit].get("minus", {})
 
                 operating_costs = infra[unit]["money"] * unit_amount
-                plus_amount = 0
-                plus_amount_multiplier = 1
+                plus_amount: float = 0.0
+                plus_amount_multiplier: float = 1.0
 
                 if 1 in policies and unit == "universities":
                     operating_costs *= 1.14
@@ -581,7 +613,8 @@ def generate_province_revenue():  # Runs each hour
 
                 # Boolean for whether a player has enough resources, energy,
                 # money to power his building
-                has_enough_stuff = {"status": True, "issues": []}
+                issues: list[str] = []
+                has_enough_stuff: dict[str, Any] = {"status": True, "issues": issues}
 
                 if current_money < operating_costs:
                     msg = (
@@ -614,7 +647,7 @@ def generate_province_revenue():  # Runs each hour
 
                     if new_energy < 0:
                         has_enough_stuff["status"] = False
-                        has_enough_stuff["issues"].append("energy")
+                        issues.append("energy")
                         new_energy = 0
 
                     db.execute(
@@ -623,7 +656,8 @@ def generate_province_revenue():  # Runs each hour
                     )
 
                 dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
-                resources = dict(dbdict.fetchone())
+                resources_row = dbdict.fetchone()
+                resources: dict[str, int] = dict(resources_row) if resources_row else {}
                 for resource, amount in minus.items():
                     amount *= unit_amount
                     current_resource = resources[resource]
@@ -773,19 +807,20 @@ def generate_province_revenue():  # Runs each hour
 
                 # Function for completing an effect (adding pollution, etc)
                 def do_effect(
-                    eff,
-                    eff_amount,
-                    sign,
-                    province_id=province_id,
-                    unit_category=unit_category,
-                    unit=unit,
-                    upgrades=upgrades,
-                    policies=policies,
-                ):
+                    eff: str,
+                    eff_amount: float,
+                    sign: str,
+                    province_id: int = province_id,
+                    unit_category: str | bool = unit_category,
+                    unit: str = unit,
+                    upgrades: dict[str, Any] = upgrades,
+                    policies: list[int] = policies,
+                ) -> None:
                     # TODO: one query for all this
                     effect_select = f"SELECT {eff} FROM provinces " + "WHERE id=%s"
                     db.execute(effect_select, (province_id,))
-                    current_effect = db.fetchone()[0]
+                    row = db.fetchone()
+                    current_effect = int(row[0]) if row else 0
 
                     # GOVERNMENT REGULATION
                     if (
@@ -852,7 +887,9 @@ def generate_province_revenue():  # Runs each hour
                 continue
 
 
-def war_reparation_tax():
+def war_reparation_tax() -> None:
+    """Run the daily war reparation tax job."""
+    # Function returns None and performs DB updates.
     from database import get_db_cursor
 
     with get_db_cursor() as db:
@@ -907,7 +944,7 @@ def war_reparation_tax():
 
 
 @celery.task()
-def task_population_growth():
+def task_population_growth() -> None:
     try:
         population_growth()
     except psycopg2.InterfaceError as e:
@@ -937,12 +974,12 @@ def task_population_growth():
 
 
 @celery.task()
-def task_tax_income():
+def task_tax_income() -> None:
     tax_income()
 
 
 @celery.task()
-def task_generate_province_revenue():
+def task_generate_province_revenue() -> None:
     generate_province_revenue()
 
 
@@ -952,12 +989,12 @@ def task_generate_province_revenue():
 
 
 @celery.task()
-def task_war_reparation_tax():
+def task_war_reparation_tax() -> None:
     war_reparation_tax()
 
 
 @celery.task()
-def task_manpower_increase():
+def task_manpower_increase() -> None:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
