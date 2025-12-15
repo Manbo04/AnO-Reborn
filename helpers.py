@@ -2,7 +2,7 @@
 
 from datetime import date
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import Callable, TypeVar, Any
 from typing import ParamSpec
 
 from dotenv import load_dotenv
@@ -27,7 +27,8 @@ def get_flagname(user_id: int) -> str:
     """Return the cached flag name for a user, populating the cache if needed."""
     cache_key = f"flag_{user_id}"
     cached = query_cache.get(cache_key)
-    if cached is not None:
+    # Ensure the cached value is a string before returning it to satisfy type checks
+    if isinstance(cached, str):
         return cached
 
     with get_db_cursor() as db:
@@ -42,7 +43,7 @@ def get_flagname(user_id: int) -> str:
         return flag_name
 
 
-def login_required(f: Callable[P, R]) -> Callable[P, R]:
+def login_required(f: Callable[P, R]) -> Callable[P, Any]:
     """Decorator that redirects unauthenticated users to /login.
 
     This is typed with ParamSpec so that the decorated function preserves
@@ -50,7 +51,7 @@ def login_required(f: Callable[P, R]) -> Callable[P, R]:
     """
 
     @wraps(f)
-    def decorated_function(*args: P.args, **kwargs: P.kwargs) -> R:
+    def decorated_function(*args: P.args, **kwargs: P.kwargs) -> Any:
         import logging
 
         logger = logging.getLogger(__name__)
@@ -68,9 +69,9 @@ def login_required(f: Callable[P, R]) -> Callable[P, R]:
 
 
 # Check for necessary values without them user can't access a page
-def check_required(func: Callable[P, R]) -> Callable[P, R]:
+def check_required(func: Callable[P, R]) -> Callable[P, Any]:
     @wraps(func)
-    def check_session(*args: P.args, **kwargs: P.kwargs) -> R:
+    def check_session(*args: P.args, **kwargs: P.kwargs) -> Any:
         if not session.get("enemy_id", None):
             return redirect("/wars")
         return func(*args, **kwargs)
@@ -78,7 +79,7 @@ def check_required(func: Callable[P, R]) -> Callable[P, R]:
     return check_session
 
 
-def error(code: int, message: str):
+def error(code: int, message: str) -> tuple[Any, int]:
     """Return the error template and HTTP status code."""
     return render_template("error.html", code=code, message=message), code
 
@@ -87,7 +88,8 @@ def get_influence(country_id: int) -> int:
     """Compute and cache an influence score for a country."""
     cache_key = f"influence_{country_id}"
     cached = query_cache.get(cache_key)
-    if cached is not None:
+    # Only accept cached integers to satisfy the declared return type
+    if isinstance(cached, int):
         return cached
 
     cId = country_id
@@ -198,7 +200,7 @@ def get_influence(country_id: int) -> int:
     return influence
 
 
-def get_coalition_influence(coalition_id):
+def get_coalition_influence(coalition_id: int) -> int:
     with get_db_cursor() as db:
         total_influence = 0
 
@@ -211,7 +213,9 @@ def get_coalition_influence(coalition_id):
             return 0
 
         for member in members:
-            member_influence = get_influence(member[0])
+            # fetched rows are untyped; coerce the user id to int for typing
+            member_id = int(member[0])
+            member_influence = get_influence(member_id)
             total_influence += member_influence
 
-        return total_influence
+        return int(total_influence)

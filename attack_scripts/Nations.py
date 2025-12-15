@@ -1,12 +1,12 @@
 import os
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple, List, Union
 
 import psycopg2
 
 
-def calculate_bonuses(attack_effects: Any, defender: Any, unit: Any) -> int:
+def calculate_bonuses(attack_effects: Any, defender: Any, unit: Any) -> float:
     """Compute per-unit bonus for the fight mechanics.
 
     This is a conservative implementation that preserves existing behavior by
@@ -15,9 +15,9 @@ def calculate_bonuses(attack_effects: Any, defender: Any, unit: Any) -> int:
     """
     try:
         # If `unit` exposes a helper we can utilize it
-        return unit.calculate_battle_bonus(attack_effects, defender)
+        return float(unit.calculate_battle_bonus(attack_effects, defender))
     except Exception:
-        return 0
+        return 0.0
 
 
 class Economy:
@@ -65,7 +65,7 @@ class Economy:
         _db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
         self.gold = _db.fetchone()[0]
 
-    def get_particular_resources(self, resources) -> Dict[str, Any]:
+    def get_particular_resources(self, resources: list[str]) -> Dict[str, Any]:
         """Return specific resources for this nation as a dict."""
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
@@ -76,7 +76,7 @@ class Economy:
         )
         _db = connection.cursor()
 
-        resource_dict = {}
+        resource_dict: Dict[str, Any] = {}
 
         print(resources)
 
@@ -144,7 +144,7 @@ class Economy:
     # IMPORTANT: the amount is not validated in this method.
     # Provide a valid value when calling.
     def transfer_resources(
-        self, resource: str, amount: int, destinationID: int
+        self, resource: str, amount: float, destinationID: int
     ) -> Optional[str]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
@@ -158,7 +158,7 @@ class Economy:
         if resource not in self.resources:
             return "Invalid resource"
 
-        def morale_change(column, win_type, winner, loser):
+        def morale_change(column: str, win_type: float, winner: Any, loser: Any) -> str:
             # Updated morale change: accept a computed morale delta passed
             # through the caller. The caller should compute the delta based on
             # the units involved. We keep the win_type -> human-readable
@@ -238,25 +238,48 @@ class Economy:
 
 
 class Nation:
+    # Class-level defaults used by several helpers. These mirror values in
+    # `variables.py` but are defined here to make the class self-contained for
+    # type checking and to provide sensible defaults for tests.
+    public_works: List[str] = [
+        "hospitals",
+        "libraries",
+        "universities",
+        "city_parks",
+        "monorails",
+    ]
+
+    # Mapping of upgrade field names to their default values. Populated from
+    # the DB at runtime; kept as an empty dict for typing purposes.
+    supply_related_upgrades: Dict[str, int] = {}
+
     def __init__(
-        self, nationID, military=None, economy=None, provinces=None, current_wars=None
-    ):
+        self,
+        nationID: int,
+        military: Optional[dict[str, Any]] = None,
+        economy: Optional[dict[str, Any]] = None,
+        provinces: Optional[dict[str, Any]] = None,
+        current_wars: Optional[list[int]] = None,
+    ) -> None:
         self.id = nationID  # integer ID
 
         self.military = military
         self.economy = economy
-        self.provinces = provinces
+        # Explicitly annotate the instance attribute so mypy treats its type
+        # consistently across methods.
+        self.provinces: Optional[dict[str, Any]] = provinces
 
         self.current_wars = current_wars
         self.wins = 0
         self.losses = 0
 
-    def declare_war(self, target_nation):
-        pass
+    def declare_war(self, target_nation: Any) -> None:
+        # Placeholder for war declaration logic. Kept minimal for now.
+        return None
 
     # Function for sending posts to nation's news page
     @staticmethod
-    def send_news(destination_id: int, message: str):
+    def send_news(destination_id: int, message: str) -> None:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -272,7 +295,7 @@ class Nation:
         connection.commit()
         connection.close()
 
-    def get_provinces(self):
+    def get_provinces(self) -> dict[str, Any]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -283,6 +306,7 @@ class Nation:
 
         db = connection.cursor()
         if self.provinces is None:
+            # Initialize provinces with concrete types for downstream use.
             self.provinces = {"provinces_number": 0, "province_stats": {}}
             db.execute(
                 "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s", (self.id,)
@@ -293,6 +317,9 @@ class Nation:
             if provinces_number > 0:
                 db.execute("SELECT * FROM provinces WHERE userId=(%s)", (self.id,))
                 provinces = db.fetchall()
+                # Ensure mypy recognizes `self.provinces` as a mapping before
+                # indexing into it.
+                assert isinstance(self.provinces, dict)
                 for province in provinces:
                     self.provinces["province_stats"][province[1]] = {
                         "userId": province[0],
@@ -307,7 +334,7 @@ class Nation:
         return self.provinces
 
     @staticmethod
-    def get_current_wars(id):
+    def get_current_wars(id: int) -> list[int]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -323,6 +350,10 @@ class Nation:
             (id, id),
         )
         id_list = db.fetchall()
+
+        # Normalize DB row results into a simple list of ints to avoid Any
+        # leaking out of the DB cursor implementation.
+        return [int(r[0]) for r in id_list]
 
         # # determine wheter the user is the aggressor or the defender
         # current_wars_result = []
@@ -342,13 +373,14 @@ class Nation:
 
     # Get everything from proInfra table which is in the "public works" category
     @classmethod
-    def get_public_works(self, province_id):
+    def get_public_works(cls, province_id: int) -> dict[str, int]:
         from psycopg2.extras import RealDictCursor
 
         from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            public_works_string = ",".join(self.public_works)
+            # Use the class-level `public_works` list for consistency.
+            public_works_string = ",".join(cls.public_works)
 
             infra_sel_stat = (
                 f"SELECT {public_works_string} FROM proInfra " + "WHERE id=%s"
@@ -357,13 +389,18 @@ class Nation:
             result = db.fetchone()
 
             if not result:
-                return {pw: 0 for pw in self.public_works}
+                return {pw: 0 for pw in cls.public_works}
 
             return dict(result)
 
     # set the peace_date in wars table for a particular war
     @staticmethod
-    def set_peace(db, connection, war_id=None, options=None):
+    def set_peace(
+        db: Any,
+        connection: Any,
+        war_id: Optional[int] = None,
+        options: Optional[dict[str, Any]] = None,
+    ) -> None:
         print("Setting war peace")
         print(war_id, options)
         if war_id is not None:
@@ -371,6 +408,8 @@ class Nation:
                 "UPDATE wars SET peace_date=(%s) WHERE id=(%s)", (time.time(), war_id)
             )
         else:
+            if options is None:
+                raise ValueError("options must be provided when war_id is None")
             option = options["option"]
             query = "UPDATE wars SET peace_date=(%s)" + f"WHERE {option}" + "=(%s)"
             db.execute(query, (time.time(), options["value"]))
@@ -379,13 +418,13 @@ class Nation:
 
     # Get the list of owned upgrades like supply amount increaser from 200 to 210, etc.
     @classmethod
-    def get_upgrades(cls, upgrade_type, user_id):
+    def get_upgrades(cls, upgrade_type: str, user_id: int) -> dict[str, int]:
         from psycopg2.extras import RealDictCursor
 
         from database import get_db_cursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            upgrades = {}
+            upgrades: dict[str, int] = {}
 
             if upgrade_type == "supplies":
                 upgrade_fields = list(cls.supply_related_upgrades.keys())
@@ -427,7 +466,13 @@ class Military(Nation):
     #   {"libraries": 3, "hospitals": x, ...}
     # note: also could use this for population damage when attack happens
     @staticmethod
-    def infrastructure_damage(damage, particular_infra, province_id):
+    def infrastructure_damage(
+        damage: float, particular_infra: dict[str, int], province_id: int
+    ) -> dict[str, tuple[str, int]]:
+        # Types: damage: float|int, particular_infra: dict[str,int], province_id: int
+        # Returns a mapping of building names to an effect description and count.
+        # Annotated to make callers type-safe.
+        # -> dict[str, tuple[str, int]]
         from database import get_db_connection
 
         available_buildings = []
@@ -447,7 +492,7 @@ class Military(Nation):
             # health is the damage required to destroy a building
             health = 1500
 
-            damage_effects = {}
+            damage_effects: dict[str, tuple[str, int]] = {}
 
             while damage > 0:
                 if not len(available_buildings):
@@ -471,10 +516,11 @@ class Military(Nation):
 
                     available_buildings.pop(random_building)
 
-                    if damage_effects.get(target, 0):
-                        damage_effects[target][1] += 1
+                    if target in damage_effects:
+                        name, count = damage_effects[target]
+                        damage_effects[target] = (name, count + 1)
                     else:
-                        damage_effects[target] = ["destroyed", 1]
+                        damage_effects[target] = ("destroyed", 1)
 
                 # NOTE: possible feature: a building might not be destroyed but
                 # become unusable if reparation cost is lower than rebuying it.
@@ -491,7 +537,7 @@ class Military(Nation):
 
     # Returns the morale either for the attacker or the defender, and with the war_id
     @staticmethod
-    def get_morale(column, attacker, defender):
+    def get_morale(column: str, attacker: Any, defender: Any) -> Tuple[int, int]:
         from database import get_db_cursor
 
         with get_db_cursor() as db:
@@ -516,7 +562,7 @@ class Military(Nation):
     # losers: [id1,id2...idn]
     # NOTE: currently only one winner is supported: winners = [id]
     @staticmethod
-    def reparation_tax(winners, losers):
+    def reparation_tax(winners: list[int], losers: list[int]) -> None:
         # def reparation_tax(winner_side, loser_side):
 
         # get remaining morale for winner (only one supported current_wars)
@@ -558,7 +604,7 @@ class Military(Nation):
     # Update the morale and give back the win type name
     @staticmethod
     # def morale_change(war_id, morale, column, win_type, winner, loser):
-    def morale_change(column, win_type, winner, loser):
+    def morale_change(column: str, win_type: float, winner: Any, loser: Any) -> str:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -627,7 +673,9 @@ class Military(Nation):
         return win_condition
 
     @staticmethod
-    def special_fight(attacker, defender, target):  # Units, Units, int -> str, None
+    def special_fight(
+        attacker: Any, defender: Any, target: Any
+    ) -> Union[Tuple[Dict[str, int], Any], str]:
         target_amount = defender.get_military(defender.user_id).get(target, None)
 
         if target_amount is not None:
@@ -713,7 +761,9 @@ class Military(Nation):
                     attack_effects[0], public_works, random_province
                 )
             else:
-                infra_damage_effects = 0
+                # No infra damage if no provinces are found: return empty
+                # mapping consistent with `infrastructure_damage` return type.
+                infra_damage_effects = {}
 
             # {target: losed_amount} <- the target and the destroyed amount
             return (
@@ -738,18 +788,22 @@ class Military(Nation):
 
     @staticmethod
     # Attacker/defender here are the participant users for this specific fight
-    def fight(attacker, defender):  # Units, Units -> int
+    def fight(
+        attacker: Any, defender: Any
+    ) -> Tuple[
+        Any, Any, Any
+    ]:  # Units, Units -> (winner, win_condition, attack_effects)
         # IMPORTANT: You can tune fight chances, bonuses and casualty rules here.
         # See `units.py` for individual unit bonus definitions.
         attacker_roll = random.uniform(1, 5)
-        attacker_chance = 0
-        attacker_unit_amount_bonuses = 0
-        attacker_bonus = 0
+        attacker_chance = 0.0
+        attacker_unit_amount_bonuses = 0.0
+        attacker_bonus = 0.0
 
         defender_roll = random.uniform(1, 5)
-        defender_chance = 0
-        defender_unit_amount_bonuses = 0
-        defender_bonus = 0
+        defender_chance = 0.0
+        defender_unit_amount_bonuses = 0.0
+        defender_bonus = 0.0
 
         dealt_infra_damage = 0
 
@@ -790,12 +844,16 @@ class Military(Nation):
         # print(attacker_chance, defender_chance)
 
         # Determine the winner
+        # Initialize these as floats so subsequent fractional calculations
+        # don't produce incompatible-assignment errors with mypy.
+        winner_casulties: float = 0.0
+        win_type: float = 0.0
         if defender_chance >= attacker_chance:
             winner = defender
             loser = attacker
             if attacker_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
+                winner_casulties = 0.0
+                win_type = 5.0
             else:
                 win_type = defender_chance / attacker_chance
                 winner_casulties = (1 + attacker_chance) / defender_chance
@@ -803,8 +861,8 @@ class Military(Nation):
             winner = attacker
             loser = defender
             if defender_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
+                winner_casulties = 0.0
+                win_type = 5.0
             else:
                 win_type = attacker_chance / defender_chance
                 winner_casulties = (1 + defender_chance) / attacker_chance
@@ -923,8 +981,10 @@ class Military(Nation):
 
             # print("w_casualties", w_casualties)
             # print("l_casualties", l_casualties)
-            winner.casualties(winner_unit, w_casualties)
-            loser.casualties(loser_unit, l_casualties)
+            # `casualties` expects an integer amount; cast here to make the
+            # conversion explicit and satisfy static typing.
+            winner.casualties(winner_unit, int(w_casualties))
+            loser.casualties(loser_unit, int(l_casualties))
 
         # infrastructure damage
         connection = psycopg2.connect(
@@ -959,7 +1019,7 @@ class Military(Nation):
     # select only needed units instead of all
     # particular_units must be a list of string unit names
     @staticmethod
-    def get_particular_units_list(cId, particular_units):  # int, list -> list
+    def get_particular_units_list(cId: int, particular_units: list[str]) -> list[int]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -977,7 +1037,7 @@ class Military(Nation):
         allAmounts = db.fetchall()
 
         # get the unit amounts based on the selected_units
-        unit_to_amount_dict = {}
+        unit_to_amount_dict: dict[str, int] = {}
 
         # TODO: maybe use the self.allUnits because it looks like repetative code
         cidunits = [
@@ -1007,7 +1067,7 @@ class Military(Nation):
         return unit_lst  # this is a list of the format [100, 50, 50]
 
     @staticmethod
-    def get_military(cId):  # int -> dict
+    def get_military(cId: int) -> dict[str, int]:
         from psycopg2.extras import RealDictCursor
 
         from database import get_db_cursor
@@ -1023,7 +1083,7 @@ class Military(Nation):
             return dict(result) if result else {}
 
     @staticmethod
-    def get_limits(cId):  # int -> dict
+    def get_limits(cId: int) -> dict[str, float]:
         from database import get_db_cursor
 
         with get_db_cursor() as db:
@@ -1056,33 +1116,33 @@ class Military(Nation):
 
         # TODO: maybe clear this mess a bit up
         # Land units
-        soldiers = max(0, army_bases * 100 - military["soldiers"])
-        tanks = max(0, army_bases * 8 - military["tanks"])
-        artillery = max(0, army_bases * 8 - military["artillery"])
+        soldiers = float(max(0, army_bases * 100 - military["soldiers"]))
+        tanks = float(max(0, army_bases * 8 - military["tanks"]))
+        artillery = float(max(0, army_bases * 8 - military["artillery"]))
 
         # Air units
         air_units = military["fighters"] + military["bombers"] + military["apaches"]
-        air_limit = max(0, aerodomes * 5 - air_units)
+        air_limit = float(max(0, aerodomes * 5 - air_units))
         bombers = air_limit
         fighters = air_limit
         apaches = air_limit
 
         # Naval units
         naval_units = military["submarines"] + military["destroyers"]
-        naval_limit = max(0, harbours * 3 - naval_units)
+        naval_limit = float(max(0, harbours * 3 - naval_units))
         submarines = naval_limit
         destroyers = naval_limit
 
-        cruisers = max(0, harbours * 2 - military["cruisers"])
+        cruisers = float(max(0, harbours * 2 - military["cruisers"]))
 
         # Special
         special_units = Military.get_special(cId)
-        spies = max(0, admin_buildings * 1 - special_units["spies"])
-        icbms = max(0, silos + 1 - special_units["icbms"])
-        nukes = max(0, silos - special_units["nukes"])
+        spies = float(max(0, admin_buildings * 1 - special_units["spies"]))
+        icbms = float(max(0, silos + 1 - special_units["icbms"]))
+        nukes = float(max(0, silos - special_units["nukes"]))
 
         if increased_funding:
-            spies *= 1.4
+            spies = spies * 1.4
 
         return {
             "soldiers": soldiers,
@@ -1100,7 +1160,7 @@ class Military(Nation):
         }
 
     @staticmethod
-    def get_special(cId):  # int -> dict
+    def get_special(cId: int) -> dict[str, int]:
         from psycopg2.extras import RealDictCursor
 
         from database import get_db_cursor
@@ -1111,7 +1171,7 @@ class Military(Nation):
             return dict(result) if result else {"spies": 0, "icbms": 0, "nukes": 0}
 
     # Check and set default_defense in nation table
-    def set_defense(self, defense_string):  # str -> None
+    def set_defense(self, defense_string: str) -> Optional[str]:  # str -> None
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -1135,6 +1195,9 @@ class Military(Nation):
         else:
             # user should never reach here, msg for beta testers
             return "Invalid number of units given to set_defense, report to admin"
+        # Explicitly return None on success for clarity and to satisfy static
+        # checkers that expect all annotated functions to have a return.
+        return None
 
 
 # DEBUGGING:

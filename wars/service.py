@@ -5,7 +5,7 @@ from database import get_db_cursor
 from helpers import get_influence
 
 
-def target_data(cId):
+def target_data(cId: int) -> dict[str, float | int]:
     with get_db_cursor() as db:
         influence = get_influence(cId)
         db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
@@ -18,7 +18,7 @@ def target_data(cId):
     return data
 
 
-def update_supply(war_id):
+def update_supply(war_id: int) -> None | str:
     MAX_SUPPLY = 2000
     with get_db_cursor() as db:
         db.execute(
@@ -38,8 +38,12 @@ def update_supply(war_id):
         if supply_by_hours > 0:
             db.execute("SELECT attacker,defender FROM wars where id=(%s)", (war_id,))
             attacker_id, defender_id = db.fetchone()
-            attacker_upgrades = Nation.get_upgrades("supplies", attacker_id)
-            defender_upgrades = Nation.get_upgrades("supplies", defender_id)
+            attacker_upgrades: dict[str, int] = Nation.get_upgrades(
+                "supplies", attacker_id
+            )
+            defender_upgrades: dict[str, int] = Nation.get_upgrades(
+                "supplies", defender_id
+            )
             for i in attacker_upgrades.values():
                 attacker_supplies += i
             for i in defender_upgrades.values():
@@ -68,6 +72,8 @@ def update_supply(war_id):
                 ("UPDATE wars SET last_visited=(%s) " "WHERE id=(%s)"),
                 (time.time(), war_id),
             )
+    # Explicitly return None to make return type consistent across all paths
+    return None
 
 
 # Business logic for war mechanics will be moved here

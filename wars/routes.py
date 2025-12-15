@@ -4,7 +4,7 @@ import time
 import traceback
 
 from flask import Blueprint, redirect, render_template, request, session
-from typing import Any, no_type_check
+from typing import Any
 
 from attack_scripts import Nation
 from attack_scripts.Nations import Economy
@@ -30,9 +30,11 @@ wars_bp = Blueprint("wars", __name__)
 
 
 # Peace offers show up here
-@wars_bp.route("/peace_offers", methods=["POST", "GET"])
+@wars_bp.route(
+    "/peace_offers",
+    methods=["POST", "GET"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def peace_offers() -> Any:
     cId = session["user_id"]
 
@@ -46,8 +48,8 @@ def peace_offers() -> Any:
         incoming_counter = 0
         outgoing_counter = 0
 
-        incoming = {}
-        outgoing = {}
+        incoming: dict[int, dict[str, Any]] = {}
+        outgoing: dict[int, dict[str, Any]] = {}
 
         resources = []
         resources_fetch = None
@@ -229,7 +231,7 @@ def peace_offers() -> Any:
 
                     successful = give_resource(cId, author_id, res, required)
                     if successful is not True:
-                        return error(400, successful)
+                        return error(400, str(successful))
 
                 # commit peace (we pass the DB cursor and real connection)
                 AttackNation.set_peace(
@@ -253,9 +255,11 @@ def peace_offers() -> Any:
 
 
 # Send peace offer
-@wars_bp.route("/send_peace_offer/<int:war_id>/<int:enemy_id>", methods=["POST"])
+@wars_bp.route(
+    "/send_peace_offer/<int:war_id>/<int:enemy_id>",
+    methods=["POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     cId = session["user_id"]
     if request.method == "POST":
@@ -312,9 +316,11 @@ def send_peace_offer(war_id: int, enemy_id: int) -> Any:
 
 
 # War details page
-@wars_bp.route("/war/<int:war_id>", methods=["GET"])
+@wars_bp.route(
+    "/war/<int:war_id>",
+    methods=["GET"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def war_with_id(war_id: int) -> Any:
     with get_db_cursor() as db:
         db.execute("SELECT * FROM wars WHERE id=(%s) AND peace_date IS NULL", (war_id,))
@@ -400,16 +406,18 @@ def war_with_id(war_id: int) -> Any:
 # ...existing code...
 
 
-@wars_bp.route("/warchoose/<int:war_id>", methods=["GET", "POST"])
+@wars_bp.route(
+    "/warchoose/<int:war_id>",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
 @check_required
-@no_type_check
 def warChoose(war_id: int) -> Any:
     cId = session["user_id"]
     if request.method == "GET":
         normal_units = Military.get_military(cId)
         special_units = Military.get_special(cId)
-        units = normal_units.copy()
+        units: dict[str, int] = normal_units.copy()
         units.update(special_units)
         return render_template("warchoose.html", units=units, war_id=war_id)
     elif request.method == "POST":
@@ -431,14 +439,18 @@ def warChoose(war_id: int) -> Any:
         return redirect("/waramount")
 
 
-@wars_bp.route("/waramount", methods=["GET", "POST"])
+@wars_bp.route(
+    "/waramount",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
 @check_required
-@no_type_check
 def warAmount() -> Any:
     cId = session["user_id"]
     attack_units = Units.rebuild_from_dict(session["attack_units"])
     if request.method == "GET":
+        if attack_units.selected_units_list is None:
+            return error(400, "No attack units selected")
         unitamounts = Military.get_particular_units_list(
             cId, attack_units.selected_units_list
         )
@@ -451,7 +463,8 @@ def warAmount() -> Any:
             unit_interfaces=Units.allUnitInterfaces,
         )
     elif request.method == "POST":
-        selected_units = attack_units.selected_units_list
+        if attack_units.selected_units is None:
+            return error(400, "Units not attached")
         selected_units = attack_units.selected_units.copy()
         units_name = list(selected_units.keys())
         incoming_unit = list(request.form)
@@ -485,9 +498,11 @@ def warAmount() -> Any:
             return "everything just broke"
 
 
-@wars_bp.route("/wartarget", methods=["GET", "POST"])
+@wars_bp.route(
+    "/wartarget",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def warTarget() -> Any:
     cId = session["user_id"]
     eId = session["enemy_id"]
@@ -512,7 +527,7 @@ def warTarget() -> Any:
             "cruisers",
             "submarines",
         ]
-        units = {}
+        units: dict[str, int] = {}
         return render_template(
             "wartarget.html",
             units=units,
@@ -521,9 +536,14 @@ def warTarget() -> Any:
         )
     if request.method == "POST":
         target = request.form.get("targeted_unit")
+        if not target:
+            return error(400, "Invalid target selected")
         target_amount = Military.get_particular_units_list(eId, [target])
+        if not target_amount:
+            return error(400, "Invalid target selected")
         defender = Units(eId, {target: target_amount[0]}, selected_units_list=[target])
         attack_units = Units.rebuild_from_dict(session["attack_units"])
+        assert defender.selected_units_list is not None
         special_fight_result = Military.special_fight(
             attack_units, defender, defender.selected_units_list[0]
         )
@@ -533,9 +553,11 @@ def warTarget() -> Any:
         return redirect("warResult")
 
 
-@wars_bp.route("/warResult", methods=["GET"])
+@wars_bp.route(
+    "/warResult",
+    methods=["GET"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def warResult() -> Any:
     import logging
 
@@ -575,11 +597,13 @@ def warResult() -> Any:
             for unit in defenselst:
                 if unit not in UnitsClass.allUnits:
                     return error(400, "Invalid unit in default defense configuration.")
-            defenseunits = {}
+            defenseunits: dict[str, int] = {}
             for unit in defenselst:
                 db.execute(f"SELECT {unit} FROM military WHERE id=(%s)", (eId,))
                 defenseunits[unit] = db.fetchone()[0]
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
+            assert defender.selected_units is not None
+            assert attacker.selected_units is not None
             prev_defender = dict(defender.selected_units)
             prev_attacker = dict(attacker.selected_units)
             db.execute(
@@ -601,15 +625,15 @@ def warResult() -> Any:
             winner, win_condition, attack_effects = Military.fight(attacker, defender)
             if len(war_type) > 0:
                 if war_type == "Raze":
-                    attack_effects[0] = attack_effects[0] * 10
+                    attack_effects[0] = int(attack_effects[0] * 10)
                 elif war_type == "Loot":
-                    attack_effects[0] = attack_effects[0] * 0.2
+                    attack_effects[0] = int(attack_effects[0] * 0.2)
                     if winner == attacker.user_id:
                         db.execute(
                             "SELECT gold FROM stats WHERE id=(%s)", (defender.user_id,)
                         )
                         fetched = db.fetchone()
-                        available_resource = 0
+                        available_resource: float = 0.0
                         if fetched and fetched[0] is not None:
                             try:
                                 available_resource = float(fetched[0])
@@ -634,7 +658,7 @@ def warResult() -> Any:
                 "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
                 (defender.user_id,),
             )
-            province_id_fetch = db.fetchall()
+            province_id_fetch = db.fetchall() or []
             if len(province_id_fetch) > 0:
                 random_province = province_id_fetch[
                     random.randint(0, len(province_id_fetch) - 1)
@@ -652,10 +676,12 @@ def warResult() -> Any:
                 winner = attacker_name
             defender_loss = {}
             attacker_loss = {}
+            assert defender.selected_units_list is not None
             for unit in defender.selected_units_list:
                 defender_loss[unit] = (
                     prev_defender[unit] - defender.selected_units[unit]
                 )
+            assert attacker.selected_units_list is not None
             for unit in attacker.selected_units_list:
                 attacker_loss[unit] = (
                     prev_attacker[unit] - attacker.selected_units[unit]
@@ -678,9 +704,11 @@ def warResult() -> Any:
     )
 
 
-@wars_bp.route("/declare_war", methods=["POST"])
+@wars_bp.route(
+    "/declare_war",
+    methods=["POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def declare_war() -> Any:
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
     defender_raw = request.form.get("defender")
@@ -772,9 +800,11 @@ def declare_war() -> Any:
     return redirect("/wars")
 
 
-@wars_bp.route("/defense", methods=["GET", "POST"])
+@wars_bp.route(
+    "/defense",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def defense() -> Any:
     cId = session["user_id"]
     units = Military.get_military(cId)
@@ -787,19 +817,21 @@ def defense() -> Any:
             if item not in Military.allUnits:
                 return error(400, "Invalid unit types!")
         if len(defense_units) == 3:
-            defense_units = ",".join(defense_units)
+            defense_units_str = ",".join(defense_units)
             db.execute(
                 "UPDATE military SET default_defense=(%s) WHERE id=(%s)",
-                (defense_units, cId),
+                (defense_units_str, cId),
             )
         else:
             return error(400, "Invalid number of units selected!")
         return redirect("/wars")
 
 
-@wars_bp.route("/wars", methods=["GET", "POST"])
+@wars_bp.route(
+    "/wars",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def wars() -> Any:
     cId = session["user_id"]
     if request.method == "GET":
@@ -878,9 +910,11 @@ def wars() -> Any:
         )
 
 
-@wars_bp.route("/find_targets", methods=["GET", "POST"])
+@wars_bp.route(
+    "/find_targets",
+    methods=["GET", "POST"],
+)  # type: ignore[untyped-decorator]
 @login_required
-@no_type_check
 def find_targets() -> Any:
     cId = session["user_id"]
     if request.method == "GET":

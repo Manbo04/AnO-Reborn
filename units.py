@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from math import floor
 from random import randint
-from typing import Union, Optional
+from typing import Union, Optional, Dict, List, Tuple, Any
 
 import psycopg2
 from dotenv import load_dotenv
@@ -33,8 +33,8 @@ class BlueprintUnit(ABC):
 
     unit_type: str = ""
     supply_cost: int = 0
-    damage = 0
-    bonus = 0
+    damage: float = 0.0
+    bonus: float = 0.0
 
     def __init__(self, amount: int) -> None:
         self.amount = amount
@@ -51,7 +51,7 @@ class BlueprintUnit(ABC):
     """
 
     @abstractmethod
-    def attack(self, defending_units: str) -> list:
+    def attack(self, defending_units: str) -> list[float]:
         """Calculate attack result vs defending unit type.
 
         Returns a list [damage, bonus].
@@ -74,9 +74,9 @@ class SoldierUnit(BlueprintUnit):
     resource_cost = {"ammunition": 1}
 
     def __init__(self, amount: int) -> None:
-        self.amount = amount
+        self.amount: int = amount
 
-    def attack(self, defending_units: str) -> list:
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "artillery":
             # self.damage += 55
             self.bonus += 3 * self.amount
@@ -94,10 +94,10 @@ class TankUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 1, "gasoline": 1}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         # One tank beats 4 soldiers. If one tank beat only 4 soldiers then
         # soldiers would heavily counter tanks because 1 tank costs roughly
         # the same as ~50 soldiers.
@@ -118,10 +118,10 @@ class ArtilleryUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         # One artillery beats 3 tanks
         if defending_units == "tanks":
             self.bonus += 2 * self.amount
@@ -137,10 +137,10 @@ class BomberUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "soldiers":
             self.bonus += 2 * self.amount
 
@@ -167,10 +167,10 @@ class FighterUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "bombers":
             # self.damage += 55
             self.bonus += 4 * self.amount
@@ -186,10 +186,10 @@ class ApacheUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "soldiers":
             self.bonus += 1 * self.amount
         elif defending_units == "tanks":
@@ -210,15 +210,15 @@ class DestroyerUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus += 1.6 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -228,10 +228,10 @@ class CruiserUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "destroyers":
             self.bonus += 0.3 * self.amount
         elif defending_units == "fighters":
@@ -240,7 +240,7 @@ class CruiserUnit(BlueprintUnit):
             self.bonus += 0.4 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -250,10 +250,10 @@ class SubmarineUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "cruisers":
             self.bonus += 0.2 * self.amount
         return [self.damage * self.amount, self.bonus]
@@ -268,10 +268,10 @@ class IcbmUnit(BlueprintUnit):
     damage = 1000
     supply_cost = 500
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus -= 5 * self.amount
         return [self.damage * self.amount, self.bonus]
@@ -285,10 +285,10 @@ class NukeUnit(BlueprintUnit):
     damage = 3000
     supply_cost = 1000
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus -= 5 * self.amount
         else:
@@ -305,8 +305,8 @@ class SpyUnit(BlueprintUnit):
     unit_type = "spies"
     damage = 0  # does not attack anyway
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
     def buy(self, amount: int) -> None:
         pass
@@ -314,7 +314,7 @@ class SpyUnit(BlueprintUnit):
 
 # make an instance of this object with Units(cId)
 class Units(Military):
-    allUnits = [
+    allUnits: List[str] = [
         "soldiers",
         "tanks",
         "artillery",
@@ -330,7 +330,7 @@ class Units(Military):
     ]
     # SpyUnit not included because it has no interactions with other units,
     # so it doesn't need to run inside the Units.attack method.
-    allUnitInterfaces: list[type[BlueprintUnit]] = [
+    allUnitInterfaces: List[type[BlueprintUnit]] = [
         SoldierUnit,
         TankUnit,
         ArtilleryUnit,
@@ -357,25 +357,28 @@ class Units(Military):
     def __init__(
         self,
         user_id: int,
-        selected_units: Optional[dict] = None,
+        selected_units: Optional[Dict[str, int]] = None,
         bonuses: Optional[int] = None,
-        selected_units_list: Optional[list] = None,
+        selected_units_list: Optional[List[str]] = None,
         war_id: Optional[int] = None,
     ) -> None:
-        self.user_id = user_id
-        self.selected_units = selected_units
-        self.bonuses = bonuses
-        self.supply_costs = 0
+        self.user_id: int = user_id
+        self.selected_units: Optional[Dict[str, int]] = selected_units
+        self.bonuses: Optional[int] = bonuses
+        self.supply_costs: int = 0
         self.available_supplies: Optional[int] = None
-        self.war_id = war_id
+        self.war_id: Optional[int] = war_id
+        # Fields used by other methods
+        self.save_for: List[str] = []
+        self.suffered_casualties: Dict[str, int] = {}
 
         # selected_units_list is needed at: Nations.py/Military->fight();
         # a list of selected_units keys
-        self.selected_units_list = selected_units_list
+        self.selected_units_list: Optional[List[str]] = selected_units_list
 
     # This is needed because we can't store object in server-side cache :(
     @classmethod
-    def rebuild_from_dict(cls, sess_dict):
+    def rebuild_from_dict(cls, sess_dict: dict[str, Any]) -> "Units":
         # If you modify the `sess_dict` it will affect the actual session;
         # create a copy to avoid side effects.
         dic = dict(sess_dict)
@@ -409,7 +412,9 @@ class Units(Military):
     #        selected (as in warchoose)
     #        e.g., units_count = 1 when a single special unit is selected
     #        (like nukes or icbms)
-    def attach_units(self, selected_units: dict, units_count: int) -> Union[str, None]:
+    def attach_units(
+        self, selected_units: Dict[str, int], units_count: int
+    ) -> Union[str, None]:
         # Validate then attach units
         # Function parameter description:
         #    - selected_units: see the `Units` class docstring above
@@ -459,7 +464,9 @@ class Units(Military):
             return None
 
     # Attack with all units contained in selected_units
-    def attack(self, attacker_unit: str, target: str) -> Union[str, tuple, None]:
+    def attack(
+        self, attacker_unit: str, target: str
+    ) -> Union[str, Tuple[float, float], None]:
         if self.selected_units:
             assert self.selected_units is not None
             # Call interface to unit type
@@ -482,6 +489,13 @@ class Units(Military):
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)
                         attack_effects = interface_object.attack(target)
+                        # Normalize to a (damage, bonus) tuple of floats for callers
+                        try:
+                            dmg = float(attack_effects[0])
+                            bon = float(attack_effects[1])
+                        except Exception:
+                            return "Invalid attack effects"
+                        return (dmg, bon)
 
                     # doesen't have any effect if unit amount is zero
                     else:
@@ -494,7 +508,7 @@ class Units(Military):
         else:
             return "Units are not attached!"
 
-    def _save_casualties(self):
+    def _save_casualties(self) -> None:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
