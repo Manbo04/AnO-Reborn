@@ -4,18 +4,17 @@ import time
 import traceback
 
 from flask import Blueprint, redirect, render_template, request, session
-from typing import Any
+from typing import Any, no_type_check
 
 from attack_scripts import Nation
 from attack_scripts.Nations import Economy
 from attack_scripts.Nations import Economy as AttackEconomy
 from attack_scripts.Nations import Military
 from attack_scripts.Nations import Nation as AttackNation
-from database import get_db_connection
+from database import get_db_connection, get_db_cursor
 from helpers import (
     check_required,
     error,
-    get_db_cursor,
     get_flagname,
     get_influence,
     login_required,
@@ -33,7 +32,8 @@ wars_bp = Blueprint("wars", __name__)
 # Peace offers show up here
 @wars_bp.route("/peace_offers", methods=["POST", "GET"])
 @login_required
-def peace_offers():
+@no_type_check
+def peace_offers() -> Any:
     cId = session["user_id"]
 
     with get_db_cursor() as db:
@@ -255,6 +255,7 @@ def peace_offers():
 # Send peace offer
 @wars_bp.route("/send_peace_offer/<int:war_id>/<int:enemy_id>", methods=["POST"])
 @login_required
+@no_type_check
 def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     cId = session["user_id"]
     if request.method == "POST":
@@ -313,7 +314,8 @@ def send_peace_offer(war_id: int, enemy_id: int) -> Any:
 # War details page
 @wars_bp.route("/war/<int:war_id>", methods=["GET"])
 @login_required
-def war_with_id(war_id):
+@no_type_check
+def war_with_id(war_id: int) -> Any:
     with get_db_cursor() as db:
         db.execute("SELECT * FROM wars WHERE id=(%s) AND peace_date IS NULL", (war_id,))
         valid_war = db.fetchone()
@@ -401,7 +403,8 @@ def war_with_id(war_id):
 @wars_bp.route("/warchoose/<int:war_id>", methods=["GET", "POST"])
 @login_required
 @check_required
-def warChoose(war_id):
+@no_type_check
+def warChoose(war_id: int) -> Any:
     cId = session["user_id"]
     if request.method == "GET":
         normal_units = Military.get_military(cId)
@@ -431,7 +434,8 @@ def warChoose(war_id):
 @wars_bp.route("/waramount", methods=["GET", "POST"])
 @login_required
 @check_required
-def warAmount():
+@no_type_check
+def warAmount() -> Any:
     cId = session["user_id"]
     attack_units = Units.rebuild_from_dict(session["attack_units"])
     if request.method == "GET":
@@ -483,7 +487,8 @@ def warAmount():
 
 @wars_bp.route("/wartarget", methods=["GET", "POST"])
 @login_required
-def warTarget():
+@no_type_check
+def warTarget() -> Any:
     cId = session["user_id"]
     eId = session["enemy_id"]
     if request.method == "GET":
@@ -530,7 +535,8 @@ def warTarget():
 
 @wars_bp.route("/warResult", methods=["GET"])
 @login_required
-def warResult():
+@no_type_check
+def warResult() -> Any:
     import logging
 
     logger = logging.getLogger(__name__)
@@ -674,6 +680,7 @@ def warResult():
 
 @wars_bp.route("/declare_war", methods=["POST"])
 @login_required
+@no_type_check
 def declare_war() -> Any:
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
     defender_raw = request.form.get("defender")
@@ -767,7 +774,8 @@ def declare_war() -> Any:
 
 @wars_bp.route("/defense", methods=["GET", "POST"])
 @login_required
-def defense():
+@no_type_check
+def defense() -> Any:
     cId = session["user_id"]
     units = Military.get_military(cId)
     if request.method == "GET":
@@ -791,7 +799,8 @@ def defense():
 
 @wars_bp.route("/wars", methods=["GET", "POST"])
 @login_required
-def wars():
+@no_type_check
+def wars() -> Any:
     cId = session["user_id"]
     if request.method == "GET":
         normal_units = Military.get_military(cId)
@@ -871,7 +880,8 @@ def wars():
 
 @wars_bp.route("/find_targets", methods=["GET", "POST"])
 @login_required
-def find_targets():
+@no_type_check
+def find_targets() -> Any:
     cId = session["user_id"]
     if request.method == "GET":
         with get_db_cursor() as db:
