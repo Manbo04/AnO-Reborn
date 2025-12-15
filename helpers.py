@@ -2,12 +2,17 @@
 
 from datetime import date
 from functools import wraps
-from typing import Any, Callable
+from typing import Callable, TypeVar
+from typing import ParamSpec
 
 from dotenv import load_dotenv
 from flask import redirect, render_template, request, session
 
 from database import get_db_cursor, query_cache
+
+# Generic parameterization for decorator typing
+P = ParamSpec("P")
+R = TypeVar("R")
 
 load_dotenv()
 
@@ -37,11 +42,15 @@ def get_flagname(user_id: int) -> str:
         return flag_name
 
 
-def login_required(f: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator that redirects unauthenticated users to /login."""
+def login_required(f: Callable[P, R]) -> Callable[P, R]:
+    """Decorator that redirects unauthenticated users to /login.
+
+    This is typed with ParamSpec so that the decorated function preserves
+    the original callable signature for static type checkers.
+    """
 
     @wraps(f)
-    def decorated_function(*args: Any, **kwargs: Any) -> Any:
+    def decorated_function(*args: P.args, **kwargs: P.kwargs) -> R:
         import logging
 
         logger = logging.getLogger(__name__)
@@ -59,9 +68,9 @@ def login_required(f: Callable[..., Any]) -> Callable[..., Any]:
 
 
 # Check for necessary values without them user can't access a page
-def check_required(func: Callable[..., Any]) -> Callable[..., Any]:
+def check_required(func: Callable[P, R]) -> Callable[P, R]:
     @wraps(func)
-    def check_session(*args: Any, **kwargs: Any) -> Any:
+    def check_session(*args: P.args, **kwargs: P.kwargs) -> R:
         if not session.get("enemy_id", None):
             return redirect("/wars")
         return func(*args, **kwargs)
