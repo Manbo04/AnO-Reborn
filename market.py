@@ -6,7 +6,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session
 import variables
 from database import get_db_cursor
 from helpers import error, login_required
-from typing import Union
+from typing import Union, Any, no_type_check
 
 
 # TODO: implement connection passing here.
@@ -87,7 +87,8 @@ market_bp = Blueprint("market", __name__)
 
 @market_bp.route("/market", methods=["GET", "POST"])
 @login_required
-def market():
+@no_type_check
+def market() -> Any:
     if request.method == "GET":
         # Connection
         connection = psycopg2.connect(
@@ -238,7 +239,8 @@ def market():
 
 @market_bp.route("/buy_offer/<offer_id>", methods=["POST"])
 @login_required
-def buy_market_offer(offer_id):
+@no_type_check
+def buy_market_offer(offer_id: str) -> Any:
     connection = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -293,7 +295,8 @@ def buy_market_offer(offer_id):
 
 @market_bp.route("/sell_offer/<offer_id>", methods=["POST"])
 @login_required
-def sell_market_offer(offer_id):
+@no_type_check
+def sell_market_offer(offer_id: str) -> Any:
     conn = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -363,13 +366,15 @@ def sell_market_offer(offer_id):
 
 @market_bp.route("/marketoffer/", methods=["GET"])
 @login_required
-def marketoffer():
+@no_type_check
+def marketoffer() -> Any:
     return render_template("marketoffer.html")
 
 
 @market_bp.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
-def post_offer(offer_type):
+@no_type_check
+def post_offer(offer_type: str) -> Any:
     cId = session["user_id"]
 
     connection = psycopg2.connect(
@@ -455,7 +460,8 @@ def post_offer(offer_type):
 
 @market_bp.route("/my_offers", methods=["GET"])
 @login_required
-def my_offers():
+@no_type_check
+def my_offers() -> Any:
     cId = session["user_id"]
     offers = {}
     with get_db_cursor() as db:
@@ -493,7 +499,8 @@ def my_offers():
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
-def delete_offer(offer_id):
+@no_type_check
+def delete_offer(offer_id: str) -> Any:
     cId = session["user_id"]
 
     with get_db_cursor() as db:
@@ -536,7 +543,8 @@ def delete_offer(offer_id):
 
 @market_bp.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
 @login_required
-def trade_offer(offer_type, offeree_id):
+@no_type_check
+def trade_offer(offer_type: str, offeree_id: str) -> Any:
     if request.method == "POST":
         cId = session["user_id"]
 
@@ -581,7 +589,7 @@ def trade_offer(offer_type, offeree_id):
             realAmount = int(db.fetchone()[0])
 
             if amount > realAmount:  # Checks if user wants to sell more than he has
-                return error("400", "Selling amount is higher the amount you have.")
+                return error(400, "Selling amount is higher the amount you have.")
 
             # Calculates the resource amount the seller should have
             newResourceAmount = realAmount - amount
@@ -624,7 +632,8 @@ def trade_offer(offer_type, offeree_id):
 
 @market_bp.route("/decline_trade/<trade_id>", methods=["POST"])
 @login_required
-def decline_trade(trade_id):
+@no_type_check
+def decline_trade(trade_id: str) -> Any:
     if not trade_id.isnumeric():
         return error(400, "Trade id must be numeric")
 
@@ -678,7 +687,8 @@ def decline_trade(trade_id):
 
 @market_bp.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
-def accept_trade(trade_id):
+@no_type_check
+def accept_trade(trade_id: str) -> Any:
     cId = session["user_id"]
 
     connection = psycopg2.connect(
@@ -717,7 +727,8 @@ def accept_trade(trade_id):
 
 @market_bp.route("/transfer/<transferee>", methods=["POST"])
 @login_required
-def transfer(transferee):
+@no_type_check
+def transfer(transferee: str) -> Any:
     cId = session["user_id"]
 
     connection = psycopg2.connect(
