@@ -27,7 +27,7 @@ import string
 from datetime import datetime as dt
 
 import psycopg2
-import requests  # used by RequestsHandler
+import requests  # used by RequestsHandler  # type: ignore[import-untyped]
 from flaskext.markdown import Markdown
 from psycopg2.extras import RealDictCursor
 

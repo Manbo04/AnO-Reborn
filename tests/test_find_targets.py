@@ -53,9 +53,7 @@ def test_find_targets_get_no_targets():
             cookie = http.cookies.SimpleCookie()
             cookie.load(set_cookie)
             for morsel in cookie.values():
-                client.set_cookie(
-                    key=morsel.key, value=morsel.value, domain="localhost"
-                )
+                client.set_cookie("localhost", morsel.key, morsel.value)
         resp = client.get("/find_targets")
         assert resp.status_code == 200
         assert b"Potential War Targets" in resp.data
@@ -96,9 +94,7 @@ def test_find_targets_shows_target():
             cookie = http.cookies.SimpleCookie()
             cookie.load(set_cookie)
             for morsel in cookie.values():
-                client.set_cookie(
-                    key=morsel.key, value=morsel.value, domain="localhost"
-                )
+                client.set_cookie("localhost", morsel.key, morsel.value)
         resp = client.get("/find_targets")
         assert resp.status_code == 200
         assert b"ft_test_target" in resp.data
