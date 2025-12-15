@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from flask import redirect, render_template, request, session
 
-from app import app
+from AnO.app import app
 from attack_scripts import Military
 from database import get_db_cursor
 from helpers import error, get_date, login_required
@@ -11,7 +11,7 @@ from variables import MILDICT
 load_dotenv()
 
 
-@app.route("/military", methods=["GET", "POST"])
+@app.route("/military", methods=["GET", "POST"])  # type: ignore[untyped-decorator]
 @login_required
 def military():
     cId = session["user_id"]
@@ -42,7 +42,7 @@ def military():
         )
 
 
-@app.route("/<way>/<units>", methods=["POST"])
+@app.route("/<way>/<units>", methods=["POST"])  # type: ignore[untyped-decorator]
 @login_required
 def military_sell_buy(way, units):  # WARNING: function used only for military
     if request.method == "POST":

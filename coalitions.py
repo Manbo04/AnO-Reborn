@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import flash, redirect, render_template, request, session
 
 import variables
-from app import app
+from AnO.app import app
 from database import get_db_cursor
 from helpers import error, get_coalition_influence, login_required
 
@@ -23,7 +23,7 @@ def get_user_role(user_id):
 
 
 # Route for viewing a coalition's page
-@app.route("/coalition/<colId>", methods=["GET"])
+@app.route("/coalition/<colId>", methods=["GET"])  # type: ignore[untyped-decorator]
 @login_required
 def coalition(colId):
     with get_db_cursor() as db:
@@ -348,7 +348,11 @@ def coalition(colId):
 
 
 # Route for establishing a coalition
-@app.route("/establish_coalition", methods=["GET", "POST"])
+@app.route(
+    "/establish_coalition",
+    methods=["GET", "POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def establish_coalition():
     if request.method == "POST":
@@ -420,6 +424,7 @@ def establish_coalition():
 
 # Route for viewing all existing coalitions
 @app.route("/coalitions", methods=["GET"])
+# type: ignore[untyped-decorator]
 def coalitions():
     with get_db_cursor() as db:
         search = request.values.get("search")
@@ -497,7 +502,11 @@ def coalitions():
 
 
 # Route for joining a coalition
-@app.route("/join/<colId>", methods=["POST"])
+@app.route(
+    "/join/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def join_col(colId):
     with get_db_cursor() as db:
@@ -545,7 +554,11 @@ def join_col(colId):
 
 
 # Route for leaving a coalition
-@app.route("/leave/<colId>", methods=["POST"])
+@app.route(
+    "/leave/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def leave_col(colId):
     with get_db_cursor() as db:
@@ -564,6 +577,7 @@ def leave_col(colId):
 
 # Route for redirecting to the user's coalition
 @app.route("/my_coalition", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def my_coalition():
     with get_db_cursor() as db:
@@ -579,7 +593,11 @@ def my_coalition():
 
 
 # Route for giving someone a role in your coalition
-@app.route("/give_position", methods=["POST"])
+@app.route(
+    "/give_position",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def give_position():
     with get_db_cursor() as db:
@@ -650,7 +668,11 @@ def give_position():
 
 
 # Route for accepting a coalition join request
-@app.route("/add/<uId>", methods=["POST"])
+@app.route(
+    "/add/<uId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def adding(uId):
     with get_db_cursor() as db:
@@ -675,7 +697,11 @@ def adding(uId):
 
 
 # Route for removing a join request
-@app.route("/remove/<uId>", methods=["POST"])
+@app.route(
+    "/remove/<uId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def removing_requests(uId):
     with get_db_cursor() as db:
@@ -698,7 +724,11 @@ def removing_requests(uId):
 
 
 # Route for deleting a coalition
-@app.route("/delete_coalition/<colId>", methods=["POST"])
+@app.route(
+    "/delete_coalition/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def delete_coalition(colId):
     cId = session["user_id"]
@@ -720,7 +750,11 @@ def delete_coalition(colId):
 
 
 # Route for updating name, description, flag of coalition
-@app.route("/update_col_info/<colId>", methods=["POST"])
+@app.route(
+    "/update_col_info/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def update_col_info(colId):
     cId = session["user_id"]
@@ -789,7 +823,11 @@ def update_col_info(colId):
 
 
 # Route for depositing resources into the bank
-@app.route("/deposit_into_bank/<colId>", methods=["POST"])
+@app.route(
+    "/deposit_into_bank/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def deposit_into_bank(colId):
     cId = session["user_id"]
@@ -946,7 +984,11 @@ def withdraw(resource, amount, user_id, colId):
 
 
 # Route from withdrawing from the bank
-@app.route("/withdraw_from_bank/<colId>", methods=["POST"])
+@app.route(
+    "/withdraw_from_bank/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def withdraw_from_bank(colId):
     cId = session["user_id"]
@@ -991,7 +1033,11 @@ def withdraw_from_bank(colId):
 
 
 # Route for requesting a resource from the coalition bank
-@app.route("/request_from_bank/<colId>", methods=["POST"])
+@app.route(
+    "/request_from_bank/<colId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def request_from_bank(colId):
     cId = session["user_id"]
@@ -1044,7 +1090,11 @@ def request_from_bank(colId):
 
 
 # Route for removing a request for a resource from the coalition bank
-@app.route("/remove_bank_request/<bankId>", methods=["POST"])
+@app.route(
+    "/remove_bank_request/<bankId>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def remove_bank_request(bankId):
     cId = session["user_id"]
@@ -1091,7 +1141,11 @@ def accept_bank_request(bankId):
 
 
 # Route for offering another coalition a treaty
-@app.route("/offer_treaty", methods=["POST"])
+@app.route(
+    "/offer_treaty",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def offer_treaty():
     cId = session["user_id"]
@@ -1145,7 +1199,11 @@ def offer_treaty():
 
 
 # Route for accepting a treaty offer from another coalition
-@app.route("/accept_treaty/<offer_id>", methods=["POST"])
+@app.route(
+    "/accept_treaty/<offer_id>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def accept_treaty(offer_id):
     cId = session["user_id"]
@@ -1185,7 +1243,11 @@ def accept_treaty(offer_id):
 
 
 # Route for breaking a treaty with another coalition
-@app.route("/break_treaty/<offer_id>", methods=["POST"])
+@app.route(
+    "/break_treaty/<offer_id>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def break_treaty(offer_id):
     cId = session["user_id"]
@@ -1201,7 +1263,11 @@ def break_treaty(offer_id):
     return redirect("/my_coalition")
 
 
-@app.route("/decline_treaty/<offer_id>", methods=["POST"])
+@app.route(
+    "/decline_treaty/<offer_id>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def decline_treaty(offer_id):
     cId = session["user_id"]

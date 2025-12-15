@@ -421,6 +421,7 @@ def inject_user():
 
 
 @app.route("/", methods=["GET"])
+# type: ignore[untyped-decorator]
 def index():
     # In local development/testing, ensure a visible debug cookie is set on the
     # home page when a session exists or to help test clients detect cookie
@@ -443,11 +444,13 @@ def index():
 
 
 @app.route("/robots.txt")
+# type: ignore[untyped-decorator]
 def robots():
     return send_from_directory("static", "robots.txt")
 
 
 @app.route("/account", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 @cache_response(ttl_seconds=60)
 def account():
@@ -461,12 +464,14 @@ def account():
 
 
 @app.route("/recruitments", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def recruitments():
     return render_template("recruitments.html")
 
 
 @app.route("/businesses", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def businesses():
     return render_template("businesses.html")
@@ -474,6 +479,7 @@ def businesses():
 
 # Redirect bare /country to the user's own country page
 @app.route("/country", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def country_redirect():
     return redirect("/my_country")
@@ -488,6 +494,7 @@ def assembly():
 
 
 @app.route("/logout")
+# type: ignore[untyped-decorator]
 def logout():
     if session.get("user_id") is not None:
         session.clear()
@@ -497,11 +504,13 @@ def logout():
 
 
 @app.route("/tutorial", methods=["GET"])
+# type: ignore[untyped-decorator]
 def tutorial():
     return render_template("tutorial.html")
 
 
 @app.route("/forgot_password", methods=["GET"])
+# type: ignore[untyped-decorator]
 def forget_password():
     return render_template("forgot_password.html")
 
@@ -514,11 +523,13 @@ def statistics():
 
 
 @app.route("/my_offers", methods=["GET"])
+# type: ignore[untyped-decorator]
 def myoffers():
     return render_template("my_offers.html")
 
 
 @app.route("/war", methods=["GET"])
+# type: ignore[untyped-decorator]
 def war():
     # Redirect to the consolidated Wars page handled by the 'wars' blueprint
     return redirect("/wars")
@@ -527,12 +538,14 @@ def war():
 ## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
 ## compatibility by redirecting to the war result page for logged-in users in the blueprint.
 @app.route("/warresult", methods=["GET"])
+# type: ignore[untyped-decorator]
 def warresult_deprecated():
     # Redirect to canonical /warResult route when accessed from legacy code
     return redirect("/warResult")
 
 
 @app.route("/mass_purchase", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def mass_purchase():
     cId = session["user_id"]
@@ -554,6 +567,7 @@ def mass_purchase():
 
 
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
+# type: ignore[untyped-decorator]
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 

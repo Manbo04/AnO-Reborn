@@ -1,7 +1,7 @@
 from flask import session
 
 import upgrades
-from app import app
+from AnO.app import app
 
 
 class FakeCursor:

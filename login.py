@@ -7,7 +7,7 @@ from flask import redirect, render_template, request, session
 from requests_oauthlib import OAuth2Session
 
 # Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
+from AnO.app import app
 from database import get_db_cursor
 from helpers import error
 
@@ -15,7 +15,9 @@ load_dotenv()
 
 
 @app.route("/login/", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 @app.route("/login", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 def login():
     if request.method == "POST":
         import logging
@@ -134,6 +136,7 @@ def make_session(token=None, state=None, scope=None):
 
 
 @app.route("/discord_login/", methods=["GET"])
+# type: ignore[untyped-decorator]
 def discord_login():
     app.config["SESSION_PERMANENT"] = True
     app.permanent_session_lifetime = datetime.timedelta(days=365)

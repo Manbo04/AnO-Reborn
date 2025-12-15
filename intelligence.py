@@ -20,6 +20,7 @@ bp = Blueprint("intelligence", __name__)
 
 # TODO: add complex operation sorting by date and merging
 @bp.route("/intelligence", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def intelligence():
     if request.method == "GET":
@@ -82,6 +83,7 @@ def intelligence():
 
 
 @bp.route("/spyAmount", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 @login_required
 def spyAmount():
     cId = session["user_id"]
@@ -142,6 +144,7 @@ def spyAmount():
 
 # TODO: add notifications
 @bp.route("/spyResult", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 @login_required
 def spyResult():
     if request.method == "GET":
