@@ -33,7 +33,7 @@ wars_bp = Blueprint("wars", __name__)
 @wars_bp.route(
     "/peace_offers",
     methods=["POST", "GET"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def peace_offers() -> Any:
     cId = session["user_id"]
@@ -258,7 +258,7 @@ def peace_offers() -> Any:
 @wars_bp.route(
     "/send_peace_offer/<int:war_id>/<int:enemy_id>",
     methods=["POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     cId = session["user_id"]
@@ -319,7 +319,7 @@ def send_peace_offer(war_id: int, enemy_id: int) -> Any:
 @wars_bp.route(
     "/war/<int:war_id>",
     methods=["GET"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def war_with_id(war_id: int) -> Any:
     with get_db_cursor() as db:
@@ -409,7 +409,7 @@ def war_with_id(war_id: int) -> Any:
 @wars_bp.route(
     "/warchoose/<int:war_id>",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 @check_required
 def warChoose(war_id: int) -> Any:
@@ -442,7 +442,7 @@ def warChoose(war_id: int) -> Any:
 @wars_bp.route(
     "/waramount",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 @check_required
 def warAmount() -> Any:
@@ -501,7 +501,7 @@ def warAmount() -> Any:
 @wars_bp.route(
     "/wartarget",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def warTarget() -> Any:
     cId = session["user_id"]
@@ -556,7 +556,7 @@ def warTarget() -> Any:
 @wars_bp.route(
     "/warResult",
     methods=["GET"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def warResult() -> Any:
     import logging
@@ -707,7 +707,7 @@ def warResult() -> Any:
 @wars_bp.route(
     "/declare_war",
     methods=["POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def declare_war() -> Any:
     WAR_TYPES = ["Raze", "Sustained", "Loot"]
@@ -803,7 +803,7 @@ def declare_war() -> Any:
 @wars_bp.route(
     "/defense",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def defense() -> Any:
     cId = session["user_id"]
@@ -830,7 +830,7 @@ def defense() -> Any:
 @wars_bp.route(
     "/wars",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def wars() -> Any:
     cId = session["user_id"]
@@ -913,7 +913,7 @@ def wars() -> Any:
 @wars_bp.route(
     "/find_targets",
     methods=["GET", "POST"],
-)  # type: ignore[untyped-decorator]
+)
 @login_required
 def find_targets() -> Any:
     cId = session["user_id"]

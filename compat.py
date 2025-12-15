@@ -45,11 +45,13 @@ def _make_constant_wrapper() -> type[ast.Constant]:
 
 
 if not hasattr(ast, "Str"):
-    # Assign directly instead of using setattr to avoid Flake8-B010 warnings
-    ast.Str = _make_constant_wrapper()
+    # Assign a wrapper type for older code that may use `ast.Str`. Mypy
+    # disallows reassignment to a type object, so suppress the assignment
+    # check here while retaining the runtime behavior.
+    ast.Str = _make_constant_wrapper()  # type: ignore
 if not hasattr(ast, "Num"):
-    ast.Num = _make_constant_wrapper()
+    ast.Num = _make_constant_wrapper()  # type: ignore
 if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = _make_constant_wrapper()
+    ast.NameConstant = _make_constant_wrapper()  # type: ignore
 if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = _make_constant_wrapper()
+    ast.Ellipsis = _make_constant_wrapper()  # type: ignore
