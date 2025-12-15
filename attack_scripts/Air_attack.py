@@ -7,13 +7,13 @@ import random
 
 # print statements
 def ground_attack(
-    nat1_name,
-    nat2_name,
-    nat1_fighters,
-    nat2_fighters,
-    Nat1Bomb,
-    Nat2Bomb,
-):
+    nat1_name: str,
+    nat2_name: str,
+    nat1_fighters: int,
+    nat2_fighters: int,
+    Nat1Bomb: int,
+    Nat2Bomb: int,
+) -> str:
     nat1_roll_wins = 0
     nat2_roll_wins = 0
 
@@ -39,11 +39,11 @@ def ground_attack(
             Nat2 -= difference
             # calulates bomber losses
             Bombloss = random.randint(1, max(1, Nat1Bomb // 5)) * 5
-            Nat1Bomb = Nat1Bomb - Bombloss / 5
-            displayloss1 = Bombloss / 5
+            Nat1Bomb = Nat1Bomb - (Bombloss // 5)
+            displayloss1 = Bombloss // 5
             Bombloss2 = random.randint(1, max(1, Nat2Bomb // 5)) * 5
-            Nat2Bomb = Nat2Bomb - Bombloss2 / 5
-            displayloss2 = Bombloss2 / 5
+            Nat2Bomb = Nat2Bomb - (Bombloss2 // 5)
+            displayloss2 = Bombloss2 // 5
             print("Nation 2 lost %s Bombers" % displayloss2)
             # gives a 6% casualty rate for the nation that rolled larger
             six_percent_loss = int(Nat2 * 0.06)
@@ -60,11 +60,11 @@ def ground_attack(
             Nat1 -= difference
             # the twelve percent stored in new variable so it can be printed
             Bombloss1 = random.randint(1, max(1, Nat1Bomb // 5)) * 5
-            Nat1Bomb = Nat1Bomb - Bombloss1 / 5
-            displayloss1 = Bombloss1 / 5
+            Nat1Bomb = Nat1Bomb - (Bombloss1 // 5)
+            displayloss1 = Bombloss1 // 5
             Bombloss2 = random.randint(1, max(1, Nat2Bomb // 5)) * 5
-            Nat2Bomb = Nat2Bomb - Bombloss2 / 5
-            displayloss2 = Bombloss2 / 5
+            Nat2Bomb = Nat2Bomb - (Bombloss2 // 5)
+            displayloss2 = Bombloss2 // 5
             print(f"Nation 2 lost {displayloss2} Bombers")
             six_percent_loss = int(Nat1 * 0.06)
             Nat2 -= six_percent_loss
@@ -85,4 +85,6 @@ def ground_attack(
     return f"{nat2_name} won the battle"
 
 
-ground_attack("Danzig", "Konigsburg", 630, 380, 4, 10)
+if __name__ == "__main__":
+    # Example invocation for local debugging
+    ground_attack("Danzig", "Konigsburg", 630, 380, 4, 10)

@@ -89,6 +89,7 @@ market_bp = Blueprint("market", __name__)
     "/market",
     methods=["GET", "POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def market() -> Any:
     if request.method == "GET":
@@ -243,6 +244,7 @@ def market() -> Any:
     "/buy_offer/<offer_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def buy_market_offer(offer_id: str) -> Any:
     connection = psycopg2.connect(
@@ -301,6 +303,7 @@ def buy_market_offer(offer_id: str) -> Any:
     "/sell_offer/<offer_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def sell_market_offer(offer_id: str) -> Any:
     conn = psycopg2.connect(
@@ -374,6 +377,7 @@ def sell_market_offer(offer_id: str) -> Any:
     "/marketoffer/",
     methods=["GET"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def marketoffer() -> Any:
     return render_template("marketoffer.html")
@@ -383,6 +387,7 @@ def marketoffer() -> Any:
     "/post_offer/<offer_type>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def post_offer(offer_type: str) -> Any:
     cId = session["user_id"]
@@ -472,6 +477,7 @@ def post_offer(offer_type: str) -> Any:
     "/my_offers",
     methods=["GET"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def my_offers() -> Any:
     cId = session["user_id"]
@@ -513,6 +519,7 @@ def my_offers() -> Any:
     "/delete_offer/<offer_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def delete_offer(offer_id: str) -> Any:
     cId = session["user_id"]
@@ -559,6 +566,7 @@ def delete_offer(offer_id: str) -> Any:
     "/post_trade_offer/<offer_type>/<offeree_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def trade_offer(offer_type: str, offeree_id: str) -> Any:
     if request.method == "POST":
@@ -650,6 +658,7 @@ def trade_offer(offer_type: str, offeree_id: str) -> Any:
     "/decline_trade/<trade_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def decline_trade(trade_id: str) -> Any:
     if not trade_id.isnumeric():
@@ -706,7 +715,7 @@ def decline_trade(trade_id: str) -> Any:
 @market_bp.route(
     "/accept_trade/<trade_id>",
     methods=["POST"],
-)
+)  # type: ignore[untyped-decorator]
 @login_required
 def accept_trade(trade_id: str) -> Any:
     cId = session["user_id"]
@@ -748,7 +757,7 @@ def accept_trade(trade_id: str) -> Any:
 @market_bp.route(
     "/transfer/<transferee>",
     methods=["POST"],
-)
+)  # type: ignore[untyped-decorator]
 @login_required
 def transfer(transferee: str) -> Any:
     cId = session["user_id"]

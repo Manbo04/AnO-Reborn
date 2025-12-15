@@ -1,6 +1,6 @@
 import database
 from database import QueryCache, cache_response, QueryHelper
-from app import app
+from AnO.app import app
 
 
 def test_querycache_set_get_invalidate():

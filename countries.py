@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from flask import redirect, render_template, request, session
 
 import variables
-from app import app
+from AnO.app import app
 from coalitions import get_user_role
 from database import cache_response, get_db_cursor
 from helpers import error, get_influence, login_required
@@ -284,7 +284,7 @@ def next_turn_rations(cId, prod_rations):
         return current_rations
 
 
-@app.route("/delete_news/<int:id>", methods=["POST"])
+@app.route("/delete_news/<int:id>", methods=["POST"])  # type: ignore[untyped-decorator]
 @login_required
 def delete_news(id):
     with get_db_cursor() as db:
@@ -316,13 +316,13 @@ def cg_need(user_id):
         return cg_needed
 
 
-@app.route("/my_country")
+@app.route("/my_country")  # type: ignore[untyped-decorator]
 def my_country():
     user_id = session["user_id"]
     return redirect(f"/country/id={user_id}")
 
 
-@app.route("/country/id=<cId>")
+@app.route("/country/id=<cId>")  # type: ignore[untyped-decorator]
 @login_required
 @cache_response(ttl_seconds=30)
 def country(cId):
@@ -466,7 +466,7 @@ def country(cId):
     )
 
 
-@app.route("/countries", methods=["GET"])
+@app.route("/countries", methods=["GET"])  # type: ignore[untyped-decorator]
 @login_required
 def countries():
     with get_db_cursor() as db:
@@ -550,7 +550,7 @@ def countries():
     return render_template("countries.html", countries=results, current_user_id=cId)
 
 
-@app.route("/update_country_info", methods=["POST"])
+@app.route("/update_country_info", methods=["POST"])  # type: ignore[untyped-decorator]
 @login_required
 def update_info():
     with get_db_cursor() as db:
@@ -659,7 +659,7 @@ def update_info():
 
 
 # TODO: check if you can DELETE with one statement
-@app.route("/delete_own_account", methods=["POST"])
+@app.route("/delete_own_account", methods=["POST"])  # type: ignore[untyped-decorator]
 @login_required
 def delete_own_account():
     with get_db_cursor() as db:

@@ -9,7 +9,7 @@ This test reproduces the acceptance flow end-to-end:
 - Assert war has a `peace_date` set and resources were transferred
 """
 
-from app import app
+from AnO.app import app
 from database import get_db_connection
 
 import http.cookies

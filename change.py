@@ -9,7 +9,7 @@ from flask import redirect, render_template, request, session
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from app import app
+from AnO.app import app
 from database import get_db_cursor
 from helpers import error, login_required
 
@@ -63,6 +63,7 @@ def sendEmail(recipient, code):
 
 # Route for requesting a password reset; after request the user can reset the password.
 @app.route("/request_password_reset", methods=["POST"])
+# type: ignore[untyped-decorator]
 def request_password_reset():
     code = generateResetCode()
 
@@ -98,6 +99,7 @@ def request_password_reset():
 
 # Route for resetting password after request for changing password has been submitted.
 @app.route("/reset_password/<code>", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 def reset_password(code):
     if request.method == "GET":
         return render_template("reset_password.html", code=code)
@@ -123,6 +125,7 @@ def reset_password(code):
 
 
 @app.route("/change", methods=["POST"])
+# type: ignore[untyped-decorator]
 @login_required
 def change():
     with get_db_cursor() as db:

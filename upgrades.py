@@ -20,7 +20,11 @@ def get_upgrades(cId):
         return dict(zip(colnames, row))
 
 
-@bp.route("/upgrades", methods=["GET"])
+@bp.route(
+    "/upgrades",
+    methods=["GET"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def upgrades():
     cId = session["user_id"]
@@ -28,7 +32,11 @@ def upgrades():
     return render_template("upgrades.html", upgrades=upgrades)
 
 
-@bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
+@bp.route(
+    "/upgrades_sb/<ttype>/<thing>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def upgrade_sell_buy(ttype, thing):
     prices = {

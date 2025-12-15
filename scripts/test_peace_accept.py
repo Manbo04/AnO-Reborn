@@ -2,7 +2,7 @@
 # Usage: run with the project's venv python to perform an acceptance flow
 # using Flask test_client
 
-from app import app
+from AnO.app import app
 from database import get_db_connection
 
 # Use the test client

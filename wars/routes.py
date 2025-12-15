@@ -34,6 +34,7 @@ wars_bp = Blueprint("wars", __name__)
     "/peace_offers",
     methods=["POST", "GET"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def peace_offers() -> Any:
     cId = session["user_id"]
@@ -259,6 +260,7 @@ def peace_offers() -> Any:
     "/send_peace_offer/<int:war_id>/<int:enemy_id>",
     methods=["POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     cId = session["user_id"]
@@ -320,6 +322,7 @@ def send_peace_offer(war_id: int, enemy_id: int) -> Any:
     "/war/<int:war_id>",
     methods=["GET"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def war_with_id(war_id: int) -> Any:
     with get_db_cursor() as db:
@@ -410,6 +413,7 @@ def war_with_id(war_id: int) -> Any:
     "/warchoose/<int:war_id>",
     methods=["GET", "POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 @check_required
 def warChoose(war_id: int) -> Any:
@@ -443,6 +447,7 @@ def warChoose(war_id: int) -> Any:
     "/waramount",
     methods=["GET", "POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 @check_required
 def warAmount() -> Any:
@@ -502,6 +507,7 @@ def warAmount() -> Any:
     "/wartarget",
     methods=["GET", "POST"],
 )
+# type: ignore[untyped-decorator]
 @login_required
 def warTarget() -> Any:
     cId = session["user_id"]

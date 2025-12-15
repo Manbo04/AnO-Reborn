@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from flask import redirect, render_template, request, session
 
 import variables
-from app import app
+from AnO.app import app
 from database import cache_response, get_db_cursor
 from helpers import error, get_date, login_required
 from tasks import energy_info
@@ -13,7 +13,11 @@ from upgrades import get_upgrades
 load_dotenv()
 
 
-@app.route("/provinces", methods=["GET"])
+@app.route(
+    "/provinces",
+    methods=["GET"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 @cache_response(ttl_seconds=30)
 def provinces():
@@ -33,7 +37,11 @@ def provinces():
         return render_template("provinces.html", provinces=provinces)
 
 
-@app.route("/province/<pId>", methods=["GET"])
+@app.route(
+    "/province/<pId>",
+    methods=["GET"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def province(pId):
     with get_db_cursor() as db:
@@ -181,7 +189,11 @@ def get_province_price(user_id):
         return price
 
 
-@app.route("/createprovince", methods=["GET", "POST"])
+@app.route(
+    "/createprovince",
+    methods=["GET", "POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def createprovince():
     cId = session["user_id"]
@@ -262,7 +274,11 @@ def get_free_slots(pId, slot_type):  # pId = province id
         return free_slots
 
 
-@app.route("/<way>/<units>/<province_id>", methods=["POST"])
+@app.route(
+    "/<way>/<units>/<province_id>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def province_sell_buy(way, units, province_id):
     cId = session["user_id"]

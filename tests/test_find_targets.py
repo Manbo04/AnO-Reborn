@@ -1,5 +1,5 @@
 # pytest not required at module level; remove unused import to satisfy linter
-from app import app
+from AnO.app import app
 from database import get_db_connection
 
 

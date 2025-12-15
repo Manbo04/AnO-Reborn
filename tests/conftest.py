@@ -1,13 +1,15 @@
 import os
+from typing import Any, Generator, Callable
+
 import pytest
 import http.cookies
 
 from flask import request
 
-from app import app as flask_app
+from AnO.app import app as flask_app
 
 
-def _set_session_cookie(client, app, key, value):
+def _set_session_cookie(client: Any, app: Any, key: str, value: Any) -> None:
     """Utility to set session keys on the test client without using
     client.session_transaction() which can be brittle across Flask versions.
     """
@@ -27,13 +29,13 @@ def _set_session_cookie(client, app, key, value):
 
 
 @pytest.fixture
-def client():
+def client() -> Generator[Any, None, None]:
     with flask_app.test_client() as c:
         yield c
 
 
 @pytest.fixture
-def db_connection():
+def db_connection() -> Generator[Any, None, None]:
     """Provide a DB connection for integration tests. Tests that depend on
     an actual database are skipped by default and require the environment
     variable `RUN_DB_INTEGRATION=1` to be set.
@@ -60,7 +62,7 @@ def db_connection():
 
 
 @pytest.fixture
-def db_cursor(db_connection):
+def db_cursor(db_connection: Any) -> Generator[Any, None, None]:
     """Yield a cursor wrapped in a transaction which will be rolled back
     after the test to avoid leaving persistent state in the test database.
     """
@@ -73,8 +75,8 @@ def db_cursor(db_connection):
 
 
 @pytest.fixture
-def set_session(client):
-    def _set(key, value):
+def set_session(client: Any) -> Callable[[str, Any], None]:
+    def _set(key: str, value: Any) -> None:
         _set_session_cookie(client, flask_app, key, value)
 
     return _set
