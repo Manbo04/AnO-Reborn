@@ -526,7 +526,9 @@ class Units(Military):
                 for unit_type, amount in self.suffered_casualties.items():
                     mil_statement = f"SELECT {unit_type} FROM military " "WHERE id=(%s)"
                     db.execute(mil_statement, (self.user_id,))
-                    available_unit_amount = db.fetchone()[0]
+                    from database import fetchone_first
+
+                    available_unit_amount = fetchone_first(db, 0)
 
                     mil_update = (
                         f"UPDATE military SET {unit_type}=(%s) " "WHERE id=(%s)"
@@ -600,7 +602,9 @@ class Units(Military):
 
         if war_id is not None:
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-            is_attacker = db.fetchone()[0]
+            from database import fetchone_first
+
+            is_attacker = fetchone_first(db, 0)
 
             if is_attacker == self.user_id:
                 sign = "attacker_supplies"
@@ -609,7 +613,7 @@ class Units(Military):
 
             sign_select = f"SELECT {sign} FROM wars " "WHERE id=(%s)"
             db.execute(sign_select, (war_id,))
-            current_supplies = db.fetchone()[0]
+            current_supplies = fetchone_first(db, 0)
 
             sign_update = f"UPDATE wars SET {sign}=(%s) " "WHERE id=(%s)"
             db.execute(sign_update, (current_supplies - self.supply_costs, war_id))

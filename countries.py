@@ -278,8 +278,12 @@ def next_turn_rations(cId, prod_rations):
         current_rations = db.fetchone()[0] + prod_rations
 
         for pId in provinces:
-            rations, _ = calc_pg(pId, current_rations)
-            current_rations = rations
+            # calc_pg now returns a rations delta (negative or zero) and the
+            # updated population; apply the delta to the current rations
+            rations_delta, _ = calc_pg(pId, current_rations)
+            current_rations = current_rations + rations_delta
+            if current_rations < 0:
+                current_rations = 0
 
         return current_rations
 

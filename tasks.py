@@ -412,23 +412,26 @@ def calc_pg(pId: int, rations: int) -> tuple[int, int]:
 
         rations_increase += round(rations_needed_percent * 2, 2)
 
-        # Calculates the new rations of the player
-        new_rations = rations - rations_needed
-        if new_rations < 0:
-            new_rations = 0
-        new_rations = int(new_rations)
+        # Calculates the rations change for the player. Return a delta so
+        # callers apply it incrementally to avoid race conditions with other
+        # tasks that also update rations (e.g., production).
+        # We only consume as many rations as are available.
+        rations_to_consume = min(rations, rations_needed)
+        rations_delta = -int(rations_to_consume)
 
         newPop: float = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
         # Population must be an integer
         newPop = int(round(newPop))
 
         db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
-        owner = db.fetchone()[0]
+        from database import fetchone_first
+
+        owner = fetchone_first(db, 0)
 
         policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
-            policies = db.fetchone()[0]
+            policies = fetchone_first(db, [])
         except Exception:
             policies = []
 
@@ -440,7 +443,7 @@ def calc_pg(pId: int, rations: int) -> tuple[int, int]:
         if fullPop < 0:
             fullPop = 0
 
-        return new_rations, fullPop
+        return rations_delta, fullPop
 
 
 # Seems to be working as expected
@@ -448,6 +451,7 @@ def population_growth() -> None:  # Function for growing population
     from psycopg2.extras import execute_batch
 
     from database import get_db_connection
+    from database import fetchone_first
 
     with get_db_connection() as conn:
         db = conn.cursor()
@@ -462,12 +466,12 @@ def population_growth() -> None:  # Function for growing population
             province_id = province_id[0]
             try:
                 db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
-                user_id = db.fetchone()[0]
+                user_id = fetchone_first(db, 0)
 
                 db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-                current_rations = db.fetchone()[0]
+                current_rations = fetchone_first(db, 0)
 
-                rations, population = calc_pg(province_id, current_rations)
+                rations_delta, population = calc_pg(province_id, current_rations)
 
                 msg = (
                     f"Updated rations for province id: {province_id}, "
@@ -475,12 +479,13 @@ def population_growth() -> None:  # Function for growing population
                 )
                 print(msg)
                 msg2 = (
-                    f"Set {current_rations} to {rations} "
-                    f"({rations - current_rations})"
+                    f"Applied rations delta for province id: {province_id}, "
+                    f"user id: {user_id} | current: {current_rations} "
+                    f"delta: {rations_delta}"
                 )
                 print(msg2)
-
-                rations_updates.append((rations, user_id))
+                # Use delta updates to avoid clobbering concurrent changes
+                rations_updates.append((rations_delta, user_id))
                 population_updates.append((population, province_id))
 
             except Exception as e:
@@ -489,8 +494,12 @@ def population_growth() -> None:  # Function for growing population
 
         # Batch execute updates
         if rations_updates:
+            # Apply deltas and clamp at zero to avoid negative rations and to
+            # preserve production applied by other tasks.
             execute_batch(
-                db, "UPDATE resources SET rations=%s WHERE id=%s", rations_updates
+                db,
+                "UPDATE resources SET rations=GREATEST(rations + %s, 0) WHERE id=%s",
+                rations_updates,
             )
         if population_updates:
             execute_batch(

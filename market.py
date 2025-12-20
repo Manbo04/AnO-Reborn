@@ -44,7 +44,9 @@ def give_resource(
     if resource in ["gold", "money"]:
         if giver_id != "bank":
             db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
-            current_giver_money = db.fetchone()[0]
+            from database import fetchone_first
+
+            current_giver_money = fetchone_first(db, 0)
 
             if current_giver_money < amount:
                 return "Giver doesn't have enough resources to transfer such amount."
@@ -60,7 +62,7 @@ def give_resource(
                 f"SELECT {resource} FROM resources WHERE " + "id=%s"
             )
             db.execute(current_resource_statement, (giver_id,))
-            current_giver_resource = db.fetchone()[0]
+            current_giver_resource = fetchone_first(db, 0)
 
             if current_giver_resource < amount:
                 return "Giver doesn't have enough resources to transfer such amount."

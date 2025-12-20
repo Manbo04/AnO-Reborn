@@ -6,6 +6,12 @@ from typing import Any, Dict, Optional, Tuple, List, Union
 import psycopg2
 
 
+def _fetch_one_first(cursor: Any, default: Any = None) -> Any:
+    """Return the first column from cursor.fetchone() or default if no row."""
+    row = cursor.fetchone()
+    return row[0] if row else default
+
+
 def calculate_bonuses(attack_effects: Any, defender: Any, unit: Any) -> float:
     """Compute per-unit bonus for the fight mechanics.
 
@@ -63,7 +69,7 @@ class Economy:
 
         # TODO: update this query when the database schema changes
         _db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
-        self.gold = _db.fetchone()[0]
+        self.gold = _fetch_one_first(_db, 0)
 
     def get_particular_resources(self, resources: list[str]) -> Dict[str, Any]:
         """Return specific resources for this nation as a dict."""
@@ -86,11 +92,11 @@ class Economy:
                     _db.execute(
                         "SELECT gold FROM stats WHERE id=(%s)", (self.nationID,)
                     )
-                    resource_dict[resource] = _db.fetchone()[0]
+                    resource_dict[resource] = _fetch_one_first(_db, 0)
                 else:
                     query = f"SELECT {resource}" + " FROM resources WHERE id=(%s)"
                     _db.execute(query, (self.nationID,))
-                    resource_dict[resource] = _db.fetchone()[0]
+                    resource_dict[resource] = _fetch_one_first(_db, 0)
         except Exception as e:
             # TODO ERROR HANDLER OR RETURN THE ERROR AS A VAlUE
             print(e)
@@ -220,7 +226,7 @@ class Economy:
                 for resource in Economy.resources:
                     resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
                     db.execute(resource_sel_stat, (loser.user_id,))
-                    resource_amount = db.fetchone()[0]
+                    resource_amount = _fetch_one_first(db, 0)
                     # transfer 20% of resource on hand
                     eco.transfer_resources(
                         resource, resource_amount * (1 / 5), winner.user_id
@@ -311,7 +317,7 @@ class Nation:
             db.execute(
                 "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s", (self.id,)
             )
-            provinces_number = db.fetchone()[0]
+            provinces_number = _fetch_one_first(db, 0)
             self.provinces["provinces_number"] = provinces_number
 
             if provinces_number > 0:
@@ -352,9 +358,6 @@ class Nation:
         id_list = db.fetchall()
 
         # Normalize DB row results into a simple list of ints to avoid Any
-        # leaking out of the DB cursor implementation.
-        return [int(r[0]) for r in id_list]
-
         # # determine wheter the user is the aggressor or the defender
         # current_wars_result = []
         # for war_id in id_list:
@@ -551,9 +554,18 @@ class Military(Nation):
                     defender.user_id,
                 ),
             )
-            war_id = db.fetchall()[-1][0]
-            db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
-            morale = db.fetchone()[0]
+            # Use the last matching war id (most recent)
+            rows = db.fetchall()
+            if not rows:
+                return (0, 0)
+
+            war_id = rows[-1][0]
+
+            war_column_stat = f"SELECT {column} FROM wars WHERE id=(%s)"
+            db.execute(war_column_stat, (war_id,))
+            from database import fetchone_first
+
+            morale = fetchone_first(db, 0)
             return (war_id, morale)
 
     # Reparation tax
@@ -583,7 +595,7 @@ class Military(Nation):
             "WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
             (winners[0], winners[0], losers[0], losers[0]),
         )
-        winner_remaining_morale = db.fetchone()[0]
+        winner_remaining_morale = _fetch_one_first(db, 0)
 
         # Calculate reparation tax based on remaining morale
         # if winner_remaining_morale_effect
@@ -624,7 +636,7 @@ class Military(Nation):
 
         war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
         db.execute(war_column_stat, (war_id,))
-        morale = db.fetchone()[0]
+        morale = _fetch_one_first(db, 0)
 
         # annihilation
         # 50 morale change
@@ -655,7 +667,7 @@ class Military(Nation):
             for resource in Economy.resources:
                 resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
                 db.execute(resource_sel_stat, (loser.user_id,))
-                resource_amount = db.fetchone()[0]
+                resource_amount = _fetch_one_first(db, 0)
 
                 # Transfer 20% of the resource on hand.
                 # TODO: define how this should behave if an alliance won.
@@ -734,7 +746,7 @@ class Military(Nation):
                 f"SELECT {special_unit} FROM military WHERE id=(%s)",
                 (attacker.user_id,),
             )
-            special_unit_fetch = db.fetchone()[0]
+            special_unit_fetch = _fetch_one_first(db, 0)
 
             db.execute(
                 f"UPDATE military SET {special_unit}=(%s) WHERE id=(%s)",
@@ -885,7 +897,7 @@ class Military(Nation):
             "AND peace_date IS NULL",
             (winner.user_id, winner.user_id),
         )
-        abs_attacker = db.fetchone()[0]
+        abs_attacker = _fetch_one_first(db, 0)
 
         if winner.user_id == abs_attacker:
             # morale column of the loser
