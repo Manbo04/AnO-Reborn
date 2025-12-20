@@ -277,8 +277,9 @@ def callback():
                 "SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'",
                 (discord_auth,),
             )
-            duplicate = db.fetchone()[0]
-            duplicate = True
+            from database import fetchone_first
+
+            duplicate = fetchone_first(db, None) is not None
         except TypeError:
             duplicate = False
 

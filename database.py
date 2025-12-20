@@ -121,6 +121,17 @@ def cache_response(
 # Global query cache (5-minute TTL for slower-changing data)
 query_cache = QueryCache(ttl_seconds=300)
 
+
+def fetchone_first(cursor: Any, default: Any = None) -> Any:
+    """Return the first column from cursor.fetchone(), or default if no row.
+
+    This helper avoids repeated None checks when a single-column value is
+    expected and improves readability at call sites.
+    """
+    row = cursor.fetchone()
+    return row[0] if row else default
+
+
 # Generic type for decorator wrappers
 T = TypeVar("T")
 
