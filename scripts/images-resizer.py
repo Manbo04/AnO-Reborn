@@ -8,9 +8,10 @@
 # Test image size - 2.90 mb
 # Test image dimensions - 1920 x 1280
 
+import os
+
 from PIL import Image
 from resizeimage import resizeimage
-import os
 
 
 def resize(filename):
@@ -32,5 +33,5 @@ for image in images:
     try:
         resize(image)
         print(f"Resized image: {image}")
-    except:
+    except Exception:
         print(f"Failed to resize image: {image}")

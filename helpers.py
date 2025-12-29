@@ -1,55 +1,65 @@
 # FULLY MIGRATED
 
-import os
-from flask import redirect, render_template, session, request
-from functools import wraps, lru_cache
-from dotenv import load_dotenv
 from datetime import date
+from functools import wraps
+from typing import Callable, TypeVar, Any
+from typing import ParamSpec
+
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+
 from database import get_db_cursor, query_cache
+
+# Generic parameterization for decorator typing
+P = ParamSpec("P")
+R = TypeVar("R")
 
 load_dotenv()
 
 
-def get_date():
+def get_date() -> str:
+    """Return today's date as YYYY-MM-DD."""
     today = date.today()
     return today.strftime("%Y-%m-%d")
 
 
-def get_flagname(user_id):
-    # Check cache first
+def get_flagname(user_id: int) -> str:
+    """Return the cached flag name for a user, populating the cache if needed."""
     cache_key = f"flag_{user_id}"
     cached = query_cache.get(cache_key)
-    if cached is not None:
+    # Ensure the cached value is a string before returning it to satisfy type checks
+    if isinstance(cached, str):
         return cached
 
-    # Query if not cached
     with get_db_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
-        flag_name = db.fetchone()[0]
+        row = db.fetchone()
+        flag_name = row[0] if row else None
 
-        if flag_name == None:
+        if flag_name is None:
             flag_name = "default_flag.jpg"
 
-        # Cache the result
         query_cache.set(cache_key, flag_name)
         return flag_name
 
 
-def login_required(f):
-    """
-    Decorate routes to require login.
+def login_required(f: Callable[P, R]) -> Callable[P, Any]:
+    """Decorator that redirects unauthenticated users to /login.
 
-    http://flask.pocoo.org/docs/1.0/patterns/viewdecorators/
+    This is typed with ParamSpec so that the decorated function preserves
+    the original callable signature for static type checkers.
     """
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: P.args, **kwargs: P.kwargs) -> Any:
         import logging
 
         logger = logging.getLogger(__name__)
         if not session.get("user_id", None):
             logger.debug(
-                f"login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}"
+                "login_required: session user_id=%s path=%s",
+                session.get("user_id", None),
+                getattr(request, "path", None),
             )
             logger.debug("login_required: user_id missing, redirecting to /login")
             return redirect("/login")
@@ -58,11 +68,10 @@ def login_required(f):
     return decorated_function
 
 
-# Check for neccessary values without them user can't access a page
-# example: can't access /warchoose or /waramount without enemy_id
-def check_required(func):
+# Check for necessary values without them user can't access a page
+def check_required(func: Callable[P, R]) -> Callable[P, Any]:
     @wraps(func)
-    def check_session(*args, **kwargs):
+    def check_session(*args: P.args, **kwargs: P.kwargs) -> Any:
         if not session.get("enemy_id", None):
             return redirect("/wars")
         return func(*args, **kwargs)
@@ -70,17 +79,17 @@ def check_required(func):
     return check_session
 
 
-def error(code, message):
-    # Return the proper HTTP status code along with the error template to
-    # ensure external clients receive the correct status for assertion checks
+def error(code: int, message: str) -> tuple[Any, int]:
+    """Return the error template and HTTP status code."""
     return render_template("error.html", code=code, message=message), code
 
 
-def get_influence(country_id):
-    # Check cache first
+def get_influence(country_id: int) -> int:
+    """Compute and cache an influence score for a country."""
     cache_key = f"influence_{country_id}"
     cached = query_cache.get(cache_key)
-    if cached is not None:
+    # Only accept cached integers to satisfy the declared return type
+    if isinstance(cached, int):
         return cached
 
     cId = country_id
@@ -88,8 +97,11 @@ def get_influence(country_id):
     with get_db_cursor() as db:
         try:
             db.execute(
-                """SELECT soldiers, artillery, tanks, fighters, bombers, apaches, submarines,
-            destroyers, cruisers, ICBMs, nukes, spies FROM military WHERE id=%s""",
+                (
+                    "SELECT soldiers, artillery, tanks, fighters, bombers, apaches, "
+                    "submarines, destroyers, cruisers, ICBMs, nukes, spies "
+                    "FROM military WHERE id=%s"
+                ),
                 (cId,),
             )
             military = db.fetchall()[0]
@@ -106,7 +118,7 @@ def get_influence(country_id):
             icbms_score = military[9] * 250
             nukes_score = military[10] * 500
             spies_score = military[11] * 25
-        except:
+        except Exception:
             tanks_score = 0
             soldiers_score = 0
             artillery_score = 0
@@ -127,44 +139,40 @@ def get_influence(country_id):
         try:
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
             money_score = int(db.fetchone()[0]) * 0.00001
-        except:
+        except Exception:
             money_score = 0
 
         try:
             db.execute("SELECT SUM(cityCount) FROM provinces WHERE userId=(%s)", (cId,))
             cities_score = int(db.fetchone()[0]) * 10
-        except:
+        except Exception:
             cities_score = 0
 
         try:
             db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (cId,))
             provinces_score = int(db.fetchone()[0]) * 300
-        except:
+        except Exception:
             provinces_score = 0
 
         try:
             db.execute("SELECT SUM(land) FROM provinces WHERE userId=%s", (cId,))
             land_score = db.fetchone()[0] * 10
-        except:
+        except Exception:
             land_score = 0
 
         try:
             db.execute(
-                """SELECT oil + rations + coal + uranium + bauxite + iron + lead + copper + lumber + components + steel,
-            consumer_goods + aluminium + gasoline + ammunition FROM resources WHERE id=%s""",
+                (
+                    "SELECT oil + rations + coal + uranium + bauxite + iron + lead + "
+                    "copper + lumber + components + steel, consumer_goods + "
+                    "aluminium + gasoline + ammunition FROM resources "
+                    "WHERE id=%s"
+                ),
                 (cId,),
             )
             resources_score = db.fetchone()[0] * 0.001
-        except:
+        except Exception:
             resources_score = 0
-
-    """
-    (# of provinces * 300)+(# of soldiers * 0.02)+(# of artillery*1.6)+(# of tanks*0.8)
-    +(# of fighters* 3.5)+(# of bombers *2.5)+(# of apaches *3.2)+(# of subs * 4.5)+
-    (# of destroyers *3.0)+(# of cruisers *5.5) + (# of ICBMS*250)+(# of Nukes * 500)
-    + (# of spies*25) + (# of total cities * 10) + (# of total land * 10)+
-    (total number of rss *0.001)+(total amount of money*0.00001)
-    """
 
     influence = (
         provinces_score
@@ -188,13 +196,11 @@ def get_influence(country_id):
 
     influence = round(influence)
 
-    # Cache the result
     query_cache.set(cache_key, influence)
-
     return influence
 
 
-def get_coalition_influence(coalition_id):
+def get_coalition_influence(coalition_id: int) -> int:
     with get_db_cursor() as db:
         total_influence = 0
 
@@ -203,11 +209,13 @@ def get_coalition_influence(coalition_id):
                 "SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,)
             )
             members = db.fetchall()
-        except:
+        except Exception:
             return 0
 
         for member in members:
-            member_influence = get_influence(member[0])
+            # fetched rows are untyped; coerce the user id to int for typing
+            member_id = int(member[0])
+            member_influence = get_influence(member_id)
             total_influence += member_influence
 
-        return total_influence
+        return int(total_influence)

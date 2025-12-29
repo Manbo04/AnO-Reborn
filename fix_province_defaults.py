@@ -4,8 +4,9 @@ Fix script to update existing provinces with better default values for
 happiness, productivity, and consumer_spending.
 """
 
-import psycopg2
 import os
+
+import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()

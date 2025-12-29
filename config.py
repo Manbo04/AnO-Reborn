@@ -2,11 +2,12 @@
 Configuration helper for Railway deployment
 Parses DATABASE_URL and REDIS_URL into individual components
 """
+
 import os
 from urllib.parse import urlparse
 
 
-def parse_database_url():
+def parse_database_url() -> dict[str, str]:
     """
     Parse DATABASE_URL into individual components for legacy code compatibility
     Railway provides DATABASE_URL, but legacy code expects PG_* variables
@@ -39,7 +40,7 @@ def parse_database_url():
     }
 
 
-def get_redis_url():
+def get_redis_url() -> str:
     """
     Get Redis URL for Celery broker
     Railway provides REDIS_URL, fallback to broker_url for local dev
@@ -49,7 +50,7 @@ def get_redis_url():
     )
 
 
-def get_secret_key():
+def get_secret_key() -> str:
     """
     Get or generate secret key for Flask
     """

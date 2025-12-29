@@ -1,7 +1,9 @@
 import random
 
 
-def ground_attack(nat1_name, nat2_name, nat1_soldiers, nat2_soldiers):
+def ground_attack(
+    nat1_name: str, nat2_name: str, nat1_soldiers: int, nat2_soldiers: int
+) -> None:
     # TODO: get nation names from DB, get amount of soldiers from DB,
     # add tanks to script, add infra damage
 
@@ -49,4 +51,6 @@ def ground_attack(nat1_name, nat2_name, nat1_soldiers, nat2_soldiers):
         print("Nation 2 won the battle")
 
 
-ground_attack("Blackadder", "CLRFL", 1500, 1500)
+if __name__ == "__main__":
+    # Example local invocation
+    ground_attack("Blackadder", "CLRFL", 1500, 1500)

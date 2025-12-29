@@ -1,34 +1,43 @@
 # FULLY MIGRATED
 
+import os
 from abc import ABC, abstractmethod
-from attack_scripts import Military
-from math import floor, ceil
+from math import floor
 from random import randint
-from typing import Union
+from typing import Union, Optional, Dict, List, Tuple, Any
+
 import psycopg2
 from dotenv import load_dotenv
 
+from attack_scripts import Military
+
 load_dotenv()
-import os
 
 
 # Blueprint for units
 class BlueprintUnit(ABC):
-
     """
     Every Unit class should follow and inherit this Blueprint!
 
-    Neccessary variables:
-        - unit_type: used to identify interfaces (i.e. TankUnit, SoldierUnit) for particular units
-        - bonus: used to calculate the battle advantage
-        - damage: used to determine the damage dealt to a specific target (infra, other buildings), used for percentage calculation
-            * in case of nukes: damage in nuke is the pure damage to units and infrastructure (when nuke targeted to a single object/unit damage is dealt)
-        - resource_cost: the required resources per x amount unit to be able to attack
-            ex. {"ammunition": 1} <- means 1 ammunition is needed for one unit to attack
+    Necessary variables:
+            - unit_type: used to identify interfaces (e.g., TankUnit, SoldierUnit)
+                for particular units
+            - bonus: used to calculate the battle advantage
+            - damage: determines damage dealt to a specific target (infrastructure
+                or buildings) and is used for percentage calculations. For nukes,
+                damage is the raw damage to units and infrastructure (a nuke
+                targeted at a single object deals unit damage to that object).
+            - resource_cost: resources required per unit, e.g.:
+                {"ammunition": 1} means 1 ammunition is needed for one unit
     """
 
-    damage = 0
-    bonus = 0
+    unit_type: str = ""
+    supply_cost: int = 0
+    damage: float = 0.0
+    bonus: float = 0.0
+
+    def __init__(self, amount: int) -> None:
+        self.amount = amount
 
     """
     attack method:
@@ -42,12 +51,20 @@ class BlueprintUnit(ABC):
     """
 
     @abstractmethod
-    def attack(defending_units):
-        pass
+    def attack(self, defending_units: str) -> list[float]:
+        """Calculate attack result vs defending unit type.
+
+        Returns a list [damage, bonus].
+        """
+        raise NotImplementedError
 
     @abstractmethod
-    def buy(amount):
-        pass
+    def buy(self, amount: int) -> None:
+        """Buy amount of this unit (stubbed).
+
+        Concrete implementations may update resources or state.
+        """
+        raise NotImplementedError
 
 
 class SoldierUnit(BlueprintUnit):
@@ -57,9 +74,9 @@ class SoldierUnit(BlueprintUnit):
     resource_cost = {"ammunition": 1}
 
     def __init__(self, amount: int) -> None:
-        self.amount = amount
+        self.amount: int = amount
 
-    def attack(self, defending_units: str) -> list:
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "artillery":
             # self.damage += 55
             self.bonus += 3 * self.amount
@@ -67,7 +84,7 @@ class SoldierUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -77,19 +94,21 @@ class TankUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 1, "gasoline": 1}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
-        # One tank beats 4 soldiers (if one tank beat only 4 soldiers then soldiers really counter tanks because 1 tank costs the same as ~50 soldiers.)
-        # One tank becomes 4x more effectiveness vs soldiers.
+    def attack(self, defending_units: str) -> list[float]:
+        # One tank beats 4 soldiers. If one tank beat only 4 soldiers then
+        # soldiers would heavily counter tanks because 1 tank costs roughly
+        # the same as ~50 soldiers.
+        # One tank becomes 4x more effective versus soldiers.
         if defending_units == "soldiers":
             self.damage += 2
             self.bonus += 6 * self.amount
 
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -99,16 +118,16 @@ class ArtilleryUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         # One artillery beats 3 tanks
         if defending_units == "tanks":
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -118,10 +137,10 @@ class BomberUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "soldiers":
             self.bonus += 2 * self.amount
 
@@ -138,7 +157,7 @@ class BomberUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -148,16 +167,16 @@ class FighterUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "bombers":
             # self.damage += 55
             self.bonus += 4 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -167,10 +186,10 @@ class ApacheUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "soldiers":
             self.bonus += 1 * self.amount
         elif defending_units == "tanks":
@@ -181,7 +200,7 @@ class ApacheUnit(BlueprintUnit):
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -191,15 +210,15 @@ class DestroyerUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus += 1.6 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -209,10 +228,10 @@ class CruiserUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "destroyers":
             self.bonus += 0.3 * self.amount
         elif defending_units == "fighters":
@@ -221,7 +240,7 @@ class CruiserUnit(BlueprintUnit):
             self.bonus += 0.4 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy(amount):
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -231,15 +250,15 @@ class SubmarineUnit(BlueprintUnit):
     supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "cruisers":
             self.bonus += 0.2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -249,15 +268,15 @@ class IcbmUnit(BlueprintUnit):
     damage = 1000
     supply_cost = 500
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus -= 5 * self.amount
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
@@ -266,35 +285,36 @@ class NukeUnit(BlueprintUnit):
     damage = 3000
     supply_cost = 1000
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def attack(self, defending_units):
+    def attack(self, defending_units: str) -> list[float]:
         if defending_units == "submarines":
             self.bonus -= 5 * self.amount
         else:
             pass
         return [self.damage * self.amount, self.bonus]
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
-# does not have attack method, their functionality is coded separately in intelligence.py
+# Does not have an attack method; their functionality is implemented in
+# `intelligence.py`.
 class SpyUnit(BlueprintUnit):
     unit_type = "spies"
     damage = 0  # does not attack anyway
 
-    def __init__(self, amount):
-        self.amount = amount
+    def __init__(self, amount: int) -> None:
+        self.amount: int = amount
 
-    def buy():
+    def buy(self, amount: int) -> None:
         pass
 
 
 # make an instance of this object with Units(cId)
 class Units(Military):
-    allUnits = [
+    allUnits: List[str] = [
         "soldiers",
         "tanks",
         "artillery",
@@ -308,8 +328,9 @@ class Units(Military):
         "icbms",
         "nukes",
     ]
-    # spyunit not included because it has no interactions with other units, so it doesnt need to run inside the Units.attack method.
-    allUnitInterfaces = [
+    # SpyUnit not included because it has no interactions with other units,
+    # so it doesn't need to run inside the Units.attack method.
+    allUnitInterfaces: List[type[BlueprintUnit]] = [
         SoldierUnit,
         TankUnit,
         ArtilleryUnit,
@@ -326,35 +347,40 @@ class Units(Military):
     """
     When you want the data to be validated call object.attach_units(selected_units)
 
-    Description of properties:
-        - user_id: represents which user the units belongs to, type: integer
-        - selected_units: represents the unit_type and unit_amount, type: dictionary; example: {"unit_name1": unit_amount1}
-        - bonuses: bonus gained from general or something like this, type: integer (i don't know if this will be implemented or not)
+        Description of properties:
+                - user_id: which user the units belong to (type: int)
+                - selected_units: mapping of unit_type to unit_amount, e.g.,
+                    {"unit_name1": unit_amount1}
+                - bonuses: bonus gained from generals or other modifiers (type: int)
     """
 
     def __init__(
         self,
-        user_id,
-        selected_units: dict = None,
-        bonuses: int = None,
-        selected_units_list: list = None,
-        war_id=None,
-    ):
-        self.user_id = user_id
-        self.selected_units = selected_units
-        self.bonuses = bonuses
-        self.supply_costs = 0
-        self.available_supplies = None
-        self.war_id = war_id
+        user_id: int,
+        selected_units: Optional[Dict[str, int]] = None,
+        bonuses: Optional[int] = None,
+        selected_units_list: Optional[List[str]] = None,
+        war_id: Optional[int] = None,
+    ) -> None:
+        self.user_id: int = user_id
+        self.selected_units: Optional[Dict[str, int]] = selected_units
+        self.bonuses: Optional[int] = bonuses
+        self.supply_costs: int = 0
+        self.available_supplies: Optional[int] = None
+        self.war_id: Optional[int] = war_id
+        # Fields used by other methods
+        self.save_for: List[str] = []
+        self.suffered_casualties: Dict[str, int] = {}
 
         # selected_units_list is needed at: Nations.py/Military->fight();
         # a list of selected_units keys
-        self.selected_units_list = selected_units_list
+        self.selected_units_list: Optional[List[str]] = selected_units_list
 
-    # this is needed because we can't store object in server side cache :(
+    # This is needed because we can't store object in server-side cache :(
     @classmethod
-    def rebuild_from_dict(cls, sess_dict):
-        # if you modify the sess_dict it'll affect the actual session, that is why I recomend to create a copy
+    def rebuild_from_dict(cls, sess_dict: dict[str, Any]) -> "Units":
+        # If you modify the `sess_dict` it will affect the actual session;
+        # create a copy to avoid side effects.
         dic = dict(sess_dict)
         sort_out = ["supply_costs", "available_supplies"]
         store_sort_values = []
@@ -369,7 +395,7 @@ class Units(Military):
 
         try:
             reb = cls(**dic)
-        except:
+        except Exception:
             print("ERROR BECAUSE REB CAN't be created")
             raise TypeError
 
@@ -381,10 +407,22 @@ class Units(Military):
     # Validate then attach units
     # Function parameter description:
     #    - selected_units read the Units class document above
-    #    - units_count how many selected_units should be given (will be validated)
-    #        example: units_count = 3 when 3 different unit_type should be selected (like from warchoose)
-    #        example: units_count = 1 when 1 unit_type sould be selected (like a special unit: nukes, icbms)
-    def attach_units(self, selected_units: dict, units_count: int) -> Union[str, None]:
+    #    - units_count: how many selected_units should be provided (validated)
+    #        e.g., units_count = 3 when three different unit types are
+    #        selected (as in warchoose)
+    #        e.g., units_count = 1 when a single special unit is selected
+    #        (like nukes or icbms)
+    def attach_units(
+        self, selected_units: Dict[str, int], units_count: int
+    ) -> Union[str, None]:
+        # Validate then attach units
+        # Function parameter description:
+        #    - selected_units: see the `Units` class docstring above
+        #    - units_count: how many different unit types should be given
+        #        e.g., units_count = 3 when three different unit types are
+        #        selected (as in warchoose)
+        #        e.g., units_count = 1 when a single special unit is selected
+        #        (like nukes or icbms)
         self.supply_costs = 0
         unit_types = list(selected_units.keys())
         normal_units = self.get_military(self.user_id)
@@ -423,10 +461,14 @@ class Units(Military):
         else:
             self.selected_units = selected_units
             self.selected_units_list = list(selected_units.keys())
+            return None
 
     # Attack with all units contained in selected_units
-    def attack(self, attacker_unit: str, target: str) -> Union[str, tuple, None]:
+    def attack(
+        self, attacker_unit: str, target: str
+    ) -> Union[str, Tuple[float, float], None]:
         if self.selected_units:
+            assert self.selected_units is not None
             # Call interface to unit type
             for interface in self.allUnitInterfaces:
                 if interface.unit_type == attacker_unit:
@@ -436,24 +478,37 @@ class Units(Military):
                     if unit_amount is None:
                         return "Unit is not valid!"
 
-                    # interface.supply_cost*self.selected_units[attacker_unit] - calculates the supply cost based on unit amount
-                    # supply = self.attack_cost(interface.supply_cost*self.selected_units[attacker_unit])
+                    # Calculate supply cost based on unit amount, e.g.:
+                    # interface.supply_cost * self.selected_units[attacker_unit]
+                    # supply = self.attack_cost(
+                    #     interface.supply_cost * self.selected_units[attacker_unit]
+                    # )
                     # if supply:
-                    # return supply
+                    #     return supply
 
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)
                         attack_effects = interface_object.attack(target)
+                        # Normalize to a (damage, bonus) tuple of floats for callers
+                        try:
+                            dmg = float(attack_effects[0])
+                            bon = float(attack_effects[1])
+                        except Exception:
+                            return "Invalid attack effects"
+                        return (dmg, bon)
 
                     # doesen't have any effect if unit amount is zero
                     else:
                         return (0, 0)
 
                     return tuple(attack_effects)
+            # If the loop finishes with no matching interface or other fallthrough,
+            # return None to indicate no attack was performed.
+            return None
         else:
             return "Units are not attached!"
 
-    def save(self):
+    def _save_casualties(self) -> None:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -469,14 +524,14 @@ class Units(Military):
             if save_type == "casualties":
                 # The casualties method sets a suffered_casualties
                 for unit_type, amount in self.suffered_casualties.items():
-                    mil_statement = (
-                        f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
-                    )
+                    mil_statement = f"SELECT {unit_type} FROM military " "WHERE id=(%s)"
                     db.execute(mil_statement, (self.user_id,))
-                    available_unit_amount = db.fetchone()[0]
+                    from database import fetchone_first
+
+                    available_unit_amount = fetchone_first(db, 0)
 
                     mil_update = (
-                        f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
+                        f"UPDATE military SET {unit_type}=(%s) " "WHERE id=(%s)"
                     )
                     db.execute(
                         mil_update, (available_unit_amount - amount, self.user_id)
@@ -506,6 +561,7 @@ class Units(Military):
         # TODO: optimize this by creating integer at the user side
         amount = int(floor(amount))
         # print("LOSS AMOUNT", self.user_id, unit_type, amount)
+        assert self.selected_units is not None
         unit_amount = self.selected_units[unit_type]
 
         if amount > unit_amount:
@@ -522,7 +578,7 @@ class Units(Military):
         db.execute(mil_update, (available_unit_amount - amount, self.user_id))
         connection.commit()
 
-    def save(self):
+    def save(self) -> Union[str, None]:
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
             user=os.getenv("PG_USER"),
@@ -536,37 +592,42 @@ class Units(Military):
         # Save supplies
         try:
             db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) "
+                "AND peace_date IS NULL",
                 (self.user_id, self.user_id),
             )
             war_id = db.fetchall()[-1][0]
-        except:
+        except Exception:
             return "War is already over!"
 
         if war_id is not None:
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-            is_attacker = db.fetchone()[0]
+            from database import fetchone_first
+
+            is_attacker = fetchone_first(db, 0)
 
             if is_attacker == self.user_id:
                 sign = "attacker_supplies"
             else:
                 sign = "defender_supplies"
 
-            sign_select = f"SELECT {sign} FROM wars " + " WHERE id=(%s)"
+            sign_select = f"SELECT {sign} FROM wars " "WHERE id=(%s)"
             db.execute(sign_select, (war_id,))
-            current_supplies = db.fetchone()[0]
+            current_supplies = fetchone_first(db, 0)
 
-            sign_update = f"UPDATE wars SET {sign}" + "=(%s) WHERE id=(%s)"
+            sign_update = f"UPDATE wars SET {sign}=(%s) " "WHERE id=(%s)"
             db.execute(sign_update, (current_supplies - self.supply_costs, war_id))
 
             connection.commit()
+            return None
         else:
             print("ERROR DURING SAVE")
             return "ERROR DURING SAVE"
 
-    # Fetch the available supplies and resources which are required and compare it to unit attack cost
-    # It also saves the remaining morale to the database
-    def attack_cost(self, cost: int) -> str:
+    # Fetch the available supplies and resources which are required and
+    # compare them to unit attack cost. It also saves the remaining morale
+    # to the database
+    def attack_cost(self, cost: int) -> Optional[str]:
         if self.available_supplies is None:
             connection = psycopg2.connect(
                 database=os.getenv("PG_DATABASE"),
@@ -583,8 +644,9 @@ class Units(Military):
             # Resolve attacker id safely and compare to this object's user id.
             attacker_id = row[0] if row else None
 
-            # If the current Units object belongs to the attacker side, read attacker_supplies,
-            # otherwise read defender_supplies. Fall back to 0 if values are missing.
+            # If the current Units object belongs to the attacker side,
+            # read attacker_supplies; otherwise read defender_supplies.
+            # Fall back to 0 if values are missing.
             if attacker_id is not None and attacker_id == self.user_id:
                 db.execute(
                     "SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,)
@@ -608,6 +670,7 @@ class Units(Military):
         self.supply_costs += cost
         if self.supply_costs > self.available_supplies:
             return "Not enough supplies available"
+        return None
 
 
 # DEBUGGING
@@ -627,7 +690,8 @@ if __name__ == "__main__":
     import time
 
     db.execute(
-        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
+        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze',"
+        f"'falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
     )
     connection.commit()
 

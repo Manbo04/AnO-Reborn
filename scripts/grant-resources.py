@@ -11,8 +11,9 @@ Intended to run via Railway:
 import os
 import sys
 from urllib.parse import urlparse
-from dotenv import load_dotenv
+
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -83,7 +84,9 @@ try:
 
     conn.commit()
     print(
-        f"Granted user {user_id}: +{gold_amount} gold, +{resource_amount} to each resource"
+        "Granted user "
+        f"{user_id}: +{gold_amount} gold, +{resource_amount} to "
+        "each resource"
     )
 except Exception as e:
     conn.rollback()

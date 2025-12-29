@@ -1,7 +1,7 @@
-from app import app
-from flask import request, redirect, session
-import os
 from dotenv import load_dotenv
+from flask import redirect, request, session
+
+from AnO.app import app
 from database import get_db_cursor
 
 load_dotenv()
@@ -47,12 +47,12 @@ def get_policies_from_request(type, prange, form):
     policies = []
     for i in range(1, prange + 1):
         value = form.get(f"{type}{i}")
-        if value != None:
+        if value is not None:
             policies.append(int(value))
     return policies
 
 
-@app.route("/policies/update", methods=["POST"])
+@app.route("/policies/update", methods=["POST"])  # type: ignore[untyped-decorator]
 def policies():
     cId = session["user_id"]
 

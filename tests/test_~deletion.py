@@ -1,9 +1,10 @@
-from test_auth import login, login_session
+import os
+
 import credentials
 import psycopg2
-import os
 from dotenv import load_dotenv
 from init import BASE_URL
+from test_auth import login, login_session
 
 load_dotenv()
 
@@ -23,18 +24,23 @@ def delete_user(username, email, session):
 
     try:
         db.execute(
-            "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
+            (
+                "SELECT id FROM users WHERE username=%s "
+                "AND email=%s AND auth_type='normal'"
+            ),
             (username, email),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if row is None:
+            return True
+    except Exception:
         return True
     return False
 
 
 def test_deletion():
-    assert delete_user(credentials.username, credentials.email, login_session) == True
+    assert delete_user(credentials.username, credentials.email, login_session) is True
 
 
 def test_login_after_deletion():
-    assert login(login_session) == False
+    assert login(login_session) is False

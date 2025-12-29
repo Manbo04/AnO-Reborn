@@ -49,3 +49,38 @@ Affairs & order is a nation simulation game, where you can make your own nation,
 2. Run the beat pool by running: `celery -A app.celery beat --loglevel=INFO` in the terminal.
 3. Run *1* worker by running: `celery -A app.celery worker --loglevel=INFO` in another terminal window.
 4. For `celery` to work, RabbitMQ must be running.
+
+## Testing
+
+Run unit tests locally with:
+
+```bash
+python -m pytest -q
+```
+
+DB-backed integration tests are skipped by default to avoid accidental
+connections to production databases. To run the DB integration tests locally:
+
+1. Ensure a local Postgres instance is running and available.
+2. Create and initialize the test database (you can use `init_db_railway.py`):
+
+```bash
+export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+python init_db_railway.py
+```
+
+3. Set the flag and run integration tests:
+
+```bash
+export RUN_DB_INTEGRATION=1
+export PG_HOST=localhost
+export PG_PORT=5432
+export PG_DATABASE=postgres
+export PG_USER=postgres
+export PG_PASSWORD=postgres
+python -m pytest tests/integration -q
+```
+
+CI runs a dedicated `db-integration` job that starts a Postgres service,
+initializes the schema, and runs these integration tests in an isolated
+environment.

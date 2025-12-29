@@ -1,4 +1,11 @@
-# Byte-compiled / optimized / DLL files
+*.coverage
+/.coverage
+coverage.xml
+.pytest_cache/
+__pycache__/
+*.py[cod]
+env/
+venv/# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -10,6 +17,7 @@ __pycache__/
 .venv
 env/
 venv/
+venv310/
 ENV/
 env.bak/
 venv.bak/

@@ -1,10 +1,9 @@
-from flask import Blueprint, render_template, session, redirect
-from helpers import login_required, error
-from database import get_db_cursor
-import os
-
 # Game.ping() # temporarily removed this line because it might make celery not work
 from dotenv import load_dotenv
+from flask import Blueprint, redirect, render_template, session
+
+from database import get_db_cursor
+from helpers import error, login_required
 
 load_dotenv()
 
@@ -21,7 +20,11 @@ def get_upgrades(cId):
         return dict(zip(colnames, row))
 
 
-@bp.route("/upgrades", methods=["GET"])
+@bp.route(
+    "/upgrades",
+    methods=["GET"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def upgrades():
     cId = session["user_id"]
@@ -29,7 +32,11 @@ def upgrades():
     return render_template("upgrades.html", upgrades=upgrades)
 
 
-@bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
+@bp.route(
+    "/upgrades_sb/<ttype>/<thing>",
+    methods=["POST"],
+)
+# type: ignore[untyped-decorator]
 @login_required
 def upgrade_sell_buy(ttype, thing):
     prices = {
@@ -113,7 +120,7 @@ def upgrade_sell_buy(ttype, thing):
             current_gold = db.fetchone()[0]
 
             if current_gold < money:
-                return error(400, f"You don't have enough money to buy this upgrade.")
+                return error(400, "You don't have enough money to buy this upgrade.")
 
             for resource, amount in resources.items():
                 db.execute(f"SELECT {resource} FROM resources WHERE id=%s", (cId,))
@@ -121,7 +128,10 @@ def upgrade_sell_buy(ttype, thing):
                 if current_amount < amount:
                     return error(
                         400,
-                        f"You don't have enough {resource.upper()} to buy this upgrade.",
+                        (
+                            f"You don't have enough {resource.upper()} "
+                            "to buy this upgrade."
+                        ),
                     )
 
             db.execute(

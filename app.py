@@ -1,45 +1,66 @@
-import ast
-import sys, os
+#!/usr/bin/env python3
+"""Main Flask application entrypoint."""
+# Allow imports to appear after small compatibility shims; ignore E402 here
+# as this file intentionally performs early runtime shims before other imports.
+# flake8: noqa: E402
+import os  # noqa: E402
+import traceback  # noqa: E402
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-if not hasattr(ast, "Str"):
-    ast.Str = ast.Constant
-if not hasattr(ast, "Num"):
-    ast.Num = ast.Constant
-if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = ast.Constant
-if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = ast.Constant
-import ast
-import sys, os
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-if not hasattr(ast, "Str"):
-    ast.Str = ast.Constant
-if not hasattr(ast, "Num"):
-    ast.Num = ast.Constant
-if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = ast.Constant
-if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = ast.Constant
-
+from dotenv import load_dotenv  # noqa: E402
 from flask import (
     Flask,
-    request,
-    render_template,
-    session,
     redirect,
+    render_template,
+    request,  # noqa: E402
     send_from_directory,
-    jsonify,
+    session,
 )
-import traceback
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+import compat  # apply early runtime shims and sys.path adjustments  # noqa: F401
 
+load_dotenv()  # noqa: E402
+
+
+import logging
+import random
+import string
+from datetime import datetime as dt
+
+import psycopg2
+import requests  # used by RequestsHandler  # type: ignore[import-untyped]
+from flaskext.markdown import Markdown
+from psycopg2.extras import RealDictCursor
+
+import intelligence  # noqa: F401
+import market  # noqa: F401
+import tasks  # noqa: F401
+import upgrades  # noqa: F401  # imported for side-effects (blueprints)
+from database import get_db_cursor
+from helpers import login_required
+from variables import MILDICT, PROVINCE_UNIT_PRICES
 
 app = Flask(__name__)
+
+# Register blueprints defined in modules that no longer import `app` directly
+from market import market_bp  # imported lazily to avoid circular import
+
+app.register_blueprint(market_bp)
+
+import statistics  # noqa: F401
+
+import change  # noqa: F401
+import coalitions  # noqa: F401
+import countries  # noqa: F401
+import login  # noqa: F401
+import military  # noqa: F401
+import policies  # noqa: F401
+
+# Import modules that define routes/blueprints and expect `app` to exist.
+# These are imported lazily after the Flask `app` is created to avoid
+# circular import issues when modules import `app` during route registration.
+import province  # noqa: F401
+import signup  # noqa: F401
+from wars.routes import wars_bp
 
 # NOTE: Previously we instrumented session saving for debugging Set-Cookie
 # issues. That instrumentation has been removed to avoid verbose logs in
@@ -47,7 +68,7 @@ app = Flask(__name__)
 
 
 # Debug test route for logging verification (must be after app is defined)
-## Only one debugtest route should exist, after app = Flask(__name__)
+# Only one debugtest route should exist, after app = Flask(__name__)
 
 
 # Add global 403 error handler after app is defined
@@ -102,7 +123,7 @@ def before_request():
 
 
 # Import cache_response decorator
-from database import cache_response
+from database import cache_response  # noqa: E402
 
 # Performance: Enable gzip compression for responses
 try:
@@ -131,7 +152,6 @@ def add_cache_headers(response):
     return response
 
 
-# Helper to get minified asset path in production
 def asset(filename):
     """Returns minified version of asset in production, original in development"""
     import os
@@ -153,36 +173,6 @@ def asset(filename):
 
 # Make asset helper available in templates
 app.jinja_env.globals["asset"] = asset
-
-import upgrades
-import intelligence
-import tasks
-import market
-import province
-import military
-import change
-import coalitions
-import countries
-import signup
-import login
-from wars.routes import wars_bp
-import policies
-import statistics
-import requests
-import logging
-from variables import MILDICT, PROVINCE_UNIT_PRICES
-from flaskext.markdown import Markdown
-from psycopg2.extras import RealDictCursor
-from datetime import datetime as dt
-import string
-import random
-import os
-from helpers import login_required
-from database import get_db_cursor
-import psycopg2
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 # LOGGING
@@ -212,7 +202,7 @@ class RequestsHandler(logging.Handler):
         self.send_discord_webhook(record)
 
 
-###
+##
 
 
 Markdown(app)
@@ -291,7 +281,7 @@ def page_not_found(error):
 
 @app.errorhandler(405)
 def method_not_allowed(error):
-    message = f"This request method is not allowed!"
+    message = "This request method is not allowed!"
     return render_template("error.html", code=405, message=message)
 
 
@@ -431,6 +421,7 @@ def inject_user():
 
 
 @app.route("/", methods=["GET"])
+# type: ignore[untyped-decorator]
 def index():
     # In local development/testing, ensure a visible debug cookie is set on the
     # home page when a session exists or to help test clients detect cookie
@@ -453,11 +444,13 @@ def index():
 
 
 @app.route("/robots.txt")
+# type: ignore[untyped-decorator]
 def robots():
     return send_from_directory("static", "robots.txt")
 
 
 @app.route("/account", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 @cache_response(ttl_seconds=60)
 def account():
@@ -471,12 +464,14 @@ def account():
 
 
 @app.route("/recruitments", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def recruitments():
     return render_template("recruitments.html")
 
 
 @app.route("/businesses", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def businesses():
     return render_template("businesses.html")
@@ -484,6 +479,7 @@ def businesses():
 
 # Redirect bare /country to the user's own country page
 @app.route("/country", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def country_redirect():
     return redirect("/my_country")
@@ -498,6 +494,7 @@ def assembly():
 
 
 @app.route("/logout")
+# type: ignore[untyped-decorator]
 def logout():
     if session.get("user_id") is not None:
         session.clear()
@@ -507,11 +504,13 @@ def logout():
 
 
 @app.route("/tutorial", methods=["GET"])
+# type: ignore[untyped-decorator]
 def tutorial():
     return render_template("tutorial.html")
 
 
 @app.route("/forgot_password", methods=["GET"])
+# type: ignore[untyped-decorator]
 def forget_password():
     return render_template("forgot_password.html")
 
@@ -524,11 +523,13 @@ def statistics():
 
 
 @app.route("/my_offers", methods=["GET"])
+# type: ignore[untyped-decorator]
 def myoffers():
     return render_template("my_offers.html")
 
 
 @app.route("/war", methods=["GET"])
+# type: ignore[untyped-decorator]
 def war():
     # Redirect to the consolidated Wars page handled by the 'wars' blueprint
     return redirect("/wars")
@@ -537,12 +538,14 @@ def war():
 ## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
 ## compatibility by redirecting to the war result page for logged-in users in the blueprint.
 @app.route("/warresult", methods=["GET"])
+# type: ignore[untyped-decorator]
 def warresult_deprecated():
     # Redirect to canonical /warResult route when accessed from legacy code
     return redirect("/warResult")
 
 
 @app.route("/mass_purchase", methods=["GET"])
+# type: ignore[untyped-decorator]
 @login_required
 def mass_purchase():
     cId = session["user_id"]
@@ -564,6 +567,7 @@ def mass_purchase():
 
 
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
+# type: ignore[untyped-decorator]
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 

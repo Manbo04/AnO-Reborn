@@ -1,17 +1,17 @@
-from celery import Celery
-import psycopg2
-import os
+import math
 import time
-from dotenv import load_dotenv
-from attack_scripts import Economy
-import math
-import variables
-from psycopg2.extras import RealDictCursor
+
+import psycopg2
+from celery import Celery
 from celery.schedules import crontab
-import math
+from dotenv import load_dotenv
+
+import config  # Parse Railway environment variables
+import variables
+from typing import Any, Union, cast
+from attack_scripts import Economy
 
 load_dotenv()
-import config  # Parse Railway environment variables
 
 redis_url = config.get_redis_url()
 celery = Celery("app", broker=redis_url)
@@ -56,9 +56,10 @@ celery.conf.update(
 
 
 # Handles exception for an error
-def handle_exception(e):
+def handle_exception(e: BaseException) -> None:
     filename = __file__
-    line = e.__traceback__.tb_lineno
+    tb = getattr(e, "__traceback__", None)
+    line = tb.tb_lineno if tb is not None else None
     print("\n-----------------START OF EXCEPTION-------------------")
     print(f"Filename: {filename}")
     print(f"Error: {e}")
@@ -67,47 +68,57 @@ def handle_exception(e):
 
 
 # Returns how many rations a player needs
-def rations_needed(cId):
+def rations_needed(cId: int) -> int:
+    from psycopg2.extras import RealDictCursor
     from database import get_db_cursor
 
-    with get_db_cursor() as db:
+    # Use a RealDictCursor so we get a mapping of column->value which is
+    # easier to work with for dynamic column lists and avoids indexing
+    # into opaque DB row objects.
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
         # Use aggregated query instead of loop
         db.execute(
             "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s", (cId,)
         )
-        total_population = db.fetchone()[0]
+        row = db.fetchone()
+        total_population = int(row[0]) if row else 0
         return total_population // variables.RATIONS_PER
 
 
 # Returns energy production and consumption from a certain province
-def energy_info(province_id):
+def energy_info(province_id: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        production = 0
-        consumption = 0
+        production: int = 0
+        consumption: int = 0
 
-        consumers = variables.ENERGY_CONSUMERS
-        producers = variables.ENERGY_UNITS
+        consumers: list[str] = variables.ENERGY_CONSUMERS
+        producers: list[str] = variables.ENERGY_UNITS
 
-        infra = variables.NEW_INFRA
+        infra: dict[str, dict[str, Any]] = cast(
+            dict[str, dict[str, Any]], variables.NEW_INFRA
+        )
 
         # Fetch all data in a single query
         all_fields = consumers + producers
         query = f"SELECT {', '.join(all_fields)} FROM proInfra WHERE id=%s"
         db.execute(query, (province_id,))
-        result = db.fetchone()
+        row = db.fetchone()
 
-        if not result:
+        if not row:
             return 0, 0
 
-        # Calculate consumption from first N fields
-        consumption = sum(result[: len(consumers)])
+        # Convert to a plain dict so mypy understands we can call `.get`
+        row_dict: dict[str, Any] = dict(row)
 
-        # Calculate production from remaining fields
-        for idx, producer in enumerate(producers):
-            producer_count = result[len(consumers) + idx]
-            production += producer_count * infra[producer]["plus"]["energy"]
+        consumption = 0
+        for c in consumers:
+            consumption += int(row_dict.get(c, 0))
+
+        for p in producers:
+            producer_count = int(row_dict.get(p, 0))
+            production += producer_count * infra[p]["plus"]["energy"]
 
         return consumption, production
 
@@ -115,14 +126,15 @@ def energy_info(province_id):
 # Returns a rations score for a user, from -1 to -1.4
 # -1 = Enough or more than enough rations
 # -1.4 = No rations at all
-def food_stats(user_id):
+def food_stats(user_id: int) -> float:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
         needed_rations = rations_needed(user_id)
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-        current_rations = db.fetchone()[0]
+        row = db.fetchone()
+        current_rations = int(row[0]) if row else 0
 
     if needed_rations == 0:
         needed_rations = 1
@@ -139,7 +151,7 @@ def food_stats(user_id):
 # Returns an energy score for a user, from -1 to -1.6
 # -1 = Enough or more than enough energy
 # -1.6 = No energy at all
-def energy_stats(user_id):
+def energy_stats(user_id: int) -> float:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
@@ -172,7 +184,7 @@ def energy_stats(user_id):
 
 
 # Function for calculating tax income
-def calc_ti(user_id):
+def calc_ti(user_id: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
@@ -180,6 +192,7 @@ def calc_ti(user_id):
         consumer_goods = db.fetchone()[0]
 
         # Education policies (may not exist yet)
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
             policies = db.fetchone()[0]
@@ -198,7 +211,7 @@ def calc_ti(user_id):
         if not provinces:  # User doesn't have any provinces
             return False, False
 
-        income = 0
+        income: float = 0.0
         for population, land in provinces:  # Base and land calculation
             land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
             if land_multiplier > 1:
@@ -240,8 +253,8 @@ def calc_ti(user_id):
 
 
 # Function for actually giving money to players
-def tax_income():
-    from database import get_db_connection, BatchOperations
+def tax_income() -> None:
+    from database import get_db_connection
 
     try:
         with get_db_connection() as conn:
@@ -267,9 +280,13 @@ def tax_income():
                 if not money and not consumer_goods:
                     continue
 
-                print(
-                    f"Updated money for user id: {user_id}. Set {current_money} money to {current_money + money} money. (+{money})"
+                new_money = current_money + money
+                msg = (
+                    f"Updated money for user id: {user_id}. "
+                    f"Set {current_money} money to "
+                    f"{new_money} money. (+{money})"
                 )
+                print(msg)
 
                 money_updates.append((money, user_id))
                 if consumer_goods != 0:
@@ -292,20 +309,23 @@ def tax_income():
                 )
     except psycopg2.InterfaceError as e:
         print(
-            f"Database connection error in tax_income: {e}. Skipping tax income update."
+            "Database connection error in tax_income: %s. "
+            "Skipping tax income update." % (e,)
         )
         return
 
 
 # Function for calculating population growth for a given province
-def calc_pg(pId, rations):
+def calc_pg(pId: int, rations: int) -> tuple[int, int]:
     from database import get_db_cursor
 
     with get_db_cursor() as db:
         db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
         curPop = db.fetchone()[0]
 
-        maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
+        maxPop: float = float(
+            variables.DEFAULT_MAX_POPULATION
+        )  # Base max population: 1 million
 
         try:
             db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
@@ -327,47 +347,60 @@ def calc_pg(pId, rations):
             land * variables.LAND_MAX_POPULATION_ADDITION
         )  # Each land slot adds 120,000 population
 
+        # Initialize to float so later fractional modifiers don't cause
+        # type-inference conflicts with mypy.
+        happiness: float = 0.0
         try:
             db.execute("SELECT happiness FROM provinces WHERE id=%s", (pId,))
-            happiness = int(db.fetchone()[0])
+            happiness = float(db.fetchone()[0])
         except TypeError:
-            happiness = 0
+            happiness = 0.0
 
+        pollution: float = 0.0
         try:
             db.execute("SELECT pollution FROM provinces WHERE id=%s", (pId,))
-            pollution = db.fetchone()[0]
+            pollution = float(db.fetchone()[0])
         except TypeError:
-            pollution = 0
+            pollution = 0.0
 
+        productivity: float = 0.0
         try:
             db.execute("SELECT productivity FROM provinces WHERE id=%s", (pId,))
-            productivity = db.fetchone()[0]
+            productivity = float(db.fetchone()[0])
         except TypeError:
-            productivity = 0
+            productivity = 0.0
 
         # Each % increases / decreases max population by
-        happiness = round(
-            (happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2
+        happiness = float(
+            round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2)
         )  # The more you have the better
 
         # Each % increases / decreases max population by
-        pollution = round(
-            (pollution - 50) * -variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2
+        pollution = float(
+            round(
+                (pollution - 50)
+                * -variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER,
+                2,
+            )
         )  # The less you have the better
 
         # Each % increases / decreases resource output by
-        productivity = round(
-            (productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER,
-            2,
+        productivity = float(
+            round(
+                (productivity - 50)
+                * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER,
+                2,
+            )
         )  # The more you have the better
 
         maxPop += (maxPop * happiness) + (maxPop * pollution)
-        maxPop = round(maxPop)
+        maxPop = float(round(maxPop))
 
         if maxPop < variables.DEFAULT_MAX_POPULATION:
             maxPop = variables.DEFAULT_MAX_POPULATION
 
-        rations_increase = 0  # Default rations increase. If user has no rations it will decrease by 1% of maxPop
+        rations_increase: float = 0.0  # Default rations increase.
+        # If user has no rations it will decrease by 1% of maxPop
         rations_needed = curPop // variables.RATIONS_PER
 
         if rations_needed < 1:
@@ -379,23 +412,27 @@ def calc_pg(pId, rations):
 
         rations_increase += round(rations_needed_percent * 2, 2)
 
-        # Calculates the new rations of the player
-        new_rations = rations - rations_needed
-        if new_rations < 0:
-            new_rations = 0
-        new_rations = int(new_rations)
+        # Calculates the rations change for the player. Return a delta so
+        # callers apply it incrementally to avoid race conditions with other
+        # tasks that also update rations (e.g., production).
+        # We only consume as many rations as are available.
+        rations_to_consume = min(rations, rations_needed)
+        rations_delta = -int(rations_to_consume)
 
-        newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
+        newPop: float = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
         # Population must be an integer
         newPop = int(round(newPop))
 
         db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
-        owner = db.fetchone()[0]
+        from database import fetchone_first
 
+        owner = fetchone_first(db, 0)
+
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
-            policies = db.fetchone()[0]
-        except:
+            policies = fetchone_first(db, [])
+        except Exception:
             policies = []
 
         if 5 in policies:
@@ -406,13 +443,15 @@ def calc_pg(pId, rations):
         if fullPop < 0:
             fullPop = 0
 
-        return new_rations, fullPop
+        return rations_delta, fullPop
 
 
 # Seems to be working as expected
-def population_growth():  # Function for growing population
-    from database import get_db_connection
+def population_growth() -> None:  # Function for growing population
     from psycopg2.extras import execute_batch
+
+    from database import get_db_connection
+    from database import fetchone_first
 
     with get_db_connection() as conn:
         db = conn.cursor()
@@ -427,21 +466,26 @@ def population_growth():  # Function for growing population
             province_id = province_id[0]
             try:
                 db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
-                user_id = db.fetchone()[0]
+                user_id = fetchone_first(db, 0)
 
                 db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-                current_rations = db.fetchone()[0]
+                current_rations = fetchone_first(db, 0)
 
-                rations, population = calc_pg(province_id, current_rations)
+                rations_delta, population = calc_pg(province_id, current_rations)
 
-                print(
-                    f"Updated rations for province id: {province_id}, user id: {user_id}"
+                msg = (
+                    f"Updated rations for province id: {province_id}, "
+                    f"user id: {user_id}"
                 )
-                print(
-                    f"Set {current_rations} to {rations} ({rations - current_rations})"
+                print(msg)
+                msg2 = (
+                    f"Applied rations delta for province id: {province_id}, "
+                    f"user id: {user_id} | current: {current_rations} "
+                    f"delta: {rations_delta}"
                 )
-
-                rations_updates.append((rations, user_id))
+                print(msg2)
+                # Use delta updates to avoid clobbering concurrent changes
+                rations_updates.append((rations_delta, user_id))
                 population_updates.append((population, province_id))
 
             except Exception as e:
@@ -450,8 +494,12 @@ def population_growth():  # Function for growing population
 
         # Batch execute updates
         if rations_updates:
+            # Apply deltas and clamp at zero to avoid negative rations and to
+            # preserve production applied by other tasks.
             execute_batch(
-                db, "UPDATE resources SET rations=%s WHERE id=%s", rations_updates
+                db,
+                "UPDATE resources SET rations=GREATEST(rations + %s, 0) WHERE id=%s",
+                rations_updates,
             )
         if population_updates:
             execute_batch(
@@ -459,7 +507,7 @@ def population_growth():  # Function for growing population
             )
 
 
-def find_unit_category(unit):
+def find_unit_category(unit: str) -> Union[str, bool]:
     categories = variables.INFRA_TYPE_BUILDINGS
     for name, list in categories.items():
         if unit in list:
@@ -477,9 +525,10 @@ Tested features:
 """
 
 
-def generate_province_revenue():  # Runs each hour
-    from database import get_db_connection
+def generate_province_revenue() -> None:  # Runs each hour
     from psycopg2.extras import RealDictCursor
+
+    from database import get_db_connection
 
     with get_db_connection() as conn:
         db = conn.cursor()
@@ -504,14 +553,16 @@ def generate_province_revenue():  # Runs each hour
 
         energy_consumers = variables.ENERGY_CONSUMERS
         user_resources = variables.RESOURCES
-        infra = variables.NEW_INFRA
+        infra = cast(dict[str, dict[str, Any]], variables.NEW_INFRA)
 
         try:
             db.execute(
-                "SELECT proInfra.id, provinces.userId, provinces.land FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC"
+                "SELECT proInfra.id, provinces.userId, provinces.land "
+                "FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id "
+                "ORDER BY id ASC"
             )
-            infra_ids = db.fetchall()
-        except:
+            infra_ids = list(db.fetchall())
+        except Exception:
             infra_ids = []
 
     for province_id, user_id, land in infra_ids:
@@ -520,16 +571,19 @@ def generate_province_revenue():  # Runs each hour
         )  # So energy would reset each turn
 
         dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-        upgrades = dict(dbdict.fetchone())
+        upgrades_row = dbdict.fetchone()
+        upgrades: dict[str, Any] = dict(upgrades_row) if upgrades_row else {}
 
+        policies: list[int]
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
             policies = db.fetchone()[0]
-        except:
+        except Exception:
             policies = []
 
         dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
-        units = dict(dbdict.fetchone())
+        units_row = dbdict.fetchone()
+        units: dict[str, int] = dict(units_row) if units_row else {}
 
         for unit in columns:
             unit_amount = units[unit]
@@ -543,8 +597,8 @@ def generate_province_revenue():  # Runs each hour
                 minus = infra[unit].get("minus", {})
 
                 operating_costs = infra[unit]["money"] * unit_amount
-                plus_amount = 0
-                plus_amount_multiplier = 1
+                plus_amount: float = 0.0
+                plus_amount_multiplier: float = 1.0
 
                 if 1 in policies and unit == "universities":
                     operating_costs *= 1.14
@@ -553,10 +607,10 @@ def generate_province_revenue():  # Runs each hour
                 if 6 in policies and unit == "universities":
                     operating_costs *= 0.93
 
-                ### CHEAPER MATERIALS
+                # CHEAPER MATERIALS
                 if unit_category == "industry" and upgrades["cheapermaterials"]:
                     operating_costs *= 0.8
-                ### ONLINE SHOPPING
+                # ONLINE SHOPPING
                 if unit == "malls" and upgrades["onlineshopping"]:
                     operating_costs *= 0.7
 
@@ -566,13 +620,17 @@ def generate_province_revenue():  # Runs each hour
 
                 operating_costs = int(operating_costs)
 
-                # Boolean for whether a player has enough resources, energy, money to power his building
-                has_enough_stuff = {"status": True, "issues": []}
+                # Boolean for whether a player has enough resources, energy,
+                # money to power his building
+                issues: list[str] = []
+                has_enough_stuff: dict[str, Any] = {"status": True, "issues": issues}
 
                 if current_money < operating_costs:
-                    print(
-                        f"Couldn't update {unit} for {province_id} as they don't have enough money"
+                    msg = (
+                        f"Couldn't update {unit} for {province_id} as they don't have "
+                        f"enough money"
                     )
+                    print(msg)
                     has_enough_stuff["status"] = False
                     has_enough_stuff["issues"].append("money")
                 else:
@@ -581,7 +639,7 @@ def generate_province_revenue():  # Runs each hour
                             "UPDATE stats SET gold=gold-%s WHERE id=%s",
                             (operating_costs, user_id),
                         )
-                    except:
+                    except Exception:
                         conn.rollback()
                         continue
 
@@ -598,7 +656,7 @@ def generate_province_revenue():  # Runs each hour
 
                     if new_energy < 0:
                         has_enough_stuff["status"] = False
-                        has_enough_stuff["issues"].append("energy")
+                        issues.append("energy")
                         new_energy = 0
 
                     db.execute(
@@ -607,18 +665,19 @@ def generate_province_revenue():  # Runs each hour
                     )
 
                 dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
-                resources = dict(dbdict.fetchone())
+                resources_row = dbdict.fetchone()
+                resources: dict[str, int] = dict(resources_row) if resources_row else {}
                 for resource, amount in minus.items():
                     amount *= unit_amount
                     current_resource = resources[resource]
 
-                    ### AUTOMATION INTEGRATION
+                    # AUTOMATION INTEGRATION
                     if (
                         unit == "component_factories"
                         and upgrades["automationintegration"]
                     ):
                         amount *= 0.75
-                    ### LARGER FORGES
+                    # LARGER FORGES
                     if unit == "steel_mills" and upgrades["largerforges"]:
                         amount *= 0.7
 
@@ -627,16 +686,22 @@ def generate_province_revenue():  # Runs each hour
                     if new_resource < 0:
                         has_enough_stuff["status"] = False
                         has_enough_stuff["issues"].append(resource)
-                        print(
-                            f"F | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | Failed to minus {amount} of {resource} ({current_resource})"
+                        msg = (
+                            f"F | USER: {user_id} | PROVINCE: {province_id} | "
+                            f"{unit} ({unit_amount}) | Failed to minus {amount} of "
+                            f"{resource} ({current_resource})"
                         )
+                        print(msg)
                     else:
                         resource_u_statement = (
                             f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
                         )
-                        print(
-                            f"S | MINUS | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | {resource} {current_resource}={new_resource} (-{current_resource-new_resource})"
+                        msg = (
+                            f"S | MINUS | USER: {user_id} | PROVINCE: {province_id} | "
+                            f"{unit} ({unit_amount}) | {resource} {current_resource}="
+                            f"{new_resource} (-{current_resource - new_resource})"
                         )
+                        print(msg)
                         db.execute(
                             resource_u_statement,
                             (
@@ -646,14 +711,17 @@ def generate_province_revenue():  # Runs each hour
                         )
 
                 if not has_enough_stuff["status"]:
-                    print(
-                        f"F | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | Not enough {', '.join(has_enough_stuff['issues'])}"
+                    msg = (
+                        f"F | USER: {user_id} | PROVINCE: {province_id} | "
+                        f"{unit} ({unit_amount}) | Not enough "
+                        f"{', '.join(has_enough_stuff['issues'])}"
                     )
+                    print(msg)
                     continue
 
                 plus = infra[unit].get("plus", {})
 
-                ### BETTER ENGINEERING
+                # BETTER ENGINEERING
                 if unit == "nuclear_reactors" and upgrades["betterengineering"]:
                     plus["energy"] += 6
 
@@ -694,8 +762,9 @@ def generate_province_revenue():  # Runs each hour
                     amount += plus_amount
                     amount *= unit_amount
                     amount *= plus_amount_multiplier
-                    # Normalize production to integer units so we don't persist fractional
-                    # resources (e.g., 0.5 rations). Use ceil to avoid losing tiny outputs.
+                    # Normalize production to integer units to avoid fractional
+                    # resources (e.g., 0.5 rations).
+                    # Use ceil to avoid losing tiny outputs.
                     amount = math.ceil(amount)
                     if resource in province_resources:
                         # TODO: make this optimized
@@ -718,9 +787,11 @@ def generate_province_revenue():  # Runs each hour
                         upd_prov_statement = (
                             f"UPDATE provinces SET {resource}" + "=%s WHERE id=%s"
                         )
-                        print(
-                            f"S | PLUS |USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | ADDING | {resource} | {amount}"
+                        msg = (
+                            f"S | PLUS | USER: {user_id} | PROVINCE: {province_id} | "
+                            f"{unit} ({unit_amount}) | ADDING | {resource} | {amount}"
                         )
+                        print(msg)
                         db.execute(
                             upd_prov_statement, (new_resource_number, province_id)
                         )
@@ -730,9 +801,11 @@ def generate_province_revenue():  # Runs each hour
                             f"UPDATE resources SET {resource}={resource}"
                             + "+%s WHERE id=%s"
                         )
-                        print(
-                            f"S | PLUS | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | ADDING | {resource} | {amount}"
+                        msg = (
+                            f"S | PLUS | USER: {user_id} | PROVINCE: {province_id} | "
+                            f"{unit} ({unit_amount}) | ADDING | {resource} | {amount}"
                         )
+                        print(msg)
                         db.execute(
                             upd_res_statement,
                             (
@@ -742,13 +815,23 @@ def generate_province_revenue():  # Runs each hour
                         )
 
                 # Function for completing an effect (adding pollution, etc)
-                def do_effect(eff, eff_amount, sign):
+                def do_effect(
+                    eff: str,
+                    eff_amount: float,
+                    sign: str,
+                    province_id: int = province_id,
+                    unit_category: str | bool = unit_category,
+                    unit: str = unit,
+                    upgrades: dict[str, Any] = upgrades,
+                    policies: list[int] = policies,
+                ) -> None:
                     # TODO: one query for all this
                     effect_select = f"SELECT {eff} FROM provinces " + "WHERE id=%s"
                     db.execute(effect_select, (province_id,))
-                    current_effect = db.fetchone()[0]
+                    row = db.fetchone()
+                    current_effect = int(row[0]) if row else 0
 
-                    ### GOVERNMENT REGULATION
+                    # GOVERNMENT REGULATION
                     if (
                         unit_category == "retail"
                         and upgrades["governmentregulation"]
@@ -756,7 +839,7 @@ def generate_province_revenue():  # Runs each hour
                         and sign == "+"
                     ):
                         eff_amount *= 0.75
-                    ###
+                    #
                     if unit == "universities" and 3 in policies:
                         eff_amount *= 1.1
 
@@ -791,12 +874,14 @@ def generate_province_revenue():  # Runs each hour
 
                 if 5 in policies:
                     db.execute(
-                        "UPDATE provinces SET productivity=productivity*0.91 WHERE id=%s",
+                        "UPDATE provinces SET productivity=productivity*0.91 "
+                        "WHERE id=%s",
                         (province_id,),
                     )
                 if 4 in policies:
                     db.execute(
-                        "UPDATE provinces SET productivity=productivity*1.05 WHERE id=%s",
+                        "UPDATE provinces SET productivity=productivity*1.05 "
+                        "WHERE id=%s",
                         (province_id,),
                     )
                 if 2 in policies:
@@ -811,19 +896,26 @@ def generate_province_revenue():  # Runs each hour
                 continue
 
 
-def war_reparation_tax():
+def war_reparation_tax() -> None:
+    """Run the daily war reparation tax job."""
+    # Function returns None and performs DB updates.
     from database import get_db_cursor
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT id,peace_date,attacker,attacker_morale,defender,defender_morale FROM wars WHERE (peace_date IS NOT NULL) AND (peace_offer_id IS NULL)"
+            "SELECT id, peace_date, attacker, attacker_morale, "
+            "defender, defender_morale "
+            "FROM wars WHERE (peace_date IS NOT NULL) AND (peace_offer_id IS NULL)"
         )
         truces = db.fetchall()
 
         for state in truces:
             war_id, peace_date, attacker, a_morale, defender, d_morale = state
 
-            # For now we simply delete war record if no longer needed for reparation tax (NOTE: if we want history table for wars then move these peace redords to other table or reuse not needed wars table column -- marter )
+            # For now we simply delete war record if no longer needed for
+            # reparation tax.
+            # If a history table for wars is desired, move these peace records
+            # to another table or reuse an existing column.
             # If peace is made longer than a week (604800 = one week in seconds)
             if peace_date < (time.time() - 604800):
                 db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
@@ -853,22 +945,25 @@ def war_reparation_tax():
                             resource, resource_amount * (1 / 20), winner
                         )
                     else:
-                        # transfer 20% of all resource (TODO: implement if and alliance won how to give it)
+                        # Transfer 20% of all resource to the winner.
+                        # TODO: when an alliance wins, determine how to distribute it.
                         eco.transfer_resources(
                             resource, resource_amount * (1 / 5), winner
                         )
 
 
 @celery.task()
-def task_population_growth():
+def task_population_growth() -> None:
     try:
         population_growth()
     except psycopg2.InterfaceError as e:
         # Connection was closed (likely due to forked workers sharing pool).
         # Try to recover by closing/reinitializing the pool and retrying once.
-        print(
-            f"population_growth: caught InterfaceError: {e}. Reinitializing pool and retrying."
+        msg = (
+            f"population_growth: caught InterfaceError: {e}. "
+            f"Reinitializing pool and retrying."
         )
+        print(msg)
         try:
             # Attempt to close pooled connections so child process will reinit
             from database import db_pool
@@ -888,26 +983,27 @@ def task_population_growth():
 
 
 @celery.task()
-def task_tax_income():
+def task_tax_income() -> None:
     tax_income()
 
 
 @celery.task()
-def task_generate_province_revenue():
+def task_generate_province_revenue() -> None:
     generate_province_revenue()
 
 
 # Runs once a day
-# Transfer X% of all resources (could depends on conditions like Raze war_type) to the winner side after a war
+# Transfer X% of all resources to the winner side after a war.
+# This may depend on conditions such as the war type (e.g., 'Raze').
 
 
 @celery.task()
-def task_war_reparation_tax():
+def task_war_reparation_tax() -> None:
     war_reparation_tax()
 
 
 @celery.task()
-def task_manpower_increase():
+def task_manpower_increase() -> None:
     from database import get_db_cursor
 
     with get_db_cursor() as db:

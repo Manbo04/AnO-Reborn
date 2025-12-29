@@ -1,27 +1,31 @@
-from flask import request, render_template, session, redirect, jsonify
-from helpers import error
+import datetime
+import os
+
+import bcrypt
+from dotenv import load_dotenv
+from flask import redirect, render_template, request, session
+from requests_oauthlib import OAuth2Session
 
 # Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
-import bcrypt
-import os
-from requests_oauthlib import OAuth2Session
-from dotenv import load_dotenv
-import datetime
+from AnO.app import app
 from database import get_db_cursor
+from helpers import error
 
 load_dotenv()
 
 
 @app.route("/login/", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 @app.route("/login", methods=["GET", "POST"])
+# type: ignore[untyped-decorator]
 def login():
     if request.method == "POST":
         import logging
 
         logger = logging.getLogger(__name__)
         logger.debug("POST /login/ called")
-        logger.debug("Login: request.form contains keys: %s", list(request.form.keys()))
+        form_keys = list(request.form.keys())
+        logger.debug("Login: request.form contains keys: %s", form_keys)
         app.config["SESSION_PERMANENT"] = True
         app.permanent_session_lifetime = datetime.timedelta(days=365)
 
@@ -60,8 +64,10 @@ def login():
                 logger.debug("Password matches, logging in user.")
                 # sets session's user_id to current user's id
                 session["user_id"] = user[0]
-                logger.debug(f"Session after set: {dict(session)}")
-                # Mark session as permanent and modified to ensure cookie is set on response
+                session_dict = dict(session)
+                logger.debug("Session after set: %s", session_dict)
+                # Mark session as permanent and modified so the cookie is
+                # set on the response
                 session.permanent = True
                 session.modified = True
 
@@ -75,10 +81,8 @@ def login():
                     db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user[0],))
 
                 logger.debug("Returning redirect to / after login")
-                from flask import make_response
-
-                response = redirect("/")
-                return response  # redirects user to homepage
+                # Redirect to homepage; `redirect` returns a response object
+                return redirect("/")
             else:
                 logger.debug("Password does not match.")
                 return error(400, "Wrong password")
@@ -132,6 +136,7 @@ def make_session(token=None, state=None, scope=None):
 
 
 @app.route("/discord_login/", methods=["GET"])
+# type: ignore[untyped-decorator]
 def discord_login():
     app.config["SESSION_PERMANENT"] = True
     app.permanent_session_lifetime = datetime.timedelta(days=365)

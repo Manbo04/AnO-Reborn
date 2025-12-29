@@ -4,17 +4,18 @@ Admin script to reset a user's password
 Usage: python3 admin_reset_password.py <username> <new_password>
 """
 
-import sys
-import bcrypt
 import os
-from dotenv import load_dotenv
+import sys
 from urllib.parse import urlparse
+
+import bcrypt
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
 
-def get_db_connection():
+def get_db_connection() -> "psycopg2.extensions.connection":
     """Get database connection from Railway DATABASE_URL or local config"""
     database_url = os.getenv("DATABASE_URL")
 
@@ -38,7 +39,7 @@ def get_db_connection():
         )
 
 
-def reset_password(username, new_password):
+def reset_password(username: str, new_password: str) -> bool:
     """Reset a user's password"""
 
     if not username or not new_password:

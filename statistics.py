@@ -1,10 +1,12 @@
-from flask import request, render_template, session
-from helpers import login_required
+from flask import render_template
+
+from AnO.app import app
 from database import get_db_cursor
-from app import app
+from helpers import login_required
 
 
 @app.route("/statistics")
+# type: ignore[untyped-decorator]
 @login_required
 def statistics():
     """Display market statistics and nation stats"""
