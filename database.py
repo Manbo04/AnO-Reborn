@@ -4,21 +4,23 @@ Provides connection pooling, query helpers, and unified database access patterns
 """
 
 import psycopg2
-from psycopg2 import pool
 from psycopg2.extras import RealDictCursor, execute_batch
 import os
 from contextlib import contextmanager
-from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Tuple
 import logging
-from functools import lru_cache, wraps
+from functools import wraps
 from time import time
 
-load_dotenv()
-import config  # Parse Railway DATABASE_URL
+# Load environment from .env (if present) before parsing DATABASE_URL
+from dotenv import load_dotenv
 
-# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL) for pool creation (force override)
-from urllib.parse import urlparse
+# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL)
+# for pool creation (force override)
+from urllib.parse import urlparse, parse_qs
+
+# Load environment from .env (if present) before parsing DATABASE_URL
+load_dotenv()
 
 db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 if db_url:
@@ -28,10 +30,22 @@ if db_url:
     os.environ["PG_USER"] = parsed.username or "postgres"
     os.environ["PG_PASSWORD"] = parsed.password or ""
     os.environ["PG_DATABASE"] = parsed.path[1:] if parsed.path else "postgres"
+    # If the URL includes query parameters (e.g., sslmode=require), expose
+    # the relevant option as PGSSLMODE so psycopg2 can use it.
+    if parsed.query:
+        q = parse_qs(parsed.query)
+        sslmode = q.get("sslmode")
+        if sslmode:
+            os.environ["PGSSLMODE"] = sslmode[0]
 else:
+    # Lazy import here so load_dotenv() runs first and environment vars
+    # from a .env file are available to config.parse_database_url().
+    import config
+
     config.parse_database_url()  # fallback to original behavior
 
 logger = logging.getLogger(__name__)
+DEFAULT_CONNECT_TIMEOUT = int(os.getenv("PG_CONNECT_TIMEOUT", "10"))
 
 
 # Simple query result cache for frequently accessed, slowly-changing data
@@ -142,21 +156,55 @@ class DatabasePool:
             except Exception:
                 pass
             self._pool = None
-        try:
-            self._pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=50,
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
+        # Try to initialize the pool, with a small retry/backoff to avoid
+        # hanging indefinitely if the DB is temporarily unavailable.
+        retries = 3
+        backoff = 1
+        last_exc = None
+        for attempt in range(1, retries + 1):
+            try:
+                self._pool = psycopg2.pool.ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=50,
+                    database=os.getenv("PG_DATABASE"),
+                    user=os.getenv("PG_USER"),
+                    password=os.getenv("PG_PASSWORD"),
+                    host=os.getenv("PG_HOST"),
+                    port=os.getenv("PG_PORT"),
+                    sslmode=os.getenv("PGSSLMODE") or None,
+                    connect_timeout=DEFAULT_CONNECT_TIMEOUT,
+                )
+                self._pid = os.getpid()
+                logger.info(
+                    "Database connection pool initialized (pid=%s) on attempt %s",
+                    self._pid,
+                    attempt,
+                )
+                last_exc = None
+                break
+            except Exception as e:
+                last_exc = e
+                logger.warning(
+                    "Attempt %s/%s to initialize DB pool failed: %s",
+                    attempt,
+                    retries,
+                    e,
+                )
+                # small backoff before retrying
+                try:
+                    import time as _time
+
+                    _time.sleep(backoff)
+                except Exception:
+                    pass
+                backoff *= 2
+
+        if last_exc is not None:
+            logger.error(
+                "Failed to initialize database pool after retries: %s", last_exc
             )
-            self._pid = os.getpid()
-            logger.info("Database connection pool initialized (pid=%s)", self._pid)
-        except Exception as e:
-            logger.error(f"Failed to initialize database pool: {e}")
-            raise
+            # Re-raise so calling code can decide how to proceed
+            raise last_exc
 
     def get_connection(self):
         """Get a connection from the pool"""
@@ -173,14 +221,14 @@ class DatabasePool:
                 # Try to close the connection if it can't be returned
                 try:
                     conn.close()
-                except:
+                except Exception:
                     pass
         else:
             logger.warning("Attempted to return connection but pool is not initialized")
             # Close the connection to avoid leaks
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
 
     def close_all(self):
@@ -247,6 +295,8 @@ def get_db_cursor(cursor_factory=None):
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
+                sslmode=os.getenv("PGSSLMODE") or None,
+                connect_timeout=DEFAULT_CONNECT_TIMEOUT,
             )
 
         # If the connection appears closed for any reason, create a fresh one
@@ -261,6 +311,8 @@ def get_db_cursor(cursor_factory=None):
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
+                sslmode=os.getenv("PGSSLMODE") or None,
+                connect_timeout=DEFAULT_CONNECT_TIMEOUT,
             )
 
         cursor = conn.cursor(cursor_factory=cursor_factory)
@@ -332,7 +384,9 @@ class QueryHelper:
 
     @staticmethod
     def execute_many(query: str, params_list: List[tuple]) -> None:
-        """Execute a query with multiple parameter sets using execute_batch for efficiency"""
+        """Execute a query with multiple parameter sets
+        using execute_batch for efficiency
+        """
         with get_db_cursor() as cursor:
             execute_batch(cursor, query, params_list)
 
@@ -352,7 +406,8 @@ class UserQueries:
         """Get all resources for a user in a single query"""
         query = """
             SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper,
-                   lumber, components, steel, consumer_goods, aluminium, gasoline, ammunition
+                   lumber, components, steel, consumer_goods,
+                   aluminium, gasoline, ammunition
             FROM resources WHERE id = %s
         """
         result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
@@ -504,7 +559,8 @@ class CoalitionQueries:
     @staticmethod
     def get_coalition_influence(coalition_id: int) -> int:
         """Calculate total coalition influence efficiently"""
-        # This would need the influence calculation logic, but we can pre-aggregate much of it
+        # This would need the influence calculation logic, but we can
+        # pre-aggregate much of it
         query = """
             SELECT
                 c.userId,
@@ -585,6 +641,34 @@ def get_user_full_data(user_id: int) -> Dict[str, Any]:
         "stats": UserQueries.get_user_stats(user_id),
         "provinces": ProvinceQueries.get_user_provinces_summary(user_id),
     }
+
+
+# Convenience helper used by tasks to safely read the first column of a
+# previously-executed cursor. Many code paths expect a simple value and
+# historically did `row = cursor.fetchone()[0]` which raises when no row is
+# returned. This helper centralizes the safe pattern.
+def fetchone_first(cursor, default=None):
+    """Return the first column of the fetched row or `default` if no row.
+
+    Args:
+        cursor: DB cursor that has just executed a query.
+        default: Value to return when no row is present.
+
+    Returns:
+        The first column of the row or `default`.
+    """
+    row = cursor.fetchone()
+    if not row:
+        return default
+    try:
+        return row[0]
+    except Exception:
+        # Defensive fallback in case row is e.g. a mapping
+        # Try to get a value if possible, else return default
+        try:
+            return next(iter(row.values()))
+        except Exception:
+            return default
 
 
 def close_database_pool():
