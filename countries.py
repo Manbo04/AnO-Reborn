@@ -14,7 +14,6 @@ from datetime import datetime
 from wars.service import target_data
 import math
 from database import get_db_cursor, cache_response
-from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
@@ -73,12 +72,13 @@ def get_econ_statistics(cId):
             SUM(proInfra.ammunition_factories) AS ammunition_factories,
             SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
             SUM(proInfra.oil_refineries) AS oil_refineries
-            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id WHERE provinces.userId=%s;
+            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id
+            WHERE provinces.userId=%s;
             """,
                 (cId,),
             )
             total = dict(dbdict.fetchone())
-        except:
+        except Exception:
             total = {}
 
     expenses = {}
@@ -99,7 +99,7 @@ def get_econ_statistics(cId):
             convert_minus = []
             return False
 
-        if minus != None:
+        if minus is not None:
             unit_type = get_unit_type(unit)
             expenses[unit_type][minus] += minus_amount
         return True
@@ -148,7 +148,6 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId):
     from database import get_db_connection
-    from psycopg2.extras import RealDictCursor
 
     # Use a dedicated connection for the lifetime of this function to
     # prevent nested `get_db_cursor()` calls from accidentally reusing
@@ -156,9 +155,12 @@ def get_revenue(cId):
     with get_db_connection() as conn:
         db = conn.cursor()
 
-        cg_needed = cg_need(cId)
+        # cg_needed not needed in this function; computed in view when rendering
 
-        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+        db.execute(
+            "SELECT id FROM provinces WHERE userId=%s",
+            (cId,),
+        )  # noqa: E501
         provinces = db.fetchall()
 
         revenue = {"gross": {}, "net": {}}
@@ -172,11 +174,7 @@ def get_revenue(cId):
         for province in provinces:
             province = province[0]
 
-            db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
-            buildings = db.fetchone()
-            if buildings is None:
-                buildings = [0] * len(proinfra_columns)
-            # Convert tuple to dict by matching column names
+            # Column names for proInfra table (used to map tuple -> dict)
             proinfra_columns = [
                 "id",
                 "coal_burners",
@@ -214,6 +212,12 @@ def get_revenue(cId):
                 "aluminium_refineries",
                 "oil_refineries",
             ]
+
+            db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
+            buildings = db.fetchone()
+            if buildings is None:
+                buildings = [0] * len(proinfra_columns)
+            # Convert tuple to dict by matching column names
             buildings = dict(zip(proinfra_columns, buildings))
 
             for building, build_count in buildings.items():
@@ -231,7 +235,9 @@ def get_revenue(cId):
                         db.execute(
                             "SELECT land FROM provinces WHERE id=%s", (province,)
                         )
-                        land = db.fetchone()[0]
+                        from database import fetchone_first
+
+                        land = fetchone_first(db, 0)
                         amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
 
                     total = build_count * amount
@@ -244,7 +250,9 @@ def get_revenue(cId):
                     revenue["net"][resource] -= total
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-        current_rations = db.fetchone()[0]
+        from database import fetchone_first
+
+        current_rations = fetchone_first(db, 0)
 
         ti_money, ti_cg = calc_ti(cId)
 
@@ -258,7 +266,8 @@ def get_revenue(cId):
         new_rations = next_turn_rations(cId, prod_rations)
         revenue["net"]["rations"] = new_rations - current_rations
 
-        # Filter to only show resources with positive gross production or non-zero net (for special cases like rations)
+        # Filter to only show resources with positive gross production or
+        # non-zero net (for special cases like rations)
         filtered_revenue = {"gross": revenue["gross"], "net": revenue["net"]}
 
         return filtered_revenue
@@ -273,7 +282,9 @@ def next_turn_rations(cId, prod_rations):
         provinces = db.fetchall()
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-        current_rations = db.fetchone()[0] + prod_rations
+        from database import fetchone_first
+
+        current_rations = fetchone_first(db, 0) + prod_rations
 
         for pId in provinces:
             rations, _ = calc_pg(pId, current_rations)
@@ -287,7 +298,9 @@ def next_turn_rations(cId, prod_rations):
 def delete_news(id):
     with get_db_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
-        destination_id = db.fetchone()[0]
+        from database import fetchone_first
+
+        destination_id = fetchone_first(db, None)
         if destination_id == session["user_id"]:
             db.execute("DELETE FROM news WHERE id=(%s)", (id,))
             return "200"
@@ -304,9 +317,9 @@ def cg_need(user_id):
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (user_id,))
-        population = db.fetchone()[0]
-        if population is None:
-            population = 0
+        from database import fetchone_first
+
+        population = fetchone_first(db, 0)
 
         # How many consumer goods are needed to feed a nation
         cg_needed = math.ceil(population / variables.CONSUMER_GOODS_PER)
@@ -327,7 +340,9 @@ def my_country():
 def country(cId):
     with get_db_cursor() as db:
         db.execute(
-            "SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
+            "SELECT users.username, stats.location, users.description, "
+            "users.date, users.flag "
+            "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
             (cId,),
         )
         row = db.fetchone()
@@ -339,7 +354,8 @@ def country(cId):
         influence = get_influence(cId)
 
         db.execute(
-            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s",
+            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) "
+            "FROM provinces WHERE userId=%s",
             (cId,),
         )
         stats_row = db.fetchone()
@@ -352,20 +368,25 @@ def country(cId):
             provinceCount = 0
 
         db.execute(
-            "SELECT provinceName, id, population, CAST(cityCount AS INTEGER) as cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+            "SELECT provinceName, id, population, "
+            "CAST(cityCount AS INTEGER) as cityCount, land, "
+            "happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC",
             (cId,),
         )
         provinces = db.fetchall()
 
-        cg_needed = cg_need(cId)
+        # cg_needed is not used here; compute later in the view function when needed
 
         try:
             status = cId == str(session["user_id"])
-        except:
+        except Exception:
             status = False
 
         db.execute(
-            "SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s",
+            "SELECT coalitions.colId, coalitions.role, "
+            "colNames.name, colNames.flag "
+            "FROM coalitions INNER JOIN colNames ON "
+            "coalitions.colId=colNames.id WHERE coalitions.userId=%s",
             (cId,),
         )
         col_row = db.fetchone()
@@ -391,7 +412,8 @@ def country(cId):
             db.execute(
                 "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
             )
-            # data order in the tuple appears as in the news schema (notice this when work with this data using jija)
+            # data order in the tuple appears as in the news schema
+            # (notice this when work with this data using jija)
             news = db.fetchall()
             news_amount = len(news)
 
@@ -399,7 +421,8 @@ def country(cId):
         if status:
             revenue = get_revenue(cId)
             db.execute(
-                "SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s",
+                "SELECT name, type, resource, amount, date FROM revenue "
+                "WHERE user_id=%s",
                 (cId,),
             )
             expenses = db.fetchall()
@@ -412,6 +435,9 @@ def country(cId):
             statistics = {}
 
         rations_need = rations_needed(cId)
+
+    # Compute consumer goods needed for rendering
+    cg_needed = cg_need(cId)
 
     return render_template(
         "country.html",
@@ -466,17 +492,18 @@ def countries():
         if not province_range:
             province_range = 0
 
-        db.execute(
-            """SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
-coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
-FROM USERS
-LEFT JOIN provinces ON users.id = provinces.userId
-LEFT JOIN coalitions ON users.id = coalitions.userId
-LEFT JOIN colNames ON colNames.id = coalitions.colId
-GROUP BY users.id, coalitions.colId, colNames.name
-HAVING COUNT(provinces.id) >= %s;""",
-            (province_range,),
-        )
+            db.execute(
+                """SELECT users.id, users.username, users.date, users.flag,
+                COALESCE(SUM(provinces.population), 0) AS province_population,
+                coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
+                FROM USERS
+                LEFT JOIN provinces ON users.id = provinces.userId
+                LEFT JOIN coalitions ON users.id = coalitions.userId
+                LEFT JOIN colNames ON colNames.id = coalitions.colId
+                GROUP BY users.id, coalitions.colId, colNames.name
+                HAVING COUNT(provinces.id) >= %s;""",
+                (province_range,),
+            )
         dbResults = db.fetchall()
 
     # Hack to add influence into the query, filter influence, province range, etc.
@@ -559,7 +586,7 @@ def update_info():
                 current_flag = db.fetchone()[0]
 
                 os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
-            except:
+            except Exception:
                 pass
 
             # Save the file & shit
@@ -619,7 +646,9 @@ def update_info():
             for province_id in provinces:
                 province_id = province_id[0]
                 db.execute(
-                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id=%s",
+                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, "
+                    "copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, "
+                    "lumber_mills=0 WHERE id=%s",  # noqa: E501
                     (province_id,),
                 )
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
@@ -660,7 +689,7 @@ def delete_own_account():
 
         try:
             coalition_role = get_user_role(cId)
-        except:
+        except Exception:
             coalition_role = None
         if coalition_role != "leader":
             pass
