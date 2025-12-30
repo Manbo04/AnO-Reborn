@@ -412,14 +412,18 @@
                                     <a href="#retail" class="templatedivflex2left" id="cityretail" onclick="cityretail()">
 
                                         <h3 class="smallheader">Retail
+                                            {% if not has_power %}
                                             <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                            {% endif %}
                                         </h3>
 
                                     </a>
                                     <a href="#publicWorks" class="templatedivflex2left" id="cityworks" onclick="cityworks()">
 
                                         <h3 class="smallheader">Public Works
+                                            {% if not has_power %}
                                             <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                            {% endif %}
                                         </h3>
 
                                     </a>
@@ -1208,7 +1212,9 @@
                                     <a href="#processing" class="templatedivflex2left" id="landprocessing" onclick="landprocessing()">
 
                                         <h3 class="smallheader">Processing
+                                            {% if not has_power %}
                                             <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                            {% endif %}
                                         </h3>
 
                                     </a>
