@@ -247,8 +247,8 @@ def callback():
                 "SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'",
                 (discord_auth,),
             )
-            duplicate = db.fetchone()[0]
-            duplicate = True
+            _row = db.fetchone()
+            duplicate = True if _row else False
         except TypeError:
             duplicate = False
 
@@ -285,7 +285,9 @@ def discord_register():
                 """,
                     (client_ip,),
                 )
-                attempt_count = db.fetchone()[0]
+                from database import fetchone_first
+
+                attempt_count = fetchone_first(db, 0)
                 if attempt_count >= 3:
                     return error(
                         429,
