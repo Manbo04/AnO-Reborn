@@ -146,7 +146,13 @@ def discord_login():
             "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord'",
             (discord_auth,),
         )
-        user_id = db.fetchone()[0]
+        from database import fetchone_first
+
+        user_id = fetchone_first(db, 0)
+
+        if not user_id:
+            # No user yet — direct to signup flow
+            return redirect("/discord_signup")
 
         # TODO: remove later, this is for old users
         try:

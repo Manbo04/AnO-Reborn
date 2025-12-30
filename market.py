@@ -21,6 +21,7 @@ def give_resource(giver_id, taker_id, resource, amount):
     )
 
     db = conn.cursor()
+    from database import fetchone_first
 
     if giver_id != "bank":
         giver_id = int(giver_id)
@@ -37,7 +38,9 @@ def give_resource(giver_id, taker_id, resource, amount):
     if resource in ["gold", "money"]:
         if giver_id != "bank":
             db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
-            current_giver_money = db.fetchone()[0]
+            from database import fetchone_first
+
+            current_giver_money = fetchone_first(db, 0)
 
             if current_giver_money < amount:
                 return "Giver doesn't have enough resources to transfer such amount."
@@ -53,7 +56,9 @@ def give_resource(giver_id, taker_id, resource, amount):
                 f"SELECT {resource} FROM resources WHERE " + "id=%s"
             )
             db.execute(current_resource_statement, (giver_id,))
-            current_giver_resource = db.fetchone()[0]
+            from database import fetchone_first
+
+            current_giver_resource = fetchone_first(db, 0)
 
             if current_giver_resource < amount:
                 return "Giver doesn't have enough resources to transfer such amount."
@@ -116,14 +121,14 @@ def market():
 
         if offer_type is not None and price_type is None:
             db.execute("SELECT offer_id FROM offers WHERE type=(%s)", (offer_type,))
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is None and price_type is not None:
             offer_ids_statement = (
                 f"SELECT offer_id FROM offers ORDER BY price {price_type}"
             )
             db.execute(offer_ids_statement)
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is not None and price_type is not None:
             offer_ids_statement = (
@@ -131,11 +136,11 @@ def market():
                 + f"ORDER by price {price_type}"
             )
             db.execute(offer_ids_statement, (offer_type,))
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         elif offer_type is None and price_type is None:
             db.execute("SELECT offer_id FROM offers ORDER BY price ASC")
-            offer_ids_list = db.fetchall()
+            _ = db.fetchall()
 
         if filter_resource is not None:
             resources_list = variables.RESOURCES
@@ -242,13 +247,23 @@ def buy_market_offer(offer_id):
     db = connection.cursor()
 
     cId = session["user_id"]
-    amount_wanted = int(request.form.get(f"amount_{offer_id}").replace(",", ""))
+    # Guard against missing or invalid form input
+    amt_raw = request.form.get(f"amount_{offer_id}")
+    if not amt_raw:
+        return error(400, "Missing amount")
+    try:
+        amount_wanted = int(amt_raw.replace(",", ""))
+    except ValueError:
+        return error(400, "Invalid amount")
 
     db.execute(
         "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
         (offer_id,),
     )
-    resource, total_amount, price_for_one, seller_id = db.fetchone()
+    _row = db.fetchone()
+    if not _row:
+        return error(404, "Offer not found")
+    resource, total_amount, price_for_one, seller_id = _row
 
     if amount_wanted < 1:
         return error(400, "Amount cannot be less than 1")
@@ -257,7 +272,9 @@ def buy_market_offer(offer_id):
         return error(400, "Amount wanted cant be higher than total amount")
 
     db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-    buyers_gold = int(db.fetchone()[0])
+    from database import fetchone_first
+
+    buyers_gold = int(fetchone_first(db, 0))
 
     total_price = amount_wanted * price_for_one
 
@@ -306,12 +323,15 @@ def sell_market_offer(offer_id):
         "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
         (offer_id,),
     )
-    resource, total_amount, price_for_one, buyer_id = db.fetchone()
+    row = db.fetchone()
+    if not row:
+        return error(404, "Offer not found")
+    resource, total_amount, price_for_one, buyer_id = row
 
     # Sees how much of the resource the seller has
     resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
     db.execute(resource_statement, (seller_id,))
-    sellers_resource = db.fetchone()[0]
+    sellers_resource = fetchone_first(db, 0)
 
     if amount_wanted < 1:
         return error(400, "Amount cannot be less than 1")
@@ -395,7 +415,9 @@ def post_offer(offer_type):
     if offer_type == "sell":
         rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
         db.execute(rStatement, (cId,))
-        realAmount = int(db.fetchone()[0])
+        from database import fetchone_first
+
+        realAmount = int(fetchone_first(db, 0))
 
         if amount > realAmount:  # Checks if user wants to sell more than he has
             return error(400, "Selling amount is higher than the amount you have.")
@@ -429,7 +451,7 @@ def post_offer(offer_type):
 
         money_to_take_away = int(amount) * int(price)
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        current_money = db.fetchone()[0]
+        current_money = fetchone_first(db, 0)
 
         if current_money < money_to_take_away:
             return error(400, "You don't have enough money.")
@@ -564,7 +586,9 @@ def trade_offer(offer_type, offeree_id):
         if offer_type == "sell":
             rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
             db.execute(rStatement, (cId,))
-            realAmount = int(db.fetchone()[0])
+            from database import fetchone_first
+
+            realAmount = int(fetchone_first(db, 0))
 
             if amount > realAmount:  # Checks if user wants to sell more than he has
                 return error("400", "Selling amount is higher the amount you have.")
@@ -591,7 +615,7 @@ def trade_offer(offer_type, offeree_id):
 
             money_to_take_away = amount * price
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            current_money = db.fetchone()[0]
+            current_money = fetchone_first(db, 0)
             if current_money < money_to_take_away:
                 return error(400, "You don't have enough money.")
             new_money = current_money - money_to_take_away
@@ -736,7 +760,9 @@ def transfer(transferee):
 
     if resource in ["gold", "money"]:
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        user_money = db.fetchone()[0]
+        from database import fetchone_first
+
+        user_money = fetchone_first(db, 0)
 
         if amount > user_money:
             return error(400, "You don't have enough money.")
@@ -750,7 +776,7 @@ def transfer(transferee):
     else:
         user_resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
         db.execute(user_resource_statement, (cId,))
-        user_resource = int(db.fetchone()[0])
+        user_resource = int(fetchone_first(db, 0))
 
         if amount > user_resource:
             return error(400, "You don't have enough resources.")
@@ -769,7 +795,7 @@ def transfer(transferee):
             f"SELECT {resource} FROM resources " + "WHERE id=%s"
         )
         db.execute(transferee_resource_statement, (transferee,))
-        transferee_resource = int(db.fetchone()[0])
+        transferee_resource = int(fetchone_first(db, 0))
 
         # Calculates the amount of resource the transferee should have
         new_transferee_resource_amount = amount + transferee_resource

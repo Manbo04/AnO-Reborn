@@ -25,9 +25,11 @@ def get_flagname(user_id):
     # Query if not cached
     with get_db_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
-        flag_name = db.fetchone()[0]
+        from database import fetchone_first
 
-        if flag_name == None:
+        flag_name = fetchone_first(db, None)
+
+        if flag_name is None:
             flag_name = "default_flag.jpg"
 
         # Cache the result
@@ -126,26 +128,26 @@ def get_influence(country_id):
 
         try:
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            money_score = int(db.fetchone()[0]) * 0.00001
-        except:
+            money_score = int(fetchone_first(db, 0)) * 0.00001
+        except Exception:
             money_score = 0
 
         try:
             db.execute("SELECT SUM(cityCount) FROM provinces WHERE userId=(%s)", (cId,))
-            cities_score = int(db.fetchone()[0]) * 10
-        except:
+            cities_score = int(fetchone_first(db, 0)) * 10
+        except Exception:
             cities_score = 0
 
         try:
             db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (cId,))
-            provinces_score = int(db.fetchone()[0]) * 300
-        except:
+            provinces_score = int(fetchone_first(db, 0)) * 300
+        except Exception:
             provinces_score = 0
 
         try:
             db.execute("SELECT SUM(land) FROM provinces WHERE userId=%s", (cId,))
-            land_score = db.fetchone()[0] * 10
-        except:
+            land_score = fetchone_first(db, 0) * 10
+        except Exception:
             land_score = 0
 
         try:
@@ -154,8 +156,8 @@ def get_influence(country_id):
             consumer_goods + aluminium + gasoline + ammunition FROM resources WHERE id=%s""",
                 (cId,),
             )
-            resources_score = db.fetchone()[0] * 0.001
-        except:
+            resources_score = fetchone_first(db, 0) * 0.001
+        except Exception:
             resources_score = 0
 
     """
