@@ -291,7 +291,7 @@ def page_not_found(error):
 
 @app.errorhandler(405)
 def method_not_allowed(error):
-    message = f"This request method is not allowed!"
+    message = "This request method is not allowed!"
     return render_template("error.html", code=405, message=message)
 
 

@@ -29,8 +29,11 @@ def delete_user(username, email, session):
             "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
             (username, email),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if not row:
+            return True
+        result = row[0]
+    except Exception:
         return True
     return False
 
@@ -84,8 +87,11 @@ def register(session):
             "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
             (credentials.username, credentials.email),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if not row:
+            return False
+        result = row[0]
+    except Exception:
         return False
 
     return True

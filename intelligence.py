@@ -104,10 +104,12 @@ def spyAmount():
 
         with get_db_cursor() as db:
             db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
-            eDefcon = db.fetchone()[0]
+            from database import fetchone_first
+
+            eDefcon = int(fetchone_first(db, 1) or 1)
 
             db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
-            eSpies = db.fetchone()[0]
+            eSpies = int(fetchone_first(db, 1) or 1)
 
         # calculate what values have been revealed based on prep, amount, edefcon, espies
         resources = variables.RESOURCES
@@ -180,7 +182,9 @@ def spyResult():
                 )
 
             db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
-            actual_spies = db.fetchone()[0]
+            from database import fetchone_first
+
+            actual_spies = int(fetchone_first(db, 0) or 0)
 
             if spies > actual_spies:
                 return error(
@@ -189,7 +193,7 @@ def spyResult():
                 )
 
             db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
-            enemy_spies = db.fetchone()[0]
+            enemy_spies = int(fetchone_first(db, 0) or 0)
 
             print(eId, enemy_spies)
 
@@ -201,7 +205,7 @@ def spyResult():
                 "INSERT INTO spyinfo (spyer, spyee, date) VALUES (%s, %s, %s) RETURNING id",
                 (cId, eId, time.time()),
             )
-            operation_id = db.fetchone()[0]
+            operation_id = fetchone_first(db, 0)
 
             object_list = variables.RESOURCES
 

@@ -163,17 +163,45 @@ class DatabasePool:
         last_exc = None
         for attempt in range(1, retries + 1):
             try:
-                self._pool = psycopg2.pool.ThreadedConnectionPool(
-                    minconn=1,
-                    maxconn=50,
-                    database=os.getenv("PG_DATABASE"),
-                    user=os.getenv("PG_USER"),
-                    password=os.getenv("PG_PASSWORD"),
-                    host=os.getenv("PG_HOST"),
-                    port=os.getenv("PG_PORT"),
-                    sslmode=os.getenv("PGSSLMODE") or None,
-                    connect_timeout=DEFAULT_CONNECT_TIMEOUT,
-                )
+                try:
+                    self._pool = psycopg2.pool.ThreadedConnectionPool(
+                        minconn=1,
+                        maxconn=50,
+                        database=os.getenv("PG_DATABASE"),
+                        user=os.getenv("PG_USER"),
+                        password=os.getenv("PG_PASSWORD"),
+                        host=os.getenv("PG_HOST"),
+                        port=os.getenv("PG_PORT"),
+                        sslmode=os.getenv("PGSSLMODE") or None,
+                        connect_timeout=DEFAULT_CONNECT_TIMEOUT,
+                    )
+                except AttributeError:
+                    # Some test environments provide a psycopg2 without the
+                    # connection pool helper (e.g. minimal wheels). Fall back
+                    # to a simple per-call connection helper to keep tests
+                    # working without requiring the pool implementation.
+                    class _SimplePool:
+                        def getconn(self):
+                            return psycopg2.connect(
+                                database=os.getenv("PG_DATABASE"),
+                                user=os.getenv("PG_USER"),
+                                password=os.getenv("PG_PASSWORD"),
+                                host=os.getenv("PG_HOST"),
+                                port=os.getenv("PG_PORT"),
+                                sslmode=os.getenv("PGSSLMODE") or None,
+                                connect_timeout=DEFAULT_CONNECT_TIMEOUT,
+                            )
+
+                        def putconn(self, conn):
+                            try:
+                                conn.close()
+                            except Exception:
+                                pass
+
+                        def closeall(self):
+                            return
+
+                    self._pool = _SimplePool()
                 self._pid = os.getpid()
                 logger.info(
                     "Database connection pool initialized (pid=%s) on attempt %s",

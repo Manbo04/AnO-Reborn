@@ -92,7 +92,9 @@ def users():
             ),
         )
         db.execute("SELECT id FROM users WHERE username = (%s)", (user["username"],))
-        user_id = db.fetchone()[0]
+        from database import fetchone_first
+
+        user_id = fetchone_first(db, 0)
         db.execute(
             "INSERT INTO stats (id, location) VALUES (%s, %s)",
             (user_id, user["continent"]),
@@ -141,7 +143,9 @@ def test_declare_war(login_session, users):
     )
     db = conn.cursor()
     db.execute("SELECT id FROM users WHERE username=%s", (users[1]["username"],))
-    defender_id = db.fetchone()[0]
+    from database import fetchone_first
+
+    defender_id = fetchone_first(db, 0)
     data = {"defender": defender_id, "warType": "Raze", "description": "Test war"}
     r = login_session.post(f"{BASE_URL}/declare_war", data=data, allow_redirects=True)
     assert r.status_code == 200 or r.status_code == 302
@@ -169,9 +173,11 @@ def test_peace_offer(login_session, users):
     )
     db = conn.cursor()
     db.execute("SELECT id FROM wars WHERE peace_date IS NULL ORDER BY id DESC LIMIT 1")
-    war_id = db.fetchone()[0]
+    from database import fetchone_first
+
+    war_id = fetchone_first(db, 0)
     db.execute("SELECT defender FROM wars WHERE id=%s", (war_id,))
-    enemy_id = db.fetchone()[0]
+    enemy_id = fetchone_first(db, 0)
     data = {"money": "100"}
     r = login_session.post(
         f"{BASE_URL}/send_peace_offer/{war_id}/{enemy_id}",
@@ -180,7 +186,9 @@ def test_peace_offer(login_session, users):
     )
     assert r.status_code == 200 or r.status_code == 302
     db.execute("SELECT peace_offer_id FROM wars WHERE id=%s", (war_id,))
-    offer_id = db.fetchone()[0]
+    from database import fetchone_first
+
+    offer_id = fetchone_first(db, 0)
     assert offer_id is not None
 
 

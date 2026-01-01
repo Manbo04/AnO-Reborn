@@ -1,0 +1,75 @@
+"""Authoritative `tasks` module (single authoritative `calc_ti`).
+
+This file holds exactly one minimal, defensive `calc_ti` implementation to
+avoid accidental duplicate/garbled definitions present previously.
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Tuple
+
+
+def calc_ti(user_id: int) -> Tuple[int, int] | Tuple[bool, bool]:
+    """Defensive tax income calculation.
+
+    Returns (income, removed_consumer_goods) where `removed_consumer_goods`
+    is a non-negative integer; returns (False, False) when user has no
+    provinces.
+    """
+    # Local imports so tests can monkeypatch database helpers before reload
+    from database import get_db_cursor, fetchone_first
+    import variables
+
+    with get_db_cursor() as db:
+        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
+        consumer_goods = int(fetchone_first(db, 0) or 0)
+
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
+            policies = fetchone_first(db, [])
+            if isinstance(policies, int):
+                policies = [policies]
+        except Exception:
+            policies = []
+
+        try:
+            db.execute("SELECT population, land FROM provinces WHERE userId=%s", (user_id,))
+            provinces = db.fetchall() or []
+        except Exception:
+            provinces = []
+
+    if not provinces:
+        return False, False
+
+    income = 0
+    for population, land in provinces:
+        land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
+        if land_multiplier > 1:
+            land_multiplier = 1
+
+        base_multiplier = variables.DEFAULT_TAX_INCOME
+        if 1 in policies:
+            base_multiplier *= 1.01
+        if 6 in policies:
+            base_multiplier *= 0.98
+        if 4 in policies:
+            base_multiplier *= 0.98
+
+        multiplier = base_multiplier + (base_multiplier * land_multiplier)
+        income += multiplier * population
+
+    total_pop = sum(p for p, _ in provinces)
+    max_cg = math.ceil(total_pop / variables.CONSUMER_GOODS_PER) if total_pop > 0 else 0
+
+    removed_cg = 0
+    if consumer_goods and max_cg:
+        if max_cg <= consumer_goods:
+            removed_cg = max_cg
+            income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+        else:
+            multiplier = consumer_goods / max_cg
+            income *= 1 + (0.5 * multiplier)
+            removed_cg = consumer_goods
+
+    return math.floor(income), removed_cg

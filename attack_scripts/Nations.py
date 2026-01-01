@@ -1,8 +1,9 @@
 import random
 import psycopg2
-import os, time
-import math
+import os
+import time
 from dotenv import load_dotenv
+from database import fetchone_first
 
 load_dotenv()
 
@@ -48,7 +49,8 @@ class Economy:
     ]
 
     def __init__(self, nationID):
-        # Keep both names for compatibility: some codebases use 'nationID' while others use 'id'
+        # Keep both attribute names for compatibility.
+        # Some codebases use 'nationID' while others use 'id'.
         self.nationID = nationID
         self.id = nationID
         # Compose a Nation instance so Economy exposes nation-level helper methods
@@ -70,7 +72,7 @@ class Economy:
 
         # TODO fix this when the databases changes and update to include all resources
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
-        self.gold = db.fetchone()[0]
+        self.gold = fetchone_first(db, 0)
 
     def get_particular_resources(
         self, resources
@@ -92,11 +94,11 @@ class Economy:
             for resource in resources:
                 if resource == "money":
                     db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
-                    resource_dict[resource] = db.fetchone()[0]
+                    resource_dict[resource] = fetchone_first(db, 0)
                 else:
                     query = f"SELECT {resource}" + " FROM resources WHERE id=(%s)"
                     db.execute(query, (self.nationID,))
-                    resource_dict[resource] = db.fetchone()[0]
+                    resource_dict[resource] = fetchone_first(db, 0)
         except Exception as e:
             # TODO ERROR HANDLER OR RETURN THE ERROR AS A VAlUE
             print(e)
@@ -147,7 +149,8 @@ class Economy:
 
         connection.commit()
 
-    # IMPORTANT: the amount is not validated in this method, so you should provide a valid value
+    # IMPORTANT: the amount is not validated in this method.
+    # Callers must provide a validated value.
     def transfer_resources(self, resource, amount, destinationID):
         connection = psycopg2.connect(
             database=os.getenv("PG_DATABASE"),
@@ -185,7 +188,7 @@ class Economy:
 
             war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
             db.execute(war_column_stat, (war_id,))
-            morale = db.fetchone()[0]
+            morale = fetchone_first(db, 0)
 
             # Determine win_condition label from win_type (keeps semantics for other logic)
             if win_type >= 3:
@@ -218,7 +221,7 @@ class Economy:
                 for resource in Economy.resources:
                     resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
                     db.execute(resource_sel_stat, (loser.user_id,))
-                    resource_amount = db.fetchone()[0]
+                    resource_amount = fetchone_first(db, 0)
                     # transfer 20% of resource on hand
                     eco.transfer_resources(
                         resource, resource_amount * (1 / 5), winner.user_id
@@ -282,7 +285,7 @@ class Nation:
             db.execute(
                 "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s", (self.id,)
             )
-            provinces_number = db.fetchone()[0]
+            provinces_number = fetchone_first(db, 0)
             self.provinces["provinces_number"] = provinces_number
 
             if provinces_number > 0:
@@ -480,7 +483,7 @@ class Military(Nation):
 
         with get_db_cursor() as db:
             db.execute(
-                f"SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
                 (
                     attacker.user_id,
                     defender.user_id,
@@ -490,7 +493,7 @@ class Military(Nation):
             )
             war_id = db.fetchall()[-1][0]
             db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
-            morale = db.fetchone()[0]
+            morale = fetchone_first(db, 0)
             return (war_id, morale)
 
     # Reparation tax
@@ -521,7 +524,7 @@ class Military(Nation):
             "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
             (winners[0], winners[0], losers[0], losers[0]),
         )
-        winner_remaining_morale = db.fetchone()[0]
+        winner_remaining_morale = fetchone_first(db, 0)
 
         # Calculate reparation tax based on remaining morale
         # if winner_remaining_morale_effect
@@ -560,7 +563,7 @@ class Military(Nation):
 
         war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
         db.execute(war_column_stat, (war_id,))
-        morale = db.fetchone()[0]
+        morale = fetchone_first(db, 0)
 
         # annihilation
         # 50 morale change
@@ -589,7 +592,7 @@ class Military(Nation):
             for resource in Economy.resources:
                 resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
                 db.execute(resource_sel_stat, (loser.user_id,))
-                resource_amount = db.fetchone()[0]
+                resource_amount = fetchone_first(db, 0)
 
                 # transfer 20% of resource on hand (TODO: implement if and alliance won how to give it)
                 eco.transfer_resources(
@@ -657,7 +660,7 @@ class Military(Nation):
                 f"SELECT {special_unit} FROM military WHERE id=(%s)",
                 (attacker.user_id,),
             )
-            special_unit_fetch = db.fetchone()[0]
+            special_unit_fetch = fetchone_first(db, 0)
 
             db.execute(
                 f"UPDATE military SET {special_unit}=(%s) WHERE id=(%s)",
@@ -822,7 +825,7 @@ class Military(Nation):
             "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
             (winner.user_id, winner.user_id),
         )
-        abs_attacker = db.fetchone()[0]
+        abs_attacker = fetchone_first(db, 0)
 
         if winner.user_id == abs_attacker:
             # morale column of the loser
@@ -1028,11 +1031,11 @@ class Military(Nation):
 
             # these numbers determine the upper limit of how many of each military unit can be built per day
             db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
-            manpower = db.fetchone()[0]
+            manpower = fetchone_first(db, 0)
 
             # fetch upgrade flag while cursor is open
             db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
-            increased_funding = db.fetchone()[0]
+            increased_funding = fetchone_first(db, 0)
 
         military = Military.get_military(cId)
 
@@ -1103,13 +1106,13 @@ class Military(Nation):
 
         db = connection.cursor()
         defense_list = defense_string.split(",")
-        if len(defense_units) == 3:
-            # default_defense is stored in the db: 'unit1,unit2,unit3'
-            defense_units = ",".join(defense_units)
+        if len(defense_list) == 3:
+            # default_defense is stored in the db as 'unit1,unit2,unit3'
+            defense_units = ",".join(defense_list)
 
             db.execute(
                 "UPDATE nation SET default_defense=(%s) WHERE nation_id=(%s)",
-                (defense_units, nation[1]),
+                (defense_units, self.id),
             )
 
             connection.commit()
