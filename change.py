@@ -132,7 +132,9 @@ def change():
             return error(400, "No password provided")
 
         db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
-        hash_value = db.fetchone()[0].encode("utf-8")
+        from database import fetchone_first
+
+        hash_value = fetchone_first(db, "").encode("utf-8")
 
         if bcrypt.checkpw(password, hash_value):
             if email:

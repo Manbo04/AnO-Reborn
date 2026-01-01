@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 import os
+from database import fetchone_first
 
 
 # Blueprint for units
@@ -369,7 +370,7 @@ class Units(Military):
 
         try:
             reb = cls(**dic)
-        except:
+        except Exception:
             print("ERROR BECAUSE REB CAN't be created")
             raise TypeError
 
@@ -473,7 +474,7 @@ class Units(Military):
                         f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
                     )
                     db.execute(mil_statement, (self.user_id,))
-                    available_unit_amount = db.fetchone()[0]
+                    available_unit_amount = fetchone_first(db, 0)
 
                     mil_update = (
                         f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
@@ -516,7 +517,7 @@ class Units(Military):
         # Save records to the database
         mil_statement = f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
         db.execute(mil_statement, (self.user_id,))
-        available_unit_amount = db.fetchone()[0]
+        available_unit_amount = fetchone_first(db, 0)
 
         mil_update = f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
         db.execute(mil_update, (available_unit_amount - amount, self.user_id))
@@ -540,12 +541,12 @@ class Units(Military):
                 (self.user_id, self.user_id),
             )
             war_id = db.fetchall()[-1][0]
-        except:
+        except Exception:
             return "War is already over!"
 
         if war_id is not None:
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-            is_attacker = db.fetchone()[0]
+            is_attacker = fetchone_first(db, 0)
 
             if is_attacker == self.user_id:
                 sign = "attacker_supplies"
@@ -554,7 +555,7 @@ class Units(Military):
 
             sign_select = f"SELECT {sign} FROM wars " + " WHERE id=(%s)"
             db.execute(sign_select, (war_id,))
-            current_supplies = db.fetchone()[0]
+            current_supplies = fetchone_first(db, 0)
 
             sign_update = f"UPDATE wars SET {sign}" + "=(%s) WHERE id=(%s)"
             db.execute(sign_update, (current_supplies - self.supply_costs, war_id))

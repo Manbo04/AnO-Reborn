@@ -9,7 +9,8 @@ def make_user(db, username):
         (username, f"{username}@example.com", "h", "2020-01-01", "normal"),
     )
     db.execute("SELECT id FROM users WHERE username=%s", (username,))
-    return db.fetchone()[0]
+    row = db.fetchone()
+    return row[0] if row else None
 
 
 def test_find_targets_get_no_targets():

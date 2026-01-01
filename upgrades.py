@@ -110,14 +110,18 @@ def upgrade_sell_buy(ttype, thing):
 
         if ttype == "buy":
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            current_gold = db.fetchone()[0]
+            from database import fetchone_first
+
+            current_gold = fetchone_first(db, 0)
 
             if current_gold < money:
-                return error(400, f"You don't have enough money to buy this upgrade.")
+                return error(400, "You don't have enough money to buy this upgrade.")
 
             for resource, amount in resources.items():
                 db.execute(f"SELECT {resource} FROM resources WHERE id=%s", (cId,))
-                current_amount = db.fetchone()[0]
+                from database import fetchone_first
+
+                current_amount = fetchone_first(db, 0)
                 if current_amount < amount:
                     return error(
                         400,

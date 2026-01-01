@@ -6,7 +6,7 @@ import variables
 from tasks import energy_info
 from helpers import get_date
 from upgrades import get_upgrades
-from database import get_db_cursor, cache_response
+from database import get_db_cursor, cache_response, fetchone_first
 import math
 
 load_dotenv()
@@ -235,10 +235,12 @@ def get_free_slots(pId, slot_type):  # pId = province id
             """,
                 (pId,),
             )
-            used_slots = int(db.fetchone()[0])
+            from database import fetchone_first
+
+            used_slots = int(fetchone_first(db, 0) or 0)
 
             db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
-            all_slots = int(db.fetchone()[0])
+            all_slots = int(fetchone_first(db, 0) or 0)
 
             free_slots = all_slots - used_slots
 
@@ -254,10 +256,10 @@ def get_free_slots(pId, slot_type):  # pId = province id
             """,
                 (pId,),
             )
-            used_slots = int(db.fetchone()[0])
+            used_slots = int(fetchone_first(db, 0) or 0)
 
             db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
-            all_slots = int(db.fetchone()[0])
+            all_slots = int(fetchone_first(db, 0) or 0)
 
             free_slots = all_slots - used_slots
 
@@ -278,8 +280,7 @@ def province_sell_buy(way, units, province_id):
                     cId,
                 ),
             )
-            ownProvince = db.fetchone()[0]
-            ownProvince = True
+            ownProvince = fetchone_first(db, None) is not None
         except TypeError:
             ownProvince = False
 
@@ -366,7 +367,9 @@ def province_sell_buy(way, units, province_id):
         ]
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        gold = db.fetchone()[0]
+        from database import fetchone_first
+
+        gold = fetchone_first(db, 0)
 
         try:
             wantedUnits = int(request.form.get(units))
@@ -389,7 +392,7 @@ def province_sell_buy(way, units, province_id):
 
         if units == "cityCount":
             db.execute("SELECT cityCount FROM provinces WHERE id=(%s)", (province_id,))
-            current_cityCount = db.fetchone()[0]
+            current_cityCount = fetchone_first(db, 0)
 
             cityCount_price = sum_cost_exp(750000, 1.09, current_cityCount, wantedUnits)
         else:
@@ -397,7 +400,7 @@ def province_sell_buy(way, units, province_id):
 
         if units == "land":
             db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
-            current_land = db.fetchone()[0]
+            current_land = fetchone_first(db, 0)
 
             land_price = sum_cost_exp(520000, 1.07, current_land, wantedUnits)
         else:
@@ -426,7 +429,9 @@ def province_sell_buy(way, units, province_id):
 
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
-            policies = db.fetchone()[0]
+            policies = fetchone_first(db, [])
+            if isinstance(policies, int):
+                policies = [policies]
         except (TypeError, IndexError):
             policies = []
 
@@ -454,7 +459,7 @@ def province_sell_buy(way, units, province_id):
         else:
             curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
         db.execute(curUnStat, (province_id,))
-        currentUnits = db.fetchone()[0]
+        currentUnits = fetchone_first(db, 0)
 
         if units in city_units:
             slot_type = "city"
@@ -474,7 +479,9 @@ def province_sell_buy(way, units, province_id):
                         f"SELECT {resource} FROM resources" + " WHERE id=%s"
                     )
                     db.execute(current_resource_stat, (cId,))
-                    current_resource = int(db.fetchone()[0])
+                    from database import fetchone_first
+
+                    current_resource = int(fetchone_first(db, 0) or 0)
 
                     new_resource = current_resource - (amount * wantedUnits)
 
@@ -502,7 +509,7 @@ def province_sell_buy(way, units, province_id):
                         f"SELECT {resource} FROM resources" + " WHERE id=%s"
                     )
                     db.execute(current_resource_stat, (cId,))
-                    current_resource = db.fetchone()[0]
+                    current_resource = fetchone_first(db, 0)
 
                     new_resource = current_resource + (amount * wantedUnits)
 

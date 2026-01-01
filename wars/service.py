@@ -1,5 +1,5 @@
 from helpers import get_influence
-from database import get_db_cursor
+from database import get_db_cursor, fetchone_first
 from attack_scripts import Nation
 import time
 
@@ -8,7 +8,7 @@ def target_data(cId):
     with get_db_cursor() as db:
         influence = get_influence(cId)
         db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
-        province_range = db.fetchone()[0]
+        province_range = fetchone_first(db, 0)
     data = {
         "upper": influence * 2,
         "lower": influence * 0.9,

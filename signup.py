@@ -3,7 +3,6 @@
 from flask import request, render_template, session, redirect
 import datetime
 from helpers import error
-import psycopg2
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 from app import app
@@ -20,7 +19,7 @@ OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 try:
     environment = os.getenv("ENVIRONMENT")
-except:
+except Exception:
     environment = "DEV"
 
 if environment == "PROD":
@@ -169,7 +168,7 @@ def ensure_signup_attempts_table():
             logging.getLogger(__name__).debug(
                 "ensure_signup_attempts_table: failed to ensure table: %s", e
             )
-        except:
+        except Exception:
             pass
 
 
@@ -313,7 +312,7 @@ def discord_register():
                 print("ERROR: No token")
                 return error(400, "Discord authentication failed - no token")
 
-            print(f"Fetching Discord user...")
+            print("Fetching Discord user...")
             response = discord.get(API_BASE_URL + "/users/@me")
             print(f"Response code: {response.status_code}")
             discord_user = response.json()
@@ -330,6 +329,9 @@ def discord_register():
             # Get form data
             username = request.form.get("username", "").strip()
             continent_str = request.form.get("continent", "")
+            from database import fetchone_first
+
+            attempt_count = fetchone_first(db, 0)
 
             # Verify reCAPTCHA
             recaptcha_response = request.form.get("g-recaptcha-response")
@@ -404,7 +406,9 @@ def discord_register():
 
                 # Get the new user ID
                 db.execute("SELECT id FROM users WHERE hash=%s", (discord_auth,))
-                user_id = db.fetchone()[0]
+                from database import fetchone_first
+
+                user_id = fetchone_first(db, 0)
 
                 session["user_id"] = user_id
                 session.permanent = True
@@ -440,7 +444,7 @@ def discord_register():
             try:
                 session.pop("oauth2_state", None)
                 session.pop("oauth2_token", None)
-            except:
+            except Exception:
                 pass
 
             return redirect("/")
@@ -449,7 +453,7 @@ def discord_register():
             import traceback
 
             error_msg = str(e)
-            print(f"\n!!! DISCORD SIGNUP ERROR !!!")
+            print("\n!!! DISCORD SIGNUP ERROR !!!")
             print(f"Error: {error_msg}")
             print(traceback.format_exc())
             print("!!! END ERROR !!!\n")
@@ -487,7 +491,9 @@ def signup():
             """,
                 (client_ip,),
             )
-            attempt_count = db.fetchone()[0]
+            from database import fetchone_first
+
+            attempt_count = fetchone_first(db, 0)
 
             # Use a relaxed limit for local development and tests so automated
             # test runs from 127.0.0.1 don't get rate limited.
@@ -600,7 +606,9 @@ def signup():
 
             # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
-            user_id = db.fetchone()[0]
+            from database import fetchone_first
+
+            user_id = fetchone_first(db, 0)
 
             # Stores the user's
             session["user_id"] = user_id
@@ -608,8 +616,6 @@ def signup():
             session.modified = True
 
             # Return redirect; do not set developer-only cookies in normal flow.
-            from flask import make_response
-
             response = redirect("/")
             # Continue with DB setup and then return the response
 

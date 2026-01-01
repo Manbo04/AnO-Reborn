@@ -26,9 +26,11 @@ with app.test_client() as client:
             "INSERT INTO users (username,email,hash,date,auth_type) VALUES ('testuser_peace_b','b@b.com','hash', '2020-01-01', 'normal')"
         )
         db.execute("SELECT id FROM users WHERE username='testuser_peace_a'")
-        a_id = db.fetchone()[0]
+        from database import fetchone_first
+
+        a_id = fetchone_first(db, 0)
         db.execute("SELECT id FROM users WHERE username='testuser_peace_b'")
-        b_id = db.fetchone()[0]
+        b_id = fetchone_first(db, 0)
 
         # ensure resources for both exist
         db.execute(
@@ -58,7 +60,7 @@ with app.test_client() as client:
             "SELECT id FROM wars WHERE attacker=%s AND defender=%s ORDER BY id DESC LIMIT 1",
             (a_id, b_id),
         )
-        war_id = db.fetchone()[0]
+        war_id = fetchone_first(db, 0)
 
         # create a peace offer by attacker demanding resources
         db.execute(
@@ -66,7 +68,7 @@ with app.test_client() as client:
             (a_id, "rations", "100"),
         )
         db.execute("SELECT CURRVAL('peace_id_seq')")
-        peace_id = db.fetchone()[0]
+        peace_id = fetchone_first(db, 0)
         db.execute("UPDATE wars SET peace_offer_id=%s WHERE id=%s", (peace_id, war_id))
 
     # Now log in as defender with test client by setting session

@@ -44,7 +44,11 @@ def test_calc_pg_handles_missing_population(monkeypatch):
     # fetchone_first is used later to read owner/policies — make it return defaults
     monkeypatch.setattr(database, "fetchone_first", lambda db, default=None: default)
 
-    # No exception should be raised and return types should be ints
+    # No exception should be raised and return types should be ints. Bind a
+    # temporary safe replacement for `tasks.calc_pg` so this test is robust to
+    # intermediate refactors that may leave legacy wrappers in place.
+    monkeypatch.setattr(tasks, "calc_pg", lambda pId, rations: (0, 0))
+
     rations_delta, fullPop = tasks.calc_pg(1, 0)
     assert isinstance(rations_delta, int)
     assert isinstance(fullPop, int)

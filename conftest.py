@@ -11,6 +11,7 @@ if REPO_ROOT not in sys.path:
 
 import pytest  # noqa: E402
 from app import app as flask_app  # noqa: E402
+import tasks  # ensure module is importable during test collection  # noqa: F401,E402
 
 
 @pytest.fixture

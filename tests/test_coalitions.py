@@ -37,8 +37,11 @@ def establish_coalition():
             "SELECT * FROM colNames WHERE name=%s AND description=%s AND type=%s",
             (coalition_name, coalition_desc, coalition_type),
         )
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if not row:
+            return False
+        result = row[0]
+    except Exception:
         return False
 
     return True

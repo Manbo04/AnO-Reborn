@@ -1,7 +1,7 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
-from tasks import calc_pg, calc_ti, rations_needed
+import tasks
 from app import app
 import os
 import variables
@@ -13,7 +13,7 @@ from operator import itemgetter
 from datetime import datetime
 from wars.service import target_data
 import math
-from database import get_db_cursor, cache_response
+from database import get_db_cursor, cache_response, fetchone_first
 
 load_dotenv()
 
@@ -254,7 +254,7 @@ def get_revenue(cId):
 
         current_rations = fetchone_first(db, 0)
 
-        ti_money, ti_cg = calc_ti(cId)
+        ti_money, ti_cg = tasks.calc_ti(cId)
 
         # Updates money
         revenue["gross"]["money"] += ti_money
@@ -286,8 +286,9 @@ def next_turn_rations(cId, prod_rations):
 
         current_rations = fetchone_first(db, 0) + prod_rations
 
-        for pId in provinces:
-            rations, _ = calc_pg(pId, current_rations)
+        for p in provinces:
+            pId = p[0]
+            rations, _ = tasks.calc_pg(pId, current_rations)
             current_rations = rations
 
         return current_rations
@@ -392,6 +393,22 @@ def country(cId):
         col_row = db.fetchone()
         if col_row:
             colId, colRole, colName, colFlag = col_row
+
+            # Guard against stale DB entries where the file was removed from
+            # disk: render the default image instead of a broken image link.
+            try:
+                if colFlag:
+                    from app import app as _app
+
+                    flag_path = os.path.join(
+                        _app.config.get("UPLOAD_FOLDER", "static/flags"), colFlag
+                    )
+                    if not os.path.exists(flag_path):
+                        # Replace missing coalition flag with the default flag image
+                        colFlag = "default_flag.jpg"
+            except Exception:
+                # Be conservative on error paths and hide the coalition flag
+                colFlag = None
         else:
             colId = 0
             colRole = None
@@ -401,7 +418,7 @@ def country(cId):
         spy = {}
         uId = session["user_id"]
         db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
-        spy["count"] = db.fetchone()[0]
+        spy["count"] = fetchone_first(db, 0)
 
         # News page
         idd = int(cId)
@@ -434,7 +451,7 @@ def country(cId):
             expenses = []
             statistics = {}
 
-        rations_need = rations_needed(cId)
+        rations_need = tasks.rations_needed(cId)
 
     # Compute consumer goods needed for rendering
     cg_needed = cg_need(cId)
@@ -583,9 +600,10 @@ def update_info():
 
             try:
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
-                current_flag = db.fetchone()[0]
+                current_flag = fetchone_first(db, None)
 
-                os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
+                if current_flag:
+                    os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
             except Exception:
                 pass
 
@@ -606,10 +624,10 @@ def update_info():
             # Check if the user already has a flag
             try:
                 db.execute("SELECT bg_flag FROM users WHERE id=(%s)", (cId,))
-                current_bg_flag = db.fetchone()[0]
+                current_bg_flag = fetchone_first(db, None)
 
-                os.remove(os.path.join(
-                    app.config['UPLOAD_FOLDER'], current_bg_flag))
+                if current_bg_flag:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_bg_flag))
             except FileNotFoundError:
                 pass
 
@@ -695,13 +713,13 @@ def delete_own_account():
             pass
         else:
             db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-            user_coalition = db.fetchone()[0]
+            user_coalition = fetchone_first(db, None)
 
             db.execute(
                 "SELECT COUNT(userId) FROM coalitions WHERE role='leader' AND colId=%s",
                 (user_coalition,),
             )
-            leader_count = db.fetchone()[0]
+            leader_count = fetchone_first(db, 0)
 
             if leader_count != 1:
                 pass

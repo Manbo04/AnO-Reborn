@@ -1,6 +1,6 @@
 from flask import request, render_template, session, redirect, flash
 from helpers import login_required, error
-from database import get_db_cursor
+from database import get_db_cursor, fetchone_first
 from app import app
 from attack_scripts import Military
 from dotenv import load_dotenv
@@ -31,7 +31,7 @@ def military():
         # Get current manpower
         with get_db_cursor() as db:
             db.execute("SELECT manpower FROM military WHERE id=%s", (cId,))
-            manpower = db.fetchone()[0]
+            manpower = fetchone_first(db, 0)
 
         return render_template(
             "military.html",
@@ -77,7 +77,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 db.execute(
                     "SELECT widespreadpropaganda FROM upgrades WHERE user_id=%s", (cId,)
                 )
-                wp = db.fetchone()[0]
+                wp = fetchone_first(db, 0)
                 if wp:
                     MILDICT["soldiers"]["price"] *= 0.65
 
@@ -87,13 +87,13 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             price = MILDICT[units]["price"]
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold = db.fetchone()[0]
+            gold = fetchone_first(db, 0)
 
             totalPrice = wantedUnits * price
 
             curUnStat = f"SELECT {units} FROM military " + "WHERE id=%s"
             db.execute(curUnStat, (cId,))
-            currentUnits = db.fetchone()[0]
+            currentUnits = fetchone_first(db, 0)
 
             resources = MILDICT[units]["resources"]
 
@@ -161,7 +161,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         f"SELECT {resource} FROM resources WHERE id=" + "%s"
                     )
                     db.execute(selectResource, (cId,))
-                    currentResources = db.fetchone()[0]
+                    currentResources = fetchone_first(db, 0)
                     requiredResources = amount * wantedUnits
 
                     if requiredResources > currentResources:

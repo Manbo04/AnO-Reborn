@@ -9,14 +9,14 @@ load_dotenv()
 import variables
 from operator import itemgetter
 import datetime
-from database import get_db_cursor
+from database import get_db_cursor, fetchone_first
 
 
 # Function for getting the coalition role of a user
 def get_user_role(user_id):
     with get_db_cursor() as db:
         db.execute("SELECT role FROM coalitions WHERE userId=%s", (user_id,))
-        role = db.fetchone()[0]
+        role = fetchone_first(db, None)
 
         return role
 
@@ -43,7 +43,7 @@ def coalition(colId):
             db.execute(
                 "SELECT COUNT(userId) FROM coalitions WHERE colId=(%s)", (colId,)
             )
-            members_count = db.fetchone()[0] or 0
+            members_count = fetchone_first(db, 0) or 0
         except (TypeError, AttributeError, IndexError):
             members_count = 0
 
@@ -122,7 +122,7 @@ def coalition(colId):
                     + " AND colId=%s",
                     (colId,),
                 )
-                member_roles[role] = db.fetchone()[0]
+                member_roles[role] = fetchone_first(db, 0)
 
         else:
             member_roles = {}
@@ -140,7 +140,7 @@ def coalition(colId):
                         (colId,),
                     )
                     ingoing_ids = list(db.fetchall()[0])
-                except:
+                except Exception:
                     ingoing_ids = []
 
                 col_ids = []
@@ -161,7 +161,7 @@ def coalition(colId):
                     trt_descriptions.append(treaty_description)
 
                     db.execute("SELECT name FROM colNames WHERE id=(%s)", (col_id,))
-                    coalition_name = db.fetchone()[0]
+                    coalition_name = fetchone_first(db, None)
                     col_names.append(coalition_name)
 
                 ingoing_treaties = {}
@@ -171,7 +171,7 @@ def coalition(colId):
                 ingoing_treaties["treaty_names"] = (trt_names,)
                 ingoing_treaties["treaty_descriptions"] = trt_descriptions
                 ingoing_length = len(ingoing_ids)
-            except:
+            except Exception:
                 ingoing_treaties = {}
                 ingoing_length = 0
 
@@ -183,7 +183,7 @@ def coalition(colId):
                         (colId, colId),
                     )
                     raw_active_ids = db.fetchall()
-                except:
+                except Exception:
                     raw_active_ids = []
 
                 active_treaties = {}
@@ -207,12 +207,12 @@ def coalition(colId):
                         db.execute(
                             "SELECT col2_id FROM treaties WHERE id=(%s)", (offer_id,)
                         )
-                        coalition_id = db.fetchone()[0]
+                        coalition_id = fetchone_first(db, 0)
 
                     db.execute(
                         "SELECT name FROM colNames WHERE id=(%s)", (coalition_id,)
                     )
-                    coalition_name = db.fetchone()[0]
+                    coalition_name = fetchone_first(db, None)
 
                     active_treaties["col_ids"].append(coalition_id)
                     active_treaties["col_names"].append(coalition_name)
@@ -220,7 +220,7 @@ def coalition(colId):
                     active_treaties["treaty_descriptions"].append(treaty_description)
 
                 active_length = len(raw_active_ids)
-            except:
+            except Exception:
                 active_treaties = {}
                 active_length = 0
         else:
@@ -253,14 +253,14 @@ def coalition(colId):
                 db.execute(
                     "SELECT " + raw + " FROM colBanks WHERE colId=(%s)", (colId,)
                 )
-                bankRaw[raw] = db.fetchone()[0]
+                bankRaw[raw] = fetchone_first(db, None)
         else:
             bankRaw = {}
 
         try:
             db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
-            flag = db.fetchone()[0]
-        except:
+            flag = fetchone_first(db, None)
+        except Exception:
             flag = None
 
         if user_role == "leader" and colType != "Open" and userInCurCol:
@@ -347,10 +347,9 @@ def establish_coalition():
                     "SELECT userId FROM coalitions WHERE userId=(%s)",
                     (session["user_id"],),
                 )
-                db.fetchone()[0]
-
-                return error(403, "You are already in a coalition")
-            except:
+                if fetchone_first(db, None) is not None:
+                    return error(403, "You are already in a coalition")
+            except Exception:
                 pass
 
             cType = request.form.get("type")
@@ -487,14 +486,13 @@ def join_col(colId):
 
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-            db.fetchone()[0]
-
-            return error(400, "You're already in a coalition")
-        except:
+            if fetchone_first(db, None) is not None:
+                return error(400, "You're already in a coalition")
+        except Exception:
             pass
 
         db.execute("SELECT type FROM colNames WHERE id=%s", (colId,))
-        colType = db.fetchone()[0]
+        colType = fetchone_first(db, None)
 
         if colType == "Open":
             db.execute(
@@ -552,7 +550,7 @@ def my_coalition():
 
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-            coalition = db.fetchone()[0]
+            coalition = fetchone_first(db, 0)
         except TypeError:
             return redirect("/")  # Redirects to home page instead of an error
 
@@ -568,8 +566,8 @@ def give_position():
 
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
-            colId = db.fetchone()[0]
-        except:
+            colId = fetchone_first(db, 0)
+        except Exception:
             return error(400, "You are not a part of any coalition")
 
         user_role = get_user_role(cId)
@@ -632,7 +630,9 @@ def adding(uId):
     with get_db_cursor() as db:
         try:
             db.execute("SELECT colId FROM requests WHERE reqId=(%s)", (uId,))
-            colId = db.fetchone()[0]
+            colId = fetchone_first(db, 0)
+            if colId is None:
+                raise TypeError
         except TypeError:
             return error(400, "User hasn't posted a request to join")
 
@@ -657,7 +657,9 @@ def removing_requests(uId):
     with get_db_cursor() as db:
         try:
             db.execute("SELECT colId FROM requests WHERE reqId=%s", (uId,))
-            colId = db.fetchone()[0]
+            colId = fetchone_first(db, 0)
+            if colId is None:
+                raise TypeError
         except TypeError:
             return error(400, "User hasn't posted a request to join this coalition.")
 
@@ -683,9 +685,9 @@ def delete_coalition(colId):
     if user_role != "leader":
         return error(400, "You aren't the leader of this coalition")
 
-    with get_db_cursor() as db:
-        db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
-        coalition_name = db.fetchone()[0]
+        with get_db_cursor() as db:
+            db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
+            coalition_name = fetchone_first(db, None)
 
         db.execute("DELETE FROM colNames WHERE id=(%s)", (colId,))
         db.execute("DELETE FROM coalitions WHERE colId=(%s)", (colId,))
@@ -720,12 +722,15 @@ def update_col_info(colId):
             with get_db_cursor() as db:
                 try:
                     db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
-                    current_flag = db.fetchone()[0]
+                    current_flag = fetchone_first(db, None)
 
                     # If he does, delete the flag
-                    os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
+                    if current_flag:
+                        os.remove(
+                            os.path.join(app.config["UPLOAD_FOLDER"], current_flag)
+                        )
 
-                except:
+                except Exception:
                     pass
 
             # Save the file
@@ -776,7 +781,8 @@ def deposit_into_bank(colId):
                 "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
                 (cId, colId),
             )
-            db.fetchone()[0]
+            if fetchone_first(db, None) is None:
+                raise TypeError
     except TypeError:
         return redirect(400, "You aren't in this coalition")
 
@@ -787,7 +793,7 @@ def deposit_into_bank(colId):
     for res in resources:
         try:
             resource = request.form.get(res)
-        except:
+        except Exception:
             resource = ""
 
         if resource is not None and resource != "":
@@ -801,7 +807,7 @@ def deposit_into_bank(colId):
         # If the resource is money, removes the money from the seller
         if resource == "money":
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            current_money = int(db.fetchone()[0])
+            current_money = int(fetchone_first(db, 0) or 0)
 
             if current_money < amount:
                 return error(400, "You don't have enough money")
@@ -817,7 +823,7 @@ def deposit_into_bank(colId):
             )
 
             db.execute(current_resource_statement, (cId,))
-            current_resource = int(db.fetchone()[0])
+            current_resource = int(fetchone_first(db, 0) or 0)
 
             if amount < 1:
                 return error(400, "Amount cannot be less than 1")
@@ -835,7 +841,7 @@ def deposit_into_bank(colId):
             f"SELECT {resource} FROM colBanks" + " WHERE colId=%s"
         )
         db.execute(current_resource_statement, (colId,))
-        current_resource = int(db.fetchone()[0])
+        current_resource = int(fetchone_first(db, 0) or 0)
 
         new_resource = current_resource + amount
 
@@ -930,7 +936,7 @@ def withdraw_from_bank(colId):
     for res in resources:
         try:
             resource = request.form.get(res)
-        except:
+        except Exception:
             resource = ""
 
         if resource is not None and resource != "":
@@ -969,8 +975,9 @@ def request_from_bank(colId):
                 "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
                 (cId, colId),
             )
-            db.fetchone()[0]
-        except TypeError:
+            if fetchone_first(db, None) is None:
+                return redirect(400, "You aren't in this coalition")
+        except Exception:
             return redirect(400, "You aren't in this coalition")
 
         resources = ["money"] + variables.RESOURCES
@@ -980,7 +987,7 @@ def request_from_bank(colId):
         for res in resources:
             try:
                 resource = request.form.get(res)
-            except:
+            except Exception:
                 resource = ""
 
             if resource is not None and resource != "":
@@ -1067,14 +1074,18 @@ def offer_treaty():
     with get_db_cursor() as db:
         try:
             db.execute("SELECT id FROM colNames WHERE name=(%s)", (col2_name,))
-            col2_id = db.fetchone()[0]
-        except:
+            col2_id = fetchone_first(db, None)
+            if col2_id is None:
+                return error(400, f"No such coalition: {col2_name}")
+        except Exception:
             return error(400, f"No such coalition: {col2_name}")
 
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
-            user_coalition = db.fetchone()[0]
-        except:
+            user_coalition = fetchone_first(db, None)
+            if user_coalition is None:
+                return error(400, "You are not in a coalition")
+        except Exception:
             return error(400, "You are not in a coalition")
 
         if col2_id == user_coalition:
@@ -1097,7 +1108,7 @@ def offer_treaty():
                 "INSERT INTO treaties (col1_id, col2_id, treaty_name, treaty_description) VALUES (%s, %s, %s, %s)",
                 (user_coalition, col2_id, treaty_name, treaty_message),
             )
-        except:
+        except Exception:
             return error(
                 400, "Error inserting into database. Please contact the website admins"
             )
@@ -1116,15 +1127,19 @@ def accept_treaty(offer_id):
     with get_db_cursor() as db:
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
-            user_coalition = db.fetchone()[0]
+            user_coalition = fetchone_first(db, None)
+            if user_coalition is None:
+                raise Exception
 
             db.execute(
                 "SELECT id FROM treaties WHERE col2_id=%s AND id=%s",
                 (user_coalition, offer_id),
             )
-            permission_offer_id = db.fetchone()[0]
+            permission_offer_id = fetchone_first(db, None)
+            if permission_offer_id is None:
+                raise Exception
 
-        except:
+        except Exception:
             return error(400, "You do not have such an offer")
 
         if permission_offer_id != offer_id:

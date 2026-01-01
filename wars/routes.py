@@ -7,7 +7,7 @@ from helpers import (
     check_required,
     get_influence,
 )
-from database import get_db_connection
+from database import get_db_connection, fetchone_first
 from attack_scripts.Nations import (
     Economy as AttackEconomy,
     Economy,
@@ -63,7 +63,7 @@ def peace_offers():
                         db.execute(
                             "SELECT author FROM peace WHERE id=(%s)", (offer_id,)
                         )
-                        author_id = db.fetchone()[0]
+                        author_id = fetchone_first(db, None)
                         if author_id == cId:
                             offer = outgoing
                             outgoing_counter += 1
@@ -80,7 +80,8 @@ def peace_offers():
                                 "SELECT demanded_amount FROM peace WHERE id=(%s)",
                                 (offer_id,),
                             )
-                            amounts = db.fetchone()[0].split(",")
+                            row = db.fetchone()
+                            amounts = row[0].split(",") if row and row[0] else []
                             resources = resources.split(",")
 
                             offer[offer_id]["resource_count"] = len(resources)
@@ -100,7 +101,7 @@ def peace_offers():
                         db.execute(
                             "SELECT username FROM users WHERE id=(%s)", (author_id,)
                         )
-                        offer[offer_id]["author"] = [author_id, db.fetchone()[0]]
+                        offer[offer_id]["author"] = [author_id, fetchone_first(db, "")]
 
                         db.execute(
                             "SELECT attacker, defender FROM wars "
@@ -112,14 +113,14 @@ def peace_offers():
                             db.execute(
                                 "SELECT username FROM users WHERE id=(%s)", (ids[1],)
                             )
-                            receiver_name = db.fetchone()[0]
+                            receiver_name = fetchone_first(db, "")
                             receiver_id = ids[1]
                         else:
                             db.execute(
                                 "SELECT username FROM users WHERE id=(%s)", (ids[0],)
                             )
                             receiver_id = ids[0]
-                            receiver_name = db.fetchone()[0]
+                            receiver_name = fetchone_first(db, "")
 
                         offer[offer_id]["receiver_id"] = receiver_id
                         offer[offer_id]["receiver"] = receiver_name
@@ -282,7 +283,7 @@ def send_peace_offer(war_id, enemy_id):
                     resources_string += res + ","
                     amount_string += str(amo) + ","
             db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
-            peace_offer_id = db.fetchone()[0]
+            peace_offer_id = fetchone_first(db, None)
             if not peace_offer_id:
                 db.execute(
                     (
@@ -292,7 +293,7 @@ def send_peace_offer(war_id, enemy_id):
                     (cId, resources_string[:-1], amount_string[:-1]),
                 )
                 db.execute("SELECT CURRVAL('peace_id_seq')")
-                lastrowid = db.fetchone()[0]
+                lastrowid = fetchone_first(db, None)
                 db.execute(
                     "UPDATE wars SET peace_offer_id=(%s) " "WHERE id=(%s)",
                     (lastrowid, war_id),
@@ -318,14 +319,14 @@ def war_with_id(war_id):
         if not valid_war:
             return error(404, "This war doesn't exist")
         db.execute("SELECT peace_date FROM wars WHERE id=(%s)", (war_id,))
-        peace_made = db.fetchone()[0]
+        peace_made = fetchone_first(db, None)
         if peace_made:
             return "This war already ended"
         cId = session["user_id"]
         db.execute("SELECT defender FROM wars WHERE id=(%s)", (war_id,))
-        defender = db.fetchone()[0]
+        defender = fetchone_first(db, None)
         db.execute("SELECT username FROM users WHERE id=(%s)", (defender,))
-        defender_name = db.fetchone()[0]
+        defender_name = fetchone_first(db, "")
         db.execute(
             "SELECT defender_supplies,defender_morale FROM wars WHERE id=(%s)",
             (war_id,),
@@ -333,9 +334,9 @@ def war_with_id(war_id):
         info = db.fetchone()
         defender_info = {"morale": info[1], "supplies": info[0]}
         db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-        attacker = db.fetchone()[0]
+        attacker = fetchone_first(db, None)
         db.execute("SELECT username FROM users WHERE id=(%s)", (attacker,))
-        attacker_name = db.fetchone()[0]
+        attacker_name = fetchone_first(db, "")
         db.execute(
             "SELECT attacker_supplies,attacker_morale FROM wars WHERE id=(%s)",
             (war_id,),
@@ -347,9 +348,9 @@ def war_with_id(war_id):
         else:
             enemy_id = attacker
         db.execute("SELECT war_type FROM wars WHERE id=(%s)", (war_id,))
-        war_type = db.fetchone()[0]
+        war_type = fetchone_first(db, "")
         db.execute("SELECT agressor_message FROM wars WHERE id=(%s)", (war_id,))
-        agressor_message = db.fetchone()[0]
+        agressor_message = fetchone_first(db, "")
         if cId == attacker:
             session["enemy_id"] = defender
         else:
@@ -363,7 +364,7 @@ def war_with_id(war_id):
         if cId_type == "spectator":
             return error(400, "You can't view this war")
         db.execute("SELECT spies FROM military WHERE id=(%s)", (cId,))
-        spyCount = db.fetchone()[0]
+        spyCount = fetchone_first(db, 0)
         spyPrep = 1
         eSpyCount = 0
         eDefcon = 1
@@ -550,9 +551,9 @@ def warResult():
     eId = session["enemy_id"]
     with get_db_cursor() as db:
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
-        attacker_name = db.fetchone()[0]
+        attacker_name = fetchone_first(db, "")
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["enemy_id"],))
-        defender_name = db.fetchone()[0]
+        defender_name = fetchone_first(db, "")
         attacker_result = {"nation_name": attacker_name}
         defender_result = {"nation_name": defender_name}
         win_condition = None
@@ -560,7 +561,7 @@ def warResult():
         result = session.get("from_wartarget", None)
         if result is None:
             db.execute("SELECT default_defense FROM military WHERE id=(%s)", (eId,))
-            defensestring = db.fetchone()[0]
+            defensestring = fetchone_first(db, "")
             defenselst = defensestring.split(",")
             from units import Units as UnitsClass
 
@@ -570,7 +571,7 @@ def warResult():
             defenseunits = {}
             for unit in defenselst:
                 db.execute(f"SELECT {unit} FROM military WHERE id=(%s)", (eId,))
-                defenseunits[unit] = db.fetchone()[0]
+                defenseunits[unit] = fetchone_first(db, 0)
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
             prev_defender = dict(defender.selected_units)
             prev_attacker = dict(attacker.selected_units)
@@ -749,7 +750,7 @@ def declare_war():
                 ),
             )
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
-            attacker_name = db.fetchone()[0]
+            attacker_name = fetchone_first(db, "")
             Economy.send_news(defender.id, f"{attacker_name} declared war!")
     except Exception as e:
         import logging
@@ -798,7 +799,7 @@ def wars():
         units.update(special_units)
         with get_db_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
-            yourCountry = db.fetchone()[0]
+            yourCountry = fetchone_first(db, "")
             try:
                 db.execute(
                     (
@@ -813,10 +814,12 @@ def wars():
                     update_supply(war_id)
                     attacker_info = {}
                     defender_info = {}
+
                     db.execute("SELECT username FROM users WHERE id=%s", (attacker,))
-                    att_name = db.fetchone()[0]
+                    att_name = fetchone_first(db, "")
                     attacker_info["name"] = att_name
                     attacker_info["id"] = attacker
+
                     db.execute(
                         (
                             "SELECT attacker_morale, attacker_supplies "
@@ -827,9 +830,11 @@ def wars():
                     att_morale_and_supplies = db.fetchone()
                     attacker_info["morale"] = att_morale_and_supplies[0]
                     attacker_info["supplies"] = att_morale_and_supplies[1]
+
                     db.execute("SELECT username FROM users WHERE id=%s", (defender,))
-                    def_name = db.fetchone()[0]
+                    def_name = fetchone_first(db, "")
                     defender_info["name"] = def_name
+
                     db.execute(
                         (
                             "SELECT defender_morale,defender_supplies "
@@ -841,8 +846,10 @@ def wars():
                     defender_info["morale"] = def_morale_and_supplies[0]
                     defender_info["supplies"] = def_morale_and_supplies[1]
                     defender_info["id"] = defender
+
                     attacker_info["flag"] = get_flagname(attacker)
                     defender_info["flag"] = get_flagname(defender)
+
                     war_info[war_id] = {"att": attacker_info, "def": defender_info}
             except Exception:
                 war_attacker_defender_ids = []
@@ -855,7 +862,7 @@ def wars():
                     ),
                     (cId, cId),
                 )
-                warsCount = db.fetchone()[0]
+                warsCount = fetchone_first(db, 0)
             except Exception:
                 warsCount = 0
         return render_template(
@@ -874,7 +881,7 @@ def find_targets():
     if request.method == "GET":
         with get_db_cursor() as db:
             db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
-            user_provinces = db.fetchone()[0]
+            user_provinces = fetchone_first(db, 0)
             min_provinces = max(0, user_provinces - 3)
             max_provinces = user_provinces + 1
             user_influence = get_influence(cId)

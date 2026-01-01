@@ -1,6 +1,6 @@
 from app import app
 from helpers import login_required, error
-from database import get_db_cursor
+from database import get_db_cursor, fetchone_first
 import psycopg2
 from flask import request, render_template, session, redirect, flash
 import os
@@ -21,7 +21,6 @@ def give_resource(giver_id, taker_id, resource, amount):
     )
 
     db = conn.cursor()
-    from database import fetchone_first
 
     if giver_id != "bank":
         giver_id = int(giver_id)
@@ -38,8 +37,6 @@ def give_resource(giver_id, taker_id, resource, amount):
     if resource in ["gold", "money"]:
         if giver_id != "bank":
             db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
-            from database import fetchone_first
-
             current_giver_money = fetchone_first(db, 0)
 
             if current_giver_money < amount:
@@ -56,8 +53,6 @@ def give_resource(giver_id, taker_id, resource, amount):
                 f"SELECT {resource} FROM resources WHERE " + "id=%s"
             )
             db.execute(current_resource_statement, (giver_id,))
-            from database import fetchone_first
-
             current_giver_resource = fetchone_first(db, 0)
 
             if current_giver_resource < amount:
@@ -381,82 +376,109 @@ def marketoffer():
 @app.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
 def post_offer(offer_type):
+    import uuid
+
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
-
-    db = connection.cursor()
-
-    resource = request.form.get("resource")
-    amount = int(request.form.get("amount"))
-    price = request.form.get("price")
-
-    # List of all the resources in the game
-    resources = variables.RESOURCES
-
-    offer_types = ["buy", "sell"]
-    if offer_type not in offer_types:
-        return error(400, "Offer type must be 'buy' or 'sell'")
-
-    if (
-        resource not in resources
-    ):  # Checks if the resource the user selected actually exists
-        return error(400, "No such resource")
-
-    if amount < 1:  # Checks if the amount is negative
-        return error(400, "Amount must be greater than 0")
-
-    if offer_type == "sell":
-        rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-        db.execute(rStatement, (cId,))
-        from database import fetchone_first
-
-        realAmount = int(fetchone_first(db, 0))
-
-        if amount > realAmount:  # Checks if user wants to sell more than he has
-            return error(400, "Selling amount is higher than the amount you have.")
-
-        # Calculates the resource amount the seller should have
-        give_resource(cId, "bank", resource, amount)
-
-        # Creates a new offer
-        db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
-            (
-                cId,
-                offer_type,
-                resource,
-                int(amount),
-                int(price),
-            ),
+    # Guard the entire handler so unexpected exceptions are logged with a
+    # short reference id for postmortem, and connections are closed.
+    uid = uuid.uuid4().hex[:12]
+    try:
+        connection = psycopg2.connect(
+            database=os.getenv("PG_DATABASE"),
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
+            host=os.getenv("PG_HOST"),
+            port=os.getenv("PG_PORT"),
         )
 
-    elif offer_type == "buy":
-        db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
-            (
-                cId,
-                offer_type,
-                resource,
-                int(amount),
-                int(price),
-            ),
-        )
+        db = connection.cursor()
+
+        resource = request.form.get("resource")
+        # Validate numeric inputs early and return helpful errors instead of
+        # letting a ValueError bubble up and produce a 500/502 in production.
+        try:
+            amount_raw = request.form.get("amount")
+            amount = int(amount_raw)
+        except Exception:
+            return ("Invalid amount", 400)
+
+        price_raw = request.form.get("price")
+        try:
+            price = int(price_raw)
+        except Exception:
+            return ("Invalid price", 400)
+
+        # List of all the resources in the game
+        resources = variables.RESOURCES
+
+        offer_types = ["buy", "sell"]
+        if offer_type not in offer_types:
+            return ("Offer type must be 'buy' or 'sell'", 400)
+
+        if (
+            resource not in resources
+        ):  # Checks if the resource the user selected actually exists
+            return ("No such resource", 400)
+
+        if amount < 1:  # Checks if the amount is negative
+            return ("Amount must be greater than 0", 400)
+
+        if offer_type == "sell":
+            rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
+            db.execute(rStatement, (cId,))
+            from database import fetchone_first
+
+            # `fetchone_first` returns a safe default when the SELECT yields no
+            # rows — avoid indexing into None.
+            realAmount = int(fetchone_first(db, 0) or 0)
+
+            if amount > realAmount:  # Checks if user wants to sell more than he has
+                return ("Selling amount is higher than the amount you have.", 400)
+
+            # Calculates the resource amount the seller should have
+            give_resource(cId, "bank", resource, amount)
+
+            # Creates a new offer
+            db.execute(
+                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (cId, offer_type, resource, int(amount), int(price)),
+            )
+
+        elif offer_type == "buy":
+            db.execute(
+                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    cId,
+                    offer_type,
+                    resource,
+                    int(amount),
+                    int(price),
+                ),
+            )
 
         money_to_take_away = int(amount) * int(price)
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        current_money = fetchone_first(db, 0)
+        current_money = int(fetchone_first(db, 0) or 0)
 
         if current_money < money_to_take_away:
             return error(400, "You don't have enough money.")
 
         give_resource(cId, "bank", "money", money_to_take_away)
+
+        connection.commit()
+        connection.close()
+        return redirect("/market")
+    except Exception as e:
+        # Log the exception with an id the user can provide for debugging.
+        app.logger.exception(f"post_offer error ({uid}): {e}")
+        try:
+            connection.close()
+        except Exception:
+            pass
+        # Return a minimal text response to avoid executing the regular error
+        # template (which may touch the DB during template rendering).
+        return (f"Internal Server Error. Reference id: {uid}", 500)
 
     connection.commit()
     flash("You just posted a market offer")

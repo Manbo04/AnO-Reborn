@@ -1,11 +1,10 @@
 # FULLY MIGRATED
 
-import os
 from flask import redirect, render_template, session, request
-from functools import wraps, lru_cache
+from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
-from database import get_db_cursor, query_cache
+from database import get_db_cursor, query_cache, fetchone_first
 
 load_dotenv()
 
@@ -108,7 +107,7 @@ def get_influence(country_id):
             icbms_score = military[9] * 250
             nukes_score = military[10] * 500
             spies_score = military[11] * 25
-        except:
+        except Exception:
             tanks_score = 0
             soldiers_score = 0
             artillery_score = 0
@@ -205,7 +204,7 @@ def get_coalition_influence(coalition_id):
                 "SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,)
             )
             members = db.fetchall()
-        except:
+        except Exception:
             return 0
 
         for member in members:

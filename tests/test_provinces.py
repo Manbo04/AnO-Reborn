@@ -25,8 +25,11 @@ def create_province():
 
     try:
         db.execute("SELECT id FROM provinces WHERE provincename=%s", (data["name"],))
-        result = db.fetchone()[0]
-    except:
+        row = db.fetchone()
+        if not row:
+            return False
+        result = row[0]
+    except Exception:
         return False
     return True
 
