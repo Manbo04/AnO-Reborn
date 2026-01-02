@@ -120,7 +120,7 @@
                         <label class="imageinput fit center"><span class="material-icons-outlined">
                             wallpaper
                                 </span>Choose Image
-                                <input type="file" name="flag_input" id="imageinput" accept="image/*" onchange="flagItselfUpload(event)">
+                                <input type="file" name="flag_input" id="province-flag-input" accept="image/*" onchange="flagItselfUpload(event)">
                               </label>
                     </div>
                 </div>
@@ -501,7 +501,7 @@
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["coal_burners"] }} Coal Power Plants</h3>
 
-                                <p class="templatecontentpleft">Coal power plants are a cheap way to produce power for a developing nation. While they cost less to build and opperate, they contribute lots of pollution.</p>
+                                <p class="templatecontentpleft">Coal power plants are a cheap way to produce power for a developing nation. While they cost less to build and operate, they contribute lots of pollution.</p>
 
                                 <ul>Coal power plants cost {{ infra["coal_burners_money"] | commas }} per hour, takes {{ infra["coal_burners_convert_minus"][0]["coal"] }} coal per hour, and produces +{{ infra["coal_burners_plus"]["energy"] }} electricity
                                     and +{{ infra["coal_burners_effect"][0]["pollution"] }}% pollution
@@ -549,7 +549,7 @@
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["oil_burners"] }} Oil Power Plants</h3>
 
-                                <p class="templatecontentpleft">Oil power plants cost more to opperate and build than coal power plants, but produce less pollution. They are ideal for a nation pursuing tax income as a primary revenue source.</p>
+                                <p class="templatecontentpleft">Oil power plants cost more to operate and build than coal power plants, but produce less pollution. They are ideal for a nation pursuing tax income as a primary revenue source.</p>
 
                                 <ul>Oil power plants cost {{ infra["oil_burners_money"] | commas }} per hour, takes {{ infra["oil_burners_convert_minus"][0]["oil"] }} oil per hour, and contributes +{{ infra["oil_burners_plus"]["energy"] }} electricity and
                                     +{{ infra["oil_burners_effect"][0]["pollution"] }}% pollution

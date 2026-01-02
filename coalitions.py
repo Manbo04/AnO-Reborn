@@ -1,15 +1,16 @@
-from flask import request, render_template, session, redirect, flash
-from helpers import login_required, error
-from helpers import get_coalition_influence
-from app import app
+import datetime
 import os
+from operator import itemgetter
+
+from flask import redirect, flash, render_template, request, session
 from dotenv import load_dotenv
 
-load_dotenv()
+from app import app
+from database import fetchone_first, get_db_cursor
+from helpers import error, get_coalition_influence, login_required
 import variables
-from operator import itemgetter
-import datetime
-from database import get_db_cursor, fetchone_first
+
+load_dotenv()
 
 
 # Function for getting the coalition role of a user
@@ -52,7 +53,10 @@ def coalition(colId):
 
         try:
             db.execute(
-                "SELECT coalitions.userId, users.username FROM coalitions INNER JOIN users ON coalitions.userId=users.id WHERE coalitions.role='leader' AND coalitions.colId=%s",
+                "SELECT coalitions.userId, users.username "
+                "FROM coalitions INNER JOIN users "
+                "ON coalitions.userId=users.id "
+                "WHERE coalitions.role='leader' AND coalitions.colId=%s",
                 (colId,),
             )
             leaders = db.fetchall()
@@ -60,14 +64,18 @@ def coalition(colId):
             leaders = []
 
         try:
-            # stats table has no influence column; keep list lightweight and avoid bad column reference
+            # stats table lacks influence; keep list lightweight
             db.execute(
                 """
                 SELECT coalitions.userId,
                        users.username,
                        coalitions.role,
                        0 AS influence,
-                       (SELECT COUNT(*) FROM provinces WHERE userId = coalitions.userId) AS province_count
+                       (
+                           SELECT COUNT(*)
+                           FROM provinces
+                           WHERE userId = coalitions.userId
+                       ) AS province_count
                 FROM coalitions
                 INNER JOIN users ON coalitions.userId = users.id
                 WHERE coalitions.colId = %s
@@ -136,7 +144,9 @@ def coalition(colId):
             try:
                 try:
                     db.execute(
-                        "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Pending' ORDER BY id ASC",
+                        "SELECT id FROM treaties "
+                        "WHERE col2_id=(%s) AND status='Pending' "
+                        "ORDER BY id ASC",
                         (colId,),
                     )
                     ingoing_ids = list(db.fetchall()[0])
@@ -152,7 +162,8 @@ def coalition(colId):
                     treaty_id = treaty_id
 
                     db.execute(
-                        "SELECT col1_id, treaty_name, treaty_description FROM treaties WHERE id=(%s)",
+                        "SELECT col1_id, treaty_name, treaty_description "
+                        "FROM treaties WHERE id=(%s)",
                         (treaty_id,),
                     )
                     col_id, treaty_name, treaty_description = db.fetchone()
@@ -175,11 +186,13 @@ def coalition(colId):
                 ingoing_treaties = {}
                 ingoing_length = 0
 
-            #### ACTIVE ####
+            # ACTIVE
             try:
                 try:
                     db.execute(
-                        "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Active' OR col1_id=(%s) ORDER BY id ASC",
+                        "SELECT id FROM treaties "
+                        "WHERE col2_id=(%s) AND status='Active' OR col1_id=(%s) "
+                        "ORDER BY id ASC",
                         (colId, colId),
                     )
                     raw_active_ids = db.fetchall()
@@ -199,7 +212,8 @@ def coalition(colId):
                     active_treaties["ids"].append(offer_id)
 
                     db.execute(
-                        "SELECT col1_id, treaty_name, treaty_description FROM treaties WHERE id=(%s)",
+                        "SELECT col1_id, treaty_name, treaty_description "
+                        "FROM treaties WHERE id=(%s)",
                         (offer_id,),
                     )
                     coalition_id, treaty_name, treaty_description = db.fetchone()
@@ -292,7 +306,7 @@ def coalition(colId):
             requests = []
             requestIds = []
 
-        ### BANK STUFF
+        # BANK STUFF
         if user_role == "leader" and userInCurCol:
             # Use JOIN query to fetch bank requests with usernames
             db.execute(
@@ -367,7 +381,8 @@ def establish_coalition():
             if db.fetchone():
                 return error(
                     400,
-                    "The coalition name is already taken. Please choose a different name.",
+                    "The coalition name is already taken. "
+                    "Please choose a different name.",
                 )
 
             if len(str(name)) > 40:
@@ -378,7 +393,8 @@ def establish_coalition():
             else:
                 date = str(datetime.date.today())
                 db.execute(
-                    "INSERT INTO colNames (name, type, description, date) VALUES (%s, %s, %s, %s)",
+                    "INSERT INTO colNames (name, type, description, date) "
+                    "VALUES (%s, %s, %s, %s)",
                     (name, cType, desc, date),
                 )
 
@@ -389,7 +405,8 @@ def establish_coalition():
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
-                    "INSERT INTO coalitions (colId, userId, role) VALUES (%s, %s, %s)",
+                    "INSERT INTO coalitions (colId, userId, role) "
+                    "VALUES (%s, %s, %s)",
                     (colId, session["user_id"], "leader"),
                 )
 
@@ -412,12 +429,16 @@ def coalitions():
         sortway = request.values.get("sortway")
 
         db.execute(
-            """SELECT colNames.id, colNames.type, colNames.name, COUNT(coalitions.userId) AS members, date
-FROM colNames
-INNER JOIN coalitions
-ON colNames.id=coalitions.colId
-GROUP BY colNames.id;
-"""
+            """
+            SELECT colNames.id,
+                   colNames.type,
+                   colNames.name,
+                   COUNT(coalitions.userId) AS members,
+                   date
+            FROM colNames
+            INNER JOIN coalitions ON colNames.id = coalitions.colId
+            GROUP BY colNames.id;
+            """
         )
         coalitionsDb = db.fetchall()
 
@@ -597,7 +618,10 @@ def give_position():
         # The user id for the person being given the role
         try:
             db.execute(
-                "SELECT users.id, coalitions.colid, coalitions.role FROM users INNER JOIN coalitions ON users.id=coalitions.userid WHERE users.username=%s",
+                "SELECT users.id, coalitions.colid, coalitions.role "
+                "FROM users INNER JOIN coalitions "
+                "ON users.id=coalitions.userid "
+                "WHERE users.username=%s",
                 (username,),
             )
             roleer, roleer_col, current_roleer_role = db.fetchone()
@@ -612,7 +636,8 @@ def give_position():
             return error(400, "No such user found")
 
         # If the user role is lower up the hierarchy than the giving role
-        # Or if the current role of the person being given the role is higher up the hierarchy than the user giving the role
+        # Or if the current role of the person being given the role is higher up
+        # the hierarchy than the user giving the role
         if roles.index(role) < roles.index(user_role) or roles.index(
             current_roleer_role
         ) < roles.index(user_role):
@@ -715,7 +740,7 @@ def update_col_info(colId):
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
-    flag = request.files["flag_input"]
+    flag = request.files.get("flag_input")
     if flag:
         if allowed_file(flag.filename):
             # Check if the user already has a flag
@@ -766,7 +791,7 @@ def update_col_info(colId):
     return redirect("/my_coalition")
 
 
-### COALITION BANK STUFF ###
+# COALITION BANK STUFF
 
 
 # Route for depositing resources into the bank
@@ -885,7 +910,8 @@ def withdraw(resource, amount, user_id, colId):
         db.execute(update_statement, (new_resource, colId))
 
         app.logger.info(
-            f"withdraw: colId={colId} resource={resource} amount={amount} bank_before={current_resource} bank_after={new_resource}"
+            f"withdraw: colId={colId} resource={resource} amount={amount} "
+            f"bank_before={current_resource} bank_after={new_resource}"
         )
 
         # Gives the leader his resource
@@ -899,7 +925,8 @@ def withdraw(resource, amount, user_id, colId):
 
             db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
             app.logger.info(
-                f"withdraw: user_id={user_id} gold_before={current_money} gold_after={new_money}"
+                f"withdraw: user_id={user_id} gold_before={current_money} "
+                f"gold_after={new_money}"
             )
 
         # If the resource is not money, gives him that resource
@@ -914,7 +941,8 @@ def withdraw(resource, amount, user_id, colId):
             update_statement = f"UPDATE resources SET {resource}=%s WHERE id=%s"
             db.execute(update_statement, (new_resource, user_id))
             app.logger.info(
-                f"withdraw: user_id={user_id} {resource}_before={user_current} {resource}_after={new_resource}"
+                f"withdraw: user_id={user_id} {resource}_before={user_current} "
+                f"{resource}_after={new_resource}"
             )
 
 
@@ -1007,7 +1035,8 @@ def request_from_bank(colId):
         resource = requested_resources[0]
 
         db.execute(
-            "INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO colBanksRequests (reqId, colId, amount, resource) "
+            "VALUES (%s, %s, %s, %s)",
             (cId, colId, amount, resource),
         )
 
@@ -1105,7 +1134,8 @@ def offer_treaty():
             return error(400, "Please enter a treaty description")
         try:
             db.execute(
-                "INSERT INTO treaties (col1_id, col2_id, treaty_name, treaty_description) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO treaties (col1_id, col2_id, treaty_name, "
+                "treaty_description) VALUES (%s, %s, %s, %s)",
                 (user_coalition, col2_id, treaty_name, treaty_message),
             )
         except Exception:
@@ -1145,7 +1175,9 @@ def accept_treaty(offer_id):
         if permission_offer_id != offer_id:
             return error(
                 400,
-                "You do not have an offer for this id. Please report this bug if you're using the web ui and not testing for permission vulns haha",
+                "You do not have an offer for this id. "
+                "Please report this bug if you're using the web ui "
+                "and not testing for permission vulns haha",
             )
 
         user_role = get_user_role(cId)
