@@ -1,32 +1,45 @@
 import ast
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-if not hasattr(ast, "Str"):
-    ast.Str = ast.Constant
-if not hasattr(ast, "Num"):
-    ast.Num = ast.Constant
-if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = ast.Constant
-if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = ast.Constant
-import ast
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-if not hasattr(ast, "Str"):
-    ast.Str = ast.Constant
-if not hasattr(ast, "Num"):
-    ast.Num = ast.Constant
-if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = ast.Constant
-if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = ast.Constant
-
-from flask import Flask, request, render_template, session, redirect, send_from_directory, jsonify
+from flask import Flask, request, render_template, session, redirect, send_from_directory, jsonify, make_response
+from flask_compress import Compress
 import traceback
-import os
+import upgrades
+import intelligence
+# import tasks
+# import market
+# import province
+# import military
+# import change
+# import coalitions
+# import countries
+import signup
+# import login
+from wars.routes import wars_bp
+# import policies
+# import statistics
+import requests
+import logging
+from variables import MILDICT, PROVINCE_UNIT_PRICES
+from flaskext.markdown import Markdown
+from psycopg2.extras import RealDictCursor
+from datetime import datetime as dt
+import string
+import random
+from helpers import login_required
+from database import get_db_cursor, cache_response, get_db_connection
+# import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
 
+sys.path.insert(-1, os.path.dirname(os.path.abspath(__file__)))
+if not hasattr(ast, "Str"):
+    ast.Str = ast.Constant
+if not hasattr(ast, "Num"):
+    ast.Num = ast.Constant
+if not hasattr(ast, "NameConstant"):
+    ast.NameConstant = ast.Constant
+if not hasattr(ast, "Ellipsis"):
+    ast.Ellipsis = ast.Constant
 
 app = Flask(__name__)
 
@@ -43,7 +56,7 @@ app = Flask(__name__)
 # Add global 403 error handler after app is defined
 @app.errorhandler(403)
 def forbidden_error(error):
-    import logging
+
     logger = logging.getLogger(__name__)
     logger.warning(f"403 error handler triggered: {error}")
     return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
@@ -74,15 +87,16 @@ def before_request():
         if forwarded_proto != 'https' and not request.is_secure:
             url = request.url.replace('http://', 'https://', 1)
             return redirect(url, code=301)
+    return None
     # Keep this hook small and non-verbose; avoid emitting per-request debug logs
     # unless explicitly enabled in configuration.
 
 # Import cache_response decorator
-from database import cache_response
+# from database import cache_response
 
 # Performance: Enable gzip compression for responses
 try:
-    from flask_compress import Compress
+
     Compress(app)
 except ImportError:
     # Flask-Compress not installed, continue without it
@@ -107,7 +121,7 @@ def add_cache_headers(response):
 # Helper to get minified asset path in production
 def asset(filename):
     """Returns minified version of asset in production, original in development"""
-    import os
+
     is_production = os.getenv('FLASK_ENV') == 'production' or os.getenv('RAILWAY_ENVIRONMENT_NAME') is not None
     
     if is_production and (filename.endswith('.css') or filename.endswith('.js')):
@@ -122,34 +136,7 @@ def asset(filename):
 # Make asset helper available in templates
 app.jinja_env.globals['asset'] = asset
 
-import upgrades
-import intelligence
-import tasks
-import market
-import province
-import military
-import change
-import coalitions
-import countries
-import signup
-import login
-from wars.routes import wars_bp
-import policies
-import statistics
-import requests
-import logging
-from variables import MILDICT, PROVINCE_UNIT_PRICES
-from flaskext.markdown import Markdown
-from psycopg2.extras import RealDictCursor
-from datetime import datetime as dt
-import string
-import random
-import os
-from helpers import login_required
-from database import get_db_cursor
-import psycopg2
-from dotenv import load_dotenv
-load_dotenv()
+
 
 
 # LOGGING
@@ -159,24 +146,26 @@ logging.basicConfig(level=logging.ERROR,
 logger = logging.getLogger(__name__)
 
 
+def send_discord_webhook(record):
+    url = os.getenv("DISCORD_WEBHOOK_URL")
+    if not url:
+        return  # Skip if webhook not configured
+    formatter = logging.Formatter(logging_format)
+    message = formatter.format(record)
+    data = {
+        "content": message,
+        "username": "A&O ERROR"
+    }
+    requests.post(url, json=data)
+
+
 class RequestsHandler(logging.Handler):
-    def send_discord_webhook(self, record):
-        url = os.getenv("DISCORD_WEBHOOK_URL")
-        if not url:
-            return  # Skip if webhook not configured
-        formatter = logging.Formatter(logging_format)
-        message = formatter.format(record)
-        data = {
-            "content": message,
-            "username": "A&O ERROR"
-        }
-        requests.post(url, json=data)
 
     def emit(self, record):
         """Send the log records (created by loggers) to
         the appropriate destination.
         """
-        self.send_discord_webhook(record)
+        send_discord_webhook(record)
 ###
 
 
@@ -186,7 +175,7 @@ Markdown(app)
 def _init_province_defaults():
     """Ensure all provinces have proper default values for stats"""
     try:
-        from database import get_db_connection
+
         with get_db_connection() as conn:
             db = conn.cursor()
             # Update provinces with 0 happiness/productivity to have neutral 50% defaults
@@ -279,10 +268,10 @@ def commas(value):
 
 @app.template_filter()
 def days_old(date_string):
-    from datetime import datetime
+
     try:
-        date_obj = datetime.strptime(str(date_string), "%Y-%m-%d")
-        today = datetime.today()
+        date_obj = dt.strptime(str(date_string), "%Y-%m-%d")
+        today = dt.today()
         delta = today - date_obj
         days = delta.days
         return f"{date_string} ({days} Days Old)"
@@ -363,11 +352,11 @@ def formatname(value):
 
 def get_resources():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
-        cId = session["user_id"]
+        target_user_id = session["user_id"]
 
         try:
             db.execute(
-                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s", (cId,))
+                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s", (target_user_id,))
             resources = dict(db.fetchone())
             return resources
         except TypeError:
