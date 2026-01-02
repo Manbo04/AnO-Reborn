@@ -408,14 +408,17 @@ def country(cId):
                     if not os.path.exists(flag_path):
                         # Replace missing coalition flag with the default flag image
                         colFlag = "default_flag.jpg"
+                else:
+                    # Empty/NULL flag in DB -> show default instead of a broken link
+                    colFlag = "default_flag.jpg"
             except Exception:
-                # Be conservative on error paths and hide the coalition flag
-                colFlag = None
+                # Be conservative on error paths and fall back to default flag
+                colFlag = "default_flag.jpg"
         else:
             colId = 0
             colRole = None
             colName = ""
-            colFlag = None
+            colFlag = "default_flag.jpg"
 
         spy = {}
         uId = session["user_id"]
