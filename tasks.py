@@ -312,13 +312,16 @@ def calc_pg(pId, rations):
         except TypeError:
             productivity = 0
 
-        # Each % increases / decreases max population by 
+        # Each % increases / decreases max population by
+        # 0.012
         happiness = round((happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2) # The more you have the better
 
-        # Each % increases / decreases max population by 
+        # Each % increases / decreases max population by
+        #0.0085
         pollution = round((pollution - 50) * - variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2) # The less you have the better
 
-        # Each % increases / decreases resource output by 
+        # Each % increases / decreases resource output by
+        #0.009
         productivity = round((productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER, 2) # The more you have the better
 
         maxPop += (maxPop * happiness) + (maxPop * pollution)
