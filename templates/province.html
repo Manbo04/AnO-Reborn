@@ -375,6 +375,26 @@
         {% if province["own"] %}
         <h2 class="templatecontentheaderleft">Infrastructure</h2>
 
+        <style>
+            /* Keep counts and labels aligned across the 3-column infra summary */
+            .infra-table td {
+                text-align: left;
+            }
+            .infra-table .unit-line {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                width: 100%;
+            }
+            .infra-table .unit-count {
+                font-weight: 600;
+                min-width: 28px;
+            }
+            .infra-table .unit-name {
+                flex: 1 1 auto;
+            }
+        </style>
+
         <div class="templatedivflex2 menuflex2">
             <a href="#cityshow" class="templatedivflex2left" id="provincecity" onclick="provincecity()">
 
@@ -399,7 +419,7 @@
 
 
                 <div class="templateoutertablediv">
-                    <table class="templatetable templatetable2 smalltable">
+                    <table class="templatetable templatetable2 smalltable infra-table">
                         <tr>
                             <td colspan="3">
                                 <div class="templatedivflex2 menuflex2 width100">
@@ -431,35 +451,40 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>{{ units["coal_burners"] }} Coal Power Plants</td>
-                            <td>{{ units["gas_stations"] }} Gas Stations</td>
-                            <td>{{ units["city_parks"] }} City Park</td>
+                            <th>Electricity</th>
+                            <th>Retail</th>
+                            <th>Public Works</th>
                         </tr>
                         <tr>
-                            <td>{{ units["oil_burners"] }} Oil Power Plants</td>
-                            <td>{{ units["general_stores"] }} General Stores</td>
-                            <td>{{ units["libraries"] }} Libraries</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["coal_burners"] }}</span><span class="unit-name">Coal Power Plants</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["gas_stations"] }}</span><span class="unit-name">Gas Stations</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["city_parks"] }}</span><span class="unit-name">City Park</span></div></td>
                         </tr>
                         <tr>
-                            <td>{{ units["solar_fields"] }} Solar Fields</td>
-                            <td>{{ units["farmers_markets"] }} Farmers Markets</td>
-                            <td>{{ units["hospitals"] }} Hospitals</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["oil_burners"] }}</span><span class="unit-name">Oil Power Plants</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["general_stores"] }}</span><span class="unit-name">General Stores</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["libraries"] }}</span><span class="unit-name">Libraries</span></div></td>
                         </tr>
                         <tr>
-                            <td>{{ units["hydro_dams"] }} Hydro Dams</td>
-                            <td>{{ units["banks"] }} Banks</td>
-                            <td>{{ units["universities"] }} Universities</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["solar_fields"] }}</span><span class="unit-name">Solar Fields</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["farmers_markets"] }}</span><span class="unit-name">Farmers Markets</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["hospitals"] }}</span><span class="unit-name">Hospitals</span></div></td>
                         </tr>
                         <tr>
-                            <td>{{ units["nuclear_reactors"] }} Nuclear Reactors</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["hydro_dams"] }}</span><span class="unit-name">Hydro Dams</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["banks"] }}</span><span class="unit-name">Banks</span></div></td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["universities"] }}</span><span class="unit-name">Universities</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["nuclear_reactors"] }}</span><span class="unit-name">Nuclear Reactors</span></div></td>
                             {% if upgrades["onlineshopping"] %}
-                            <td>{{ units["malls"] }} Fulfillment Centers</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["malls"] }}</span><span class="unit-name">Fulfillment Centers</span></div></td>
                             {% else %}
-                            <td>{{ units["malls"] }} Malls</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["malls"] }}</span><span class="unit-name">Malls</span></div></td>
                             {% endif %} {% if upgrades["highspeedrail"] %}
-                            <td>{{ units["monorails"] }} Bullet Trains</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["monorails"] }}</span><span class="unit-name">Bullet Trains</span></div></td>
                             {% else %}
-                            <td>{{ units["monorails"] }} Monorails</td>
+                            <td><div class="unit-line"><span class="unit-count">{{ units["monorails"] }}</span><span class="unit-name">Monorails</span></div></td>
                             {% endif %}
                         </tr>
                     </table>

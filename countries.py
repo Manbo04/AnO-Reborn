@@ -166,7 +166,9 @@ def get_revenue(cId):
         revenue = {"gross": {}, "net": {}}
 
         infra = variables.NEW_INFRA
-        resources = variables.RESOURCES
+        resources = list(
+            variables.RESOURCES
+        )  # copy to avoid mutating the global list across calls
         resources.extend(["money", "energy"])
         for resource in resources:
             revenue["gross"][resource] = 0
@@ -627,7 +629,8 @@ def update_info():
                 current_bg_flag = fetchone_first(db, None)
 
                 if current_bg_flag:
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_bg_flag))
+                    bg_path = os.path.join(app.config["UPLOAD_FOLDER"], current_bg_flag)
+                    os.remove(bg_path)
             except FileNotFoundError:
                 pass
 
@@ -637,8 +640,9 @@ def update_info():
                 extension = current_filename.rsplit('.', 1)[1].lower()
                 filename = f"bg_flag_{cId}" + '.' + extension
                 flag.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                db.execute("UPDATE users SET bg_flag=(%s) WHERE id=(%s)",
-                           (filename, cId))
+                db.execute(
+                    "UPDATE users SET bg_flag=(%s) WHERE id=(%s)", (filename, cId)
+                )
         """
 
         # Location changing
