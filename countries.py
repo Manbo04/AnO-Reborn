@@ -596,7 +596,7 @@ def update_info():
                 and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
             )
 
-        flag = request.files["flag_input"]
+        flag = request.files.get("flag_input")
         if flag:
             if not allowed_file(flag.filename):
                 return error(400, "Bad flag file format")
@@ -648,7 +648,6 @@ def update_info():
                 )
         """
 
-        # Location changing
         new_location = request.form.get("countryLocation")
 
         continents = [

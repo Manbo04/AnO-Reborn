@@ -90,7 +90,7 @@
             <div class="countryimagediv" id="countryFlagBackground">
                 <!--country flag-->
                 {% if flag != None %}
-                <img class="countryimage" src="/static/flags/{{ flag }}" alt="{{ flag }}">
+                <img class="countryimage" src="{{ url_for('static', filename='flags/' + flag) }}" alt="{{ flag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';">
                 <!-- hmm not using url_for, but somewhy it render-->
                 <!-- this is the one that shows -- steven -->
                 {% else %}
@@ -98,7 +98,7 @@
                 <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
                 <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
                 {% if colFlag != None %}
-                <img class="countrycoalitionimage" src="/static/flags/{{ colFlag }}" alt="{{ colFlag }}" /> {% endif %}
+                <img class="countrycoalitionimage" src="{{ url_for('static', filename='flags/' + colFlag) }}" alt="{{ colFlag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';" /> {% endif %}
             </div>
 
 
@@ -791,7 +791,7 @@
                             <label class="imageinput fit center"><span class="material-icons-outlined">
                                     wallpaper
                                         </span>Choose Image
-                                        <input type="file" name="bg_flag_input" id="imageinput" accept="image/*" onchange="flagBackgroundUpload(event)">
+                                        <input type="file" name="bg_flag_input" id="country-bg-flag-input" accept="image/*" onchange="flagBackgroundUpload(event)">
                                       </label>
 
                             -->
@@ -826,7 +826,7 @@
                             <label class="imageinput fit center"><span class="material-icons-outlined">
                                 wallpaper
                                     </span>Choose Image
-                                    <input type="file" name="flag_input" id="imageinput" accept="image/*" onchange="flagItselfUpload(event)">
+                                    <input type="file" name="flag_input" id="country-flag-input" accept="image/*" onchange="flagItselfUpload(event)">
                                   </label>
                         </div>
                         <div class="templatedivflex2left">
@@ -854,7 +854,7 @@
                             <label class="imageinput fit center"><span class="material-icons-outlined">
                                 slideshow
                                     </span>Choose Video
-                                    <input type="file" name="flag_input" id="imageinput" accept="video/*" onchange="videoUpload(event)">
+                                    <input type="file" name="flag_input" id="country-flag-video-input" accept="video/*" onchange="videoUpload(event)">
                                   </label>
 
                                 -->
