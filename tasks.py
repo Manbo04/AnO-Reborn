@@ -308,7 +308,11 @@ def generate_province_revenue() -> None:
             db.execute("UPDATE provinces SET energy=0 WHERE id=%s", (province_id,))
 
             dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-            upgrades = dict(dbdict.fetchone())
+            upgrades_row = dbdict.fetchone()
+            if not upgrades_row:
+                # User has no upgrades row, skip this province
+                continue
+            upgrades = dict(upgrades_row)
 
             try:
                 db.execute(
@@ -319,7 +323,11 @@ def generate_province_revenue() -> None:
                 policies = []
 
             dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
-            units = dict(dbdict.fetchone())
+            units_row = dbdict.fetchone()
+            if not units_row:
+                # Province has no infrastructure row, skip
+                continue
+            units = dict(units_row)
 
             for unit in columns:
                 unit_amount = units[unit]
@@ -396,7 +404,11 @@ def generate_province_revenue() -> None:
 
                     # Check raw material requirements
                     dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
-                    resources = dict(dbdict.fetchone())
+                    resource_row = dbdict.fetchone()
+                    if not resource_row:
+                        # User has no resources row, skip this unit
+                        continue
+                    resources = dict(resource_row)
 
                     for resource, amount in minus.items():
                         amount *= unit_amount
@@ -678,12 +690,16 @@ def tax_income() -> None:
                     cg_updates.append((removed, uid))
 
         if money_updates:
+            # Order by user_id to reduce deadlock likelihood
+            money_updates.sort(key=lambda x: x[1])
             extras.execute_batch(
                 db,
                 "UPDATE stats SET gold=gold+%s WHERE id=%s",
                 money_updates,
             )
         if cg_updates:
+            # Order by user_id to reduce deadlock likelihood
+            cg_updates.sort(key=lambda x: x[1])
             extras.execute_batch(
                 db,
                 "UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s",
@@ -729,10 +745,12 @@ def population_growth() -> None:
                 continue
 
         if user_rations:
+            # Order by user_id to reduce deadlock likelihood
+            rations_updates = sorted([(r, uid) for uid, r in user_rations.items()], key=lambda x: x[1])
             execute_batch(
                 db,
                 "UPDATE resources SET rations=%s WHERE id=%s",
-                [(r, uid) for uid, r in user_rations.items()],
+                rations_updates,
             )
 
         if pop_updates:
