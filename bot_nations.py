@@ -258,33 +258,33 @@ def execute_market_stabilization(bot_id=None):
         # Sell orders at MAX price (sets price ceiling)
 
         # First pass: Place BUY orders at minimum prices to set floor
-        # Only buy if we're below our target reserve level
+        # Always buy at minimum price to give players a guaranteed buyer
         for resource, price_info in TARGET_PRICES.items():
             min_price = price_info["min"]
-            target_reserve = MIN_RESERVES[resource] * 3  # 3x minimum is target
-            reserve = resources.get(resource, 0)
 
-            # If below target, allocate gold to buy more
-            if reserve < target_reserve and remaining_gold > min_price * 10000:
-                # Calculate how much to buy to reach target
-                buy_amount = min(
-                    50000, target_reserve - reserve, remaining_gold // min_price
-                )
+            # Calculate how much gold we can allocate to this resource
+            # Spread budget across all 4 resources
+            budget_per_resource = remaining_gold // 4
+
+            if budget_per_resource > min_price * 100:  # At least 100 units
+                # Calculate how many units we can buy with this budget
+                max_units_affordable = budget_per_resource // min_price
+                # Buy up to 50k units to encourage player selling
+                buy_amount = min(50000, max_units_affordable)
+
                 if buy_amount > 100:
-                    buy_cost = buy_amount * min_price
                     place_buy_order(bot_id, resource, buy_amount, min_price)
-                    remaining_gold -= buy_cost
+                    remaining_gold -= buy_amount * min_price
 
         # Second pass: Place SELL orders at maximum prices to set ceiling
-        # Only if we have excess above our target level
+        # Always sell at maximum price to give players a guaranteed seller
         for resource, price_info in TARGET_PRICES.items():
             max_price = price_info["max"]
-            target_reserve = MIN_RESERVES[resource] * 3
             reserve = resources.get(resource, 0)
 
-            if reserve > target_reserve:
-                # Sell excess above target
-                sell_amount = min(50000, reserve - target_reserve)
+            # Sell if we have any reserve (always have stock available)
+            if reserve > 10000:  # Keep minimal 10k in reserve
+                sell_amount = min(50000, reserve - 10000)
                 if sell_amount > 100:
                     place_sell_order(bot_id, resource, sell_amount, max_price)
 

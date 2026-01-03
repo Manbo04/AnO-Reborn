@@ -759,16 +759,23 @@ def _safe_update_productivity(db_cursor, province_id, multiplier) -> None:
 
 
 def bot_market_stabilization():
-    """Celery task for bot market stabilization (runs every 2 hours)."""
+    """Celery task for bot market stabilization (runs every 30 minutes)."""
     try:
-        from bot_nations import (
-            ensure_bot_nations_exist,
-            execute_market_stabilization,
-            produce_resources,
-        )
+        from bot_nations import ensure_bot_nations_exist, execute_market_stabilization
 
         ensure_bot_nations_exist()
         execute_market_stabilization()  # Primary stabilizer
+
+    except Exception as e:
+        handle_exception(e)
+
+
+def bot_resource_production():
+    """Celery task for bot resource production (runs every 1 hour)."""
+    try:
+        from bot_nations import ensure_bot_nations_exist, produce_resources
+
+        ensure_bot_nations_exist()
         produce_resources()  # Resource producer
 
     except Exception as e:
@@ -776,7 +783,7 @@ def bot_market_stabilization():
 
 
 def bot_cancel_stale_orders():
-    """Celery task to cancel stale bot orders (runs every 6 hours)."""
+    """Celery task to cancel stale bot orders (runs every 2 hours)."""
     try:
         from bot_nations import BOT_NATION_IDS, cancel_bot_orders
 
@@ -788,7 +795,7 @@ def bot_cancel_stale_orders():
 
 
 def bot_check_status():
-    """Celery task to check and log bot status (runs every 1 hour)."""
+    """Celery task to check and log bot status (runs every 30 minutes)."""
     try:
         import logging
 
@@ -821,5 +828,6 @@ task_tax_income = _TaskWrapper(tax_income)
 task_generate_province_revenue = _TaskWrapper(generate_province_revenue)
 task_population_growth = _TaskWrapper(population_growth)
 task_bot_market_stabilization = _TaskWrapper(bot_market_stabilization)
+task_bot_resource_production = _TaskWrapper(bot_resource_production)
 task_bot_cancel_stale_orders = _TaskWrapper(bot_cancel_stale_orders)
 task_bot_check_status = _TaskWrapper(bot_check_status)
