@@ -160,7 +160,9 @@ def market():
         # Add pagination with LIMIT and OFFSET
         if filter_resource is not None:
             # Get total count for pagination
-            db.execute("SELECT COUNT(*) FROM offers WHERE resource = %s", (filter_resource,))
+            db.execute(
+                "SELECT COUNT(*) FROM offers WHERE resource = %s", (filter_resource,)
+            )
             total_offers = fetchone_first(db, 0)
 
             query = """
@@ -177,14 +179,18 @@ def market():
             db.execute("SELECT COUNT(*) FROM offers WHERE type = %s", (offer_type,))
             total_offers = fetchone_first(db, 0)
 
-            query = """
+            query = (
+                """
                 SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
                 FROM offers o
                 INNER JOIN users u ON o.user_id = u.id
                 WHERE o.type = %s
-                ORDER BY o.price """ + ("ASC" if price_type == "ascending" else "DESC") + """
+                ORDER BY o.price """
+                + ("ASC" if price_type == "ascending" else "DESC")
+                + """
                 LIMIT %s OFFSET %s
             """
+            )
             params = (offer_type, per_page, offset)
         elif offer_type is not None:
             # Get total count for pagination
@@ -269,7 +275,7 @@ def market():
             total_pages=total_pages,
             has_prev=has_prev,
             has_next=has_next,
-            total_offers=total_offers
+            total_offers=total_offers,
         )
 
 
