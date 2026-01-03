@@ -151,12 +151,16 @@
                                 </div>
                                 <div class="templatedivflex2left">
                                     {% if type == "sell" %}
-                                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        check
-                                        </span>Buy</button> {% elif type == "buy" %}
-                                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        check
-                                        </span>Sell</button> {% endif %}
+                                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"
+                                            onclick="return confirmMarketTransaction(event, 'BUY', '{{ resource }}', '{{ amount | commas }}', '{{ price | commas }}')">
+                                        <span class="material-icons-outlined">check</span>Buy
+                                    </button>
+                                    {% elif type == "buy" %}
+                                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"
+                                            onclick="return confirmMarketTransaction(event, 'SELL', '{{ resource }}', '{{ amount | commas }}', '{{ price | commas }}')">
+                                        <span class="material-icons-outlined">check</span>Sell
+                                    </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </form>
@@ -165,6 +169,48 @@
                 </tr>
                 {% endfor %}
             </table>
+
+            <!-- Pagination Controls -->
+            {% if total_pages > 1 %}
+            <div class="infodiv" style="text-align: center; margin-top: 20px;">
+                <p class="templatecontentpleft">
+                    Page {{ page }} of {{ total_pages }} ({{ total_offers }} total offers)
+                </p>
+                <div class="templatedivflex2 divflex2center" style="justify-content: center; gap: 10px;">
+                    {% if has_prev %}
+                    <a href="/market?page={{ page - 1 }}{% if request.args.get('filtered_resource') %}&filtered_resource={{ request.args.get('filtered_resource') }}{% endif %}{% if request.args.get('offer_type') %}&offer_type={{ request.args.get('offer_type') }}{% endif %}{% if request.args.get('price_type') %}&price_type={{ request.args.get('price_type') }}{% endif %}"
+                       class="templatedivbutton smallactionbutton">
+                        <span class="material-icons-outlined">arrow_back</span> Previous
+                    </a>
+                    {% endif %}
+
+                    {% if page > 2 %}
+                    <a href="/market?page=1{% if request.args.get('filtered_resource') %}&filtered_resource={{ request.args.get('filtered_resource') }}{% endif %}{% if request.args.get('offer_type') %}&offer_type={{ request.args.get('offer_type') }}{% endif %}{% if request.args.get('price_type') %}&price_type={{ request.args.get('price_type') }}{% endif %}"
+                       class="templatedivbutton smallactionbutton">1</a>
+                    {% if page > 3 %}
+                    <span style="padding: 0 10px;">...</span>
+                    {% endif %}
+                    {% endif %}
+
+                    <span class="templatedivbutton smallactionbutton" style="background: #00a7e1; color: white; font-weight: bold;">{{ page }}</span>
+
+                    {% if page < total_pages - 1 %}
+                    {% if page < total_pages - 2 %}
+                    <span style="padding: 0 10px;">...</span>
+                    {% endif %}
+                    <a href="/market?page={{ total_pages }}{% if request.args.get('filtered_resource') %}&filtered_resource={{ request.args.get('filtered_resource') }}{% endif %}{% if request.args.get('offer_type') %}&offer_type={{ request.args.get('offer_type') }}{% endif %}{% if request.args.get('price_type') %}&price_type={{ request.args.get('price_type') }}{% endif %}"
+                       class="templatedivbutton smallactionbutton">{{ total_pages }}</a>
+                    {% endif %}
+
+                    {% if has_next %}
+                    <a href="/market?page={{ page + 1 }}{% if request.args.get('filtered_resource') %}&filtered_resource={{ request.args.get('filtered_resource') }}{% endif %}{% if request.args.get('offer_type') %}&offer_type={{ request.args.get('offer_type') }}{% endif %}{% if request.args.get('price_type') %}&price_type={{ request.args.get('price_type') }}{% endif %}"
+                       class="templatedivbutton smallactionbutton">
+                        Next <span class="material-icons-outlined">arrow_forward</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

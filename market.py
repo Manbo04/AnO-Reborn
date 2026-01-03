@@ -97,6 +97,17 @@ def market():
         except TypeError:
             filter_resource = None
 
+        # Pagination
+        try:
+            page = int(request.values.get("page", 1))
+            if page < 1:
+                page = 1
+        except (TypeError, ValueError):
+            page = 1
+
+        per_page = 50  # Show 50 offers per page
+        offset = (page - 1) * per_page
+
         try:
             price_type = request.values.get("price_type")
         except TypeError:
@@ -146,41 +157,62 @@ def market():
                 return error(400, "No such resource")
 
         # Use JOIN query instead of loop to fetch all data at once
+        # Add pagination with LIMIT and OFFSET
         if filter_resource is not None:
+            # Get total count for pagination
+            db.execute("SELECT COUNT(*) FROM offers WHERE resource = %s", (filter_resource,))
+            total_offers = fetchone_first(db, 0)
+
             query = """
                 SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
                 FROM offers o
                 INNER JOIN users u ON o.user_id = u.id
                 WHERE o.resource = %s
                 ORDER BY o.price ASC
+                LIMIT %s OFFSET %s
             """
-            params = (filter_resource,)
+            params = (filter_resource, per_page, offset)
         elif offer_type is not None and price_type is not None:
+            # Get total count for pagination
+            db.execute("SELECT COUNT(*) FROM offers WHERE type = %s", (offer_type,))
+            total_offers = fetchone_first(db, 0)
+
             query = """
                 SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
                 FROM offers o
                 INNER JOIN users u ON o.user_id = u.id
                 WHERE o.type = %s
-                ORDER BY o.price " + ("ASC" if price_type == "ascending" else "DESC") + "
+                ORDER BY o.price """ + ("ASC" if price_type == "ascending" else "DESC") + """
+                LIMIT %s OFFSET %s
             """
-            params = (offer_type,)
+            params = (offer_type, per_page, offset)
         elif offer_type is not None:
+            # Get total count for pagination
+            db.execute("SELECT COUNT(*) FROM offers WHERE type = %s", (offer_type,))
+            total_offers = fetchone_first(db, 0)
+
             query = """
                 SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
                 FROM offers o
                 INNER JOIN users u ON o.user_id = u.id
                 WHERE o.type = %s
                 ORDER BY o.price ASC
+                LIMIT %s OFFSET %s
             """
-            params = (offer_type,)
+            params = (offer_type, per_page, offset)
         else:
+            # Get total count for pagination
+            db.execute("SELECT COUNT(*) FROM offers")
+            total_offers = fetchone_first(db, 0)
+
             query = """
                 SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
                 FROM offers o
                 INNER JOIN users u ON o.user_id = u.id
                 ORDER BY o.price ASC
+                LIMIT %s OFFSET %s
             """
-            params = None
+            params = (per_page, offset)
 
         if params:
             db.execute(query, params)
@@ -188,6 +220,11 @@ def market():
             db.execute(query)
 
         offers_data = db.fetchall()
+
+        # Calculate pagination data
+        total_pages = (total_offers + per_page - 1) // per_page  # Ceiling division
+        has_prev = page > 1
+        has_next = page < total_pages
 
         # Process results
         ids = []
@@ -224,7 +261,15 @@ def market():
         )  # Zips everything into 1 list
 
         return render_template(
-            "market.html", offers=offers, price_type=price_type, cId=cId
+            "market.html",
+            offers=offers,
+            price_type=price_type,
+            cId=cId,
+            page=page,
+            total_pages=total_pages,
+            has_prev=has_prev,
+            has_next=has_next,
+            total_offers=total_offers
         )
 
 

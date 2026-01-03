@@ -69,7 +69,8 @@
                             <option value="Loot">Loot</option>
                         </select>
                         <textarea name="description" placeholder="War message" maxlength="240" style="width: 200px; height: 40px; margin-right: 10px;"></textarea>
-                        <button type="submit" class="templatedivbutton smallactionbutton">
+                        <button type="submit" class="templatedivbutton smallactionbutton"
+                                onclick="return confirmWarDeclaration(event, '{{ target.username }}')">
                             <span class="material-icons-outlined">military_tech</span>Declare War
                         </button>
                     </form>
