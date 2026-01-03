@@ -82,9 +82,10 @@
             <div class="templatedivflex2 menuflex">
                 <div class="templatedivflex2left">
 
-                    <button formaction="/delete_own_account" type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"><span class="material-icons-outlined">
-                                cancel
-                                </span>Delete account</button>
+                    <button formaction="/delete_own_account" type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"
+                            onclick="return confirmNationDelete(event)">
+                        <span class="material-icons-outlined">cancel</span>Delete account
+                    </button>
 
                 </div>
 
