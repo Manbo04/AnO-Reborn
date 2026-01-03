@@ -52,6 +52,9 @@ def ensure_bot_nations_exist():
                     continue
 
                 # Create bot nation user
+                bot_username = (
+                    "Market Bot" if bot_name == "market_stabilizer" else "Supply Bot"
+                )
                 db.execute(
                     """
                     INSERT INTO users (id, username, email, date, hash, auth_type)
@@ -59,7 +62,7 @@ def ensure_bot_nations_exist():
                     """,
                     (
                         bot_id,
-                        f"BOT_{bot_name.upper()}",
+                        bot_username,
                         f"bot.{bot_name}@ano-system.local",
                         datetime.now().strftime("%Y-%m-%d"),
                         "bot_account",  # Special hash for bot accounts
