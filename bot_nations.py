@@ -70,10 +70,10 @@ def ensure_bot_nations_exist():
                 # Create stats entry for bot
                 db.execute(
                     """
-                    INSERT INTO stats (id, gold)
-                    VALUES (%s, %s)
+                    INSERT INTO stats (id, gold, location)
+                    VALUES (%s, %s, %s)
                     """,
-                    (bot_id, 10000000),  # 10M starting gold
+                    (bot_id, 10000000, "Bot Nation"),  # 10M starting gold
                 )
 
                 # Create resources entry for bot with large reserves
@@ -225,9 +225,9 @@ def execute_market_stabilization(bot_id=None):
 
     The bot will:
     1. Check current market prices
-    2. Buy resources if prices are below target
-    3. Sell resources if prices are above target
-    4. Maintain minimum reserves
+    2. Place buy orders when prices are below target range
+    3. Place sell orders when prices are above target range
+    4. Always maintain orders at target prices to guide market
 
     Args:
         bot_id: ID of bot to execute (defaults to primary market stabilizer)
@@ -245,37 +245,45 @@ def execute_market_stabilization(bot_id=None):
         logger.info(f"Bot resources: {resources}")
         logger.info(f"Bot gold: {gold}")
 
-        # Strategy 1: Buy low
+        # Clear old orders first to prevent accumulation
+        cancel_bot_orders(bot_id)
+
+        remaining_gold = gold
+
+        # Strategy: Provide liquidity at target price extremes
+        # Buy orders at MIN price (sets price floor)
+        # Sell orders at MAX price (sets price ceiling)
+
+        # First pass: Place BUY orders at minimum prices to set floor
+        # Only buy if we're below our target reserve level
         for resource, price_info in TARGET_PRICES.items():
-            current_price = prices.get(resource, price_info["target"])
+            min_price = price_info["min"]
+            target_reserve = MIN_RESERVES[resource] * 3  # 3x minimum is target
+            reserve = resources.get(resource, 0)
 
-            # If price is below minimum target, buy
-            if current_price < price_info["min"]:
-                # Calculate how much we can afford
-                reserve = resources.get(resource, 0)
-                budget_for_resource = gold // 2  # Use half of available gold max
+            # If below target, allocate gold to buy more
+            if reserve < target_reserve and remaining_gold > min_price * 10000:
+                # Calculate how much to buy to reach target
+                buy_amount = min(
+                    50000, target_reserve - reserve, remaining_gold // min_price
+                )
+                if buy_amount > 100:
+                    buy_cost = buy_amount * min_price
+                    place_buy_order(bot_id, resource, buy_amount, min_price)
+                    remaining_gold -= buy_cost
 
-                if reserve < MIN_RESERVES[resource] and budget_for_resource > 0:
-                    # Buy amount that would bring us to target level
-                    amount_to_buy = max(1000, MIN_RESERVES[resource] - reserve)
-                    total_cost = amount_to_buy * current_price
-
-                    if total_cost <= budget_for_resource:
-                        place_buy_order(bot_id, resource, amount_to_buy, current_price)
-                        gold -= total_cost
-
-        # Strategy 2: Sell high
+        # Second pass: Place SELL orders at maximum prices to set ceiling
+        # Only if we have excess above our target level
         for resource, price_info in TARGET_PRICES.items():
-            current_price = prices.get(resource, price_info["target"])
+            max_price = price_info["max"]
+            target_reserve = MIN_RESERVES[resource] * 3
+            reserve = resources.get(resource, 0)
 
-            # If price is above maximum target, sell
-            if current_price > price_info["max"]:
-                reserve = resources.get(resource, 0)
-
-                if reserve > MIN_RESERVES[resource]:
-                    # Sell surplus above minimum reserve
-                    amount_to_sell = max(1000, reserve - MIN_RESERVES[resource])
-                    place_sell_order(bot_id, resource, amount_to_sell, current_price)
+            if reserve > target_reserve:
+                # Sell excess above target
+                sell_amount = min(50000, reserve - target_reserve)
+                if sell_amount > 100:
+                    place_sell_order(bot_id, resource, sell_amount, max_price)
 
         logger.info(f"Market stabilization complete for Bot {bot_id}")
 
