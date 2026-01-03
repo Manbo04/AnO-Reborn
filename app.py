@@ -168,6 +168,7 @@ import login
 from wars.routes import wars_bp
 import policies
 import statistics
+import bot_admin  # noqa: F401 - Enables bot admin endpoints
 import requests
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES

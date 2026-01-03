@@ -19,6 +19,10 @@ _CALC_TI_OVERRIDE = globals().get("calc_ti", None)
 MAX_INT_32 = 2**31 - 1
 
 
+def _clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(value, high))
+
+
 def find_unit_category(unit):
     """Helper to determine unit category."""
     industry = [
@@ -157,8 +161,103 @@ def calc_ti(user_id: int) -> Tuple[int, int] | Tuple[bool, bool]:
 
 
 def calc_pg(pId, rations):
-    """Safe stub for population growth helper used by views/tests."""
-    return rations, rations
+    """Realistic hourly population growth with starvation/overshoot checks.
+
+    Uses a logistic-like curve capped by a carrying capacity derived from base
+    population, city count, land, and small happiness/pollution/productivity
+    effects. Rations act as the primary throttle: full rations => growth; half
+    rations => steady; no rations => decline. Returns (new_rations, new_pop).
+    """
+
+    from database import get_db_cursor
+
+    try:
+        rations_available = int(rations or 0)
+    except Exception:
+        rations_available = 0
+
+    with get_db_cursor() as db:
+        try:
+            db.execute(
+                "SELECT population, happiness, pollution, productivity, "
+                "CAST(cityCount AS INTEGER), land, userId "
+                "FROM provinces WHERE id=%s",
+                (pId,),
+            )
+            row = db.fetchone()
+        except Exception:
+            row = None
+
+    if not row:
+        return rations_available, 0
+
+    (
+        population,
+        happiness,
+        pollution,
+        productivity,
+        citycount,
+        land,
+        owner_id,
+    ) = row
+
+    population = int(population or 0)
+    happiness = int(happiness or 50)
+    pollution = int(pollution or 50)
+    productivity = int(productivity or 50)
+    citycount = int(citycount or 0)
+    land = int(land or 0)
+
+    # Carrying capacity: base + city/land additions, lightly influenced by
+    # sentiment/productivity. Hard cap to prevent runaway populations.
+    base_cap = variables.DEFAULT_MAX_POPULATION
+    cap = base_cap
+    cap += citycount * variables.CITY_MAX_POPULATION_ADDITION
+    cap += land * variables.LAND_MAX_POPULATION_ADDITION
+
+    sentiment_multiplier = 1
+    sentiment_multiplier += (happiness - 50) * 0.004
+    sentiment_multiplier += (50 - pollution) * 0.004
+    sentiment_multiplier += (productivity - 50) * 0.002
+    sentiment_multiplier = _clamp(sentiment_multiplier, 0.7, 1.3)
+
+    cap = int(cap * sentiment_multiplier)
+    cap = max(cap, base_cap)
+    cap = min(cap, base_cap * 12)
+
+    # Food gate: determines direction and magnitude of growth/decline.
+    rations_needed = max(population // variables.RATIONS_PER, 1)
+    supply_ratio = _clamp(rations_available / rations_needed, 0.0, 1.0)
+
+    # Apply consumption immediately for subsequent province processing.
+    new_rations = max(rations_available - rations_needed, 0)
+
+    # Growth factor maps 0..1 supply to -1..1 effect.
+    growth_factor = (supply_ratio - 0.5) * 2
+
+    # Base hourly growth ~0.05% at low pop, ~1.2% daily when fed and far from cap.
+    base_rate = 0.0005
+    rate_multiplier = 1
+    rate_multiplier += (happiness - 50) * 0.003
+    rate_multiplier += (productivity - 50) * 0.002
+    rate_multiplier += (50 - pollution) * 0.002
+    rate_multiplier = _clamp(rate_multiplier, 0.5, 1.5)
+
+    effective_rate = base_rate * rate_multiplier * growth_factor
+
+    if population <= 0 or cap <= 0:
+        return new_rations, 0
+
+    if effective_rate >= 0:
+        delta = effective_rate * population * (1 - (population / cap))
+    else:
+        # Starvation/decline; proportional to current population.
+        delta = effective_rate * population
+
+    new_population = population + delta
+    new_population = max(0, min(int(round(new_population)), MAX_INT_32))
+
+    return int(new_rations), int(new_population)
 
 
 def generate_province_revenue() -> None:
@@ -592,6 +691,58 @@ def tax_income() -> None:
             )
 
 
+def population_growth() -> None:
+    """Advance population growth for all provinces once per hour.
+
+    Rations are consumed per province in order of province id while keeping a
+    running balance per user so multiple provinces share the same food pool.
+    """
+
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch
+
+    calc_fn = calc_pg
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute("SELECT id, userId FROM provinces ORDER BY id ASC")
+        provinces = db.fetchall() or []
+
+        user_rations = {}
+        pop_updates = []
+
+        for province_id, user_id in provinces:
+            try:
+                if user_id not in user_rations:
+                    db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
+                    row = db.fetchone()
+                    user_rations[user_id] = int(row[0]) if row else 0
+
+                rations_available = user_rations[user_id]
+                new_rations, new_pop = calc_fn(province_id, rations_available)
+
+                user_rations[user_id] = new_rations
+                pop_updates.append((new_pop, province_id))
+
+            except Exception as e:
+                handle_exception(e)
+                continue
+
+        if user_rations:
+            execute_batch(
+                db,
+                "UPDATE resources SET rations=%s WHERE id=%s",
+                [(r, uid) for uid, r in user_rations.items()],
+            )
+
+        if pop_updates:
+            execute_batch(
+                db,
+                "UPDATE provinces SET population=%s WHERE id=%s",
+                pop_updates,
+            )
+
+
 def _safe_update_productivity(db_cursor, province_id, multiplier) -> None:
     """Safely update productivity with bounds checking."""
     db_cursor.execute("SELECT productivity FROM provinces WHERE id=%s", (province_id,))
@@ -605,6 +756,52 @@ def _safe_update_productivity(db_cursor, province_id, multiplier) -> None:
     db_cursor.execute(
         "UPDATE provinces SET productivity=(%s) WHERE id=%s", (new_val, province_id)
     )
+
+
+def bot_market_stabilization():
+    """Celery task for bot market stabilization (runs every 2 hours)."""
+    try:
+        from bot_nations import (
+            ensure_bot_nations_exist,
+            execute_market_stabilization,
+            produce_resources,
+        )
+
+        ensure_bot_nations_exist()
+        execute_market_stabilization()  # Primary stabilizer
+        produce_resources()  # Resource producer
+
+    except Exception as e:
+        handle_exception(e)
+
+
+def bot_cancel_stale_orders():
+    """Celery task to cancel stale bot orders (runs every 6 hours)."""
+    try:
+        from bot_nations import BOT_NATION_IDS, cancel_bot_orders
+
+        for bot_id in BOT_NATION_IDS.values():
+            cancel_bot_orders(bot_id)
+
+    except Exception as e:
+        handle_exception(e)
+
+
+def bot_check_status():
+    """Celery task to check and log bot status (runs every 1 hour)."""
+    try:
+        import logging
+
+        from bot_nations import BOT_NATION_IDS, get_bot_status
+
+        logger = logging.getLogger(__name__)
+
+        for bot_name, bot_id in BOT_NATION_IDS.items():
+            status = get_bot_status(bot_id)
+            logger.info(f"Bot {bot_name} status: {status}")
+
+    except Exception as e:
+        handle_exception(e)
 
 
 class _TaskWrapper:
@@ -622,3 +819,7 @@ class _TaskWrapper:
 
 task_tax_income = _TaskWrapper(tax_income)
 task_generate_province_revenue = _TaskWrapper(generate_province_revenue)
+task_population_growth = _TaskWrapper(population_growth)
+task_bot_market_stabilization = _TaskWrapper(bot_market_stabilization)
+task_bot_cancel_stale_orders = _TaskWrapper(bot_cancel_stale_orders)
+task_bot_check_status = _TaskWrapper(bot_check_status)
