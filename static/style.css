@@ -94,10 +94,13 @@
 
 @keyframes navbarparentload {
     from {
-        top: -55px;
+        transform: translateY(-55px);
         opacity: 0;
     }
-    to {}
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes textload {
@@ -150,17 +153,17 @@
     0% {
         opacity: 0;
         pointer-events: none;
-        top: -15px;
+        transform: translateY(-15px);
     }
     50% {
         opacity: 0;
         pointer-events: none;
-        top: -15px;
+        transform: translateY(-15px);
     }
     100% {
         opacity: 1;
         pointer-events: all;
-        top: 0px;
+        transform: translateY(0);
     }
 }
 
@@ -168,17 +171,17 @@
     0% {
         opacity: 0;
         pointer-events: none;
-        top: 15px;
+        transform: translateY(15px);
     }
     50% {
         opacity: 0;
         pointer-events: none;
-        top: 15px;
+        transform: translateY(15px);
     }
     100% {
         opacity: 1;
         pointer-events: all;
-        top: 0px;
+        transform: translateY(0);
     }
 }
 
@@ -186,17 +189,17 @@
     0% {
         opacity: 0;
         pointer-events: none;
-        top: 8px;
+        transform: translateY(8px);
     }
     50% {
         opacity: 0;
         pointer-events: none;
-        top: 8px;
+        transform: translateY(8px);
     }
     100% {
         opacity: 1;
         pointer-events: all;
-        top: -5px;
+        transform: translateY(-5px);
     }
 }
 
@@ -396,6 +399,7 @@ label {
     padding: 0 5%;
     box-shadow: 0 0 0.5rem 0 rgba(58, 59, 69, 0.8);
     transition: all 0.3s;
+    will-change: transform;
 }
 
 .navbarparent:hover {
@@ -1319,6 +1323,7 @@ label {
     width: -moz-fit-content;
     margin: auto;
     padding: 10px 20px;
+    will-change: transform, opacity;
     background-color: #00a7e1;
     box-shadow: rgba(0, 0, 0, 0.15) 0 3px 4px 1px, rgba(0, 0, 0, 0.4) 0 12px 32px 0;
     text-transform: capitalize;
@@ -1358,7 +1363,7 @@ label {
     animation: templatedivcontentload 0.85s;
     position: relative;
     font-size: 18px;
-}
+    will-change: transform, opacity;
 
 .templatecontentheaderleft {
     background: var(--foregroundThree);
