@@ -9,6 +9,38 @@
 
 /* REMOVED: * { transition: all 0.3s; } - This was causing major performance issues */
 
+/* Mobile-first responsive design */
+:root {
+    --mobile-width: 375px;
+    --tablet-width: 768px;
+    --desktop-width: 1024px;
+}
+
+/* Base responsive body styles */
+body {
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch-friendly adjustments for mobile */
+@media all and (max-width: 768px) {
+    body {
+        font-size: 16px;
+    }
+
+    a, button, input[type="button"], input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
 .material-icons-outlined {
     font-family: 'Material Icons';
     position: relative;
@@ -402,6 +434,14 @@ label {
     will-change: transform;
 }
 
+@media all and (max-width: 480px) {
+    .navbarparent {
+        width: 100%;
+        padding: 0;
+        height: 50px;
+    }
+}
+
 .navbarparent:hover {
     background: #363945 !important;
 }
@@ -419,6 +459,20 @@ label {
     line-height: 55px;
 }
 
+@media all and (max-width: 768px) {
+    .navbarparenttitle {
+        font-size: 20px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .navbarparenttitle {
+        font-size: 16px;
+        line-height: 50px;
+        margin-left: 1px;
+    }
+}
+
 .navbarparenttitle:hover {
     color: rgba(255, 255, 255, 0.7);
 }
@@ -430,6 +484,14 @@ label {
     float: left;
     margin-right: 10px;
     user-select: none;
+}
+
+@media all and (max-width: 480px) {
+    .navbarparenttitleimage {
+        height: 40px;
+        width: 40px;
+        margin: 3px;
+    }
 }
 
 .menubar {
@@ -1114,9 +1176,24 @@ label {
     box-shadow: rgba(0, 0, 0, 0.1) 0 20px 50px 0px;
 }
 
-@media all and (max-width: 750px) {
+@media all and (max-width: 768px) {
     .templatediv {
-        width: 90%;
+        width: 95%;
+        margin: 30px auto;
+        margin-top: 160px;
+        padding-bottom: 20px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatediv {
+        width: 100%;
+        margin: 20px 0;
+        margin-top: 120px;
+        padding-bottom: 15px;
+        border-radius: 0;
     }
 }
 
@@ -1130,9 +1207,19 @@ label {
     background-attachment: fixed;
 }
 
-@media all and (max-width: 750px) {
+@media all and (max-width: 768px) {
     .templatedivtopper {
-        background-attachment: unset;
+        background-attachment: scroll;
+        padding: 10px 0;
+        margin-bottom: 8px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatedivtopper {
+        padding: 8px 0;
+        margin-bottom: 5px;
+        background-size: 100% 100%;
     }
 }
 
@@ -1331,6 +1418,21 @@ label {
     border-radius: 4px;
 }
 
+@media all and (max-width: 768px) {
+    .templatedivtitle {
+        font-size: 28px;
+        padding: 8px 15px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatedivtitle {
+        font-size: 22px;
+        padding: 6px 12px;
+        box-shadow: rgba(0, 0, 0, 0.15) 0 2px 3px 0px;
+    }
+}
+
 .advert {
     text-align: center;
 }
@@ -1432,6 +1534,25 @@ label {
     animation: templatedivcontentload 1.25s;
     position: relative;
     font-weight: normal;
+}
+
+@media all and (max-width: 768px) {
+    .templatedivbutton {
+        padding: 8px 30px;
+        margin: 8px;
+        font-size: 0.95rem;
+        line-height: 24px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatedivbutton {
+        display: block;
+        width: 90%;
+        margin: 10px auto;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
 }
 
 .templatedivbutton:hover {
@@ -1880,11 +2001,19 @@ label {
 .templatedivflex2 {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 @media all and (max-width: 1055px) {
     .templatedivflex2 {
         flex-direction: column;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatedivflex2 {
+        flex-direction: column;
+        padding: 0 5px;
     }
 }
 
@@ -1954,6 +2083,28 @@ button {
     float: none;
 }
 
+@media all and (max-width: 768px) {
+    input,
+    button {
+        margin: auto 1%;
+        font-size: 16px;
+        padding: 10px 12px;
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    input,
+    button {
+        margin: 8px auto;
+        display: block;
+        width: 90%;
+        padding: 12px;
+        font-size: 16px;
+    }
+}
+
 .templateflexfullinput {
     float: none;
     margin: 0px auto;
@@ -1967,6 +2118,25 @@ button {
     flex-direction: column;
     flex-wrap: wrap;
     border-radius: 4px;
+}
+
+@media all and (max-width: 768px) {
+    .templatedivflex2left,
+    .templatedivflex2right {
+        margin: 15px auto;
+        padding: 6px;
+        width: 95%;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatedivflex2left,
+    .templatedivflex2right {
+        margin: 10px auto;
+        padding: 4px;
+        width: 100%;
+        border-radius: 0;
+    }
 }
 
 .flex2rightfloatright {
@@ -2051,6 +2221,28 @@ button {
     box-shadow: rgba(58, 59, 69, 0.15) 0px 0px 48px 0px;
     border-radius: 4px;
     border-collapse: initial;
+    overflow-x: auto;
+    display: block;
+}
+
+@media all and (max-width: 768px) {
+    .templatetable {
+        width: 95%;
+        padding: 4px;
+        margin: 3px auto;
+        font-size: 14px;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .templatetable {
+        width: 100%;
+        padding: 2px;
+        margin: 2px 0;
+        font-size: 12px;
+        border-radius: 0;
+    }
+}
     align-items: center;
 }
 
