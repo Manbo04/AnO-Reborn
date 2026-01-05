@@ -343,16 +343,31 @@ def my_country():
 @cache_response(ttl_seconds=30)
 def country(cId):
     with get_db_cursor() as db:
-        db.execute(
-            "SELECT users.username, stats.location, users.description, "
-            "users.date, users.flag "
-            "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
-            (cId,),
-        )
-        row = db.fetchone()
-        if not row:
-            return error(404, "Country doesn't exist")
-        username, location, description, dateCreated, flag = row
+        # Try to fetch motto, but handle case where column doesn't exist yet
+        try:
+            db.execute(
+                "SELECT users.username, stats.location, users.description, "
+                "users.date, users.flag, users.motto "
+                "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
+                (cId,),
+            )
+            row = db.fetchone()
+            if not row:
+                return error(404, "Country doesn't exist")
+            username, location, description, dateCreated, flag, motto = row
+        except Exception:
+            # Fallback if motto column doesn't exist yet
+            db.execute(
+                "SELECT users.username, stats.location, users.description, "
+                "users.date, users.flag "
+                "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
+                (cId,),
+            )
+            row = db.fetchone()
+            if not row:
+                return error(404, "Country doesn't exist")
+            username, location, description, dateCreated, flag = row
+            motto = None
 
         policies = get_user_policies(cId)
         influence = get_influence(cId)
@@ -467,6 +482,7 @@ def country(cId):
         username=username,
         cId=cId,
         description=description,
+        motto=motto,
         happiness=happiness,
         population=population,
         location=location,
@@ -587,6 +603,17 @@ def update_info():
             db.execute(
                 "UPDATE users SET description=%s WHERE id=%s", (description, cId)
             )
+
+        # Motto changing
+        motto = request.form.get("motto", "")
+        if motto:
+            # Limit motto length to prevent abuse
+            motto = motto[:100]
+            try:
+                db.execute("UPDATE users SET motto=%s WHERE id=%s", (motto, cId))
+            except Exception:
+                # Column might not exist yet, skip silently
+                pass
 
         # Flag changing
         ALLOWED_EXTENSIONS = ["png", "jpg"]

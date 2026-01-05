@@ -3156,7 +3156,7 @@ button {
 /*COUNTRY*/
 
 .countryimagediv {
-    padding: 10px;
+    padding: 20px;
     margin: 15px auto;
     display: block;
     width: 95%;
@@ -3172,19 +3172,39 @@ button {
     transition: none;
 }
 
+.country-flag-container {
+    display: inline-block;
+    text-align: center;
+}
+
 .countryimage {
-    width: 40vw;
-    height: 22.5vw;
-    float: left;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 3px 4px 1px, rgba(0, 0, 0, 0.4) 0 12px 32px 0;
+    width: 25vw;
+    height: 14vw;
+    max-width: 400px;
+    max-height: 225px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 4px 8px 2px, rgba(0, 0, 0, 0.5) 0 12px 32px 0;
     text-align: center;
     background-repeat: no-repeat;
     background-size: cover;
     object-fit: cover;
     background-position: center;
-    position: relative;
     border-radius: 4px;
     user-select: initial;
+    display: block;
+    margin: 0 auto;
+}
+
+.country-motto {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #2c3e50;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    display: inline-block;
 }
 
 .countrycoalitionimage {
@@ -3589,6 +3609,56 @@ button {
 
 
 /*Coalition*/
+
+.coalition-flag-container {
+    padding: 20px;
+    margin: 20px auto;
+    display: block;
+    width: 95%;
+    text-align: center;
+    background: transparent;
+    border-radius: 4px;
+}
+
+.coalitionflagimage {
+    width: 30vw;
+    height: 16.875vw;
+    max-width: 500px;
+    max-height: 281px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 4px 8px 2px, rgba(0, 0, 0, 0.5) 0 12px 32px 0;
+    background-repeat: no-repeat;
+    background-size: cover;
+    object-fit: cover;
+    background-position: center;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.coalition-flag-container {
+    padding: 20px;
+    margin: 20px auto;
+    display: block;
+    width: 95%;
+    text-align: center;
+    background: transparent;
+    border-radius: 4px;
+}
+
+.coalitionflagimage {
+    width: 30vw;
+    height: 16.875vw;
+    max-width: 500px;
+    max-height: 281px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 4px 8px 2px, rgba(0, 0, 0, 0.5) 0 12px 32px 0;
+    background-repeat: no-repeat;
+    background-size: cover;
+    object-fit: cover;
+    background-position: center;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 0 auto;
+}
 
 .general,
 .join,

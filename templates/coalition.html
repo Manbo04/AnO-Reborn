@@ -73,12 +73,11 @@
         <!--GENERAL-->
         <div class="general" id="general">
 
-            <div class="countryimagediv">
-
+            <div class="coalition-flag-container">
                 <!--coalition flag-->
                 {% if flag != None %}
-                <img class="countryimage" src="/static/flags/{{ flag }}" alt="{{ flag }}"> {% else %}
-                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
+                <img class="coalitionflagimage" src="/static/flags/{{ flag }}" alt="{{ flag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';"> {% else %}
+                <img class="coalitionflagimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
             </div>
 
             {% if description != None %}
