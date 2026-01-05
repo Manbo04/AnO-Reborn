@@ -173,11 +173,16 @@ def ensure_signup_attempts_table():
             pass
 
 
-# Import app here (after app.py has finished initializing) to avoid circular imports
-from app import app
+# NOTE: 'app' is imported inside route registration function to avoid circular imports
 
 
-@app.route("/discord", methods=["GET", "POST"])
+def _get_app():
+    """Lazy import to break circular dependency."""
+    from app import app
+
+    return app
+
+
 def discord():
     scope = request.args.get("scope", "identify email")
 
@@ -188,7 +193,6 @@ def discord():
     return redirect(authorization_url)  # oauth2/authorize
 
 
-@app.route("/callback")
 def callback():
     from database import get_db_cursor
 
@@ -261,9 +265,9 @@ def callback():
     return redirect("/discord_signup")
 
 
-@app.route("/discord_signup", methods=["GET", "POST"])
 def discord_register():
     from database import get_db_cursor
+    from app import app
 
     if request.method == "GET":
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
@@ -458,7 +462,6 @@ def discord_register():
             return error(500, f"Signup failed: {error_msg}")
 
 
-@app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         import logging
@@ -647,3 +650,13 @@ def signup():
         return render_template(
             "signup.html", way="normal", recaptcha_site_key=recaptcha_site_key
         )
+
+
+# Register routes at module load time after app has been imported
+_app = _get_app()
+_app.add_url_rule("/discord", "discord", discord, methods=["GET", "POST"])
+_app.add_url_rule("/callback", "callback", callback)
+_app.add_url_rule(
+    "/discord_signup", "discord_register", discord_register, methods=["GET", "POST"]
+)
+_app.add_url_rule("/signup", "signup", signup, methods=["GET", "POST"])
