@@ -1,6 +1,6 @@
 from flask import request, render_template, session, redirect, flash
 from helpers import login_required, error
-from app import app
+# NOTE: 'app' is NOT imported at module level to avoid circular imports
 import os
 from dotenv import load_dotenv
 import bcrypt
