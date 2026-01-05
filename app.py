@@ -102,6 +102,9 @@ except ImportError:
     # Flask-Compress not installed, continue without it
     pass
 
+# Register signup routes after app is fully initialized
+signup.register_signup_routes(app)
+
 # Performance: Add caching headers for static files
 @app.after_request
 def add_cache_headers(response):
