@@ -59,7 +59,6 @@ def sendEmail(recipient, code):
 
 
 # Route for requesting the reset of a password, after which the user can reset his password.
-@app.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
     code = generateResetCode()
 
@@ -93,7 +92,6 @@ def request_password_reset():
 
 
 # Route for resetting password after request for changing password has been submitted.
-@app.route("/reset_password/<code>", methods=["GET", "POST"])
 def reset_password(code):
     if request.method == "GET":
         return render_template("reset_password.html", code=code)
@@ -118,7 +116,6 @@ def reset_password(code):
         return redirect("/")
 
 
-@app.route("/change", methods=["POST"])
 @login_required
 def change():
     with get_db_cursor() as db:
@@ -143,3 +140,10 @@ def change():
             return error(401, "Incorrect password")
 
     return redirect("/account")
+
+
+def register_change_routes(app_instance):
+    """Register all change routes with the Flask app instance"""
+    app_instance.add_url_rule("/request_password_reset", "request_password_reset", request_password_reset, methods=["POST"])
+    app_instance.add_url_rule("/reset_password/<code>", "reset_password", reset_password, methods=["GET", "POST"])
+    app_instance.add_url_rule("/change", "change", change, methods=["POST"])
