@@ -2364,8 +2364,8 @@ button {
 /* Narrow width for ranking number column */
 .templatetable2 td:first-child,
 .templatetable2 th:first-child {
-    width: 16px;
-    max-width: 16px;
+    width: auto;
+    max-width: none;
     padding: 2px;
     font-size: 14px;
     line-height: 1.2;
