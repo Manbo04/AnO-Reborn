@@ -545,13 +545,17 @@ def update_info():
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
                 current_flag = db.fetchone()[0]
                 from flask import current_app
-                os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag))
+
+                os.remove(
+                    os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag)
+                )
             except:
                 pass
 
             # Save the file & shit
             if allowed_file(current_filename):
                 from flask import current_app
+
                 extension = current_filename.rsplit(".", 1)[1].lower()
                 filename = f"flag_{cId}" + "." + extension
                 new_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
@@ -714,21 +718,21 @@ def register_countries_routes(app_instance):
         "/update_country_info",
         "update_info",
         login_required(update_info),
-        methods=["POST"]
+        methods=["POST"],
     )
-    
+
     # Register delete_news route
     app_instance.add_url_rule(
         "/delete_news/<int:id>",
         "delete_news",
         login_required(delete_news),
-        methods=["POST"]
+        methods=["POST"],
     )
-    
+
     # Register delete_own_account route
     app_instance.add_url_rule(
         "/delete_own_account",
         "delete_own_account",
         login_required(delete_own_account),
-        methods=["POST"]
+        methods=["POST"],
     )

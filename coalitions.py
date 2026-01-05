@@ -1,7 +1,6 @@
-from flask import request, render_template, session, redirect, flash
+from flask import request, render_template, session, redirect, flash, current_app
 from helpers import login_required, error
 from helpers import get_coalition_influence
-from app import app
 import os
 from dotenv import load_dotenv
 
@@ -22,8 +21,6 @@ def get_user_role(user_id):
 
 
 # Route for viewing a coalition's page
-@app.route("/coalition/<colId>", methods=["GET"])
-@login_required
 def coalition(colId):
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -336,8 +333,6 @@ def coalition(colId):
 
 
 # Route for establishing a coalition
-@app.route("/establish_coalition", methods=["GET", "POST"])
-@login_required
 def establish_coalition():
     if request.method == "POST":
         with get_db_cursor() as db:
@@ -479,8 +474,6 @@ GROUP BY colNames.id;
 
 
 # Route for joining a coalition
-@app.route("/join/<colId>", methods=["POST"])
-@login_required
 def join_col(colId):
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -526,8 +519,6 @@ def join_col(colId):
 
 
 # Route for leaving a coalition
-@app.route("/leave/<colId>", methods=["POST"])
-@login_required
 def leave_col(colId):
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -544,8 +535,6 @@ def leave_col(colId):
 
 
 # Route for redirecting to the user's coalition
-@app.route("/my_coalition", methods=["GET"])
-@login_required
 def my_coalition():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -560,8 +549,6 @@ def my_coalition():
 
 
 # Route for giving someone a role in your coalition
-@app.route("/give_position", methods=["POST"])
-@login_required
 def give_position():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -626,8 +613,6 @@ def give_position():
 
 
 # Route for accepting a coalition join request
-@app.route("/add/<uId>", methods=["POST"])
-@login_required
 def adding(uId):
     with get_db_cursor() as db:
         try:
@@ -651,8 +636,6 @@ def adding(uId):
 
 
 # Route for removing a join request
-@app.route("/remove/<uId>", methods=["POST"])
-@login_required
 def removing_requests(uId):
     with get_db_cursor() as db:
         try:
@@ -674,8 +657,6 @@ def removing_requests(uId):
 
 
 # Route for deleting a coalition
-@app.route("/delete_coalition/<colId>", methods=["POST"])
-@login_required
 def delete_coalition(colId):
     cId = session["user_id"]
     user_role = get_user_role(cId)
@@ -696,8 +677,6 @@ def delete_coalition(colId):
 
 
 # Route for updating name, description, flag of coalition
-@app.route("/update_col_info/<colId>", methods=["POST"])
-@login_required
 def update_col_info(colId):
     cId = session["user_id"]
 
@@ -723,7 +702,7 @@ def update_col_info(colId):
                     current_flag = db.fetchone()[0]
 
                     # If he does, delete the flag
-                    os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
+                    os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag))
 
                 except:
                     pass
@@ -732,7 +711,7 @@ def update_col_info(colId):
             current_filename = flag.filename
             extension = current_filename.rsplit(".", 1)[1].lower()
             filename = f"col_flag_{colId}" + "." + extension
-            flag.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            flag.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
             with get_db_cursor() as db:
                 db.execute(
                     "UPDATE colNames SET flag=(%s) WHERE id=(%s)", (filename, colId)
@@ -765,8 +744,6 @@ def update_col_info(colId):
 
 
 # Route for depositing resources into the bank
-@app.route("/deposit_into_bank/<colId>", methods=["POST"])
-@login_required
 def deposit_into_bank(colId):
     cId = session["user_id"]
 
@@ -878,7 +855,7 @@ def withdraw(resource, amount, user_id, colId):
         update_statement = f"UPDATE colBanks SET {resource}=%s WHERE colId=%s"
         db.execute(update_statement, (new_resource, colId))
 
-        app.logger.info(
+        current_app.logger.info(
             f"withdraw: colId={colId} resource={resource} amount={amount} bank_before={current_resource} bank_after={new_resource}"
         )
 
@@ -892,7 +869,7 @@ def withdraw(resource, amount, user_id, colId):
             new_money = current_money + amount
 
             db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
-            app.logger.info(
+            current_app.logger.info(
                 f"withdraw: user_id={user_id} gold_before={current_money} gold_after={new_money}"
             )
 
@@ -907,14 +884,12 @@ def withdraw(resource, amount, user_id, colId):
 
             update_statement = f"UPDATE resources SET {resource}=%s WHERE id=%s"
             db.execute(update_statement, (new_resource, user_id))
-            app.logger.info(
+            current_app.logger.info(
                 f"withdraw: user_id={user_id} {resource}_before={user_current} {resource}_after={new_resource}"
             )
 
 
 # Route from withdrawing from the bank
-@app.route("/withdraw_from_bank/<colId>", methods=["POST"])
-@login_required
 def withdraw_from_bank(colId):
     cId = session["user_id"]
 
@@ -958,8 +933,6 @@ def withdraw_from_bank(colId):
 
 
 # Route for requesting a resource from the coalition bank
-@app.route("/request_from_bank/<colId>", methods=["POST"])
-@login_required
 def request_from_bank(colId):
     cId = session["user_id"]
 
@@ -1008,8 +981,6 @@ def request_from_bank(colId):
 
 
 # Route for removing a request for a resource from the coalition bank
-@app.route("/remove_bank_request/<bankId>", methods=["POST"])
-@login_required
 def remove_bank_request(bankId):
     cId = session["user_id"]
 
@@ -1025,8 +996,6 @@ def remove_bank_request(bankId):
 
 
 # Route for accepting a bank request from the coalition bank
-@app.route("/accept_bank_request/<bankId>", methods=["POST"])
-@login_required
 def accept_bank_request(bankId):
     cId = session["user_id"]
 
@@ -1055,8 +1024,6 @@ def accept_bank_request(bankId):
 
 
 # Route for offering another coalition a treaty
-@app.route("/offer_treaty", methods=["POST"])
-@login_required
 def offer_treaty():
     cId = session["user_id"]
 
@@ -1106,8 +1073,6 @@ def offer_treaty():
 
 
 # Route for accepting a treaty offer from another coalition
-@app.route("/accept_treaty/<offer_id>", methods=["POST"])
-@login_required
 def accept_treaty(offer_id):
     cId = session["user_id"]
 
@@ -1144,8 +1109,6 @@ def accept_treaty(offer_id):
 
 
 # Route for breaking a treaty with another coalition
-@app.route("/break_treaty/<offer_id>", methods=["POST"])
-@login_required
 def break_treaty(offer_id):
     cId = session["user_id"]
 
@@ -1160,8 +1123,6 @@ def break_treaty(offer_id):
     return redirect("/my_coalition")
 
 
-@app.route("/decline_treaty/<offer_id>", methods=["POST"])
-@login_required
 def decline_treaty(offer_id):
     cId = session["user_id"]
 
@@ -1174,3 +1135,52 @@ def decline_treaty(offer_id):
         db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
 
     return redirect("/my_coalition")
+
+
+def register_coalitions_routes(app_instance):
+    """Register all coalition routes after app initialization to avoid circular imports"""
+    
+    # Apply login_required decorator to all routes
+    coalition_wrapped = login_required(coalition)
+    establish_coalition_wrapped = login_required(establish_coalition)
+    coalitions_wrapped = login_required(coalitions)
+    join_col_wrapped = login_required(join_col)
+    leave_col_wrapped = login_required(leave_col)
+    my_coalition_wrapped = login_required(my_coalition)
+    give_position_wrapped = login_required(give_position)
+    adding_wrapped = login_required(adding)
+    removing_requests_wrapped = login_required(removing_requests)
+    delete_coalition_wrapped = login_required(delete_coalition)
+    update_col_info_wrapped = login_required(update_col_info)
+    deposit_into_bank_wrapped = login_required(deposit_into_bank)
+    withdraw_from_bank_wrapped = login_required(withdraw_from_bank)
+    request_from_bank_wrapped = login_required(request_from_bank)
+    remove_bank_request_wrapped = login_required(remove_bank_request)
+    accept_bank_request_wrapped = login_required(accept_bank_request)
+    offer_treaty_wrapped = login_required(offer_treaty)
+    accept_treaty_wrapped = login_required(accept_treaty)
+    break_treaty_wrapped = login_required(break_treaty)
+    decline_treaty_wrapped = login_required(decline_treaty)
+    
+    # Register all coalition routes
+    app_instance.add_url_rule("/coalition/<colId>", view_func=coalition_wrapped, methods=["GET"])
+    app_instance.add_url_rule("/establish_coalition", view_func=establish_coalition_wrapped, methods=["GET", "POST"])
+    app_instance.add_url_rule("/coalitions", view_func=coalitions_wrapped, methods=["GET"])
+    app_instance.add_url_rule("/join/<colId>", view_func=join_col_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/leave/<colId>", view_func=leave_col_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/my_coalition", view_func=my_coalition_wrapped, methods=["GET"])
+    app_instance.add_url_rule("/give_position", view_func=give_position_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/add/<uId>", view_func=adding_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/remove/<uId>", view_func=removing_requests_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/delete_coalition/<colId>", view_func=delete_coalition_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/update_col_info/<colId>", view_func=update_col_info_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/deposit_into_bank/<colId>", view_func=deposit_into_bank_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/withdraw_from_bank/<colId>", view_func=withdraw_from_bank_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/request_from_bank/<colId>", view_func=request_from_bank_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/remove_bank_request/<bankId>", view_func=remove_bank_request_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/accept_bank_request/<bankId>", view_func=accept_bank_request_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/offer_treaty", view_func=offer_treaty_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/accept_treaty/<offer_id>", view_func=accept_treaty_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/break_treaty/<offer_id>", view_func=break_treaty_wrapped, methods=["POST"])
+    app_instance.add_url_rule("/decline_treaty/<offer_id>", view_func=decline_treaty_wrapped, methods=["POST"])
+

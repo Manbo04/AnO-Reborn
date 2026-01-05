@@ -21,8 +21,7 @@ import market
 # import province
 # import military
 import change
-
-# import coalitions
+import coalitions
 import countries
 import signup
 import login
@@ -131,6 +130,7 @@ signup.register_signup_routes(app)
 login.register_login_routes(app)
 market.register_market_routes(app)
 change.register_change_routes(app)
+coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
