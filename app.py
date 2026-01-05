@@ -110,6 +110,13 @@ change.register_change_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
 
+# Configure OAuth2 SECRET_KEY from login module
+from dotenv import load_dotenv
+load_dotenv()
+oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
+if oauth2_secret:
+    app.config["SECRET_KEY"] = oauth2_secret
+
 # Performance: Add caching headers for static files
 @app.after_request
 def add_cache_headers(response):

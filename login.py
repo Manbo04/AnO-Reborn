@@ -100,10 +100,8 @@ API_BASE_URL = os.environ.get("API_BASE_URL", "https://discordapp.com/api")
 AUTHORIZATION_BASE_URL = API_BASE_URL + "/oauth2/authorize"
 TOKEN_URL = API_BASE_URL + "/oauth2/token"
 
-if OAUTH2_CLIENT_SECRET:
-    # Only set SECRET_KEY from environment variable if it's present; otherwise, use
-    # the default secret key already configured in app.py to avoid clearing it.
-    app.config["SECRET_KEY"] = OAUTH2_CLIENT_SECRET
+# NOTE: SECRET_KEY configuration moved to app.py after app initialization
+# to avoid circular imports
 
 if "http://" in OAUTH2_REDIRECT_URI:
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
