@@ -52,7 +52,7 @@ def get_policies_from_request(type, prange, form):
     return policies
 
 
-def policies_update():
+def policies():
     cId = session["user_id"]
 
     with get_db_cursor() as db:
@@ -69,4 +69,4 @@ def policies_update():
 
 def register_policies_routes(app_instance):
     """Register all policies routes with the Flask app instance"""
-    app_instance.add_url_rule("/policies/update", "policies_update", policies_update, methods=["POST"])
+    app_instance.add_url_rule("/policies/update", "policies_update", policies, methods=["POST"])

@@ -228,7 +228,7 @@ def market():
 
 
 @login_required
-def buy(offer_id):
+def buy_market_offer(offer_id):
     connection = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -282,7 +282,7 @@ def buy(offer_id):
 
 
 @login_required
-def sell(offer_id):
+def sell_market_offer(offer_id):
     conn = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -514,7 +514,7 @@ def delete_offer(offer_id):
 
 
 @login_required
-def post_trade_offer(offer_type, offeree_id):
+def trade_offer(offer_type, offeree_id):
     if request.method == "POST":
         cId = session["user_id"]
 
@@ -780,13 +780,13 @@ def transfer(transferee):
 def register_market_routes(app_instance):
     """Register all market routes with the Flask app instance"""
     app_instance.add_url_rule("/market", "market", market, methods=["GET", "POST"])
-    app_instance.add_url_rule("/buy_offer/<offer_id>", "buy_offer", buy, methods=["POST"])
-    app_instance.add_url_rule("/sell_offer/<offer_id>", "sell_offer", sell, methods=["POST"])
+    app_instance.add_url_rule("/buy_offer/<offer_id>", "buy_offer", buy_market_offer, methods=["POST"])
+    app_instance.add_url_rule("/sell_offer/<offer_id>", "sell_offer", sell_market_offer, methods=["POST"])
     app_instance.add_url_rule("/marketoffer/", "marketoffer", marketoffer, methods=["GET", "POST"])
     app_instance.add_url_rule("/post_offer/<offer_type>", "post_offer", post_offer, methods=["POST"])
     app_instance.add_url_rule("/my_offers", "my_offers", my_offers, methods=["GET"])
     app_instance.add_url_rule("/delete_offer/<offer_id>", "delete_offer", delete_offer, methods=["POST"])
-    app_instance.add_url_rule("/post_trade_offer/<offer_type>/<offeree_id>", "post_trade_offer", post_trade_offer, methods=["POST"])
+    app_instance.add_url_rule("/post_trade_offer/<offer_type>/<offeree_id>", "post_trade_offer", trade_offer, methods=["POST"])
     app_instance.add_url_rule("/decline_trade/<trade_id>", "decline_trade", decline_trade, methods=["POST"])
     app_instance.add_url_rule("/accept_trade/<trade_id>", "accept_trade", accept_trade, methods=["POST"])
     app_instance.add_url_rule("/transfer/<transferee>", "transfer", transfer, methods=["POST"])
