@@ -1,4 +1,4 @@
-from app import app
+# NOTE: 'app' is NOT imported at module level to avoid circular imports
 from helpers import login_required, error
 from database import get_db_cursor
 import psycopg2
