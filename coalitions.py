@@ -139,7 +139,7 @@ def coalition(colId):
                         "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Pending' ORDER BY id ASC",
                         (colId,),
                     )
-                    ingoing_ids = list(db.fetchall()[0])
+                    ingoing_ids = [row[0] for row in db.fetchall()]
                 except:
                     ingoing_ids = []
 
