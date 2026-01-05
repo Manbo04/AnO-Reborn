@@ -2,7 +2,7 @@ from flask import request, render_template, session, redirect, jsonify
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
+# NOTE: 'app' is NOT imported at module level to avoid circular imports
 import bcrypt
 import os
 from requests_oauthlib import OAuth2Session
@@ -13,8 +13,6 @@ from database import get_db_cursor
 load_dotenv()
 
 
-@app.route("/login/", methods=["GET", "POST"])
-@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         import logging
@@ -131,8 +129,8 @@ def make_session(token=None, state=None, scope=None):
     )
 
 
-@app.route("/discord_login/", methods=["GET"])
 def discord_login():
+    from app import app
     app.config["SESSION_PERMANENT"] = True
     app.permanent_session_lifetime = datetime.timedelta(days=365)
 
@@ -173,3 +171,10 @@ def discord_login():
 # were intentionally removed during cleanup. If you need to temporarily
 # re-enable explicit cookie/ session diagnostics, add a guarded endpoint
 # behind a config flag (e.g. app.config['ENABLE_DEV_ENDPOINTS'] == True).
+
+
+def register_login_routes(app_instance):
+    """Register login routes. Called by app.py after app initialization."""
+    app_instance.add_url_rule("/login/", "login_slash", login, methods=["GET", "POST"])
+    app_instance.add_url_rule("/login", "login", login, methods=["GET", "POST"])
+    app_instance.add_url_rule("/discord_login/", "discord_login", discord_login, methods=["GET"])

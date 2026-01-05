@@ -1,4 +1,4 @@
-from app import app
+# NOTE: 'app' is NOT imported at module level to avoid circular imports
 from flask import request, redirect, session
 import os
 from dotenv import load_dotenv
