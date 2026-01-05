@@ -431,10 +431,18 @@ def population_growth():  # Function for growing population
             province_id = province_id[0]
             try:
                 db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
-                user_id = db.fetchone()[0]
+                user_row = db.fetchone()
+                if not user_row:
+                    print(f"WARNING: Province {province_id} has no userId, skipping")
+                    continue
+                user_id = user_row[0]
 
                 db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-                current_rations = db.fetchone()[0]
+                rations_row = db.fetchone()
+                if not rations_row:
+                    print(f"WARNING: User {user_id} has no resources row, skipping")
+                    continue
+                current_rations = rations_row[0]
 
                 rations, population = calc_pg(province_id, current_rations)
 
