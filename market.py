@@ -75,7 +75,6 @@ def give_resource(giver_id, taker_id, resource, amount):
     return True
 
 
-@app.route("/market", methods=["GET", "POST"])
 @login_required
 def market():
     if request.method == "GET":
@@ -228,9 +227,8 @@ def market():
         )
 
 
-@app.route("/buy_offer/<offer_id>", methods=["POST"])
 @login_required
-def buy_market_offer(offer_id):
+def buy(offer_id):
     connection = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -283,9 +281,8 @@ def buy_market_offer(offer_id):
     return redirect("/market")
 
 
-@app.route("/sell_offer/<offer_id>", methods=["POST"])
 @login_required
-def sell_market_offer(offer_id):
+def sell(offer_id):
     conn = psycopg2.connect(
         database=os.getenv("PG_DATABASE"),
         user=os.getenv("PG_USER"),
@@ -352,13 +349,11 @@ def sell_market_offer(offer_id):
     return redirect("/market")
 
 
-@app.route("/marketoffer/", methods=["GET"])
 @login_required
 def marketoffer():
     return render_template("marketoffer.html")
 
 
-@app.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
 def post_offer(offer_type):
     cId = session["user_id"]
@@ -442,7 +437,6 @@ def post_offer(offer_type):
     return redirect("/market")
 
 
-@app.route("/my_offers", methods=["GET"])
 @login_required
 def my_offers():
     cId = session["user_id"]
@@ -477,7 +471,6 @@ WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
     return render_template("my_offers.html", cId=cId, offers=offers)
 
 
-@app.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
 def delete_offer(offer_id):
     cId = session["user_id"]
@@ -520,9 +513,8 @@ def delete_offer(offer_id):
     return redirect("/my_offers")
 
 
-@app.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
 @login_required
-def trade_offer(offer_type, offeree_id):
+def post_trade_offer(offer_type, offeree_id):
     if request.method == "POST":
         cId = session["user_id"]
 
@@ -606,7 +598,6 @@ def trade_offer(offer_type, offeree_id):
         return redirect(f"/country/id={offeree_id}")
 
 
-@app.route("/decline_trade/<trade_id>", methods=["POST"])
 @login_required
 def decline_trade(trade_id):
     if not trade_id.isnumeric():
@@ -659,7 +650,6 @@ def decline_trade(trade_id):
     return redirect("/my_offers")
 
 
-@app.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
 def accept_trade(trade_id):
     cId = session["user_id"]
@@ -697,7 +687,6 @@ def accept_trade(trade_id):
     return redirect("/my_offers")
 
 
-@app.route("/transfer/<transferee>", methods=["POST"])
 @login_required
 def transfer(transferee):
     cId = session["user_id"]
@@ -786,3 +775,18 @@ def transfer(transferee):
     connection.close()
 
     return redirect(f"/country/id={transferee}")
+
+
+def register_market_routes(app_instance):
+    """Register all market routes with the Flask app instance"""
+    app_instance.add_url_rule("/market", "market", market, methods=["GET", "POST"])
+    app_instance.add_url_rule("/buy_offer/<offer_id>", "buy_offer", buy, methods=["POST"])
+    app_instance.add_url_rule("/sell_offer/<offer_id>", "sell_offer", sell, methods=["POST"])
+    app_instance.add_url_rule("/marketoffer/", "marketoffer", marketoffer, methods=["GET", "POST"])
+    app_instance.add_url_rule("/post_offer/<offer_type>", "post_offer", post_offer, methods=["POST"])
+    app_instance.add_url_rule("/my_offers", "my_offers", my_offers, methods=["GET"])
+    app_instance.add_url_rule("/delete_offer/<offer_id>", "delete_offer", delete_offer, methods=["POST"])
+    app_instance.add_url_rule("/post_trade_offer/<offer_type>/<offeree_id>", "post_trade_offer", post_trade_offer, methods=["POST"])
+    app_instance.add_url_rule("/decline_trade/<trade_id>", "decline_trade", decline_trade, methods=["POST"])
+    app_instance.add_url_rule("/accept_trade/<trade_id>", "accept_trade", accept_trade, methods=["POST"])
+    app_instance.add_url_rule("/transfer/<transferee>", "transfer", transfer, methods=["POST"])

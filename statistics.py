@@ -4,7 +4,6 @@ from database import get_db_cursor
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
 
-@app.route("/statistics")
 @login_required
 def statistics():
     """Display market statistics and nation stats"""
@@ -96,3 +95,8 @@ def statistics():
         avg_influence=avg_influence,
         max_influence=max_influence,
     )
+
+
+def register_statistics_routes(app_instance):
+    """Register all statistics routes with the Flask app instance"""
+    app_instance.add_url_rule("/statistics", "statistics", statistics)

@@ -6,17 +6,17 @@ import traceback
 import upgrades
 import intelligence
 # import tasks
-# import market
+import market
 # import province
 # import military
-# import change
+import change
 # import coalitions
 # import countries
 import signup
-# import login
+import login
 from wars.routes import wars_bp
-# import policies
-# import statistics
+import policies
+import statistics
 import requests
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
@@ -104,6 +104,11 @@ except ImportError:
 
 # Register signup routes after app is fully initialized
 signup.register_signup_routes(app)
+login.register_login_routes(app)
+market.register_market_routes(app)
+change.register_change_routes(app)
+policies.register_policies_routes(app)
+statistics.register_statistics_routes(app)
 
 # Performance: Add caching headers for static files
 @app.after_request
