@@ -652,11 +652,11 @@ def signup():
         )
 
 
-# Register routes at module load time after app has been imported
-_app = _get_app()
-_app.add_url_rule("/discord", "discord", discord, methods=["GET", "POST"])
-_app.add_url_rule("/callback", "callback", callback)
-_app.add_url_rule(
-    "/discord_signup", "discord_register", discord_register, methods=["GET", "POST"]
-)
-_app.add_url_rule("/signup", "signup", signup, methods=["GET", "POST"])
+def register_signup_routes(app_instance):
+    """Register signup routes. This should be called by app.py AFTER app is fully initialized."""
+    app_instance.add_url_rule("/discord", "discord", discord, methods=["GET", "POST"])
+    app_instance.add_url_rule("/callback", "callback", callback)
+    app_instance.add_url_rule(
+        "/discord_signup", "discord_register", discord_register, methods=["GET", "POST"]
+    )
+    app_instance.add_url_rule("/signup", "signup", signup, methods=["GET", "POST"])
