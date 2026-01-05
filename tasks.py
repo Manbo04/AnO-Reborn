@@ -107,7 +107,8 @@ def calc_ti(user_id: int) -> Tuple[int, int] | Tuple[bool, bool]:
 
     with get_db_cursor() as db:
         db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
-        consumer_goods = int(fetchone_first(db, 0) or 0)
+        cg_result = db.fetchone()
+        consumer_goods = int(cg_result[0] if cg_result else 0)
 
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
@@ -389,7 +390,10 @@ def generate_province_revenue() -> None:
                         db.execute(
                             "SELECT energy FROM provinces WHERE id=%s", (province_id,)
                         )
-                        current_energy = db.fetchone()[0]
+                        energy_result = db.fetchone()
+                        if not energy_result:
+                            continue
+                        current_energy = energy_result[0]
                         new_energy = current_energy - unit_amount
 
                         if new_energy < 0:
@@ -643,22 +647,25 @@ def generate_province_revenue() -> None:
                     # Apply policy effects
                     if 5 in policies:
                         db.execute(
-                            "UPDATE provinces SET productivity=productivity*0.91 "
+                            "UPDATE provinces SET "
+                            "productivity=LEAST(productivity*0.91, 2147483647) "
                             "WHERE id=%s",
                             (province_id,),
                         )
                     if 4 in policies:
                         db.execute(
-                            "UPDATE provinces SET productivity=productivity*1.05 "
+                            "UPDATE provinces SET "
+                            "productivity=LEAST(productivity*1.05, 2147483647) "
                             "WHERE id=%s",
                             (province_id,),
                         )
                     if 2 in policies:
                         db.execute(
-                            "UPDATE provinces SET happiness=happiness*0.89 WHERE id=%s",
+                            "UPDATE provinces SET "
+                            "happiness=LEAST(happiness*0.89, 100) "
+                            "WHERE id=%s",
                             (province_id,),
                         )
-
                 except Exception as e:
                     conn.rollback()
                     handle_exception(e)
@@ -746,7 +753,9 @@ def population_growth() -> None:
 
         if user_rations:
             # Order by user_id to reduce deadlock likelihood
-            rations_updates = sorted([(r, uid) for uid, r in user_rations.items()], key=lambda x: x[1])
+            rations_updates = sorted(
+                [(r, uid) for uid, r in user_rations.items()], key=lambda x: x[1]
+            )
             execute_batch(
                 db,
                 "UPDATE resources SET rations=%s WHERE id=%s",
