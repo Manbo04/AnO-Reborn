@@ -16,8 +16,9 @@ import math
 from database import get_db_cursor, cache_response, fetchone_first
 
 load_dotenv()
-
-app.config["UPLOAD_FOLDER"] = "static/flags"
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "flags")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 Mb limit
 
 
