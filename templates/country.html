@@ -87,18 +87,18 @@
         <div class="view" id="view">
 
 
-            <div class="countryimagediv" id="countryFlagBackground">
+            <div class="countryimagediv" id="countryFlagBackground" {% if colFlag != None %}style="background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('{{ url_for('static', filename='flags/' + colFlag) }}');"{% endif %}>
                 <!--country flag-->
-                {% if flag != None %}
-                <img class="countryimage" src="{{ url_for('static', filename='flags/' + flag) }}" alt="{{ flag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';">
-                <!-- hmm not using url_for, but somewhy it render-->
-                <!-- this is the one that shows -- steven -->
-                {% else %}
-                <!-- tried first with url_for, but it didn't work -- t0dd -->
-                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
-                <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
-                {% if colFlag != None %}
-                <img class="countrycoalitionimage" src="{{ url_for('static', filename='flags/' + colFlag) }}" alt="{{ colFlag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';" /> {% endif %}
+                <div class="country-flag-container">
+                    {% if flag != None %}
+                    <img class="countryimage" src="{{ url_for('static', filename='flags/' + flag) }}" alt="{{ flag }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}';">
+                    {% else %}
+                    <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" />
+                    {% endif %}
+                    {% if motto != None and motto != '' %}
+                    <div class="country-motto">{{ motto }}</div>
+                    {% endif %}
+                </div>
             </div>
 
 
@@ -892,6 +892,11 @@
                                 autosave: true,
                             })
                         </script>
+                    </div>
+
+                    <label for="motto">Nation Motto (max 100 characters)</label>
+                    <div class="center">
+                        <input type="text" class="templateinput" name="motto" maxlength="100" placeholder="Enter your nation's motto" value="{{ motto|e if motto else '' }}">
                     </div>
 
                     <button class="templatedivbutton templatecenteredbutton" formaction="/update_country_info" type="submit"><span class="material-icons-outlined">
