@@ -3,6 +3,7 @@ import os
 from operator import itemgetter
 
 from flask import redirect, flash, render_template, request, session
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
 from app import app
@@ -369,12 +370,21 @@ def establish_coalition():
             cType = request.form.get("type")
             name = request.form.get("name")
             desc = request.form.get("description")
+            flag_file = request.files.get("flag_input")
 
             if not name or not cType:
                 return error(400, "Name and type are required")
 
             if cType not in ["Open", "Invite Only"]:
                 return error(400, "Invalid coalition type")
+
+            ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg"]
+
+            def allowed_file(filename):
+                return (
+                    "." in filename
+                    and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+                )
 
             # Check if coalition name already exists
             db.execute("SELECT id FROM colNames WHERE name = %s", (name,))
@@ -402,6 +412,25 @@ def establish_coalition():
                 colId = db.fetchone()[
                     0
                 ]  # Gets the coalition id of the just inserted coalition
+
+                # Handle coalition flag upload (optional)
+                if flag_file and flag_file.filename:
+                    if not allowed_file(flag_file.filename):
+                        return error(400, "File format not supported. Use png/jpg/jpeg")
+
+                    os.makedirs(
+                        app.config.get("UPLOAD_FOLDER", "static/flags"), exist_ok=True
+                    )
+                    filename = secure_filename(flag_file.filename)
+                    extension = filename.rsplit(".", 1)[1].lower()
+                    filename = f"col_flag_{colId}.{extension}"
+                    flag_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                    flag_file.save(flag_path)
+
+                    db.execute(
+                        "UPDATE colNames SET flag=(%s) WHERE id=(%s)",
+                        (filename, colId),
+                    )
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
@@ -741,27 +770,30 @@ def update_col_info(colId):
         )
 
     flag = request.files.get("flag_input")
-    if flag:
-        if allowed_file(flag.filename):
+    if flag and flag.filename:
+        safe_name = secure_filename(flag.filename)
+        if allowed_file(safe_name):
             # Check if the user already has a flag
             with get_db_cursor() as db:
                 try:
                     db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
                     current_flag = fetchone_first(db, None)
 
-                    # If he does, delete the flag
+                    # If the coalition already has a flag saved on disk, remove it
                     if current_flag:
-                        os.remove(
-                            os.path.join(app.config["UPLOAD_FOLDER"], current_flag)
-                        )
-
+                        try:
+                            os.remove(
+                                os.path.join(app.config["UPLOAD_FOLDER"], current_flag)
+                            )
+                        except FileNotFoundError:
+                            pass
                 except Exception:
                     pass
 
-            # Save the file
-            current_filename = flag.filename
-            extension = current_filename.rsplit(".", 1)[1].lower()
-            filename = f"col_flag_{colId}" + "." + extension
+            # Save the new flag
+            extension = safe_name.rsplit(".", 1)[1].lower()
+            filename = f"col_flag_{colId}.{extension}"
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
             flag.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             with get_db_cursor() as db:
                 db.execute(

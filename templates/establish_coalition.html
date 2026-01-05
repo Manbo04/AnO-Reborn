@@ -17,7 +17,7 @@
             <img id="output" />
         </div>
 
-        <form action="/establish_coalition" method="POST">
+        <form action="/establish_coalition" method="POST" enctype="multipart/form-data">
 
             <div class="infodiv">
                 <div class="templatedivflex2 divflex2center">
@@ -26,14 +26,14 @@
                         <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" required/>
 
                     </div>
-                    <!-- <div class="templatedivflex2right">
+                    <div class="templatedivflex2right">
 
-                    <label for="coalitionflag">Coalition Flag</label>
-                    <input class="loginsignupinput" type="file" name="coalitionflag" accept="image/*" onchange="loadFile(event)" required/>
+                        <label for="coalitionflag">Coalition Flag (optional)</label>
+                        <input class="loginsignupinput" id="coalitionflag" type="file" name="flag_input" accept="image/*" />
 
-                </div> temporarily disabled flags because its a lot of work to add them-->
+                    </div>
                 </div>
-                <!-- <p class="templatecontentpcenter">Flags should be in a 16:9 format.</p>-->
+                <p class="templatecontentpcenter">PNG/JPG up to 2MB. Recommended 16:9 aspect ratio.</p>
                 <div class="templatedivflex2 menuflex">
                     <div class="templatedivflex2left">
 
