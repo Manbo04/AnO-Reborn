@@ -6,7 +6,7 @@ from helpers import error
 import psycopg2
 
 # Game.ping() # temporarily removed this line because it might make celery not work
-from app import app
+# NOTE: 'app' is imported locally in route registration to avoid circular imports
 import bcrypt
 from requests_oauthlib import OAuth2Session
 import os
@@ -171,6 +171,10 @@ def ensure_signup_attempts_table():
             )
         except:
             pass
+
+
+# Import app here (after app.py has finished initializing) to avoid circular imports
+from app import app
 
 
 @app.route("/discord", methods=["GET", "POST"])
