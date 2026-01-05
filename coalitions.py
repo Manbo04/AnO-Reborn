@@ -150,7 +150,7 @@ def coalition(colId):
                         "ORDER BY id ASC",
                         (colId,),
                     )
-                    ingoing_ids = list(db.fetchall()[0])
+                    ingoing_ids = [row[0] for row in db.fetchall()]
                 except Exception:
                     ingoing_ids = []
 
