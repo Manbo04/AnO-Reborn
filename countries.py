@@ -2,7 +2,6 @@ from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
 from tasks import calc_pg, calc_ti, rations_needed
-from app import app
 import os
 import variables
 from dotenv import load_dotenv
@@ -18,8 +17,7 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-app.config["UPLOAD_FOLDER"] = "static/flags"
-app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 Mb limit
+# App config will be set when routes are registered
 
 
 # TODO: rewrite this function for fucks sake
@@ -282,8 +280,6 @@ def next_turn_rations(cId, prod_rations):
         return current_rations
 
 
-@app.route("/delete_news/<int:id>", methods=["POST"])
-@login_required
 def delete_news(id):
     with get_db_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
@@ -314,16 +310,11 @@ def cg_need(user_id):
         return cg_needed
 
 
-@app.route("/my_country")
-@login_required
 def my_country():
     user_id = session["user_id"]
     return redirect(f"/country/id={user_id}")
 
 
-@app.route("/country/id=<cId>")
-@login_required
-@cache_response(ttl_seconds=30)
 def country(cId):
     with get_db_cursor() as db:
         db.execute(
@@ -444,8 +435,6 @@ def country(cId):
     )
 
 
-@app.route("/countries", methods=["GET"])
-@login_required
 def countries():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -524,8 +513,6 @@ HAVING COUNT(provinces.id) >= %s;""",
     return render_template("countries.html", countries=results, current_user_id=cId)
 
 
-@app.route("/update_country_info", methods=["POST"])
-@login_required
 def update_info():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -557,16 +544,17 @@ def update_info():
             try:
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
                 current_flag = db.fetchone()[0]
-
-                os.remove(os.path.join(app.config["UPLOAD_FOLDER"], current_flag))
+                from flask import current_app
+                os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag))
             except:
                 pass
 
             # Save the file & shit
             if allowed_file(current_filename):
+                from flask import current_app
                 extension = current_filename.rsplit(".", 1)[1].lower()
                 filename = f"flag_{cId}" + "." + extension
-                new_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                new_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 flag.save(new_path)
                 db.execute("UPDATE users SET flag=(%s) WHERE id=(%s)", (filename, cId))
 
@@ -582,7 +570,7 @@ def update_info():
                 current_bg_flag = db.fetchone()[0]
 
                 os.remove(os.path.join(
-                    app.config['UPLOAD_FOLDER'], current_bg_flag))
+                    current_app.config['UPLOAD_FOLDER'], current_bg_flag))
             except FileNotFoundError:
                 pass
 
@@ -591,7 +579,7 @@ def update_info():
             if allowed_file(current_filename):
                 extension = current_filename.rsplit('.', 1)[1].lower()
                 filename = f"bg_flag_{cId}" + '.' + extension
-                flag.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                flag.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
                 db.execute("UPDATE users SET bg_flag=(%s) WHERE id=(%s)",
                            (filename, cId))
         """
@@ -628,8 +616,6 @@ def update_info():
 
 
 # TODO: check if you can DELETE with one statement
-@app.route("/delete_own_account", methods=["POST"])
-@login_required
 def delete_own_account():
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -688,3 +674,61 @@ def delete_own_account():
     session.clear()
 
     return redirect("/")
+
+
+def register_countries_routes(app_instance):
+    """Register all routes from countries module after app initialization."
+
+    This deferred registration avoids circular imports:
+    wsgi.py -> app.py -> countries -> app (causes circular dependency at import time)
+
+    Args:
+        app_instance: Flask app instance to register routes with
+    """
+    from functools import wraps
+
+    # Configure app settings for countries routes
+    app_instance.config["UPLOAD_FOLDER"] = "static/flags"
+    app_instance.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 MB limit
+
+    # Register my_country route
+    app_instance.add_url_rule(
+        "/my_country", "my_country", login_required(my_country), methods=["GET"]
+    )
+
+    # Register country route
+    app_instance.add_url_rule(
+        "/country/id=<cId>",
+        "country",
+        login_required(cache_response(ttl_seconds=30)(country)),
+        methods=["GET"],
+    )
+
+    # Register countries route
+    app_instance.add_url_rule(
+        "/countries", "countries", login_required(countries), methods=["GET"]
+    )
+
+    # Register update_country_info route
+    app_instance.add_url_rule(
+        "/update_country_info",
+        "update_info",
+        login_required(update_info),
+        methods=["POST"]
+    )
+    
+    # Register delete_news route
+    app_instance.add_url_rule(
+        "/delete_news/<int:id>",
+        "delete_news",
+        login_required(delete_news),
+        methods=["POST"]
+    )
+    
+    # Register delete_own_account route
+    app_instance.add_url_rule(
+        "/delete_own_account",
+        "delete_own_account",
+        login_required(delete_own_account),
+        methods=["POST"]
+    )
