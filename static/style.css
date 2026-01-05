@@ -2088,25 +2088,25 @@ button {
 }
 
 .templatetable td {
-    margin: 0px 2%;
-    width: 46%;
+    margin: 0px;
+    padding: 8px 12px;
+    width: 50%;
     min-width: 40px;
     text-align: left;
-    display: table;
+    display: table-cell;
     font-weight: normal;
     color: var(--colorOne);
     font-size: 14px;
     position: relative;
-    float: left;
-    line-height: 30px;
-    height: 0;
+    line-height: 1.4;
+    height: auto;
     white-space: normal;
     overflow: visible;
+    vertical-align: middle;
 }
 
 .templatetable td:nth-child(even) {
     text-align: right;
-    float: left;
 }
 
 .templatesmalltd {
