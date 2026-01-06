@@ -9,10 +9,12 @@ NO_FOOD_TAX_MULTIPLIER = (
     0.7  # How much the tax income will decrease if there's no food -30%
 )
 DEFAULT_LAND_TAX_MULTIPLIER = 0.02  # Multiplier of tax income per land slot
-DEFAULT_HAPPINESS_TAX_MULTIPLIER = 0.012
+# Population growth multipliers - now more realistic
+# Higher happiness increases growth, pollution decreases it
+DEFAULT_HAPPINESS_GROWTH_MULTIPLIER = 0.04  # 4% impact per happiness point
+DEFAULT_POLLUTION_GROWTH_MULTIPLIER = 0.02  # 2% impact per pollution point
 
 DEFAULT_MAX_POPULATION = 1000000
-DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER = 0.0085
 CITY_MAX_POPULATION_ADDITION = 750000
 LAND_MAX_POPULATION_ADDITION = 120000
 
@@ -21,7 +23,7 @@ DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER = 0.009  # 9%
 LAND_FARM_PRODUCTION_ADDITION = 3
 
 CONSUMER_GOODS_PER = 80000  # 1 Consumer good per x population
-RATIONS_PER = 25000  # 1 Ration per x population
+RATIONS_PER = 10000  # 1 Ration per x population (increased efficiency for growth)
 
 UNITS = [
     "soldiers",
