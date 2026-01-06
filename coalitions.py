@@ -400,7 +400,6 @@ def establish_coalition():
 
 
 # Route for viewing all existing coalitions
-@app.route("/coalitions", methods=["GET"])
 def coalitions():
     with get_db_cursor() as db:
         search = request.values.get("search")
@@ -702,7 +701,9 @@ def update_col_info(colId):
                     current_flag = db.fetchone()[0]
 
                     # If he does, delete the flag
-                    os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag))
+                    os.remove(
+                        os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag)
+                    )
 
                 except:
                     pass
@@ -1139,7 +1140,7 @@ def decline_treaty(offer_id):
 
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
-    
+
     # Apply login_required decorator to all routes
     coalition_wrapped = login_required(coalition)
     establish_coalition_wrapped = login_required(establish_coalition)
@@ -1161,26 +1162,77 @@ def register_coalitions_routes(app_instance):
     accept_treaty_wrapped = login_required(accept_treaty)
     break_treaty_wrapped = login_required(break_treaty)
     decline_treaty_wrapped = login_required(decline_treaty)
-    
-    # Register all coalition routes
-    app_instance.add_url_rule("/coalition/<colId>", view_func=coalition_wrapped, methods=["GET"])
-    app_instance.add_url_rule("/establish_coalition", view_func=establish_coalition_wrapped, methods=["GET", "POST"])
-    app_instance.add_url_rule("/coalitions", view_func=coalitions_wrapped, methods=["GET"])
-    app_instance.add_url_rule("/join/<colId>", view_func=join_col_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/leave/<colId>", view_func=leave_col_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/my_coalition", view_func=my_coalition_wrapped, methods=["GET"])
-    app_instance.add_url_rule("/give_position", view_func=give_position_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/add/<uId>", view_func=adding_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/remove/<uId>", view_func=removing_requests_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/delete_coalition/<colId>", view_func=delete_coalition_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/update_col_info/<colId>", view_func=update_col_info_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/deposit_into_bank/<colId>", view_func=deposit_into_bank_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/withdraw_from_bank/<colId>", view_func=withdraw_from_bank_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/request_from_bank/<colId>", view_func=request_from_bank_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/remove_bank_request/<bankId>", view_func=remove_bank_request_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/accept_bank_request/<bankId>", view_func=accept_bank_request_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/offer_treaty", view_func=offer_treaty_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/accept_treaty/<offer_id>", view_func=accept_treaty_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/break_treaty/<offer_id>", view_func=break_treaty_wrapped, methods=["POST"])
-    app_instance.add_url_rule("/decline_treaty/<offer_id>", view_func=decline_treaty_wrapped, methods=["POST"])
 
+    # Register all coalition routes
+    app_instance.add_url_rule(
+        "/coalition/<colId>", view_func=coalition_wrapped, methods=["GET"]
+    )
+    app_instance.add_url_rule(
+        "/establish_coalition",
+        view_func=establish_coalition_wrapped,
+        methods=["GET", "POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalitions", view_func=coalitions_wrapped, methods=["GET"]
+    )
+    app_instance.add_url_rule(
+        "/join/<colId>", view_func=join_col_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/leave/<colId>", view_func=leave_col_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/my_coalition", view_func=my_coalition_wrapped, methods=["GET"]
+    )
+    app_instance.add_url_rule(
+        "/give_position", view_func=give_position_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule("/add/<uId>", view_func=adding_wrapped, methods=["POST"])
+    app_instance.add_url_rule(
+        "/remove/<uId>", view_func=removing_requests_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/delete_coalition/<colId>",
+        view_func=delete_coalition_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/update_col_info/<colId>", view_func=update_col_info_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/deposit_into_bank/<colId>",
+        view_func=deposit_into_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/withdraw_from_bank/<colId>",
+        view_func=withdraw_from_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/request_from_bank/<colId>",
+        view_func=request_from_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/remove_bank_request/<bankId>",
+        view_func=remove_bank_request_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/accept_bank_request/<bankId>",
+        view_func=accept_bank_request_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/offer_treaty", view_func=offer_treaty_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/accept_treaty/<offer_id>", view_func=accept_treaty_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/break_treaty/<offer_id>", view_func=break_treaty_wrapped, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/decline_treaty/<offer_id>", view_func=decline_treaty_wrapped, methods=["POST"]
+    )
