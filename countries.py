@@ -5,7 +5,6 @@ from tasks import calc_pg, calc_ti, rations_needed
 import os
 import variables
 from dotenv import load_dotenv
-from coalitions import get_user_role
 from collections import defaultdict
 from policies import get_user_policies
 from operator import itemgetter
@@ -649,8 +648,10 @@ def delete_own_account():
         db.execute("DELETE FROM peace WHERE author=%s", (cId,))
 
         try:
+            from coalitions import get_user_role
+
             coalition_role = get_user_role(cId)
-        except:
+        except Exception:
             coalition_role = None
         if coalition_role != "leader":
             pass
