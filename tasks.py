@@ -346,32 +346,23 @@ def calc_pg(pId, rations):
         except TypeError:
             productivity = 0
 
-        # Each % increases / decreases max population by
-        # 0.012
-        happiness = round(
-            (happiness - 50) * variables.DEFAULT_HAPPINESS_TAX_MULTIPLIER, 2
-        )  # The more you have the better
+        # Calculate happiness impact on max population
+        # At 50% happiness: neutral (0% impact)
+        # At 100% happiness: +6% to max population
+        # At 0% happiness: -6% to max population
+        happiness_multiplier = (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
+        
+        # Calculate pollution impact on max population
+        # At 50% pollution: neutral (0% impact)  
+        # At 100% pollution: -3% to max population
+        # At 0% pollution: +3% to max population
+        pollution_multiplier = (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
 
-        # Each % increases / decreases max population by
-        # 0.0085
-        pollution = round(
-            (pollution - 50) * -variables.DEFAULT_POLLUTION_MAX_POPULATION_MULTIPLIER, 2
-        )  # The less you have the better
-
-        # Each % increases / decreases resource output by
-        # 0.009
-        productivity = round(
-            (productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER,
-            2,
-        )  # The more you have the better
-
-        maxPop += (maxPop * happiness) + (maxPop * pollution)
-        maxPop = round(maxPop)
-
+        maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
+        
         if maxPop < variables.DEFAULT_MAX_POPULATION:
             maxPop = variables.DEFAULT_MAX_POPULATION
 
-        rations_increase = 0  # Default rations increase. If user has no rations it will decrease by 1% of maxPop
         rations_needed = curPop // variables.RATIONS_PER
 
         if rations_needed < 1:
@@ -381,15 +372,26 @@ def calc_pg(pId, rations):
         if rations_needed_percent > 1:
             rations_needed_percent = 1
 
-        rations_increase += round(rations_needed_percent * 2, 2)
-
+        # Population growth is now based on:
+        # - Ration availability (0-100% determines growth rate 0-5%)
+        # - Distance from max population (growth slows as you approach max)
+        # - Education policy bonus
+        
+        base_growth_rate = rations_needed_percent * 5  # Max 5% growth with full rations
+        
+        # Slow growth as population approaches max (logistic growth curve)
+        population_pressure = curPop / maxPop  # 0 to 1
+        pressure_reduction = 1 - (population_pressure ** 2)  # Exponential slowdown near max
+        
+        growth_rate = base_growth_rate * pressure_reduction  # Apply pressure reduction
+        
         # Calculates the new rations of the player
         new_rations = rations - rations_needed
         if new_rations < 0:
             new_rations = 0
         new_rations = int(new_rations)
 
-        newPop = (maxPop // 100) * rations_increase  # 1% of maxPop * -1 to 1
+        newPop = int(round((maxPop / 100) * growth_rate))  # Growth as percentage of max
         # Population must be an integer
         newPop = int(round(newPop))
 
@@ -403,7 +405,7 @@ def calc_pg(pId, rations):
             policies = []
 
         if 5 in policies:
-            newPop = int(round(newPop * 1.16))  # 16% increase
+            newPop = int(round(newPop * 1.25))  # 25% increase (was 16%)
 
         fullPop = int(curPop + newPop)
 
