@@ -372,18 +372,9 @@ def calc_pg(pId, rations):
         if rations_needed_percent > 1:
             rations_needed_percent = 1
 
-        # Population growth is now based on:
-        # - Ration availability (0-100% determines growth rate 0-5%)
-        # - Distance from max population (growth slows as you approach max)
-        # - Education policy bonus
-        
-        base_growth_rate = rations_needed_percent * 5  # Max 5% growth with full rations
-        
-        # Slow growth as population approaches max (logistic growth curve)
-        population_pressure = curPop / maxPop  # 0 to 1
-        pressure_reduction = 1 - (population_pressure ** 2)  # Exponential slowdown near max
-        
-        growth_rate = base_growth_rate * pressure_reduction  # Apply pressure reduction
+        # Slower, controlled population growth (prevents snowballing)
+        # Max 0.5% growth with perfect rations
+        growth_rate = rations_needed_percent * 0.5
         
         # Calculates the new rations of the player
         new_rations = rations - rations_needed
@@ -392,8 +383,6 @@ def calc_pg(pId, rations):
         new_rations = int(new_rations)
 
         newPop = int(round((maxPop / 100) * growth_rate))  # Growth as percentage of max
-        # Population must be an integer
-        newPop = int(round(newPop))
 
         db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
         owner = db.fetchone()[0]
@@ -405,7 +394,7 @@ def calc_pg(pId, rations):
             policies = []
 
         if 5 in policies:
-            newPop = int(round(newPop * 1.25))  # 25% increase (was 16%)
+            newPop = int(round(newPop * 1.2))  # 20% boost from education policy
 
         fullPop = int(curPop + newPop)
 
