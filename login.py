@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect, jsonify
+from flask import request, render_template, session, redirect, jsonify, current_app
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
@@ -20,8 +20,9 @@ def login():
         logger = logging.getLogger(__name__)
         logger.debug("POST /login/ called")
         logger.debug("Login: request.form contains keys: %s", list(request.form.keys()))
-        app.config["SESSION_PERMANENT"] = True
-        app.permanent_session_lifetime = datetime.timedelta(days=365)
+        # Use application context to avoid circular imports / NameError
+        current_app.config["SESSION_PERMANENT"] = True
+        current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
         # gets the password input from the form
         password = request.form.get("password")
