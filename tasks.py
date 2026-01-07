@@ -838,6 +838,24 @@ def generate_province_revenue():  # Runs each hour
                 handle_exception(e)
                 continue
 
+        # Final safeguard: clamp all percentage-based fields to [0,100] after all effects
+        try:
+            db.execute(
+                """
+                UPDATE provinces
+                SET
+                    happiness = LEAST(100, GREATEST(0, happiness)),
+                    productivity = LEAST(100, GREATEST(0, productivity)),
+                    pollution = LEAST(100, GREATEST(0, pollution)),
+                    consumer_spending = LEAST(100, GREATEST(0, consumer_spending))
+                WHERE userId = %s
+                """,
+                (user_id,),
+            )
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
+
 
 def war_reparation_tax():
     from database import get_db_cursor
