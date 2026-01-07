@@ -20,29 +20,27 @@ celery.conf.update(
 )
 
 celery_beat_schedule = {
-    "population_growth": {
-        "task": "tasks.task_population_growth",
-        # Run every 1 hour (3600 seconds) to make a "turn" = 1 hour
-        "schedule": 3600,
+    # Staggered to reduce concurrent writes and deadlocks
+    "tax_income": {
+        "task": "tasks.task_tax_income",
+        "schedule": crontab(minute="0"),  # at minute 0 each hour
     },
     "generate_province_revenue": {
         "task": "tasks.task_generate_province_revenue",
-        # Run every 1 hour (3600 seconds)
-        "schedule": 3600,
+        "schedule": crontab(minute="10"),  # at minute 10 each hour
     },
-    "tax_income": {
-        "task": "tasks.task_tax_income",
-        # Run every 1 hour (3600 seconds)
-        "schedule": 3600,
+    "population_growth": {
+        "task": "tasks.task_population_growth",
+        "schedule": crontab(minute="20"),  # at minute 20 each hour
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
         # Run every day at midnight (UTC)
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute="0", hour="0"),
     },
     "manpower_increase": {
         "task": "tasks.task_manpower_increase",
-        "schedule": crontab(minute=0, hour="*/4"),  # Run every 4 hours
+        "schedule": crontab(minute="5", hour="*/4"),  # Run every 4 hours, minute 5
     },
 }
 
@@ -428,12 +426,23 @@ def population_growth():  # Function for growing population
                     continue
                 user_id = user_row[0]
 
+                # Ensure a resources row exists for this user to prevent update no-ops and warnings
+                try:
+                    db.execute(
+                        "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+                        (user_id,),
+                    )
+                except Exception:
+                    # If schema requires other NOT NULL fields without defaults, fallback to reading; updates may no-op
+                    pass
+
                 db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
                 rations_row = db.fetchone()
                 if not rations_row:
-                    print(f"WARNING: User {user_id} has no resources row, skipping")
-                    continue
-                current_rations = rations_row[0]
+                    print(f"WARNING: User {user_id} has no resources row after ensure; treating rations=0")
+                    current_rations = 0
+                else:
+                    current_rations = rations_row[0]
 
                 rations, population = calc_pg(province_id, current_rations)
 
@@ -608,6 +617,15 @@ def generate_province_revenue():  # Runs each hour
                         "UPDATE provinces SET energy=%s WHERE id=%s",
                         (new_energy, province_id),
                     )
+
+                # Ensure user has a resources row so subsequent updates succeed
+                try:
+                    db.execute(
+                        "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+                        (user_id,),
+                    )
+                except Exception:
+                    pass
 
                 dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
                 resources = dict(dbdict.fetchone())
