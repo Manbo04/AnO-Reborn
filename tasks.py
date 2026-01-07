@@ -42,6 +42,11 @@ celery_beat_schedule = {
         "task": "tasks.task_manpower_increase",
         "schedule": crontab(minute="5", hour="*/4"),  # Run every 4 hours, minute 5
     },
+    "backfill_missing_resources": {
+        "task": "tasks.task_backfill_missing_resources",
+        # Run daily 01:15 UTC to repair missing rows quietly
+        "schedule": crontab(minute="15", hour="1"),
+    },
 }
 
 celery.conf.update(
@@ -980,3 +985,43 @@ def task_manpower_increase():
                     "UPDATE military SET manpower=manpower+(%s) WHERE id=(%s)",
                     (produced_manpower, id[0]),
                 )
+
+
+def backfill_missing_resources():
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        # Find users missing a resources row
+        db.execute(
+            """
+            SELECT u.id
+            FROM users u
+            LEFT JOIN resources r ON r.id = u.id
+            WHERE r.id IS NULL
+            """
+        )
+        missing = [row[0] for row in db.fetchall()]
+        if not missing:
+            return
+
+        cols = ["id"] + variables.RESOURCES
+        placeholders = ",".join(["%s"] * len(cols))
+        sql = f"INSERT INTO resources ({','.join(cols)}) VALUES ({placeholders}) ON CONFLICT (id) DO NOTHING"
+
+        params = []
+        zeros = [0] * len(variables.RESOURCES)
+        for user_id in missing:
+            params.append([user_id] + zeros)
+
+        try:
+            execute_batch(db, sql, params)
+            print(f"Backfilled resources for {len(missing)} users")
+        except Exception as e:
+            handle_exception(e)
+
+
+@celery.task()
+def task_backfill_missing_resources():
+    _run_with_deadlock_retries(backfill_missing_resources, "backfill_missing_resources")
