@@ -793,13 +793,15 @@ def generate_province_revenue():  # Runs each hour
                     do_effect(effect, amount, "-")
 
                 if 5 in policies:
+                    # Clamp to [0, 100] and avoid integer overflow during cast
                     db.execute(
-                        "UPDATE provinces SET productivity=productivity*0.91 WHERE id=%s",
+                        "UPDATE provinces SET productivity = LEAST(100, GREATEST(0, ROUND(productivity * 0.91))) WHERE id=%s",
                         (province_id,),
                     )
                 if 4 in policies:
+                    # Clamp to [0, 100] and avoid integer overflow during cast
                     db.execute(
-                        "UPDATE provinces SET productivity=productivity*1.05 WHERE id=%s",
+                        "UPDATE provinces SET productivity = LEAST(100, GREATEST(0, ROUND(productivity * 1.05))) WHERE id=%s",
                         (province_id,),
                     )
                 if 2 in policies:
@@ -862,32 +864,54 @@ def war_reparation_tax():
                         )
 
 
-@celery.task()
-def task_population_growth():
-    try:
-        population_growth()
-    except psycopg2.InterfaceError as e:
-        # Connection was closed (likely due to forked workers sharing pool).
-        # Try to recover by closing/reinitializing the pool and retrying once.
-        print(
-            f"population_growth: caught InterfaceError: {e}. Reinitializing pool and retrying."
-        )
-        try:
-            # Attempt to close pooled connections so child process will reinit
-            from database import db_pool
+def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
+    """Run a DB-heavy function with retries on Postgres deadlocks and transient errors."""
+    import random
+    from psycopg2 import errors as pg_errors
+    from psycopg2.errorcodes import DEADLOCK_DETECTED
 
+    attempt = 0
+    while True:
+        try:
+            return fn()
+        except pg_errors.DeadlockDetected as e:
+            attempt += 1
+            if attempt > max_retries:
+                print(f"{label}: exceeded deadlock retries ({max_retries}). Last error: {e}")
+                raise
+            backoff = 0.2 * attempt + random.uniform(0, 0.2)
+            print(f"{label}: deadlock detected, retrying in {backoff:.2f}s (attempt {attempt}/{max_retries})")
             try:
-                db_pool.close_all()
+                time.sleep(backoff)
             except Exception:
                 pass
-        except Exception:
-            pass
+            continue
+        except psycopg2.InterfaceError as e:
+            # Connection was closed (likely due to forked workers sharing pool). Attempt pool reset then retry once per attempt.
+            print(f"{label}: InterfaceError: {e}. Reinitializing pool and retrying.")
+            try:
+                from database import db_pool
 
-        # Retry once
-        try:
-            population_growth()
-        except Exception as e2:
-            print(f"population_growth: retry failed: {e2}")
+                try:
+                    db_pool.close_all()
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            attempt += 1
+            if attempt > max_retries:
+                print(f"{label}: exceeded interface error retries ({max_retries}). Last error: {e}")
+                raise
+            try:
+                time.sleep(0.1 * attempt)
+            except Exception:
+                pass
+            continue
+
+
+@celery.task()
+def task_population_growth():
+    _run_with_deadlock_retries(population_growth, "population_growth")
 
 
 @celery.task()
@@ -897,7 +921,7 @@ def task_tax_income():
 
 @celery.task()
 def task_generate_province_revenue():
-    generate_province_revenue()
+    _run_with_deadlock_retries(generate_province_revenue, "generate_province_revenue")
 
 
 # Runs once a day
