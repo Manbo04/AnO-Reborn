@@ -129,13 +129,20 @@ def make_session(token=None, state=None, scope=None):
 
 
 def discord_login():
-    from app import app
-    app.config["SESSION_PERMANENT"] = True
-    app.permanent_session_lifetime = datetime.timedelta(days=365)
+    # Use the Flask application context instead of importing app
+    current_app.config["SESSION_PERMANENT"] = True
+    current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
     with get_db_cursor() as db:
         discord = make_session(token=session.get("oauth2_token"))
-        discord_user_id = discord.get(API_BASE_URL + "/users/@me").json()["id"]
+        # Fetch Discord user, guard against missing/invalid token
+        me_resp = discord.get(API_BASE_URL + "/users/@me")
+        if me_resp.status_code != 200:
+            return error(401, "Discord authentication failed. Please try again.")
+        payload = me_resp.json()
+        discord_user_id = payload.get("id")
+        if not discord_user_id:
+            return error(401, "Discord authentication failed. Missing user id.")
 
         discord_auth = discord_user_id
 
@@ -143,7 +150,10 @@ def discord_login():
             "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord'",
             (discord_auth,),
         )
-        user_id = db.fetchone()[0]
+        row = db.fetchone()
+        if not row:
+            return error(404, "No account linked to this Discord. Please sign up.")
+        user_id = row[0]
 
         # TODO: remove later, this is for old users
         try:
@@ -161,7 +171,8 @@ def discord_login():
     except KeyError:
         pass
 
-    session.pop("oauth2_token")
+    # Safely clear oauth token if present
+    session.pop("oauth2_token", None)
 
     return redirect("/")
 
