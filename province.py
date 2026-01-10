@@ -1,6 +1,5 @@
-from flask import request, render_template, session, redirect
+from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from app import app
 from dotenv import load_dotenv
 import os
 import variables
@@ -10,10 +9,12 @@ from upgrades import get_upgrades
 from database import get_db_cursor, cache_response
 import math
 
+bp = Blueprint("province", __name__)
+
 load_dotenv()
 
 
-@app.route("/provinces", methods=["GET"])
+@bp.route("/provinces", methods=["GET"])
 @login_required
 @cache_response(ttl_seconds=30)
 def provinces():
@@ -30,7 +31,7 @@ def provinces():
         return render_template("provinces.html", provinces=provinces)
 
 
-@app.route("/province/<pId>", methods=["GET"])
+@bp.route("/province/<pId>", methods=["GET"])
 @login_required
 def province(pId):
     with get_db_cursor() as db:
@@ -173,7 +174,7 @@ def get_province_price(user_id):
         return price
 
 
-@app.route("/createprovince", methods=["GET", "POST"])
+@bp.route("/createprovince", methods=["GET", "POST"])
 @login_required
 def createprovince():
     cId = session["user_id"]
@@ -251,7 +252,7 @@ def get_free_slots(pId, slot_type):  # pId = province id
         return free_slots
 
 
-@app.route("/<way>/<units>/<province_id>", methods=["POST"])
+@bp.route("/<way>/<units>/<province_id>", methods=["POST"])
 @login_required
 def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
