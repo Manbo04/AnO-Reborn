@@ -563,7 +563,14 @@ def signup():
             return error(400, "reCAPTCHA verification failed")
 
         # Turns the continent number into 0-indexed
-        continent_number = int(request.form.get("continent")) - 1
+        continent_str = request.form.get("continent")
+        if not continent_str:
+            return error(400, "Continent selection is required")
+        try:
+            continent_number = int(continent_str) - 1
+        except (ValueError, TypeError):
+            return error(400, "Continent must be a valid number")
+        
         # Ordered list, DO NOT EDIT
         continents = [
             "Tundra",
@@ -574,6 +581,10 @@ def signup():
             "Grassland",
             "Mountain Range",
         ]
+        
+        if continent_number < 0 or continent_number >= len(continents):
+            return error(400, "Invalid continent selection")
+        
         continent = continents[continent_number]
 
         with get_db_cursor() as db:
