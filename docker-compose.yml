@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ano-postgres
+    environment:
+      POSTGRES_DB: ${PG_DATABASE:-ano_game}
+      POSTGRES_USER: ${PG_USER:-ano_user}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-changeme}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-ano_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ano_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ano-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ano_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano-web
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-PROD}
+      FLASK_APP: wsgi.py
+      PG_DATABASE: ${PG_DATABASE:-ano_game}
+      PG_USER: ${PG_USER:-ano_user}
+      PG_PASSWORD: ${PG_PASSWORD:-changeme}
+      PG_HOST: postgres
+      PG_PORT: ${PG_PORT:-5432}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-http://localhost:5000/callback}
+      SECRET_KEY: ${SECRET_KEY}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 --access-logfile - --error-logfile - wsgi:app
+    networks:
+      - ano_network
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano-celery-worker
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-PROD}
+      PG_DATABASE: ${PG_DATABASE:-ano_game}
+      PG_USER: ${PG_USER:-ano_user}
+      PG_PASSWORD: ${PG_PASSWORD:-changeme}
+      PG_HOST: postgres
+      PG_PORT: ${PG_PORT:-5432}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: celery -A tasks worker --loglevel=INFO --concurrency=4
+    networks:
+      - ano_network
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano-beat
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-PROD}
+      PG_DATABASE: ${PG_DATABASE:-ano_game}
+      PG_USER: ${PG_USER:-ano_user}
+      PG_PASSWORD: ${PG_PASSWORD:-changeme}
+      PG_HOST: postgres
+      PG_PORT: ${PG_PORT:-5432}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: celery -A tasks beat --loglevel=INFO
+    networks:
+      - ano_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ano_network:
+    driver: bridge
