@@ -2,6 +2,30 @@
 
 Affairs & order is a nation simulation game, where you can make your own nation, build a military and industry, and declare war.
 
+## 🐳 Quick Start with Docker (Recommended!)
+
+The easiest way to get started is with Docker. Get the entire application running with one command:
+
+```bash
+docker-compose up --build
+```
+
+See [DOCKER_QUICKSTART.md](./DOCKER_QUICKSTART.md) for detailed Docker setup instructions.
+
+**Why Docker?**
+- ✅ One command setup - no manual installation of Python, PostgreSQL, Redis, etc.
+- ✅ Consistent environment across all machines
+- ✅ Easy for new developers to get started
+- ✅ Production-ready deployment
+
+Learn more: [What are containers and how to use them?](./CONTAINERS.md)
+
+---
+
+## Traditional Installation (Manual Setup)
+
+If you prefer not to use Docker, follow these steps:
+
 ## Repo installation.
 
 1. Install Git and add Git to PATH. https://stackoverflow.com/questions/26620312/installing-git-in-path-with-github-client-for-windows
