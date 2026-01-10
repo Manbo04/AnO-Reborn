@@ -239,6 +239,9 @@ def _init_province_defaults():
 _init_province_defaults()
 
 # register blueprints
+import military
+
+app.register_blueprint(military.bp)
 app.register_blueprint(province.bp)
 app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
