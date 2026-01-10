@@ -19,13 +19,19 @@ cd AnO-Reborn
 
 ### 2. Create Environment File
 
-Copy the example environment file and customize it:
+Copy the Docker environment example file:
+
+```bash
+cp .env.docker.example .env
+```
+
+Or, if you prefer to use the Railway example:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your values:
+Edit `.env` and customize your values (at minimum, change the passwords and secret key):
 
 ```bash
 # Database Configuration
