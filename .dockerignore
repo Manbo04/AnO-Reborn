@@ -71,6 +71,7 @@ celerybeat.pid
 *.md
 !README.md
 !CONTAINERS.md
+!DOCKER_QUICKSTART.md
 
 # Temporary files
 tmp/
