@@ -7,7 +7,7 @@ Affairs & order is a nation simulation game, where you can make your own nation,
 The easiest way to get started is with Docker. Get the entire application running with one command:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 See [DOCKER_QUICKSTART.md](./DOCKER_QUICKSTART.md) for detailed Docker setup instructions.

@@ -61,7 +61,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 ### 3. Start All Services
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This command will:
