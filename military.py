@@ -69,7 +69,14 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             if units not in allUnits and units != "apaches":
                 return error("No such unit exists.", 400)
 
-            wantedUnits = int(request.form.get(units))
+            units_str = request.form.get(units)
+            if not units_str:
+                return error(400, "Unit amount is required")
+            
+            try:
+                wantedUnits = int(units_str)
+            except (ValueError, TypeError):
+                return error(400, "Unit amount must be a valid number")
 
             if wantedUnits < 1:
                 return error(400, "You cannot buy or sell less than 1 unit")
