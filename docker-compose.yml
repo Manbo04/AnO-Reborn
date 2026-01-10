@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: ano_postgres
+    environment:
+      POSTGRES_USER: ${PG_USER:-ano}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-anopassword}
+      POSTGRES_DB: ${PG_DATABASE:-ano}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-ano}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Message Broker for Celery)
+  redis:
+    image: redis:7-alpine
+    container_name: ano_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Flask Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano_web
+    command: gunicorn wsgi:app --workers 4 --timeout 120 --bind 0.0.0.0:5000
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://${PG_USER:-ano}:${PG_PASSWORD:-anopassword}@db:5432/${PG_DATABASE:-ano}
+      PG_DATABASE: ${PG_DATABASE:-ano}
+      PG_USER: ${PG_USER:-ano}
+      PG_PASSWORD: ${PG_PASSWORD:-anopassword}
+      PG_HOST: db
+      PG_PORT: 5432
+      
+      # Redis configuration
+      REDIS_URL: redis://redis:6379/0
+      
+      # Application configuration
+      ENVIRONMENT: ${ENVIRONMENT:-DEV}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      FLASK_APP: app.py
+      FLASK_ENV: ${FLASK_ENV:-development}
+      
+      # Optional configurations
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      # Mount code for development (comment out for production)
+      - .:/app
+      # Exclude virtual environment from mount
+      - /app/venv310
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Celery Worker (Background Tasks)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano_celery_worker
+    command: celery -A tasks worker --loglevel=INFO
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://${PG_USER:-ano}:${PG_PASSWORD:-anopassword}@db:5432/${PG_DATABASE:-ano}
+      PG_DATABASE: ${PG_DATABASE:-ano}
+      PG_USER: ${PG_USER:-ano}
+      PG_PASSWORD: ${PG_PASSWORD:-anopassword}
+      PG_HOST: db
+      PG_PORT: 5432
+      
+      # Redis configuration
+      REDIS_URL: redis://redis:6379/0
+      
+      # Application configuration
+      ENVIRONMENT: ${ENVIRONMENT:-DEV}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - .:/app
+      - /app/venv310
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Celery Beat (Task Scheduler)
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ano_celery_beat
+    command: celery -A tasks beat --loglevel=INFO
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://${PG_USER:-ano}:${PG_PASSWORD:-anopassword}@db:5432/${PG_DATABASE:-ano}
+      PG_DATABASE: ${PG_DATABASE:-ano}
+      PG_USER: ${PG_USER:-ano}
+      PG_PASSWORD: ${PG_PASSWORD:-anopassword}
+      PG_HOST: db
+      PG_PORT: 5432
+      
+      # Redis configuration
+      REDIS_URL: redis://redis:6379/0
+      
+      # Application configuration
+      ENVIRONMENT: ${ENVIRONMENT:-DEV}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - .:/app
+      - /app/venv310
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: ano_network
