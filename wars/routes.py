@@ -466,7 +466,13 @@ def warAmount():
                 return error(400, err_valid)
             return redirect("/warResult")
         elif len(units_name) == 1:
-            amount = int(request.form.get(units_name[0]))
+            amount_str = request.form.get(units_name[0])
+            if not amount_str:
+                return error(400, "Can't attack because you haven't sent any units")
+            try:
+                amount = int(amount_str)
+            except (ValueError, TypeError):
+                return error(400, "Unit amount must be a valid number")
             if not amount:
                 return error(400, "Can't attack because you haven't sent any units")
             selected_units[units_name[0]] = amount
