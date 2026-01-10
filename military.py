@@ -1,7 +1,6 @@
-from flask import request, render_template, session, redirect, flash
+from flask import Blueprint, request, render_template, session, redirect, flash
 from helpers import login_required, error
 from database import get_db_cursor
-from app import app
 from attack_scripts import Military
 from dotenv import load_dotenv
 
@@ -11,8 +10,10 @@ from helpers import get_date
 from upgrades import get_upgrades
 from variables import MILDICT
 
+bp = Blueprint("military", __name__)
 
-@app.route("/military", methods=["GET", "POST"])
+
+@bp.route("/military", methods=["GET", "POST"])
 @login_required
 def military():
     cId = session["user_id"]
@@ -43,7 +44,7 @@ def military():
         )
 
 
-@app.route("/<way>/<units>", methods=["POST"])
+@bp.route("/military/<way>/<units>", methods=["POST"])
 @login_required
 def military_sell_buy(way, units):  # WARNING: function used only for military
     if request.method == "POST":
