@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Docker Setup Validation Script for AnO-Reborn
 # This script checks if your environment is ready for Docker

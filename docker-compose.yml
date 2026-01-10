@@ -61,7 +61,8 @@ services:
     volumes:
       # Mount code for development (comment out for production)
       - .:/app
-      # Exclude virtual environment from mount
+      # Exclude virtual environment from mount (adjust if your venv has a different name)
+      # Common names: venv, venv310, env, .venv
       - /app/venv310
     depends_on:
       db:

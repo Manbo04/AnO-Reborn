@@ -76,7 +76,7 @@ In a new terminal window:
 
 ```bash
 # Access the web container
-docker-compose exec web bash
+docker compose exec web bash
 
 # Run database initialization script
 python init_db_railway.py
@@ -105,70 +105,70 @@ You should see the AnO-Reborn login/signup page!
 Run in background without showing logs:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Stop Services
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### View Logs
 
 All services:
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 Specific service:
 ```bash
-docker-compose logs -f web      # Flask app
-docker-compose logs -f worker   # Celery worker
-docker-compose logs -f beat     # Celery beat
-docker-compose logs -f db       # PostgreSQL
-docker-compose logs -f redis    # Redis
+docker compose logs -f web      # Flask app
+docker compose logs -f worker   # Celery worker
+docker compose logs -f beat     # Celery beat
+docker compose logs -f db       # PostgreSQL
+docker compose logs -f redis    # Redis
 ```
 
 ### Restart a Service
 
 ```bash
-docker-compose restart web
-docker-compose restart worker
+docker compose restart web
+docker compose restart worker
 ```
 
 ### Rebuild After Code Changes
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Execute Commands in Containers
 
 Access Flask shell:
 ```bash
-docker-compose exec web flask shell
+docker compose exec web flask shell
 ```
 
 Access PostgreSQL:
 ```bash
-docker-compose exec db psql -U ano -d ano
+docker compose exec db psql -U ano -d ano
 ```
 
 Access Python in web container:
 ```bash
-docker-compose exec web python
+docker compose exec web python
 ```
 
 Run bash in web container:
 ```bash
-docker-compose exec web bash
+docker compose exec web bash
 ```
 
 ### Check Running Containers
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### Remove Everything (Including Volumes)
@@ -176,7 +176,7 @@ docker-compose ps
 **Warning**: This deletes all data!
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Troubleshooting
@@ -191,42 +191,42 @@ PORT=8080
 
 Then restart:
 ```bash
-docker-compose down
-docker-compose up
+docker compose down
+docker compose up
 ```
 
 ### Database Connection Error
 
 1. Check if database is running:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 2. Check database logs:
    ```bash
-   docker-compose logs db
+   docker compose logs db
    ```
 
 3. Verify `.env` has correct database settings
 
 ### Code Changes Not Reflected
 
-The docker-compose.yml mounts your local code directory, so changes should be automatic. If not:
+The docker compose.yml mounts your local code directory, so changes should be automatic. If not:
 
 ```bash
-docker-compose restart web
+docker compose restart web
 ```
 
 Or rebuild:
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Container Fails to Start
 
 Check logs:
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 Common issues:
@@ -240,13 +240,13 @@ If you're having persistent issues:
 
 ```bash
 # Stop containers
-docker-compose down -v
+docker compose down -v
 
 # Remove all unused Docker resources
 docker system prune -a
 
 # Rebuild from scratch
-docker-compose up --build
+docker compose up --build
 ```
 
 ## Development Workflow
@@ -255,16 +255,16 @@ docker-compose up --build
 2. Changes are automatically available (code is mounted as volume)
 3. **Restart service** if needed:
    ```bash
-   docker-compose restart web
+   docker compose restart web
    ```
 4. **View logs** to debug:
    ```bash
-   docker-compose logs -f web
+   docker compose logs -f web
    ```
 
 ## Production Deployment
 
-For production, remove the volume mounts in `docker-compose.yml`:
+For production, remove the volume mounts in `docker compose.yml`:
 
 ```yaml
 # Comment out these lines in web, worker, and beat services:
@@ -283,7 +283,7 @@ SECRET_KEY=<strong-secret-key>
 
 ## Architecture
 
-When you run `docker-compose up`, you start 5 containers:
+When you run `docker compose up`, you start 5 containers:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -313,7 +313,7 @@ All containers can communicate with each other by service name (e.g., `db`, `red
 ## Next Steps
 
 - Read [CONTAINERS.md](./CONTAINERS.md) for comprehensive container documentation
-- Customize `docker-compose.yml` for your needs
+- Customize `docker compose.yml` for your needs
 - Set up CI/CD with Docker
 - Deploy to cloud platforms that support Docker
 
