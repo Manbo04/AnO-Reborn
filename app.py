@@ -38,6 +38,7 @@ import string
 import random
 from helpers import login_required
 from database import get_db_cursor, cache_response, get_db_connection
+import province
 
 # import psycopg2
 from dotenv import load_dotenv
@@ -238,6 +239,7 @@ def _init_province_defaults():
 _init_province_defaults()
 
 # register blueprints
+app.register_blueprint(province.bp)
 app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
