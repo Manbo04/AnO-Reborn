@@ -1,0 +1,110 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+venv310/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env.local
+.env.*.local
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Logs
+*.log
+logs/
+flask_debug.log
+flask_out.log
+server.log
+server_run.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+celerybeat-schedule
+celerybeat.pid
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (keep only essential docs)
+*.md
+!README.md
+!CONTAINERS.md
+!DOCKER_QUICKSTART.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.swp
+
+# Local development
+.local/
+cookies.txt
+
+# Test files
+tests/
+test.py
+test_tasks.py
+
+# Backup files
+*.backup
+tasks.py.broken
+signup.py.backup
+
+# Coverage reports
+.coverage
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Celery
+celerybeat-schedule.db
+
+# Misc
+.pre-commit-config.yaml
