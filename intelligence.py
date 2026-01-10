@@ -158,7 +158,16 @@ def spyResult():
     if request.method == "POST":
         cId = session["user_id"]
         eId = request.form.get("country")
-        spies = int(request.form.get("spies"))
+        
+        spies_str = request.form.get("spies")
+        if not spies_str:
+            return error(400, "Number of spies is required")
+        
+        try:
+            spies = int(spies_str)
+        except (ValueError, TypeError):
+            return error(400, "Number of spies must be a valid number")
+        
         spy_type = request.form.get("spy_type")
 
         with get_db_cursor() as db:

@@ -240,7 +240,15 @@ def buy_market_offer(offer_id):
     db = connection.cursor()
 
     cId = session["user_id"]
-    amount_wanted = int(request.form.get(f"amount_{offer_id}").replace(",", ""))
+    
+    amount_str = request.form.get(f"amount_{offer_id}")
+    if not amount_str:
+        return error(400, "Amount is required")
+    
+    try:
+        amount_wanted = int(amount_str.replace(",", ""))
+    except (ValueError, TypeError, AttributeError):
+        return error(400, "Amount must be a valid number")
 
     db.execute(
         "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
@@ -294,10 +302,18 @@ def sell_market_offer(offer_id):
     db = conn.cursor()
 
     seller_id = session["user_id"]
-    amount_wanted = int(request.form.get(f"amount_{offer_id}"))
-
+    
     if not offer_id.isnumeric():
         return error(400, "Values must be numeric")
+    
+    amount_str = request.form.get(f"amount_{offer_id}")
+    if not amount_str:
+        return error(400, "Amount is required")
+    
+    try:
+        amount_wanted = int(amount_str)
+    except (ValueError, TypeError):
+        return error(400, "Amount must be a valid number")
 
     db.execute(
         "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
@@ -369,8 +385,22 @@ def post_offer(offer_type):
     db = connection.cursor()
 
     resource = request.form.get("resource")
-    amount = int(request.form.get("amount"))
-    price = request.form.get("price")
+    
+    amount_str = request.form.get("amount")
+    if not amount_str:
+        return error(400, "Amount is required")
+    try:
+        amount = int(amount_str)
+    except (ValueError, TypeError):
+        return error(400, "Amount must be a valid number")
+    
+    price_str = request.form.get("price")
+    if not price_str:
+        return error(400, "Price is required")
+    try:
+        price = int(price_str)
+    except (ValueError, TypeError):
+        return error(400, "Price must be a valid number")
 
     # List of all the resources in the game
     resources = variables.RESOURCES
@@ -529,8 +559,22 @@ def trade_offer(offer_type, offeree_id):
         db = connection.cursor()
 
         resource = request.form.get("resource")
-        amount = int(request.form.get("amount"))
-        price = int(request.form.get("price"))
+        
+        amount_str = request.form.get("amount")
+        if not amount_str:
+            return error(400, "Amount is required")
+        try:
+            amount = int(amount_str)
+        except (ValueError, TypeError):
+            return error(400, "Amount must be a valid number")
+        
+        price_str = request.form.get("price")
+        if not price_str:
+            return error(400, "Price is required")
+        try:
+            price = int(price_str)
+        except (ValueError, TypeError):
+            return error(400, "Price must be a valid number")
 
         if price < 1:
             return error(400, "Price cannot be less than 1")
@@ -702,7 +746,14 @@ def transfer(transferee):
     db = connection.cursor()
 
     resource = request.form.get("resource")
-    amount = int(request.form.get("amount"))
+    
+    amount_str = request.form.get("amount")
+    if not amount_str:
+        return error(400, "Amount is required")
+    try:
+        amount = int(amount_str)
+    except (ValueError, TypeError):
+        return error(400, "Amount must be a valid number")
 
     ### DEFINITIONS ###
 
