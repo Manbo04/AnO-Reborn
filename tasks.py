@@ -353,16 +353,20 @@ def calc_pg(pId, rations):
         # At 50% happiness: neutral (0% impact)
         # At 100% happiness: +6% to max population
         # At 0% happiness: -6% to max population
-        happiness_multiplier = (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
-        
+        happiness_multiplier = (
+            (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
+        )
+
         # Calculate pollution impact on max population
-        # At 50% pollution: neutral (0% impact)  
+        # At 50% pollution: neutral (0% impact)
         # At 100% pollution: -3% to max population
         # At 0% pollution: +3% to max population
-        pollution_multiplier = (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
+        pollution_multiplier = (
+            (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
+        )
 
         maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
-        
+
         if maxPop < variables.DEFAULT_MAX_POPULATION:
             maxPop = variables.DEFAULT_MAX_POPULATION
 
@@ -378,7 +382,7 @@ def calc_pg(pId, rations):
         # Slower, controlled population growth (prevents snowballing)
         # Max 0.5% growth with perfect rations
         growth_rate = rations_needed_percent * 0.5
-        
+
         # Calculates the new rations of the player
         new_rations = rations - rations_needed
         if new_rations < 0:
@@ -407,65 +411,116 @@ def calc_pg(pId, rations):
         return new_rations, fullPop
 
 
-# Seems to be working as expected
+# Optimized population growth to minimize per-province queries and log noise
 def population_growth():  # Function for growing population
     from database import get_db_connection
-    from psycopg2.extras import execute_batch
+    from psycopg2.extras import execute_batch, RealDictCursor
 
     with get_db_connection() as conn:
         db = conn.cursor()
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
-        db.execute("SELECT id FROM provinces ORDER BY userId ASC")
-        provinces = db.fetchall()
+        # Preload all provinces with the fields needed for growth calculations
+        dbdict.execute(
+            """
+            SELECT id, userId, population, cityCount, land, happiness, pollution, productivity
+            FROM provinces
+            ORDER BY userId ASC
+            """
+        )
+        provinces = dbdict.fetchall()
+
+        if not provinces:
+            return
+
+        user_ids = [row["userid"] for row in provinces]
+        unique_user_ids = sorted(set(user_ids))
+
+        # Ensure resources rows exist for every user once, not per province
+        execute_batch(
+            db,
+            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+            [(uid,) for uid in unique_user_ids],
+        )
+
+        # Preload rations and policies into dicts for O(1) lookups
+        dbdict.execute(
+            "SELECT id, rations FROM resources WHERE id = ANY(%s)", (unique_user_ids,)
+        )
+        ration_map = {row["id"]: row["rations"] for row in dbdict.fetchall()}
+
+        dbdict.execute(
+            "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
+            (unique_user_ids,),
+        )
+        policy_map = {row["user_id"]: row["education"] for row in dbdict.fetchall()}
+
+        def calc_pg_cached(province_row):
+            province_id = province_row["id"]
+            user_id = province_row["userid"]
+            curPop = province_row["population"] or 0
+            cities = province_row["citycount"] or 0
+            land = province_row["land"] or 0
+            happiness = int(province_row.get("happiness") or 0)
+            pollution = province_row.get("pollution") or 0
+            productivity = province_row.get("productivity") or 0
+
+            maxPop = variables.DEFAULT_MAX_POPULATION
+            maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION
+            maxPop += land * variables.LAND_MAX_POPULATION_ADDITION
+
+            happiness_multiplier = (
+                (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
+            )
+            pollution_multiplier = (
+                (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
+            )
+
+            maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
+            if maxPop < variables.DEFAULT_MAX_POPULATION:
+                maxPop = variables.DEFAULT_MAX_POPULATION
+
+            rations_needed = curPop // variables.RATIONS_PER
+            if rations_needed < 1:
+                rations_needed = 1
+
+            current_rations = ration_map.get(user_id, 0) or 0
+            rations_ratio = current_rations / rations_needed
+            if rations_ratio > 1:
+                rations_ratio = 1
+
+            # Slower, controlled population growth (prevents snowballing)
+            growth_rate = rations_ratio * 0.5
+
+            new_rations = current_rations - rations_needed
+            if new_rations < 0:
+                new_rations = 0
+            new_rations = int(new_rations)
+
+            newPop = int(round((maxPop / 100) * growth_rate))
+
+            policies = policy_map.get(user_id) or []
+            if 5 in policies:
+                newPop = int(round(newPop * 1.2))
+
+            fullPop = int(curPop + newPop)
+            if fullPop < 0:
+                fullPop = 0
+
+            return user_id, new_rations, fullPop
 
         rations_updates = []
         population_updates = []
 
-        for province_id in provinces:
-            province_id = province_id[0]
+        for province_row in provinces:
             try:
-                db.execute("SELECT userId FROM provinces WHERE id=%s", (province_id,))
-                user_row = db.fetchone()
-                if not user_row:
-                    print(f"WARNING: Province {province_id} has no userId, skipping")
-                    continue
-                user_id = user_row[0]
-
-                # Ensure a resources row exists for this user to prevent update no-ops and warnings
-                try:
-                    db.execute(
-                        "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
-                        (user_id,),
-                    )
-                except Exception:
-                    # If schema requires other NOT NULL fields without defaults, fallback to reading; updates may no-op
-                    pass
-
-                db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-                rations_row = db.fetchone()
-                if not rations_row:
-                    print(f"WARNING: User {user_id} has no resources row after ensure; treating rations=0")
-                    current_rations = 0
-                else:
-                    current_rations = rations_row[0]
-
-                rations, population = calc_pg(province_id, current_rations)
-
-                print(
-                    f"Updated rations for province id: {province_id}, user id: {user_id}"
-                )
-                print(
-                    f"Set {current_rations} to {rations} ({rations - current_rations})"
-                )
-
+                user_id, rations, population = calc_pg_cached(province_row)
                 rations_updates.append((rations, user_id))
-                population_updates.append((population, province_id))
-
+                population_updates.append((population, province_row["id"]))
             except Exception as e:
                 handle_exception(e)
                 continue
 
-        # Batch execute updates
         if rations_updates:
             execute_batch(
                 db, "UPDATE resources SET rations=%s WHERE id=%s", rations_updates
@@ -474,6 +529,10 @@ def population_growth():  # Function for growing population
             execute_batch(
                 db, "UPDATE provinces SET population=%s WHERE id=%s", population_updates
             )
+
+        print(
+            f"population_growth: updated {len(population_updates)} provinces across {len(unique_user_ids)} users"
+        )
 
 
 def find_unit_category(unit):
@@ -918,10 +977,14 @@ def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
         except pg_errors.DeadlockDetected as e:
             attempt += 1
             if attempt > max_retries:
-                print(f"{label}: exceeded deadlock retries ({max_retries}). Last error: {e}")
+                print(
+                    f"{label}: exceeded deadlock retries ({max_retries}). Last error: {e}"
+                )
                 raise
             backoff = 0.2 * attempt + random.uniform(0, 0.2)
-            print(f"{label}: deadlock detected, retrying in {backoff:.2f}s (attempt {attempt}/{max_retries})")
+            print(
+                f"{label}: deadlock detected, retrying in {backoff:.2f}s (attempt {attempt}/{max_retries})"
+            )
             try:
                 time.sleep(backoff)
             except Exception:
@@ -941,7 +1004,9 @@ def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
                 pass
             attempt += 1
             if attempt > max_retries:
-                print(f"{label}: exceeded interface error retries ({max_retries}). Last error: {e}")
+                print(
+                    f"{label}: exceeded interface error retries ({max_retries}). Last error: {e}"
+                )
                 raise
             try:
                 time.sleep(0.1 * attempt)
