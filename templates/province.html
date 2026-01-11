@@ -273,18 +273,19 @@
                                 citiesamount = parseInt(citiesamount);
                                 cityCount = parseInt(cityCount) || 0;
 
-                                function sum_cost_exp(startingValue, rateOfGrowth, currentOwned, numPurchased) {
-                                    const oneMinus = 1 - rateOfGrowth;
-                                    const M = (startingValue * (1 - rateOfGrowth ** (currentOwned + numPurchased))) / oneMinus;
-                                    const N = (startingValue * (1 - (rateOfGrowth ** currentOwned))) / oneMinus;
-                                    return Math.round(M - N);
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
+                                    let totalCost = 0;
+                                    for (let i = 0; i < numPurchased; i++) {
+                                        totalCost += basePrice + ((currentOwned + i) * incrementPerItem);
+                                    }
+                                    return Math.round(totalCost);
                                 }
 
                                 function numberWithCommas(x) {
                                     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                                 }
 
-                                let newPrice = sum_cost_exp(750000, 1.09, cityCount, citiesamount)
+                                let newPrice = sum_cost_linear(750000, 50000, cityCount, citiesamount)
                                 let newOutputPrice = numberWithCommas(newPrice)
                                 console.log("New City price: " + newOutputPrice)
 
@@ -329,18 +330,19 @@
                                 landamount = parseInt(landamount);
                                 current_land = parseInt(current_land) || 0;
 
-                                function sum_cost_exp(startingValue, rateOfGrowth, currentOwned, numPurchased) {
-                                    const oneMinus = 1 - rateOfGrowth;
-                                    const M = (startingValue * (1 - rateOfGrowth ** (currentOwned + numPurchased))) / oneMinus;
-                                    const N = (startingValue * (1 - (rateOfGrowth ** currentOwned))) / oneMinus;
-                                    return Math.round(M - N);
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
+                                    let totalCost = 0;
+                                    for (let i = 0; i < numPurchased; i++) {
+                                        totalCost += basePrice + ((currentOwned + i) * incrementPerItem);
+                                    }
+                                    return Math.round(totalCost);
                                 }
 
                                 function numberWithCommas(x) {
                                     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                                 }
 
-                                let land_price = sum_cost_exp(520000, 1.07, current_land, landamount)
+                                let land_price = sum_cost_linear(520000, 25000, current_land, landamount)
                                 let land_output_price = numberWithCommas(land_price)
                                 console.log("New land price: " + land_output_price)
                                 landoutput.innerHTML = land_output_price;

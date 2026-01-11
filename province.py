@@ -364,22 +364,22 @@ def province_sell_buy(way, units, province_id):
         if wantedUnits < 1:
             return error(400, "Units cannot be less than 1")
 
-        def sum_cost_exp(starting_value, rate_of_growth, current_owned, num_purchased):
-            M = (
-                starting_value
-                * (1 - pow(rate_of_growth, (current_owned + num_purchased)))
-            ) / (1 - rate_of_growth)
-            N = (starting_value * (1 - pow(rate_of_growth, (current_owned)))) / (
-                1 - rate_of_growth
-            )
-            total_cost = M - N
+        def sum_cost_linear(
+            base_price, increment_per_item, current_owned, num_purchased
+        ):
+            """Linear pricing: basePrice + (itemsOwned * incrementPerItem) for each item"""
+            total_cost = 0
+            for i in range(num_purchased):
+                total_cost += base_price + ((current_owned + i) * increment_per_item)
             return round(total_cost)
 
         if units == "cityCount":
             db.execute("SELECT cityCount FROM provinces WHERE id=(%s)", (province_id,))
             current_cityCount = db.fetchone()[0]
 
-            cityCount_price = sum_cost_exp(750000, 1.09, current_cityCount, wantedUnits)
+            cityCount_price = sum_cost_linear(
+                750000, 50000, current_cityCount, wantedUnits
+            )
         else:
             cityCount_price = 0
 
@@ -387,7 +387,7 @@ def province_sell_buy(way, units, province_id):
             db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
             current_land = db.fetchone()[0]
 
-            land_price = sum_cost_exp(520000, 1.07, current_land, wantedUnits)
+            land_price = sum_cost_linear(520000, 25000, current_land, wantedUnits)
         else:
             land_price = 0
 
