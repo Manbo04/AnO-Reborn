@@ -1,0 +1,21 @@
+# All 20 routes from coalitions.py:
+1. coalition(colId) - /coalition/<colId> - GET
+2. establish_coalition() - /establish_coalition - GET, POST
+3. coalitions() - /coalitions - GET
+4. join_col(colId) - /join/<colId> - POST
+5. leave_col(colId) - /leave/<colId> - POST
+6. my_coalition() - /my_coalition - GET
+7. give_position() - /give_position - POST
+8. adding(uId) - /add/<uId> - POST
+9. removing_requests(uId) - /remove/<uId> - POST
+10. delete_coalition(colId) - /delete_coalition/<colId> - POST
+11. update_col_info(colId) - /update_col_info/<colId> - POST
+12. deposit_into_bank(colId) - /deposit_into_bank/<colId> - POST
+13. withdraw_from_bank(colId) - /withdraw_from_bank/<colId> - POST
+14. request_from_bank(colId) - /request_from_bank/<colId> - POST
+15. remove_bank_request(bankId) - /remove_bank_request/<bankId> - POST
+16. accept_bank_request(bankId) - /accept_bank_request/<bankId> - POST
+17. offer_treaty() - /offer_treaty - POST
+18. accept_treaty(offer_id) - /accept_treaty/<offer_id> - POST
+19. break_treaty(offer_id) - /break_treaty/<offer_id> - POST
+20. decline_treaty(offer_id) - /decline_treaty/<offer_id> - POST

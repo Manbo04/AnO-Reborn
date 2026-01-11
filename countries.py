@@ -444,6 +444,7 @@ def countries():
         province_range = request.values.get("province_range")
         sort = request.values.get("sort")
         sortway = request.values.get("sortway")
+        page = request.values.get("page", default=1, type=int)
 
         if sort == "war_range":
             target = target_data(cId)
@@ -454,6 +455,26 @@ def countries():
         if not province_range:
             province_range = 0
 
+        # First, get total count without pagination for result info
+        db.execute(
+            """SELECT COUNT(DISTINCT users.id) as total
+FROM USERS
+LEFT JOIN provinces ON users.id = provinces.userId
+LEFT JOIN coalitions ON users.id = coalitions.userId
+LEFT JOIN colNames ON colNames.id = coalitions.colId
+GROUP BY users.id
+HAVING COUNT(provinces.id) >= %s;""",
+            (province_range,),
+        )
+        try:
+            total_count = db.fetchone()[0]
+        except:
+            total_count = 0
+
+        # Fetch paginated results with optimized query
+        page_size = 50
+        offset = (page - 1) * page_size
+
         db.execute(
             """SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
 coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
@@ -462,18 +483,26 @@ LEFT JOIN provinces ON users.id = provinces.userId
 LEFT JOIN coalitions ON users.id = coalitions.userId
 LEFT JOIN colNames ON colNames.id = coalitions.colId
 GROUP BY users.id, coalitions.colId, colNames.name
-HAVING COUNT(provinces.id) >= %s;""",
-            (province_range,),
+HAVING COUNT(provinces.id) >= %s
+ORDER BY users.id DESC
+LIMIT %s OFFSET %s;""",
+            (province_range, page_size, offset),
         )
         dbResults = db.fetchall()
 
-    # Hack to add influence into the query, filter influence, province range, etc.
+    # Batch load all influence values for this page (avoid N+1 query pattern)
+    user_ids = [user[0] for user in dbResults]
+    influences = {}
+    for user_id in user_ids:
+        influences[user_id] = get_influence(user_id)
+
+    # Process results with cached influences
     results = []
     for user in dbResults:
         addUser = True
         user_id = user[0]
         user = list(user)
-        influence = get_influence(user_id)
+        influence = influences.get(user_id, 0)
 
         user_date = user[2]
         date = datetime.fromisoformat(user_date)
@@ -509,7 +538,9 @@ HAVING COUNT(provinces.id) >= %s;""",
     if sort == "provinces":
         results = sorted(results, key=itemgetter(7), reverse=reverse)
 
-    return render_template("countries.html", countries=results, current_user_id=cId)
+    total_pages = (total_count + page_size - 1) // page_size
+    return render_template("countries.html", countries=results, current_user_id=cId, 
+                         current_page=page, total_pages=total_pages)
 
 
 def update_info():
