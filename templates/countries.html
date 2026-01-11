@@ -85,6 +85,23 @@
 
             </table>
         </div>
+
+        <!-- Pagination controls -->
+        {% if total_pages and total_pages > 1 %}
+        <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
+            {% if current_page > 1 %}
+                <a href="/countries?page=1" class="templatedivbutton smallactionbutton">First</a>
+                <a href="/countries?page={{ current_page - 1 }}" class="templatedivbutton smallactionbutton">← Previous</a>
+            {% endif %}
+
+            <span style="margin: 0 10px;">Page {{ current_page }} of {{ total_pages }}</span>
+
+            {% if current_page < total_pages %}
+                <a href="/countries?page={{ current_page + 1 }}" class="templatedivbutton smallactionbutton">Next →</a>
+                <a href="/countries?page={{ total_pages }}" class="templatedivbutton smallactionbutton">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock%}
