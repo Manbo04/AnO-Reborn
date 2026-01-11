@@ -1,10 +1,68 @@
 # UI/Backend Inconsistency Audit Report
 **Scan Date:** January 11, 2026  
-**Status:** Complete game-wide scan for mismatches between UI tooltips and backend implementation
+**Status:** Complete game-wide scan + user-reported bugs fixed  
+**Last Updated:** January 11, 2026 (Commit 191beb0a)
 
 ---
 
-## CRITICAL INCONSISTENCIES FOUND
+## ⚠️ NEWLY DISCOVERED CRITICAL BUGS (User Reported)
+
+### BUG 1: **Power Status Check (production == consumption)** ✅ FIXED
+**Location:** `province.py` line 138  
+**Issue:** Province shows "unpowered" when production exactly equals consumption  
+**User Report:**
+```
+"I am currently producing 4 units of electricity and consuming 4 units 
+of electricity, but it looks like my province is unpowered."
+```
+
+**Root Cause:**
+```python
+# OLD CODE (WRONG):
+return production > consumption  # Returns False when 4 == 4
+
+# FIXED CODE:
+return production >= consumption  # Returns True when 4 == 4
+```
+
+**Status:** ✅ **FIXED** in commit 191beb0a  
+**Impact:** Users with balanced energy now correctly show as powered
+
+---
+
+### BUG 2: **Coal Power Plant Consumption Mismatch** ✅ FIXED
+**Location:** `variables.py` INFRA vs NEW_INFRA  
+**User Report:**
+```
+"I have two coal mines and get 62 units of coal per hour (31 each).
+Coal power plant is supposed to take 48 coal per hour.
+But I have a net gain of 51 coal per hour, meaning it only uses 11 coal."
+```
+
+**Root Cause:** Backend uses `NEW_INFRA` but UI displays `INFRA` (old values)
+- **UI displayed (INFRA line 171):** `"coal_burners_convert_minus": [{"coal": 48}]`
+- **Backend uses (NEW_INFRA line 418):** `"minus": {"coal": 11}`
+- **User calculation proves backend:** 62 production - 11 consumption = 51 net ✓
+
+**Full INFRA/NEW_INFRA Synchronization (Commit 191beb0a):**
+
+| Building | Stat | OLD INFRA | NEW_INFRA | Fixed |
+|----------|------|-----------|-----------|-------|
+| coal_burners | coal consumption | 48 | 11 | ✅ |
+| coal_burners | pollution | 7% | 6% | ✅ |
+| oil_burners | oil consumption | 56 | 16 | ✅ |
+| oil_burners | pollution | 5% | 4% | ✅ |
+| solar_fields | energy | 4 | 3 | ✅ |
+| solar_fields | money | 11000 | 13000 | ✅ |
+| malls | pollution | 10% | 9% | ✅ |
+| farms | rations | 20 | 12 | ✅ |
+
+**Status:** ✅ **FIXED** - All OLD INFRA values now match NEW_INFRA backend implementation  
+**Impact:** UI tooltips now display accurate resource consumption/production
+
+---
+
+## CRITICAL INCONSISTENCIES FOUND (Previous Scan)
 
 ### 1. **HAPPINESS MULTIPLIER - Major Discrepancy** ⚠️
 **Location:** `templates/province.html` line 167 & 175  
