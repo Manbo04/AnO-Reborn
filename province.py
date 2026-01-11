@@ -135,7 +135,7 @@ def province(pId):
 
         def has_enough_power(province_id):
             consumption, production = energy_info(province_id)
-            return production > consumption
+            return production >= consumption
 
         enough_rations = has_enough_rations(province["user"])
 
