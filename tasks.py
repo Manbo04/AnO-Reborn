@@ -584,13 +584,13 @@ def generate_province_revenue():  # Runs each hour
 
         try:
             db.execute(
-                "SELECT proInfra.id, provinces.userId, provinces.land FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC"
+                "SELECT proInfra.id, provinces.userId, provinces.land, provinces.productivity FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC"
             )
             infra_ids = db.fetchall()
         except:
             infra_ids = []
 
-    for province_id, user_id, land in infra_ids:
+    for province_id, user_id, land, productivity in infra_ids:
         db.execute(
             "UPDATE provinces SET energy=0 WHERE id=%s", (province_id,)
         )  # So energy would reset each turn
@@ -621,6 +621,17 @@ def generate_province_revenue():  # Runs each hour
                 operating_costs = infra[unit]["money"] * unit_amount
                 plus_amount = 0
                 plus_amount_multiplier = 1
+
+                # Apply productivity multiplier: 0.9% per productivity point
+                # At 50% productivity (neutral): 1.0x multiplier
+                # At 100% productivity: 1.45x multiplier (50 * 0.9% = 45%)
+                # At 0% productivity: 0.55x multiplier (-50 * 0.9% = -45%)
+                if productivity is not None:
+                    productivity_multiplier = 1 + (
+                        (productivity - 50)
+                        * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER
+                    )
+                    plus_amount_multiplier *= productivity_multiplier
 
                 if 1 in policies and unit == "universities":
                     operating_costs *= 1.14
