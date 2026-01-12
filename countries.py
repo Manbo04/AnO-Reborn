@@ -161,20 +161,22 @@ def get_revenue(cId):
 
         cg_needed = cg_need(cId)
 
-        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-        provinces = db.fetchall()
+        # Prefetch province ids and land to avoid per-province lookups later
+        db.execute("SELECT id, land FROM provinces WHERE userId=%s", (cId,))
+        province_rows = db.fetchall()
+        provinces = [row[0] for row in province_rows]
+        land_by_id = {row[0]: row[1] for row in province_rows}
 
         revenue = {"gross": {}, "net": {}}
 
         infra = variables.NEW_INFRA
-        resources = variables.RESOURCES
+        # Copy to avoid mutating global state; repeated extends were exploding the list
+        resources = list(variables.RESOURCES)
         resources.extend(["money", "energy"])
         for resource in resources:
             revenue["gross"][resource] = 0
             revenue["net"][resource] = 0
         for province in provinces:
-            province = province[0]
-
             db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
             buildings = db.fetchone()
             if buildings is None:
@@ -231,10 +233,7 @@ def get_revenue(cId):
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
                     if building == "farms":
-                        db.execute(
-                            "SELECT land FROM provinces WHERE id=%s", (province,)
-                        )
-                        land = db.fetchone()[0]
+                        land = land_by_id.get(province, 0)
                         amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
 
                     total = build_count * amount
@@ -545,8 +544,13 @@ LIMIT %s OFFSET %s;""",
         results = sorted(results, key=itemgetter(7), reverse=reverse)
 
     total_pages = (total_count + page_size - 1) // page_size
-    return render_template("countries.html", countries=results, current_user_id=cId, 
-                         current_page=page, total_pages=total_pages)
+    return render_template(
+        "countries.html",
+        countries=results,
+        current_user_id=cId,
+        current_page=page,
+        total_pages=total_pages,
+    )
 
 
 def update_info():
@@ -742,7 +746,7 @@ def register_countries_routes(app_instance):
     app_instance.add_url_rule(
         "/country/id=<cId>",
         "country",
-        login_required(cache_response(ttl_seconds=30)(country)),
+        login_required(cache_response(ttl_seconds=120)(country)),
         methods=["GET"],
     )
 
