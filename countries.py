@@ -144,8 +144,14 @@ def format_econ_statistics(statistics):
 
 
 def get_revenue(cId):
-    from database import get_db_connection
+    from database import get_db_connection, query_cache
     from psycopg2.extras import RealDictCursor
+
+    # Check cache first - expensive calculation
+    cache_key = f"revenue_{cId}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
 
     # Use a dedicated connection for the lifetime of this function to
     # prevent nested `get_db_cursor()` calls from accidentally reusing
