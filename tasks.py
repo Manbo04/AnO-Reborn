@@ -27,11 +27,11 @@ celery_beat_schedule = {
     },
     "generate_province_revenue": {
         "task": "tasks.task_generate_province_revenue",
-        "schedule": crontab(minute="10"),  # at minute 10 each hour
+        "schedule": crontab(minute="25"),  # at minute 25 each hour (increased from 10)
     },
     "population_growth": {
         "task": "tasks.task_population_growth",
-        "schedule": crontab(minute="20"),  # at minute 20 each hour
+        "schedule": crontab(minute="45"),  # at minute 45 each hour (increased from 20)
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
@@ -704,6 +704,8 @@ def generate_province_revenue():  # Runs each hour
 
                 dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
                 resources = dict(dbdict.fetchone())
+                resource_updates = {}  # Collect all resource changes for this user
+                
                 for resource, amount in minus.items():
                     amount *= unit_amount
                     current_resource = resources[resource]
@@ -727,18 +729,13 @@ def generate_province_revenue():  # Runs each hour
                             f"F | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | Failed to minus {amount} of {resource} ({current_resource})"
                         )
                     else:
-                        resource_u_statement = (
-                            f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-                        )
+                        # Accumulate changes instead of updating one by one
+                        if resource not in resource_updates:
+                            resource_updates[resource] = new_resource
+                        else:
+                            resource_updates[resource] = new_resource
                         print(
                             f"S | MINUS | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | {resource} {current_resource}={new_resource} (-{current_resource-new_resource})"
-                        )
-                        db.execute(
-                            resource_u_statement,
-                            (
-                                new_resource,
-                                user_id,
-                            ),
                         )
 
                 if not has_enough_stuff["status"]:
