@@ -367,10 +367,13 @@ def province_sell_buy(way, units, province_id):
         def sum_cost_linear(
             base_price, increment_per_item, current_owned, num_purchased
         ):
-            """Linear pricing: basePrice + (itemsOwned * incrementPerItem) for each item"""
-            total_cost = 0
-            for i in range(num_purchased):
-                total_cost += base_price + ((current_owned + i) * increment_per_item)
+            """Linear pricing: O(1) formula instead of O(n) loop
+            Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
+            = numPurchased * basePrice + increment * (numPurchased * currentOwned + numPurchased*(numPurchased-1)/2)
+            """
+            total_cost = (num_purchased * base_price + 
+                         increment_per_item * (num_purchased * current_owned + 
+                                               num_purchased * (num_purchased - 1) / 2))
             return round(total_cost)
 
         if units == "cityCount":
