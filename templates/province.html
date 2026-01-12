@@ -274,10 +274,10 @@
                                 cityCount = parseInt(cityCount) || 0;
 
                                 function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
-                                    let totalCost = 0;
-                                    for (let i = 0; i < numPurchased; i++) {
-                                        totalCost += basePrice + ((currentOwned + i) * incrementPerItem);
-                                    }
+                                    // O(1) formula instead of O(n) loop for performance
+                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
+                                    let totalCost = numPurchased * basePrice + 
+                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
                                     return Math.round(totalCost);
                                 }
 
@@ -331,10 +331,10 @@
                                 current_land = parseInt(current_land) || 0;
 
                                 function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
-                                    let totalCost = 0;
-                                    for (let i = 0; i < numPurchased; i++) {
-                                        totalCost += basePrice + ((currentOwned + i) * incrementPerItem);
-                                    }
+                                    // O(1) formula instead of O(n) loop for performance
+                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
+                                    let totalCost = numPurchased * basePrice + 
+                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
                                     return Math.round(totalCost);
                                 }
 
