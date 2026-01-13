@@ -133,16 +133,12 @@ def province(pId):
             rations_minus = province["population"] // variables.RATIONS_PER
             return rations - rations_minus > 1
 
-        def has_enough_power(province_id):
-            consumption, production = energy_info(province_id)
-            return production >= consumption
-
         enough_rations = has_enough_rations(province["user"])
 
-        energy = {}
-
-        energy["consumption"], energy["production"] = energy_info(pId)
-        has_power = has_enough_power(pId)
+        # Fetch energy info once and reuse for both display and power check
+        energy_consumption, energy_production = energy_info(pId)
+        energy = {"consumption": energy_consumption, "production": energy_production}
+        has_power = energy_production >= energy_consumption
 
         infra = variables.INFRA
         new_infra = variables.NEW_INFRA
