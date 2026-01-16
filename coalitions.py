@@ -110,16 +110,15 @@ def coalition(colId):
                 "member": None,
             }
 
-            for role in member_roles:
-                db.execute(
-                    "SELECT COUNT(userId) FROM coalitions WHERE role="
-                    + "'"
-                    + role
-                    + "'"
-                    + " AND colId=%s",
-                    (colId,),
-                )
-                member_roles[role] = db.fetchone()[0]
+            # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
+            db.execute(
+                "SELECT role, COUNT(userId) FROM coalitions WHERE colId=%s GROUP BY role",
+                (colId,),
+            )
+            role_counts = db.fetchall()
+            for role, count in role_counts:
+                if role in member_roles:
+                    member_roles[role] = count
 
         else:
             member_roles = {}
@@ -145,21 +144,22 @@ def coalition(colId):
                 trt_names = []
                 trt_descriptions = []
 
-                for treaty_id in ingoing_ids:
-                    treaty_id = treaty_id
-
+                # OPTIMIZATION: Batch fetch all treaty data in ONE query instead of N*2 queries
+                if ingoing_ids:
+                    placeholders = ','.join(['%s'] * len(ingoing_ids))
                     db.execute(
-                        "SELECT col1_id, treaty_name, treaty_description FROM treaties WHERE id=(%s)",
-                        (treaty_id,),
+                        f"""SELECT t.id, t.col1_id, t.treaty_name, t.treaty_description, c.name 
+                            FROM treaties t 
+                            JOIN colNames c ON t.col1_id = c.id 
+                            WHERE t.id IN ({placeholders})""",
+                        tuple(ingoing_ids),
                     )
-                    col_id, treaty_name, treaty_description = db.fetchone()
-                    col_ids.append(col_id)
-                    trt_names.append(treaty_name)
-                    trt_descriptions.append(treaty_description)
-
-                    db.execute("SELECT name FROM colNames WHERE id=(%s)", (col_id,))
-                    coalition_name = db.fetchone()[0]
-                    col_names.append(coalition_name)
+                    for row in db.fetchall():
+                        treaty_id, col_id, treaty_name, treaty_description, coalition_name = row
+                        col_ids.append(col_id)
+                        trt_names.append(treaty_name)
+                        trt_descriptions.append(treaty_description)
+                        col_names.append(coalition_name)
 
                 ingoing_treaties = {}
                 ingoing_treaties["ids"] = (ingoing_ids,)
@@ -190,31 +190,33 @@ def coalition(colId):
                 active_treaties["treaty_names"] = []
                 active_treaties["treaty_descriptions"] = []
 
-                for i in raw_active_ids:
-                    offer_id = i[0]
-
-                    active_treaties["ids"].append(offer_id)
-
+                # OPTIMIZATION: Batch fetch all active treaty data in ONE query
+                if raw_active_ids:
+                    active_ids = [i[0] for i in raw_active_ids]
+                    placeholders = ','.join(['%s'] * len(active_ids))
                     db.execute(
-                        "SELECT col1_id, treaty_name, treaty_description FROM treaties WHERE id=(%s)",
-                        (offer_id,),
+                        f"""SELECT t.id, t.col1_id, t.col2_id, t.treaty_name, t.treaty_description,
+                                   c1.name as col1_name, c2.name as col2_name
+                            FROM treaties t 
+                            JOIN colNames c1 ON t.col1_id = c1.id 
+                            JOIN colNames c2 ON t.col2_id = c2.id 
+                            WHERE t.id IN ({placeholders})""",
+                        tuple(active_ids),
                     )
-                    coalition_id, treaty_name, treaty_description = db.fetchone()
-                    if coalition_id == colId:
-                        db.execute(
-                            "SELECT col2_id FROM treaties WHERE id=(%s)", (offer_id,)
-                        )
-                        coalition_id = db.fetchone()[0]
-
-                    db.execute(
-                        "SELECT name FROM colNames WHERE id=(%s)", (coalition_id,)
-                    )
-                    coalition_name = db.fetchone()[0]
-
-                    active_treaties["col_ids"].append(coalition_id)
-                    active_treaties["col_names"].append(coalition_name)
-                    active_treaties["treaty_names"].append(treaty_name)
-                    active_treaties["treaty_descriptions"].append(treaty_description)
+                    for row in db.fetchall():
+                        offer_id, col1_id, col2_id, treaty_name, treaty_description, col1_name, col2_name = row
+                        active_treaties["ids"].append(offer_id)
+                        # Show the OTHER coalition, not the current one
+                        if col1_id == colId:
+                            coalition_id = col2_id
+                            coalition_name = col2_name
+                        else:
+                            coalition_id = col1_id
+                            coalition_name = col1_name
+                        active_treaties["col_ids"].append(coalition_id)
+                        active_treaties["col_names"].append(coalition_name)
+                        active_treaties["treaty_names"].append(treaty_name)
+                        active_treaties["treaty_descriptions"].append(treaty_description)
 
                 active_length = len(raw_active_ids)
             except:
@@ -246,11 +248,15 @@ def coalition(colId):
                 "ammunition": None,
             }
 
-            for raw in bankRaw:
-                db.execute(
-                    "SELECT " + raw + " FROM colBanks WHERE colId=(%s)", (colId,)
-                )
-                bankRaw[raw] = db.fetchone()[0]
+            # OPTIMIZATION: Fetch all bank resources in ONE query instead of 15 queries
+            resource_cols = ", ".join(bankRaw.keys())
+            db.execute(
+                f"SELECT {resource_cols} FROM colBanks WHERE colId=(%s)", (colId,)
+            )
+            row = db.fetchone()
+            if row:
+                for i, resource in enumerate(bankRaw.keys()):
+                    bankRaw[resource] = row[i]
         else:
             bankRaw = {}
 
