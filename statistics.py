@@ -22,47 +22,31 @@ def statistics():
 
         market_stats = {}
 
+        # OPTIMIZATION: Fetch all resource stats in ONE query instead of 21 queries
+        db.execute(
+            """
+            SELECT resource, 
+                   ROUND(AVG(price)) as avg_price,
+                   MAX(price) as max_price,
+                   MIN(price) as min_price
+            FROM offers
+            WHERE type = 'sell' AND resource IN %s
+            GROUP BY resource
+            """,
+            (tuple(resources),),
+        )
+        
+        # Initialize all resources with default values
         for resource in resources:
-            # Get average price
-            db.execute(
-                """
-                SELECT AVG(price) as avg_price
-                FROM offers
-                WHERE resource = %s AND type = 'sell'
-            """,
-                (resource,),
-            )
-            avg_result = db.fetchone()
-            avg_price = round(avg_result[0]) if avg_result[0] else 0
-
-            # Get highest price
-            db.execute(
-                """
-                SELECT MAX(price) as max_price
-                FROM offers
-                WHERE resource = %s AND type = 'sell'
-            """,
-                (resource,),
-            )
-            max_result = db.fetchone()
-            max_price = max_result[0] if max_result[0] else 0
-
-            # Get lowest price
-            db.execute(
-                """
-                SELECT MIN(price) as min_price
-                FROM offers
-                WHERE resource = %s AND type = 'sell'
-            """,
-                (resource,),
-            )
-            min_result = db.fetchone()
-            min_price = min_result[0] if min_result[0] else 0
-
+            market_stats[resource] = {"avg": 0, "max": 0, "min": 0}
+        
+        # Populate with actual data
+        for row in db.fetchall():
+            resource, avg_price, max_price, min_price = row
             market_stats[resource] = {
-                "avg": avg_price,
-                "max": max_price,
-                "min": min_price,
+                "avg": int(avg_price) if avg_price else 0,
+                "max": max_price if max_price else 0,
+                "min": min_price if min_price else 0,
             }
 
         # Get some basic nation statistics
