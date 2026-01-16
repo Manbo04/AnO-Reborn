@@ -105,6 +105,10 @@ app.config["SESSION_COOKIE_SECURE"] = (
 # Trust X-Forwarded-* headers from Railway reverse proxy
 @app.before_request
 def before_request():
+    # Track request start time for performance monitoring
+    from time import time
+    request.start_time = time()
+    
     # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
     if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
         forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
@@ -148,6 +152,15 @@ if oauth2_secret:
 # Performance: Add caching headers for static files
 @app.after_request
 def add_cache_headers(response):
+    # Log slow requests for debugging (only in production)
+    from time import time
+    if hasattr(request, 'start_time') and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        elapsed = time() - request.start_time
+        if elapsed > 2.0:  # Log requests taking more than 2 seconds
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"SLOW REQUEST: {request.path} took {elapsed:.2f}s")
+    
     # Cache static assets for 1 month (2592000 seconds)
     if request.path.startswith("/static/"):
         response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
@@ -458,15 +471,27 @@ def formatname(value):
 
 
 def get_resources():
+    """Get user's resources with short-term caching to avoid repeated DB queries"""
+    from database import query_cache
+    
+    target_user_id = session.get("user_id")
+    if not target_user_id:
+        return {}
+    
+    # Check cache first (30 second TTL for resources - they change frequently)
+    cache_key = f"resources_{target_user_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
-        target_user_id = session["user_id"]
-
         try:
             db.execute(
                 "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s",
                 (target_user_id,),
             )
             resources = dict(db.fetchone())
+            query_cache.set(cache_key, resources)
             return resources
         except TypeError:
             return {}
