@@ -169,8 +169,12 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 resource_cols = ", ".join(resource_names)
                 db.execute(f"SELECT {resource_cols} FROM resources WHERE id=%s", (cId,))
                 current_resources_row = db.fetchone()
-                current_resources = dict(zip(resource_names, current_resources_row)) if current_resources_row else {}
-                
+                current_resources = (
+                    dict(zip(resource_names, current_resources_row))
+                    if current_resources_row
+                    else {}
+                )
+
                 for resource, amount in resources.items():
                     currentResources = current_resources.get(resource, 0) or 0
                     requiredResources = amount * wantedUnits
@@ -188,8 +192,6 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         + "-%s WHERE id=%s"
                     )
                     db.execute(updateResource, (requiredResources, cId))
-
-                print(totalPrice)
 
                 db.execute(
                     "UPDATE stats SET gold=gold-%s WHERE id=%s", (totalPrice, cId)

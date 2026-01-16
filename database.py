@@ -40,6 +40,8 @@ logger = logging.getLogger(__name__)
 class QueryCache:
     """Simple in-memory cache with TTL for database query results"""
 
+    MAX_CACHE_SIZE = 10000  # Prevent unbounded memory growth
+
     def __init__(self, ttl_seconds=300):  # 5 minute default TTL
         self.cache = {}
         self.ttl = ttl_seconds
@@ -60,7 +62,31 @@ class QueryCache:
 
     def set(self, key, value):
         """Cache a value with current timestamp"""
+        # Evict expired entries periodically to prevent unbounded growth
+        if len(self.cache) > self.MAX_CACHE_SIZE:
+            self._evict_expired()
+        # If still over limit, clear oldest half
+        if len(self.cache) > self.MAX_CACHE_SIZE:
+            self._evict_oldest(len(self.cache) // 2)
         self.cache[key] = (value, time())
+
+    def _evict_expired(self):
+        """Remove all expired entries"""
+        current_time = time()
+        self.cache = {
+            k: v for k, v in self.cache.items() if current_time - v[1] < self.ttl
+        }
+
+    def _evict_oldest(self, count):
+        """Remove the oldest n entries"""
+        if count <= 0 or not self.cache:
+            return
+        sorted_keys = sorted(self.cache.keys(), key=lambda k: self.cache[k][1])
+        for key in sorted_keys[:count]:
+            try:
+                del self.cache[key]
+            except KeyError:
+                pass
 
     def invalidate(self, pattern=None):
         """Clear cache or clear entries matching pattern"""
@@ -211,6 +237,18 @@ class DatabasePool:
 
         try:
             conn = self._pool.getconn()
+            # Validate connection is still alive
+            if conn.closed or not self._is_connection_healthy(conn):
+                logger.warning(
+                    "Retrieved stale connection from pool, getting fresh one"
+                )
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                # Try to get a new connection by putting one back and re-getting
+                self._pool.putconn(conn, close=True)
+                conn = self._pool.getconn()
             return conn
         except Exception as e:
             # Put the slot back if we failed to get connection
@@ -220,17 +258,39 @@ class DatabasePool:
                 pass
             raise
 
-    def return_connection(self, conn):
-        """Return a connection to the pool"""
+    def _is_connection_healthy(self, conn):
+        """Check if a connection is still usable"""
+        try:
+            # Quick health check - execute a simple query
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+            cur.fetchone()
+            cur.close()
+            return True
+        except Exception:
+            return False
+
+    def return_connection(self, conn, close=False):
+        """Return a connection to the pool
+
+        Args:
+            conn: The connection to return
+            close: If True, close the connection instead of returning to pool
+        """
         if self._pool is not None:
             try:
-                self._pool.putconn(conn)
+                # Check if connection is broken/closed
+                if conn.closed or close:
+                    # Close and remove from pool instead of returning bad connection
+                    self._pool.putconn(conn, close=True)
+                else:
+                    self._pool.putconn(conn)
             except Exception as e:
                 logger.error(f"Error returning connection to pool: {e}")
                 # Try to close the connection if it can't be returned
                 try:
                     conn.close()
-                except:
+                except Exception:
                     pass
             finally:
                 # Mark slot as available
@@ -244,7 +304,7 @@ class DatabasePool:
             # Close the connection to avoid leaks
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
 
     def close_all(self):
@@ -268,18 +328,24 @@ def get_db_connection(cursor_factory=None):
             cursor.execute("SELECT ...")
     """
     conn = db_pool.get_connection()
+    close_on_return = False
     try:
         yield conn
         conn.commit()
+    except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
+        # Connection-level error - mark for closure
+        close_on_return = True
+        logger.error(f"Database connection error: {e}")
+        raise
     except Exception as e:
         try:
             conn.rollback()
         except Exception:
-            pass  # Ignore rollback errors if connection is closed
+            close_on_return = True  # Connection may be broken
         logger.error(f"Database error: {e}")
         raise
     finally:
-        db_pool.return_connection(conn)
+        db_pool.return_connection(conn, close=close_on_return)
 
 
 @contextmanager
@@ -299,6 +365,7 @@ def get_db_cursor(cursor_factory=None):
     # pool could be closed by another context.
     conn = None
     used_pool = False
+    close_on_return = False
     try:
         try:
             conn = db_pool.get_connection()
@@ -311,6 +378,7 @@ def get_db_cursor(cursor_factory=None):
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
+                connect_timeout=10,
             )
 
         # If the connection appears closed for any reason, create a fresh one
@@ -325,17 +393,24 @@ def get_db_cursor(cursor_factory=None):
                 password=os.getenv("PG_PASSWORD"),
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
+                connect_timeout=10,
             )
+            used_pool = False
 
         cursor = conn.cursor(cursor_factory=cursor_factory)
         try:
             yield cursor
             conn.commit()
+        except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
+            # Connection-level error - mark for closure
+            close_on_return = True
+            logger.error(f"Database connection error in cursor: {e}")
+            raise
         except Exception as e:
             try:
                 conn.rollback()
             except Exception:
-                pass
+                close_on_return = True
             logger.error(f"Database error: {e}")
             raise
         finally:
@@ -349,7 +424,7 @@ def get_db_cursor(cursor_factory=None):
             if conn is not None:
                 if used_pool:
                     try:
-                        db_pool.return_connection(conn)
+                        db_pool.return_connection(conn, close=close_on_return)
                     except Exception:
                         try:
                             conn.close()
