@@ -25,9 +25,10 @@ def get_flagname(user_id):
     # Query if not cached
     with get_db_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
-        flag_name = db.fetchone()[0]
+        result = db.fetchone()
+        flag_name = result[0] if result else None
 
-        if flag_name == None:
+        if flag_name is None:
             flag_name = "default_flag.jpg"
 
         # Cache the result
