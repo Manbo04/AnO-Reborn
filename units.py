@@ -7,6 +7,7 @@ from random import randint
 from typing import Union
 import psycopg2
 from dotenv import load_dotenv
+from database import get_db_connection
 
 load_dotenv()
 import os
@@ -454,15 +455,8 @@ class Units(Military):
             return "Units are not attached!"
 
     def save(self):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         for save_type in self.save_for:
             # Save casualties
@@ -492,15 +486,8 @@ class Units(Military):
     # NOTE: to save the data to the db later on put it to the save method
     # unit_type -> name of the unit type, amount -> used to decreate by it
     def casualties(self, unit_type: str, amount: int) -> None:
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         # Make sure this is and integer
         # TODO: optimize this by creating integer at the user side
@@ -523,15 +510,8 @@ class Units(Military):
         connection.commit()
 
     def save(self):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         # Save supplies
         try:
@@ -568,14 +548,8 @@ class Units(Military):
     # It also saves the remaining morale to the database
     def attack_cost(self, cost: int) -> str:
         if self.available_supplies is None:
-            connection = psycopg2.connect(
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-            )
-            db = connection.cursor()
+            with get_db_connection() as connection:
+                db = connection.cursor()
 
             db.execute("SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,))
             row = db.fetchone()
@@ -616,14 +590,8 @@ if __name__ == "__main__":
     defender = 5
     war_id = 666
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
-    db = connection.cursor()
+    with get_db_connection() as connection:
+        db = connection.cursor()
     import time
 
     db.execute(
