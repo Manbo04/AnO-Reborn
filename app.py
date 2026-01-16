@@ -195,14 +195,60 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Thread-safe queue for Discord webhook messages
+import threading
+import queue as queue_module
+
+_webhook_queue = queue_module.Queue()
+_webhook_thread = None
+_webhook_thread_lock = threading.Lock()
+
+
+def _webhook_worker():
+    """Background worker that sends Discord webhooks without blocking the main thread"""
+    while True:
+        try:
+            data = _webhook_queue.get(timeout=5)
+            if data is None:  # Shutdown signal
+                break
+            url = os.getenv("DISCORD_WEBHOOK_URL")
+            if url:
+                try:
+                    # Use a short timeout to avoid hanging
+                    requests.post(url, json=data, timeout=5)
+                except Exception:
+                    pass  # Don't let webhook failures crash the worker
+            _webhook_queue.task_done()
+        except queue_module.Empty:
+            continue  # Keep waiting for more messages
+
+
+def _ensure_webhook_thread():
+    """Start the webhook worker thread if not already running"""
+    global _webhook_thread
+    with _webhook_thread_lock:
+        if _webhook_thread is None or not _webhook_thread.is_alive():
+            _webhook_thread = threading.Thread(target=_webhook_worker, daemon=True)
+            _webhook_thread.start()
+
+
 def send_discord_webhook(record):
+    """Queue a Discord webhook message (non-blocking)"""
     url = os.getenv("DISCORD_WEBHOOK_URL")
     if not url:
         return  # Skip if webhook not configured
     formatter = logging.Formatter(logging_format)
     message = formatter.format(record)
+    # Truncate message if too long for Discord (2000 char limit)
+    if len(message) > 1900:
+        message = message[:1900] + "...[truncated]"
     data = {"content": message, "username": "A&O ERROR"}
-    requests.post(url, json=data)
+
+    _ensure_webhook_thread()
+    try:
+        _webhook_queue.put_nowait(data)  # Non-blocking
+    except queue_module.Full:
+        pass  # Drop message if queue is full (better than blocking)
 
 
 class RequestsHandler(logging.Handler):

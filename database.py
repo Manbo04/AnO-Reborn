@@ -13,6 +13,8 @@ from typing import List, Dict, Any, Optional, Tuple
 import logging
 from functools import lru_cache, wraps
 from time import time
+import threading
+import queue
 
 load_dotenv()
 import config  # Parse Railway DATABASE_URL
@@ -117,15 +119,19 @@ query_cache = QueryCache(ttl_seconds=300)
 
 
 class DatabasePool:
-    """Singleton database connection pool"""
+    """Singleton database connection pool with timeout support"""
 
     _instance = None
     _pool = None
     _pid = None
+    _lock = None
+    _available = None  # Semaphore-like queue for timeout support
+    CONNECTION_TIMEOUT = 10  # seconds to wait for connection before giving up
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DatabasePool, cls).__new__(cls)
+            cls._instance._lock = threading.Lock()
         return cls._instance
 
     def _initialize_pool(self):
@@ -135,33 +141,81 @@ class DatabasePool:
         if self._pool is not None and self._pid == current_pid:
             return  # Already initialized in this process
 
-        # If pool exists but belongs to a different (forked) process, close it
-        if self._pool is not None and self._pid != current_pid:
-            try:
-                self._pool.closeall()
-            except Exception:
-                pass
-            self._pool = None
-        try:
-            self._pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=50,
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-            )
-            self._pid = os.getpid()
-            logger.info("Database connection pool initialized (pid=%s)", self._pid)
-        except Exception as e:
-            logger.error(f"Failed to initialize database pool: {e}")
-            raise
+        with self._lock:
+            # Double-check inside lock
+            if self._pool is not None and self._pid == current_pid:
+                return
 
-    def get_connection(self):
-        """Get a connection from the pool"""
+            # If pool exists but belongs to a different (forked) process, close it
+            if self._pool is not None and self._pid != current_pid:
+                try:
+                    self._pool.closeall()
+                except Exception:
+                    pass
+                self._pool = None
+                self._available = None
+
+            try:
+                maxconn = 50
+                self._pool = psycopg2.pool.ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=maxconn,
+                    database=os.getenv("PG_DATABASE"),
+                    user=os.getenv("PG_USER"),
+                    password=os.getenv("PG_PASSWORD"),
+                    host=os.getenv("PG_HOST"),
+                    port=os.getenv("PG_PORT"),
+                )
+                # Create a queue to track available slots with timeout support
+                self._available = queue.Queue(maxsize=maxconn)
+                for _ in range(maxconn):
+                    self._available.put(True)
+
+                self._pid = os.getpid()
+                logger.info(
+                    "Database connection pool initialized (pid=%s, max=%d)",
+                    self._pid,
+                    maxconn,
+                )
+            except Exception as e:
+                logger.error(f"Failed to initialize database pool: {e}")
+                raise
+
+    def get_connection(self, timeout=None):
+        """Get a connection from the pool with timeout support
+
+        Args:
+            timeout: Maximum seconds to wait for a connection.
+                     Defaults to CONNECTION_TIMEOUT (10s).
+
+        Raises:
+            TimeoutError: If no connection available within timeout
+            Exception: If pool cannot be initialized
+        """
+        if timeout is None:
+            timeout = self.CONNECTION_TIMEOUT
+
         self._initialize_pool()  # Lazy init and fork-safe reinit
-        return self._pool.getconn()
+
+        # Wait for an available slot with timeout
+        try:
+            self._available.get(timeout=timeout)
+        except queue.Empty:
+            logger.error(
+                f"Database connection pool exhausted, timed out after {timeout}s"
+            )
+            raise TimeoutError(f"Database connection pool exhausted, waited {timeout}s")
+
+        try:
+            conn = self._pool.getconn()
+            return conn
+        except Exception as e:
+            # Put the slot back if we failed to get connection
+            try:
+                self._available.put(True, block=False)
+            except queue.Full:
+                pass
+            raise
 
     def return_connection(self, conn):
         """Return a connection to the pool"""
@@ -175,6 +229,13 @@ class DatabasePool:
                     conn.close()
                 except:
                     pass
+            finally:
+                # Mark slot as available
+                if self._available is not None:
+                    try:
+                        self._available.put(True, block=False)
+                    except queue.Full:
+                        pass
         else:
             logger.warning("Attempted to return connection but pool is not initialized")
             # Close the connection to avoid leaks
