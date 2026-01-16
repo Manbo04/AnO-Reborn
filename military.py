@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
 from helpers import login_required, error
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 from attack_scripts import Military
 from dotenv import load_dotenv
 
@@ -72,7 +72,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             units_str = request.form.get(units)
             if not units_str:
                 return error(400, "Unit amount is required")
-            
+
             try:
                 wantedUnits = int(units_str)
             except (ValueError, TypeError):
