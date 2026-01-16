@@ -33,6 +33,7 @@ def provinces():
 
 @bp.route("/province/<pId>", methods=["GET"])
 @login_required
+@cache_response(ttl_seconds=15)  # Short cache for province page (updates frequently)
 def province(pId):
     with get_db_cursor() as db:
         cId = session["user_id"]
@@ -367,9 +368,9 @@ def province_sell_buy(way, units, province_id):
             Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
             = numPurchased * basePrice + increment * (numPurchased * currentOwned + numPurchased*(numPurchased-1)/2)
             """
-            total_cost = (num_purchased * base_price + 
-                         increment_per_item * (num_purchased * current_owned + 
-                                               num_purchased * (num_purchased - 1) / 2))
+            total_cost = num_purchased * base_price + increment_per_item * (
+                num_purchased * current_owned + num_purchased * (num_purchased - 1) / 2
+            )
             return round(total_cost)
 
         if units == "cityCount":

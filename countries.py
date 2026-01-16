@@ -495,11 +495,11 @@ LIMIT %s OFFSET %s;""",
         )
         dbResults = db.fetchall()
 
-    # Batch load all influence values for this page (avoid N+1 query pattern)
+    # Batch load all influence values for this page using bulk query (single DB call)
+    from helpers import get_bulk_influence
+
     user_ids = [user[0] for user in dbResults]
-    influences = {}
-    for user_id in user_ids:
-        influences[user_id] = get_influence(user_id)
+    influences = get_bulk_influence(user_ids)
 
     # Process results with cached influences
     results = []
