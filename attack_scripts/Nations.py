@@ -197,7 +197,6 @@ class Economy:
             db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
 
             connection.commit()
-            connection.close()
 
             return win_condition
 
@@ -229,7 +228,6 @@ class Nation:
             (destination_id, message),
         )
         connection.commit()
-        connection.close()
 
     def get_provinces(self):
         with get_db_connection() as connection:
@@ -480,7 +478,6 @@ class Military(Nation):
         print(winner_remaining_morale, tax_rate)
 
         connection.commit()
-        connection.close()
 
     # Update the morale and give back the win type name
     @staticmethod
@@ -538,7 +535,6 @@ class Military(Nation):
         db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
 
         connection.commit()
-        connection.close()
 
         return win_condition
 
@@ -895,7 +891,6 @@ class Military(Nation):
         for unit in particular_units:
             unit_lst.append(unit_to_amount_dict[unit])
 
-        connection.close()
         return unit_lst  # this is a list of the format [100, 50, 50]
 
     @staticmethod

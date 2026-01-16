@@ -529,7 +529,7 @@ def calc_pg(pId, rations):
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
             policies = db.fetchone()[0]
-        except:
+        except (TypeError, AttributeError):
             policies = []
 
         if 5 in policies:
@@ -726,7 +726,7 @@ def generate_province_revenue():  # Runs each hour
                 "SELECT proInfra.id, provinces.userId, provinces.land, provinces.productivity FROM proInfra INNER JOIN provinces ON proInfra.id=provinces.id ORDER BY id ASC"
             )
             infra_ids = db.fetchall()
-        except:
+        except Exception:
             infra_ids = []
 
         # ============ BULK PRELOAD DATA TO ELIMINATE N+1 QUERIES ============
@@ -1260,16 +1260,20 @@ def war_reparation_tax():
                     loser = attacker
 
                 eco = Economy(loser)
-                
+
                 # OPTIMIZATION: Fetch all resources and war_type in ONE query each instead of 30 queries
                 resource_cols = ", ".join(Economy.resources)
-                db.execute(f"SELECT {resource_cols} FROM resources WHERE id=%s", (loser,))
+                db.execute(
+                    f"SELECT {resource_cols} FROM resources WHERE id=%s", (loser,)
+                )
                 resource_row = db.fetchone()
-                resource_amounts = dict(zip(Economy.resources, resource_row)) if resource_row else {}
-                
+                resource_amounts = (
+                    dict(zip(Economy.resources, resource_row)) if resource_row else {}
+                )
+
                 db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
                 war_type = db.fetchone()
-                
+
                 for idx, resource in enumerate(Economy.resources):
                     resource_amount = resource_amounts.get(resource, 0) or 0
 

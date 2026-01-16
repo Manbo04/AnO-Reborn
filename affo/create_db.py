@@ -46,7 +46,7 @@ def create_database(database, user, password, host, port):
                 db.execute(f"DROP TABLE IF EXISTS {i}")
                 db.execute(file.read())
                 print(f"Recreated table {i}")
-            except:
+            except Exception:
                 print(f"Failed to recreate table {i}")
         connection.commit()
 
