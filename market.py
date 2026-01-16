@@ -32,12 +32,18 @@ def give_resource(giver_id, taker_id, resource, amount):
                 current_giver_money = db.fetchone()[0]
 
                 if current_giver_money < amount:
-                    return "Giver doesn't have enough resources to transfer such amount."
+                    return (
+                        "Giver doesn't have enough resources to transfer such amount."
+                    )
 
-                db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (amount, giver_id))
+                db.execute(
+                    "UPDATE stats SET gold=gold-%s WHERE id=%s", (amount, giver_id)
+                )
 
             if taker_id != "bank":
-                db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, taker_id))
+                db.execute(
+                    "UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, taker_id)
+                )
 
         else:
             if giver_id != "bank":
@@ -48,16 +54,20 @@ def give_resource(giver_id, taker_id, resource, amount):
                 current_giver_resource = db.fetchone()[0]
 
                 if current_giver_resource < amount:
-                    return "Giver doesn't have enough resources to transfer such amount."
+                    return (
+                        "Giver doesn't have enough resources to transfer such amount."
+                    )
 
                 giver_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}-{amount}" + " WHERE id=%s"
+                    f"UPDATE resources SET {resource}={resource}-{amount}"
+                    + " WHERE id=%s"
                 )
                 db.execute(giver_update_statement, (giver_id,))
 
             if taker_id != "bank":
                 taker_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}+{amount}" + " WHERE id=%s"
+                    f"UPDATE resources SET {resource}={resource}+{amount}"
+                    + " WHERE id=%s"
                 )
                 db.execute(taker_update_statement, (taker_id,))
 
@@ -194,138 +204,120 @@ def market():
 
 @login_required
 def buy_market_offer(offer_id):
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as connection:
+        db = connection.cursor()
 
-    db = connection.cursor()
+        cId = session["user_id"]
 
-    cId = session["user_id"]
-    
-    amount_str = request.form.get(f"amount_{offer_id}")
-    if not amount_str:
-        return error(400, "Amount is required")
-    
-    try:
-        amount_wanted = int(amount_str.replace(",", ""))
-    except (ValueError, TypeError, AttributeError):
-        return error(400, "Amount must be a valid number")
+        amount_str = request.form.get(f"amount_{offer_id}")
+        if not amount_str:
+            return error(400, "Amount is required")
 
-    db.execute(
-        "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
-        (offer_id,),
-    )
-    resource, total_amount, price_for_one, seller_id = db.fetchone()
+        try:
+            amount_wanted = int(amount_str.replace(",", ""))
+        except (ValueError, TypeError, AttributeError):
+            return error(400, "Amount must be a valid number")
 
-    if amount_wanted < 1:
-        return error(400, "Amount cannot be less than 1")
-
-    if amount_wanted > total_amount:
-        return error(400, "Amount wanted cant be higher than total amount")
-
-    db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-    buyers_gold = int(db.fetchone()[0])
-
-    total_price = amount_wanted * price_for_one
-
-    if total_price > buyers_gold:  # Checks if buyer doesnt have enough gold for buyin
-        return error(400, "You don't have enough money.")  # Returns error if true
-
-    give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
-    give_resource(cId, seller_id, "money", total_price)  # Gives the money
-
-    new_offer_amount = total_amount - amount_wanted
-
-    if new_offer_amount == 0:
-        db.execute("DELETE FROM offers WHERE offer_id=(%s)", (offer_id,))
-    else:
         db.execute(
-            "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
-            (new_offer_amount, offer_id),
+            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
+            (offer_id,),
         )
+        resource, total_amount, price_for_one, seller_id = db.fetchone()
 
-    connection.commit()  # Commits the connection
-    connection.close()  # Closes the connection
+        if amount_wanted < 1:
+            return error(400, "Amount cannot be less than 1")
+
+        if amount_wanted > total_amount:
+            return error(400, "Amount wanted cant be higher than total amount")
+
+        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+        buyers_gold = int(db.fetchone()[0])
+
+        total_price = amount_wanted * price_for_one
+
+        if (
+            total_price > buyers_gold
+        ):  # Checks if buyer doesnt have enough gold for buyin
+            return error(400, "You don't have enough money.")  # Returns error if true
+
+        give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
+        give_resource(cId, seller_id, "money", total_price)  # Gives the money
+
+        new_offer_amount = total_amount - amount_wanted
+
+        if new_offer_amount == 0:
+            db.execute("DELETE FROM offers WHERE offer_id=(%s)", (offer_id,))
+        else:
+            db.execute(
+                "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
+                (new_offer_amount, offer_id),
+            )
 
     return redirect("/market")
 
 
 @login_required
 def sell_market_offer(offer_id):
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as conn:
+        db = conn.cursor()
 
-    db = conn.cursor()
+        seller_id = session["user_id"]
 
-    seller_id = session["user_id"]
-    
-    if not offer_id.isnumeric():
-        return error(400, "Values must be numeric")
-    
-    amount_str = request.form.get(f"amount_{offer_id}")
-    if not amount_str:
-        return error(400, "Amount is required")
-    
-    try:
-        amount_wanted = int(amount_str)
-    except (ValueError, TypeError):
-        return error(400, "Amount must be a valid number")
+        if not offer_id.isnumeric():
+            return error(400, "Values must be numeric")
 
-    db.execute(
-        "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
-        (offer_id,),
-    )
-    resource, total_amount, price_for_one, buyer_id = db.fetchone()
+        amount_str = request.form.get(f"amount_{offer_id}")
+        if not amount_str:
+            return error(400, "Amount is required")
 
-    # Sees how much of the resource the seller has
-    resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-    db.execute(resource_statement, (seller_id,))
-    sellers_resource = db.fetchone()[0]
+        try:
+            amount_wanted = int(amount_str)
+        except (ValueError, TypeError):
+            return error(400, "Amount must be a valid number")
 
-    if amount_wanted < 1:
-        return error(400, "Amount cannot be less than 1")
-
-    if amount_wanted > total_amount:
-        return error(
-            400,
-            "The amount of resources you're selling is higher than what the buyer wants",
+        db.execute(
+            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
+            (offer_id,),
         )
+        resource, total_amount, price_for_one, buyer_id = db.fetchone()
 
-    # Checks if it's less than what the seller wants to sell
-    if sellers_resource < amount_wanted:
-        return error(400, "You don't have enough of that resource")
+        # Sees how much of the resource the seller has
+        resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
+        db.execute(resource_statement, (seller_id,))
+        sellers_resource = db.fetchone()[0]
 
-    # Removes the resource from the seller and gives it to the buyer
-    give_resource(seller_id, buyer_id, resource, amount_wanted)
+        if amount_wanted < 1:
+            return error(400, "Amount cannot be less than 1")
 
-    # Takes away the money used for buying from the buyer and gives it to the seller
-    give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
+        if amount_wanted > total_amount:
+            return error(
+                400,
+                "The amount of resources you're selling is higher than what the buyer wants",
+            )
 
-    # Generates the new amount, after the buyer has got his resources from the seller
-    new_offer_amount = total_amount - amount_wanted
+        # Checks if it's less than what the seller wants to sell
+        if sellers_resource < amount_wanted:
+            return error(400, "You don't have enough of that resource")
 
-    if new_offer_amount == 0:  # Checks if the new offer amount is equal to 0
-        db.execute(
-            "DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)
-        )  # If yes, it deletes the offer
+        # Removes the resource from the seller and gives it to the buyer
+        give_resource(seller_id, buyer_id, resource, amount_wanted)
 
-    else:
-        db.execute(
-            "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
-            (new_offer_amount, offer_id),
-        )  # Updates the database with the new amount
+        # Takes away the money used for buying from the buyer and gives it to the seller
+        give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
 
-    conn.commit()
-    conn.close()
+        # Generates the new amount, after the buyer has got his resources from the seller
+        new_offer_amount = total_amount - amount_wanted
+
+        if new_offer_amount == 0:  # Checks if the new offer amount is equal to 0
+            db.execute(
+                "DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)
+            )  # If yes, it deletes the offer
+
+        else:
+            db.execute(
+                "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
+                (new_offer_amount, offer_id),
+            )  # Updates the database with the new amount
 
     return redirect("/market")
 
@@ -339,96 +331,87 @@ def marketoffer():
 def post_offer(offer_type):
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as connection:
+        db = connection.cursor()
 
-    db = connection.cursor()
+        resource = request.form.get("resource")
 
-    resource = request.form.get("resource")
-    
-    amount_str = request.form.get("amount")
-    if not amount_str:
-        return error(400, "Amount is required")
-    try:
-        amount = int(amount_str)
-    except (ValueError, TypeError):
-        return error(400, "Amount must be a valid number")
-    
-    price_str = request.form.get("price")
-    if not price_str:
-        return error(400, "Price is required")
-    try:
-        price = int(price_str)
-    except (ValueError, TypeError):
-        return error(400, "Price must be a valid number")
+        amount_str = request.form.get("amount")
+        if not amount_str:
+            return error(400, "Amount is required")
+        try:
+            amount = int(amount_str)
+        except (ValueError, TypeError):
+            return error(400, "Amount must be a valid number")
 
-    # List of all the resources in the game
-    resources = variables.RESOURCES
+        price_str = request.form.get("price")
+        if not price_str:
+            return error(400, "Price is required")
+        try:
+            price = int(price_str)
+        except (ValueError, TypeError):
+            return error(400, "Price must be a valid number")
 
-    offer_types = ["buy", "sell"]
-    if offer_type not in offer_types:
-        return error(400, "Offer type must be 'buy' or 'sell'")
+        # List of all the resources in the game
+        resources = variables.RESOURCES
 
-    if (
-        resource not in resources
-    ):  # Checks if the resource the user selected actually exists
-        return error(400, "No such resource")
+        offer_types = ["buy", "sell"]
+        if offer_type not in offer_types:
+            return error(400, "Offer type must be 'buy' or 'sell'")
 
-    if amount < 1:  # Checks if the amount is negative
-        return error(400, "Amount must be greater than 0")
+        if (
+            resource not in resources
+        ):  # Checks if the resource the user selected actually exists
+            return error(400, "No such resource")
 
-    if offer_type == "sell":
-        rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-        db.execute(rStatement, (cId,))
-        realAmount = int(db.fetchone()[0])
+        if amount < 1:  # Checks if the amount is negative
+            return error(400, "Amount must be greater than 0")
 
-        if amount > realAmount:  # Checks if user wants to sell more than he has
-            return error(400, "Selling amount is higher than the amount you have.")
+        if offer_type == "sell":
+            rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
+            db.execute(rStatement, (cId,))
+            realAmount = int(db.fetchone()[0])
 
-        # Calculates the resource amount the seller should have
-        give_resource(cId, "bank", resource, amount)
+            if amount > realAmount:  # Checks if user wants to sell more than he has
+                return error(400, "Selling amount is higher than the amount you have.")
 
-        # Creates a new offer
-        db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
-            (
-                cId,
-                offer_type,
-                resource,
-                int(amount),
-                int(price),
-            ),
-        )
+            # Calculates the resource amount the seller should have
+            give_resource(cId, "bank", resource, amount)
 
-    elif offer_type == "buy":
-        db.execute(
-            "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
-            (
-                cId,
-                offer_type,
-                resource,
-                int(amount),
-                int(price),
-            ),
-        )
+            # Creates a new offer
+            db.execute(
+                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    cId,
+                    offer_type,
+                    resource,
+                    int(amount),
+                    int(price),
+                ),
+            )
 
-        money_to_take_away = int(amount) * int(price)
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        current_money = db.fetchone()[0]
+        elif offer_type == "buy":
+            db.execute(
+                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    cId,
+                    offer_type,
+                    resource,
+                    int(amount),
+                    int(price),
+                ),
+            )
 
-        if current_money < money_to_take_away:
-            return error(400, "You don't have enough money.")
+            money_to_take_away = int(amount) * int(price)
+            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            current_money = db.fetchone()[0]
 
-        give_resource(cId, "bank", "money", money_to_take_away)
+            if current_money < money_to_take_away:
+                return error(400, "You don't have enough money.")
 
-    connection.commit()
-    flash("You just posted a market offer")
-    connection.close()  # Closes the connection
+            give_resource(cId, "bank", "money", money_to_take_away)
+
+        flash("You just posted a market offer")
     return redirect("/market")
 
 
@@ -513,97 +496,85 @@ def trade_offer(offer_type, offeree_id):
     if request.method == "POST":
         cId = session["user_id"]
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
-        db = connection.cursor()
+            resource = request.form.get("resource")
 
-        resource = request.form.get("resource")
-        
-        amount_str = request.form.get("amount")
-        if not amount_str:
-            return error(400, "Amount is required")
-        try:
-            amount = int(amount_str)
-        except (ValueError, TypeError):
-            return error(400, "Amount must be a valid number")
-        
-        price_str = request.form.get("price")
-        if not price_str:
-            return error(400, "Price is required")
-        try:
-            price = int(price_str)
-        except (ValueError, TypeError):
-            return error(400, "Price must be a valid number")
+            amount_str = request.form.get("amount")
+            if not amount_str:
+                return error(400, "Amount is required")
+            try:
+                amount = int(amount_str)
+            except (ValueError, TypeError):
+                return error(400, "Amount must be a valid number")
 
-        if price < 1:
-            return error(400, "Price cannot be less than 1")
+            price_str = request.form.get("price")
+            if not price_str:
+                return error(400, "Price is required")
+            try:
+                price = int(price_str)
+            except (ValueError, TypeError):
+                return error(400, "Price must be a valid number")
 
-        if not offeree_id.isnumeric():
-            return error(400, "Offeree id must be numeric")
+            if price < 1:
+                return error(400, "Price cannot be less than 1")
 
-        offer_types = ["buy", "sell"]
-        if offer_type not in offer_types:
-            return error(400, "Offer type must be 'buy' or 'sell'")
+            if not offeree_id.isnumeric():
+                return error(400, "Offeree id must be numeric")
 
-        # List of all the resources in the game
-        resources = variables.RESOURCES
+            offer_types = ["buy", "sell"]
+            if offer_type not in offer_types:
+                return error(400, "Offer type must be 'buy' or 'sell'")
 
-        if (
-            resource not in resources
-        ):  # Checks if the resource the user selected actually exists
-            return error(400, "No such resource")
+            # List of all the resources in the game
+            resources = variables.RESOURCES
 
-        if amount < 1:  # Checks if the amount is negative
-            return error(400, "Amount must be greater than 0")
+            if (
+                resource not in resources
+            ):  # Checks if the resource the user selected actually exists
+                return error(400, "No such resource")
 
-        if offer_type == "sell":
-            rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-            db.execute(rStatement, (cId,))
-            realAmount = int(db.fetchone()[0])
+            if amount < 1:  # Checks if the amount is negative
+                return error(400, "Amount must be greater than 0")
 
-            if amount > realAmount:  # Checks if user wants to sell more than he has
-                return error("400", "Selling amount is higher the amount you have.")
+            if offer_type == "sell":
+                rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
+                db.execute(rStatement, (cId,))
+                realAmount = int(db.fetchone()[0])
 
-            # Calculates the resource amount the seller should have
-            newResourceAmount = realAmount - amount
+                if amount > realAmount:  # Checks if user wants to sell more than he has
+                    return error("400", "Selling amount is higher the amount you have.")
 
-            upStatement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-            db.execute(upStatement, (newResourceAmount, cId))
+                # Calculates the resource amount the seller should have
+                newResourceAmount = realAmount - amount
 
-            # Creates a new offer
-            db.execute(
-                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
-                (cId, offer_type, resource, amount, price, offeree_id),
-            )
+                upStatement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
+                db.execute(upStatement, (newResourceAmount, cId))
 
-            connection.commit()  # Commits the data to the database
+                # Creates a new offer
+                db.execute(
+                    "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (cId, offer_type, resource, amount, price, offeree_id),
+                )
 
-        elif offer_type == "buy":
-            db.execute(
-                "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
-                (cId, offer_type, resource, amount, price, offeree_id),
-            )
+            elif offer_type == "buy":
+                db.execute(
+                    "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (cId, offer_type, resource, amount, price, offeree_id),
+                )
 
-            money_to_take_away = amount * price
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            current_money = db.fetchone()[0]
-            if current_money < money_to_take_away:
-                return error(400, "You don't have enough money.")
-            new_money = current_money - money_to_take_away
+                money_to_take_away = amount * price
+                db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+                current_money = db.fetchone()[0]
+                if current_money < money_to_take_away:
+                    return error(400, "You don't have enough money.")
+                new_money = current_money - money_to_take_away
 
-            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
+                db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
 
-            flash("You just posted a market offer")
+                flash("You just posted a market offer")
 
-            connection.commit()
-
-        connection.close()  # Closes the connection
         return redirect(f"/country/id={offeree_id}")
 
 
@@ -614,47 +585,37 @@ def decline_trade(trade_id):
 
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as connection:
+        db = connection.cursor()
 
-    db = connection.cursor()
-
-    db.execute(
-        "SELECT offeree, offerer, type, resource, amount, price FROM trades WHERE offer_id=(%s)",
-        (trade_id,),
-    )
-    offeree, offerer, type, resource, amount, price = db.fetchone()
-
-    if cId not in [offeree, offerer]:
-        return error(400, "You haven't been sent that offer")
-
-    db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
-
-    if type == "sell":  # Give back resources, not money
-        query = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
         db.execute(
-            query,
-            (
-                amount,
-                offerer,
-            ),
+            "SELECT offeree, offerer, type, resource, amount, price FROM trades WHERE offer_id=(%s)",
+            (trade_id,),
         )
-    elif type == "buy":
-        db.execute(
-            "UPDATE stats SET gold=gold+%s WHERE id=%s",
-            (
-                amount * price,
-                offerer,
-            ),
-        )
+        offeree, offerer, type, resource, amount, price = db.fetchone()
 
-    connection.commit()
-    connection.close()
+        if cId not in [offeree, offerer]:
+            return error(400, "You haven't been sent that offer")
+
+        db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+
+        if type == "sell":  # Give back resources, not money
+            query = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
+            db.execute(
+                query,
+                (
+                    amount,
+                    offerer,
+                ),
+            )
+        elif type == "buy":
+            db.execute(
+                "UPDATE stats SET gold=gold+%s WHERE id=%s",
+                (
+                    amount * price,
+                    offerer,
+                ),
+            )
 
     return redirect("/my_offers")
 
@@ -663,36 +624,27 @@ def decline_trade(trade_id):
 def accept_trade(trade_id):
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as connection:
+        db = connection.cursor()
 
-    db = connection.cursor()
+        db.execute(
+            "SELECT offeree, type, offerer, resource, amount, price FROM trades WHERE offer_id=(%s)",
+            (trade_id,),
+        )
+        offeree, trade_type, offerer, resource, amount, price = db.fetchone()
 
-    db.execute(
-        "SELECT offeree, type, offerer, resource, amount, price FROM trades WHERE offer_id=(%s)",
-        (trade_id,),
-    )
-    offeree, trade_type, offerer, resource, amount, price = db.fetchone()
+        if offeree != cId:
+            return error(400, "You can't accept that offer")
 
-    if offeree != cId:
-        return error(400, "You can't accept that offer")
+        if trade_type == "sell":
+            give_resource(offeree, offerer, "money", amount * price)
+            give_resource(offerer, offeree, resource, amount)
+        elif trade_type == "buy":
+            give_resource(offerer, offeree, "money", amount * price)
+            give_resource(offeree, offerer, resource, amount)
 
-    if trade_type == "sell":
-        give_resource(offeree, offerer, "money", amount * price)
-        give_resource(offerer, offeree, resource, amount)
-    elif trade_type == "buy":
-        give_resource(offerer, offeree, "money", amount * price)
-        give_resource(offeree, offerer, resource, amount)
+        db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
 
-    db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
-
-    connection.commit()
-    connection.close()
     return redirect("/my_offers")
 
 
@@ -700,95 +652,90 @@ def accept_trade(trade_id):
 def transfer(transferee):
     cId = session["user_id"]
 
-    connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    with get_db_connection() as connection:
+        db = connection.cursor()
 
-    db = connection.cursor()
+        resource = request.form.get("resource")
 
-    resource = request.form.get("resource")
-    
-    amount_str = request.form.get("amount")
-    if not amount_str:
-        return error(400, "Amount is required")
-    try:
-        amount = int(amount_str)
-    except (ValueError, TypeError):
-        return error(400, "Amount must be a valid number")
+        amount_str = request.form.get("amount")
+        if not amount_str:
+            return error(400, "Amount is required")
+        try:
+            amount = int(amount_str)
+        except (ValueError, TypeError):
+            return error(400, "Amount must be a valid number")
 
-    ### DEFINITIONS ###
+        ### DEFINITIONS ###
 
-    # user - the user transferring the resource, whose id is 'cId'
-    # transferee - the user upon whom the resource is transferred
+        # user - the user transferring the resource, whose id is 'cId'
+        # transferee - the user upon whom the resource is transferred
 
-    ###################
+        ###################
 
-    # List of all the resources in the game
-    resources = variables.RESOURCES
+        # List of all the resources in the game
+        resources = variables.RESOURCES
 
-    if resource not in resources and resource not in [
-        "gold",
-        "money",
-    ]:  # Checks if the resource the user selected actually exists
-        return error(400, "No such resource")
+        if resource not in resources and resource not in [
+            "gold",
+            "money",
+        ]:  # Checks if the resource the user selected actually exists
+            return error(400, "No such resource")
 
-    if amount < 1:
-        return error(400, "Amount cannot be less than 1")
+        if amount < 1:
+            return error(400, "Amount cannot be less than 1")
 
-    if resource in ["gold", "money"]:
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        user_money = db.fetchone()[0]
+        if resource in ["gold", "money"]:
+            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            user_money = db.fetchone()[0]
 
-        if amount > user_money:
-            return error(400, "You don't have enough money.")
+            if amount > user_money:
+                return error(400, "You don't have enough money.")
 
-        # Removes the money from the user
-        db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (amount, cId))
+            # Removes the money from the user
+            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (amount, cId))
 
-        # Gives the money to the transferee
-        db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, transferee))
+            # Gives the money to the transferee
+            db.execute(
+                "UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, transferee)
+            )
 
-    else:
-        user_resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-        db.execute(user_resource_statement, (cId,))
-        user_resource = int(db.fetchone()[0])
+        else:
+            user_resource_statement = (
+                f"SELECT {resource} FROM resources " + "WHERE id=%s"
+            )
+            db.execute(user_resource_statement, (cId,))
+            user_resource = int(db.fetchone()[0])
 
-        if amount > user_resource:
-            return error(400, "You don't have enough resources.")
+            if amount > user_resource:
+                return error(400, "You don't have enough resources.")
 
-        # Calculates the amount of resource the user should have
-        new_user_resource_amount = user_resource - amount
+            # Calculates the amount of resource the user should have
+            new_user_resource_amount = user_resource - amount
 
-        # Removes the resource from the user
-        user_resource_update_statement = (
-            f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-        )
-        db.execute(user_resource_update_statement, (new_user_resource_amount, cId))
+            # Removes the resource from the user
+            user_resource_update_statement = (
+                f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
+            )
+            db.execute(user_resource_update_statement, (new_user_resource_amount, cId))
 
-        # Sees how much of the resource the transferee has
-        transferee_resource_statement = (
-            f"SELECT {resource} FROM resources " + "WHERE id=%s"
-        )
-        db.execute(transferee_resource_statement, (transferee,))
-        transferee_resource = int(db.fetchone()[0])
+            # Sees how much of the resource the transferee has
+            transferee_resource_statement = (
+                f"SELECT {resource} FROM resources " + "WHERE id=%s"
+            )
+            db.execute(transferee_resource_statement, (transferee,))
+            transferee_resource = int(db.fetchone()[0])
 
-        # Calculates the amount of resource the transferee should have
-        new_transferee_resource_amount = amount + transferee_resource
+            # Calculates the amount of resource the transferee should have
+            new_transferee_resource_amount = amount + transferee_resource
 
-        # Gives the resource to the transferee
-        transferee_update_statement = (
-            f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-        )
-        db.execute(
-            transferee_update_statement, (new_transferee_resource_amount, transferee)
-        )
-
-    connection.commit()
-    connection.close()
+            # Gives the resource to the transferee
+            transferee_update_statement = (
+                f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
+            )
+            db.execute(
+                transferee_update_statement,
+                (new_transferee_resource_amount, transferee),
+            )
 
     return redirect(f"/country/id={transferee}")
 
@@ -796,13 +743,34 @@ def transfer(transferee):
 def register_market_routes(app_instance):
     """Register all market routes with the Flask app instance"""
     app_instance.add_url_rule("/market", "market", market, methods=["GET", "POST"])
-    app_instance.add_url_rule("/buy_offer/<offer_id>", "buy_offer", buy_market_offer, methods=["POST"])
-    app_instance.add_url_rule("/sell_offer/<offer_id>", "sell_offer", sell_market_offer, methods=["POST"])
-    app_instance.add_url_rule("/marketoffer/", "marketoffer", marketoffer, methods=["GET", "POST"])
-    app_instance.add_url_rule("/post_offer/<offer_type>", "post_offer", post_offer, methods=["POST"])
+    app_instance.add_url_rule(
+        "/buy_offer/<offer_id>", "buy_offer", buy_market_offer, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/sell_offer/<offer_id>", "sell_offer", sell_market_offer, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/marketoffer/", "marketoffer", marketoffer, methods=["GET", "POST"]
+    )
+    app_instance.add_url_rule(
+        "/post_offer/<offer_type>", "post_offer", post_offer, methods=["POST"]
+    )
     app_instance.add_url_rule("/my_offers", "my_offers", my_offers, methods=["GET"])
-    app_instance.add_url_rule("/delete_offer/<offer_id>", "delete_offer", delete_offer, methods=["POST"])
-    app_instance.add_url_rule("/post_trade_offer/<offer_type>/<offeree_id>", "post_trade_offer", trade_offer, methods=["POST"])
-    app_instance.add_url_rule("/decline_trade/<trade_id>", "decline_trade", decline_trade, methods=["POST"])
-    app_instance.add_url_rule("/accept_trade/<trade_id>", "accept_trade", accept_trade, methods=["POST"])
-    app_instance.add_url_rule("/transfer/<transferee>", "transfer", transfer, methods=["POST"])
+    app_instance.add_url_rule(
+        "/delete_offer/<offer_id>", "delete_offer", delete_offer, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/post_trade_offer/<offer_type>/<offeree_id>",
+        "post_trade_offer",
+        trade_offer,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/decline_trade/<trade_id>", "decline_trade", decline_trade, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/accept_trade/<trade_id>", "accept_trade", accept_trade, methods=["POST"]
+    )
+    app_instance.add_url_rule(
+        "/transfer/<transferee>", "transfer", transfer, methods=["POST"]
+    )
