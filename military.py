@@ -164,12 +164,15 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         f"You don't have enough money for that ({gold}/{totalPrice}). You need {totalPrice-gold} more money.",
                     )
 
+                # OPTIMIZATION: Batch fetch all required resources in ONE query
+                resource_names = list(resources.keys())
+                resource_cols = ", ".join(resource_names)
+                db.execute(f"SELECT {resource_cols} FROM resources WHERE id=%s", (cId,))
+                current_resources_row = db.fetchone()
+                current_resources = dict(zip(resource_names, current_resources_row)) if current_resources_row else {}
+                
                 for resource, amount in resources.items():
-                    selectResource = (
-                        f"SELECT {resource} FROM resources WHERE id=" + "%s"
-                    )
-                    db.execute(selectResource, (cId,))
-                    currentResources = db.fetchone()[0]
+                    currentResources = current_resources.get(resource, 0) or 0
                     requiredResources = amount * wantedUnits
 
                     if requiredResources > currentResources:
