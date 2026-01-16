@@ -32,5 +32,5 @@ for image in images:
     try:
         resize(image)
         print(f"Resized image: {image}")
-    except:
+    except Exception:
         print(f"Failed to resize image: {image}")

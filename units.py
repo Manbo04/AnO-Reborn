@@ -370,9 +370,8 @@ class Units(Military):
 
         try:
             reb = cls(**dic)
-        except:
-            print("ERROR BECAUSE REB CAN't be created")
-            raise TypeError
+        except (TypeError, ValueError):
+            raise TypeError("Cannot create Units instance from database row")
 
         for sort, value in zip(sort_out, store_sort_values):
             setattr(reb, sort, value)
@@ -416,8 +415,7 @@ class Units(Military):
                             return supply_check
                         break
                 units_count -= 1
-        except Exception as e:
-            print(e)
+        except Exception:
             return "Not enough unit type selected"
 
         # If the validation is ended successfully
@@ -520,7 +518,7 @@ class Units(Military):
                 (self.user_id, self.user_id),
             )
             war_id = db.fetchall()[-1][0]
-        except:
+        except (IndexError, TypeError):
             return "War is already over!"
 
         if war_id is not None:
@@ -541,7 +539,6 @@ class Units(Military):
 
             connection.commit()
         else:
-            print("ERROR DURING SAVE")
             return "ERROR DURING SAVE"
 
     # Fetch the available supplies and resources which are required and compare it to unit attack cost
@@ -586,40 +583,34 @@ class Units(Military):
 
 # DEBUGGING
 if __name__ == "__main__":
+    import time
+
     attacker = 2
     defender = 5
     war_id = 666
 
     with get_db_connection() as connection:
         db = connection.cursor()
-    import time
 
-    db.execute(
-        f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
-    )
-    connection.commit()
+        db.execute(
+            f"INSERT INTO wars VALUES ({war_id},{attacker},{defender},'Raze','falas message',NULL,{time.time()},2000,2000,{time.time()}, 100, 100)"
+        )
+        connection.commit()
 
-    attack_units = Units(
-        attacker,
-        war_id=war_id,
-        selected_units_list=["soldiers", "cruisers", "tanks"],
-        selected_units={"soldiers": 1000, "cruisers": 100, "tanks": 50},
-    )
+        attack_units = Units(
+            attacker,
+            war_id=war_id,
+            selected_units_list=["soldiers", "cruisers", "tanks"],
+            selected_units={"soldiers": 1000, "cruisers": 100, "tanks": 50},
+        )
 
-    defender_units = Units(
-        defender,
-        {"tanks": 544, "soldiers": 64, "artillery": 55},
-        selected_units_list=["tanks", "soldiers", "artillery"],
-    )
+        defender_units = Units(
+            defender,
+            {"tanks": 544, "soldiers": 64, "artillery": 55},
+            selected_units_list=["tanks", "soldiers", "artillery"],
+        )
 
-    # defender_units = Units(defender, {
-    # "tanks": 0,
-    # "soldiers": 0,
-    # "artillery": 0
-    # }, selected_units_list=["tanks", "soldiers", "artillery"])
+        print(Military.fight(attack_units, defender_units))
 
-    print(Military.fight(attack_units, defender_units))
-
-    db.execute(f"DELETE FROM wars WHERE id={war_id}")
-    connection.commit()
-    connection.close()
+        db.execute(f"DELETE FROM wars WHERE id={war_id}")
+        connection.commit()

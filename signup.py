@@ -4,6 +4,10 @@ from flask import request, render_template, session, redirect
 import datetime
 from helpers import error
 import psycopg2
+import logging
+
+# Configure logger for signup
+logger = logging.getLogger(__name__)
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 # NOTE: 'app' is imported locally in route registration to avoid circular imports
@@ -20,7 +24,7 @@ OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 try:
     environment = os.getenv("ENVIRONMENT")
-except:
+except Exception:
     environment = "DEV"
 
 if environment == "PROD":
@@ -169,7 +173,7 @@ def ensure_signup_attempts_table():
             logging.getLogger(__name__).debug(
                 "ensure_signup_attempts_table: failed to ensure table: %s", e
             )
-        except:
+        except Exception:
             pass
 
 
@@ -214,7 +218,7 @@ def callback():
     except Exception as e:
         err_name = type(e).__name__
         err_str = str(e)
-        print(f"OAuth token fetch error: {err_name}: {err_str}")
+        logger.warning(f"OAuth token fetch error: {err_name}: {err_str}")
 
         is_state_error = (
             "MismatchingStateError" in err_name
@@ -227,7 +231,7 @@ def callback():
                 incoming_state = request.args.get("state") or request.values.get(
                     "state"
                 )
-                print(
+                logger.info(
                     f"OAuth state mismatch — attempting fallback with incoming state: {incoming_state}"
                 )
                 discord_state = make_session(state=incoming_state)
@@ -237,7 +241,7 @@ def callback():
                     authorization_response=request.url,
                 )
             except Exception as e2:
-                print(f"OAuth fallback failed: {type(e2).__name__}: {e2}")
+                logger.error(f"OAuth fallback failed: {type(e2).__name__}: {e2}")
                 raise
         else:
             raise
@@ -277,8 +281,7 @@ def discord_register():
 
     elif request.method == "POST":
         try:
-            print("\n=== DISCORD SIGNUP START ===")
-            print(f"Token in session: {bool(session.get('oauth2_token'))}")
+            logger.debug("Discord signup started")
 
             # Defensive: ensure signup_attempts exists
             ensure_signup_attempts_table()
@@ -316,21 +319,18 @@ def discord_register():
             token = session.get("oauth2_token")
             discord = make_session(token=token)
             if not discord or not token:
-                print("ERROR: No token")
+                logger.warning("Discord signup failed - no token in session")
                 return error(400, "Discord authentication failed - no token")
 
-            print(f"Fetching Discord user...")
             response = discord.get(API_BASE_URL + "/users/@me")
-            print(f"Response code: {response.status_code}")
             discord_user = response.json()
-            print(f"Discord user: {discord_user}")
 
             discord_user_id = discord_user.get("id")
             email = discord_user.get("email")
 
             if not discord_user_id:
                 err = f"Discord API error: {discord_user}"
-                print(f"ERROR: {err}")
+                logger.error(err)
                 return error(400, err)
 
             # Get form data
@@ -342,11 +342,7 @@ def discord_register():
             if not verify_recaptcha(recaptcha_response):
                 return error(400, "reCAPTCHA verification failed")
 
-            print(f"Form username: {username}")
-            print(f"Form continent_str: {continent_str}")
-
             if not username:
-                print("ERROR: No username")
                 return error(400, "Country name is required")
 
             if not continent_str:
@@ -369,38 +365,30 @@ def discord_register():
 
             discord_auth = str(discord_user_id)
 
-            print(
-                f"Creating account - username: {username}, discord_id: {discord_auth}"
-            )
+            logger.info(f"Creating account: {username}")
 
             # Create account
             with get_db_cursor() as db:
-                print("Database cursor acquired")
                 # Check if username exists
                 db.execute("SELECT id FROM users WHERE username=%s", (username,))
                 if db.fetchone():
-                    print(f"Username already taken: {username}")
                     return error(400, "Country name already taken")
 
                 # Check if email exists
                 if email:
                     db.execute("SELECT id FROM users WHERE email=%s", (email,))
                     if db.fetchone():
-                        print(f"Email already used: {email}")
                         return error(400, "An account with this email already exists")
 
-                print("Username available, checking Discord ID...")
                 db.execute(
                     "SELECT id FROM users WHERE hash=%s AND auth_type='discord'",
                     (discord_auth,),
                 )
                 if db.fetchone():
-                    print(f"Discord ID already linked: {discord_auth}")
                     return error(
                         400, "This Discord account is already linked to another country"
                     )
 
-                print(f"Creating user: {username}")
                 # Create user
                 date = str(datetime.date.today())
                 db.execute(
@@ -446,37 +434,24 @@ def discord_register():
             try:
                 session.pop("oauth2_state", None)
                 session.pop("oauth2_token", None)
-            except:
+            except (KeyError, RuntimeError):
                 pass
 
             return redirect("/")
 
         except Exception as e:
-            import traceback
-
             error_msg = str(e)
-            print(f"\n!!! DISCORD SIGNUP ERROR !!!")
-            print(f"Error: {error_msg}")
-            print(traceback.format_exc())
-            print("!!! END ERROR !!!\n")
+            logger.exception(f"Discord signup error: {error_msg}")
             return error(500, f"Signup failed: {error_msg}")
 
 
 def signup():
     if request.method == "POST":
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.debug(f"POST /signup: form keys={list(request.form.keys())}")
         from database import get_db_cursor
 
         # Defensive: ensure signup_attempts exists
         ensure_signup_attempts_table()
 
-        # Debug: log remote_addr and forwarding headers to diagnose rate-limit
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.debug(
             f"signup request remote_addr={request.remote_addr} X-Forwarded-For={request.headers.get('X-Forwarded-For')}"
         )
@@ -570,7 +545,7 @@ def signup():
             continent_number = int(continent_str) - 1
         except (ValueError, TypeError):
             return error(400, "Continent must be a valid number")
-        
+
         # Ordered list, DO NOT EDIT
         continents = [
             "Tundra",
@@ -581,10 +556,10 @@ def signup():
             "Grassland",
             "Mountain Range",
         ]
-        
+
         if continent_number < 0 or continent_number >= len(continents):
             return error(400, "Invalid continent selection")
-        
+
         continent = continents[continent_number]
 
         with get_db_cursor() as db:
