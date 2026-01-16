@@ -1260,13 +1260,18 @@ def war_reparation_tax():
                     loser = attacker
 
                 eco = Economy(loser)
-                for resource in Economy.resources:
-                    resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
-                    db.execute(resource_sel_stat, (loser,))
-                    resource_amount = db.fetchone()[0]
-
-                    db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
-                    war_type = db.fetchone()
+                
+                # OPTIMIZATION: Fetch all resources and war_type in ONE query each instead of 30 queries
+                resource_cols = ", ".join(Economy.resources)
+                db.execute(f"SELECT {resource_cols} FROM resources WHERE id=%s", (loser,))
+                resource_row = db.fetchone()
+                resource_amounts = dict(zip(Economy.resources, resource_row)) if resource_row else {}
+                
+                db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
+                war_type = db.fetchone()
+                
+                for idx, resource in enumerate(Economy.resources):
+                    resource_amount = resource_amounts.get(resource, 0) or 0
 
                     # This condition lower or doesn't give reparation_tax at all
                     # NOTE: for now it lowers to only 5% (the basic is 20%)
