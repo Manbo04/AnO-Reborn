@@ -52,77 +52,77 @@ def peace_offers():
 
         try:
             if peace_offers:
-                for offer in peace_offers:
-                    offer_id = offer[0]
-                    if offer_id is not None:
+                # OPTIMIZATION: Batch fetch all peace offer data in fewer queries
+                offer_ids = [o[0] for o in peace_offers if o[0] is not None]
+                
+                if offer_ids:
+                    # Fetch all peace data at once
+                    placeholders = ','.join(['%s'] * len(offer_ids))
+                    db.execute(
+                        f"""SELECT p.id, p.demanded_resources, p.demanded_amount, p.author,
+                                   u.username as author_name,
+                                   w.attacker, w.defender
+                            FROM peace p
+                            JOIN users u ON p.author = u.id
+                            JOIN wars w ON w.peace_offer_id = p.id
+                            WHERE p.id IN ({placeholders})""",
+                        tuple(offer_ids),
+                    )
+                    peace_data = {row[0]: row for row in db.fetchall()}
+                    
+                    # Fetch all user names we might need
+                    all_user_ids = set()
+                    for row in peace_data.values():
+                        all_user_ids.add(row[5])  # attacker
+                        all_user_ids.add(row[6])  # defender
+                    
+                    if all_user_ids:
+                        user_placeholders = ','.join(['%s'] * len(all_user_ids))
                         db.execute(
-                            "SELECT demanded_resources FROM peace WHERE id=(%s)",
-                            (offer_id,),
+                            f"SELECT id, username FROM users WHERE id IN ({user_placeholders})",
+                            tuple(all_user_ids),
                         )
-                        resources_fetch = db.fetchone()
-                        db.execute(
-                            "SELECT author FROM peace WHERE id=(%s)", (offer_id,)
-                        )
-                        author_id = db.fetchone()[0]
+                        usernames = {row[0]: row[1] for row in db.fetchall()}
+                    else:
+                        usernames = {}
+                    
+                    for offer in peace_offers:
+                        offer_id = offer[0]
+                        if offer_id is None or offer_id not in peace_data:
+                            continue
+                        
+                        row = peace_data[offer_id]
+                        _, demanded_resources, demanded_amount, author_id, author_name, attacker, defender = row
+                        
                         if author_id == cId:
-                            offer = outgoing
+                            target_dict = outgoing
                             outgoing_counter += 1
                         else:
-                            offer = incoming
+                            target_dict = incoming
                             incoming_counter += 1
-
-                        offer[offer_id] = {}
-
-                    if resources_fetch:
-                        resources = resources_fetch[0]
-                        if resources:
-                            db.execute(
-                                "SELECT demanded_amount FROM peace WHERE id=(%s)",
-                                (offer_id,),
-                            )
-                            amounts = db.fetchone()[0].split(",")
-                            resources = resources.split(",")
-
-                            offer[offer_id]["resource_count"] = len(resources)
-                            offer[offer_id]["resources"] = resources
-                            offer[offer_id]["amounts"] = amounts
-
+                        
+                        target_dict[offer_id] = {}
+                        
+                        if demanded_resources:
+                            resources = demanded_resources.split(",")
+                            amounts = demanded_amount.split(",") if demanded_amount else []
+                            target_dict[offer_id]["resource_count"] = len(resources)
+                            target_dict[offer_id]["resources"] = resources
+                            target_dict[offer_id]["amounts"] = amounts
                             if cId == author_id:
-                                offer[offer_id]["owned"] = 1
-
-                        # white peace
+                                target_dict[offer_id]["owned"] = 1
                         else:
-                            offer[offer_id]["peace_type"] = "white"
-
-                        db.execute(
-                            "SELECT author FROM peace WHERE id=(%s)", (offer_id,)
-                        )
-                        db.execute(
-                            "SELECT username FROM users WHERE id=(%s)", (author_id,)
-                        )
-                        offer[offer_id]["author"] = [author_id, db.fetchone()[0]]
-
-                        db.execute(
-                            "SELECT attacker, defender FROM wars "
-                            "WHERE peace_offer_id=(%s)",
-                            (offer_id,),
-                        )
-                        ids = db.fetchone()
-                        if ids[0] == author_id:
-                            db.execute(
-                                "SELECT username FROM users WHERE id=(%s)", (ids[1],)
-                            )
-                            receiver_name = db.fetchone()[0]
-                            receiver_id = ids[1]
+                            target_dict[offer_id]["peace_type"] = "white"
+                        
+                        target_dict[offer_id]["author"] = [author_id, author_name]
+                        
+                        if attacker == author_id:
+                            receiver_id = defender
                         else:
-                            db.execute(
-                                "SELECT username FROM users WHERE id=(%s)", (ids[0],)
-                            )
-                            receiver_id = ids[0]
-                            receiver_name = db.fetchone()[0]
-
-                        offer[offer_id]["receiver_id"] = receiver_id
-                        offer[offer_id]["receiver"] = receiver_name
+                            receiver_id = attacker
+                        
+                        target_dict[offer_id]["receiver_id"] = receiver_id
+                        target_dict[offer_id]["receiver"] = usernames.get(receiver_id, "Unknown")
         except (TypeError, AttributeError, IndexError, KeyError):
             return "Something went wrong."
 
@@ -573,10 +573,13 @@ def warResult():
             for unit in defenselst:
                 if unit not in UnitsClass.allUnits:
                     return error(400, "Invalid unit in default defense configuration.")
-            defenseunits = {}
-            for unit in defenselst:
-                db.execute(f"SELECT {unit} FROM military WHERE id=(%s)", (eId,))
-                defenseunits[unit] = db.fetchone()[0]
+            
+            # OPTIMIZATION: Fetch all defense units in ONE query instead of N queries
+            defense_cols = ", ".join(defenselst)
+            db.execute(f"SELECT {defense_cols} FROM military WHERE id=(%s)", (eId,))
+            defense_row = db.fetchone()
+            defenseunits = dict(zip(defenselst, defense_row)) if defense_row else {u: 0 for u in defenselst}
+            
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
             prev_defender = dict(defender.selected_units)
             prev_attacker = dict(attacker.selected_units)
@@ -815,41 +818,53 @@ def wars():
                 )
                 war_attacker_defender_ids = db.fetchall()
                 war_info = {}
-                for war_id, defender, attacker in war_attacker_defender_ids:
-                    update_supply(war_id)
-                    attacker_info = {}
-                    defender_info = {}
-                    db.execute("SELECT username FROM users WHERE id=%s", (attacker,))
-                    att_name = db.fetchone()[0]
-                    attacker_info["name"] = att_name
-                    attacker_info["id"] = attacker
+                
+                if war_attacker_defender_ids:
+                    # OPTIMIZATION: Batch fetch all war and user data instead of N*5 queries
+                    war_ids = [w[0] for w in war_attacker_defender_ids]
+                    all_user_ids = set()
+                    for _, defender, attacker in war_attacker_defender_ids:
+                        all_user_ids.add(defender)
+                        all_user_ids.add(attacker)
+                    
+                    # Fetch all war details at once
+                    war_placeholders = ','.join(['%s'] * len(war_ids))
                     db.execute(
-                        (
-                            "SELECT attacker_morale, attacker_supplies "
-                            "FROM wars WHERE id=%s"
-                        ),
-                        (war_id,),
+                        f"""SELECT id, attacker_morale, attacker_supplies, 
+                                   defender_morale, defender_supplies 
+                            FROM wars WHERE id IN ({war_placeholders})""",
+                        tuple(war_ids),
                     )
-                    att_morale_and_supplies = db.fetchone()
-                    attacker_info["morale"] = att_morale_and_supplies[0]
-                    attacker_info["supplies"] = att_morale_and_supplies[1]
-                    db.execute("SELECT username FROM users WHERE id=%s", (defender,))
-                    def_name = db.fetchone()[0]
-                    defender_info["name"] = def_name
+                    war_details = {row[0]: row[1:] for row in db.fetchall()}
+                    
+                    # Fetch all usernames at once
+                    user_placeholders = ','.join(['%s'] * len(all_user_ids))
                     db.execute(
-                        (
-                            "SELECT defender_morale,defender_supplies "
-                            "FROM wars WHERE id=%s"
-                        ),
-                        (war_id,),
+                        f"SELECT id, username FROM users WHERE id IN ({user_placeholders})",
+                        tuple(all_user_ids),
                     )
-                    def_morale_and_supplies = db.fetchone()
-                    defender_info["morale"] = def_morale_and_supplies[0]
-                    defender_info["supplies"] = def_morale_and_supplies[1]
-                    defender_info["id"] = defender
-                    attacker_info["flag"] = get_flagname(attacker)
-                    defender_info["flag"] = get_flagname(defender)
-                    war_info[war_id] = {"att": attacker_info, "def": defender_info}
+                    usernames = {row[0]: row[1] for row in db.fetchall()}
+                    
+                    for war_id, defender, attacker in war_attacker_defender_ids:
+                        update_supply(war_id)
+                        attacker_info = {}
+                        defender_info = {}
+                        
+                        attacker_info["name"] = usernames.get(attacker, "Unknown")
+                        attacker_info["id"] = attacker
+                        
+                        details = war_details.get(war_id, (100, 0, 100, 0))
+                        attacker_info["morale"] = details[0]
+                        attacker_info["supplies"] = details[1]
+                        
+                        defender_info["name"] = usernames.get(defender, "Unknown")
+                        defender_info["morale"] = details[2]
+                        defender_info["supplies"] = details[3]
+                        defender_info["id"] = defender
+                        
+                        attacker_info["flag"] = get_flagname(attacker)
+                        defender_info["flag"] = get_flagname(defender)
+                        war_info[war_id] = {"att": attacker_info, "def": defender_info}
             except Exception:
                 war_attacker_defender_ids = []
                 war_info = {}
