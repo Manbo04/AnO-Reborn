@@ -3,6 +3,7 @@ import psycopg2
 import os, time
 import math
 from dotenv import load_dotenv
+from database import get_db_connection
 
 load_dotenv()
 
@@ -59,14 +60,8 @@ class Economy:
             self.nation = None
 
     def get_economy(self):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         # TODO fix this when the databases changes and update to include all resources
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (self.nationID,))
@@ -75,14 +70,8 @@ class Economy:
     def get_particular_resources(
         self, resources
     ):  # works, i think (?) returns players resources
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         resource_dict = {}
 
@@ -131,14 +120,8 @@ class Economy:
 
     def grant_resources(self, resource, amount):
         # TODO find a way to get the database to work on relative directories
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         db.execute(
             "UPDATE stats SET (%s) = (%s) WHERE id(%s)",
@@ -149,14 +132,8 @@ class Economy:
 
     # IMPORTANT: the amount is not validated in this method, so you should provide a valid value
     def transfer_resources(self, resource, amount, destinationID):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         if resource not in self.resources:
             return "Invalid resource"
@@ -167,15 +144,8 @@ class Economy:
             # The caller should compute a morale delta based on units involved. We still keep
             # the win_type -> human-readable win_condition mapping, but morale is adjusted
             # by the provided delta to allow per-unit impacts.
-            connection = psycopg2.connect(
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-            )
-
-            db = connection.cursor()
+            with get_db_connection() as connection:
+                db = connection.cursor()
 
             db.execute(
                 "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
@@ -252,14 +222,8 @@ class Nation:
     # Function for sending posts to nation's news page
     @staticmethod
     def send_news(destination_id: int, message: str):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
         db.execute(
             "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
             (destination_id, message),
@@ -268,15 +232,8 @@ class Nation:
         connection.close()
 
     def get_provinces(self):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
         if self.provinces is None:
             self.provinces = {"provinces_number": 0, "province_stats": {}}
             db.execute(
@@ -303,15 +260,8 @@ class Nation:
 
     @staticmethod
     def get_current_wars(id):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
         db.execute(
             "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
             (
@@ -504,14 +454,8 @@ class Military(Nation):
         # def reparation_tax(winner_side, loser_side):
 
         # get remaining morale for winner (only one supported current_wars)
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         # db.execute(
         # "SELECT IF attacker_morale==0 THEN defender_morale ELSE attacker_morale FROM (SELECT defender_morale,attacker_morale FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)) L",
@@ -542,15 +486,8 @@ class Military(Nation):
     @staticmethod
     # def morale_change(war_id, morale, column, win_type, winner, loser):
     def morale_change(column, win_type, winner, loser):
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         db.execute(
             "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
@@ -634,15 +571,8 @@ class Military(Nation):
             defender.casualties(target, final_destruction)
 
             # infrastructure damage
-            connection = psycopg2.connect(
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-            )
-
-            db = connection.cursor()
+            with get_db_connection() as connection:
+                db = connection.cursor()
 
             db.execute(
                 "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
@@ -808,15 +738,8 @@ class Military(Nation):
 
         # Get the absolute side (absolute attacker and defender) in the war for determining the loser's morale column name to decrease
 
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         db.execute(
             "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
@@ -918,15 +841,7 @@ class Military(Nation):
             winner.casualties(winner_unit, w_casualties)
             loser.casualties(loser_unit, l_casualties)
 
-        # infrastructure damage
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
+        # infrastructure damage (connection removed - code was commented out)
         # db = connection.cursor()
         # db.execute("SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC", (defender.user_id,))
         # province_id_fetch = db.fetchall()
@@ -946,15 +861,8 @@ class Military(Nation):
     # particular_units must be a list of string unit names
     @staticmethod
     def get_particular_units_list(cId, particular_units):  # int, list -> list
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
         # this data come in the format [(cId, soldiers, artillery, tanks, bombers, fighters, apaches, spies, icbms, nukes, destroyer, cruisers, submarines)]
         db.execute("SELECT * FROM military WHERE id=%s", (cId,))
@@ -1093,15 +1001,8 @@ class Military(Nation):
 
     # Check and set default_defense in nation table
     def set_defense(self, defense_string):  # str -> None
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
-
-        db = connection.cursor()
+        with get_db_connection() as connection:
+            db = connection.cursor()
         defense_list = defense_string.split(",")
         if len(defense_units) == 3:
             # default_defense is stored in the db: 'unit1,unit2,unit3'
