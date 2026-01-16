@@ -176,50 +176,60 @@ def get_revenue(cId):
         for resource in resources:
             revenue["gross"][resource] = 0
             revenue["net"][resource] = 0
+
+        # Define proinfra columns once (outside loop)
+        proinfra_columns = [
+            "id",
+            "coal_burners",
+            "oil_burners",
+            "solar_fields",
+            "hydro_dams",
+            "nuclear_reactors",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
+            "army_bases",
+            "aerodomes",
+            "harbours",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
+            "lumber_mills",
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
+        ]
+
+        # OPTIMIZATION: Batch fetch all proInfra data in ONE query instead of N queries
+        proinfra_by_id = {}
+        if provinces:
+            placeholders = ",".join(["%s"] * len(provinces))
+            db.execute(
+                f"SELECT * FROM proInfra WHERE id IN ({placeholders})", tuple(provinces)
+            )
+            for row in db.fetchall():
+                proinfra_by_id[row[0]] = dict(zip(proinfra_columns, row))
+
         for province in provinces:
-            db.execute("SELECT * FROM proInfra WHERE id=%s", (province,))
-            buildings = db.fetchone()
+            buildings = proinfra_by_id.get(province)
             if buildings is None:
-                buildings = [0] * len(proinfra_columns)
-            # Convert tuple to dict by matching column names
-            proinfra_columns = [
-                "id",
-                "coal_burners",
-                "oil_burners",
-                "solar_fields",
-                "hydro_dams",
-                "nuclear_reactors",
-                "gas_stations",
-                "general_stores",
-                "farmers_markets",
-                "malls",
-                "banks",
-                "city_parks",
-                "hospitals",
-                "libraries",
-                "universities",
-                "monorails",
-                "army_bases",
-                "aerodomes",
-                "harbours",
-                "admin_buildings",
-                "silos",
-                "farms",
-                "pumpjacks",
-                "coal_mines",
-                "bauxite_mines",
-                "copper_mines",
-                "uranium_mines",
-                "lead_mines",
-                "iron_mines",
-                "lumber_mills",
-                "component_factories",
-                "steel_mills",
-                "ammunition_factories",
-                "aluminium_refineries",
-                "oil_refineries",
-            ]
-            buildings = dict(zip(proinfra_columns, buildings))
+                buildings = dict(zip(proinfra_columns, [0] * len(proinfra_columns)))
 
             for building, build_count in buildings.items():
                 if building == "id":
@@ -648,11 +658,13 @@ def update_info():
             db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
             provinces = db.fetchall()
 
-            for province_id in provinces:
-                province_id = province_id[0]
+            # OPTIMIZATION: Batch update all provinces in ONE query instead of N queries
+            if provinces:
+                province_ids = [p[0] for p in provinces]
+                placeholders = ",".join(["%s"] * len(province_ids))
                 db.execute(
-                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id=%s",
-                    (province_id,),
+                    f"UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id IN ({placeholders})",
+                    tuple(province_ids),
                 )
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
 
@@ -674,12 +686,16 @@ def delete_own_account():
         db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
 
         # Deletes all the users provinces and their infrastructure
+        # OPTIMIZATION: Batch delete instead of N+1 queries
         db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
         province_ids = db.fetchall()
-        for province_id in province_ids:
-            province_id = province_id[0]
-            db.execute("DELETE FROM provinces WHERE id=(%s)", (province_id,))
-            db.execute("DELETE FROM proInfra WHERE id=(%s)", (province_id,))
+        if province_ids:
+            ids = [p[0] for p in province_ids]
+            placeholders = ",".join(["%s"] * len(ids))
+            db.execute(
+                f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids)
+            )
+            db.execute(f"DELETE FROM proInfra WHERE id IN ({placeholders})", tuple(ids))
 
         db.execute("DELETE FROM upgrades WHERE user_id=%s", (cId,))
         db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
