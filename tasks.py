@@ -800,7 +800,7 @@ def generate_province_revenue():  # Runs each hour
             dbdict.execute(
                 """
                 SELECT id, happiness, productivity, pollution, consumer_spending,
-                       rations, energy, population
+                       energy, population
                 FROM provinces WHERE id = ANY(%s)
             """,
                 (all_province_ids,),
@@ -1154,7 +1154,6 @@ def generate_province_revenue():  # Runs each hour
                             min(100, max(0, data.get("pollution", 0))),
                             min(100, max(0, data.get("consumer_spending", 50))),
                             data.get("energy", 0),
-                            max(0, data.get("rations", 0)),
                             pid,
                         )
                     )
@@ -1167,8 +1166,7 @@ def generate_province_revenue():  # Runs each hour
                             productivity = %s,
                             pollution = %s,
                             consumer_spending = %s,
-                            energy = %s,
-                            rations = %s
+                            energy = %s
                         WHERE id = %s
                     """,
                         province_updates,
