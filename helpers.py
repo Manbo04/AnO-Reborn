@@ -326,19 +326,31 @@ def get_bulk_influence(user_ids):
 
 
 def get_coalition_influence(coalition_id):
-    with get_db_cursor() as db:
-        total_influence = 0
+    """Get total influence for a coalition using bulk query."""
+    # Check cache first
+    cache_key = f"coalition_influence_{coalition_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
 
+    with get_db_cursor() as db:
         try:
             db.execute(
                 "SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,)
             )
             members = db.fetchall()
-        except:
+        except Exception:
             return 0
 
-        for member in members:
-            member_influence = get_influence(member[0])
-            total_influence += member_influence
+        if not members:
+            return 0
+
+        # Use bulk influence function for all members at once
+        member_ids = [m[0] for m in members]
+        influences = get_bulk_influence(member_ids)
+        total_influence = sum(influences.values())
+
+        # Cache the result
+        query_cache.set(cache_key, total_influence)
 
         return total_influence
