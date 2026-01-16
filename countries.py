@@ -75,7 +75,7 @@ def get_econ_statistics(cId):
                 (cId,),
             )
             total = dict(dbdict.fetchone())
-        except:
+        except (TypeError, AttributeError, KeyError):
             total = {}
 
     expenses = {}
@@ -107,7 +107,6 @@ def get_econ_statistics(cId):
         expenses[unit_type]["money"] += operating_costs
 
     for unit, amount in total.items():
-        print(unit, amount)
         if amount != 0 and amount is not None:
             check_for_resource_upkeep(unit, amount)
             check_for_monetary_upkeep(unit, amount)
@@ -366,7 +365,7 @@ def country(cId):
 
         try:
             status = cId == str(session["user_id"])
-        except:
+        except (KeyError, TypeError):
             status = False
 
         db.execute(
@@ -483,7 +482,7 @@ HAVING COUNT(provinces.id) >= %s;""",
         )
         try:
             total_count = db.fetchone()[0]
-        except:
+        except (TypeError, IndexError):
             total_count = 0
 
         # Fetch paginated results with optimized query
@@ -599,7 +598,7 @@ def update_info():
                 os.remove(
                     os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag)
                 )
-            except:
+            except (OSError, TypeError, AttributeError):
                 pass
 
             # Save the file & shit

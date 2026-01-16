@@ -136,7 +136,7 @@ def coalition(colId):
                         (colId,),
                     )
                     ingoing_ids = [row[0] for row in db.fetchall()]
-                except:
+                except (TypeError, Exception):
                     ingoing_ids = []
 
                 col_ids = []
@@ -146,16 +146,22 @@ def coalition(colId):
 
                 # OPTIMIZATION: Batch fetch all treaty data in ONE query instead of N*2 queries
                 if ingoing_ids:
-                    placeholders = ','.join(['%s'] * len(ingoing_ids))
+                    placeholders = ",".join(["%s"] * len(ingoing_ids))
                     db.execute(
-                        f"""SELECT t.id, t.col1_id, t.treaty_name, t.treaty_description, c.name 
-                            FROM treaties t 
-                            JOIN colNames c ON t.col1_id = c.id 
+                        f"""SELECT t.id, t.col1_id, t.treaty_name, t.treaty_description, c.name
+                            FROM treaties t
+                            JOIN colNames c ON t.col1_id = c.id
                             WHERE t.id IN ({placeholders})""",
                         tuple(ingoing_ids),
                     )
                     for row in db.fetchall():
-                        treaty_id, col_id, treaty_name, treaty_description, coalition_name = row
+                        (
+                            treaty_id,
+                            col_id,
+                            treaty_name,
+                            treaty_description,
+                            coalition_name,
+                        ) = row
                         col_ids.append(col_id)
                         trt_names.append(treaty_name)
                         trt_descriptions.append(treaty_description)
@@ -168,7 +174,7 @@ def coalition(colId):
                 ingoing_treaties["treaty_names"] = (trt_names,)
                 ingoing_treaties["treaty_descriptions"] = trt_descriptions
                 ingoing_length = len(ingoing_ids)
-            except:
+            except (TypeError, Exception):
                 ingoing_treaties = {}
                 ingoing_length = 0
 
@@ -180,7 +186,7 @@ def coalition(colId):
                         (colId, colId),
                     )
                     raw_active_ids = db.fetchall()
-                except:
+                except (TypeError, Exception):
                     raw_active_ids = []
 
                 active_treaties = {}
@@ -193,18 +199,26 @@ def coalition(colId):
                 # OPTIMIZATION: Batch fetch all active treaty data in ONE query
                 if raw_active_ids:
                     active_ids = [i[0] for i in raw_active_ids]
-                    placeholders = ','.join(['%s'] * len(active_ids))
+                    placeholders = ",".join(["%s"] * len(active_ids))
                     db.execute(
                         f"""SELECT t.id, t.col1_id, t.col2_id, t.treaty_name, t.treaty_description,
                                    c1.name as col1_name, c2.name as col2_name
-                            FROM treaties t 
-                            JOIN colNames c1 ON t.col1_id = c1.id 
-                            JOIN colNames c2 ON t.col2_id = c2.id 
+                            FROM treaties t
+                            JOIN colNames c1 ON t.col1_id = c1.id
+                            JOIN colNames c2 ON t.col2_id = c2.id
                             WHERE t.id IN ({placeholders})""",
                         tuple(active_ids),
                     )
                     for row in db.fetchall():
-                        offer_id, col1_id, col2_id, treaty_name, treaty_description, col1_name, col2_name = row
+                        (
+                            offer_id,
+                            col1_id,
+                            col2_id,
+                            treaty_name,
+                            treaty_description,
+                            col1_name,
+                            col2_name,
+                        ) = row
                         active_treaties["ids"].append(offer_id)
                         # Show the OTHER coalition, not the current one
                         if col1_id == colId:
@@ -216,10 +230,12 @@ def coalition(colId):
                         active_treaties["col_ids"].append(coalition_id)
                         active_treaties["col_names"].append(coalition_name)
                         active_treaties["treaty_names"].append(treaty_name)
-                        active_treaties["treaty_descriptions"].append(treaty_description)
+                        active_treaties["treaty_descriptions"].append(
+                            treaty_description
+                        )
 
                 active_length = len(raw_active_ids)
-            except:
+            except (TypeError, Exception):
                 active_treaties = {}
                 active_length = 0
         else:
@@ -263,7 +279,7 @@ def coalition(colId):
         try:
             db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
             flag = db.fetchone()[0]
-        except:
+        except (TypeError, IndexError):
             flag = None
 
         if user_role == "leader" and colType != "Open" and userInCurCol:
@@ -351,7 +367,7 @@ def establish_coalition():
                 db.fetchone()[0]
 
                 return error(403, "You are already in a coalition")
-            except:
+            except (TypeError, AttributeError):
                 pass
 
             cType = request.form.get("type")
@@ -488,7 +504,7 @@ def join_col(colId):
             db.fetchone()[0]
 
             return error(400, "You're already in a coalition")
-        except:
+        except (TypeError, AttributeError):
             pass
 
         db.execute("SELECT type FROM colNames WHERE id=%s", (colId,))
@@ -561,7 +577,7 @@ def give_position():
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
             colId = db.fetchone()[0]
-        except:
+        except (TypeError, AttributeError):
             return error(400, "You are not a part of any coalition")
 
         user_role = get_user_role(cId)
@@ -711,7 +727,7 @@ def update_col_info(colId):
                         os.path.join(current_app.config["UPLOAD_FOLDER"], current_flag)
                     )
 
-                except:
+                except (OSError, FileNotFoundError, TypeError):
                     pass
 
             # Save the file
@@ -771,7 +787,7 @@ def deposit_into_bank(colId):
     for res in resources:
         try:
             resource = request.form.get(res)
-        except:
+        except (KeyError, AttributeError):
             resource = ""
 
         if resource is not None and resource != "":
@@ -912,7 +928,7 @@ def withdraw_from_bank(colId):
     for res in resources:
         try:
             resource = request.form.get(res)
-        except:
+        except (KeyError, AttributeError):
             resource = ""
 
         if resource is not None and resource != "":
@@ -960,7 +976,7 @@ def request_from_bank(colId):
         for res in resources:
             try:
                 resource = request.form.get(res)
-            except:
+            except (KeyError, AttributeError):
                 resource = ""
 
             if resource is not None and resource != "":
@@ -1042,13 +1058,13 @@ def offer_treaty():
         try:
             db.execute("SELECT id FROM colNames WHERE name=(%s)", (col2_name,))
             col2_id = db.fetchone()[0]
-        except:
+        except (TypeError, AttributeError):
             return error(400, f"No such coalition: {col2_name}")
 
         try:
             db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
             user_coalition = db.fetchone()[0]
-        except:
+        except (TypeError, AttributeError):
             return error(400, "You are not in a coalition")
 
         if col2_id == user_coalition:
@@ -1071,7 +1087,7 @@ def offer_treaty():
                 "INSERT INTO treaties (col1_id, col2_id, treaty_name, treaty_description) VALUES (%s, %s, %s, %s)",
                 (user_coalition, col2_id, treaty_name, treaty_message),
             )
-        except:
+        except Exception:
             return error(
                 400, "Error inserting into database. Please contact the website admins"
             )
@@ -1096,7 +1112,7 @@ def accept_treaty(offer_id):
             )
             permission_offer_id = db.fetchone()[0]
 
-        except:
+        except (TypeError, AttributeError):
             return error(400, "You do not have such an offer")
 
         if permission_offer_id != offer_id:

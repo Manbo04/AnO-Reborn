@@ -65,7 +65,7 @@ def province(pId):
             ]
             for i, col in enumerate(columns):
                 province[col] = province_data[i]
-        except:
+        except (TypeError, IndexError):
             return error(404, "Province doesn't exist")
 
         db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
