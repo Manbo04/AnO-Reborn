@@ -1,76 +1,67 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from helpers import login_required, error
-from database import get_db_cursor
-import psycopg2
+from database import get_db_cursor, get_db_connection
 from flask import request, render_template, session, redirect, flash
 import os
 import variables
 
 
-# TODO: implement connection passing here.
 def give_resource(giver_id, taker_id, resource, amount):
     # If giver_id is bank, don't remove any resources from anyone
     # If taker_id is bank, just remove the resources from the player
 
-    conn = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
-    )
+    # Use connection pool instead of direct connection
+    with get_db_connection() as conn:
+        db = conn.cursor()
 
-    db = conn.cursor()
-
-    if giver_id != "bank":
-        giver_id = int(giver_id)
-    if taker_id != "bank":
-        taker_id = int(taker_id)
-    amount = int(amount)
-
-    resources_list = variables.RESOURCES
-
-    # Returns error if resource doesn't exist
-    if resource not in resources_list and resource != "money":
-        return "No such resource"
-
-    if resource in ["gold", "money"]:
         if giver_id != "bank":
-            db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
-            current_giver_money = db.fetchone()[0]
-
-            if current_giver_money < amount:
-                return "Giver doesn't have enough resources to transfer such amount."
-
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (amount, giver_id))
-
+            giver_id = int(giver_id)
         if taker_id != "bank":
-            db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, taker_id))
+            taker_id = int(taker_id)
+        amount = int(amount)
 
-    else:
-        if giver_id != "bank":
-            current_resource_statement = (
-                f"SELECT {resource} FROM resources WHERE " + "id=%s"
-            )
-            db.execute(current_resource_statement, (giver_id,))
-            current_giver_resource = db.fetchone()[0]
+        resources_list = variables.RESOURCES
 
-            if current_giver_resource < amount:
-                return "Giver doesn't have enough resources to transfer such amount."
+        # Returns error if resource doesn't exist
+        if resource not in resources_list and resource != "money":
+            return "No such resource"
 
-            giver_update_statement = (
-                f"UPDATE resources SET {resource}={resource}-{amount}" + " WHERE id=%s"
-            )
-            db.execute(giver_update_statement, (giver_id,))
+        if resource in ["gold", "money"]:
+            if giver_id != "bank":
+                db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
+                current_giver_money = db.fetchone()[0]
 
-        if taker_id != "bank":
-            taker_update_statement = (
-                f"UPDATE resources SET {resource}={resource}+{amount}" + " WHERE id=%s"
-            )
-            db.execute(taker_update_statement, (taker_id,))
+                if current_giver_money < amount:
+                    return "Giver doesn't have enough resources to transfer such amount."
 
-    conn.commit()
-    conn.close()
+                db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (amount, giver_id))
+
+            if taker_id != "bank":
+                db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, taker_id))
+
+        else:
+            if giver_id != "bank":
+                current_resource_statement = (
+                    f"SELECT {resource} FROM resources WHERE " + "id=%s"
+                )
+                db.execute(current_resource_statement, (giver_id,))
+                current_giver_resource = db.fetchone()[0]
+
+                if current_giver_resource < amount:
+                    return "Giver doesn't have enough resources to transfer such amount."
+
+                giver_update_statement = (
+                    f"UPDATE resources SET {resource}={resource}-{amount}" + " WHERE id=%s"
+                )
+                db.execute(giver_update_statement, (giver_id,))
+
+            if taker_id != "bank":
+                taker_update_statement = (
+                    f"UPDATE resources SET {resource}={resource}+{amount}" + " WHERE id=%s"
+                )
+                db.execute(taker_update_statement, (taker_id,))
+
+        conn.commit()
 
     return True
 
@@ -78,153 +69,127 @@ def give_resource(giver_id, taker_id, resource, amount):
 @login_required
 def market():
     if request.method == "GET":
-        # Connection
-        connection = psycopg2.connect(
-            database=os.getenv("PG_DATABASE"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD"),
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-        )
+        # Use connection pool instead of direct connection
+        from database import get_db_cursor
 
-        db = connection.cursor()
-        cId = session["user_id"]
+        with get_db_cursor() as db:
+            cId = session["user_id"]
 
-        # GET Query Parameters
-        try:
-            filter_resource = request.values.get("filtered_resource")
-        except TypeError:
-            filter_resource = None
+            # GET Query Parameters
+            try:
+                filter_resource = request.values.get("filtered_resource")
+            except TypeError:
+                filter_resource = None
 
-        try:
-            price_type = request.values.get("price_type")
-        except TypeError:
-            price_type = None
+            try:
+                price_type = request.values.get("price_type")
+            except TypeError:
+                price_type = None
 
-        try:
-            offer_type = request.values.get("offer_type")
-        except TypeError:
-            offer_type = None
+            try:
+                offer_type = request.values.get("offer_type")
+            except TypeError:
+                offer_type = None
 
-        # Processing of query parameters into database statements
-        if price_type is not None:
-            list_of_price_types = ["ASC", "DESC"]
+            # Processing of query parameters into database statements
+            if price_type is not None:
+                list_of_price_types = ["ASC", "DESC"]
 
-            if price_type not in list_of_price_types:
-                return error(400, "No such price type")
+                if price_type not in list_of_price_types:
+                    return error(400, "No such price type")
 
-        if offer_type is not None and price_type is None:
-            db.execute("SELECT offer_id FROM offers WHERE type=(%s)", (offer_type,))
-            offer_ids_list = db.fetchall()
+            if filter_resource is not None:
+                resources_list = variables.RESOURCES
 
-        elif offer_type is None and price_type is not None:
-            offer_ids_statement = (
-                f"SELECT offer_id FROM offers ORDER BY price {price_type}"
+                if (
+                    filter_resource not in resources_list
+                ):  # Checks if the resource the user selected actually exists
+                    return error(400, "No such resource")
+
+            # Use JOIN query instead of loop to fetch all data at once
+            if filter_resource is not None:
+                query = """
+                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                    FROM offers o
+                    INNER JOIN users u ON o.user_id = u.id
+                    WHERE o.resource = %s
+                    ORDER BY o.price ASC
+                """
+                db.execute(query, (filter_resource,))
+            elif offer_type is not None and price_type is not None:
+                order_dir = "ASC" if price_type == "ASC" else "DESC"
+                query = f"""
+                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                    FROM offers o
+                    INNER JOIN users u ON o.user_id = u.id
+                    WHERE o.type = %s
+                    ORDER BY o.price {order_dir}
+                """
+                db.execute(query, (offer_type,))
+            elif offer_type is not None:
+                query = """
+                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                    FROM offers o
+                    INNER JOIN users u ON o.user_id = u.id
+                    WHERE o.type = %s
+                    ORDER BY o.price ASC
+                """
+                db.execute(query, (offer_type,))
+            elif price_type is not None:
+                order_dir = "ASC" if price_type == "ASC" else "DESC"
+                query = f"""
+                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                    FROM offers o
+                    INNER JOIN users u ON o.user_id = u.id
+                    ORDER BY o.price {order_dir}
+                """
+                db.execute(query)
+            else:
+                query = """
+                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
+                    FROM offers o
+                    INNER JOIN users u ON o.user_id = u.id
+                    ORDER BY o.price ASC
+                """
+                db.execute(query)
+
+            offers_data = db.fetchall()
+
+            # Process results
+            ids = []
+            types = []
+            names = []
+            resources = []
+            amounts = []
+            prices = []
+            total_prices = []
+            offer_ids = []
+
+            for (
+                user_id,
+                offer_type_val,
+                resource,
+                amount,
+                price,
+                offer_id,
+                username,
+            ) in offers_data:
+                ids.append(user_id)
+                types.append(offer_type_val)
+                resources.append(resource)
+                amounts.append(amount)
+                prices.append(price)
+                total_prices.append(price * amount)
+                offer_ids.append(offer_id)
+                names.append(username)
+
+            offers = zip(
+                ids, types, names, resources, amounts, prices, offer_ids, total_prices
+            )  # Zips everything into 1 list
+
+            return render_template(
+                "market.html", offers=offers, price_type=price_type, cId=cId
             )
-            db.execute(offer_ids_statement)
-            offer_ids_list = db.fetchall()
-
-        elif offer_type is not None and price_type is not None:
-            offer_ids_statement = (
-                "SELECT offer_id FROM offers WHERE type=%s"
-                + f"ORDER by price {price_type}"
-            )
-            db.execute(offer_ids_statement, (offer_type,))
-            offer_ids_list = db.fetchall()
-
-        elif offer_type is None and price_type is None:
-            db.execute("SELECT offer_id FROM offers ORDER BY price ASC")
-            offer_ids_list = db.fetchall()
-
-        if filter_resource is not None:
-            resources_list = variables.RESOURCES
-
-            if (
-                filter_resource not in resources_list
-            ):  # Checks if the resource the user selected actually exists
-                return error(400, "No such resource")
-
-        # Use JOIN query instead of loop to fetch all data at once
-        if filter_resource is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.resource = %s
-                ORDER BY o.price ASC
-            """
-            params = (filter_resource,)
-        elif offer_type is not None and price_type is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.type = %s
-                ORDER BY o.price " + ("ASC" if price_type == "ascending" else "DESC") + "
-            """
-            params = (offer_type,)
-        elif offer_type is not None:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                WHERE o.type = %s
-                ORDER BY o.price ASC
-            """
-            params = (offer_type,)
-        else:
-            query = """
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                ORDER BY o.price ASC
-            """
-            params = None
-
-        if params:
-            db.execute(query, params)
-        else:
-            db.execute(query)
-
-        offers_data = db.fetchall()
-
-        # Process results
-        ids = []
-        types = []
-        names = []
-        resources = []
-        amounts = []
-        prices = []
-        total_prices = []
-        offer_ids = []
-
-        for (
-            user_id,
-            offer_type,
-            resource,
-            amount,
-            price,
-            offer_id,
-            username,
-        ) in offers_data:
-            ids.append(user_id)
-            types.append(offer_type)
-            resources.append(resource)
-            amounts.append(amount)
-            prices.append(price)
-            total_prices.append(price * amount)
-            offer_ids.append(offer_id)
-            names.append(username)
-
-        connection.close()  # Closes the connection
-
-        offers = zip(
-            ids, types, names, resources, amounts, prices, offer_ids, total_prices
-        )  # Zips everything into 1 list
-
-        return render_template(
-            "market.html", offers=offers, price_type=price_type, cId=cId
-        )
 
 
 @login_required
