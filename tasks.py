@@ -274,9 +274,10 @@ def calc_ti(user_id):
 # * Tested population=100000, land=1, consumer_goods=0 (1000, 0)
 
 
-# Function for actually giving money to players
+# Function for actually giving money to players (OPTIMIZED)
 def tax_income():
-    from database import get_db_connection, BatchOperations
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch, RealDictCursor
 
     try:
         with get_db_connection() as conn:
@@ -284,25 +285,111 @@ def tax_income():
                 return
             start = time.time()
             db = conn.cursor()
+            dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
             db.execute("SELECT id FROM users")
             users = db.fetchall()
+            all_user_ids = [u[0] for u in users]
+
+            if not all_user_ids:
+                return
+
+            # Bulk load all data upfront to eliminate N+1 queries
+            # Load all stats (gold)
+            stats_map = {}
+            dbdict.execute(
+                "SELECT id, gold FROM stats WHERE id = ANY(%s)", (all_user_ids,)
+            )
+            for row in dbdict.fetchall():
+                stats_map[row["id"]] = row["gold"]
+
+            # Load all consumer_goods
+            cg_map = {}
+            dbdict.execute(
+                "SELECT id, consumer_goods FROM resources WHERE id = ANY(%s)",
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                cg_map[row["id"]] = row["consumer_goods"]
+
+            # Load all policies
+            policies_map = {}
+            dbdict.execute(
+                "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                policies_map[row["user_id"]] = (
+                    row["education"] if row["education"] else []
+                )
+
+            # Load all provinces (population, land) grouped by user
+            provinces_map = {}  # user_id -> [(population, land), ...]
+            dbdict.execute(
+                "SELECT userId, population, land FROM provinces WHERE userId = ANY(%s)",
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                uid = row["userid"]
+                if uid not in provinces_map:
+                    provinces_map[uid] = []
+                provinces_map[uid].append((row["population"], row["land"]))
 
             # Prepare batch updates
             money_updates = []
             cg_updates = []
 
-            for user_id in users:
-                user_id = user_id[0]
-
-                db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
-                result = db.fetchone()
-                if not result:
+            for user_id in all_user_ids:
+                current_money = stats_map.get(user_id)
+                if current_money is None:
                     continue
-                current_money = result[0]
 
-                money, consumer_goods = calc_ti(user_id)
-                if not money and not consumer_goods:
+                consumer_goods = cg_map.get(user_id, 0)
+                policies = policies_map.get(user_id, [])
+                provinces = provinces_map.get(user_id, [])
+
+                if not provinces:  # User doesn't have any provinces
+                    continue
+
+                # Calculate tax income inline (previously in calc_ti)
+                income = 0
+                total_population = 0
+                for population, land in provinces:
+                    total_population = population  # Keep track of last population for consumer_goods calc
+                    land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
+                    if land_multiplier > 1:
+                        land_multiplier = 1  # Cap 100%
+
+                    base_multiplier = variables.DEFAULT_TAX_INCOME
+                    if 1 in policies:  # 1 Policy (1)
+                        base_multiplier *= 1.01  # Citizens pay 1% more tax)
+                    if 6 in policies:  # 6 Policy (2)
+                        base_multiplier *= 0.98
+                    if 4 in policies:  # 4 Policy (2)
+                        base_multiplier *= 0.98
+
+                    multiplier = base_multiplier + (base_multiplier * land_multiplier)
+                    income += multiplier * population
+
+                # Consumer goods calculation
+                new_consumer_goods = 0
+                max_cg = (
+                    math.ceil(total_population / variables.CONSUMER_GOODS_PER)
+                    if total_population > 0
+                    else 0
+                )
+
+                if consumer_goods != 0 and max_cg != 0:
+                    if max_cg <= consumer_goods:
+                        new_consumer_goods -= max_cg
+                        income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                    else:
+                        cg_multiplier = consumer_goods / max_cg
+                        income *= 1 + (0.5 * cg_multiplier)
+                        new_consumer_goods -= consumer_goods
+
+                money = math.floor(income)
+                if not money:
                     continue
 
                 print(
@@ -310,25 +397,26 @@ def tax_income():
                 )
 
                 money_updates.append((money, user_id))
-                if consumer_goods != 0:
-                    cg_updates.append((consumer_goods, user_id))
+                if new_consumer_goods != 0:
+                    cg_updates.append((abs(new_consumer_goods), user_id))
 
             # Execute batch updates
             if money_updates:
-                from psycopg2.extras import execute_batch
-
                 execute_batch(
-                    db, "UPDATE stats SET gold=gold+%s WHERE id=%s", money_updates
+                    db,
+                    "UPDATE stats SET gold=gold+%s WHERE id=%s",
+                    money_updates,
+                    page_size=100,
                 )
             if cg_updates:
-                from psycopg2.extras import execute_batch
-
                 execute_batch(
                     db,
                     "UPDATE resources SET consumer_goods=consumer_goods-%s WHERE id=%s",
                     cg_updates,
+                    page_size=100,
                 )
 
+            conn.commit()
             duration = time.time() - start
             print(
                 f"tax_income: updated {len(money_updates)} users in {duration:.2f}s (cg updates: {len(cg_updates)})"
@@ -599,7 +687,7 @@ Tested features:
 
 def generate_province_revenue():  # Runs each hour
     from database import get_db_connection
-    from psycopg2.extras import RealDictCursor
+    from psycopg2.extras import RealDictCursor, execute_batch
 
     start_time = time.time()
     processed = 0
@@ -641,24 +729,114 @@ def generate_province_revenue():  # Runs each hour
         except:
             infra_ids = []
 
+        # ============ BULK PRELOAD DATA TO ELIMINATE N+1 QUERIES ============
+        # Get all unique user_ids and province_ids
+        all_user_ids = list(set(row[1] for row in infra_ids))
+        all_province_ids = [row[0] for row in infra_ids]
+
+        # Preload all upgrades for all users at once (instead of per-loop queries)
+        upgrades_map = {}
+        if all_user_ids:
+            dbdict.execute(
+                "SELECT user_id, * FROM upgrades WHERE user_id = ANY(%s)",
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                upgrades_map[row["user_id"]] = dict(row)
+
+        # Preload all policies for all users at once
+        policies_map = {}
+        if all_user_ids:
+            dbdict.execute(
+                "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                policies_map[row["user_id"]] = row["education"]
+
+        # Preload all proInfra data for all provinces at once
+        proinfra_map = {}
+        if all_province_ids:
+            dbdict.execute(
+                "SELECT * FROM proInfra WHERE id = ANY(%s)", (all_province_ids,)
+            )
+            for row in dbdict.fetchall():
+                proinfra_map[row["id"]] = dict(row)
+
+        # Preload all stats (gold) for all users at once
+        stats_map = {}
+        if all_user_ids:
+            dbdict.execute(
+                "SELECT id, gold FROM stats WHERE id = ANY(%s)", (all_user_ids,)
+            )
+            for row in dbdict.fetchall():
+                stats_map[row["id"]] = row["gold"]
+
+        # Preload all resources for all users at once
+        resources_map = {}
+        if all_user_ids:
+            dbdict.execute(
+                "SELECT * FROM resources WHERE id = ANY(%s)", (all_user_ids,)
+            )
+            for row in dbdict.fetchall():
+                resources_map[row["id"]] = dict(row)
+
+        # Ensure all users have resource rows (batch insert)
+        if all_user_ids:
+            execute_batch(
+                db,
+                "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+                [(uid,) for uid in all_user_ids],
+            )
+
+        # Track accumulated changes for batch updates at end
+        gold_deductions = {}  # user_id -> total_deducted
+
+        # Preload province data for effects tracking (happiness, productivity, pollution, consumer_spending, energy)
+        provinces_data = (
+            {}
+        )  # province_id -> {happiness, productivity, pollution, consumer_spending, energy, ...}
+        if all_province_ids:
+            dbdict.execute(
+                """
+                SELECT id, happiness, productivity, pollution, consumer_spending,
+                       rations, energy, population
+                FROM provinces WHERE id = ANY(%s)
+            """,
+                (all_province_ids,),
+            )
+            for row in dbdict.fetchall():
+                prov_dict = dict(row)
+                prov_dict[
+                    "energy"
+                ] = 0  # Reset energy to 0 (will be built up by nuclear_reactors)
+                provinces_data[row["id"]] = prov_dict
+
         for province_id, user_id, land, productivity in infra_ids:
-            db.execute(
-                "UPDATE provinces SET energy=0 WHERE id=%s", (province_id,)
-            )  # So energy would reset each turn
+            # Initialize tracking for this user
+            if user_id not in gold_deductions:
+                gold_deductions[user_id] = 0
 
-            dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-            upgrades = dict(dbdict.fetchone())
+            # Use preloaded upgrades instead of per-loop query
+            upgrades = upgrades_map.get(user_id, {})
+            if not upgrades:
+                dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
+                result = dbdict.fetchone()
+                upgrades = dict(result) if result else {}
+                upgrades_map[user_id] = upgrades
 
-            try:
-                db.execute(
-                    "SELECT education FROM policies WHERE user_id=%s", (user_id,)
-                )
-                policies = db.fetchone()[0]
-            except:
+            # Use preloaded policies instead of per-loop query
+            policies = policies_map.get(user_id, [])
+            if policies is None:
                 policies = []
 
-            dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
-            units = dict(dbdict.fetchone())
+            # Use preloaded proInfra instead of per-loop query
+            units = proinfra_map.get(province_id, {})
+            if not units:
+                dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
+                result = dbdict.fetchone()
+                units = dict(result) if result else {}
+                proinfra_map[province_id] = units
 
             for unit in columns:
                 unit_amount = units[unit]
@@ -693,15 +871,16 @@ def generate_province_revenue():  # Runs each hour
                         operating_costs *= 0.93
 
                     ### CHEAPER MATERIALS
-                    if unit_category == "industry" and upgrades["cheapermaterials"]:
+                    if unit_category == "industry" and upgrades.get("cheapermaterials"):
                         operating_costs *= 0.8
                     ### ONLINE SHOPPING
-                    if unit == "malls" and upgrades["onlineshopping"]:
+                    if unit == "malls" and upgrades.get("onlineshopping"):
                         operating_costs *= 0.7
 
-                    # Removing money operating costs (if user has the money)
-                    db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
-                    current_money = db.fetchone()[0]
+                    # Use preloaded gold and track deductions (instead of per-building SELECT+UPDATE)
+                    current_money = stats_map.get(user_id, 0) - gold_deductions.get(
+                        user_id, 0
+                    )
 
                     operating_costs = int(operating_costs)
 
@@ -715,22 +894,15 @@ def generate_province_revenue():  # Runs each hour
                         has_enough_stuff["status"] = False
                         has_enough_stuff["issues"].append("money")
                     else:
-                        try:
-                            db.execute(
-                                "UPDATE stats SET gold=gold-%s WHERE id=%s",
-                                (operating_costs, user_id),
-                            )
-                        except:
-                            conn.rollback()
-                            continue
-
-                    # TODO: make sure this works correctly
-                    if unit in energy_consumers:
-                        db.execute(
-                            "SELECT energy FROM provinces WHERE id=%s",
-                            (province_id,),
+                        # Track deduction for batch update at end
+                        gold_deductions[user_id] = (
+                            gold_deductions.get(user_id, 0) + operating_costs
                         )
-                        current_energy = db.fetchone()[0]
+
+                    # Use tracked energy in provinces_data instead of per-building SELECT
+                    if unit in energy_consumers:
+                        prov_data = provinces_data.get(province_id, {})
+                        current_energy = prov_data.get("energy", 0)
 
                         new_energy = (
                             current_energy - unit_amount
@@ -741,36 +913,31 @@ def generate_province_revenue():  # Runs each hour
                             has_enough_stuff["issues"].append("energy")
                             new_energy = 0
 
-                        db.execute(
-                            "UPDATE provinces SET energy=%s WHERE id=%s",
-                            (new_energy, province_id),
-                        )
+                        # Track energy in provinces_data for batch update
+                        if province_id in provinces_data:
+                            provinces_data[province_id]["energy"] = new_energy
 
-                    # Ensure user has a resources row so subsequent updates succeed
-                    try:
-                        db.execute(
-                            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
-                            (user_id,),
+                    # Use preloaded resources instead of per-building queries
+                    resources = resources_map.get(user_id, {})
+                    if not resources:
+                        dbdict.execute(
+                            "SELECT * FROM resources WHERE id=%s", (user_id,)
                         )
-                    except Exception:
-                        pass
-
-                    dbdict.execute("SELECT * FROM resources WHERE id=%s", (user_id,))
-                    resources = dict(dbdict.fetchone())
-                    resource_updates = {}  # Collect all resource changes for this user
+                        result = dbdict.fetchone()
+                        resources = dict(result) if result else {}
+                        resources_map[user_id] = resources
 
                     for resource, amount in minus.items():
                         amount *= unit_amount
-                        current_resource = resources[resource]
+                        current_resource = resources.get(resource, 0)
 
                         ### AUTOMATION INTEGRATION
-                        if (
-                            unit == "component_factories"
-                            and upgrades["automationintegration"]
+                        if unit == "component_factories" and upgrades.get(
+                            "automationintegration"
                         ):
                             amount *= 0.75
                         ### LARGER FORGES
-                        if unit == "steel_mills" and upgrades["largerforges"]:
+                        if unit == "steel_mills" and upgrades.get("largerforges"):
                             amount *= 0.7
 
                         new_resource = current_resource - amount
@@ -782,11 +949,8 @@ def generate_province_revenue():  # Runs each hour
                                 f"F | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | Failed to minus {amount} of {resource} ({current_resource})"
                             )
                         else:
-                            # Accumulate changes instead of updating one by one
-                            if resource not in resource_updates:
-                                resource_updates[resource] = new_resource
-                            else:
-                                resource_updates[resource] = new_resource
+                            # Update local cache and track for batch update
+                            resources_map[user_id][resource] = new_resource
                             log_verbose(
                                 f"S | MINUS | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | {resource} {current_resource}={new_resource} (-{current_resource-new_resource})"
                             )
@@ -846,12 +1010,9 @@ def generate_province_revenue():  # Runs each hour
                         # resources (e.g., 0.5 rations). Use ceil to avoid losing tiny outputs.
                         amount = math.ceil(amount)
                         if resource in province_resources:
-                            # TODO: make this optimized
-                            cpr_statement = (
-                                f"SELECT {resource} FROM provinces" + " WHERE id=%s"
-                            )
-                            db.execute(cpr_statement, (province_id,))
-                            current_plus_resource = db.fetchone()[0]
+                            # Use preloaded province data instead of per-building SELECT
+                            prov_data = provinces_data.get(province_id, {})
+                            current_plus_resource = prov_data.get(resource, 0)
 
                             # Adding resource
                             new_resource_number = current_plus_resource + amount
@@ -862,47 +1023,37 @@ def generate_province_revenue():  # Runs each hour
                             ):
                                 new_resource_number = 100
                             if new_resource_number < 0:
-                                new_resource_number = (
-                                    0  # TODO: is this line really necessary?
-                                )
+                                new_resource_number = 0
 
-                            upd_prov_statement = (
-                                f"UPDATE provinces SET {resource}" + "=%s WHERE id=%s"
-                            )
+                            # Update local cache for batch write later
+                            if province_id in provinces_data:
+                                provinces_data[province_id][
+                                    resource
+                                ] = new_resource_number
                             log_verbose(
                                 f"S | PLUS |USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | ADDING | {resource} | {amount}"
                             )
-                            db.execute(
-                                upd_prov_statement, (new_resource_number, province_id)
-                            )
 
                         elif resource in user_resources:
-                            upd_res_statement = (
-                                f"UPDATE resources SET {resource}={resource}"
-                                + "+%s WHERE id=%s"
+                            # Update resources_map cache for batch write later
+                            current_val = resources_map.get(user_id, {}).get(
+                                resource, 0
                             )
+                            resources_map[user_id][resource] = current_val + amount
                             log_verbose(
                                 f"S | PLUS | USER: {user_id} | PROVINCE: {province_id} | {unit} ({unit_amount}) | ADDING | {resource} | {amount}"
-                            )
-                            db.execute(
-                                upd_res_statement,
-                                (
-                                    amount,
-                                    user_id,
-                                ),
                             )
 
                     # Function for completing an effect (adding pollution, etc)
                     def do_effect(eff, eff_amount, sign):
-                        # TODO: one query for all this
-                        effect_select = f"SELECT {eff} FROM provinces " + "WHERE id=%s"
-                        db.execute(effect_select, (province_id,))
-                        current_effect = db.fetchone()[0]
+                        # Use preloaded province data instead of per-building SELECT
+                        prov_data = provinces_data.get(province_id, {})
+                        current_effect = prov_data.get(eff, 0)
 
                         ### GOVERNMENT REGULATION
                         if (
                             unit_category == "retail"
-                            and upgrades["governmentregulation"]
+                            and upgrades.get("governmentregulation")
                             and eff == "pollution"
                             and sign == "+"
                         ):
@@ -929,8 +1080,9 @@ def generate_province_revenue():  # Runs each hour
                             if new_effect < 0:
                                 new_effect = 0
 
-                        eff_update = f"UPDATE provinces SET {eff}" + "=%s WHERE id=%s"
-                        db.execute(eff_update, (new_effect, province_id))
+                        # Update local cache for batch write later
+                        if province_id in provinces_data:
+                            provinces_data[province_id][eff] = new_effect
 
                     for effect, amount in eff.items():
                         amount *= unit_amount
@@ -941,22 +1093,26 @@ def generate_province_revenue():  # Runs each hour
                         do_effect(effect, amount, "-")
 
                     if 5 in policies:
-                        # Clamp to [0, 100] and avoid integer overflow during cast
-                        db.execute(
-                            "UPDATE provinces SET productivity = LEAST(100, GREATEST(0, ROUND(productivity * 0.91))) WHERE id=%s",
-                            (province_id,),
-                        )
+                        # Update local cache instead of per-building UPDATE
+                        prov_data = provinces_data.get(province_id, {})
+                        current_prod = prov_data.get("productivity", 50)
+                        new_prod = max(0, min(100, round(current_prod * 0.91)))
+                        if province_id in provinces_data:
+                            provinces_data[province_id]["productivity"] = new_prod
                     if 4 in policies:
-                        # Clamp to [0, 100] and avoid integer overflow during cast
-                        db.execute(
-                            "UPDATE provinces SET productivity = LEAST(100, GREATEST(0, ROUND(productivity * 1.05))) WHERE id=%s",
-                            (province_id,),
-                        )
+                        # Update local cache instead of per-building UPDATE
+                        prov_data = provinces_data.get(province_id, {})
+                        current_prod = prov_data.get("productivity", 50)
+                        new_prod = max(0, min(100, round(current_prod * 1.05)))
+                        if province_id in provinces_data:
+                            provinces_data[province_id]["productivity"] = new_prod
                     if 2 in policies:
-                        db.execute(
-                            "UPDATE provinces SET happiness=happiness*0.89 WHERE id=%s",
-                            (province_id,),
-                        )
+                        # Update local cache instead of per-building UPDATE
+                        prov_data = provinces_data.get(province_id, {})
+                        current_hap = prov_data.get("happiness", 50)
+                        new_hap = round(current_hap * 0.89)
+                        if province_id in provinces_data:
+                            provinces_data[province_id]["happiness"] = new_hap
 
                 except Exception as e:
                     conn.rollback()
@@ -965,23 +1121,108 @@ def generate_province_revenue():  # Runs each hour
 
             processed += 1
 
-            # Final safeguard: clamp all percentage-based fields to [0,100] after all effects
-            try:
-                db.execute(
-                    """
-                    UPDATE provinces
-                    SET
-                        happiness = LEAST(100, GREATEST(0, happiness)),
-                        productivity = LEAST(100, GREATEST(0, productivity)),
-                        pollution = LEAST(100, GREATEST(0, pollution)),
-                        consumer_spending = LEAST(100, GREATEST(0, consumer_spending))
-                    WHERE userId = %s
+        # ============ BATCH WRITE ALL ACCUMULATED CHANGES ============
+        # Write all gold deductions in batch
+        try:
+            if gold_deductions:
+                gold_updates = [
+                    (amount, user_id)
+                    for user_id, amount in gold_deductions.items()
+                    if amount > 0
+                ]
+                if gold_updates:
+                    execute_batch(
+                        db,
+                        "UPDATE stats SET gold = gold - %s WHERE id = %s",
+                        gold_updates,
+                        page_size=100,
+                    )
+                    log_verbose(f"Batch updated gold for {len(gold_updates)} users")
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
+
+        # Write all province changes in batch (happiness, productivity, pollution, consumer_spending, energy, rations)
+        try:
+            if provinces_data:
+                province_updates = []
+                for pid, data in provinces_data.items():
+                    province_updates.append(
+                        (
+                            min(100, max(0, data.get("happiness", 50))),
+                            min(100, max(0, data.get("productivity", 50))),
+                            min(100, max(0, data.get("pollution", 0))),
+                            min(100, max(0, data.get("consumer_spending", 50))),
+                            data.get("energy", 0),
+                            max(0, data.get("rations", 0)),
+                            pid,
+                        )
+                    )
+                if province_updates:
+                    execute_batch(
+                        db,
+                        """
+                        UPDATE provinces SET
+                            happiness = %s,
+                            productivity = %s,
+                            pollution = %s,
+                            consumer_spending = %s,
+                            energy = %s,
+                            rations = %s
+                        WHERE id = %s
                     """,
-                    (user_id,),
-                )
-            except Exception as e:
-                conn.rollback()
-                handle_exception(e)
+                        province_updates,
+                        page_size=100,
+                    )
+                    log_verbose(f"Batch updated {len(province_updates)} provinces")
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
+
+        # Write all resource changes in batch
+        try:
+            if resources_map:
+                # Get list of resource columns we need to update
+                resource_columns = [
+                    "iron",
+                    "steel",
+                    "oil",
+                    "lead",
+                    "bauxite",
+                    "gasoline",
+                    "aluminum",
+                    "rations",
+                    "munitions",
+                    "components",
+                    "consumer_goods",
+                ]
+                for user_id, res_data in resources_map.items():
+                    # Build dynamic update for each user with their resource values
+                    set_clauses = []
+                    values = []
+                    for col in resource_columns:
+                        if col in res_data:
+                            set_clauses.append(f"{col} = %s")
+                            values.append(
+                                max(0, res_data[col])
+                            )  # Ensure no negative values
+                    if set_clauses and values:
+                        values.append(user_id)
+                        db.execute(
+                            f"UPDATE resources SET {', '.join(set_clauses)} WHERE id = %s",
+                            values,
+                        )
+                log_verbose(f"Batch updated resources for {len(resources_map)} users")
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
+
+        # Final commit
+        try:
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
 
         duration = time.time() - start_time
         print(
@@ -1119,33 +1360,68 @@ def task_war_reparation_tax():
 
 @celery.task()
 def task_manpower_increase():
-    from database import get_db_cursor
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch, RealDictCursor
 
-    with get_db_cursor() as db:
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
+
         db.execute("SELECT id FROM users")
-        user_ids = db.fetchall()
-        for id in user_ids:
-            db.execute(
-                "SELECT SUM(population) FROM provinces WHERE userid=(%s)", (id[0],)
+        user_ids = [row[0] for row in db.fetchall()]
+
+        if not user_ids:
+            return
+
+        # Bulk load population totals per user
+        pop_map = {}
+        dbdict.execute(
+            """
+            SELECT userid, SUM(population) as total_pop
+            FROM provinces
+            WHERE userid = ANY(%s)
+            GROUP BY userid
+        """,
+            (user_ids,),
+        )
+        for row in dbdict.fetchall():
+            pop_map[row["userid"]] = row["total_pop"]
+
+        # Bulk load current manpower
+        manpower_map = {}
+        dbdict.execute(
+            "SELECT id, manpower FROM military WHERE id = ANY(%s)", (user_ids,)
+        )
+        for row in dbdict.fetchall():
+            manpower_map[row["id"]] = row["manpower"]
+
+        # Prepare batch updates
+        manpower_updates = []
+        for user_id in user_ids:
+            population = pop_map.get(user_id)
+            if not population:
+                continue
+
+            capable_population = population * 0.2
+            army_tradition = 0.5  # Increased for faster regeneration
+            produced_manpower = int(capable_population * army_tradition)
+
+            manpower = manpower_map.get(user_id, 0)
+            if manpower + produced_manpower >= population:
+                produced_manpower = 0
+
+            if produced_manpower > 0:
+                manpower_updates.append((produced_manpower, user_id))
+
+        # Batch update all manpower at once
+        if manpower_updates:
+            execute_batch(
+                db,
+                "UPDATE military SET manpower=manpower+%s WHERE id=%s",
+                manpower_updates,
+                page_size=100,
             )
-            population = db.fetchone()[0]
-            if population:
-                capable_population = population * 0.2
-
-                # Currently this is a constant
-                army_tradition = 0.5  # Increased for faster regeneration
-                produced_manpower = int(capable_population * army_tradition)
-
-                db.execute("SELECT manpower FROM military WHERE id=(%s)", (id[0],))
-                manpower = db.fetchone()[0]
-
-                if manpower + produced_manpower >= population:
-                    produced_manpower = 0
-
-                db.execute(
-                    "UPDATE military SET manpower=manpower+(%s) WHERE id=(%s)",
-                    (produced_manpower, id[0]),
-                )
+        conn.commit()
 
 
 def backfill_missing_resources():
