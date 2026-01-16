@@ -165,6 +165,9 @@ class DatabasePool:
                     password=os.getenv("PG_PASSWORD"),
                     host=os.getenv("PG_HOST"),
                     port=os.getenv("PG_PORT"),
+                    # Connection timeout settings to prevent hanging
+                    connect_timeout=10,  # 10 seconds to establish connection
+                    options="-c statement_timeout=30000",  # 30 second query timeout
                 )
                 # Create a queue to track available slots with timeout support
                 self._available = queue.Queue(maxsize=maxconn)
