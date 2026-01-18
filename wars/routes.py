@@ -313,43 +313,43 @@ def send_peace_offer(war_id, enemy_id):
 @login_required
 def war_with_id(war_id):
     with get_db_cursor() as db:
-        db.execute("SELECT * FROM wars WHERE id=(%s) AND peace_date IS NULL", (war_id,))
-        valid_war = db.fetchone()
-        if not valid_war:
+        # Single query to get all war data
+        db.execute(
+            """SELECT id, attacker, defender, war_type, agressor_message, peace_date,
+                      attacker_supplies, attacker_morale, defender_supplies, defender_morale
+               FROM wars WHERE id=(%s)""",
+            (war_id,)
+        )
+        war = db.fetchone()
+        if not war:
             return error(404, "This war doesn't exist")
-        db.execute("SELECT peace_date FROM wars WHERE id=(%s)", (war_id,))
-        peace_made = db.fetchone()[0]
-        if peace_made:
+        
+        # Unpack war data (tuple access by position)
+        (war_id_db, attacker, defender, war_type, agressor_message, peace_date,
+         attacker_supplies, attacker_morale, defender_supplies, defender_morale) = war
+        
+        if peace_date:
             return "This war already ended"
+        
         cId = session["user_id"]
-        db.execute("SELECT defender FROM wars WHERE id=(%s)", (war_id,))
-        defender = db.fetchone()[0]
-        db.execute("SELECT username FROM users WHERE id=(%s)", (defender,))
-        defender_name = db.fetchone()[0]
+        
+        # Single query to get both usernames
         db.execute(
-            "SELECT defender_supplies,defender_morale FROM wars WHERE id=(%s)",
-            (war_id,),
+            "SELECT id, username FROM users WHERE id IN (%s, %s)",
+            (attacker, defender)
         )
-        info = db.fetchone()
-        defender_info = {"morale": info[1], "supplies": info[0]}
-        db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-        attacker = db.fetchone()[0]
-        db.execute("SELECT username FROM users WHERE id=(%s)", (attacker,))
-        attacker_name = db.fetchone()[0]
-        db.execute(
-            "SELECT attacker_supplies,attacker_morale FROM wars WHERE id=(%s)",
-            (war_id,),
-        )
-        info = db.fetchone()
-        attacker_info = {"morale": info[1], "supplies": info[0]}
+        user_rows = db.fetchall()
+        usernames = {row[0]: row[1] for row in user_rows}
+        attacker_name = usernames.get(attacker, "Unknown")
+        defender_name = usernames.get(defender, "Unknown")
+        
+        defender_info = {"morale": defender_morale, "supplies": defender_supplies}
+        attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies}
+        
         if attacker == cId:
             enemy_id = defender
         else:
             enemy_id = attacker
-        db.execute("SELECT war_type FROM wars WHERE id=(%s)", (war_id,))
-        war_type = db.fetchone()[0]
-        db.execute("SELECT agressor_message FROM wars WHERE id=(%s)", (war_id,))
-        agressor_message = db.fetchone()[0]
         if cId == attacker:
             session["enemy_id"] = defender
         else:
@@ -363,7 +363,8 @@ def war_with_id(war_id):
         if cId_type == "spectator":
             return error(400, "You can't view this war")
         db.execute("SELECT spies FROM military WHERE id=(%s)", (cId,))
-        spyCount = db.fetchone()[0]
+        spy_result = db.fetchone()
+        spyCount = spy_result[0] if spy_result else 0
         spyPrep = 1
         eSpyCount = 0
         eDefcon = 1
