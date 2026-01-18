@@ -610,7 +610,6 @@ if __name__ == "__main__":
             selected_units_list=["tanks", "soldiers", "artillery"],
         )
 
-        print(Military.fight(attack_units, defender_units))
 
         db.execute(f"DELETE FROM wars WHERE id={war_id}")
         connection.commit()

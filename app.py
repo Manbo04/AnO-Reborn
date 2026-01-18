@@ -410,7 +410,6 @@ def prores(unit):
 
     renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
 
-    print(unit)
     unit_name = unit.replace("_", " ").capitalize()
     if unit_name == "Coal burners":
         unit_name = "Coal power plants"

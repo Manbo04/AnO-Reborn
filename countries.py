@@ -615,7 +615,6 @@ def update_info():
         bg_flag = request.files["bg_flag_input"]
         if bg_flag and allowed_file(bg_flag.filename):
 
-            print("bg flag")
 
             # Check if the user already has a flag
             try:
