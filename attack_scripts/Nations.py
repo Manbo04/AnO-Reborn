@@ -75,8 +75,6 @@ class Economy:
 
         resource_dict = {}
 
-        print(resources)
-
         try:
             for resource in resources:
                 if resource == "money":
@@ -88,13 +86,10 @@ class Economy:
                     resource_dict[resource] = db.fetchone()[0]
         except Exception as e:
             # TODO ERROR HANDLER OR RETURN THE ERROR AS A VAlUE
-            print(e)
-            print("INVALID RESOURCE NAME")
             # Return an empty dict to avoid downstream attribute errors and allow
             # the caller to handle invalid resources explicitly.
             return {}
 
-        print(resource_dict)
         return resource_dict
 
     def __getattr__(self, name):
@@ -305,8 +300,6 @@ class Nation:
     # set the peace_date in wars table for a particular war
     @staticmethod
     def set_peace(db, connection, war_id=None, options=None):
-        print("Setting war peace")
-        print(war_id, options)
         if war_id is not None:
             db.execute(
                 "UPDATE wars SET peace_date=(%s) WHERE id=(%s)", (time.time(), war_id)
@@ -469,14 +462,10 @@ class Military(Nation):
         # if winner_remaining_morale_effect
         tax_rate = 0.2 * winner_remaining_morale
 
-        print(
-            db.execute(
-                "INSERT INTO reparation_tax (winner,loser,percentage,until) VALUES (%s,%s,%s,%s)",
-                (winners[0], losers[0], tax_rate, time.time() + 5000),
-            )
+        db.execute(
+            "INSERT INTO reparation_tax (winner,loser,percentage,until) VALUES (%s,%s,%s,%s)",
+            (winners[0], losers[0], tax_rate, time.time() + 5000),
         )
-        print(winner_remaining_morale, tax_rate)
-
         connection.commit()
 
     # Update the morale and give back the win type name
