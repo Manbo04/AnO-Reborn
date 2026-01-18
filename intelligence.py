@@ -248,18 +248,20 @@ def spyResult():
                     + " WHERE id=%s"
                 )
                 db.execute(uncover_statement, (eId,))
-                objects = db.fetchall()[0]
+                results = db.fetchall()
+                if results:
+                    objects = results[0]
 
-                update_objects = []
-                for res, amo in zip(uncovered_objects, objects):
-                    update_objects.append(f"{res}={amo}")
-                update_objects_string = ", ".join(update_objects)
+                    update_objects = []
+                    for res, amo in zip(uncovered_objects, objects):
+                        update_objects.append(f"{res}={amo}")
+                    update_objects_string = ", ".join(update_objects)
 
-                if len(update_objects) > 0:
-                    spyinfo_update = (
-                        f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
-                    )
-                    db.execute(spyinfo_update, (operation_id,))
+                    if len(update_objects) > 0:
+                        spyinfo_update = (
+                            f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
+                        )
+                        db.execute(spyinfo_update, (operation_id,))
 
             db.execute(
                 "UPDATE military SET spies=spies-%s WHERE id=%s", (executed_spies, cId)
