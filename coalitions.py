@@ -423,75 +423,82 @@ def establish_coalition():
 
 # Route for viewing all existing coalitions
 def coalitions():
+    """Coalition rankings page - optimized single query"""
     with get_db_cursor() as db:
         search = request.values.get("search")
         sort = request.values.get("sort")
         sortway = request.values.get("sortway")
 
+        # Single optimized query: get all coalition data with pre-calculated influence
+        # This replaces N+1 queries (one per coalition) with a single query
         db.execute(
-            """SELECT colNames.id, colNames.type, colNames.name, COUNT(coalitions.userId) AS members, date
-FROM colNames
-INNER JOIN coalitions
-ON colNames.id=coalitions.colId
-GROUP BY colNames.id;
-"""
+            """
+            SELECT 
+                c.id,
+                c.type,
+                c.name,
+                c.flag,
+                COUNT(DISTINCT coal.userId) AS members,
+                c.date,
+                COALESCE(SUM(
+                    (SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)
+                ), 0) AS total_influence
+            FROM colNames c
+            INNER JOIN coalitions coal ON c.id = coal.colId
+            GROUP BY c.id, c.type, c.name, c.flag, c.date
+            """
         )
         coalitionsDb = db.fetchall()
 
-        coalitions = []
-        for col in coalitionsDb:
-            col = list(col)
-            addCoalition = True
-            col_id = col[0]
-            col_type = col[1]
-            name = col[2]
-            col_date = col[4]
-
-            influence = get_coalition_influence(col_id)
-            col.append(influence)
-
-            try:
-                date = datetime.datetime.fromisoformat(col_date)
-                unix = int((date - datetime.datetime(1970, 1, 1)).total_seconds())
-            except (ValueError, TypeError):
-                unix = 0  # Default to epoch if date is invalid
-            col.append(unix)
-
-            if search and search not in name:
-                addCoalition = False
-
+        coalitions_list = []
+        for row in coalitionsDb:
+            col_id, col_type, name, flag, members, col_date, influence = row
+            
+            # Apply search filter
+            if search and search.lower() not in name.lower():
+                continue
+                
+            # Apply type filter
             if sort == "invite_only" and col_type == "Open":
-                addCoalition = False
+                continue
             if sort == "open" and col_type == "Invite Only":
-                addCoalition = False
+                continue
 
-            if addCoalition:
-                coalitions.append(col)
+            # Calculate unix timestamp for age sorting
+            try:
+                date_obj = datetime.datetime.fromisoformat(str(col_date))
+                unix = int((date_obj - datetime.datetime(1970, 1, 1)).total_seconds())
+            except (ValueError, TypeError):
+                unix = 0
 
-        reverse = False
-        # Default to influence descending if no sort specified
-        if not sort:
-            sort = "influence"
-            sortway = "desc"
-        elif sort in [
-            "open",
-            "invite_only",
-        ]:  # Also default to influence for filter-only sorts
+            coalitions_list.append({
+                'id': col_id,
+                'type': col_type,
+                'name': name,
+                'flag': flag,
+                'members': members,
+                'date': col_date,
+                'influence': influence,
+                'unix': unix
+            })
+
+        # Default sorting
+        if not sort or sort in ["open", "invite_only"]:
             sort = "influence"
             if not sortway:
                 sortway = "desc"
 
-        if sortway == "desc":
-            reverse = True
+        reverse = sortway == "desc"
 
+        # Sort the results
         if sort == "influence":
-            coalitions = sorted(coalitions, key=itemgetter(5), reverse=reverse)
+            coalitions_list.sort(key=lambda x: x['influence'], reverse=reverse)
         elif sort == "members":
-            coalitions = sorted(coalitions, key=itemgetter(3), reverse=reverse)
+            coalitions_list.sort(key=lambda x: x['members'], reverse=reverse)
         elif sort == "age":
-            coalitions = sorted(coalitions, key=itemgetter(6), reverse=not reverse)
+            coalitions_list.sort(key=lambda x: x['unix'], reverse=not reverse)
 
-        return render_template("coalitions.html", coalitions=coalitions)
+        return render_template("coalitions.html", coalitions=coalitions_list)
 
 
 # Route for joining a coalition
