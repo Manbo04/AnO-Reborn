@@ -605,13 +605,12 @@ def update_info():
             if allowed_file(current_filename):
                 from flask import current_app
                 from database import query_cache
-                import base64
+                from helpers import compress_flag_image
 
-                extension = current_filename.rsplit(".", 1)[1].lower()
-                filename = f"flag_{cId}" + "." + extension
+                # Compress and resize flag for fast storage/retrieval
+                flag_data, extension = compress_flag_image(flag, max_size=300, quality=85)
+                filename = f"flag_{cId}.{extension}"
 
-                # Read file data and encode to base64 for database storage
-                flag_data = base64.b64encode(flag.read()).decode("utf-8")
                 db.execute(
                     "UPDATE users SET flag=(%s), flag_data=(%s) WHERE id=(%s)",
                     (filename, flag_data, cId),

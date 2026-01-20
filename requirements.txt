@@ -14,3 +14,4 @@ Flask-Markdown==0.3
 gunicorn==20.1.0
 redis==4.5.1
 Flask-Compress==1.13
+Pillow>=10.0.0
