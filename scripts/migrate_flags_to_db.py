@@ -11,46 +11,45 @@ import base64
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import get_connection
+from database import get_db_connection
 
 
 def migrate():
     """Add flag_data columns to users and colNames tables"""
-    conn = get_connection()
-    cur = conn.cursor()
+    with get_db_connection() as conn:
+        cur = conn.cursor()
 
-    try:
-        # Add flag_data column to users table (for country flags)
-        print("Adding flag_data column to users table...")
-        cur.execute(
+        try:
+            # Add flag_data column to users table (for country flags)
+            print("Adding flag_data column to users table...")
+            cur.execute(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS flag_data TEXT;
             """
-            ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS flag_data TEXT;
-        """
-        )
+            )
 
-        # Add flag_data column to colNames table (for coalition flags)
-        print("Adding flag_data column to colNames table...")
-        cur.execute(
+            # Add flag_data column to colNames table (for coalition flags)
+            print("Adding flag_data column to colNames table...")
+            cur.execute(
+                """
+                ALTER TABLE colNames
+                ADD COLUMN IF NOT EXISTS flag_data TEXT;
             """
-            ALTER TABLE colNames
-            ADD COLUMN IF NOT EXISTS flag_data TEXT;
-        """
-        )
+            )
 
-        conn.commit()
-        print("✓ Migration complete! flag_data columns added.")
+            conn.commit()
+            print("✓ Migration complete! flag_data columns added.")
 
-        # Try to migrate existing local files to database
-        migrate_existing_flags(cur, conn)
+            # Try to migrate existing local files to database
+            migrate_existing_flags(cur, conn)
 
-    except Exception as e:
-        conn.rollback()
-        print(f"✗ Error during migration: {e}")
-        raise
-    finally:
-        cur.close()
-        conn.close()
+        except Exception as e:
+            conn.rollback()
+            print(f"✗ Error during migration: {e}")
+            raise
+        finally:
+            cur.close()
 
 
 def migrate_existing_flags(cur, conn):
