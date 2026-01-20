@@ -713,8 +713,8 @@ def update_col_info(colId):
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
-    flag = request.files["flag_input"]
-    if flag:
+    flag = request.files.get("flag_input")
+    if flag and flag.filename:  # Check both file exists AND has a filename
         if allowed_file(flag.filename):
             # Check if the user already has a flag
             with get_db_cursor() as db:
@@ -739,6 +739,10 @@ def update_col_info(colId):
                 db.execute(
                     "UPDATE colNames SET flag=(%s) WHERE id=(%s)", (filename, colId)
                 )
+
+            # Invalidate coalition influence cache so flag changes show
+            from database import query_cache
+            query_cache.invalidate(f"coalition_influence_{colId}")
         else:
             return error(400, "File format not supported")
 
