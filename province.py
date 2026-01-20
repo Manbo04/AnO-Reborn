@@ -1,9 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
 from dotenv import load_dotenv
-import os
 import variables
-from tasks import energy_info
 from helpers import get_date
 from upgrades import get_upgrades
 from database import get_db_cursor, cache_response
@@ -35,50 +33,58 @@ def provinces():
 @login_required
 @cache_response(ttl_seconds=15)  # Short cache for province page (updates frequently)
 def province(pId):
-    with get_db_cursor() as db:
-        cId = session["user_id"]
+    from psycopg2.extras import RealDictCursor
+    from database import get_db_connection
 
-        upgrades = get_upgrades(cId)
+    cId = session["user_id"]
 
-        # Object under which the data about a province is stored
+    # OPTIMIZED: Single query to fetch province + infrastructure + resources + stats + upgrades
+    with get_db_connection() as conn:
+        db = conn.cursor(cursor_factory=RealDictCursor)
 
-        try:
-            db.execute(
-                """SELECT id, userId AS user, provinceName AS name, population, pollution, happiness, productivity,
-            consumer_spending, CAST(citycount AS INTEGER) as citycount, land, energy AS electricity FROM provinces WHERE id=(%s)""",
-                (pId,),
-            )
-            province_data = db.fetchone()
-            province = {}
-            columns = [
-                "id",
-                "user",
-                "name",
-                "population",
-                "pollution",
-                "happiness",
-                "productivity",
-                "consumer_spending",
-                "citycount",
-                "land",
-                "electricity",
-            ]
-            for i, col in enumerate(columns):
-                province[col] = province_data[i]
-        except (TypeError, IndexError):
+        # Combined query - reduces 7+ queries to 1
+        db.execute(
+            """
+            SELECT
+                p.id, p.userId AS user, p.provinceName AS name, p.population, p.pollution,
+                p.happiness, p.productivity, p.consumer_spending,
+                CAST(p.citycount AS INTEGER) as citycount, p.land, p.energy AS electricity,
+                s.location,
+                r.consumer_goods, r.rations,
+                pi.*
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            LEFT JOIN resources r ON p.userId = r.id
+            LEFT JOIN proInfra pi ON p.id = pi.id
+            WHERE p.id = %s
+            """,
+            (pId,),
+        )
+        result = db.fetchone()
+
+        if not result:
             return error(404, "Province doesn't exist")
 
-        db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
-        location_data = db.fetchone()
-        province["location"] = location_data[0] if location_data else None
+        # Convert to dict for template
+        result = dict(result)
 
-        province["free_cityCount"] = province["citycount"] - get_free_slots(pId, "city")
-        province["free_land"] = province["land"] - get_free_slots(pId, "land")
-        province["own"] = province["user"] == cId
+        # Build province dict from result
+        province = {
+            "id": result["id"],
+            "user": result["user"],
+            "name": result["name"],
+            "population": result["population"],
+            "pollution": result["pollution"],
+            "happiness": result["happiness"],
+            "productivity": result["productivity"],
+            "consumer_spending": result["consumer_spending"],
+            "citycount": result["citycount"],
+            "land": result["land"],
+            "electricity": result["electricity"],
+            "location": result["location"],
+        }
 
-        # Selects values for province buildings from the database and assigns them to vars
-        db.execute("""SELECT * FROM proInfra WHERE id=%s""", (pId,))
-        proinfra_data = db.fetchone()
+        # Build units dict from proInfra columns
         proinfra_columns = [
             "id",
             "coal_burners",
@@ -116,33 +122,81 @@ def province(pId):
             "aluminium_refineries",
             "oil_refineries",
         ]
-        units = dict(zip(proinfra_columns, proinfra_data))
+        units = {col: result.get(col, 0) for col in proinfra_columns}
 
-        def has_enough_cg(user_id):
-            db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
-            consumer_goods_data = db.fetchone()
-            consumer_goods = consumer_goods_data[0] if consumer_goods_data else 0
-            max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
-            return consumer_goods >= max_cg
+        # Calculate free slots in-memory (no extra queries)
+        city_buildings = [
+            "coal_burners",
+            "oil_burners",
+            "hydro_dams",
+            "nuclear_reactors",
+            "solar_fields",
+            "gas_stations",
+            "general_stores",
+            "farmers_markets",
+            "malls",
+            "banks",
+            "city_parks",
+            "hospitals",
+            "libraries",
+            "universities",
+            "monorails",
+        ]
+        land_buildings = [
+            "army_bases",
+            "harbours",
+            "aerodomes",
+            "admin_buildings",
+            "silos",
+            "farms",
+            "pumpjacks",
+            "coal_mines",
+            "bauxite_mines",
+            "copper_mines",
+            "uranium_mines",
+            "lead_mines",
+            "iron_mines",
+            "lumber_mills",
+            "component_factories",
+            "steel_mills",
+            "ammunition_factories",
+            "aluminium_refineries",
+            "oil_refineries",
+        ]
 
-        enough_consumer_goods = has_enough_cg(province["user"])
+        used_city_slots = sum(units.get(b, 0) or 0 for b in city_buildings)
+        used_land_slots = sum(units.get(b, 0) or 0 for b in land_buildings)
 
-        def has_enough_rations(user_id):
-            db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-            rations_data = db.fetchone()
-            rations = rations_data[0] if rations_data else 0
-            rations_minus = province["population"] // variables.RATIONS_PER
-            return rations - rations_minus > 1
+        province["free_cityCount"] = province["citycount"] - used_city_slots
+        province["free_land"] = province["land"] - used_land_slots
+        province["own"] = province["user"] == cId
 
-        enough_rations = has_enough_rations(province["user"])
+        # Check consumer goods and rations from already-fetched data
+        consumer_goods = result.get("consumer_goods", 0) or 0
+        rations = result.get("rations", 0) or 0
 
-        # Fetch energy info once and reuse for both display and power check
-        energy_consumption, energy_production = energy_info(pId)
+        max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
+        enough_consumer_goods = consumer_goods >= max_cg
+
+        rations_minus = province["population"] // variables.RATIONS_PER
+        enough_rations = rations - rations_minus > 1
+
+        # Calculate energy in-memory from proInfra data
+        consumers = variables.ENERGY_CONSUMERS
+        producers = variables.ENERGY_UNITS
+        new_infra = variables.NEW_INFRA
+
+        energy_consumption = sum(units.get(c, 0) or 0 for c in consumers)
+        energy_production = sum(
+            (units.get(p, 0) or 0) * new_infra[p]["plus"]["energy"] for p in producers
+        )
         energy = {"consumption": energy_consumption, "production": energy_production}
         has_power = energy_production >= energy_consumption
 
+        # Get upgrades (single query, already cached in get_upgrades)
+        upgrades = get_upgrades(cId)
+
         infra = variables.INFRA
-        new_infra = variables.NEW_INFRA
         prices = variables.PROVINCE_UNIT_PRICES
 
         return render_template(
