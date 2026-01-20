@@ -98,21 +98,24 @@ def spyAmount():
 
     # make the spy entry here
     if request.method == "POST":
-        prep = request.form.get("prep")
-        spies = request.form.get("amount")
+        prep = int(request.form.get("prep", 1) or 1)
+        spies = int(request.form.get("amount", 1) or 1)
         eId = request.form.get("enemy")
 
         with get_db_cursor() as db:
             db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
-            eDefcon = db.fetchone()[0]
+            defcon_result = db.fetchone()
+            eDefcon = defcon_result[0] if defcon_result and defcon_result[0] else 1
 
             db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
-            eSpies = db.fetchone()[0]
+            spies_result = db.fetchone()
+            eSpies = spies_result[0] if spies_result and spies_result[0] else 1
 
         # calculate what values have been revealed based on prep, amount, edefcon, espies
         resources = variables.RESOURCES
 
-        revealChance = prep * spies / (eDefcon * eSpies)
+        # Prevent division by zero - use max(1, ...) to ensure positive denominator
+        revealChance = (prep * spies) / max(1, eDefcon * eSpies)
         spyEntry = {}
         for unit in Military.allUnits:
             if random() * revealChance > 0.5:

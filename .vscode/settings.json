@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^source venv310/bin/activate && python -c \"from app import app; app\\.config\\['TESTING'\\] = True; client = app\\.test_client\\(\\); response = client\\.get\\('/static/images/soldier\\.jpg'\\); print\\('Status:', response\\.status_code\\); print\\('Content-Type:', response\\.content_type\\); print\\('Content-Length:', len\\(response\\.data\\)\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
