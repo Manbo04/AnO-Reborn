@@ -731,14 +731,11 @@ def update_col_info(colId):
                     pass
 
             # Save the file to database for persistent storage
-            import base64
+            from helpers import compress_flag_image
 
-            current_filename = flag.filename
-            extension = current_filename.rsplit(".", 1)[1].lower()
-            filename = f"col_flag_{colId}" + "." + extension
-
-            # Read file data and encode to base64 for database storage
-            flag_data = base64.b64encode(flag.read()).decode("utf-8")
+            # Compress and resize flag for fast storage/retrieval
+            flag_data, extension = compress_flag_image(flag, max_size=300, quality=85)
+            filename = f"col_flag_{colId}.{extension}"
 
             with get_db_cursor() as db:
                 db.execute(
