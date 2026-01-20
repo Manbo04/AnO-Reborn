@@ -601,16 +601,26 @@ def update_info():
             except (OSError, TypeError, AttributeError):
                 pass
 
-            # Save the file & shit
+            # Save the file & store in database for persistent storage
             if allowed_file(current_filename):
                 from flask import current_app
                 from database import query_cache
+                import base64
 
                 extension = current_filename.rsplit(".", 1)[1].lower()
                 filename = f"flag_{cId}" + "." + extension
+
+                # Read file data and encode to base64 for database storage
+                flag_data = base64.b64encode(flag.read()).decode("utf-8")
+                db.execute(
+                    "UPDATE users SET flag=(%s), flag_data=(%s) WHERE id=(%s)",
+                    (filename, flag_data, cId),
+                )
+
+                # Also save to filesystem for backward compatibility
+                flag.seek(0)  # Reset file pointer after read
                 new_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 flag.save(new_path)
-                db.execute("UPDATE users SET flag=(%s) WHERE id=(%s)", (filename, cId))
 
                 # Invalidate flag cache so new flag shows immediately
                 query_cache.invalidate(f"flag_{cId}")

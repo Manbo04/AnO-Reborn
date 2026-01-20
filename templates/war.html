@@ -18,7 +18,7 @@
 
                 <!-- cId is the Flask value for your country's Id-->
                 <!--defender nation flag-->
-                <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+defender_flag) }}" />
+                <img tabindex="0" class="unitimage" src="/flag/country/{{ defender }}" />
 
                 <div class="progressbarparent">
                     <div class="progressbarchildtext">{{defender_info["morale"]}} / 100 Morale</div>
@@ -42,7 +42,7 @@
 
                 <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
                 <!--aggressor nation flag-->
-                <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+attacker_flag) }}" />
+                <img tabindex="0" class="unitimage" src="/flag/country/{{ attacker }}" />
 
                 <div class="progressbarparent">
                     <div class="progressbarchildtext">{{attacker_info["morale"]}} / 100 Morale</div>
@@ -67,7 +67,7 @@
 
                 <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
                 <!--aggressor nation flag-->
-                <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+defender_flag) }}" />
+                <img tabindex="0" class="unitimage" src="/flag/country/{{ defender }}" />
 
                 <div class="progressbarparent">
                     <div class="progressbarchildtext">{{attacker_info["morale"]}} / 100 Morale</div>
@@ -90,7 +90,7 @@
             <div class="templatedivflex2left">
 
                 <h2 class="templatecontentheadercenter"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
-                <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+attacker_flag) }}" />
+                <img tabindex="0" class="unitimage" src="/flag/country/{{ attacker }}" />
 
                 <div class="progressbarparent">
                     <div class="progressbarchildtext">{{defender_info["morale"]}} / 100 Morale</div>
