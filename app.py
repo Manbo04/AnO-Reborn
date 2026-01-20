@@ -107,8 +107,9 @@ app.config["SESSION_COOKIE_SECURE"] = (
 def before_request():
     # Track request start time for performance monitoring
     from time import time
+
     request.start_time = time()
-    
+
     # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
     if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
         forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
@@ -154,13 +155,15 @@ if oauth2_secret:
 def add_cache_headers(response):
     # Log slow requests for debugging (only in production)
     from time import time
-    if hasattr(request, 'start_time') and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+
+    if hasattr(request, "start_time") and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
         elapsed = time() - request.start_time
         if elapsed > 2.0:  # Log requests taking more than 2 seconds
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"SLOW REQUEST: {request.path} took {elapsed:.2f}s")
-    
+
     # Cache static assets for 1 month (2592000 seconds)
     if request.path.startswith("/static/"):
         response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
@@ -472,17 +475,17 @@ def formatname(value):
 def get_resources():
     """Get user's resources with short-term caching to avoid repeated DB queries"""
     from database import query_cache
-    
+
     target_user_id = session.get("user_id")
     if not target_user_id:
         return {}
-    
+
     # Check cache first (30 second TTL for resources - they change frequently)
     cache_key = f"resources_{target_user_id}"
     cached = query_cache.get(cache_key)
     if cached is not None:
         return cached
-    
+
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
         try:
             db.execute(
@@ -526,6 +529,61 @@ def index():
 @app.route("/robots.txt")
 def robots():
     return send_from_directory("static", "robots.txt")
+
+
+@app.route("/flag/<flag_type>/<int:flag_id>")
+def serve_flag(flag_type, flag_id):
+    """Serve flag images from database storage (persistent across deployments)"""
+    import base64
+    from flask import Response
+
+    with get_db_cursor() as cur:
+        if flag_type == "country":
+            cur.execute("SELECT flag_data FROM users WHERE id = %s", (flag_id,))
+        elif flag_type == "coalition":
+            cur.execute("SELECT flag_data FROM colNames WHERE id = %s", (flag_id,))
+        else:
+            return send_from_directory("static/flags", "default_flag.jpg")
+
+        row = cur.fetchone()
+
+        if row and row[0]:
+            try:
+                flag_data = base64.b64decode(row[0])
+                # Detect image type from magic bytes
+                if flag_data[:8] == b"\x89PNG\r\n\x1a\n":
+                    mimetype = "image/png"
+                elif flag_data[:2] == b"\xff\xd8":
+                    mimetype = "image/jpeg"
+                elif flag_data[:6] in (b"GIF87a", b"GIF89a"):
+                    mimetype = "image/gif"
+                else:
+                    mimetype = "image/png"
+
+                response = Response(flag_data, mimetype=mimetype)
+                response.headers[
+                    "Cache-Control"
+                ] = "public, max-age=3600"  # Cache 1 hour
+                return response
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).error(f"Error decoding flag: {e}")
+
+        # Fall back to file system (for backward compatibility)
+        if flag_type == "country":
+            cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
+        else:
+            cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
+
+        row = cur.fetchone()
+        if row and row[0]:
+            try:
+                return send_from_directory("static/flags", row[0])
+            except:
+                pass
+
+        return send_from_directory("static/flags", "default_flag.jpg")
 
 
 @app.route("/account", methods=["GET"])
