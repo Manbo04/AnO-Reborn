@@ -41,11 +41,15 @@ def login():
         with get_db_cursor() as db:
             # selects data about user, from users
             db.execute(
-                "SELECT * FROM users WHERE username=(%s) AND auth_type='normal'",
+                "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
                 (username,),
             )
             user = db.fetchone()
             logger.debug(f"DB user row fetched for username={username}: {bool(user)}")
+
+            if not user:
+                logger.debug("User not found")
+                return error(403, "Wrong password or user doesn't exist")
 
             try:
                 hashed_pw = user[4].encode("utf-8")
@@ -56,6 +60,13 @@ def login():
 
             # checks if user exists and if the password is correct
             if bcrypt.checkpw(password, hashed_pw):
+                # Check if email is verified
+                is_verified = user[8] if len(user) > 8 else True  # Default True for old users
+                if is_verified is False:
+                    # Get the email for resend
+                    user_email = user[2] if user[2] else ''
+                    return redirect(f'/verification_pending?email={user_email}')
+                
                 logger.debug("Password matches, logging in user.")
                 # sets session's user_id to current user's id
                 session["user_id"] = user[0]
@@ -83,8 +94,15 @@ def login():
                 return error(400, "Wrong password")
 
     else:
+        # Check for verification message parameter
+        message = request.args.get('message', '')
+        verification_message = None
+        if message == 'verified':
+            verification_message = "Email verified successfully! You can now login."
+        elif message == 'already_verified':
+            verification_message = "Your email is already verified. Please login."
         # renders login.html when "/login" is acessed via get
-        return render_template("login.html")
+        return render_template("login.html", verification_message=verification_message)
 
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
