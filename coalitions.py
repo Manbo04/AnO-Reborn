@@ -25,26 +25,24 @@ def coalition(colId):
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        try:
-            db.execute(
-                "SELECT name, type, description FROM colNames WHERE id=(%s)", (colId,)
-            )
-            result = db.fetchone()
-            if not result:
-                return error(404, "This coalition doesn't exist")
-            name, colType, description = result
-        except (TypeError, AttributeError, IndexError):
+        # OPTIMIZATION: Single query for basic coalition info + member count + total influence
+        db.execute(
+            """
+            SELECT 
+                c.name, c.type, c.description, c.flag,
+                COUNT(DISTINCT coal.userId) AS members_count,
+                COALESCE(SUM((SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)), 0) AS total_influence
+            FROM colNames c
+            LEFT JOIN coalitions coal ON c.id = coal.colId
+            WHERE c.id = %s
+            GROUP BY c.id, c.name, c.type, c.description, c.flag
+            """,
+            (colId,),
+        )
+        result = db.fetchone()
+        if not result:
             return error(404, "This coalition doesn't exist")
-
-        try:
-            db.execute(
-                "SELECT COUNT(userId) FROM coalitions WHERE colId=(%s)", (colId,)
-            )
-            members_count = db.fetchone()[0] or 0
-        except (TypeError, AttributeError, IndexError):
-            members_count = 0
-
-        total_influence = get_coalition_influence(colId)
+        name, colType, description, flag, members_count, total_influence = result
         average_influence = total_influence // members_count if members_count > 0 else 0
 
         try:
@@ -276,11 +274,7 @@ def coalition(colId):
         else:
             bankRaw = {}
 
-        try:
-            db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
-            flag = db.fetchone()[0]
-        except (TypeError, IndexError):
-            flag = None
+        # flag already fetched in initial query above
 
         if user_role == "leader" and colType != "Open" and userInCurCol:
             db.execute(
@@ -356,20 +350,18 @@ def coalition(colId):
 
 # Route for establishing a coalition
 def establish_coalition():
+    with get_db_cursor() as db:
+        # Check if user is already in a coalition (for both GET and POST)
+        db.execute(
+            "SELECT colId FROM coalitions WHERE userId=(%s)",
+            (session["user_id"],),
+        )
+        existing = db.fetchone()
+        if existing:
+            return error(403, "You are already in a coalition")
+    
     if request.method == "POST":
         with get_db_cursor() as db:
-            # Checks if a user is already in a coalition
-            try:
-                db.execute(
-                    "SELECT userId FROM coalitions WHERE userId=(%s)",
-                    (session["user_id"],),
-                )
-                db.fetchone()[0]
-
-                return error(403, "You are already in a coalition")
-            except (TypeError, AttributeError):
-                pass
-
             cType = request.form.get("type")
             name = request.form.get("name")
             desc = request.form.get("description")

@@ -838,33 +838,36 @@ def wars():
                     )
                     war_details = {row[0]: row[1:] for row in db.fetchall()}
                     
-                    # Fetch all usernames at once
+                    # Fetch all usernames AND flags at once
                     user_placeholders = ','.join(['%s'] * len(all_user_ids))
                     db.execute(
-                        f"SELECT id, username FROM users WHERE id IN ({user_placeholders})",
+                        f"SELECT id, username, flag FROM users WHERE id IN ({user_placeholders})",
                         tuple(all_user_ids),
                     )
-                    usernames = {row[0]: row[1] for row in db.fetchall()}
+                    user_data = {row[0]: {'name': row[1], 'flag': row[2] or 'default_flag.jpg'} for row in db.fetchall()}
                     
                     for war_id, defender, attacker in war_attacker_defender_ids:
-                        update_supply(war_id)
+                        # NOTE: update_supply moved to background task - don't call during page load
                         attacker_info = {}
                         defender_info = {}
                         
-                        attacker_info["name"] = usernames.get(attacker, "Unknown")
+                        att_data = user_data.get(attacker, {'name': 'Unknown', 'flag': 'default_flag.jpg'})
+                        def_data = user_data.get(defender, {'name': 'Unknown', 'flag': 'default_flag.jpg'})
+                        
+                        attacker_info["name"] = att_data['name']
                         attacker_info["id"] = attacker
+                        attacker_info["flag"] = att_data['flag']
                         
                         details = war_details.get(war_id, (100, 0, 100, 0))
                         attacker_info["morale"] = details[0]
                         attacker_info["supplies"] = details[1]
                         
-                        defender_info["name"] = usernames.get(defender, "Unknown")
+                        defender_info["name"] = def_data['name']
+                        defender_info["id"] = defender
+                        defender_info["flag"] = def_data['flag']
                         defender_info["morale"] = details[2]
                         defender_info["supplies"] = details[3]
-                        defender_info["id"] = defender
                         
-                        attacker_info["flag"] = get_flagname(attacker)
-                        defender_info["flag"] = get_flagname(defender)
                         war_info[war_id] = {"att": attacker_info, "def": defender_info}
             except Exception:
                 war_attacker_defender_ids = []
