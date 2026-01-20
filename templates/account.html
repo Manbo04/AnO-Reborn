@@ -78,11 +78,11 @@
     <h2 class="templatecontentheaderleft">Danger Zone</h2>
 
     <div class="infodiv">
-        <form method="POST">
+        <form method="POST" id="deleteAccountForm">
             <div class="templatedivflex2 menuflex">
                 <div class="templatedivflex2left">
 
-                    <button formaction="/delete_own_account" type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"><span class="material-icons-outlined">
+                    <button type="button" onclick="confirmDeleteAccount()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
                                 cancel
                                 </span>Delete account</button>
 
@@ -90,14 +90,173 @@
 
                 <div class="templatedivflex2left">
 
-                    <a class="templatedivbutton templatecenteredbutton redactionbutton" href="/logout"><span class="material-icons-outlined">
+                    <button type="button" onclick="confirmLogout()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
                             arrow_forward
-                            </span>Log Out</a>
+                            </span>Log Out</button>
 
                 </div>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Delete Account Confirmation Modal -->
+<div id="deleteAccountModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined" style="color: #ff4444;">warning</span> Delete Account</h2>
+        <p>Are you sure you want to <strong>permanently delete</strong> your account?</p>
+        <p style="color: #ff6666;">This action cannot be undone. All your data, including your nation, resources, and progress will be lost forever.</p>
+        <div class="modal-input">
+            <label>Type your country name to confirm: <strong>{{ user.username }}</strong></label>
+            <input type="text" id="deleteConfirmInput" placeholder="Enter country name" />
+        </div>
+        <div class="modal-buttons">
+            <button onclick="closeDeleteModal()" class="templatedivbutton">Cancel</button>
+            <button onclick="executeDelete()" class="templatedivbutton redactionbutton" id="confirmDeleteBtn" disabled>Delete Forever</button>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined">logout</span> Log Out</h2>
+        <p>Are you sure you want to log out?</p>
+        <div class="modal-buttons">
+            <button onclick="closeLogoutModal()" class="templatedivbutton">Cancel</button>
+            <a href="/logout" class="templatedivbutton redactionbutton">Yes, Log Out</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.modal-content h2 {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-content p {
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+.modal-input {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.modal-input label {
+    display: block;
+    margin-bottom: 8px;
+    color: #aaa;
+}
+
+.modal-input input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background: #0f0f1a;
+    color: #fff;
+    font-size: 14px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.modal-buttons .templatedivbutton {
+    min-width: 120px;
+}
+
+#confirmDeleteBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+const expectedName = "{{ user.username }}";
+
+function confirmDeleteAccount() {
+    document.getElementById('deleteAccountModal').style.display = 'flex';
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteAccountModal').style.display = 'none';
+}
+
+function confirmLogout() {
+    document.getElementById('logoutModal').style.display = 'flex';
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+
+document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = this.value !== expectedName;
+});
+
+function executeDelete() {
+    if (document.getElementById('deleteConfirmInput').value === expectedName) {
+        // Create and submit form to delete account
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/delete_own_account';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Close modals when clicking outside
+document.getElementById('deleteAccountModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+
+document.getElementById('logoutModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLogoutModal();
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+        closeLogoutModal();
+    }
+});
+</script>
 </div>
 {% endblock %}
