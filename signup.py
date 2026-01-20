@@ -586,7 +586,7 @@ def signup():
 
             # Generate verification token
             from email_utils import generate_verification_token, send_verification_email, is_email_configured
-            verification_token = generate_verification_token()
+            verification_token = generate_verification_token(email)
 
             # Inserts the user and his data to the main table for users
             db.execute(
