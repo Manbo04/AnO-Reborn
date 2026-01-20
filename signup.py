@@ -584,27 +584,40 @@ def signup():
             # Hashes the inputted password
             hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
 
-            # Generate verification token
+            # Check if email verification columns exist
             from email_utils import generate_verification_token, send_verification_email, is_email_configured
-            verification_token = generate_verification_token(email)
-
-            # Inserts the user and his data to the main table for users
-            db.execute(
-                "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
-                (username, email, hashed, str(datetime.date.today()), "normal", False, verification_token),
-            )  # creates a new user || added account creation date
+            
+            try:
+                # Try to use email verification if columns exist
+                db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+                has_verification = db.fetchone() is not None
+            except:
+                has_verification = False
+            
+            if has_verification and is_email_configured():
+                # New flow with email verification
+                verification_token = generate_verification_token(email)
+                db.execute(
+                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
+                    (username, email, hashed, str(datetime.date.today()), "normal", False, verification_token),
+                )
+            else:
+                # Legacy flow without email verification
+                db.execute(
+                    "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
+                    (username, email, hashed, str(datetime.date.today()), "normal"),
+                )
+                verification_token = None
 
             # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
-            # Send verification email
-            if is_email_configured():
+            # Send verification email if configured
+            if verification_token and is_email_configured():
                 email_sent = send_verification_email(email, username, verification_token)
                 if not email_sent:
                     logger.warning(f"Failed to send verification email to {email}")
-            else:
-                logger.warning("Email not configured - user created without verification email")
 
             # Create all the user's game tables (needed for game to work after verification)
             db.execute(
@@ -615,10 +628,13 @@ def signup():
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
-            # Don't log them in yet - redirect to verification pending page
-            from flask import make_response
-            response = redirect("/verification_pending")
-            return response
+            # If verification is enabled, redirect to pending page; otherwise log them in
+            if verification_token:
+                return redirect(f"/verification_pending?email={email}")
+            else:
+                # Legacy: log them in directly
+                session["user_id"] = user_id
+                return redirect("/")
 
         # Mark attempt as successful
         with get_db_cursor() as db:

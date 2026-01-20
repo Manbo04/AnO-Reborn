@@ -39,11 +39,24 @@ def login():
         password = password.encode("utf-8")
 
         with get_db_cursor() as db:
+            # Check if verification columns exist
+            try:
+                db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+                has_verification = db.fetchone() is not None
+            except:
+                has_verification = False
+            
             # selects data about user, from users
-            db.execute(
-                "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
-                (username,),
-            )
+            if has_verification:
+                db.execute(
+                    "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
+                    (username,),
+                )
+            else:
+                db.execute(
+                    "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
+                    (username,),
+                )
             user = db.fetchone()
             logger.debug(f"DB user row fetched for username={username}: {bool(user)}")
 
@@ -60,12 +73,12 @@ def login():
 
             # checks if user exists and if the password is correct
             if bcrypt.checkpw(password, hashed_pw):
-                # Check if email is verified
-                is_verified = user[8] if len(user) > 8 else True  # Default True for old users
-                if is_verified is False:
-                    # Get the email for resend
-                    user_email = user[2] if user[2] else ''
-                    return redirect(f'/verification_pending?email={user_email}')
+                # Check if email is verified (only if verification is enabled)
+                if has_verification:
+                    is_verified = user[8] if len(user) > 8 else True
+                    if is_verified is False:
+                        user_email = user[2] if user[2] else ''
+                        return redirect(f'/verification_pending?email={user_email}')
                 
                 logger.debug("Password matches, logging in user.")
                 # sets session's user_id to current user's id
