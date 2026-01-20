@@ -730,18 +730,29 @@ def update_col_info(colId):
                 except (OSError, FileNotFoundError, TypeError):
                     pass
 
-            # Save the file
+            # Save the file to database for persistent storage
+            import base64
+
             current_filename = flag.filename
             extension = current_filename.rsplit(".", 1)[1].lower()
             filename = f"col_flag_{colId}" + "." + extension
-            flag.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
+
+            # Read file data and encode to base64 for database storage
+            flag_data = base64.b64encode(flag.read()).decode("utf-8")
+
             with get_db_cursor() as db:
                 db.execute(
-                    "UPDATE colNames SET flag=(%s) WHERE id=(%s)", (filename, colId)
+                    "UPDATE colNames SET flag=(%s), flag_data=(%s) WHERE id=(%s)",
+                    (filename, flag_data, colId),
                 )
+
+            # Also save to filesystem for backward compatibility
+            flag.seek(0)  # Reset file pointer after read
+            flag.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
 
             # Invalidate coalition influence cache so flag changes show
             from database import query_cache
+
             query_cache.invalidate(f"coalition_influence_{colId}")
         else:
             return error(400, "File format not supported")
