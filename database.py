@@ -182,7 +182,8 @@ class DatabasePool:
                 self._available = None
 
             try:
-                maxconn = 50
+                # With multiple instances (EU, Singapore, etc.), use fewer connections per instance
+                maxconn = int(os.getenv("DB_MAX_CONNECTIONS", "20"))
                 self._pool = psycopg2.pool.ThreadedConnectionPool(
                     minconn=1,
                     maxconn=maxconn,
@@ -194,6 +195,11 @@ class DatabasePool:
                     # Connection timeout settings to prevent hanging
                     connect_timeout=10,  # 10 seconds to establish connection
                     options="-c statement_timeout=30000",  # 30 second query timeout
+                    # TCP keepalive settings to detect dead connections
+                    keepalives=1,  # Enable TCP keepalives
+                    keepalives_idle=30,  # Send keepalive after 30 seconds idle
+                    keepalives_interval=10,  # Retry every 10 seconds
+                    keepalives_count=3,  # Give up after 3 failed keepalives
                 )
                 # Create a queue to track available slots with timeout support
                 self._available = queue.Queue(maxsize=maxconn)
@@ -379,6 +385,10 @@ def get_db_cursor(cursor_factory=None):
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
                 connect_timeout=10,
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=3,
             )
 
         # If the connection appears closed for any reason, create a fresh one
@@ -394,6 +404,10 @@ def get_db_cursor(cursor_factory=None):
                 host=os.getenv("PG_HOST"),
                 port=os.getenv("PG_PORT"),
                 connect_timeout=10,
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=3,
             )
             used_pool = False
 
