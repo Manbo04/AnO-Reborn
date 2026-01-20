@@ -764,9 +764,12 @@ def register_countries_routes(app_instance):
         methods=["GET"],
     )
 
-    # Register countries route
+    # Register countries route (cached for 60 seconds - list doesn't change often)
     app_instance.add_url_rule(
-        "/countries", "countries", login_required(countries), methods=["GET"]
+        "/countries",
+        "countries",
+        login_required(cache_response(ttl_seconds=60)(countries)),
+        methods=["GET"],
     )
 
     # Register update_country_info route
