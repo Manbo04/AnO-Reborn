@@ -575,7 +575,7 @@ def update_info():
             )
 
         # Flag changing
-        ALLOWED_EXTENSIONS = ["png", "jpg"]
+        ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg"]
 
         def allowed_file(filename):
             return (
@@ -583,8 +583,8 @@ def update_info():
                 and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
             )
 
-        flag = request.files["flag_input"]
-        if flag:
+        flag = request.files.get("flag_input")
+        if flag and flag.filename:  # Check both file exists AND has a filename
             if not allowed_file(flag.filename):
                 return error(400, "Bad flag file format")
 
@@ -604,12 +604,16 @@ def update_info():
             # Save the file & shit
             if allowed_file(current_filename):
                 from flask import current_app
+                from database import query_cache
 
                 extension = current_filename.rsplit(".", 1)[1].lower()
                 filename = f"flag_{cId}" + "." + extension
                 new_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 flag.save(new_path)
                 db.execute("UPDATE users SET flag=(%s) WHERE id=(%s)", (filename, cId))
+
+                # Invalidate flag cache so new flag shows immediately
+                query_cache.invalidate(f"flag_{cId}")
 
         """
         bg_flag = request.files["bg_flag_input"]
@@ -757,10 +761,11 @@ def register_countries_routes(app_instance):
     )
 
     # Register country route
+    # Cache is short (30s) since users viewing their own country need fresh data after edits
     app_instance.add_url_rule(
         "/country/id=<cId>",
         "country",
-        login_required(cache_response(ttl_seconds=120)(country)),
+        login_required(cache_response(ttl_seconds=30)(country)),
         methods=["GET"],
     )
 
