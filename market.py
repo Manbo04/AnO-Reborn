@@ -742,7 +742,15 @@ def transfer(transferee):
 
 def register_market_routes(app_instance):
     """Register all market routes with the Flask app instance"""
-    app_instance.add_url_rule("/market", "market", market, methods=["GET", "POST"])
+    from database import cache_response
+
+    # Market page with caching for GET requests (30 second TTL)
+    app_instance.add_url_rule(
+        "/market",
+        "market",
+        cache_response(ttl_seconds=30)(market),
+        methods=["GET", "POST"],
+    )
     app_instance.add_url_rule(
         "/buy_offer/<offer_id>", "buy_offer", buy_market_offer, methods=["POST"]
     )
@@ -755,7 +763,13 @@ def register_market_routes(app_instance):
     app_instance.add_url_rule(
         "/post_offer/<offer_type>", "post_offer", post_offer, methods=["POST"]
     )
-    app_instance.add_url_rule("/my_offers", "my_offers", my_offers, methods=["GET"])
+    # My offers page with caching (15 second TTL)
+    app_instance.add_url_rule(
+        "/my_offers",
+        "my_offers",
+        cache_response(ttl_seconds=15)(my_offers),
+        methods=["GET"],
+    )
     app_instance.add_url_rule(
         "/delete_offer/<offer_id>", "delete_offer", delete_offer, methods=["POST"]
     )
