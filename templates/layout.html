@@ -4,8 +4,8 @@
 
 <head>
     <meta charset="utf-8">
-    <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png') }}" />
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png') }}?v=2" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2">
     <meta name="viewport" content="width=device-width, initial-scale=0.8">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
     <meta name="description" content="Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries,
@@ -37,7 +37,7 @@
     <script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
     <script src="{{ url_for('static', filename='scroller.js') }}"></script>
 
-    <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}" type="image/png">
+    <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
     <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
     <script data-ad-client="ca-pub-2399873064840158" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -92,7 +92,7 @@
         {% endif %}
 
         <a class="navbarparenttitle" href="/">
-            <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}" class="navbarparenttitleimage" /> Affairs and Order</a>
+            <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=2" class="navbarparenttitleimage" /> Affairs and Order</a>
 
         <!---->
 
@@ -247,97 +247,97 @@
             <!--I WILL REPLACE THE TEXT WITH RESOURCE ICONS SOON - CARSON-->
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["gold"] | commas }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
             <br />
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resrations.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["rations"] | commas }}</p>
                 <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resoil.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["oil"] | commas }}</p>
                 <div class="resourceinfo">Oil can be used to make power, and can be refined into gasoline for fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["coal"] | commas }}</p>
                 <div class="resourceinfo">Coal is a cheap but pollution intensive fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["uranium"] | commas }}</p>
                 <div class="resourceinfo">Uranium is capable of fueling large nuclear power plants, or being a reactant in nuclear weapons.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["bauxite"] | commas }}</p>
                 <div class="resourceinfo">Bauxite is a valuable mineral when manufactured into aluminium</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resiron.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["iron"] | commas }}</p>
                 <div class="resourceinfo">Iron is incredibly useful when refined with coke into steel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/reslead.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["lead"] | commas }}</p>
                 <div class="resourceinfo">Lead is useful for war, as it can be refined into ammunition.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["copper"] | commas }}</p>
                 <div class="resourceinfo">copper can be refined into consumer goods</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["lumber"] | commas}}</p>
                 <div class="resourceinfo">Lumber is a common bulding material.</div>
 
             </div>
             <br />
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/rescomponents.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/rescomponents.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["components"] | commas }}</p>
                 <div class="resourceinfo">Components are necessary for advanced war machines and country projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/ressteel.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/ressteel.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["steel"] | commas }}</p>
                 <div class="resourceinfo">Steel is invaluable for building infrastructure, military machines, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resconsumer_goods.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resconsumer_goods.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["consumer_goods"] | commas }}</p>
                 <div class="resourceinfo">Consumer goods are advanced manufactured goods that can drastically increase tax income. Every 80000 people consume 1 consumer good</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resaluminium.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resaluminium.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["aluminium"] | commas}}</p>
                 <div class="resourceinfo">Aluminium is a useful material for infrastructure, military, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resgasoline.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resgasoline.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["gasoline"] | commas }}</p>
                 <div class="resourceinfo">Gasoline is necessary to mantian a functioning military in war, fueling all types of vehicles.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename='images/resammunition.png' ) }}" class="resource" />
+                <img src="{{ url_for( 'static', filename='images/resammunition.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["ammunition"] | commas }}</p>
                 <div class="resourceinfo">Ammunition allows for both your soldiers to be more effective, and for your military machines to fight in war.</div>
 
@@ -385,7 +385,7 @@
             <div class="templatedivflex2left footerchild">
 
                 <h1 class="footertitle navbarparenttitle">
-                    <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}" class="navbarparenttitleimage footertitleicon" /> Affairs and Order</h1>
+                    <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=2" class="navbarparenttitleimage footertitleicon" /> Affairs and Order</h1>
 
 
                 <div class="footercopyright">© 2021</div>
