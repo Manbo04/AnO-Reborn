@@ -6,8 +6,60 @@ from functools import wraps, lru_cache
 from dotenv import load_dotenv
 from datetime import date
 from database import get_db_cursor, query_cache
+from io import BytesIO
+import base64
 
 load_dotenv()
+
+
+def compress_flag_image(file_storage, max_size=300, quality=85):
+    """
+    Compress and resize a flag image for efficient database storage.
+    
+    Args:
+        file_storage: Flask FileStorage object
+        max_size: Maximum width/height in pixels (default 300px)
+        quality: JPEG quality 1-100 (default 85)
+    
+    Returns:
+        tuple: (base64_encoded_data, extension)
+    """
+    try:
+        from PIL import Image
+        
+        # Read the image
+        img = Image.open(file_storage)
+        
+        # Convert RGBA to RGB if needed (for JPEG)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        
+        # Resize if larger than max_size
+        if img.width > max_size or img.height > max_size:
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        
+        # Save to buffer as JPEG with compression
+        buffer = BytesIO()
+        img.save(buffer, format='JPEG', quality=quality, optimize=True)
+        buffer.seek(0)
+        
+        # Encode to base64
+        flag_data = base64.b64encode(buffer.read()).decode('utf-8')
+        
+        return flag_data, 'jpg'
+        
+    except ImportError:
+        # PIL not available, fall back to raw storage
+        file_storage.seek(0)
+        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
+        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        return flag_data, extension
+    except Exception as e:
+        # On any error, fall back to raw storage
+        file_storage.seek(0)
+        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
+        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        return flag_data, extension
 
 
 def get_date():
