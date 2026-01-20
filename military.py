@@ -1,38 +1,47 @@
-from flask import Blueprint, request, render_template, session, redirect, flash
+from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
 from database import get_db_cursor, cache_response
 from attack_scripts import Military
 from dotenv import load_dotenv
-
-load_dotenv()
-import os
 from helpers import get_date
 from upgrades import get_upgrades
 from variables import MILDICT
+
+load_dotenv()
 
 bp = Blueprint("military", __name__)
 
 
 @bp.route("/military", methods=["GET", "POST"])
 @login_required
+@cache_response(ttl_seconds=10)  # Short cache for military page
 def military():
     cId = session["user_id"]
 
-    if request.method == "GET":  # maybe optimise this later with css anchors
-        simple_units = Military.get_military(cId)
-        special_units = Military.get_special(cId)
-        units = simple_units.copy()
-        units.update(special_units)
-        upgrades = get_upgrades(cId)
+    if request.method == "GET":
+        # OPTIMIZED: get_military and get_special are already single queries
+        # manpower is now fetched together with military units
+        from psycopg2.extras import RealDictCursor
 
-        # finding daily limits through finding number of each military building in proinfra tables that belong to a user
-        # The info of which proinfra tables belong to a user is in provinces table
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            # Single query for all military data including manpower
+            db.execute(
+                """SELECT tanks, soldiers, artillery, bombers, fighters, apaches,
+                   destroyers, cruisers, submarines, spies, ICBMs as icbms, nukes, manpower
+                   FROM military WHERE id=%s""",
+                (cId,),
+            )
+            mil_data = db.fetchone()
+            if mil_data:
+                mil_data = dict(mil_data)
+                manpower = mil_data.pop("manpower", 0)
+                units = mil_data
+            else:
+                units = {}
+                manpower = 0
+
+        upgrades = get_upgrades(cId)  # Now cached in upgrades.py
         limits = Military.get_limits(cId)
-
-        # Get current manpower
-        with get_db_cursor() as db:
-            db.execute("SELECT manpower FROM military WHERE id=%s", (cId,))
-            manpower = db.fetchone()[0]
 
         return render_template(
             "military.html",
