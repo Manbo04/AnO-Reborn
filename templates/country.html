@@ -1,5 +1,5 @@
 {% extends"layout.html"%} {% block title %} {{ username }} {% endblock %} {% block head %} {% if flag != None %}
-<meta property="og:image" content="/static/flags/{{ flag }}" /> {% endif %}
+<meta property="og:image" content="/flag/country/{{ cId }}" /> {% endif %}
 <meta name="viewport" content="width=device-width, initial-scale=0.8">
 <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
 
@@ -90,7 +90,7 @@
             <div class="countryimagediv" id="countryFlagBackground">
                 <!--country flag-->
                 {% if flag != None %}
-                <img class="countryimage" src="/static/flags/{{ flag }}" alt="{{ flag }}">
+                <img class="countryimage" src="/flag/country/{{ cId }}" alt="{{ flag }}">
                 <!-- hmm not using url_for, but somewhy it render-->
                 <!-- this is the one that shows -- steven -->
                 {% else %}
@@ -98,7 +98,7 @@
                 <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
                 <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
                 {% if colFlag != None %}
-                <img class="countrycoalitionimage" src="/static/flags/{{ colFlag }}" alt="{{ colFlag }}" /> {% endif %}
+                <img class="countrycoalitionimage" src="/flag/coalition/{{ colId }}" alt="{{ colFlag }}" /> {% endif %}
             </div>
 
 
