@@ -31,7 +31,6 @@ ENV/
 *~
 .DS_Store
 node_modules/
-static/images/
 celerybeat-schedule
 errors.log
 *.log
