@@ -8,7 +8,7 @@ load_dotenv()
 import variables
 from operator import itemgetter
 import datetime
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 
 
 # Function for getting the coalition role of a user
@@ -1163,13 +1163,13 @@ def decline_treaty(offer_id):
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
 
-    # Apply login_required decorator to all routes
-    coalition_wrapped = login_required(coalition)
+    # Apply login_required and cache_response decorators to read-heavy routes
+    coalition_wrapped = cache_response(ttl_seconds=30)(login_required(coalition))
     establish_coalition_wrapped = login_required(establish_coalition)
-    coalitions_wrapped = login_required(coalitions)
+    coalitions_wrapped = cache_response(ttl_seconds=60)(login_required(coalitions))
     join_col_wrapped = login_required(join_col)
     leave_col_wrapped = login_required(leave_col)
-    my_coalition_wrapped = login_required(my_coalition)
+    my_coalition_wrapped = cache_response(ttl_seconds=30)(login_required(my_coalition))
     give_position_wrapped = login_required(give_position)
     adding_wrapped = login_required(adding)
     removing_requests_wrapped = login_required(removing_requests)
