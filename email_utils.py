@@ -39,9 +39,64 @@ def is_email_configured():
     return bool(config['user'] and config['password'])
 
 
-def generate_verification_token():
-    """Generate a unique verification token"""
-    return str(uuid.uuid4())
+def generate_verification_token(email):
+    """Generate a unique verification token that encodes the email"""
+    import hashlib
+    import time
+    # Create a token that includes email hash and timestamp for uniqueness
+    token_base = f"{email}:{time.time()}:{uuid.uuid4()}"
+    return hashlib.sha256(token_base.encode()).hexdigest()
+
+
+def verify_email_token(token):
+    """
+    Verify a token and return the associated email if valid.
+    This looks up the token in the database to find the associated user.
+    
+    Args:
+        token: The verification token from the email link
+        
+    Returns:
+        str: The email address if valid, None otherwise
+    """
+    from database import get_connection
+    from datetime import timedelta
+    
+    if not token:
+        return None
+    
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Find user with this token, check it's not expired (24 hour validity)
+        cur.execute("""
+            SELECT email, token_created_at 
+            FROM users 
+            WHERE verification_token = %s
+        """, (token,))
+        
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if not result:
+            return None
+        
+        email, token_created_at = result
+        
+        # Check if token is expired (24 hours)
+        if token_created_at:
+            expiry_time = token_created_at + timedelta(hours=24)
+            if datetime.now() > expiry_time:
+                logger.warning(f"Verification token expired for {email}")
+                return None
+        
+        return email
+        
+    except Exception as e:
+        logger.error(f"Error verifying token: {e}")
+        return None
 
 
 def send_email(to_email, subject, html_content, text_content=None):
