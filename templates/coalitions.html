@@ -80,14 +80,19 @@
                         <th>Date Created</th>
                         <th>Type</th>
                     </tr>
-                    {% for id, type, name, members, date, influence, unix in coalitions %}
+                    {% for col in coalitions %}
                     <tr>
                         <td>{{ loop.index }})</td>
-                        <td><a href="/coalition/{{ id }}">{{ name }}</a></td>
-                        <td>{{ influence }}</td>
-                        <td>{{ members }}</td>
-                        <td>{{ date }}</td>
-                        <td>{{ type }}</td>
+                        <td>
+                            {% if col.flag %}
+                            <img src="/flag/coalition/{{ col.id }}" alt="" style="width: 24px; height: 16px; vertical-align: middle; margin-right: 6px; border-radius: 2px;">
+                            {% endif %}
+                            <a href="/coalition/{{ col.id }}">{{ col.name }}</a>
+                        </td>
+                        <td>{{ col.influence }}</td>
+                        <td>{{ col.members }}</td>
+                        <td>{{ col.date }}</td>
+                        <td>{{ col.type }}</td>
                     </tr>
                     {% endfor %}
                 </table>
