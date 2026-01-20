@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, session, redirect
 from helpers import login_required, error
-from database import get_db_cursor
-import os
+from database import get_db_cursor, query_cache
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 from dotenv import load_dotenv
@@ -12,13 +11,24 @@ bp = Blueprint("upgrades", __name__)
 
 
 def get_upgrades(cId):
+    # Check cache first
+    cache_key = f"upgrades_{cId}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     with get_db_cursor() as db:
         db.execute("SELECT * FROM upgrades WHERE user_id=%s", (cId,))
         row = db.fetchone()
         if not row:
-            return {}
-        colnames = [desc[0] for desc in db.description]
-        return dict(zip(colnames, row))
+            result = {}
+        else:
+            colnames = [desc[0] for desc in db.description]
+            result = dict(zip(colnames, row))
+
+        # Cache for 5 minutes
+        query_cache.set(cache_key, result)
+        return result
 
 
 @bp.route("/upgrades", methods=["GET"])
