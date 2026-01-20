@@ -6,8 +6,8 @@
 <meta name="description" content="{{ username }}'s country."> {% endblock %} {% block body %}
 <div class="templatediv">
 
-    <div class="templatedivtopper countrytopper" style="background-image: url('{{ url_for('static', filename='images/country.jpg') }}');">
-        <!-- <img src="{{ url_for('static', filename='images/country.jpg') }}" /> -->
+    <div class="templatedivtopper countrytopper" style="background-image: url('{{ url_for('static', filename='images/country.jpg') }}?v=2');">
+        <!-- <img src="{{ url_for('static', filename='images/country.jpg') }}?v=2" /> -->
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
             outlined_flag
             </span>{{ username }}</h1>
@@ -95,7 +95,7 @@
                 <!-- this is the one that shows -- steven -->
                 {% else %}
                 <!-- tried first with url_for, but it didn't work -- t0dd -->
-                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
+                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
                 <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
                 {% if colFlag != None %}
                 <img class="countrycoalitionimage" src="/static/flags/{{ colFlag }}" alt="{{ colFlag }}" /> {% endif %}
@@ -349,7 +349,7 @@
                     </div>
                     <div class="templatedivflex2left vanilla">
 
-                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/province.jpg') }}" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" />
 
                     </div>
                 </div>

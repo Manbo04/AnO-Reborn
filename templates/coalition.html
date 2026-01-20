@@ -78,7 +78,7 @@
                 <!--coalition flag-->
                 {% if flag != None %}
                 <img class="countryimage" src="/static/flags/{{ flag }}" alt="{{ flag }}"> {% else %}
-                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}" /> {% endif %}
+                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
             </div>
 
             {% if description != None %}
