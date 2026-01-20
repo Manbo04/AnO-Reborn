@@ -8,6 +8,16 @@
     .footer {
         display: none;
     }
+    
+    .verification-success {
+        background: rgba(76, 175, 80, 0.2);
+        border: 1px solid #4CAF50;
+        color: #4CAF50;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 </style>
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
@@ -20,6 +30,11 @@
     </div>
 
     <div class="templatedivcontent">
+        {% if verification_message %}
+        <div class="verification-success">
+            {{ verification_message }}
+        </div>
+        {% endif %}
 
         <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
 

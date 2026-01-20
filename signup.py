@@ -1,10 +1,11 @@
 # FULLY MIGRATED
 
-from flask import request, render_template, session, redirect
+from flask import request, render_template, session, redirect, url_for
 import datetime
 from helpers import error
 import psycopg2
 import logging
+from email_utils import send_verification_email, generate_verification_token, verify_email_token, is_email_configured
 
 # Configure logger for signup
 logger = logging.getLogger(__name__)
@@ -389,11 +390,11 @@ def discord_register():
                         400, "This Discord account is already linked to another country"
                     )
 
-                # Create user
+                # Create user (Discord users are auto-verified since Discord verifies emails)
                 date = str(datetime.date.today())
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
-                    (username, email, discord_auth, date, "discord"),
+                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (username, email, discord_auth, date, "discord", True),
                 )
 
                 # Get the new user ID
@@ -583,28 +584,29 @@ def signup():
             # Hashes the inputted password
             hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
 
+            # Generate verification token
+            from email_utils import generate_verification_token, send_verification_email, is_email_configured
+            verification_token = generate_verification_token()
+
             # Inserts the user and his data to the main table for users
             db.execute(
-                "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
-                (username, email, hashed, str(datetime.date.today()), "normal"),
+                "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
+                (username, email, hashed, str(datetime.date.today()), "normal", False, verification_token),
             )  # creates a new user || added account creation date
 
             # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
-            # Stores the user's
-            session["user_id"] = user_id
-            session.permanent = True
-            session.modified = True
+            # Send verification email
+            if is_email_configured():
+                email_sent = send_verification_email(email, username, verification_token)
+                if not email_sent:
+                    logger.warning(f"Failed to send verification email to {email}")
+            else:
+                logger.warning("Email not configured - user created without verification email")
 
-            # Return redirect; do not set developer-only cookies in normal flow.
-            from flask import make_response
-
-            response = redirect("/")
-            # Continue with DB setup and then return the response
-
-            # Inserts the user's id into the needed database tables
+            # Create all the user's game tables (needed for game to work after verification)
             db.execute(
                 "INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent)
             )
@@ -612,6 +614,10 @@ def signup():
             db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+
+            # Don't log them in yet - redirect to verification pending page
+            from flask import make_response
+            response = redirect("/verification_pending")
             return response
 
         # Mark attempt as successful
@@ -638,6 +644,110 @@ def signup():
         )
 
 
+def verification_pending():
+    """Show the verification pending page after signup."""
+    email = request.args.get('email', '')
+    return render_template("verification_pending.html", email=email)
+
+
+def verify_email():
+    """Verify user's email address using the token from the email link."""
+    from database import get_connection
+    
+    token = request.args.get('token')
+    if not token:
+        return error("Invalid verification link. No token provided.")
+    
+    # Verify the token
+    email = verify_email_token(token)
+    if not email:
+        return error("Invalid or expired verification link. Please request a new one.")
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        # Check if user exists and is not already verified
+        cur.execute("""
+            SELECT id, is_verified FROM users WHERE email = %s
+        """, (email,))
+        result = cur.fetchone()
+        
+        if not result:
+            return error("User not found.")
+        
+        user_id, is_verified = result
+        
+        if is_verified:
+            return redirect('/login?message=already_verified')
+        
+        # Mark user as verified
+        cur.execute("""
+            UPDATE users 
+            SET is_verified = TRUE, verification_token = NULL 
+            WHERE id = %s
+        """, (user_id,))
+        conn.commit()
+        
+        return redirect('/login?message=verified')
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Email verification error: {e}")
+        return error("An error occurred during verification. Please try again.")
+    finally:
+        cur.close()
+        conn.close()
+
+
+def resend_verification():
+    """Resend verification email."""
+    from database import get_connection
+    
+    if request.method != 'POST':
+        return redirect('/login')
+    
+    email = request.form.get('email', '').strip().lower()
+    if not email:
+        return error("Please provide your email address.")
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        # Check if user exists and is not verified
+        cur.execute("""
+            SELECT id, username, is_verified FROM users WHERE email = %s
+        """, (email,))
+        result = cur.fetchone()
+        
+        if not result:
+            # Don't reveal if email exists
+            return render_template("verification_pending.html", email=email, message="If an account exists with this email, a verification link has been sent.")
+        
+        user_id, username, is_verified = result
+        
+        if is_verified:
+            return redirect('/login?message=already_verified')
+        
+        # Generate new token and send email
+        new_token = generate_verification_token(email)
+        cur.execute("""
+            UPDATE users 
+            SET verification_token = %s, token_created_at = NOW() 
+            WHERE id = %s
+        """, (new_token, user_id))
+        conn.commit()
+        
+        send_verification_email(email, username, new_token)
+        
+        return render_template("verification_pending.html", email=email, message="Verification email sent! Please check your inbox.")
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Resend verification error: {e}")
+        return error("An error occurred. Please try again.")
+    finally:
+        cur.close()
+        conn.close()
+
+
 def register_signup_routes(app_instance):
     """Register signup routes. This should be called by app.py AFTER app is fully initialized."""
     app_instance.add_url_rule("/discord", "discord", discord, methods=["GET", "POST"])
@@ -646,3 +756,7 @@ def register_signup_routes(app_instance):
         "/discord_signup", "discord_register", discord_register, methods=["GET", "POST"]
     )
     app_instance.add_url_rule("/signup", "signup", signup, methods=["GET", "POST"])
+    # Email verification routes
+    app_instance.add_url_rule("/verification_pending", "verification_pending", verification_pending)
+    app_instance.add_url_rule("/verify", "verify_email", verify_email)
+    app_instance.add_url_rule("/resend_verification", "resend_verification", resend_verification, methods=["POST"])

@@ -1,0 +1,56 @@
+{% extends "layout.html" %} {% block title %} Verify Your Email {% endblock %} {% block body %}
+<style>
+    .templatecontainer {
+        background: rgba(255, 255, 255, 0);
+    }
+
+    .footer {
+        display: none;
+    }
+</style>
+<img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
+
+<div class="templatediv noboxshadowtopper loginsignupdiv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            email
+            </span>Verify Your Email</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
+            <div class="templatedivflex2left" style="text-align: center; width: 100%;">
+                
+                {% if message %}
+                <div class="templatecontentheadercenter" style="color: #4CAF50; margin-bottom: 20px;">
+                    {{ message }}
+                </div>
+                {% else %}
+                <div class="templatecontentheadercenter" style="margin-bottom: 20px;">
+                    We've sent a verification email to <strong>{{ email }}</strong>
+                </div>
+                {% endif %}
+                
+                <p style="color: #ccc; margin-bottom: 30px;">
+                    Please check your inbox and click the verification link to activate your account.
+                    <br><br>
+                    Don't see it? Check your spam folder or request a new verification email below.
+                </p>
+
+                <form action="/resend_verification" method="POST" style="margin-bottom: 20px;">
+                    <input type="hidden" name="email" value="{{ email }}" />
+                    <button class="templatedivbutton" type="submit">
+                        <span class="material-icons-outlined">refresh</span>
+                        Resend Verification Email
+                    </button>
+                </form>
+
+                <div class="templatecontentheadercenter" style="margin-top: 20px;">
+                    <a href="/login" class="templatelink">Already verified? Login here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
