@@ -39,7 +39,9 @@ def login():
 
             if not username or not password:  # checks if inputs are blank
                 logger.debug("Missing username or password")
-                return error(400, "No Password or Username")
+                from flask import flash
+                flash("Please provide both username and password.")
+                return render_template("login.html"), 400
 
             password = password.encode("utf-8")
 
@@ -67,7 +69,9 @@ def login():
 
                 if not user:
                     logger.debug("User not found")
-                    return error(403, "Wrong password or user doesn't exist")
+                    from flask import flash
+                    flash("Wrong username or password")
+                    return render_template("login.html"), 403
 
                 try:
                     hashed_pw = user[4].encode("utf-8")
@@ -109,7 +113,9 @@ def login():
                     return response  # redirects user to homepage
                 else:
                     logger.debug("Password does not match.")
-                    return error(400, "Wrong password")
+                    from flask import flash
+                    flash("Wrong username or password")
+                    return render_template("login.html"), 400
 
         except Exception as e:
             # Log the full exception with a short unique id and return a friendly message
