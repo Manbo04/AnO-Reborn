@@ -559,6 +559,12 @@ LIMIT %s OFFSET %s;""",
         current_user_id=cId,
         current_page=page,
         total_pages=total_pages,
+        sort=sort,
+        sortway=sortway,
+        search=search,
+        lowerinf=lowerinf,
+        upperinf=upperinf,
+        province_range=province_range,
     )
 
 
