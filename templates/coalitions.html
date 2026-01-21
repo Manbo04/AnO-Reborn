@@ -16,11 +16,11 @@
 
                     <select name="sort" class="templateselect">
 
-                        <option value="influence" class="templateoption" {% if sort == 'influence' %}selected{% endif %}>Influence</option>
-                        <option value="age" class="templateoption" {% if sort == 'age' %}selected{% endif %}>Age</option>
-                        <option value="invite_only" class="templateoption" {% if sort == 'invite_only' %}selected{% endif %}>Invite Only</option>
-                        <option value="open" class="templateoption" {% if sort == 'open' %}selected{% endif %}>Open</option>
-                        <option value="members" class="templateoption" {% if sort == 'members' %}selected{% endif %}>Members</option>
+                        <option value="influence" class="templateoption" {% if selected_sort == 'influence' %}selected{% endif %}>Influence</option>
+                        <option value="age" class="templateoption" {% if selected_sort == 'age' %}selected{% endif %}>Age</option>
+                        <option value="invite_only" class="templateoption" {% if selected_sort == 'invite_only' %}selected{% endif %}>Invite Only</option>
+                        <option value="open" class="templateoption" {% if selected_sort == 'open' %}selected{% endif %}>Open</option>
+                        <option value="members" class="templateoption" {% if selected_sort == 'members' %}selected{% endif %}>Members</option>
 
                         <!-- <option name="military" class="templateoption">Military</option> -->
                         <!-- <option value="population" class="templateoption">Population</option> -->
