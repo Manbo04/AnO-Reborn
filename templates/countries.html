@@ -15,28 +15,28 @@
                 <div class="templatedivflex2left">
 
                     <select name="sort" class="templateselect">
-                        <option value="influence" class="templateoption">Influence</option>
+                        <option value="influence" class="templateoption" {% if sort == 'influence' %}selected{% endif %}>Influence</option>
                         <!-- <option class="templateoption">Military</option> -->
-                        <option value="population" class="templateoption">Population</option>
-                        <option value="age" class="templateoption">Age</option>
+                        <option value="population" class="templateoption" {% if sort == 'population' %}selected{% endif %}>Population</option>
+                        <option value="age" class="templateoption" {% if sort == 'age' %}selected{% endif %}>Age</option>
                         <!-- <option class="templateoption">GDP</option> -->
-                        <option value="provinces" class="templateoption">Provinces</option>
-                        <option value="war_range" class="templateoption">War Range</option>
+                        <option value="provinces" class="templateoption" {% if sort == 'provinces' %}selected{% endif %}>Provinces</option>
+                        <option value="war_range" class="templateoption" {% if sort == 'war_range' %}selected{% endif %}>War Range</option>
                     </select>
 
                 </div>
                 <div class="templatedivflex2right">
 
                     <select name="sortway" class="templateselect">
-                        <option value="desc" class="templateoption">Descending</option>
-                        <option value="asc" class="templateoption">Ascending</option>
+                        <option value="desc" class="templateoption" {% if sortway == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" class="templateoption" {% if sortway == 'asc' %}selected{% endif %}>Ascending</option>
                     </select>
 
                 </div>
 
                 <div class="templatedivflex2left">
 
-                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search" />
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search" value="{{ search or '' }}" />
 
                 </div>
                 <div class="templatedivflex2right">
