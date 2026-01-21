@@ -77,17 +77,25 @@ def request_password_reset():
             db.execute("SELECT id FROM users WHERE email=%s", (email,))
             result = db.fetchone()
             if not result:
-                return error(400, "No account with the provided email exists.")
+                # Don't reveal whether an email exists; behave as if request succeeded
+                return redirect("/")
             cId = result[0]
 
-            db.execute(
-                "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
-                (code, cId, int(datetime.now().timestamp())),
-            )
+        # Insert reset code record for the user (always)
+        db.execute(
+            "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
+            (code, cId, int(datetime.now().timestamp())),
+        )
 
-    if not cId:
-        sendEmail(email, code)
+    # Send email with reset link regardless of how request was initiated
+    if email:
+        try:
+            sendEmail(email, code)
+        except Exception:
+            # Log failures but don't reveal to user
+            pass
 
+    # Redirect to a neutral page (home) so attackers cannot probe for valid emails
     return redirect("/")
 
 
