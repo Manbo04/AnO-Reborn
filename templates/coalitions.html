@@ -16,11 +16,11 @@
 
                     <select name="sort" class="templateselect">
 
-                        <option value="influence" class="templateoption">Influence</option>
-                        <option value="age" class="templateoption">Age</option>
-                        <option value="invite_only" class="templateoption">Invite Only</option>
-                        <option value="open" class="templateoption">Open</option>
-                        <option value="members" class="templateoption">Members</option>
+                        <option value="influence" class="templateoption" {% if sort == 'influence' %}selected{% endif %}>Influence</option>
+                        <option value="age" class="templateoption" {% if sort == 'age' %}selected{% endif %}>Age</option>
+                        <option value="invite_only" class="templateoption" {% if sort == 'invite_only' %}selected{% endif %}>Invite Only</option>
+                        <option value="open" class="templateoption" {% if sort == 'open' %}selected{% endif %}>Open</option>
+                        <option value="members" class="templateoption" {% if sort == 'members' %}selected{% endif %}>Members</option>
 
                         <!-- <option name="military" class="templateoption">Military</option> -->
                         <!-- <option value="population" class="templateoption">Population</option> -->
@@ -33,8 +33,8 @@
 
                     <select name="sortway" class="templateselect">
 
-                        <option value="desc" class="templateoption">Descending</option>
-                        <option value="asc" class="templateoption">Ascending</option>
+                        <option value="desc" class="templateoption" {% if sortway == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" class="templateoption" {% if sortway == 'asc' %}selected{% endif %}>Ascending</option>
 
                     </select>
 
@@ -42,7 +42,7 @@
                 <form action="/coalitions" method="POST">
                     <div class="templatedivflex2left">
 
-                        <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search" />
+                        <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search" value="{{ search or '' }}" />
 
                     </div>
                     <div class="templatedivflex2right">

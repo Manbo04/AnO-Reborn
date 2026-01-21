@@ -490,7 +490,13 @@ def coalitions():
         elif sort == "age":
             coalitions_list.sort(key=lambda x: x['unix'], reverse=not reverse)
 
-        return render_template("coalitions.html", coalitions=coalitions_list)
+        return render_template(
+            "coalitions.html",
+            coalitions=coalitions_list,
+            sort=sort,
+            sortway=sortway,
+            search=search,
+        )
 
 
 # Route for joining a coalition
