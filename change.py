@@ -104,22 +104,34 @@ def reset_password(code):
     if request.method == "GET":
         return render_template("reset_password.html", code=code)
     else:
-        with get_db_cursor() as db:
-            import logging
+        import logging
 
-            logger = logging.getLogger(__name__)
+        logger = logging.getLogger(__name__)
 
-            new_password = request.form.get("password").encode("utf-8")
-            logger.debug(f"Received URL code: {code}")
-            db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
-            result = db.fetchone()
-            if not result:
-                return error(400, "No such code exists.")
-            user_id = result[0]
+        # Validate input password
+        new_password_raw = request.form.get("password")
+        if not new_password_raw:
+            return error(400, "No password provided.")
+        if len(new_password_raw) < 6:
+            return error(400, "Password must be at least 6 characters long.")
 
-            hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
-            db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
-            db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
+        new_password = new_password_raw.encode("utf-8")
+
+        try:
+            with get_db_cursor() as db:
+                logger.debug(f"Received URL code: {code}")
+                db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
+                result = db.fetchone()
+                if not result:
+                    return error(400, "Invalid or expired reset code.")
+                user_id = result[0]
+
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
+                db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
+                db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
+        except Exception as e:
+            logger.exception(f"Error resetting password for code {code}: {e}")
+            return error(500, "An error occurred while resetting your password. Please try again later.")
 
         return redirect("/")
 
