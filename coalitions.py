@@ -418,7 +418,8 @@ def coalitions():
     """Coalition rankings page - optimized single query"""
     with get_db_cursor() as db:
         search = request.values.get("search")
-        sort = request.values.get("sort")
+        raw_sort = request.values.get("sort")
+        sort = raw_sort
         sortway = request.values.get("sortway")
 
         # Single optimized query: get all coalition data with pre-calculated influence
@@ -496,6 +497,7 @@ def coalitions():
             sort=sort,
             sortway=sortway,
             search=search,
+            selected_sort=raw_sort,
         )
 
 
