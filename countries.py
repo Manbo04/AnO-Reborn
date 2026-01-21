@@ -323,8 +323,9 @@ def cg_need(user_id):
         return cg_needed
 
 
+@login_required
 def my_country():
-    user_id = session["user_id"]
+    user_id = session.get("user_id")
     return redirect(f"/country/id={user_id}")
 
 
@@ -382,9 +383,12 @@ def country(cId):
             colFlag = None
 
         spy = {}
-        uId = session["user_id"]
-        db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
-        spy["count"] = db.fetchone()[0]
+        uId = session.get("user_id")
+        if uId:
+            db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
+            spy["count"] = db.fetchone()[0]
+        else:
+            spy["count"] = 0
 
         # News page
         idd = int(cId)
