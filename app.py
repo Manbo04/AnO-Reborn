@@ -57,6 +57,23 @@ if not hasattr(ast, "Ellipsis"):
 
 app = Flask(__name__)
 
+# Initialize Sentry (optional) if SENTRY_DSN is set in environment
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
+
+    sentry_dsn = os.getenv("SENTRY_DSN")
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+            environment=os.getenv("ENVIRONMENT", "DEV"),
+        )
+except Exception:
+    # If sentry isn't installed or initialization fails, continue without it
+    pass
+
 # NOTE: Previously we instrumented session saving for debugging Set-Cookie
 # issues. That instrumentation has been removed to avoid verbose logs in
 # non-development environments. Reintroduce behind a feature flag if needed.
@@ -109,6 +126,19 @@ def before_request():
     from time import time
 
     request.start_time = time()
+
+    # Set Sentry user context if available
+    try:
+        import sentry_sdk
+
+        user_id = session.get("user_id") if hasattr(session, 'get') else None
+        if user_id:
+            sentry_sdk.set_user({"id": str(user_id)})
+        else:
+            sentry_sdk.set_user(None)
+    except Exception:
+        # Sentry not configured or unavailable
+        pass
 
     # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
     if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
