@@ -134,8 +134,20 @@ def reset_password(code):
                 db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
                 db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
         except Exception as e:
-            logger.exception(f"Error resetting password for code {code}: {e}")
-            return error(500, "An error occurred while resetting your password. Please try again later.")
+            # Send to Sentry if available and return friendly id
+            try:
+                import sentry_sdk
+                event_id = sentry_sdk.capture_exception(e)
+            except Exception:
+                import logging as _logging
+                _logger = _logging.getLogger(__name__)
+                event_id = None
+                _logger.exception(f"Error resetting password for code {code}: {e}")
+
+            if event_id:
+                return error(500, f"An error occurred while resetting your password. Please report this id: {event_id}")
+            else:
+                return error(500, "An error occurred while resetting your password. Please try again later.")
 
         return redirect("/")
 

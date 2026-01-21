@@ -118,10 +118,19 @@ def login():
                     return render_template("login.html"), 400
 
         except Exception as e:
-            # Log the full exception with a short unique id and return a friendly message
-            uid = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
-            logger.exception(f"Unhandled exception during login (id={uid}): {e}")
-            return error(500, f"An internal server error occurred. Please report this id: {uid}")
+            # Try to send exception to Sentry and use its event id for tracking
+            event_id = None
+            try:
+                import sentry_sdk
+                event_id = sentry_sdk.capture_exception(e)
+            except Exception:
+                # Fallback to generated uid
+                import uuid
+                import time
+                event_id = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
+                logger.exception(f"Unhandled exception during login (id={event_id}): {e}")
+
+            return error(500, f"An internal server error occurred. Please report this id: {event_id}")
 
     else:
         # Check for verification message parameter

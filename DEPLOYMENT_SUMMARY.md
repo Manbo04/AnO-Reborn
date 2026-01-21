@@ -78,6 +78,12 @@ Once pushed to GitHub, Railway will automatically detect the changes.
 
 ### Step 3: Monitor Deployment
 
+### Optional: Set up Sentry for error aggregation (recommended)
+
+Add the `SENTRY_DSN` environment variable in Railway to enable automatic error aggregation and event tracking. The app initializes Sentry automatically if `SENTRY_DSN` is present. Consider also setting `SENTRY_TRACES_SAMPLE_RATE` (default 0.0) and `ENVIRONMENT` to differentiate events across environments.
+
+
+
 - Watch the logs for each service
 - Verify all services show "Active" status
 - Test your application at the Railway URL
