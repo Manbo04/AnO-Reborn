@@ -105,6 +105,15 @@
                         <a href="/signup" class="templatelink">Don't have an account? Get Started</a>
                     </div>
                 </form>
+
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="templatecontentheadercenter" style="color: #f44336; margin-top: 10px;">
+                    {% for m in messages %}{{ m }}{% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
             </div>
         </div>
     </div>

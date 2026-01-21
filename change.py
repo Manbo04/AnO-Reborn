@@ -78,7 +78,8 @@ def request_password_reset():
             result = db.fetchone()
             if not result:
                 # Don't reveal whether an email exists; behave as if request succeeded
-                return redirect("/")
+                flash("If an account exists with that email, a reset link has been sent.")
+                return redirect("/forgot_password")
             cId = result[0]
 
         # Insert reset code record for the user (always)
@@ -95,8 +96,9 @@ def request_password_reset():
             # Log failures but don't reveal to user
             pass
 
-    # Redirect to a neutral page (home) so attackers cannot probe for valid emails
-    return redirect("/")
+    # Inform user and redirect back to forgot password page
+    flash("If an account exists with that email, a reset link has been sent.")
+    return redirect("/forgot_password")
 
 
 # Route for resetting password after request for changing password has been submitted.
@@ -111,9 +113,11 @@ def reset_password(code):
         # Validate input password
         new_password_raw = request.form.get("password")
         if not new_password_raw:
-            return error(400, "No password provided.")
+            flash("Please provide a new password.")
+            return render_template("reset_password.html", code=code), 400
         if len(new_password_raw) < 6:
-            return error(400, "Password must be at least 6 characters long.")
+            flash("Password must be at least 6 characters long.")
+            return render_template("reset_password.html", code=code), 400
 
         new_password = new_password_raw.encode("utf-8")
 
