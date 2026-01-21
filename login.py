@@ -16,95 +16,106 @@ load_dotenv()
 def login():
     if request.method == "POST":
         import logging
+        import uuid
+        import time
 
         logger = logging.getLogger(__name__)
         logger.debug("POST /login/ called")
-        logger.debug("Login: request.form contains keys: %s", list(request.form.keys()))
-        # Use application context to avoid circular imports / NameError
-        current_app.config["SESSION_PERMANENT"] = True
-        current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
-        # gets the password input from the form
-        password = request.form.get("password")
-        # gets the username input from the forms
-        username = request.form.get("username")
-        logger.debug(
-            f"Received form data: username={username}, password_set={bool(password)}"
-        )
+        # Wrap POST handler to catch unexpected exceptions and return friendly error
+        try:
+            logger.debug("Login: request.form contains keys: %s", list(request.form.keys()))
+            # Use application context to avoid circular imports / NameError
+            current_app.config["SESSION_PERMANENT"] = True
+            current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
-        if not username or not password:  # checks if inputs are blank
-            logger.debug("Missing username or password")
-            return error(400, "No Password or Username")
+            # gets the password input from the form
+            password = request.form.get("password")
+            # gets the username input from the forms
+            username = request.form.get("username")
+            logger.debug(
+                f"Received form data: username={username}, password_set={bool(password)}"
+            )
 
-        password = password.encode("utf-8")
+            if not username or not password:  # checks if inputs are blank
+                logger.debug("Missing username or password")
+                return error(400, "No Password or Username")
 
-        with get_db_cursor() as db:
-            # Check if verification columns exist
-            try:
-                db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
-                has_verification = db.fetchone() is not None
-            except:
-                has_verification = False
-            
-            # selects data about user, from users
-            if has_verification:
-                db.execute(
-                    "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
-                    (username,),
-                )
-            else:
-                db.execute(
-                    "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
-                    (username,),
-                )
-            user = db.fetchone()
-            logger.debug(f"DB user row fetched for username={username}: {bool(user)}")
+            password = password.encode("utf-8")
 
-            if not user:
-                logger.debug("User not found")
-                return error(403, "Wrong password or user doesn't exist")
-
-            try:
-                hashed_pw = user[4].encode("utf-8")
-                logger.debug("hashed_pw retrieved for user")
-            except Exception as e:
-                logger.debug(f"Exception getting hashed_pw: {e}")
-                return error(403, "Wrong password or user doesn't exist")
-
-            # checks if user exists and if the password is correct
-            if bcrypt.checkpw(password, hashed_pw):
-                # Check if email is verified (only if verification is enabled)
-                if has_verification:
-                    is_verified = user[8] if len(user) > 8 else True
-                    if is_verified is False:
-                        user_email = user[2] if user[2] else ''
-                        return redirect(f'/verification_pending?email={user_email}')
-                
-                logger.debug("Password matches, logging in user.")
-                # sets session's user_id to current user's id
-                session["user_id"] = user[0]
-                logger.debug(f"Session after set: {dict(session)}")
-                # Mark session as permanent and modified to ensure cookie is set on response
-                session.permanent = True
-                session.modified = True
-
-                # TODO: remove later, this is for old users
+            with get_db_cursor() as db:
+                # Check if verification columns exist
                 try:
-                    db.execute(
-                        "SELECT education, soldiers FROM policies WHERE user_id=%s",
-                        (user[0],),
-                    )
+                    db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+                    has_verification = db.fetchone() is not None
                 except Exception:
-                    db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user[0],))
+                    has_verification = False
+                
+                # selects data about user, from users
+                if has_verification:
+                    db.execute(
+                        "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
+                        (username,),
+                    )
+                else:
+                    db.execute(
+                        "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
+                        (username,),
+                    )
+                user = db.fetchone()
+                logger.debug(f"DB user row fetched for username={username}: {bool(user)}")
 
-                logger.debug("Returning redirect to / after login")
-                from flask import make_response
+                if not user:
+                    logger.debug("User not found")
+                    return error(403, "Wrong password or user doesn't exist")
 
-                response = redirect("/")
-                return response  # redirects user to homepage
-            else:
-                logger.debug("Password does not match.")
-                return error(400, "Wrong password")
+                try:
+                    hashed_pw = user[4].encode("utf-8")
+                    logger.debug("hashed_pw retrieved for user")
+                except Exception as e:
+                    logger.debug(f"Exception getting hashed_pw: {e}")
+                    return error(403, "Wrong password or user doesn't exist")
+
+                # checks if user exists and if the password is correct
+                if bcrypt.checkpw(password, hashed_pw):
+                    # Check if email is verified (only if verification is enabled)
+                    if has_verification:
+                        is_verified = user[8] if len(user) > 8 else True
+                        if is_verified is False:
+                            user_email = user[2] if user[2] else ''
+                            return redirect(f'/verification_pending?email={user_email}')
+                    
+                    logger.debug("Password matches, logging in user.")
+                    # sets session's user_id to current user's id
+                    session["user_id"] = user[0]
+                    logger.debug(f"Session after set: {dict(session)}")
+                    # Mark session as permanent and modified to ensure cookie is set on response
+                    session.permanent = True
+                    session.modified = True
+
+                    # TODO: remove later, this is for old users
+                    try:
+                        db.execute(
+                            "SELECT education, soldiers FROM policies WHERE user_id=%s",
+                            (user[0],),
+                        )
+                    except Exception:
+                        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user[0],))
+
+                    logger.debug("Returning redirect to / after login")
+                    from flask import make_response
+
+                    response = redirect("/")
+                    return response  # redirects user to homepage
+                else:
+                    logger.debug("Password does not match.")
+                    return error(400, "Wrong password")
+
+        except Exception as e:
+            # Log the full exception with a short unique id and return a friendly message
+            uid = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
+            logger.exception(f"Unhandled exception during login (id={uid}): {e}")
+            return error(500, f"An internal server error occurred. Please report this id: {uid}")
 
     else:
         # Check for verification message parameter
