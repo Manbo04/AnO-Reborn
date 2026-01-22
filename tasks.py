@@ -283,9 +283,33 @@ def tax_income():
         with get_db_connection() as conn:
             if not try_pg_advisory_lock(conn, 9001, "tax_income"):
                 return
-            start = time.time()
             db = conn.cursor()
-            dbdict = conn.cursor(cursor_factory=RealDictCursor)
+            # Ensure we only run once in a short window (protects against multiple beat schedulers)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS task_runs (
+                    task_name TEXT PRIMARY KEY,
+                    last_run TIMESTAMP WITH TIME ZONE
+                )
+            """)
+            db.execute("SELECT last_run FROM task_runs WHERE task_name=%s", ("tax_income",))
+            row = db.fetchone()
+            import datetime
+            now = datetime.datetime.now(datetime.timezone.utc)
+            # Skip if last run was within the last 55 seconds
+            if row and row[0] and (now - row[0]).total_seconds() < 55:
+                print("tax_income: last run too recent, skipping")
+                try:
+                    release_pg_advisory_lock(conn, 9001)
+                except Exception:
+                    pass
+                return
+
+            db.execute(
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, now()) ON CONFLICT (task_name) DO UPDATE SET last_run = now()",
+                ("tax_income",),
+            )
+            start = time.time()
+            dbdict = conn.cursor(cursor_factory=RealDictCursor) 
 
             db.execute("SELECT id FROM users")
             users = db.fetchall()
@@ -698,6 +722,30 @@ def generate_province_revenue():  # Runs each hour
             skipped_for_lock = True
             return
         db = conn.cursor()
+        # Ensure single run within a short window to prevent duplicate hourly updates
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS task_runs (
+                task_name TEXT PRIMARY KEY,
+                last_run TIMESTAMP WITH TIME ZONE
+            )
+        """)
+        db.execute("SELECT last_run FROM task_runs WHERE task_name=%s", ("generate_province_revenue",))
+        row = db.fetchone()
+        import datetime
+        now = datetime.datetime.now(datetime.timezone.utc)
+        # Skip if this task ran within the last 90 seconds (allow some leeway for long runs)
+        if row and row[0] and (now - row[0]).total_seconds() < 90:
+            print("generate_province_revenue: last run too recent, skipping")
+            try:
+                release_pg_advisory_lock(conn, 9002)
+            except Exception:
+                pass
+            return
+
+        db.execute(
+            "INSERT INTO task_runs (task_name, last_run) VALUES (%s, now()) ON CONFLICT (task_name) DO UPDATE SET last_run = now()",
+            ("generate_province_revenue",),
+        )
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         columns = variables.BUILDINGS
