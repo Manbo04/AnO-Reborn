@@ -632,7 +632,12 @@ def account():
 @app.route("/recruitments", methods=["GET"])
 @login_required
 def recruitments():
-    return render_template("recruitments.html")
+    # List coalitions marked as recruiting
+    from database import get_db_cursor
+    with get_db_cursor() as db:
+        db.execute("SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC")
+        cols = db.fetchall()
+    return render_template("recruitments.html", coalitions=cols)
 
 
 @app.route("/businesses", methods=["GET"])

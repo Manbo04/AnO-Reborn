@@ -431,6 +431,34 @@
                     </table>
                 </div>
 
+                {% if pending_applications and pending_applications|length > 0 %}
+                <h2 class="templatecontentheaderleft">Pending applications</h2>
+                <div class="infodiv">
+                    <div class="templateoutertablediv inverttable">
+                        <table class="templatetable templatetable2">
+                            <tr>
+                                <th>Applicant</th>
+                                <th>Message</th>
+                                <th>When</th>
+                                <th>Action</th>
+                            </tr>
+                            {% for app in pending_applications %}
+                            <tr>
+                                <td><a href="/country/id={{ app[1] }}">{{ app[2] }}</a></td>
+                                <td>{{ app[3] }}</td>
+                                <td>{{ app[5] }}</td>
+                                <td>
+                                    <form method="POST" action="/add/{{ app[1] }}">
+                                        <button class="templatedivbutton">Accept</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!--
                 <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
                     check

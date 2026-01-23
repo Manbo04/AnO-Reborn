@@ -107,6 +107,15 @@ def coalition(colId):
                 "general": None,
                 "member": None,
             }
+            # Fetch pending applications for leaders
+            try:
+                db.execute(
+                    "SELECT a.id, a.userId, u.username, a.message, a.status, a.created_at FROM col_applications a JOIN users u ON a.userId = u.id WHERE a.colId=%s ORDER BY a.created_at DESC",
+                    (colId,),
+                )
+                pending_applications = db.fetchall()
+            except Exception:
+                pending_applications = []
 
             # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
             db.execute(
@@ -120,7 +129,7 @@ def coalition(colId):
 
         else:
             member_roles = {}
-
+            pending_applications = []
         # Treaties
         if (
             user_role in ["foreign_ambassador", "leader", "deputy_leader"]
@@ -345,6 +354,7 @@ def coalition(colId):
             zip=zip,
             requestIds=requestIds,
             members=members,
+            pending_applications=pending_applications,
         )
 
 
@@ -387,9 +397,10 @@ def establish_coalition():
                 )
             else:
                 date = str(datetime.date.today())
+                recruiting = True if request.form.get('recruiting') == 'on' else False
                 db.execute(
-                    "INSERT INTO colNames (name, type, description, date) VALUES (%s, %s, %s, %s)",
-                    (name, cType, desc, date),
+                "INSERT INTO colNames (name, type, description, date, recruiting) VALUES (%s, %s, %s, %s, %s)",
+                (name, cType, desc, date, recruiting),
                 )
 
                 db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
@@ -1208,6 +1219,66 @@ def register_coalitions_routes(app_instance):
     app_instance.add_url_rule(
         "/coalition/<colId>", view_func=coalition_wrapped, methods=["GET"]
     )
+
+    # Apply to coalition (GET form + POST submit)
+    def apply_to_coalition(colId):
+        from flask import request
+        with get_db_cursor() as db:
+            # Check coalition exists
+            db.execute("SELECT name FROM colNames WHERE id=%s", (colId,))
+            row = db.fetchone()
+            if not row:
+                return error(404, "Coalition not found")
+            coalition_name = row[0]
+
+            # If POST, insert application
+            if request.method == "POST":
+                message = request.form.get("message")
+                user_id = session["user_id"]
+
+                # Check if already member
+                db.execute("SELECT userId FROM coalitions WHERE userId=%s", (user_id,))
+                if db.fetchone():
+                    return error(400, "You are already in a coalition")
+
+                # Prevent duplicate applications
+                db.execute(
+                    "SELECT id FROM col_applications WHERE colId=%s AND userId=%s AND status='pending'",
+                    (colId, user_id),
+                )
+                if db.fetchone():
+                    return error(400, "You already have a pending application to this coalition")
+
+                db.execute(
+                    "INSERT INTO col_applications (colId, userId, message) VALUES (%s, %s, %s)",
+                    (colId, user_id, message),
+                )
+
+                # Notify leaders by adding news
+                db.execute(
+                    "SELECT userId FROM coalitions WHERE colId=%s AND role IN ('leader','deputy_leader')",
+                    (colId,),
+                )
+                leader_rows = db.fetchall()
+                if leader_rows:
+                    # Fetch applicant username
+                    db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
+                    username = db.fetchone()[0]
+                    notif = f"{username} applied to join coalition {coalition_name}"
+                    for leader_row in leader_rows:
+                        leader_id = leader_row[0]
+                        db.execute(
+                            "INSERT INTO news (destination_id, message, date) VALUES (%s, %s, NOW())",
+                            (leader_id, notif),
+                        )
+
+                return render_template("verification_pending.html", email=None, message="Application submitted!")
+
+            # GET - render form
+            return render_template("apply_to_coalition.html", coalition_name=coalition_name)
+
+    apply_to_coalition_wrapped = login_required(apply_to_coalition)
+    app_instance.add_url_rule("/coalition/<colId>/apply", view_func=apply_to_coalition_wrapped, methods=["GET","POST"])
     app_instance.add_url_rule(
         "/establish_coalition",
         view_func=establish_coalition_wrapped,
