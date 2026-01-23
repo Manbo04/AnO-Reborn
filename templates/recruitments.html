@@ -9,19 +9,26 @@
 
     <div class="templatedivcontent">
 
-        <h3 class="templatecontentheadercenter">Sorry, this page is not currently functional</h3>
+        <h3 class="templatecontentheadercenter">Coalitions looking for members</h3>
 
-        <!--
-        <div class="warflexparent templatedivflex2 menuflex">
-
-            <h2 class="templatecontentheadercenter">[[ coalitionName ]]</h2>
-
-            <div class="advert">
-                <a href="[[ coalitionLink ]]"><img class="advertimage" src="{{ url_for('static', filename='images/bauxitemine.jpg') }}?v=2" /></a>
+        {% if coalitions and coalitions|length > 0 %}
+            <div class="warflexparent templatedivflex2 menuflex">
+                {% for col in coalitions %}
+                <div class="templatedivflex2left vanilla">
+                    <h2 class="templatecontentheadercenter">{{ col[1] }}</h2>
+                    <p class="templatecontentpleft">{{ col[3] }}</p>
+                    <p class="templatecontentpleft">Type: {{ col[2] }}</p>
+                    <p class="templatecontentpleft"><a class="templatelink" href="/coalition/{{ col[0] }}">View coalition</a></p>
+                    {% if session.user_id and not (session.user_id in [] ) %}
+                        <!-- user is logged in, show apply button -->
+                        <p><a class="templatedivbutton" href="/coalition/{{ col[0] }}/apply">Apply to join</a></p>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-
-        </div>
-        -->
+        {% else %}
+            <p class="templatecontentcenter">No coalitions are recruiting right now.</p>
+        {% endif %}
 
     </div>
 </div>
