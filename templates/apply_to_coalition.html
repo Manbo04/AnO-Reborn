@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Apply to coalition{% endblock %}
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper recruitmentdivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">group_add</span>Apply to join {{ coalition_name }}</h1>
+    </div>
+    <div class="templatedivcontent">
+        <form method="POST">
+            <label for="message">Message to the leaders (optional)</label>
+            <textarea name="message" class="templatetextarea" placeholder="Introduce your nation and why you want to join" maxlength="500"></textarea>
+            <button class="templatedivbutton templatecenteredbutton">Send application</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
