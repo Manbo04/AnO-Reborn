@@ -1,0 +1,57 @@
+name: 'Run production backup & add indexes'
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type CONFIRM to run this job on production (safety check)'
+        required: true
+        default: ''
+
+jobs:
+  backup-and-index:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'CONFIRM' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create backups directory
+        run: mkdir -p backups
+
+      - name: Run pg_dump inside postgres container and create indexes (CONCURRENTLY)
+        id: run_index
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          export TS=$(date -u +%Y%m%d-%H%M%S)
+          BACKUP_PATH=backups/prod_dump-${TS}.dump
+          echo "Starting pg_dump to $BACKUP_PATH"
+          # Run pg_dump and psql using official postgres image to ensure compatible binaries.
+          docker run --rm -e DATABASE_URL="$DATABASE_URL" -v "$PWD":/workdir -w /workdir postgres:15 bash -lc '
+            echo "Dumping DB..."
+            pg_dump "$DATABASE_URL" -Fc -f /workdir/$BACKUP_PATH
+            echo "Dump complete."
+            # Create indexes concurrently (safe for production, requires no transaction)
+            echo "Applying CONCURRENT indexes (IF NOT EXISTS)..."
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS provinces_userid_idx ON provinces (userId);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS offers_user_id_idx ON offers (user_id);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS offers_resource_idx ON offers (resource);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS offers_price_idx ON offers (price);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS coalitions_userid_idx ON coalitions (userId);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS trades_offer_id_idx ON trades (offer_id);"
+            psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY IF NOT EXISTS wars_attacker_defender_idx ON wars (attacker, defender);"
+            echo "Indexes applied."
+          '
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-db-backup
+          path: backups/
+
+      - name: Output status
+        run: echo "Backup and indexing finished. Check backup artifact 'prod-db-backup' in workflow run artifacts."
