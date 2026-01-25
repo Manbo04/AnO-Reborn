@@ -477,9 +477,13 @@ def signup():
         # Defensive: ensure signup_attempts exists
         ensure_signup_attempts_table()
 
-        logger.debug(
-            f"signup request remote_addr={request.remote_addr} X-Forwarded-For={request.headers.get('X-Forwarded-For')}"
-        )
+        try:
+            logger.debug(
+                f"signup request remote_addr={request.remote_addr} X-Forwarded-For={request.headers.get('X-Forwarded-For')}"
+            )
+        except Exception:
+            # Defensive: ensure logging failures don't break signup flow
+            pass
 
         # IP rate limiting: max 3 attempts per IP per day
         # Allow a higher threshold (or effectively bypass) for local dev/testing
