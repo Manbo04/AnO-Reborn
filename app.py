@@ -74,6 +74,19 @@ except Exception:
     # If sentry isn't installed or initialization fails, continue without it
     pass
 
+# Optional: Flask-Limiter integration for rate limiting critical endpoints.
+# This is optional so the app can run when `flask_limiter` isn't installed
+# (useful for local dev or minimal environments).
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+
+    limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
+    app.limiter = limiter
+except Exception:
+    # If limiter isn't available or initialization fails, set attribute to None
+    app.limiter = None
+
 # NOTE: Previously we instrumented session saving for debugging Set-Cookie
 # issues. That instrumentation has been removed to avoid verbose logs in
 # non-development environments. Reintroduce behind a feature flag if needed.
