@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect, jsonify, current_app
+from flask import request, render_template, session, redirect, current_app
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
