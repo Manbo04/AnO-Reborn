@@ -5,19 +5,22 @@ Usage:
   PYTHONPATH=. venv310/bin/python scripts/reset_progress.py --dry-run
 
   # execute actual reset (will modify DB)
-  PYTHONPATH=. venv310/bin/python scripts/reset_progress.py --execute --preserve-market-users bot_user
+  # PYTHONPATH=. venv310/bin/python scripts/reset_progress.py \
+  #   --execute --preserve-market-users bot_user
 
 Notes:
  - By default this script excludes users with role='admin' from resets.
- - To preserve market bot offers, pass --preserve-market-users with a comma-separated
-   list of usernames (or set env MARKET_PRESERVE_USERS="bot1,bot2").
+ - To preserve market bot offers, pass --preserve-market-users with a
+   comma-separated list of usernames (or set env MARKET_PRESERVE_USERS
+   to something like "bot1,bot2").
  - The script will:
    * Reset resources and stats to configured starting values
    * Remove provinces and infrastructure
    * Reset military units to defaults
    * Clean market offers/trades excluding preserved users
 
-This is destructive when run with --execute. Make sure you have a DB backup before running.
+This is destructive when run with --execute. Make sure you have a DB backup
+before running.
 """
 
 import argparse
@@ -27,13 +30,16 @@ from database import get_db_cursor
 
 # Defaults used in other scripts (kept consistent)
 DEFAULTS = {
-    "rations": 800,
-    "lumber": 400,
-    "steel": 250,
-    "aluminium": 200,
-    "gold": 20000000,
+    "rations": 10000,  # food
+    "lumber": 2000,  # building resources
+    "steel": 2000,
+    "aluminium": 2000,
+    "gold": 100000000,
     "military_manpower": 100,
     "defcon": 1,
+    # starting amount for raw resources (oil, coal, uranium, bauxite, lead,
+    # copper, iron, components)
+    "raw_start": 500,
 }
 
 
@@ -49,15 +55,39 @@ def run(
     exclude_admins: bool = True,
 ):
     preserve_market_users = preserve_market_users or []
-    exclude_clause = " AND u.role != 'admin'" if exclude_admins else ""
+    # Build an exclude clause if the users table exposes an admin indicator.
+    # Some deployments don't have a `role` or `is_admin` column, so detect columns first
+    # and fall back to no-exclusion (with a warning) to avoid failing the script.
+    exclude_clause = ""
 
     with get_db_cursor() as db:
+        try:
+            db.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='users' AND column_name IN ('role','is_admin')"
+            )
+            cols = [r[0] for r in db.fetchall()]
+            if exclude_admins:
+                if "role" in cols:
+                    exclude_clause = " AND role != 'admin'"
+                elif "is_admin" in cols:
+                    exclude_clause = " AND is_admin IS NOT TRUE"
+                else:
+                    print(
+                        "Warning: users.role / users.is_admin column not found; "
+                        "exclude_admins ignored."
+                    )
+        except Exception:
+            print("Warning: could not detect admin column; exclude_admins ignored.")
+
         # Find user ids to operate on
-        db.execute(f"SELECT id, username FROM users u WHERE 1=1{exclude_clause}")
+        query = "SELECT id, username FROM users WHERE 1=1" + exclude_clause
+        db.execute(query)
         users = db.fetchall()
         user_ids = [u[0] for u in users]
         print(
-            f"Total users considered for reset: {len(user_ids)} (exclude_admins={exclude_admins})"
+            "Total users considered for reset: %d "
+            "(exclude_admins=%s)" % (len(user_ids), str(exclude_admins))
         )
 
         # Resolve preserve user_ids for market
@@ -70,7 +100,8 @@ def run(
             preserved = db.fetchall()
             preserved_ids = [p[0] for p in preserved]
             print(
-                f"Preserving market offers for users: {[p[1] for p in preserved]} (ids: {preserved_ids})"
+                "Preserving market offers for users: %s (ids: %s)"
+                % ([p[1] for p in preserved], preserved_ids)
             )
 
         if dry_run:
@@ -119,12 +150,12 @@ def run(
                 (user_ids,),
             )
         db.execute(
-            "UPDATE military SET manpower=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["military_manpower"], user_ids, exclude_clause),
+            f"UPDATE military SET manpower=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["military_manpower"], user_ids),
         )
         db.execute(
-            "UPDATE military SET defcon=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["defcon"], user_ids, exclude_clause),
+            f"UPDATE military SET defcon=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["defcon"], user_ids),
         )
 
         # Resources reset
@@ -147,26 +178,43 @@ def run(
                 (user_ids,),
             )
         db.execute(
-            "UPDATE resources SET rations=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["rations"], user_ids, exclude_clause),
+            f"UPDATE resources SET rations=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["rations"], user_ids),
         )
         db.execute(
-            "UPDATE resources SET lumber=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["lumber"], user_ids, exclude_clause),
+            f"UPDATE resources SET lumber=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["lumber"], user_ids),
         )
         db.execute(
-            "UPDATE resources SET steel=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["steel"], user_ids, exclude_clause),
+            f"UPDATE resources SET steel=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["steel"], user_ids),
         )
         db.execute(
-            "UPDATE resources SET aluminium=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["aluminium"], user_ids, exclude_clause),
+            f"UPDATE resources SET aluminium=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["aluminium"], user_ids),
         )
+
+        # Set raw resource starting amounts
+        raw_resources = [
+            "oil",
+            "coal",
+            "uranium",
+            "bauxite",
+            "lead",
+            "copper",
+            "iron",
+            "components",
+        ]
+        for raw in raw_resources:
+            db.execute(
+                f"UPDATE resources SET {raw}=%s WHERE id = ANY(%s){exclude_clause}",
+                (DEFAULTS["raw_start"], user_ids),
+            )
 
         # Stats/gold
         db.execute(
-            "UPDATE stats SET gold=%s WHERE id = ANY(%s)%s",
-            (DEFAULTS["gold"], user_ids, exclude_clause),
+            f"UPDATE stats SET gold=%s WHERE id = ANY(%s){exclude_clause}",
+            (DEFAULTS["gold"], user_ids),
         )
 
         # Provinces and infra
