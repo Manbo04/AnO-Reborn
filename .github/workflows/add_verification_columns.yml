@@ -1,0 +1,46 @@
+name: 'Add email verification columns to users'
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type CONFIRM to run this job on production (safety check)'
+        required: true
+        default: ''
+
+jobs:
+  add-verification-columns:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'CONFIRM' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify DATABASE_URL is set
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "ERROR: DATABASE_URL secret is not set for this repository or environment. Add it to repository secrets and re-run the workflow." >&2
+            exit 1
+          fi
+
+      - name: Add verification columns and mark existing users verified
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          echo "Applying ALTER TABLE statements..."
+          docker run --rm -e DATABASE_URL="$DATABASE_URL" postgres:17 bash -lc '
+            psql "$DATABASE_URL" -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;"
+            psql "$DATABASE_URL" -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;"
+            psql "$DATABASE_URL" -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS token_created_at TIMESTAMP WITH TIME ZONE;"
+            echo "Updating existing users to mark them verified..."
+            psql "$DATABASE_URL" -c "UPDATE users SET is_verified = TRUE WHERE is_verified IS NULL OR is_verified = FALSE;"
+            echo "Verifying changes..."
+            psql "$DATABASE_URL" -c "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name IN ('is_verified','verification_token','token_created_at');"
+            psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users WHERE is_verified = FALSE;"
+          '
+
+      - name: Output status
+        run: echo "Migration finished. Check the run logs for details and confirmation."
