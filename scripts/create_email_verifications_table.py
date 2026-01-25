@@ -1,8 +1,11 @@
 """Simple migration script to create `email_verifications` table.
 
-Run locally with: PYTHONPATH=. venv310/bin/python scripts/create_email_verifications_table.py
-(This will connect using config.parse_database_url environment variables.)
+Run locally:
+    venv310/bin/python scripts/create_email_verifications_table.py
+    (set PYTHONPATH=.)
+(This connects using environment variables parsed by `config.parse_database_url`.)
 """
+
 from database import get_db_connection
 
 SQL = """

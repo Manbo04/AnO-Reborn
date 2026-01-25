@@ -2,7 +2,9 @@ import tasks
 
 
 class FakeCursor:
-    def __init__(self, fetchall_return=None, fetchall_returns=None, fetchone_returns=None):
+    def __init__(
+        self, fetchall_return=None, fetchall_returns=None, fetchone_returns=None
+    ):
         # fetchall_return: single response returned for every fetchall()
         # fetchall_returns: sequence of responses popped per fetchall() call
         self._fetchall_single = fetchall_return
@@ -52,8 +54,18 @@ def test_tax_income_uses_positive_cg(monkeypatch):
     # Note: order of fetchone calls in tax_income: SELECT gold FROM stats -> fetchone
     # Later other calls may occur
     # Provide sequential responses for successive fetchall() calls in tax_income
-    # 1) users, 2) stats (id, gold), 3) resources (id, consumer_goods), 4) policies, 5) provinces (userId, population, land)
-    fetchall_seq = [user_rows, [(1, 1000)], [(1, 3)], [], [(1, 100, 1)]]
+    # 1) users
+    # 2) stats (id, gold)
+    # 3) resources (id, consumer_goods)
+    # 4) policies
+    # 5) provinces (userId, population, land)
+    fetchall_seq = [
+        user_rows,
+        [(1, 1000)],
+        [(1, 3)],
+        [],
+        [(1, 100, 1)],
+    ]
     db = FakeCursor(fetchall_returns=fetchall_seq, fetchone_returns=[(1000,)])
 
     conn = FakeConn(db)
