@@ -56,12 +56,12 @@ def login():
                 # selects data about user, from users
                 if has_verification:
                     db.execute(
-                        "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
+                        "SELECT id, username, email, description, hash, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
                         (username,),
                     )
                 else:
                     db.execute(
-                        "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
+                        "SELECT id, username, email, description, hash, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
                         (username,),
                     )
                 user = db.fetchone()
@@ -129,6 +129,9 @@ def login():
                 import time
                 event_id = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
                 logger.exception(f"Unhandled exception during login (id={event_id}): {e}")
+                # Also print stacktrace to stderr to help local debugging
+                import traceback, sys
+                print(traceback.format_exc(), file=sys.stderr)
 
             return error(500, f"An internal server error occurred. Please report this id: {event_id}")
 

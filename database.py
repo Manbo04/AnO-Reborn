@@ -109,6 +109,9 @@ def cache_response(ttl_seconds=60):
             # expensive DB queries
             return render_template(...)
     """
+    # Local imports to avoid top-level dependencies when used in tests
+    from functools import wraps
+    from time import time
 
     def decorator(f):
         cache = {}
@@ -138,6 +141,26 @@ def cache_response(ttl_seconds=60):
         return decorated_function
 
     return decorator
+
+
+# Convenience helper function used in tests and code to get first column
+# from a cursor:
+def fetchone_first(db_cursor, default=None):
+    """Return the first column from db_cursor.fetchone() or `default` if missing."""
+    try:
+        row = db_cursor.fetchone()
+        if row is None:
+            return default
+        try:
+            return row[0]
+        except Exception:
+            try:
+                # dict-like
+                return row.get(next(iter(row.keys())))
+            except Exception:
+                return default
+    except Exception:
+        return default
 
 
 # Global query cache (5-minute TTL for slower-changing data)
@@ -458,6 +481,25 @@ class QueryHelper:
     """Helper class for common database queries"""
 
     @staticmethod
+    def fetchone_first(db_cursor, default=None):
+        """Return the first column of the first row from a cursor fetchone, or default if missing."""
+        try:
+            row = db_cursor.fetchone()
+            if row is None:
+                return default
+            try:
+                # tuple-like
+                return row[0]
+            except Exception:
+                try:
+                    # dict-like
+                    return row.get(next(iter(row.keys())))
+                except Exception:
+                    return default
+        except Exception:
+            return default
+
+    @staticmethod
     def fetch_one(
         query: str, params: tuple = None, dict_cursor: bool = False
     ) -> Optional[Any]:
@@ -487,7 +529,12 @@ class QueryHelper:
     def execute_many(query: str, params_list: List[tuple]) -> None:
         """Execute a query with multiple parameter sets using execute_batch for efficiency"""
         with get_db_cursor() as cursor:
-            execute_batch(cursor, query, params_list)
+            try:
+                execute_batch(cursor, query, params_list)
+            except AttributeError:
+                # Fallback for fake cursors in tests lacking mogrify()
+                for params in params_list:
+                    cursor.execute(query, params)
 
     @staticmethod
     def execute_returning(query: str, params: tuple = None) -> Any:
