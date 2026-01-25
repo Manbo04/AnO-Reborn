@@ -435,6 +435,33 @@ def get_db_cursor(cursor_factory=None):
             used_pool = False
 
         cursor = conn.cursor(cursor_factory=cursor_factory)
+
+        # Instrumentation: wrap `execute` to log slow queries in production.
+        try:
+            threshold = float(os.getenv("DB_SLOW_QUERY_LOG_THRESHOLD", "0.5"))
+        except Exception:
+            threshold = 0.5
+
+        _orig_execute = cursor.execute
+
+        def _timed_execute(query, params=None):
+            start = time()
+            try:
+                return _orig_execute(query, params)
+            finally:
+                duration = time() - start
+                if duration > threshold and os.getenv("ENVIRONMENT") == "PROD":
+                    logger = logging.getLogger(__name__)
+                    try:
+                        logger.warning(
+                            f"SLOW QUERY ({duration:.3f}s): {query} params:{params}"
+                        )
+                    except Exception:
+                        # Don't let logging errors break application
+                        pass
+
+        cursor.execute = _timed_execute
+
         try:
             yield cursor
             conn.commit()
