@@ -173,6 +173,14 @@ coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
+# Register email verification routes (provides /verify_email/<token>)
+try:
+    import email_routes
+
+    email_routes.register_email_routes(app)
+except Exception:
+    # If email_routes cannot be registered (e.g., missing dependencies), continue without fatal error
+    pass
 
 # Configure OAuth2 SECRET_KEY from login module
 from dotenv import load_dotenv
@@ -181,6 +189,10 @@ load_dotenv()
 oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
 if oauth2_secret:
     app.config["SECRET_KEY"] = oauth2_secret
+# Ensure SECRET_KEY is always set so server-side sessions work. For local
+# development we allow a non-secret fallback (not for production).
+if not app.config.get("SECRET_KEY"):
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-not-for-prod")
 
 
 # Performance: Add caching headers for static files

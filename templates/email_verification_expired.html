@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %} Verification expired {% endblock %}
+{% block body %}
+<div class="templatediv noboxshadowtopper" style="max-width:700px;margin:40px auto;padding:20px;">
+  <div class="templatedivtopper">
+    <h1 class="templatedivtitle">Verification link expired or invalid</h1>
+  </div>
+  <div class="templatedivcontent">
+    <div class="notice notice-warning" style="padding:15px;border-radius:6px;background:#fff8e1;border:1px solid #ffecb3;">
+      <p>The verification link is invalid or has expired. You can <a href="/resend_verification">request a new verification</a> or contact admins on Discord for help.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
