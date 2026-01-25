@@ -48,6 +48,12 @@
 
     <div class="templatedivcontent">
 
+        {% if EMAIL_VERIFICATION_COMING_SOON %}
+        <div class="notice notice-warning" style="padding:12px;background:#fff8e1;border:1px solid #ffd54f;border-radius:6px;margin-bottom:16px;text-align:center;">
+            Email verification is coming soon — please remember your password. If you lose it, contact admins on our Discord server for help.
+        </div>
+        {% endif %}
+
         <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
 
             {% if way != "discord" %}
