@@ -7,8 +7,6 @@ from flask import (
     session,
     redirect,
     send_from_directory,
-    jsonify,
-    make_response,
 )
 from flask_compress import Compress
 import traceback
