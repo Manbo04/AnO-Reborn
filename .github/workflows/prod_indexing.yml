@@ -36,7 +36,8 @@ jobs:
             echo "ERROR: DATABASE_URL secret is not set for this repository or environment. Add it to repository secrets and re-run the workflow." >&2
             exit 1
           fi
-          docker run --rm -e DATABASE_URL="$DATABASE_URL" -e BACKUP_PATH="$BACKUP_PATH" -v "$PWD":/workdir -w /workdir postgres:15 bash -lc '
+          docker run --rm -e DATABASE_URL="$DATABASE_URL" -e BACKUP_PATH="$BACKUP_PATH" -v "$PWD":/workdir -w /workdir postgres:17 bash -lc '
+            set -euo pipefail
             if [ -z "${DATABASE_URL:-}" ]; then
               echo "ERROR: DATABASE_URL is not available inside container." >&2
               exit 2
