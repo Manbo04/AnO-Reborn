@@ -182,6 +182,20 @@ except Exception:
     # If email_routes cannot be registered (e.g., missing dependencies), continue without fatal error
     pass
 
+
+# Inject global feature flags and messages into template context
+@app.context_processor
+def inject_flags():
+    from os import getenv
+
+    return {
+        "EMAIL_VERIFICATION_COMING_SOON": getenv(
+            "EMAIL_VERIFICATION_COMING_SOON", "true"
+        )
+        == "true",
+    }
+
+
 # Configure OAuth2 SECRET_KEY from login module
 from dotenv import load_dotenv
 
@@ -547,6 +561,30 @@ def get_resources():
 @app.context_processor
 def inject_user():
     return dict(get_resources=get_resources)
+
+
+@app.context_processor
+def inject_resources_global():
+    """Ensure a `resources` mapping is always available in templates.
+
+    This provides a safe fallback (empty dict) when no user is logged in
+    or when a database lookup fails, preventing Jinja UndefinedError in
+    templates that reference `resources` directly.
+    """
+    from flask import session
+
+    try:
+        user_id = session.get("user_id")
+        res = get_resources(user_id) if user_id else {}
+        # Use defaultdict so missing keys return 0 in templates (prevents Jinja errors)
+        from collections import defaultdict
+
+        resources = defaultdict(int, res)
+    except Exception:
+        from collections import defaultdict
+
+        resources = defaultdict(int)
+    return dict(resources=resources)
 
 
 @app.route("/", methods=["GET"])

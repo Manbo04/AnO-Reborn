@@ -17,21 +17,26 @@ def app():
 
 
 def test_verify_route_marks_user_verified(client, app):
-    # Create a user and a token, then call the verify route
+    import uuid
+
+    # Create a user and a token, then call the verify route (use unique username/email to avoid collisions)
     with app.app_context():
         with get_db_cursor() as db:
-                db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-                    ("v", "v@t", "h", "2020-01-01", "n"),
-                )
-                user_id = db.fetchone()[0]
-                token = email_verification.generate_verification("v@t", user_id=user_id)
+            username = f"v_{uuid.uuid4().hex[:8]}"
+            email = f"{username}@example.com"
+            db.execute(
+                "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (username, email, "h", "2020-01-01", "n"),
+            )
+            user_id = db.fetchone()[0]
+            token = email_verification.generate_verification(email, user_id=user_id)
     resp = client.get(f"/verify_email/{token}", follow_redirects=True)
     assert resp.status_code == 200
     assert b"Email verified" in resp.data or b"successfully" in resp.data
 
     # Some schemas may not have an is_verified column; ensure the route responded with success
     # and did not raise an uncaught exception (asserted by status above).
+
 
 def test_verify_route_invalid_token_shows_expired(client):
     resp = client.get("/verify_email/this-token-does-not-exist", follow_redirects=True)
