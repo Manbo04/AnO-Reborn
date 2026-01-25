@@ -109,7 +109,11 @@ app.config["ALLOWED_HOSTS"] = [
 # Ensure session cookie behavior is permissive for local dev/testing
 # Keep default None in production but set explicit None to be safe
 app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["SESSION_COOKIE_SAMESITE"] = None
+# Use Lax by default for SameSite to prevent CSRF via third-party contexts but
+# still allow OAuth redirects and other reasonable flows.
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+# Prevent JavaScript from accessing session cookies
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 # In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
 # For local development or test environments where HTTPS is not used, keep cookies
 # insecure so `requests` and `curl` clients can receive them.
@@ -231,6 +235,21 @@ def add_cache_headers(response):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+
+    # Add security headers to all responses to harden against common web attacks
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer-when-downgrade")
+    # Conservative CSP - only enable in production to avoid breaking dev/test flows
+    if os.getenv("ENVIRONMENT") == "PROD":
+        try:
+            response.headers.setdefault(
+                "Content-Security-Policy",
+                "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'",
+            )
+        except Exception:
+            pass
+
     return response
 
 
