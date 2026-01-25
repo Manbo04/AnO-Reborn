@@ -12,7 +12,6 @@ from database import get_db_cursor
 
 load_dotenv()
 
-import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
