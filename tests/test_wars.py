@@ -128,7 +128,7 @@ def test_declare_war(login_session, users):
     )
     conn.close()
     login_resp = login_session.post(
-        f"{BASE_URL}/login",
+        f"{BASE_URL}/login/",
         data={"username": users[0]["username"], "password": users[0]["password"]},
     )
     assert login_resp.status_code in (200, 302)

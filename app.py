@@ -131,7 +131,7 @@ def before_request():
     try:
         import sentry_sdk
 
-        user_id = session.get("user_id") if hasattr(session, 'get') else None
+        user_id = session.get("user_id") if hasattr(session, "get") else None
         if user_id:
             sentry_sdk.set_user({"id": str(user_id)})
         else:
@@ -170,6 +170,28 @@ coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
+# Register email verification routes (provides /verify_email/<token>)
+try:
+    import email_routes
+
+    email_routes.register_email_routes(app)
+except Exception:
+    # If email_routes cannot be registered (e.g., missing dependencies), continue without fatal error
+    pass
+
+
+# Inject global feature flags and messages into template context
+@app.context_processor
+def inject_flags():
+    from os import getenv
+
+    return {
+        "EMAIL_VERIFICATION_COMING_SOON": getenv(
+            "EMAIL_VERIFICATION_COMING_SOON", "true"
+        )
+        == "true",
+    }
+
 
 # Configure OAuth2 SECRET_KEY from login module
 from dotenv import load_dotenv
@@ -178,6 +200,10 @@ load_dotenv()
 oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
 if oauth2_secret:
     app.config["SECRET_KEY"] = oauth2_secret
+# Ensure SECRET_KEY is always set so server-side sessions work. For local
+# development we allow a non-secret fallback (not for production).
+if not app.config.get("SECRET_KEY"):
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-not-for-prod")
 
 
 # Performance: Add caching headers for static files
@@ -534,6 +560,30 @@ def inject_user():
     return dict(get_resources=get_resources)
 
 
+@app.context_processor
+def inject_resources_global():
+    """Ensure a `resources` mapping is always available in templates.
+
+    This provides a safe fallback (empty dict) when no user is logged in
+    or when a database lookup fails, preventing Jinja UndefinedError in
+    templates that reference `resources` directly.
+    """
+    from flask import session
+
+    try:
+        user_id = session.get("user_id")
+        res = get_resources(user_id) if user_id else {}
+        # Use defaultdict so missing keys return 0 in templates (prevents Jinja errors)
+        from collections import defaultdict
+
+        resources = defaultdict(int, res)
+    except Exception:
+        from collections import defaultdict
+
+        resources = defaultdict(int)
+    return dict(resources=resources)
+
+
 @app.route("/", methods=["GET"])
 def index():
     # In local development/testing, ensure a visible debug cookie is set on the
@@ -634,8 +684,11 @@ def account():
 def recruitments():
     # List coalitions marked as recruiting
     from database import get_db_cursor
+
     with get_db_cursor() as db:
-        db.execute("SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC")
+        db.execute(
+            "SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
+        )
         cols = db.fetchall()
     return render_template("recruitments.html", coalitions=cols)
 
