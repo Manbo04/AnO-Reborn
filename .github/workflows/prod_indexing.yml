@@ -31,9 +31,18 @@ jobs:
           BACKUP_PATH=backups/prod_dump-${TS}.dump
           echo "Starting pg_dump to $BACKUP_PATH"
           # Run pg_dump and psql using official postgres image to ensure compatible binaries.
-          docker run --rm -e DATABASE_URL="$DATABASE_URL" -v "$PWD":/workdir -w /workdir postgres:15 bash -lc '
-            echo "Dumping DB..."
-            pg_dump "$DATABASE_URL" -Fc -f /workdir/$BACKUP_PATH
+          # Fail fast if DATABASE_URL is not set at the job level (clearer error than silent psql failures)
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "ERROR: DATABASE_URL secret is not set for this repository or environment. Add it to repository secrets and re-run the workflow." >&2
+            exit 1
+          fi
+          docker run --rm -e DATABASE_URL="$DATABASE_URL" -e BACKUP_PATH="$BACKUP_PATH" -v "$PWD":/workdir -w /workdir postgres:15 bash -lc '
+            if [ -z "${DATABASE_URL:-}" ]; then
+              echo "ERROR: DATABASE_URL is not available inside container." >&2
+              exit 2
+            fi
+            echo "Dumping DB to /workdir/$BACKUP_PATH..."
+            pg_dump "$DATABASE_URL" -Fc -f /workdir/"$BACKUP_PATH"
             echo "Dump complete."
             # Create indexes concurrently (safe for production, requires no transaction)
             echo "Applying CONCURRENT indexes (IF NOT EXISTS)..."
