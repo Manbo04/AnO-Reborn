@@ -467,9 +467,16 @@ def discord_register():
 
 
 def signup():
-    # Ensure a function-local logger exists to avoid UnboundLocalError when the module-level
-    # logger may be shadowed by other scopes or by runtime import behavior.
-    logger = logging.getLogger(__name__)
+    # Avoid UnboundLocalError by using the module-level logger and ensuring it exists.
+    # We declare `logger` as global to prevent Python treating it as a local when an
+    # assignment to `logger` appears elsewhere in the function.
+    global logger
+    try:
+        logger
+    except NameError:
+        import logging as _logging
+
+        logger = _logging.getLogger(__name__)
 
     if request.method == "POST":
         from database import get_db_cursor
