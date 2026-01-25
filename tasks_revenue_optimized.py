@@ -273,13 +273,21 @@ def generate_province_revenue_optimized():
         # Batch update energy for all provinces
         if province_field_updates:
             energy_list = [(v.get('energy', 0), pid) for pid, v in province_field_updates.items()]
-            execute_batch(db, "UPDATE provinces SET energy=%s WHERE id=%s", energy_list)
+            try:
+                execute_batch(db, "UPDATE provinces SET energy=%s WHERE id=%s", energy_list)
+            except AttributeError:
+                for energy, pid in energy_list:
+                    db.execute("UPDATE provinces SET energy=%s WHERE id=%s", (energy, pid))
 
         # Batch update happiness, productivity, pollution, consumer_spending
         for field in ['happiness', 'productivity', 'pollution', 'consumer_spending']:
             updates = [(v[field], pid) for pid, v in province_field_updates.items() if field in v]
             if updates:
-                execute_batch(db, f"UPDATE provinces SET {field}=%s WHERE id=%s", updates)
+                try:
+                    execute_batch(db, f"UPDATE provinces SET {field}=%s WHERE id=%s", updates)
+                except AttributeError:
+                    for val, pid in updates:
+                        db.execute(f"UPDATE provinces SET {field}=%s WHERE id=%s", (val, pid))
 
         # Batch update all user resources (one big batch, not per-resource!)
         if resource_updates:
@@ -295,12 +303,20 @@ def generate_province_revenue_optimized():
                 batch_data.append(tuple(values))
             
             if batch_data:
-                execute_batch(db, update_sql, batch_data)
+                try:
+                    execute_batch(db, update_sql, batch_data)
+                except AttributeError:
+                    for params in batch_data:
+                        db.execute(update_sql, params)
 
         # Batch update stats (gold) for all users
         if stats_map:
             gold_updates = [(gold, uid) for uid, gold in stats_map.items()]
-            execute_batch(db, "UPDATE stats SET gold=%s WHERE id=%s", gold_updates)
+            try:
+                execute_batch(db, "UPDATE stats SET gold=%s WHERE id=%s", gold_updates)
+            except AttributeError:
+                for amount, uid in gold_updates:
+                    db.execute("UPDATE stats SET gold=%s WHERE id=%s", (amount, uid))
 
         conn.commit()
 
