@@ -15,50 +15,50 @@ load_dotenv()
 def compress_flag_image(file_storage, max_size=300, quality=85):
     """
     Compress and resize a flag image for efficient database storage.
-    
+
     Args:
         file_storage: Flask FileStorage object
         max_size: Maximum width/height in pixels (default 300px)
         quality: JPEG quality 1-100 (default 85)
-    
+
     Returns:
         tuple: (base64_encoded_data, extension)
     """
     try:
         from PIL import Image
-        
+
         # Read the image
         img = Image.open(file_storage)
-        
+
         # Convert RGBA to RGB if needed (for JPEG)
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
         # Resize if larger than max_size
         if img.width > max_size or img.height > max_size:
             img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
+
         # Save to buffer as JPEG with compression
         buffer = BytesIO()
-        img.save(buffer, format='JPEG', quality=quality, optimize=True)
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
         buffer.seek(0)
-        
+
         # Encode to base64
-        flag_data = base64.b64encode(buffer.read()).decode('utf-8')
-        
-        return flag_data, 'jpg'
-        
+        flag_data = base64.b64encode(buffer.read()).decode("utf-8")
+
+        return flag_data, "jpg"
+
     except ImportError:
         # PIL not available, fall back to raw storage
         file_storage.seek(0)
-        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
-        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        flag_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[1].lower()
         return flag_data, extension
     except Exception as e:
         # On any error, fall back to raw storage
         file_storage.seek(0)
-        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
-        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        flag_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[1].lower()
         return flag_data, extension
 
 
@@ -86,6 +86,69 @@ def get_flagname(user_id):
         # Cache the result
         query_cache.set(cache_key, flag_name)
         return flag_name
+
+
+def validate_resource_column(name):
+    """Validate a resource column name against the allowed list from variables.
+
+    Raises ValueError if the column name is not in the canonical RESOURCES list.
+    This prevents SQL injection when column names must be interpolated into SQL.
+    """
+    from variables import RESOURCES
+
+    if name not in RESOURCES:
+        raise ValueError(f"Invalid resource column: {name}")
+    return name
+
+
+def apply_resource_delta(db_cursor, user_id, resource, delta):
+    """Safely increment (or decrement) a single resource column for a user.
+
+    Parameters:
+        db_cursor: DB cursor with execute()
+        user_id: integer user id
+        resource: column name (validated)
+        delta: numeric value to add (may be negative)
+    """
+    validate_resource_column(resource)
+    sql = f"UPDATE resources SET {resource} = {resource} + %s WHERE id = %s"
+    db_cursor.execute(sql, (delta, user_id))
+
+
+def apply_resource_bulk_delta(db_cursor, user_id, deltas):
+    """Apply multiple resource deltas in a single UPDATE for a user.
+
+    deltas: dict mapping resource column -> delta value
+    """
+    if not deltas:
+        return
+    clauses = []
+    params = []
+    for k, v in deltas.items():
+        validate_resource_column(k)
+        clauses.append(f"{k} = {k} + %s")
+        params.append(v)
+    params.append(user_id)
+    sql = f"UPDATE resources SET {', '.join(clauses)} WHERE id = %s"
+    db_cursor.execute(sql, tuple(params))
+
+
+def apply_resource_set(db_cursor, user_id, values):
+    """Set multiple resource columns to absolute values in a single UPDATE.
+
+    values: dict mapping resource column -> absolute value
+    """
+    if not values:
+        return
+    clauses = []
+    params = []
+    for k, v in values.items():
+        validate_resource_column(k)
+        clauses.append(f"{k} = %s")
+        params.append(v)
+    params.append(user_id)
+    sql = f"UPDATE resources SET {', '.join(clauses)} WHERE id = %s"
+    db_cursor.execute(sql, tuple(params))
 
 
 def login_required(f):

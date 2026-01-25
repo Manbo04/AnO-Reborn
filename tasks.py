@@ -1358,20 +1358,8 @@ def generate_province_revenue():  # Runs each hour
         # Write all resource changes in batch
         try:
             if resources_map:
-                # Get list of resource columns we need to update
-                resource_columns = [
-                    "iron",
-                    "steel",
-                    "oil",
-                    "lead",
-                    "bauxite",
-                    "gasoline",
-                    "aluminum",
-                    "rations",
-                    "munitions",
-                    "components",
-                    "consumer_goods",
-                ]
+                # Get list of resource columns we need to update (canonical list from variables)
+                resource_columns = variables.RESOURCES
                 for user_id, res_data in resources_map.items():
                     # Build dynamic update for each user with their resource values
                     set_clauses = []
