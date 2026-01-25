@@ -26,23 +26,44 @@ def coalition(colId):
         cId = session["user_id"]
 
         # OPTIMIZATION: Single query for basic coalition info + member count + total influence
-        db.execute(
-            """
-            SELECT 
-                c.name, c.type, c.description, c.flag,
-                COUNT(DISTINCT coal.userId) AS members_count,
-                COALESCE(SUM((SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)), 0) AS total_influence
-            FROM colNames c
-            LEFT JOIN coalitions coal ON c.id = coal.colId
-            WHERE c.id = %s
-            GROUP BY c.id, c.name, c.type, c.description, c.flag
-            """,
-            (colId,),
-        )
-        result = db.fetchone()
-        if not result:
-            return error(404, "This coalition doesn't exist")
-        name, colType, description, flag, members_count, total_influence = result
+        try:
+            db.execute(
+                """
+                SELECT 
+                    c.name, c.type, c.description, c.flag, c.recruiting,
+                    COUNT(DISTINCT coal.userId) AS members_count,
+                    COALESCE(SUM((SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)), 0) AS total_influence
+                FROM colNames c
+                LEFT JOIN coalitions coal ON c.id = coal.colId
+                WHERE c.id = %s
+                GROUP BY c.id, c.name, c.type, c.description, c.flag, c.recruiting
+                """,
+                (colId,),
+            )
+            result = db.fetchone()
+            if not result:
+                return error(404, "This coalition doesn't exist")
+            name, colType, description, flag, recruiting, members_count, total_influence = result
+        except Exception:
+            # Fallback for databases that haven't run the recruiting migration yet
+            db.execute(
+                """
+                SELECT 
+                    c.name, c.type, c.description, c.flag,
+                    COUNT(DISTINCT coal.userId) AS members_count,
+                    COALESCE(SUM((SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)), 0) AS total_influence
+                FROM colNames c
+                LEFT JOIN coalitions coal ON c.id = coal.colId
+                WHERE c.id = %s
+                GROUP BY c.id, c.name, c.type, c.description, c.flag
+                """,
+                (colId,),
+            )
+            result = db.fetchone()
+            if not result:
+                return error(404, "This coalition doesn't exist")
+            name, colType, description, flag, members_count, total_influence = result
+            recruiting = False
         average_influence = total_influence // members_count if members_count > 0 else 0
 
         try:
@@ -355,6 +376,7 @@ def coalition(colId):
             requestIds=requestIds,
             members=members,
             pending_applications=pending_applications,
+            recruiting=recruiting,
         )
 
 
@@ -790,7 +812,17 @@ def update_col_info(colId):
                 "UPDATE colNames SET description=%s WHERE id=%s", (description, colId)
             )
 
-    return redirect("/my_coalition")
+        # Recruiting toggle
+        try:
+            recruiting_str = request.form.get("recruiting")
+            recruiting = True if recruiting_str == "on" else False
+            db.execute("UPDATE colNames SET recruiting=%s WHERE id=%s", (recruiting, colId))
+            flash("Recruiting status updated")
+        except Exception:
+            # Ignore if the recruiting column doesn't exist yet (migration not applied)
+            pass
+
+    return redirect(f"/coalition/{colId}")
 
 
 ### COALITION BANK STUFF ###

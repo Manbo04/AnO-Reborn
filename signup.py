@@ -526,9 +526,6 @@ def signup():
         confirmation = request.form.get("confirmation").encode("utf-8")
 
         # Additional debug logging to help diagnose flaky test failures
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.debug(
             f"signup form values: username={username} email={email} continent={request.form.get('continent')}"
         )
@@ -595,12 +592,12 @@ def signup():
                 has_verification = False
             
             if has_verification and is_email_configured():
-                # New flow with email verification
-                verification_token = generate_verification_token(email)
+                # New flow with email verification (store user with unverified flag)
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
-                    (username, email, hashed, str(datetime.date.today()), "normal", False, verification_token),
+                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (username, email, hashed, str(datetime.date.today()), "normal", False),
                 )
+                verification_token = None  # will be generated after we get user_id
             else:
                 # Legacy flow without email verification
                 db.execute(
@@ -613,11 +610,41 @@ def signup():
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
+            # If email verification columns exist and email is configured, generate a token using the pluggable store
+            if has_verification and is_email_configured():
+                try:
+                    from email_verification import generate_verification
+
+                    verification_token = generate_verification(email, user_id=user_id)
+                    # Store token in users table for backwards compatibility with older verification flow
+                    db.execute("UPDATE users SET verification_token = %s, token_created_at = NOW() WHERE id = %s", (verification_token, user_id))
+                except Exception:
+                    verification_token = None
+
             # Send verification email if configured
             if verification_token and is_email_configured():
-                email_sent = send_verification_email(email, username, verification_token)
-                if not email_sent:
-                    logger.warning(f"Failed to send verification email to {email}")
+                # Prefer Celery task for production reliability
+                try:
+                    from tasks import send_verification_email_task
+
+                    send_verification_email_task.delay(email, username, verification_token)
+                except Exception:
+                    # Fallback to synchronous send (HTML email via legacy helper)
+                    try:
+                        from email_utils import send_verification_email as send_html_verification
+
+                        sent_ok = send_html_verification(email, username, verification_token)
+                        if not sent_ok:
+                            logger.warning(f"Failed to send verification email to {email}")
+                    except Exception:
+                        # Last fallback: use new text-based helper
+                        try:
+                            from email_verification import send_verification_email as send_text_verification
+
+                            send_text_verification(email, verification_token)
+                        except Exception:
+                            logger.exception(f"Unable to send verification email to {email}")
+
 
             # Create all the user's game tables (needed for game to work after verification)
             db.execute(
@@ -669,41 +696,60 @@ def verification_pending():
 def verify_email():
     """Verify user's email address using the token from the email link."""
     from database import get_connection
-    
+
     token = request.args.get('token')
     if not token:
         return error("Invalid verification link. No token provided.")
-    
-    # Verify the token
-    email = verify_email_token(token)
-    if not email:
+
+    # First, try pluggable verification backend
+    verified_entry = None
+    try:
+        from email_verification import verify_code
+
+        verified_entry = verify_code(token)
+    except Exception:
+        verified_entry = None
+
+    # If pluggable backend returned nothing, fall back to legacy DB-based token
+    email = None
+    user_id = None
+    if verified_entry:
+        email = verified_entry.email
+        user_id = verified_entry.user_id
+    else:
+        try:
+            from email_utils import verify_email_token
+
+            email = verify_email_token(token)
+        except Exception:
+            email = None
+
+    if not email and not user_id:
         return error("Invalid or expired verification link. Please request a new one.")
-    
+
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # Check if user exists and is not already verified
-        cur.execute("""
-            SELECT id, is_verified FROM users WHERE email = %s
-        """, (email,))
-        result = cur.fetchone()
-        
+        # Resolve user by id if provided, else by email
+        if user_id:
+            cur.execute("SELECT id, is_verified, email FROM users WHERE id = %s", (user_id,))
+            result = cur.fetchone()
+        else:
+            cur.execute("SELECT id, is_verified, email FROM users WHERE email = %s", (email,))
+            result = cur.fetchone()
+
         if not result:
             return error("User not found.")
-        
-        user_id, is_verified = result
-        
+
+        uid, is_verified, user_email = result
+
         if is_verified:
             return redirect('/login?message=already_verified')
-        
-        # Mark user as verified
-        cur.execute("""
-            UPDATE users 
-            SET is_verified = TRUE, verification_token = NULL 
-            WHERE id = %s
-        """, (user_id,))
+
+        # Mark user as verified and clear any stored token for parity
+        cur.execute("UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE id = %s", (uid,))
         conn.commit()
-        
+
         return redirect('/login?message=verified')
     except Exception as e:
         conn.rollback()
@@ -717,14 +763,14 @@ def verify_email():
 def resend_verification():
     """Resend verification email."""
     from database import get_connection
-    
+
     if request.method != 'POST':
         return redirect('/login')
-    
+
     email = request.form.get('email', '').strip().lower()
     if not email:
         return error("Please provide your email address.")
-    
+
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -733,27 +779,45 @@ def resend_verification():
             SELECT id, username, is_verified FROM users WHERE email = %s
         """, (email,))
         result = cur.fetchone()
-        
+
         if not result:
             # Don't reveal if email exists
             return render_template("verification_pending.html", email=email, message="If an account exists with this email, a verification link has been sent.")
-        
+
         user_id, username, is_verified = result
-        
+
         if is_verified:
             return redirect('/login?message=already_verified')
-        
-        # Generate new token and send email
-        new_token = generate_verification_token(email)
+
+        # Generate new token using pluggable verification backend when available
+        new_token = None
+        try:
+            from email_verification import generate_verification
+
+            new_token = generate_verification(email, user_id=user_id)
+        except Exception:
+            # Fallback to legacy token generator
+            new_token = generate_verification_token(email)
+
+        # Store token in users table for backward compatibility
         cur.execute("""
             UPDATE users 
             SET verification_token = %s, token_created_at = NOW() 
             WHERE id = %s
         """, (new_token, user_id))
         conn.commit()
-        
-        send_verification_email(email, username, new_token)
-        
+
+        # Send via background task (Celery) if available, else synchronous send
+        try:
+            from tasks import send_verification_email_task
+
+            send_verification_email_task.delay(email, username, new_token)
+        except Exception:
+            try:
+                send_verification_email(email, username, new_token)
+            except Exception:
+                logger.exception("Failed to send verification email")
+
         return render_template("verification_pending.html", email=email, message="Verification email sent! Please check your inbox.")
     except Exception as e:
         conn.rollback()
