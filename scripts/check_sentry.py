@@ -16,14 +16,13 @@ Usage: python scripts/check_sentry.py --lookback-minutes 15
 import os
 import sys
 import argparse
-import time
 from datetime import datetime, timedelta
 import requests
 
 
 def iso_to_dt(s):
     try:
-        return datetime.fromisoformat(s.replace('Z', '+00:00'))
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
     except Exception:
         return None
 
@@ -39,7 +38,10 @@ def main():
     env = os.getenv("SENTRY_ENV", "staging")
 
     if not token or not org or not project:
-        print("Sentry check skipped: missing SENTRY_AUTH_TOKEN, SENTRY_ORG or SENTRY_PROJECT env vars")
+        print(
+            "Sentry check skipped: missing SENTRY_AUTH_TOKEN, SENTRY_ORG "
+            "or SENTRY_PROJECT env vars"
+        )
         return 0
 
     headers = {"Authorization": f"Bearer {token}"}
@@ -59,16 +61,29 @@ def main():
             last_seen = issue.get("lastSeen")
             dt = iso_to_dt(last_seen) if last_seen else None
             if dt and dt.replace(tzinfo=None) >= cutoff:
-                recent.append({"id": issue.get("id"), "title": issue.get("title"), "lastSeen": last_seen})
+                recent.append(
+                    {
+                        "id": issue.get("id"),
+                        "title": issue.get("title"),
+                        "lastSeen": last_seen,
+                    }
+                )
 
         if recent:
-            print(f"Sentry: Found {len(recent)} recent issue(s) in environment '{env}' (last {args.lookback_minutes} minutes)")
+            print(
+                "Sentry: Found "
+                f"{len(recent)} recent issue(s) in environment '{env}' "
+                f"(last {args.lookback_minutes} minutes)"
+            )
             for i in recent:
                 print(f"- {i['id']}: {i['title']} (lastSeen={i['lastSeen']})")
             # Fail the CI job
             return 2
         else:
-            print(f"Sentry: No recent issues in environment '{env}' (last {args.lookback_minutes} minutes)")
+            print(
+                "Sentry: No recent issues in environment '"
+                f"{env}' (last {args.lookback_minutes} minutes)"
+            )
             return 0
 
     except requests.RequestException as e:
@@ -76,6 +91,6 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rc = main()
     sys.exit(rc)

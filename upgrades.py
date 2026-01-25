@@ -141,26 +141,18 @@ def upgrade_sell_buy(ttype, thing):
                     cId,
                 ),
             )
+            from helpers import apply_resource_delta
+
             for resource, amount in resources.items():
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource}-%s WHERE id=%s",
-                    (
-                        amount,
-                        cId,
-                    ),
-                )
+                apply_resource_delta(db, cId, resource, -amount)
             db.execute(f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s", (cId,))
 
         elif ttype == "sell":
             db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
+            from helpers import apply_resource_delta
+
             for resource, amount in resources.items():
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource}+%s WHERE id=%s",
-                    (
-                        amount,
-                        cId,
-                    ),
-                )
+                apply_resource_delta(db, cId, resource, amount)
             db.execute(f"UPDATE upgrades SET {thing_key}=0 WHERE user_id=%s", (cId,))
 
     return redirect("/upgrades")

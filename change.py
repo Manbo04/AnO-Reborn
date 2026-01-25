@@ -1,5 +1,6 @@
 from flask import request, render_template, session, redirect, flash
 from helpers import login_required, error
+
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 import os
 from dotenv import load_dotenv
@@ -11,7 +12,6 @@ from database import get_db_cursor
 
 load_dotenv()
 
-import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -78,7 +78,9 @@ def request_password_reset():
             result = db.fetchone()
             if not result:
                 # Don't reveal whether an email exists; behave as if request succeeded
-                flash("If an account exists with that email, a reset link has been sent.")
+                flash(
+                    "If an account exists with that email, a reset link has been sent."
+                )
                 return redirect("/forgot_password")
             cId = result[0]
 
@@ -137,17 +139,25 @@ def reset_password(code):
             # Send to Sentry if available and return friendly id
             try:
                 import sentry_sdk
+
                 event_id = sentry_sdk.capture_exception(e)
             except Exception:
                 import logging as _logging
+
                 _logger = _logging.getLogger(__name__)
                 event_id = None
                 _logger.exception(f"Error resetting password for code {code}: {e}")
 
             if event_id:
-                return error(500, f"An error occurred while resetting your password. Please report this id: {event_id}")
+                return error(
+                    500,
+                    f"An error occurred while resetting your password. Please report this id: {event_id}",
+                )
             else:
-                return error(500, "An error occurred while resetting your password. Please try again later.")
+                return error(
+                    500,
+                    "An error occurred while resetting your password. Please try again later.",
+                )
 
         return redirect("/")
 
@@ -180,6 +190,23 @@ def change():
 
 def register_change_routes(app_instance):
     """Register all change routes with the Flask app instance"""
-    app_instance.add_url_rule("/request_password_reset", "request_password_reset", request_password_reset, methods=["POST"])
-    app_instance.add_url_rule("/reset_password/<code>", "reset_password", reset_password, methods=["GET", "POST"])
-    app_instance.add_url_rule("/change", "change", change, methods=["POST"])
+    request_view = request_password_reset
+    reset_view = reset_password
+    change_view = change
+
+    # Apply stricter rate limits to password-related flows when limiter available
+    if getattr(app_instance, "limiter", None):
+        request_view = app_instance.limiter.limit("5/hour")(request_password_reset)
+        reset_view = app_instance.limiter.limit("10/hour")(reset_password)
+        change_view = app_instance.limiter.limit("20/hour")(change)
+
+    app_instance.add_url_rule(
+        "/request_password_reset",
+        "request_password_reset",
+        request_view,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/reset_password/<code>", "reset_password", reset_view, methods=["GET", "POST"]
+    )
+    app_instance.add_url_rule("/change", "change", change_view, methods=["POST"])

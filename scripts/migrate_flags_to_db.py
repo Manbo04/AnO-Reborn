@@ -5,13 +5,14 @@ This provides persistent flag storage that survives Railway deployments.
 
 Run: python scripts/migrate_flags_to_db.py
 """
+
 import os
 import sys
 import base64
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import get_db_connection
+from database import get_db_connection  # noqa: E402
 
 
 def migrate():

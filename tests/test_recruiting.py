@@ -1,7 +1,4 @@
 from test_auth import login_session, login
-import requests
-import psycopg2
-import os
 from dotenv import load_dotenv
 from init import BASE_URL
 import time
@@ -28,27 +25,36 @@ def test_recruiting_toggle_flow():
     if not login(login_session):
         # Try to register the canonical test user then login
         from test_auth import register, register_session
-        assert register(register_session) == True
-        assert login(login_session) == True
+
+        assert register(register_session)
+        assert login(login_session)
 
     # Create coalition and capture redirect to extract coalition id
-    resp = login_session.post(f"{BASE_URL}/establish_coalition", data=data, allow_redirects=False)
+    resp = login_session.post(
+        f"{BASE_URL}/establish_coalition",
+        data=data,
+        allow_redirects=False,
+    )
     if resp.status_code in (302, 303):
         loc = resp.headers.get("Location", "")
-        assert "/coalition/" in loc, f"Unexpected redirect location: {loc}"
+        # Expect a redirect location that contains '/coalition/'
+        assert "/coalition/" in loc, "Unexpected redirect location"
         colId = int(loc.rstrip("/").split("/")[-1])
     elif resp.status_code == 403:
         # User is already in a coalition; find it via DB lookup below
         colId = None
     else:
-        assert False, f"Unexpected status code: {resp.status_code}"
+        raise AssertionError(f"Unexpected status code: {resp.status_code}")
 
     try:
-        # If we were forbidden to create a new coalition, find the existing one for this user
+        # If we were forbidden to create a new coalition,
+        # find the existing one for this user
         if resp.status_code == 403:
             try:
-                import psycopg2, os
+                import psycopg2
+                import os
                 import credentials as creds
+
                 conn = psycopg2.connect(
                     database=os.getenv("PG_DATABASE"),
                     user=os.getenv("PG_USER"),
@@ -69,15 +75,18 @@ def test_recruiting_toggle_flow():
                 conn.close()
             except Exception:
                 # If DB lookup fails, fail early with context
-                assert False, "Could not determine existing coalition after 403 response"
+                raise AssertionError(
+                    "Could not determine existing coalition after 403 response"
+                )
 
         # Check the recruitment listing shows the coalition
         r = login_session.get(f"{BASE_URL}/recruitments")
-        # If we created a new coalition we expect coalition_name; if we used existing one, check by id
+        # If we created a new coalition we expect coalition_name
+        # If we used existing one, check by id
         if resp.status_code in (302, 303):
             assert coalition_name in r.text
         else:
-            assert f"/coalition/{colId}" in r.text or True
+            assert f"/coalition/{colId}" in r.text
 
         # Toggle recruiting off via update_col_info
         update_data = {
@@ -85,7 +94,11 @@ def test_recruiting_toggle_flow():
             "description": coalition_desc,
             # recruiting omitted -> should be treated as off
         }
-        resp2 = login_session.post(f"{BASE_URL}/update_col_info/{colId}", data=update_data, allow_redirects=True)
+        resp2 = login_session.post(
+            f"{BASE_URL}/update_col_info/{colId}",
+            data=update_data,
+            allow_redirects=True,
+        )
         assert resp2.status_code in (200, 302, 303)
 
         # Confirm the coalition no longer appears on the recruiting list
