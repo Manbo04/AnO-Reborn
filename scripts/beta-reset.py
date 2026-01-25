@@ -1,9 +1,8 @@
 import os
 from dotenv import load_dotenv
+import psycopg2
 
 load_dotenv()
-import psycopg2
-import sys
 
 conn = psycopg2.connect(
     database=os.getenv("PG_DATABASE"),
