@@ -202,3 +202,19 @@ Just push to GitHub and follow the Railway deployment steps. Your game will be l
 
 **Good luck with your deployment!** 🚀
 # Deployment fix
+
+## Post-reset actions (2026-01-24)
+
+- Performed a full in-database reset of player progress (`scripts/reset_progress.py --execute`) preserving market bot offers for `Market Bot` and `Supply Bot`.
+- Created CSV per-table backup: `backups/reset-backup-20260124-204139/` and compressed archive `backups/reset-backup-20260124-204139.tar.gz`.
+- Attempted a canonical `pg_dump` (Postgres 17) but local client required authentication; a best-effort `pg_dump` file exists at `backups/pg_dump-20260124.sql.gz` (may be partial).
+- Added helper scripts for maintenance:
+  - `scripts/backup_tables.py` - CSV per-table backup
+  - `scripts/verify_reset_values.py` - validate starting resource values across users
+  - `scripts/fix_missing_entries.py` - insert missing `resources/stats/military` rows
+  - `scripts/verify_reset.py` - quick verification report
+  - `scripts/smoke_test.py` - simple app smoke tests using Flask test client
+
+These changes were tested locally (full pytest run passed, smoke tests OK).
+
+---
