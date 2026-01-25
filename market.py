@@ -1,6 +1,6 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from helpers import login_required, error
-from database import get_db_cursor, get_db_connection
+from database import get_db_cursor, get_db_connection, cache_response
 from flask import request, render_template, session, redirect, flash
 import os
 import variables
@@ -46,9 +46,16 @@ def give_resource(giver_id, taker_id, resource, amount):
                 )
 
         else:
+            from helpers import validate_resource_column, apply_resource_delta
+
+            # Validate resource name explicitly to avoid SQL injection
+            if resource not in resources_list:
+                return "No such resource"
+            validate_resource_column(resource)
+
             if giver_id != "bank":
                 current_resource_statement = (
-                    f"SELECT {resource} FROM resources WHERE " + "id=%s"
+                    f"SELECT {resource} FROM resources WHERE id=%s"
                 )
                 db.execute(current_resource_statement, (giver_id,))
                 current_giver_resource = db.fetchone()[0]
@@ -58,18 +65,12 @@ def give_resource(giver_id, taker_id, resource, amount):
                         "Giver doesn't have enough resources to transfer such amount."
                     )
 
-                giver_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}-{amount}"
-                    + " WHERE id=%s"
-                )
-                db.execute(giver_update_statement, (giver_id,))
+                # Atomically adjust giver's resource using a parameterized delta
+                apply_resource_delta(db, giver_id, resource, -amount)
 
             if taker_id != "bank":
-                taker_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}+{amount}"
-                    + " WHERE id=%s"
-                )
-                db.execute(taker_update_statement, (taker_id,))
+                # Atomically adjust taker's resource using a parameterized delta
+                apply_resource_delta(db, taker_id, resource, amount)
 
         conn.commit()
 
@@ -77,6 +78,7 @@ def give_resource(giver_id, taker_id, resource, amount):
 
 
 @login_required
+@cache_response(ttl_seconds=2)
 def market():
     if request.method == "GET":
         # Use connection pool instead of direct connection
