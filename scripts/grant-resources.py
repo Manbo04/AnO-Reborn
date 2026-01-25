@@ -8,6 +8,7 @@ Example (give 100B gold and 1M resources):
 Intended to run via Railway:
   railway run python scripts/grant-resources.py 8 100000000000 1000000
 """
+
 import os
 import sys
 from urllib.parse import urlparse
@@ -83,7 +84,8 @@ try:
 
     conn.commit()
     print(
-        f"Granted user {user_id}: +{gold_amount} gold, +{resource_amount} to each resource"
+        "Granted user "
+        f"{user_id}: +{gold_amount} gold, +{resource_amount} to each resource"
     )
 except Exception as e:
     conn.rollback()

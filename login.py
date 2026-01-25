@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect, jsonify, current_app
+from flask import request, render_template, session, redirect, current_app
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
@@ -24,7 +24,9 @@ def login():
 
         # Wrap POST handler to catch unexpected exceptions and return friendly error
         try:
-            logger.debug("Login: request.form contains keys: %s", list(request.form.keys()))
+            logger.debug(
+                "Login: request.form contains keys: %s", list(request.form.keys())
+            )
             # Use application context to avoid circular imports / NameError
             current_app.config["SESSION_PERMANENT"] = True
             current_app.permanent_session_lifetime = datetime.timedelta(days=365)
@@ -40,6 +42,7 @@ def login():
             if not username or not password:  # checks if inputs are blank
                 logger.debug("Missing username or password")
                 from flask import flash
+
                 flash("Please provide both username and password.")
                 return render_template("login.html"), 400
 
@@ -48,11 +51,13 @@ def login():
             with get_db_cursor() as db:
                 # Check if verification columns exist
                 try:
-                    db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+                    db.execute(
+                        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'"
+                    )
                     has_verification = db.fetchone() is not None
                 except Exception:
                     has_verification = False
-                
+
                 # selects data about user, from users
                 if has_verification:
                     db.execute(
@@ -65,11 +70,14 @@ def login():
                         (username,),
                     )
                 user = db.fetchone()
-                logger.debug(f"DB user row fetched for username={username}: {bool(user)}")
+                logger.debug(
+                    f"DB user row fetched for username={username}: {bool(user)}"
+                )
 
                 if not user:
                     logger.debug("User not found")
                     from flask import flash
+
                     flash("Wrong username or password")
                     return render_template("login.html"), 403
 
@@ -86,9 +94,9 @@ def login():
                     if has_verification:
                         is_verified = user[8] if len(user) > 8 else True
                         if is_verified is False:
-                            user_email = user[2] if user[2] else ''
-                            return redirect(f'/verification_pending?email={user_email}')
-                    
+                            user_email = user[2] if user[2] else ""
+                            return redirect(f"/verification_pending?email={user_email}")
+
                     logger.debug("Password matches, logging in user.")
                     # sets session's user_id to current user's id
                     session["user_id"] = user[0]
@@ -104,7 +112,9 @@ def login():
                             (user[0],),
                         )
                     except Exception:
-                        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user[0],))
+                        db.execute(
+                            "INSERT INTO policies (user_id) VALUES (%s)", (user[0],)
+                        )
 
                     logger.debug("Returning redirect to / after login")
                     from flask import make_response
@@ -114,6 +124,7 @@ def login():
                 else:
                     logger.debug("Password does not match.")
                     from flask import flash
+
                     flash("Wrong username or password")
                     return render_template("login.html"), 400
 
@@ -122,26 +133,34 @@ def login():
             event_id = None
             try:
                 import sentry_sdk
+
                 event_id = sentry_sdk.capture_exception(e)
             except Exception:
                 # Fallback to generated uid
                 import uuid
                 import time
+
                 event_id = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
-                logger.exception(f"Unhandled exception during login (id={event_id}): {e}")
+                logger.exception(
+                    f"Unhandled exception during login (id={event_id}): {e}"
+                )
                 # Also print stacktrace to stderr to help local debugging
                 import traceback, sys
+
                 print(traceback.format_exc(), file=sys.stderr)
 
-            return error(500, f"An internal server error occurred. Please report this id: {event_id}")
+            return error(
+                500,
+                f"An internal server error occurred. Please report this id: {event_id}",
+            )
 
     else:
         # Check for verification message parameter
-        message = request.args.get('message', '')
+        message = request.args.get("message", "")
         verification_message = None
-        if message == 'verified':
+        if message == "verified":
             verification_message = "Email verified successfully! You can now login."
-        elif message == 'already_verified':
+        elif message == "already_verified":
             verification_message = "Your email is already verified. Please login."
         # renders login.html when "/login" is acessed via get
         return render_template("login.html", verification_message=verification_message)
@@ -245,6 +264,17 @@ def discord_login():
 
 def register_login_routes(app_instance):
     """Register login routes. Called by app.py after app initialization."""
-    app_instance.add_url_rule("/login/", "login_slash", login, methods=["GET", "POST"])
-    app_instance.add_url_rule("/login", "login", login, methods=["GET", "POST"])
-    app_instance.add_url_rule("/discord_login/", "discord_login", discord_login, methods=["GET"])
+    login_view = login
+    discord_view = discord_login
+    # Apply conservative rate limits when limiter is available
+    if getattr(app_instance, "limiter", None):
+        login_view = app_instance.limiter.limit("10/minute")(login)
+        discord_view = app_instance.limiter.limit("20/hour")(discord_login)
+
+    app_instance.add_url_rule(
+        "/login/", "login_slash", login_view, methods=["GET", "POST"]
+    )
+    app_instance.add_url_rule("/login", "login", login_view, methods=["GET", "POST"])
+    app_instance.add_url_rule(
+        "/discord_login/", "discord_login", discord_view, methods=["GET"]
+    )

@@ -526,16 +526,11 @@ def province_sell_buy(way, units, province_id):
                             "difference": current_resource - (amount * wantedUnits),
                         }
 
-                    resource_update_stat = (
-                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    )
-                    db.execute(
-                        resource_update_stat,
-                        (
-                            new_resource,
-                            cId,
-                        ),
-                    )
+                    # Use helper to safely set the absolute resource value
+                    from helpers import validate_resource_column, apply_resource_set
+
+                    validate_resource_column(resource)
+                    apply_resource_set(db, cId, {resource: new_resource})
 
                 elif way == "sell":
                     current_resource_stat = (
@@ -546,16 +541,11 @@ def province_sell_buy(way, units, province_id):
 
                     new_resource = current_resource + (amount * wantedUnits)
 
-                    resource_update_stat = (
-                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    )
-                    db.execute(
-                        resource_update_stat,
-                        (
-                            new_resource,
-                            cId,
-                        ),
-                    )
+                    # Use helper to safely set the absolute resource value
+                    from helpers import validate_resource_column, apply_resource_set
+
+                    validate_resource_column(resource)
+                    apply_resource_set(db, cId, {resource: new_resource})
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
