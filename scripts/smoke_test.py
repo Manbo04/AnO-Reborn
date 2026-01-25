@@ -1,4 +1,5 @@
 """Run simple app smoke tests using Flask test client"""
+
 from app import app
 
 paths = ["/", "/login", "/signup", "/market", "/countries", "/intelligence"]

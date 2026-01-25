@@ -4,12 +4,13 @@ Migration script to add email verification columns to users table.
 
 Run: python scripts/add_email_verification_columns.py
 """
+
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import get_db_connection
+from database import get_db_connection  # noqa: E402
 
 
 def migrate():
@@ -19,28 +20,38 @@ def migrate():
 
         try:
             print("Adding is_verified column to users table...")
-            cur.execute("""
-                ALTER TABLE users 
+            cur.execute(
+                """
+                ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
-            """)
+            """
+            )
 
             print("Adding verification_token column to users table...")
-            cur.execute("""
-                ALTER TABLE users 
+            cur.execute(
+                """
+                ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS verification_token TEXT;
-            """)
+            """
+            )
 
             print("Adding token_created_at column for expiry tracking...")
-            cur.execute("""
-                ALTER TABLE users 
+            cur.execute(
+                """
+                ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS token_created_at TIMESTAMP;
-            """)
+            """
+            )
 
             # Mark all existing users as verified (they signed up before this system)
             print("Marking existing users as verified...")
-            cur.execute("""
-                UPDATE users SET is_verified = TRUE WHERE is_verified IS NULL OR is_verified = FALSE;
-            """)
+            cur.execute(
+                """
+                UPDATE users
+                SET is_verified = TRUE
+                WHERE is_verified IS NULL OR is_verified = FALSE;
+            """
+            )
 
             conn.commit()
             print("✓ Migration complete! Email verification columns added.")
