@@ -27,3 +27,5 @@ venv.bak/
 
 # Local logging files
 errors.log
+venv310/
+backups/
