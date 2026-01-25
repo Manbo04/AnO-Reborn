@@ -601,8 +601,10 @@ def inject_resources_global():
     from flask import session
 
     try:
+        # `get_resources()` reads session internally. Calling it without
+        # arguments avoids a TypeError and makes this code robust.
         user_id = session.get("user_id")
-        res = get_resources(user_id) if user_id else {}
+        res = get_resources() if user_id else {}
         # Use defaultdict so missing keys return 0 in templates (prevents Jinja errors)
         from collections import defaultdict
 
