@@ -8,6 +8,7 @@ Adds:
 Run locally (safe to re-run):
 PYTHONPATH=. venv310/bin/python scripts/add_user_reset_columns.py
 """
+
 from database import get_db_connection
 
 SQL = """
@@ -22,4 +23,7 @@ if __name__ == "__main__":
         cur = conn.cursor()
         cur.execute(SQL)
         conn.commit()
-        print("✓ users table updated with reset columns (is_active, reset_required, reset_at)")
+        print(
+            "✓ users table updated with reset columns "
+            "(is_active, reset_required, reset_at)"
+        )

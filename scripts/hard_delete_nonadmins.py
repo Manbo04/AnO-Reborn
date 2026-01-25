@@ -6,6 +6,7 @@ Usage:
 
 WARNING: destructive. Do not run without backups and explicit approval.
 """
+
 import argparse
 from database import get_db_connection
 
@@ -24,7 +25,13 @@ def run(dry_run=True, exclude_admins=True):
         ids = [r[0] for r in rows]
         # Archive to deleted_users table if present (best-effort)
         try:
-            cur.execute("INSERT INTO deleted_users (user_id, username, email, deleted_at) SELECT id, username, email, NOW() FROM users WHERE id = ANY(%s)", (ids,))
+            cur.execute(
+                """
+                INSERT INTO deleted_users (user_id, username, email, deleted_at)
+                SELECT id, username, email, NOW() FROM users WHERE id = ANY(%s)
+                """,
+                (ids,),
+            )
         except Exception:
             pass
         cur.execute("DELETE FROM users WHERE id = ANY(%s)", (ids,))
@@ -35,6 +42,8 @@ def run(dry_run=True, exclude_admins=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true")
-    parser.add_argument("--exclude-admins", dest="exclude_admins", action="store_true", default=True)
+    parser.add_argument(
+        "--exclude-admins", dest="exclude_admins", action="store_true", default=True
+    )
     args = parser.parse_args()
     run(dry_run=not args.execute, exclude_admins=args.exclude_admins)

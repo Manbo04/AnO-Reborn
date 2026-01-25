@@ -8,6 +8,7 @@ Adds:
 Run locally (safe to re-run):
 PYTHONPATH=. venv310/bin/python scripts/add_verification_user_columns.py
 """
+
 from database import get_db_connection
 
 SQL = """
@@ -23,5 +24,6 @@ if __name__ == "__main__":
         cur.execute(SQL)
         conn.commit()
         print(
-            "✓ users table updated with verification columns (is_verified, verification_token, token_created_at)"
+            "✓ users table updated with verification columns "
+            "(is_verified, verification_token, token_created_at)"
         )
