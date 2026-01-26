@@ -36,6 +36,40 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
     <script src="{{ url_for('static', filename='scroller.js') }}"></script>
+    <!-- Fallback icon shim: replace material icon ligatures with emoji when fonts unavailable -->
+    <style>
+    .iconfallback{ font-size: 18px; vertical-align: middle; display:inline-block; }
+    </style>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        try{
+            const map = {
+                'outlined_flag':'🚩',
+                'school':'🏫',
+                'person_add_alt_1':'➕',
+                'add_circle_outline':'➕',
+                'login':'🔑',
+                'keyboard_arrow_down':'▾',
+                'refresh':'🔄',
+                'add_circle':'➕',
+                'outbond':'↗'
+            };
+            const spans = document.querySelectorAll('span.material-icons-outlined, span.material-icons');
+            spans.forEach(s => {
+                const key = s.textContent.trim();
+                if(!key) return;
+                const emoji = map[key];
+                if(emoji){
+                    s.textContent = '';
+                    const em = document.createElement('span');
+                    em.className = 'iconfallback';
+                    em.textContent = emoji;
+                    s.appendChild(em);
+                }
+            });
+        }catch(e){console.error('icon fallback error',e)}
+    });
+    </script>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
     <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
