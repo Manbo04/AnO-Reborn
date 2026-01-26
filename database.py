@@ -110,6 +110,35 @@ def cache_response(ttl_seconds=60):
             return render_template(...)
     """
 
+    def decorator(f):
+        cache = {}
+
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Create cache key from function name and user session
+            from flask import session, request
+
+            user_id = session.get("user_id", "anon")
+            page_id = request.path if hasattr(request, "path") else ""
+            cache_key = f"{f.__name__}_{user_id}_{page_id}"
+
+            # Check if response is cached
+            if cache_key in cache:
+                response, timestamp = cache[cache_key]
+                if time() - timestamp < ttl_seconds:
+                    return response
+
+            # Call actual function
+            response = f(*args, **kwargs)
+
+            # Cache the response
+            cache[cache_key] = (response, time())
+            return response
+
+        return decorated_function
+
+    return decorator
+
 
 def fetchone_first(db, default=None):
     """Fetch a single row and return its first column/value or a default.
@@ -129,15 +158,6 @@ def fetchone_first(db, default=None):
         return next(iter(row.values()))
     # Fallback: return the row itself
     return row
-
-    def decorator(f):
-        cache = {}
-
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            # Create cache key from function name and user session
-            from flask import session, request
-
             user_id = session.get("user_id", "anon")
             page_id = request.path if hasattr(request, "path") else ""
             cache_key = f"{f.__name__}_{user_id}_{page_id}"
