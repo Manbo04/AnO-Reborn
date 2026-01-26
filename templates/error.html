@@ -30,9 +30,7 @@
             <div class="templatedivflex2right">
 
                 {% if session.get('user_id') != None %}
-                <a class="templatedivbutton landingbutton templatecenteredbutton" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined landingicon">
-            outlined_flag
-            </span>Country</a> {% endif %}{% if session.get('user_id') == None %}
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="/country/id={{ session['user_id'] }}"><i class="fas fa-flag landingicon" aria-hidden="true"></i>Country</a> {% endif %}{% if session.get('user_id') == None %}
                 <a class="templatedivbutton landingbutton templatecenteredbutton" href="/"><span class="material-icons-outlined landingicon">
                     home
                     </span>Home</a> {% endif %}
