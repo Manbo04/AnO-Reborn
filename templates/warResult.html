@@ -38,9 +38,7 @@
                 <table class="templatetable">
                     <!--Your losses-->
                     <tr>
-                        <th><span class="material-icons-outlined">
-                            outlined_flag
-                            </span>{{ attacker_result["nation_name"] }}</th>
+                        <th><i class="fas fa-flag" aria-hidden="true"></i>{{ attacker_result["nation_name"] }}</th>
                     </tr>
                     {% if attacker_result.get("unit_loss", 0) %} {% for key,value in attacker_result["unit_loss"].items() %}
                     <tr>
@@ -63,9 +61,7 @@
 
                     <!-- Defender losses -->
                     <tr>
-                        <th><span class="material-icons-outlined">
-                            outlined_flag
-                            </span>{{ defender_result["nation_name"] }}</th>
+                        <th><i class="fas fa-flag" aria-hidden="true"></i>{{ defender_result["nation_name"] }}</th>
                     </tr>
                     {% if defender_result.get("unit_loss", 0) %} {% for key,value in defender_result["unit_loss"].items() %}
                     <tr>
