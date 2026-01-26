@@ -65,6 +65,29 @@
 
 .landingicon {
     top: 2.5px;
+    color: #fff !important;
+}
+
+/* Font Awesome flag sizing & alignment so it replaces material icon ligatures cleanly */
+.fa-flag {
+    position: relative;
+    top: 5px;
+    right: 5px;
+    font-size: inherit;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* Ensure flag inherits menu/text color */
+.menubara .fa-flag,
+.dropdown-content a .fa-flag,
+.templatediv .fa-flag {
+    color: inherit !important;
+}
+
+/* Make large icons scale correctly */
+.fa-flag.iconlarge {
+    font-size: 40px !important;
 }
 
 .red {

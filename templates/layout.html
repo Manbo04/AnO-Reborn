@@ -44,7 +44,6 @@
     document.addEventListener('DOMContentLoaded', function(){
         try{
             const map = {
-                'outlined_flag':'🚩',
                 'school':'🏫',
                 'person_add_alt_1':'➕',
                 'add_circle_outline':'➕',
@@ -54,19 +53,23 @@
                 'add_circle':'➕',
                 'outbond':'↗'
             };
-            const spans = document.querySelectorAll('span.material-icons-outlined, span.material-icons');
-            spans.forEach(s => {
-                const key = s.textContent.trim();
-                if(!key) return;
-                const emoji = map[key];
-                if(emoji){
-                    s.textContent = '';
-                    const em = document.createElement('span');
-                    em.className = 'iconfallback';
-                    em.textContent = emoji;
-                    s.appendChild(em);
-                }
-            });
+            // Only apply the emoji fallback if the Material Icons fonts are NOT available.
+            const fontsAvailable = (document.fonts && (document.fonts.check('12px "Material Icons"') || document.fonts.check('12px "Material Icons Outlined"')));
+            if(!fontsAvailable){
+                const spans = document.querySelectorAll('span.material-icons-outlined, span.material-icons');
+                spans.forEach(s => {
+                    const key = s.textContent.trim();
+                    if(!key) return;
+                    const emoji = map[key];
+                    if(emoji){
+                        s.textContent = '';
+                        const em = document.createElement('span');
+                        em.className = 'iconfallback';
+                        em.textContent = emoji;
+                        s.appendChild(em);
+                    }
+                });
+            }
         }catch(e){console.error('icon fallback error',e)}
     });
     </script>
@@ -192,9 +195,7 @@
                     </span></button></div>
                 <div class="dropdown-content">
                     <div class="dropdown-contentchild">
-                        <a class="" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">
-                            outlined_flag
-                        </span>Country<!--<span class="menubaranotification">1</span>--></a>
+                        <a class="" href="/country/id={{ session['user_id'] }}"><i class="fas fa-flag" aria-hidden="true"></i>Country<!--<span class="menubaranotification">1</span>--></a>
                         <a class="" href="/upgrades"><span class="material-icons-outlined">
                         engineering
                         </span>Projects</a>
@@ -218,9 +219,7 @@
     <div class="menubardiv" id="menubardiv">
 
         <h3>Internal Affairs</h3>
-        <a class="menubara" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">
-                outlined_flag
-            </span>Country<!-- <span class="menuflex2notification">1</span> --> </a>
+        <a class="menubara" href="/country/id={{ session['user_id'] }}"><i class="fas fa-flag" aria-hidden="true"></i>Country<!-- <span class="menuflex2notification">1</span> --> </a>
 
         <a class="menubara" href="/upgrades"><span class="material-icons-outlined">
             engineering
