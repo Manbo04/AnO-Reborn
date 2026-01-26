@@ -83,7 +83,11 @@ def try_pg_advisory_lock(conn, lock_id: int, label: str) -> bool:
     try:
         cur = conn.cursor()
         cur.execute("SELECT pg_try_advisory_lock(%s)", (lock_id,))
-        acquired = cur.fetchone()[0]
+        row = cur.fetchone()
+        if not row:
+            print(f"{label}: advisory lock query returned no rows")
+            return False
+        acquired = row[0]
         if not acquired:
             print(f"{label}: another run is already in progress, skipping")
         return acquired
