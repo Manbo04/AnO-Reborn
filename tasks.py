@@ -251,19 +251,23 @@ def calc_ti(user_id):
             income += multiplier * population
 
         # Consumer goods
-        new_consumer_goods = 0
-        max_cg = math.ceil(population / variables.CONSUMER_GOODS_PER)
+        total_population = sum(p for p, _ in provinces)
+        removed_consumer_goods = 0
+        max_cg = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
 
         if consumer_goods != 0 and max_cg != 0:
             if max_cg <= consumer_goods:
-                new_consumer_goods -= max_cg
+                # Enough consumer goods to fully cover consumption
+                removed_consumer_goods = max_cg
                 income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
             else:
+                # Not enough goods to fully cover consumption; apply partial multiplier
                 multiplier = consumer_goods / max_cg
                 income *= 1 + (0.5 * multiplier)
-                new_consumer_goods -= consumer_goods
+                removed_consumer_goods = consumer_goods
 
-        return math.floor(income), new_consumer_goods
+        # Return (income, removed_consumer_goods) where removed_consumer_goods is a positive count
+        return math.floor(income), removed_consumer_goods
 
 
 # (x, y) - (income, removed_consumer_goods)
@@ -285,15 +289,20 @@ def tax_income():
                 return
             db = conn.cursor()
             # Ensure we only run once in a short window (protects against multiple beat schedulers)
-            db.execute("""
+            db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS task_runs (
                     task_name TEXT PRIMARY KEY,
                     last_run TIMESTAMP WITH TIME ZONE
                 )
-            """)
-            db.execute("SELECT last_run FROM task_runs WHERE task_name=%s", ("tax_income",))
+            """
+            )
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s", ("tax_income",)
+            )
             row = db.fetchone()
             import datetime
+
             now = datetime.datetime.now(datetime.timezone.utc)
             # Skip if last run was within the last 55 seconds
             if row and row[0] and (now - row[0]).total_seconds() < 55:
@@ -309,7 +318,7 @@ def tax_income():
                 ("tax_income",),
             )
             start = time.time()
-            dbdict = conn.cursor(cursor_factory=RealDictCursor) 
+            dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
             db.execute("SELECT id FROM users")
             users = db.fetchall()
@@ -723,15 +732,21 @@ def generate_province_revenue():  # Runs each hour
             return
         db = conn.cursor()
         # Ensure single run within a short window to prevent duplicate hourly updates
-        db.execute("""
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS task_runs (
                 task_name TEXT PRIMARY KEY,
                 last_run TIMESTAMP WITH TIME ZONE
             )
-        """)
-        db.execute("SELECT last_run FROM task_runs WHERE task_name=%s", ("generate_province_revenue",))
+        """
+        )
+        db.execute(
+            "SELECT last_run FROM task_runs WHERE task_name=%s",
+            ("generate_province_revenue",),
+        )
         row = db.fetchone()
         import datetime
+
         now = datetime.datetime.now(datetime.timezone.utc)
         # Skip if this task ran within the last 90 seconds (allow some leeway for long runs)
         if row and row[0] and (now - row[0]).total_seconds() < 90:
