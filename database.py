@@ -110,6 +110,26 @@ def cache_response(ttl_seconds=60):
             return render_template(...)
     """
 
+
+def fetchone_first(db, default=None):
+    """Fetch a single row and return its first column/value or a default.
+
+    Compatibility helper: works with simple tuple rows or dict-like rows
+    (e.g., psycopg2.extras.RealDictCursor). Returns `default` if no row
+    is returned.
+    """
+    row = db.fetchone()
+    if not row:
+        return default
+    # tuple/list-like row
+    if isinstance(row, (list, tuple)):
+        return row[0]
+    # dict-like row: return the first value encountered
+    if isinstance(row, dict):
+        return next(iter(row.values()))
+    # Fallback: return the row itself
+    return row
+
     def decorator(f):
         cache = {}
 
