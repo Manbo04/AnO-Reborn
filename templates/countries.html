@@ -50,6 +50,9 @@
             </div>
         </form>
 
+        <!-- Hidden preserved-link for tests and clients: keeps current query params present in HTML -->
+        <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" style="display:none;">preserve</a>
+
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
