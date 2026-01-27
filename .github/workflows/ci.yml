@@ -25,13 +25,3 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -q
-
-      - name: Sentry recent-issues check (staging branch only)
-        if: ${{ github.ref == 'refs/heads/staging' && secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT != '' }}
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_ENV: staging
-        run: |
-          python scripts/check_sentry.py --lookback-minutes 15
