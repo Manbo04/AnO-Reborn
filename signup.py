@@ -1,27 +1,21 @@
 # FULLY MIGRATED
+# flake8: max-line-length=200
 
-from flask import request, render_template, session, redirect, url_for
+from flask import request, render_template, session, redirect
 import datetime
 from helpers import error
-import psycopg2
 import logging
-from email_utils import (
-    send_verification_email,
-    generate_verification_token,
-    verify_email_token,
-    is_email_configured,
-)
 
 # Configure logger for signup
 logger = logging.getLogger(__name__)
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 # NOTE: 'app' is imported locally in route registration to avoid circular imports
-import bcrypt
-from requests_oauthlib import OAuth2Session
-import os
-from dotenv import load_dotenv
-import requests
+import bcrypt  # noqa: E402
+from requests_oauthlib import OAuth2Session  # noqa: E402
+import os  # noqa: E402
+from dotenv import load_dotenv  # noqa: E402
+import requests  # noqa: E402
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 load_dotenv()
@@ -86,7 +80,8 @@ def ensure_signup_attempts_table():
         from database import get_db_cursor
 
         with get_db_cursor() as db:
-            # Create table if it doesn't exist (minimal primary key), then add expected columns.
+            # Create table if it doesn't exist (minimal primary key).
+            # Afterwards, add expected columns.
             db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS signup_attempts (
@@ -98,7 +93,8 @@ def ensure_signup_attempts_table():
             # Ensure expected columns exist (no-op if already present)
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"
                 )
                 import logging
 
@@ -108,10 +104,12 @@ def ensure_signup_attempts_table():
 
                 logging.getLogger(__name__).debug("ensure: ip_address error %s", e)
 
-            # Also tolerate older schema that used `ip` column name and ensure it's nullable
+            # Also tolerate older schema that used `ip` column name.
+            # Ensure it's nullable.
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS ip VARCHAR(45);"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS ip VARCHAR(45);"
                 )
                 import logging
 
@@ -121,7 +119,8 @@ def ensure_signup_attempts_table():
 
                 logging.getLogger(__name__).debug("ensure: ip add error %s", e)
 
-            # Attempt to drop NOT NULL on `ip` if it exists (wrapped in DO block to avoid errors)
+            # Attempt to drop NOT NULL on `ip` if it exists.
+            # This uses a DO block to avoid errors when column is missing.
             try:
                 db.execute(
                     """
@@ -132,9 +131,10 @@ def ensure_signup_attempts_table():
                         WHERE table_name='signup_attempts' AND column_name='ip'
                       ) THEN
                         BEGIN
-                          EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
+      EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
                         EXCEPTION WHEN others THEN
-                          -- ignore any error dropping NOT NULL (e.g., if it's already nullable)
+                          -- ignore any error dropping NOT NULL (e.g., if it's already
+                          nullable)
                         END;
                       END IF;
                     END$$;
@@ -154,16 +154,21 @@ def ensure_signup_attempts_table():
 
             try:
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS fingerprint TEXT;"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS fingerprint TEXT;"
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS email VARCHAR(255);"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS email VARCHAR(255);"
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS attempt_time "
+                    "TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
                 )
                 db.execute(
-                    "ALTER TABLE signup_attempts ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;"
+                    "ALTER TABLE signup_attempts "
+                    "ADD COLUMN IF NOT EXISTS successful BOOLEAN DEFAULT FALSE;"
                 )
                 import logging
 
@@ -238,7 +243,8 @@ def callback():
                     "state"
                 )
                 logger.info(
-                    f"OAuth state mismatch — attempting fallback with incoming state: {incoming_state}"
+                    "OAuth state mismatch — fallback with state: %s",
+                    incoming_state,
                 )
                 discord_state = make_session(state=incoming_state)
                 token = discord_state.fetch_token(
@@ -306,13 +312,16 @@ def discord_register():
                 if attempt_count >= 3:
                     return error(
                         429,
-                        "Too many signup attempts from this IP address. Please try again tomorrow.",
+                        "Too many signup attempts from this IP."
+                        " Please try again tomorrow.",
                     )
 
                 # Record this attempt
                 db.execute(
                     """
-                    INSERT INTO signup_attempts (ip_address, ip, attempt_time, successful)
+                    INSERT INTO signup_attempts (
+                        ip_address, ip, attempt_time, successful
+                    )
                     VALUES (%s, %s, NOW(), FALSE)
                 """,
                     (client_ip, client_ip),
@@ -395,10 +404,12 @@ def discord_register():
                         400, "This Discord account is already linked to another country"
                     )
 
-                # Create user (Discord users are auto-verified since Discord verifies emails)
+                # Create user
+                # Discord users are auto-verified since Discord verifies emails
                 date = str(datetime.date.today())
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO users (username, email, hash, date, "
+                    "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
                     (username, email, discord_auth, date, "discord", True),
                 )
 
@@ -458,9 +469,9 @@ def signup():
         # Defensive: ensure signup_attempts exists
         ensure_signup_attempts_table()
 
-        logger.debug(
-            f"signup request remote_addr={request.remote_addr} X-Forwarded-For={request.headers.get('X-Forwarded-For')}"
-        )
+        remote = request.remote_addr
+        forwarded = request.headers.get("X-Forwarded-For")
+        logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
 
         # IP rate limiting: max 3 attempts per IP per day
         # Allow a higher threshold (or effectively bypass) for local dev/testing
@@ -479,7 +490,8 @@ def signup():
             # test runs from 127.0.0.1 don't get rate limited.
             # In local development, skip rate-limiting for 127.0.0.1 to avoid
             # flaky failures caused by test runs or previous test artifacts.
-            # Treat local loopback and IPv4-mapped IPv6 addresses as exempt from rate-limits
+            # Treat local loopback and IPv4-mapped IPv6 addresses
+            # as exempt from rate-limits
             # Use substring checks because request.remote_addr can be in forms like
             # '::1' or '::ffff:127.0.0.1'. For local dev, disable rate-limiting.
             is_local = False
@@ -503,16 +515,25 @@ def signup():
                 max_attempts = 3
             logger.debug(f"ENVIRONMENT={os.getenv('ENVIRONMENT', 'DEV')}")
             logger.debug(
-                f"signup rate check: ip={client_ip} attempt_count={attempt_count} max_attempts={max_attempts} is_local={is_local}"
+                "signup rate check: ip=%s attempt_count=%s max_attempts=%s is_local=%s",
+                client_ip,
+                attempt_count,
+                max_attempts,
+                is_local,
             )
 
             if max_attempts is not None and attempt_count >= max_attempts:
                 logger.debug(
-                    f"signup rate limit exceeded: ip={client_ip} attempt_count={attempt_count} max_attempts={max_attempts}"
+                    "signup rate limit exceeded: ip=%s attempt_count=%s "
+                    "max_attempts=%s",
+                    client_ip,
+                    attempt_count,
+                    max_attempts,
                 )
                 return error(
                     429,
-                    "Too many signup attempts from this IP address. Please try again tomorrow.",
+                    "Too many signup attempts from this IP."
+                    " Please try again tomorrow.",
                 )
 
             # Record this attempt
@@ -534,7 +555,10 @@ def signup():
         import logging
 
         logging.getLogger(__name__).debug(
-            f"signup form values: username={username} email={email} continent={request.form.get('continent')}"
+            "signup form values: username=%s email=%s continent=%s",
+            username,
+            email,
+            request.form.get("continent"),
         )
 
         # Verify reCAPTCHA
@@ -598,17 +622,20 @@ def signup():
             try:
                 # Try to use email verification if columns exist
                 db.execute(
-                    "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'"
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name = 'users' AND column_name = 'is_verified'"
                 )
                 has_verification = db.fetchone() is not None
-            except:
+            except Exception:
                 has_verification = False
 
             if has_verification and is_email_configured():
                 # New flow with email verification
                 verification_token = generate_verification_token(email)
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
+                    "INSERT INTO users (username, email, hash, date, "
+                    "auth_type, is_verified, verification_token, token_created_at) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
                     (
                         username,
                         email,
@@ -622,12 +649,14 @@ def signup():
             else:
                 # Legacy flow without email verification
                 db.execute(
-                    "INSERT INTO users (username, email, hash, date, auth_type) VALUES (%s, %s, %s, %s, %s)",
+                    "INSERT INTO users (username, email, hash, date, "
+                    "auth_type) VALUES (%s, %s, %s, %s, %s)",
                     (username, email, hashed, str(datetime.date.today()), "normal"),
                 )
                 verification_token = None
 
-            # Selects the id of the user that was just registered. (Because id is AUTOINCREMENT'ed)
+            # Selects the id of the user that was just registered.
+            # (Because id is AUTO-INCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
             user_id = db.fetchone()[0]
 
@@ -639,7 +668,8 @@ def signup():
                 if not email_sent:
                     logger.warning(f"Failed to send verification email to {email}")
 
-            # Create all the user's game tables (needed for game to work after verification)
+            # Create all the user's game tables
+            # (needed for game to work after verification)
             db.execute(
                 "INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent)
             )
@@ -648,7 +678,8 @@ def signup():
             db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
 
-            # If verification is enabled, redirect to pending page; otherwise log them in
+            # If verification is enabled, redirect to pending page.
+            # Otherwise, log them in
             if verification_token:
                 return redirect(f"/verification_pending?email={email}")
             else:
@@ -689,6 +720,7 @@ def verification_pending():
 def verify_email():
     """Verify user's email address using the token from the email link."""
     from database import get_connection
+    from email_utils import verify_email_token
 
     token = request.args.get("token")
     if not token:
@@ -743,6 +775,7 @@ def verify_email():
 def resend_verification():
     """Resend verification email."""
     from database import get_connection
+    from email_utils import generate_verification_token, send_verification_email
 
     if request.method != "POST":
         return redirect("/login")
@@ -768,7 +801,10 @@ def resend_verification():
             return render_template(
                 "verification_pending.html",
                 email=email,
-                message="If an account exists with this email, a verification link has been sent.",
+                message=(
+                    "If an account exists with this email, "
+                    "a verification link has been sent."
+                ),
             )
 
         user_id, username, is_verified = result
@@ -805,7 +841,9 @@ def resend_verification():
 
 
 def register_signup_routes(app_instance):
-    """Register signup routes. This should be called by app.py AFTER app is fully initialized."""
+    """Register signup routes.
+    This should be called by app.py AFTER app is fully initialized.
+    """
     app_instance.add_url_rule("/discord", "discord", discord, methods=["GET", "POST"])
     app_instance.add_url_rule("/callback", "callback", callback)
     app_instance.add_url_rule(

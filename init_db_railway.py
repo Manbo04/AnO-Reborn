@@ -49,7 +49,7 @@ def create_database():
         "signup_attempts",
     ]
 
-    print(f"Initializing database...")
+    print("Initializing database...")
     print(f"Found {len(tables)} tables to create")
 
     success_count = 0
@@ -69,7 +69,7 @@ def create_database():
             print(f"✗ Failed to create table {table_name}: {e}")
             connection.rollback()
 
-    print(f"\n✓ Database initialization complete!")
+    print("\n✓ Database initialization complete!")
     print(f"Created {success_count} out of {len(tables)} tables")
 
     # Fix existing provinces with better defaults
@@ -80,7 +80,7 @@ def create_database():
             "UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0"
         )
         connection.commit()
-        print(f"✓ Fixed existing provinces with default values")
+        print("✓ Fixed existing provinces with default values")
     except Exception as e:
         print(
             f"Note: Could not fix existing provinces (may be normal on first run): {e}"
@@ -90,7 +90,7 @@ def create_database():
     try:
         db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
         connection.commit()
-        print(f"\n✓ Inserted registration keys: a, b, c")
+        print("\n✓ Inserted registration keys: a, b, c")
     except Exception as e:
         print(f"\n✗ Failed to insert keys: {e}")
 
@@ -98,7 +98,7 @@ def create_database():
     connection.close()
 
     print(f"\n{'='*50}")
-    print(f"Database initialization complete!")
+    print("Database initialization complete!")
     print(f"Successfully created {success_count}/{len(tables)} tables")
     print(f"{'='*50}")
 
