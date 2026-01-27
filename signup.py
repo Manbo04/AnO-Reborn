@@ -5,7 +5,12 @@ import datetime
 from helpers import error
 import psycopg2
 import logging
-from email_utils import send_verification_email, generate_verification_token, verify_email_token, is_email_configured
+from email_utils import (
+    send_verification_email,
+    generate_verification_token,
+    verify_email_token,
+    is_email_configured,
+)
 
 # Configure logger for signup
 logger = logging.getLogger(__name__)
@@ -528,8 +533,7 @@ def signup():
         # Additional debug logging to help diagnose flaky test failures
         import logging
 
-        logger = logging.getLogger(__name__)
-        logger.debug(
+        logging.getLogger(__name__).debug(
             f"signup form values: username={username} email={email} continent={request.form.get('continent')}"
         )
 
@@ -585,21 +589,35 @@ def signup():
             hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
 
             # Check if email verification columns exist
-            from email_utils import generate_verification_token, send_verification_email, is_email_configured
-            
+            from email_utils import (
+                generate_verification_token,
+                send_verification_email,
+                is_email_configured,
+            )
+
             try:
                 # Try to use email verification if columns exist
-                db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+                db.execute(
+                    "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'"
+                )
                 has_verification = db.fetchone() is not None
             except:
                 has_verification = False
-            
+
             if has_verification and is_email_configured():
                 # New flow with email verification
                 verification_token = generate_verification_token(email)
                 db.execute(
                     "INSERT INTO users (username, email, hash, date, auth_type, is_verified, verification_token, token_created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())",
-                    (username, email, hashed, str(datetime.date.today()), "normal", False, verification_token),
+                    (
+                        username,
+                        email,
+                        hashed,
+                        str(datetime.date.today()),
+                        "normal",
+                        False,
+                        verification_token,
+                    ),
                 )
             else:
                 # Legacy flow without email verification
@@ -615,7 +633,9 @@ def signup():
 
             # Send verification email if configured
             if verification_token and is_email_configured():
-                email_sent = send_verification_email(email, username, verification_token)
+                email_sent = send_verification_email(
+                    email, username, verification_token
+                )
                 if not email_sent:
                     logger.warning(f"Failed to send verification email to {email}")
 
@@ -662,49 +682,55 @@ def signup():
 
 def verification_pending():
     """Show the verification pending page after signup."""
-    email = request.args.get('email', '')
+    email = request.args.get("email", "")
     return render_template("verification_pending.html", email=email)
 
 
 def verify_email():
     """Verify user's email address using the token from the email link."""
     from database import get_connection
-    
-    token = request.args.get('token')
+
+    token = request.args.get("token")
     if not token:
         return error("Invalid verification link. No token provided.")
-    
+
     # Verify the token
     email = verify_email_token(token)
     if not email:
         return error("Invalid or expired verification link. Please request a new one.")
-    
+
     conn = get_connection()
     cur = conn.cursor()
     try:
         # Check if user exists and is not already verified
-        cur.execute("""
+        cur.execute(
+            """
             SELECT id, is_verified FROM users WHERE email = %s
-        """, (email,))
+        """,
+            (email,),
+        )
         result = cur.fetchone()
-        
+
         if not result:
             return error("User not found.")
-        
+
         user_id, is_verified = result
-        
+
         if is_verified:
-            return redirect('/login?message=already_verified')
-        
+            return redirect("/login?message=already_verified")
+
         # Mark user as verified
-        cur.execute("""
-            UPDATE users 
-            SET is_verified = TRUE, verification_token = NULL 
+        cur.execute(
+            """
+            UPDATE users
+            SET is_verified = TRUE, verification_token = NULL
             WHERE id = %s
-        """, (user_id,))
+        """,
+            (user_id,),
+        )
         conn.commit()
-        
-        return redirect('/login?message=verified')
+
+        return redirect("/login?message=verified")
     except Exception as e:
         conn.rollback()
         logger.error(f"Email verification error: {e}")
@@ -717,44 +743,58 @@ def verify_email():
 def resend_verification():
     """Resend verification email."""
     from database import get_connection
-    
-    if request.method != 'POST':
-        return redirect('/login')
-    
-    email = request.form.get('email', '').strip().lower()
+
+    if request.method != "POST":
+        return redirect("/login")
+
+    email = request.form.get("email", "").strip().lower()
     if not email:
         return error("Please provide your email address.")
-    
+
     conn = get_connection()
     cur = conn.cursor()
     try:
         # Check if user exists and is not verified
-        cur.execute("""
+        cur.execute(
+            """
             SELECT id, username, is_verified FROM users WHERE email = %s
-        """, (email,))
+        """,
+            (email,),
+        )
         result = cur.fetchone()
-        
+
         if not result:
             # Don't reveal if email exists
-            return render_template("verification_pending.html", email=email, message="If an account exists with this email, a verification link has been sent.")
-        
+            return render_template(
+                "verification_pending.html",
+                email=email,
+                message="If an account exists with this email, a verification link has been sent.",
+            )
+
         user_id, username, is_verified = result
-        
+
         if is_verified:
-            return redirect('/login?message=already_verified')
-        
+            return redirect("/login?message=already_verified")
+
         # Generate new token and send email
         new_token = generate_verification_token(email)
-        cur.execute("""
-            UPDATE users 
-            SET verification_token = %s, token_created_at = NOW() 
+        cur.execute(
+            """
+            UPDATE users
+            SET verification_token = %s, token_created_at = NOW()
             WHERE id = %s
-        """, (new_token, user_id))
+        """,
+            (new_token, user_id),
+        )
         conn.commit()
-        
+
         send_verification_email(email, username, new_token)
-        
-        return render_template("verification_pending.html", email=email, message="Verification email sent! Please check your inbox.")
+
+        return render_template(
+            "verification_pending.html",
+            email=email,
+            message="Verification email sent! Please check your inbox.",
+        )
     except Exception as e:
         conn.rollback()
         logger.error(f"Resend verification error: {e}")
@@ -773,6 +813,13 @@ def register_signup_routes(app_instance):
     )
     app_instance.add_url_rule("/signup", "signup", signup, methods=["GET", "POST"])
     # Email verification routes
-    app_instance.add_url_rule("/verification_pending", "verification_pending", verification_pending)
+    app_instance.add_url_rule(
+        "/verification_pending", "verification_pending", verification_pending
+    )
     app_instance.add_url_rule("/verify", "verify_email", verify_email)
-    app_instance.add_url_rule("/resend_verification", "resend_verification", resend_verification, methods=["POST"])
+    app_instance.add_url_rule(
+        "/resend_verification",
+        "resend_verification",
+        resend_verification,
+        methods=["POST"],
+    )

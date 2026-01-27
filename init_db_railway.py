@@ -86,8 +86,7 @@ def create_database():
             f"Note: Could not fix existing provinces (may be normal on first run): {e}"
         )
 
-    db.close()
-    connection.close()  # Insert initial keys for registration
+    # Insert initial keys for registration
     try:
         db.execute("INSERT INTO keys (key) VALUES ('a'), ('b'), ('c')")
         connection.commit()
@@ -95,6 +94,7 @@ def create_database():
     except Exception as e:
         print(f"\n✗ Failed to insert keys: {e}")
 
+    db.close()
     connection.close()
 
     print(f"\n{'='*50}")
