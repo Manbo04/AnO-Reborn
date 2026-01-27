@@ -1,0 +1,271 @@
+# FULLY MIGRATED
+
+from flask import Blueprint, request, render_template, session, redirect
+from helpers import login_required, error
+from attack_scripts import Military
+from random import random
+from dotenv import load_dotenv
+import variables
+import random as rand
+import time
+from src.database import get_db_cursor
+from psycopg2.extras import RealDictCursor
+
+load_dotenv()
+
+bp = Blueprint("intelligence", __name__)
+
+
+# TODO: add complex operation sorting by date and merging
+@bp.route("/intelligence", methods=["GET"])
+@login_required
+def intelligence():
+    if request.method == "GET":
+        cId = session["user_id"]
+
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            # cleanup old spyinfo rows (use spyinfo table)
+            cutoff = int(time.time()) - 86400 * 7
+            db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
+
+        data = []
+        try:
+            with get_db_cursor(cursor_factory=RealDictCursor) as db:
+                db.execute(
+                    "SELECT spyinfo.*, users.username FROM spyinfo LEFT JOIN users ON spyinfo.spyee=users.id WHERE spyinfo.spyer=%s ORDER BY date ASC",
+                    (cId,),
+                )
+                info = db.fetchall()
+
+                for row in info:
+                    data.append(dict(row))
+
+        except Exception:
+            # If anything unexpected happens reading spyinfo, return an empty page
+            return render_template("intelligence.html", info={})
+
+        sorted_data = {}
+        fully_sorted = {}
+
+        for row in data:
+            if row["spyee"] in sorted_data.keys():
+                sorted_data[row["spyee"]].append(row)
+            else:
+                sorted_data[row["spyee"]] = []
+                sorted_data[row["spyee"]].append(row)
+
+        for user, data in sorted_data.items():
+            for info in data:
+                date = info["date"]
+                for k, v in info.items():
+                    if info[k] != "false":
+                        if not fully_sorted.get(user, False):
+                            fully_sorted[user] = {}
+
+                        if not fully_sorted[user].get(k, False):
+                            fully_sorted[user][k] = v
+                        if fully_sorted[user].get("date", False):
+                            if date > fully_sorted[user]["date"]:
+                                fully_sorted[user][k] = v
+
+        required_data = variables.RESOURCES + variables.UNITS
+        for resource in required_data:
+            for user, data in fully_sorted.items():
+                if resource not in data:
+                    fully_sorted[user][resource] = "?"
+
+        return render_template("intelligence.html", info=fully_sorted)
+
+
+@bp.route("/spyAmount", methods=["GET", "POST"])
+@login_required
+def spyAmount():
+    cId = session["user_id"]
+    if request.method == "GET":
+        with get_db_cursor() as db:
+            db.execute("SELECT username FROM users WHERE id=%s", (cId,))
+            yourCountry_row = db.fetchone()
+            yourCountry = yourCountry_row[0] if yourCountry_row else ""
+
+            # fetch current spies count for this user to display in the form
+            db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
+            spies_row = db.fetchone()
+            spies = spies_row[0] if spies_row else 0
+
+        return render_template("spyAmount.html", yourCountry=yourCountry, spies=spies)
+
+    # make the spy entry here
+    if request.method == "POST":
+        prep = int(request.form.get("prep", 1) or 1)
+        spies = int(request.form.get("amount", 1) or 1)
+        eId = request.form.get("enemy")
+
+        with get_db_cursor() as db:
+            db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
+            defcon_result = db.fetchone()
+            eDefcon = defcon_result[0] if defcon_result and defcon_result[0] else 1
+
+            db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
+            spies_result = db.fetchone()
+            eSpies = spies_result[0] if spies_result and spies_result[0] else 1
+
+        # calculate what values have been revealed based on prep, amount, edefcon, espies
+        resources = variables.RESOURCES
+
+        # Prevent division by zero - use max(1, ...) to ensure positive denominator
+        revealChance = (prep * spies) / max(1, eDefcon * eSpies)
+        spyEntry = {}
+        for unit in Military.allUnits:
+            if random() * revealChance > 0.5:
+                spyEntry[unit] = "true"
+            else:
+                spyEntry[unit] = "false"
+        for resource in resources:
+            if random() * revealChance > 0.5:
+                spyEntry[resource] = "true"
+            else:
+                spyEntry[resource] = "false"
+        if random() * revealChance > 0.5:
+            spyEntry["defaultdefense"] = "true"
+        else:
+            spyEntry["defaultdefense"] = "false"
+
+        # insert spyEntry into spytable with
+        date = time.time()
+
+        # sessionize spyResult jinja
+        session["eId"] = eId
+        session["spyEntry"] = spyEntry
+        return redirect("/spyResult")
+
+
+# TODO: add notifications
+@bp.route("/spyResult", methods=["GET", "POST"])
+@login_required
+def spyResult():
+    if request.method == "GET":
+        spyEntry = session.get("spyEntry", {})
+        eId = session.get("eId")
+        enemyNation = None
+        if eId:
+            with get_db_cursor() as db:
+                db.execute("SELECT username FROM users WHERE id=%s", (eId,))
+                row = db.fetchone()
+                enemyNation = row[0] if row else None
+
+        return render_template(
+            "spyResult.html", enemyNation=enemyNation, spyEntry=spyEntry
+        )
+    if request.method == "POST":
+        cId = session["user_id"]
+        eId = request.form.get("country")
+
+        spies_str = request.form.get("spies")
+        if not spies_str:
+            return error(400, "Number of spies is required")
+
+        try:
+            spies = int(spies_str)
+        except (ValueError, TypeError):
+            return error(400, "Number of spies must be a valid number")
+
+        spy_type = request.form.get("spy_type")
+
+        with get_db_cursor() as db:
+            db.execute(
+                "SELECT spyee, date FROM spyinfo WHERE spyer=%s ORDER BY date DESC",
+                (cId,),
+            )
+            result = db.fetchone()
+            if result:
+                spyee, date = result
+            else:
+                spyee, date = None, 0
+
+            current_time = time.time()
+            if spyee != eId and current_time - date < 3600 * 12:
+                return error(
+                    400,
+                    f"12 hour cooldown for spying on another country. {current_time-date} seconds left.",
+                )
+
+            db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
+            actual_spies = db.fetchone()[0]
+
+            if spies > actual_spies:
+                return error(
+                    400,
+                    f"You don't have enough spies ({spies}/{actual_spies}). Missing {actual_spies-spies} spies",
+                )
+
+            db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
+            enemy_spies = db.fetchone()[0]
+
+            executed_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
+            uncovered_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
+            uncovered = {}
+
+            db.execute(
+                "INSERT INTO spyinfo (spyer, spyee, date) VALUES (%s, %s, %s) RETURNING id",
+                (cId, eId, time.time()),
+            )
+            operation_id = db.fetchone()[0]
+
+            object_list = variables.RESOURCES
+
+            table = "resources"
+            if spy_type == "units":
+                object_list = variables.UNITS
+                table = "military"
+
+            for object in object_list:
+                if spies - executed_spies > 0:
+                    own_rand = round(rand.uniform(0, 1), 3)
+                    enemy_rand = round(rand.uniform(0, 1), 3)
+
+                    own_score = own_rand * spies
+                    enemy_score = enemy_rand * enemy_spies
+
+                    if own_score == 0:
+                        own_score = 0.0001
+                    if enemy_score == 0:
+                        enemy_score = 0.0001
+
+                    multiplier = enemy_score / own_score
+
+                    if multiplier > 10:
+                        executed_spies += 1
+                    if multiplier > 2:
+                        uncovered_spies += 1
+                    if multiplier > 1:  # Enemy won
+                        uncovered[object] = False
+                    elif multiplier <= 1:  # Own won
+                        uncovered[object] = True
+
+            uncovered_objects = [k for k, v in uncovered.items() if v]
+            if uncovered_objects:
+                uncover_statement = (
+                    f"SELECT {', '.join(uncovered_objects)} FROM {table}"
+                    + " WHERE id=%s"
+                )
+                db.execute(uncover_statement, (eId,))
+                results = db.fetchall()
+                if results:
+                    objects = results[0]
+
+                    update_objects = []
+                    for res, amo in zip(uncovered_objects, objects):
+                        update_objects.append(f"{res}={amo}")
+                    update_objects_string = ", ".join(update_objects)
+
+                    if len(update_objects) > 0:
+                        spyinfo_update = (
+                            f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
+                        )
+                        db.execute(spyinfo_update, (operation_id,))
+
+            db.execute(
+                "UPDATE military SET spies=spies-%s WHERE id=%s", (executed_spies, cId)
+            )
+
+            return redirect("/intelligence")

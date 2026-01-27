@@ -61,9 +61,11 @@ VACUUM ANALYZE stats;
 ```
 
 **New file: `repositories/user_repository.py`**
+
 ```python
-from database import get_db_cursor, query_cache
+from src.database import get_db_cursor, query_cache
 from psycopg2.extras import RealDictCursor
+
 
 class UserRepository:
     """All user-related database operations"""

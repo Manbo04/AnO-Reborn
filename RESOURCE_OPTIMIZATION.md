@@ -40,20 +40,23 @@ python3 scripts/optimize-assets.py
 
 **Update Templates:**
 After running the optimization script, update your templates to reference minified files:
+
 ```html
 <!-- Before -->
-<link rel="stylesheet" href="/static/style.css">
-<script src="/static/script.js"></script>
+<link rel="stylesheet" href="/src/static/style.css">
+<script src="/src/static/script.js"></script>
 
 <!-- After -->
-<link rel="stylesheet" href="/static/style.min.css">
-<script src="/static/script.min.js"></script>
+<link rel="stylesheet" href="/src/static/style.min.css">
+<script src="/src/static/script.min.js"></script>
 ```
 
 **Automatic Selection:**
 The `asset()` helper function in `app.py` will automatically serve minified versions in production if they exist:
+
 ```html
-<link rel="stylesheet" href="/static/{{ asset('style.css') }}">
+
+<link rel="stylesheet" href="/src/static/{{ asset('style.css') }}">
 ```
 
 ---

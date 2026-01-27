@@ -1,0 +1,824 @@
+import ast
+import sys, os
+from flask import (
+    Flask,
+    request,
+    render_template,
+    session,
+    redirect,
+    send_from_directory,
+)
+from flask_compress import Compress
+import traceback
+import upgrades
+import intelligence
+
+# import tasks
+import market
+
+# import province
+# import military
+import change
+import coalitions
+import countries
+import signup
+import login
+from wars.routes import wars_bp
+import policies
+from src import statistics
+import requests
+import logging
+from variables import MILDICT, PROVINCE_UNIT_PRICES
+from flaskext.markdown import Markdown
+from psycopg2.extras import RealDictCursor
+from datetime import datetime as dt
+import string
+import random
+from helpers import login_required
+from database import get_db_cursor, cache_response, get_db_connection
+import province
+
+# import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
+
+sys.path.insert(-1, os.path.dirname(os.path.abspath(__file__)))
+if not hasattr(ast, "Str"):
+    ast.Str = ast.Constant
+if not hasattr(ast, "Num"):
+    ast.Num = ast.Constant
+if not hasattr(ast, "NameConstant"):
+    ast.NameConstant = ast.Constant
+if not hasattr(ast, "Ellipsis"):
+    ast.Ellipsis = ast.Constant
+
+app = Flask(__name__)
+# Disable strict slash redirects globally so tests can POST to endpoints both with
+# and without trailing slashes without automatic 308/301 redirects.
+app.url_map.strict_slashes = False
+
+# Initialize Sentry (optional) if SENTRY_DSN is set in environment
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
+
+    sentry_dsn = os.getenv("SENTRY_DSN")
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+            environment=os.getenv("ENVIRONMENT", "DEV"),
+        )
+except Exception:
+    # If sentry isn't installed or initialization fails, continue without it
+    pass
+
+# Optional: Flask-Limiter integration for rate limiting critical endpoints.
+# This is optional so the app can run when `flask_limiter` isn't installed
+# (useful for local dev or minimal environments).
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+
+    limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
+    app.limiter = limiter
+except Exception:
+    # If limiter isn't available or initialization fails, set attribute to None
+    app.limiter = None
+
+# NOTE: Previously we instrumented session saving for debugging Set-Cookie
+# issues. That instrumentation has been removed to avoid verbose logs in
+# non-development environments. Reintroduce behind a feature flag if needed.
+
+
+# Debug test route for logging verification (must be after app is defined)
+## Only one debugtest route should exist, after app = Flask(__name__)
+
+
+# Add global 403 error handler after app is defined
+@app.errorhandler(403)
+def forbidden_error(error):
+    logger = logging.getLogger(__name__)
+    logger.warning(f"403 error handler triggered: {error}")
+    return (
+        render_template(
+            "error.html", code=403, message="Forbidden: 403 error handler triggered."
+        ),
+        403,
+    )
+
+
+# Configure trusted hosts for domain setup
+# This allows Flask to work with custom domains via reverse proxy
+app.config["PREFERRED_URL_SCHEME"] = "https"
+app.config["SERVER_NAME"] = None  # Allow dynamic hostnames via proxy headers
+app.config["ALLOWED_HOSTS"] = [
+    "affairsandorder.com",
+    "www.affairsandorder.com",
+    "web-production-55d7b.up.railway.app",
+]
+
+# Ensure session cookie behavior is permissive for local dev/testing
+# Keep default None in production but set explicit None to be safe
+app.config["SESSION_COOKIE_DOMAIN"] = None
+# Use Lax by default for SameSite to prevent CSRF via third-party contexts but
+# still allow OAuth redirects and other reasonable flows.
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+# Prevent JavaScript from accessing session cookies
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+# In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
+# For local development or test environments where HTTPS is not used, keep cookies
+# insecure so `requests` and `curl` clients can receive them.
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.getenv("ENVIRONMENT") == "PROD"
+    and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
+)
+
+
+# Trust X-Forwarded-* headers from Railway reverse proxy
+@app.before_request
+def before_request():
+    # Track request start time for performance monitoring
+    from time import time
+
+    request.start_time = time()
+
+    # Set Sentry user context if available
+    try:
+        import sentry_sdk
+
+        user_id = session.get("user_id") if hasattr(session, "get") else None
+        if user_id:
+            sentry_sdk.set_user({"id": str(user_id)})
+        else:
+            sentry_sdk.set_user(None)
+    except Exception:
+        # Sentry not configured or unavailable
+        pass
+
+    # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
+    if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
+        if forwarded_proto != "https" and not request.is_secure:
+            url = request.url.replace("http://", "https://", 1)
+            return redirect(url, code=301)
+    return None
+    # Keep this hook small and non-verbose; avoid emitting per-request debug logs
+    # unless explicitly enabled in configuration.
+
+
+# Import cache_response decorator
+# from database import cache_response
+
+# Performance: Enable gzip compression for responses
+try:
+    Compress(app)
+except ImportError:
+    # Flask-Compress not installed, continue without it
+    pass
+
+# Register signup routes after app is fully initialized
+signup.register_signup_routes(app)
+login.register_login_routes(app)
+market.register_market_routes(app)
+change.register_change_routes(app)
+coalitions.register_coalitions_routes(app)
+countries.register_countries_routes(app)
+policies.register_policies_routes(app)
+statistics.register_statistics_routes(app)
+# Register email verification routes (provides /verify_email/<token>)
+try:
+    import email_routes
+
+    email_routes.register_email_routes(app)
+except Exception:
+    # If email_routes cannot be registered (e.g., missing dependencies), continue without fatal error
+    pass
+
+
+# Inject global feature flags and messages into template context
+@app.context_processor
+def inject_flags():
+    from os import getenv
+
+    return {
+        "EMAIL_VERIFICATION_COMING_SOON": getenv(
+            "EMAIL_VERIFICATION_COMING_SOON", "true"
+        )
+        == "true",
+    }
+
+
+# Configure OAuth2 SECRET_KEY from login module
+from dotenv import load_dotenv
+
+load_dotenv()
+oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
+if oauth2_secret:
+    app.config["SECRET_KEY"] = oauth2_secret
+# Ensure SECRET_KEY is always set so server-side sessions work. For local
+# development we allow a non-secret fallback (not for production).
+if not app.config.get("SECRET_KEY"):
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-not-for-prod")
+
+
+# Performance: Add caching headers for static files
+@app.after_request
+def add_cache_headers(response):
+    # Log slow requests for debugging (only in production)
+    from time import time
+
+    if hasattr(request, "start_time") and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        elapsed = time() - request.start_time
+        if elapsed > 2.0:  # Log requests taking more than 2 seconds
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(f"SLOW REQUEST: {request.path} took {elapsed:.2f}s")
+
+    # Cache static assets for 1 month (2592000 seconds)
+    if request.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+    # Cache images for 1 month
+    elif request.path.endswith((".jpg", ".png", ".gif", ".ico")):
+        response.headers["Cache-Control"] = "public, max-age=2592000"
+    # Don't cache HTML pages (they might change)
+    else:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    # Add security headers to all responses to harden against common web attacks
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer-when-downgrade")
+    # Conservative CSP - only enable in production to avoid breaking dev/test flows
+    if os.getenv("ENVIRONMENT") == "PROD":
+        try:
+            response.headers.setdefault(
+                "Content-Security-Policy",
+                "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'",
+            )
+        except Exception:
+            pass
+
+    return response
+
+
+# Helper to get minified asset path in production
+def asset(filename):
+    """Returns minified version of asset in production, original in development"""
+
+    is_production = (
+        os.getenv("FLASK_ENV") == "production"
+        or os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
+    )
+
+    if is_production and (filename.endswith(".css") or filename.endswith(".js")):
+        base, ext = filename.rsplit(".", 1)
+        minified = f"{base}.min.{ext}"
+        min_path = f"static/{minified}"
+        if os.path.exists(min_path):
+            return minified
+
+    return filename
+
+
+# Make asset helper available in templates
+app.jinja_env.globals["asset"] = asset
+
+
+# LOGGING
+logging_format = "====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+logging.basicConfig(
+    level=logging.ERROR,
+    format=logging_format,
+    filename="errors.log",
+)
+logger = logging.getLogger(__name__)
+
+
+# Thread-safe queue for Discord webhook messages
+import threading
+import queue as queue_module
+
+_webhook_queue = queue_module.Queue()
+_webhook_thread = None
+_webhook_thread_lock = threading.Lock()
+
+
+def _webhook_worker():
+    """Background worker that sends Discord webhooks without blocking the main thread"""
+    while True:
+        try:
+            data = _webhook_queue.get(timeout=5)
+            if data is None:  # Shutdown signal
+                break
+            url = os.getenv("DISCORD_WEBHOOK_URL")
+            if url:
+                try:
+                    # Use a short timeout to avoid hanging
+                    requests.post(url, json=data, timeout=5)
+                except Exception:
+                    pass  # Don't let webhook failures crash the worker
+            _webhook_queue.task_done()
+        except queue_module.Empty:
+            continue  # Keep waiting for more messages
+
+
+def _ensure_webhook_thread():
+    """Start the webhook worker thread if not already running"""
+    global _webhook_thread
+    with _webhook_thread_lock:
+        if _webhook_thread is None or not _webhook_thread.is_alive():
+            _webhook_thread = threading.Thread(target=_webhook_worker, daemon=True)
+            _webhook_thread.start()
+
+
+def send_discord_webhook(record):
+    """Queue a Discord webhook message (non-blocking)"""
+    url = os.getenv("DISCORD_WEBHOOK_URL")
+    if not url:
+        return  # Skip if webhook not configured
+    formatter = logging.Formatter(logging_format)
+    message = formatter.format(record)
+    # Truncate message if too long for Discord (2000 char limit)
+    if len(message) > 1900:
+        message = message[:1900] + "...[truncated]"
+    data = {"content": message, "username": "A&O ERROR"}
+
+    _ensure_webhook_thread()
+    try:
+        _webhook_queue.put_nowait(data)  # Non-blocking
+    except queue_module.Full:
+        pass  # Drop message if queue is full (better than blocking)
+
+
+class RequestsHandler(logging.Handler):
+    def emit(self, record):
+        """Send the log records (created by loggers) to
+        the appropriate destination.
+        """
+        send_discord_webhook(record)
+
+
+###
+
+
+Markdown(app)
+
+
+# Initialize database with proper defaults for existing provinces
+def _init_province_defaults():
+    """Ensure all provinces have proper default values for stats"""
+    try:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            # Update provinces with 0 happiness/productivity to have neutral 50% defaults
+            db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
+            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
+            db.execute(
+                "UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0"
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"Note: Province defaults initialization skipped (may be normal): {e}")
+
+
+_init_province_defaults()
+
+# register blueprints
+import military
+
+app.register_blueprint(military.bp)
+app.register_blueprint(province.bp)
+app.register_blueprint(upgrades.bp)
+app.register_blueprint(intelligence.bp)
+app.register_blueprint(wars_bp)
+
+import config  # Parse Railway environment variables
+
+# Attempt to ensure critical tables exist at startup. This helps avoid
+# import-time UndefinedTable errors in production when the DB hasn't
+# been migrated yet. It's safe to call (idempotent) and failures are
+# non-fatal.
+try:
+    if hasattr(signup, "ensure_signup_attempts_table"):
+        signup.ensure_signup_attempts_table()
+except Exception as _e:
+    # Don't raise here; just log to stdout so deployment logs capture it.
+    print(f"Startup: could not ensure signup_attempts table: {_e}")
+
+try:
+    environment = os.getenv("ENVIRONMENT")
+except (AttributeError, TypeError):
+    environment = "DEV"
+
+if environment == "PROD":
+    app.secret_key = config.get_secret_key()
+
+    handler = RequestsHandler()
+    logger.addHandler(handler)
+else:
+    app.secret_key = config.get_secret_key()
+
+# Import written packages
+# Don't put these above app = Flask(__name__), because it will cause a circular import error
+
+
+def generate_error_code():
+    numbers = 20
+    code = "".join(
+        random.choice(string.ascii_lowercase + string.digits) for _ in range(numbers)
+    )
+    time = int(dt.now().timestamp())
+    full = f"{code}-{time}"
+    return full
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("error.html", code=404, message="Page not found!")
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    message = f"This request method is not allowed!"
+    return render_template("error.html", code=405, message=message)
+
+
+@app.errorhandler(500)
+def invalid_server_error(error):
+    error_message = "Invalid Server Error. Sorry about that."
+    error_code = generate_error_code()
+    logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
+    traceback.print_exc()
+    return render_template(
+        "error.html", code=500, message=error_message, error_code=error_code
+    )
+
+
+# Jinja2 filter to add commas to numbers
+
+
+@app.template_filter()
+def commas(value):
+    try:
+        rounded = round(value)
+        returned = "{:,}".format(rounded)
+    except (TypeError, ValueError):
+        returned = value
+    return returned
+
+
+# Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
+
+
+@app.template_filter()
+def days_old(date_string):
+    try:
+        date_obj = dt.strptime(str(date_string), "%Y-%m-%d")
+        today = dt.today()
+        delta = today - date_obj
+        days = delta.days
+        return f"{date_string} ({days} Days Old)"
+    except (ValueError, TypeError):
+        return date_string
+
+
+# Jinja2 filter to render province building resource strings
+
+
+@app.template_filter()
+def prores(unit):
+    change_price = False
+    unit = unit.lower()
+    if "," in unit:
+        split_unit = unit.split(", ")
+        unit = split_unit[0]
+        change_price = float(split_unit[1])
+
+    renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
+
+    unit_name = unit.replace("_", " ").capitalize()
+    if unit_name == "Coal burners":
+        unit_name = "Coal power plants"
+    try:
+        unit = renames[unit_name]
+    except KeyError:
+        ...
+
+    price = PROVINCE_UNIT_PRICES[f"{unit}_price"]
+    if change_price:
+        price = price * change_price
+    try:
+        resources = ", ".join(
+            [f"{i[1]} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
+        )
+        full = f"{unit_name} cost { commas(price) }, { resources } each"
+    except KeyError:
+        full = f"{unit_name} cost { commas(price) } each"
+    return full
+
+
+# Jinja2 filter to render military unit resource strings
+
+
+@app.template_filter()
+def milres(unit):
+    change_price = False
+    if "," in unit:
+        split_unit = unit.split(", ")
+        unit = split_unit[0]
+        change_price = float(split_unit[1])
+    price = MILDICT[unit]["price"]
+    if change_price:
+        price = price * change_price
+    try:
+        resources = ", ".join(
+            [f"{i[1]} {i[0]}" for i in MILDICT[unit]["resources"].items()]
+        )
+        full = f"{unit.capitalize()} cost { commas(price) }, { resources } each"
+    except KeyError:
+        full = f"{unit.capitalize()} cost { commas(price) } each"
+    return full
+
+
+# Jinja2 filter to format resource names (replace underscores with spaces)
+@app.template_filter()
+def formatname(value):
+    """Convert snake_case to Title Case, with special handling for certain terms"""
+    if not isinstance(value, str):
+        return value
+
+    # Special cases
+    if value.lower() == "citycount":
+        return "City"
+
+    # Replace underscores and capitalize
+    return value.replace("_", " ").title()
+
+
+def get_resources():
+    """Get user's resources with short-term caching to avoid repeated DB queries"""
+    from database import query_cache
+
+    target_user_id = session.get("user_id")
+    if not target_user_id:
+        return {}
+
+    # Check cache first (30 second TTL for resources - they change frequently)
+    cache_key = f"resources_{target_user_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
+        try:
+            db.execute(
+                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s",
+                (target_user_id,),
+            )
+            resources = dict(db.fetchone())
+            query_cache.set(cache_key, resources)
+            return resources
+        except TypeError:
+            return {}
+
+
+@app.context_processor
+def inject_user():
+    return dict(get_resources=get_resources)
+
+
+@app.context_processor
+def inject_resources_global():
+    """Ensure a `resources` mapping is always available in templates.
+
+    This provides a safe fallback (empty dict) when no user is logged in
+    or when a database lookup fails, preventing Jinja UndefinedError in
+    templates that reference `resources` directly.
+    """
+    from flask import session
+
+    try:
+        user_id = session.get("user_id")
+        res = get_resources(user_id) if user_id else {}
+        # Use defaultdict so missing keys return 0 in templates (prevents Jinja errors)
+        from collections import defaultdict
+
+        resources = defaultdict(int, res)
+    except Exception:
+        from collections import defaultdict
+
+        resources = defaultdict(int)
+    return dict(resources=resources)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    # In local development/testing, ensure a visible debug cookie is set on the
+    # home page when a session exists or to help test clients detect cookie
+    # behavior when following redirects (requests may follow redirects and
+    # observe cookies set on the final response).
+    from flask import make_response
+
+    resp = make_response(render_template("index.html"))
+    # In local development, tests can use direct cookie assertions if desired.
+    # We intentionally don't set a global 'session_debug_home' cookie here to
+    # avoid leaving dev-only artifacts on responses. If you need such a
+    # cookie for debugging, add it behind a dev-only feature flag.
+    return resp
+
+
+# NOTE: developer-only endpoints `_debug_session` and `_test_set_session`
+# were removed during cleanup. If you need to inspect session/cookie settings
+# or set session values for troubleshooting, consider running the app in
+# a local-only debug mode and adding guarded handlers behind a config flag.
+
+
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory("static", "robots.txt")
+
+
+@app.route("/flag/<flag_type>/<int:flag_id>")
+def serve_flag(flag_type, flag_id):
+    """Serve flag images from database storage (persistent across deployments)"""
+    import base64
+    from flask import Response
+
+    with get_db_cursor() as cur:
+        if flag_type == "country":
+            cur.execute("SELECT flag_data FROM users WHERE id = %s", (flag_id,))
+        elif flag_type == "coalition":
+            cur.execute("SELECT flag_data FROM colNames WHERE id = %s", (flag_id,))
+        else:
+            return send_from_directory("static/flags", "default_flag.jpg")
+
+        row = cur.fetchone()
+
+        if row and row[0]:
+            try:
+                flag_data = base64.b64decode(row[0])
+                # Detect image type from magic bytes
+                if flag_data[:8] == b"\x89PNG\r\n\x1a\n":
+                    mimetype = "image/png"
+                elif flag_data[:2] == b"\xff\xd8":
+                    mimetype = "image/jpeg"
+                elif flag_data[:6] in (b"GIF87a", b"GIF89a"):
+                    mimetype = "image/gif"
+                else:
+                    mimetype = "image/png"
+
+                response = Response(flag_data, mimetype=mimetype)
+                response.headers[
+                    "Cache-Control"
+                ] = "public, max-age=3600"  # Cache 1 hour
+                return response
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).error(f"Error decoding flag: {e}")
+
+        # Fall back to file system (for backward compatibility)
+        if flag_type == "country":
+            cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
+        else:
+            cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
+
+        row = cur.fetchone()
+        if row and row[0]:
+            try:
+                return send_from_directory("static/flags", row[0])
+            except:
+                pass
+
+        return send_from_directory("static/flags", "default_flag.jpg")
+
+
+@app.route("/account", methods=["GET"])
+@login_required
+@cache_response(ttl_seconds=60)
+def account():
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
+        cId = session["user_id"]
+
+        db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
+        user = dict(db.fetchone())
+
+    return render_template("account.html", user=user)
+
+
+@app.route("/recruitments", methods=["GET"])
+@login_required
+def recruitments():
+    # List coalitions marked as recruiting
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        db.execute(
+            "SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
+        )
+        cols = db.fetchall()
+    return render_template("recruitments.html", coalitions=cols)
+
+
+@app.route("/businesses", methods=["GET"])
+@login_required
+def businesses():
+    return render_template("businesses.html")
+
+
+# Redirect bare /country to the user's own country page
+@app.route("/country", methods=["GET"])
+@login_required
+def country_redirect():
+    return redirect("/my_country")
+
+
+"""
+@login_required
+@app.route("/assembly", methods=["GET"])
+def assembly():
+    return render_template("assembly.html")
+"""
+
+
+@app.route("/logout")
+def logout():
+    if session.get("user_id") is not None:
+        session.clear()
+    else:
+        pass
+    return redirect("/")
+
+
+@app.route("/tutorial", methods=["GET"])
+def tutorial():
+    return render_template("tutorial.html")
+
+
+@app.route("/forgot_password", methods=["GET"])
+def forget_password():
+    return render_template("forgot_password.html")
+
+
+"""
+@app.route("/statistics", methods=["GET"])
+def statistics():
+    return render_template("statistics.html")
+"""
+
+
+@app.route("/my_offers", methods=["GET"])
+def myoffers():
+    return render_template("my_offers.html")
+
+
+@app.route("/war", methods=["GET"])
+def war():
+    # Redirect to the consolidated Wars page handled by the 'wars' blueprint
+    return redirect("/wars")
+
+
+## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
+## compatibility by redirecting to the war result page for logged-in users in the blueprint.
+@app.route("/warresult", methods=["GET"])
+def warresult_deprecated():
+    # Redirect to canonical /warResult route when accessed from legacy code
+    return redirect("/warResult")
+
+
+@app.route("/mass_purchase", methods=["GET"])
+@login_required
+def mass_purchase():
+    cId = session["user_id"]
+    with get_db_cursor() as db:
+        db.execute(
+            "SELECT id, provinceName as name, CAST(cityCount AS INTEGER) as cityCount, land FROM provinces WHERE userId=%s ORDER BY provinceName",
+            (cId,),
+        )
+        provinces = db.fetchall()
+
+        # Convert to list of dicts for template
+        province_list = []
+        if provinces:
+            colnames = [desc[0] for desc in db.description]
+            for row in provinces:
+                province_list.append(dict(zip(colnames, row)))
+
+    return render_template("mass_purchase.html", provinces=province_list)
+
+
+@app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
+def admin_init_database():
+    return "Database already initialized. Remove this route from app.py", 200
+
+
+if __name__ == "__main__":
+    # Use port 5000 by default for local development/testing to match test suite expectations
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, use_reloader=False)
