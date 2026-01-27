@@ -54,8 +54,9 @@ This document outlines the performance optimizations implemented to make the gam
 ## How to Add More Caching
 
 ### Cache a Query Result
+
 ```python
-from database import query_cache
+from src.database import query_cache
 
 # Check cache
 cache_key = "my_data_key"
@@ -112,8 +113,10 @@ execute_batch(cursor,
 Default: 5 minutes (300 seconds)
 
 To change:
+
 ```python
-from database import QueryCache
+from src.database import QueryCache
+
 cache = QueryCache(ttl_seconds=600)  # 10 minutes
 ```
 

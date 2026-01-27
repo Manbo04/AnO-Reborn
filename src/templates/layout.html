@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png') }}?v=3" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3">
+    <meta name="viewport" content="width=device-width, initial-scale=0.8">
+    <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
+    <meta name="description" content="Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries,
+    and wage war on adversaries.">
+    <meta name="theme-color" content="#00a7e1">
+    <script>
+        console.warn = () => {};
+    </script>
+    <script>
+        window.onerror = function(message, url, lineNumber) {
+            return true;
+        };
+    </script>
+    <link href="{{ url_for('static', filename='style.css') }}?v=3" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+
+    <!-- JQuery -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!--  -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
+    <script src="{{ url_for('static', filename='scroller.js') }}"></script>
+    <!-- Fallback icon shim: replace material icon ligatures with emoji when fonts unavailable -->
+    <style>
+    .iconfallback{ font-size: 18px; vertical-align: middle; display:inline-block; }
+    </style>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        try{
+            const map = {
+                'school':'🏫',
+                'person_add_alt_1':'➕',
+                'add_circle_outline':'➕',
+                'login':'🔑',
+                'keyboard_arrow_down':'▾',
+                'refresh':'🔄',
+                'add_circle':'➕',
+                'outbond':'↗'
+            };
+            // Only apply the emoji fallback if the Material Icons fonts are NOT available.
+            const fontsAvailable = (document.fonts && (document.fonts.check('12px "Material Icons"') || document.fonts.check('12px "Material Icons Outlined"')));
+            if(!fontsAvailable){
+                const spans = document.querySelectorAll('span.material-icons-outlined, span.material-icons');
+                spans.forEach(s => {
+                    const key = s.textContent.trim();
+                    if(!key) return;
+                    const emoji = map[key];
+                    if(emoji){
+                        s.textContent = '';
+                        const em = document.createElement('span');
+                        em.className = 'iconfallback';
+                        em.textContent = emoji;
+                        s.appendChild(em);
+                    }
+                });
+            }
+        }catch(e){console.error('icon fallback error',e)}
+    });
+    </script>
+
+    <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
+    <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
+    <script data-ad-client="ca-pub-2399873064840158" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RZVBFFEGHM"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', 'G-RZVBFFEGHM');
+    </script>
+    <script>
+        const imageBackground = function(event) {
+            var output = document.getElementById('imageBackground');
+            output.src = URL.createObjectURL(event.target.files[0]);
+            output.style.width = "20vw";
+            output.style.height = "11.25vw";
+            output.onload = function() {
+                URL.revokeObjectURL(output.src) //free memory
+            }
+        };
+    </script>
+    <script>
+        $(document).ready(function() {
+            new WOW().init();
+        });
+    </script>
+    {% block head %} {% endblock %}
+</head>
+
+<body>
+
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
+        new Crate({
+            server: '708006319658893385', // Affairs & Order
+            channel: '709897623917822052' // #rules
+        })
+    </script>
+    -->
+    <div class="navbarparent" id="navbarparent">
+
+        {% if session.get('user_id') != None %}
+        <div class="menubar" onclick="menubardrop()" id="menubar">
+            <div class="bar1" id="bar1"></div>
+            <div class="bar2" id="bar2"></div>
+            <div class="bar3" id="bar3"></div>
+        </div>
+        {% endif %}
+
+        <a class="navbarparenttitle" href="/src/static">
+            <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=2" class="navbarparenttitleimage" /> Affairs and Order</a>
+
+        <!---->
+
+        <div class="navbarparentloginsignupdiv">
+            {% if session.get('user_id') == None %}
+            <a class="loginsignup" href="/login"><span class="material-icons-outlined">
+                    login
+                </span>Login</a>
+            <a class="loginsignup borderbutton" href="/signup"><span class="material-icons-outlined">
+                person_add_alt_1
+                </span>Get Started</a> {% elif session.get('user_id') != None %}
+
+            <div class="dropdown">
+                <div class="dropbtn"><button class="dropbtnchild">Other<span class="material-icons-outlined iconright">
+                        keyboard_arrow_down
+                    </span></button></div>
+                <div class="dropdown-content">
+                    <div class="dropdown-contentchild">
+                        <a class="" href="/account"><span class="material-icons-outlined">
+                            perm_identity
+                        </span>Account</a>
+                        <a class="" href="/tutorial"><span class="material-icons-outlined">
+                            school
+                        </span>Tutorial</a>
+                        <!--
+                        <a class="" href="/statistics"><span class="material-icons-outlined">
+                            insert_chart_outlined
+                        </span>Statistics</a>
+                    -->
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <div class="dropbtn"><button class="dropbtnchild">Global Affairs<span class="material-icons-outlined iconright">
+                        keyboard_arrow_down
+                    </span></button></div>
+                <div class="dropdown-content">
+                    <div class="dropdown-contentchild">
+                        {% if session.get('user_id') != None %}
+                        <a class="" href="/my_coalition"><span class="material-icons-outlined">
+                            group
+                        </span>My Coalition</a> {% endif %}
+                        <a class="" href="/establish_coalition"><span class="material-icons-outlined">
+                            group_add
+                        </span>Establish a Coalition</a>
+                        <a class="" href="/coalitions"><span class="material-icons-outlined">
+                            public
+                        </span>Coalitions</a>
+                        <a class="" href="/countries"><span class="material-icons-outlined">
+                        person_pin_circle
+                        </span>Countries</a>
+                        <!--
+                        <a class="" href="/assembly"><span class="material-icons-outlined">
+                            chat
+                        </span>Assembly</a>
+                        -->
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <div class="dropbtn"><button class="dropbtnchild">Internal Affairs<span class="material-icons-outlined iconright">
+                        keyboard_arrow_down
+                    </span></button></div>
+                <div class="dropdown-content">
+                    <div class="dropdown-contentchild">
+                        <a class="" href="/country/id={{ session['user_id'] }}"><i class="fas fa-flag" aria-hidden="true"></i>Country<!--<span class="menubaranotification">1</span>--></a>
+                        <a class="" href="/upgrades"><span class="material-icons-outlined">
+                        engineering
+                        </span>Projects</a>
+                        <a class="" href="/provinces"><span class="material-icons-outlined">
+                            account_balance
+                        </span>Provinces</a>
+                        <a class="" href="/market"><span class="material-icons-outlined">
+                            local_grocery_store
+                        </span>Market<!--<span class="menubaranotification">1</span>--></a>
+                        <a class="" href="/src/warswars"><span class="material-icons-outlined">
+                            military_tech
+                        </span>Wars<!--<span class="menubaranotification">1</span>--></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    </div> {% if session.get('user_id') != None %}
+    <div class="menubardiv" id="menubardiv">
+
+        <h3>Internal Affairs</h3>
+        <a class="menubara" href="/country/id={{ session['user_id'] }}"><i class="fas fa-flag" aria-hidden="true"></i>Country<!-- <span class="menuflex2notification">1</span> --> </a>
+
+        <a class="menubara" href="/upgrades"><span class="material-icons-outlined">
+            engineering
+            </span>Projects</a>
+
+        <a class="menubara" href="/provinces"><span class="material-icons-outlined">
+                account_balance
+            </span>Provinces</a>
+        <a class="menubara" href="/market"><span class="material-icons-outlined">
+                local_grocery_store
+            </span>Market<!--<span class="menubaranotification">1</span>--></a>
+        <a class="menubara" href="/src/warswars"><span class="material-icons-outlined">
+                military_tech
+            </span>Wars<!--<span class="menubaranotification">1</span>--></a>
+
+        <h3>Global Affairs</h3>
+        <a class="menubara" href="/my_coalition"><span class="material-icons-outlined">
+                group
+            </span>My Coalition</a>
+        <a class="menubara" href="/establish_coalition"><span class="material-icons-outlined">
+                group_add
+            </span>Establish a Coalition</a>
+        <a class="menubara" href="/coalitions"><span class="material-icons-outlined">
+                public
+            </span>Coalitions</a>
+        <a class="menubara" href="/countries"><span class="material-icons-outlined">
+            person_pin_circle
+            </span>Countries</a>
+        <!--
+        <a class="menubara" href="/assembly"><span class="material-icons-outlined">
+                chat
+            </span>Assembly</a>
+        -->
+        <h3>Other</h3>
+        <a class="menubara" href="/account"><span class="material-icons-outlined">
+                perm_identity
+            </span>Account</a>
+        <a class="menubara" href="/tutorial"><span class="material-icons-outlined">
+                school
+            </span>Tutorial</a>
+
+        <!--
+        <a class="menubara" href="/statistics"><span class="material-icons-outlined">
+                insert_chart_outlined
+            </span>Statistics</a>
+        -->
+
+        <div class="resourcediv" id="resourcediv">
+            <div class="resourcedivchild" onclick="resourcedivcontentshow()">
+                <span class="material-icons-outlined resourceicon">
+                    monetization_on
+                </span>
+                <p class="resourceicontext">Resources</p>
+            </div>
+        </div>
+
+        <div class="resourcedivcontent" id="resourcedivcontent">
+            <!--I WILL REPLACE THE TEXT WITH RESOURCE ICONS SOON - CARSON-->
+            {% set resources = get_resources() %}
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["gold"] | commas }}</p>
+                <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
+            </div>
+            <br />
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["rations"] | commas }}</p>
+                <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["oil"] | commas }}</p>
+                <div class="resourceinfo">Oil can be used to make power, and can be refined into gasoline for fuel.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["coal"] | commas }}</p>
+                <div class="resourceinfo">Coal is a cheap but pollution intensive fuel.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["uranium"] | commas }}</p>
+                <div class="resourceinfo">Uranium is capable of fueling large nuclear power plants, or being a reactant in nuclear weapons.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["bauxite"] | commas }}</p>
+                <div class="resourceinfo">Bauxite is a valuable mineral when manufactured into aluminium</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["iron"] | commas }}</p>
+                <div class="resourceinfo">Iron is incredibly useful when refined with coke into steel.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["lead"] | commas }}</p>
+                <div class="resourceinfo">Lead is useful for war, as it can be refined into ammunition.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["copper"] | commas }}</p>
+                <div class="resourceinfo">copper can be refined into consumer goods</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["lumber"] | commas}}</p>
+                <div class="resourceinfo">Lumber is a common bulding material.</div>
+
+            </div>
+            <br />
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/rescomponents.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["components"] | commas }}</p>
+                <div class="resourceinfo">Components are necessary for advanced war machines and country projects.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/ressteel.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["steel"] | commas }}</p>
+                <div class="resourceinfo">Steel is invaluable for building infrastructure, military machines, and projects.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resconsumer_goods.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["consumer_goods"] | commas }}</p>
+                <div class="resourceinfo">Consumer goods are advanced manufactured goods that can drastically increase tax income. Every 80000 people consume 1 consumer good</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resaluminium.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["aluminium"] | commas}}</p>
+                <div class="resourceinfo">Aluminium is a useful material for infrastructure, military, and projects.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resgasoline.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["gasoline"] | commas }}</p>
+                <div class="resourceinfo">Gasoline is necessary to mantian a functioning military in war, fueling all types of vehicles.</div>
+
+            </div>
+            <div class="resourcetagparent" tabindex="0">
+                <img src="{{ url_for( 'static', filename='images/resammunition.png' ) }}?v=2" class="resource" />
+                <p class="resourcetag">{{ resources["ammunition"] | commas }}</p>
+                <div class="resourceinfo">Ammunition allows for both your soldiers to be more effective, and for your military machines to fight in war.</div>
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- <div class="menubardiv " id="menubardiv ">
+
+        <a class="menubara " href="/country/id={{ session[ 'user_id'] }} ">Country</a>
+
+            <a class="menubara " href="market.html ">Market</a>
+
+            <a class="menubara " href="military.html ">Military</a>
+
+            <a class="menubara " href="index.html ">Coalition</a>
+
+            <a class="menubara " href="index.html ">World</a>
+
+        </div>
+        -->
+    <div class="templatecontainer">{% block body %} {% endblock %}
+
+        <!-- Code for message flashes (You bought x soldiers, etc)-->
+        <!-- Please fix the html (not jinja templating) so it would show up somewhere, I recommend the bottom right corner of the screen.-->
+        <!-- t0dd -->
+        {% with messages = get_flashed_messages() %} {% if messages %}
+        <ul class=flashes>
+            {% for message in messages %}
+            <div class="purchasediv">
+                <div class="purchasenotif">
+                    <h3>{{ message }}</h3>
+                </div>
+            </div>
+            {% endfor %}
+        </ul>
+        {% endif %} {% endwith %}
+
+
+    </div>
+
+    <footer class="footer">
+
+        <div class="templatedivflex2 menuflex">
+            <div class="templatedivflex2left footerchild">
+
+                <h1 class="footertitle navbarparenttitle">
+                    <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=2" class="navbarparenttitleimage footertitleicon" /> Affairs and Order</h1>
+
+
+                <div class="footercopyright">© 2021</div>
+
+            </div>
+            <div class="templatedivflex2left footerchild">
+
+                <a href="https://discord.gg/SEae3Ua" target="_blank" aria-label="discord" rel="noreferrer">
+                    <i class="fab fa-discord fa-2x discordicon footericon"></i>
+                </a>
+
+                <a href="https://affairsandorder.flarum.cloud/" target="_blank" aria-label="forum" rel="noreferrer">
+                    <i class="far fa-newspaper fa-2x forumicon footericon"></i>
+                </a>
+                <a href="https://x.com/Manbo04040404" target="_blank" aria-label="twittet" rel="noreferrer">
+                    <i class="fab fa-twitter fa-2x twittericon footericon"></i>
+                </a>
+
+                <a href="https://www.youtube.com/channel/UColguUP75p-RObWBdiHiXHQ" aria-label="youtube" target="_blank" rel="noreferrer">
+                    <i class="fab fa-youtube fa-2x youtubeicon footericon"></i>
+                </a>
+
+                <a href="https://www.reddit.com/r/AffairsandOrderReborn/?feed=home" target="_blank" aria-label="discord" rel="noreferrer">
+                    <i class="fab fa-reddit fa-2x redditicon footericon"></i>
+                </a>
+                <a href="/dns_troubleshoot" aria-label="dns-troubleshooter" title="DNS troubleshooting" rel="noreferrer">
+                    <i class="fas fa-info-circle fa-2x footericon"></i>
+                </a>
+            </div>
+        </div>
+
+    </footer>
+
+</body>
+
+</html>

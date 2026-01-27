@@ -239,7 +239,8 @@ with get_db_cursor() as db:
 Each feature module exports route handlers registered with the Flask app:
 
 ```python
-from app import app
+from src.app import app
+
 
 @app.route("/country/id=<int:cId>", methods=["GET"])
 @login_required
@@ -371,7 +372,7 @@ Centralized in `database.py` with connection pooling and context manager pattern
 
 ```python
 # GOOD - Use this everywhere!
-from database import get_db_cursor
+from src.database import get_db_cursor
 
 with get_db_cursor() as db:
     db.execute("SELECT ...", params)
@@ -556,16 +557,17 @@ def get_user(user_id):
 ### 4. Session Security
 
 ```python
-from helpers import login_required
+from src.helpers import login_required
 
 # Access logged-in user ID
 user_id = session["user_id"]  # Set during login
+
 
 # Protected routes
 @app.route("/my-profile")
 @login_required
 def my_profile():
-    # Automatically redirects to login if not authenticated
+# Automatically redirects to login if not authenticated
 ```
 
 ### 5. Configuration Management

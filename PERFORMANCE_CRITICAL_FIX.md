@@ -29,9 +29,10 @@ let totalCost = numPurchased * basePrice +
 
 ### 2. **Broken Images** ✅ FIXED
 **Problem**: Image in createprovince.html used hardcoded path
+
 ```html
 <!-- OLD - Breaks when app deployed to subdirectory -->
-<img src="static/images/province.jpg" />
+<img src="src/static/images/province.jpg"/>
 ```
 
 **Solution**: Use Flask url_for() function

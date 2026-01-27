@@ -39,6 +39,7 @@
 **Lines**: 551, 584, 654, 746, 836, 887, 915, 954, 1011, 1055, 1082
 
 Pattern to replace:
+
 ```python
 # OLD
 conn = psycopg2.connect(host=PG_HOST, database=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
@@ -49,10 +50,10 @@ conn.close()
 
 # NEW
 from contextlib import contextmanager
-from database import get_db_cursor
+from src.database import get_db_cursor
 
 with get_db_cursor() as cur:
-    # ... code ...
+# ... code ...
 ```
 
 #### `military.py` - 1 call
@@ -123,23 +124,28 @@ def validate_input(value: str) -> bool:
 **Test file**: `tests/test_smoke.py`
 
 **Pattern**:
+
 ```python
 import pytest
-from app import app
+from src.app import app
+
 
 @pytest.fixture
 def client():
     with app.test_client() as client:
         yield client
 
+
 def test_login_get(client):
     """Test /login GET returns login page."""
     response = client.get('/login')
     assert response.status_code == 200
 
+
 def test_login_post_valid(client):
     """Test /login POST with valid credentials."""
     # ...
+
 
 def test_signup_get(client):
     """Test /signup GET returns signup page."""
