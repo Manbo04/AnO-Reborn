@@ -43,6 +43,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Initialize DB schema
+        run: |
+          python init_db_railway.py
+
       - name: Run tests
         run: |
           python -m pytest -q
