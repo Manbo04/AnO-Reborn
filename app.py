@@ -56,6 +56,9 @@ if not hasattr(ast, "Ellipsis"):
     ast.Ellipsis = ast.Constant
 
 app = Flask(__name__)
+# Disable strict slash redirects globally so tests can POST to endpoints both with
+# and without trailing slashes without automatic 308/301 redirects.
+app.url_map.strict_slashes = False
 
 # Initialize Sentry (optional) if SENTRY_DSN is set in environment
 try:
@@ -131,7 +134,7 @@ def before_request():
     try:
         import sentry_sdk
 
-        user_id = session.get("user_id") if hasattr(session, 'get') else None
+        user_id = session.get("user_id") if hasattr(session, "get") else None
         if user_id:
             sentry_sdk.set_user({"id": str(user_id)})
         else:
@@ -634,8 +637,11 @@ def account():
 def recruitments():
     # List coalitions marked as recruiting
     from database import get_db_cursor
+
     with get_db_cursor() as db:
-        db.execute("SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC")
+        db.execute(
+            "SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
+        )
         cols = db.fetchall()
     return render_template("recruitments.html", coalitions=cols)
 
