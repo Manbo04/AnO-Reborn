@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect, jsonify, current_app
+from flask import request, render_template, session, redirect, current_app
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
@@ -8,6 +8,9 @@ import os
 from requests_oauthlib import OAuth2Session
 from dotenv import load_dotenv
 import datetime
+import logging
+import uuid
+import time
 from database import get_db_cursor
 
 load_dotenv()
@@ -15,10 +18,6 @@ load_dotenv()
 
 def login():
     if request.method == "POST":
-        import logging
-        import uuid
-        import time
-
         logger = logging.getLogger(__name__)
         logger.debug("POST /login/ called")
 
@@ -36,7 +35,7 @@ def login():
             # gets the username input from the forms
             username = request.form.get("username")
             logger.debug(
-                f"Received form data: username={username}, password_set={bool(password)}"
+                "Received form data: user=%s, pw_set=%s", username, bool(password)
             )
 
             if not username or not password:  # checks if inputs are blank
@@ -52,7 +51,10 @@ def login():
                 # Check if verification columns exist
                 try:
                     db.execute(
-                        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'"
+                        (
+                            "SELECT column_name FROM information_schema.columns "
+                            "WHERE table_name = 'users' AND column_name = 'is_verified'"
+                        )
                     )
                     has_verification = db.fetchone() is not None
                 except Exception:
@@ -64,7 +66,10 @@ def login():
                 has_password = False
                 try:
                     db.execute(
-                        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password'"
+                        (
+                            "SELECT column_name FROM information_schema.columns "
+                            "WHERE table_name = 'users' AND column_name = 'password'"
+                        )
                     )
                     has_password = db.fetchone() is not None
                 except Exception:
@@ -73,23 +78,40 @@ def login():
                 if has_verification:
                     if has_password:
                         db.execute(
-                            "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
+                            (
+                                "SELECT id, username, email, description, "
+                                "password, auth_type, is_verified FROM users "
+                                "WHERE username=(%s) AND auth_type='normal'"
+                            ),
                             (username,),
                         )
                     else:
                         db.execute(
-                            "SELECT id, username, email, description, hash, discord_id, coalition_id, auth_type, is_verified FROM users WHERE username=(%s) AND auth_type='normal'",
+                            (
+                                "SELECT id, username, email, description, "
+                                "hash, auth_type, "
+                                "is_verified FROM users WHERE username=(%s) "
+                                "AND auth_type='normal'"
+                            ),
                             (username,),
                         )
                 else:
                     if has_password:
                         db.execute(
-                            "SELECT id, username, email, description, password, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
+                            (
+                                "SELECT id, username, email, description, "
+                                "password, auth_type FROM users WHERE username=(%s) "
+                                "AND auth_type='normal'"
+                            ),
                             (username,),
                         )
                     else:
                         db.execute(
-                            "SELECT id, username, email, description, hash, discord_id, coalition_id, auth_type FROM users WHERE username=(%s) AND auth_type='normal'",
+                            (
+                                "SELECT id, username, email, description, "
+                                "hash, auth_type FROM users WHERE username=(%s) "
+                                "AND auth_type='normal'"
+                            ),
                             (username,),
                         )
                 user = db.fetchone()
@@ -114,18 +136,34 @@ def login():
                 # checks if user exists and if the password is correct
                 if bcrypt.checkpw(password, hashed_pw):
                     # Check if email is verified (only if verification is enabled)
+                    # Only enforce email verification if email sending is configured
                     if has_verification:
-                        is_verified = user[8] if len(user) > 8 else True
-                        if is_verified is False:
-                            user_email = user[2] if user[2] else ""
-                            return redirect(f"/verification_pending?email={user_email}")
+                        try:
+                            from email_utils import is_email_configured
+
+                            email_enforced = is_email_configured()
+                        except Exception:
+                            email_enforced = False
+
+                        if email_enforced:
+                            # is_verified is selected as the last column when present
+                            is_verified = user[-1] if len(user) >= 6 else True
+                            if is_verified is False:
+                                user_email = user[2] if user[2] else ""
+                                return redirect(
+                                    f"/verification_pending?email={user_email}"
+                                )
+                        else:
+                            # Email not configured; skip verification enforcement
+                            pass
 
                     logger.debug("Password matches, logging in user.")
                     # sets session's user_id to current user's id
                     session["user_id"] = user[0]
                     logger.debug(f"Session after set: {dict(session)}")
-                    # Mark session as permanent and modified to ensure cookie is set on response
+                    # Mark session permanent so cookie persists
                     session.permanent = True
+                    # Ensure Flask sees the session as modified and writes cookie
                     session.modified = True
 
                     # TODO: remove later, this is for old users
@@ -140,7 +178,6 @@ def login():
                         )
 
                     logger.debug("Returning redirect to / after login")
-                    from flask import make_response
 
                     response = redirect("/")
                     return response  # redirects user to homepage
@@ -160,12 +197,11 @@ def login():
                 event_id = sentry_sdk.capture_exception(e)
             except Exception:
                 # Fallback to generated uid
-                import uuid
-                import time
-
                 event_id = f"{uuid.uuid4().hex[:8]}-{int(time.time())}"
                 logger.exception(
-                    f"Unhandled exception during login (id={event_id}): {e}"
+                    "Unhandled exception during login (id=%s): %s",
+                    event_id,
+                    e,
                 )
 
             return error(
