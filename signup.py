@@ -299,7 +299,16 @@ def discord_register():
             ensure_signup_attempts_table()
 
             # IP rate limiting: max 3 attempts per IP per day
-            client_ip = request.remote_addr
+            # Prefer X-Forwarded-For when present (app may run behind a proxy)
+            forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
+                "X-Forwarded-For".lower()
+            )
+            if forwarded:
+                # Use first IP in list if Multiple forwarded addresses are present
+                client_ip = forwarded.split(",")[0].strip()
+            else:
+                client_ip = request.remote_addr
+
             with get_db_cursor() as db:
                 db.execute(
                     """
@@ -474,8 +483,16 @@ def signup():
         logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
 
         # IP rate limiting: max 3 attempts per IP per day
+        # Prefer X-Forwarded-For when present (app may run behind a proxy)
+        forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
+            "X-Forwarded-For".lower()
+        )
+        if forwarded:
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = request.remote_addr
+
         # Allow a higher threshold (or effectively bypass) for local dev/testing
-        client_ip = request.remote_addr
         with get_db_cursor() as db:
             db.execute(
                 """
