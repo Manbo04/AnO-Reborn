@@ -326,8 +326,19 @@ def tax_income():
                 )
             """
             )
+            # Ensure a row exists and lock it to prevent concurrent runs from
+            # racing on the last_run check. This uses a fast INSERT ... ON CONFLICT
+            # followed by SELECT ... FOR UPDATE so concurrent workers serialize on
+            # the task_runs row.
             db.execute(
-                "SELECT last_run FROM task_runs WHERE task_name=%s", ("tax_income",)
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+                "ON CONFLICT DO NOTHING",
+                ("tax_income",),
+            )
+
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
+                ("tax_income",),
             )
             row = db.fetchone()
             import datetime
@@ -343,11 +354,7 @@ def tax_income():
                 return
 
             db.execute(
-                (
-                    "INSERT INTO task_runs (task_name, last_run) "
-                    "VALUES (%s, now()) ON CONFLICT (task_name) "
-                    "DO UPDATE SET last_run = now()"
-                ),
+                ("UPDATE task_runs SET last_run = now() WHERE task_name = %s"),
                 ("tax_income",),
             )
             start = time.time()
