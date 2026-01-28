@@ -120,32 +120,15 @@ def ensure_signup_attempts_table():
                 logging.getLogger(__name__).debug("ensure: ip add error %s", e)
 
             # Attempt to drop NOT NULL on `ip` if it exists.
-            # This uses a DO block to avoid errors when column is missing.
+            # Use a simple ALTER inside try/except; if it fails, rollback the
+            # transaction so subsequent ALTERs can proceed.
             try:
-                db.execute(
-                    """
-                    DO $$
-                    BEGIN
-                      IF EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='signup_attempts' AND column_name='ip'
-                      ) THEN
-                        BEGIN
-      EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
-                        EXCEPTION WHEN others THEN
-                          -- ignore any error dropping NOT NULL (e.g., if it's already
-                          nullable)
-                        END;
-                      END IF;
-                    END$$;
-                """
-                )
-                import logging
-
-                logging.getLogger(__name__).debug(
-                    "ensure: attempted drop NOT NULL on ip (if existed)"
-                )
+                db.execute("ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL")
             except Exception as e:
+                try:
+                    db.connection.rollback()
+                except Exception:
+                    pass
                 import logging
 
                 logging.getLogger(__name__).debug(
@@ -299,7 +282,16 @@ def discord_register():
             ensure_signup_attempts_table()
 
             # IP rate limiting: max 3 attempts per IP per day
-            client_ip = request.remote_addr
+            # Prefer X-Forwarded-For when present (app may run behind a proxy)
+            forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
+                "X-Forwarded-For".lower()
+            )
+            if forwarded:
+                # Use first IP in list if Multiple forwarded addresses are present
+                client_ip = forwarded.split(",")[0].strip()
+            else:
+                client_ip = request.remote_addr
+
             with get_db_cursor() as db:
                 db.execute(
                     """
@@ -474,8 +466,16 @@ def signup():
         logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
 
         # IP rate limiting: max 3 attempts per IP per day
+        # Prefer X-Forwarded-For when present (app may run behind a proxy)
+        forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
+            "X-Forwarded-For".lower()
+        )
+        if forwarded:
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = request.remote_addr
+
         # Allow a higher threshold (or effectively bypass) for local dev/testing
-        client_ip = request.remote_addr
         with get_db_cursor() as db:
             db.execute(
                 """

@@ -27,3 +27,9 @@ venv.bak/
 
 # Local logging files
 errors.log
+
+# Local Python virtualenv used for CI/test runs
+venv310/
+
+# Local backups and test output
+backups/
