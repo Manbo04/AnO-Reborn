@@ -146,6 +146,12 @@ def ensure_signup_attempts_table():
                     "ensure: attempted drop NOT NULL on ip (if existed)"
                 )
             except Exception as e:
+                # If the DO block fails, the current transaction may be aborted.
+                # Rollback the cursor's connection to allow subsequent ALTERs to run.
+                try:
+                    db.connection.rollback()
+                except Exception:
+                    pass
                 import logging
 
                 logging.getLogger(__name__).debug(
