@@ -12,7 +12,6 @@ from datetime import datetime
 from wars.service import target_data
 import math
 from database import get_db_cursor, cache_response
-from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
@@ -70,7 +69,8 @@ def get_econ_statistics(cId):
             SUM(proInfra.ammunition_factories) AS ammunition_factories,
             SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
             SUM(proInfra.oil_refineries) AS oil_refineries
-            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id WHERE provinces.userId=%s;
+            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id
+            WHERE provinces.userId=%s;
             """,
                 (cId,),
             )
@@ -96,7 +96,7 @@ def get_econ_statistics(cId):
             convert_minus = []
             return False
 
-        if minus != None:
+        if minus is not None:
             unit_type = get_unit_type(unit)
             expenses[unit_type][minus] += minus_amount
         return True
@@ -144,7 +144,7 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId):
     from database import get_db_connection, query_cache
-    from psycopg2.extras import RealDictCursor
+    from psycopg2.extras import RealDictCursor  # noqa: F401
 
     # Check cache first - expensive calculation
     cache_key = f"revenue_{cId}"
@@ -158,7 +158,7 @@ def get_revenue(cId):
     with get_db_connection() as conn:
         db = conn.cursor()
 
-        cg_needed = cg_need(cId)
+        _ = cg_need(cId)
 
         # Prefetch province ids and land to avoid per-province lookups later
         db.execute("SELECT id, land FROM provinces WHERE userId=%s", (cId,))
@@ -269,7 +269,8 @@ def get_revenue(cId):
         new_rations = next_turn_rations(cId, prod_rations)
         revenue["net"]["rations"] = new_rations - current_rations
 
-        # Filter to only show resources with positive gross production or non-zero net (for special cases like rations)
+        # Filter to only show resources with positive gross production
+        # or non-zero net (for special cases like rations)
         filtered_revenue = {"gross": revenue["gross"], "net": revenue["net"]}
 
         return filtered_revenue
@@ -332,7 +333,9 @@ def my_country():
 def country(cId):
     with get_db_cursor() as db:
         db.execute(
-            "SELECT users.username, stats.location, users.description, users.date, users.flag FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
+            "SELECT users.username, stats.location, users.description, "
+            "users.date, users.flag "
+            "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
             (cId,),
         )
         row = db.fetchone()
@@ -344,7 +347,8 @@ def country(cId):
         influence = get_influence(cId)
 
         db.execute(
-            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) FROM provinces WHERE userId=%s",
+            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) "
+            "FROM provinces WHERE userId=%s",
             (cId,),
         )
         stats_row = db.fetchone()
@@ -357,7 +361,11 @@ def country(cId):
             provinceCount = 0
 
         db.execute(
-            "SELECT provinceName, id, population, CAST(cityCount AS INTEGER) as cityCount, land, happiness, productivity FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+            "SELECT provinceName, id, population, "
+            "CAST(cityCount AS INTEGER) as cityCount, "
+            "land, happiness, productivity "
+            "FROM provinces WHERE userId=(%s) "
+            "ORDER BY id ASC",
             (cId,),
         )
         provinces = db.fetchall()
@@ -370,7 +378,10 @@ def country(cId):
             status = False
 
         db.execute(
-            "SELECT coalitions.colId, coalitions.role, colNames.name, colNames.flag FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id WHERE coalitions.userId=%s",
+            "SELECT coalitions.colId, coalitions.role, "
+            "colNames.name, colNames.flag "
+            "FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id "
+            "WHERE coalitions.userId=%s",
             (cId,),
         )
         col_row = db.fetchone()
@@ -399,7 +410,8 @@ def country(cId):
             db.execute(
                 "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
             )
-            # data order in the tuple appears as in the news schema (notice this when work with this data using jija)
+            # data order in the tuple appears as in the news schema
+            # (notice this when working with this data using jinja)
             news = db.fetchall()
             news_amount = len(news)
 
@@ -407,7 +419,8 @@ def country(cId):
         if status:
             revenue = get_revenue(cId)
             db.execute(
-                "SELECT name, type, resource, amount, date FROM revenue WHERE user_id=%s",
+                "SELECT name, type, resource, amount, date "
+                "FROM revenue WHERE user_id=%s",
                 (cId,),
             )
             expenses = db.fetchall()
@@ -494,16 +507,24 @@ HAVING COUNT(provinces.id) >= %s;""",
         offset = (page - 1) * page_size
 
         db.execute(
-            """SELECT users.id, users.username, users.date, users.flag, COALESCE(SUM(provinces.population), 0) AS province_population,
-coalitions.colId, colNames.name, COUNT(provinces.id) as provinces_count
-FROM USERS
-LEFT JOIN provinces ON users.id = provinces.userId
-LEFT JOIN coalitions ON users.id = coalitions.userId
-LEFT JOIN colNames ON colNames.id = coalitions.colId
-GROUP BY users.id, coalitions.colId, colNames.name
-HAVING COUNT(provinces.id) >= %s
-ORDER BY users.id DESC
-LIMIT %s OFFSET %s;""",
+            """
+            SELECT users.id,
+                   users.username,
+                   users.date,
+                   users.flag,
+                   COALESCE(SUM(provinces.population), 0) AS province_population,
+                   coalitions.colId,
+                   colNames.name,
+                   COUNT(provinces.id) as provinces_count
+            FROM USERS
+            LEFT JOIN provinces ON users.id = provinces.userId
+            LEFT JOIN coalitions ON users.id = coalitions.userId
+            LEFT JOIN colNames ON colNames.id = coalitions.colId
+            GROUP BY users.id, coalitions.colId, colNames.name
+            HAVING COUNT(provinces.id) >= %s
+            ORDER BY users.id DESC
+            LIMIT %s OFFSET %s;
+            """,
             (province_range, page_size, offset),
         )
         dbResults = db.fetchall()
@@ -618,7 +639,9 @@ def update_info():
                 from helpers import compress_flag_image
 
                 # Compress and resize flag for fast storage/retrieval
-                flag_data, extension = compress_flag_image(flag, max_size=300, quality=85)
+                flag_data, extension = compress_flag_image(
+                    flag, max_size=300, quality=85
+                )
                 filename = f"flag_{cId}.{extension}"
 
                 db.execute(
@@ -683,10 +706,12 @@ def update_info():
             if provinces:
                 province_ids = [p[0] for p in provinces]
                 placeholders = ",".join(["%s"] * len(province_ids))
-                db.execute(
-                    f"UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, lumber_mills=0 WHERE id IN ({placeholders})",
-                    tuple(province_ids),
+                sql = (
+                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, "
+                    "copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, "
+                    "lumber_mills=0 WHERE id IN ({placeholders})"
                 )
+                db.execute(sql.format(placeholders=placeholders), tuple(province_ids))
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
 
     return redirect(f"/country/id={cId}")  # Redirects the user to his country
@@ -697,14 +722,24 @@ def delete_own_account():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
+        # Track how many rows we delete from key tables for observability
+        deleted_counts = {}
+
         # Deletes all the info from database created upon signup
         db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
+        deleted_counts["users"] = db.rowcount
         db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
+        deleted_counts["stats"] = db.rowcount
         db.execute("DELETE FROM military WHERE id=(%s)", (cId,))
+        deleted_counts["military"] = db.rowcount
         db.execute("DELETE FROM resources WHERE id=(%s)", (cId,))
+        deleted_counts["resources"] = db.rowcount
+
         # Deletes all market things the user is associated with
         db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
+        deleted_counts["offers"] = db.rowcount
         db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
+        deleted_counts["wars"] = db.rowcount
 
         # Deletes all the users provinces and their infrastructure
         # OPTIMIZATION: Batch delete instead of N+1 queries
@@ -716,14 +751,22 @@ def delete_own_account():
             db.execute(
                 f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids)
             )
+            deleted_counts["provinces"] = db.rowcount
             db.execute(f"DELETE FROM proInfra WHERE id IN ({placeholders})", tuple(ids))
+            deleted_counts["proInfra"] = db.rowcount
 
         db.execute("DELETE FROM upgrades WHERE user_id=%s", (cId,))
+        deleted_counts["upgrades"] = db.rowcount
         db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
+        deleted_counts["trades"] = db.rowcount
         db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
+        deleted_counts["spyinfo"] = db.rowcount
         db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
+        deleted_counts["requests"] = db.rowcount
         db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
+        deleted_counts["reparation_tax"] = db.rowcount
         db.execute("DELETE FROM peace WHERE author=%s", (cId,))
+        deleted_counts["peace"] = db.rowcount
 
         try:
             from coalitions import get_user_role
@@ -754,6 +797,15 @@ def delete_own_account():
         db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
+        try:
+            import logging
+
+            logging.getLogger(__name__).info(
+                "delete_own_account: deleted_counts=%s", deleted_counts
+            )
+        except Exception:
+            pass
+
     session.clear()
 
     return redirect("/")
@@ -768,8 +820,6 @@ def register_countries_routes(app_instance):
     Args:
         app_instance: Flask app instance to register routes with
     """
-    from functools import wraps
-
     # Configure app settings for countries routes
     app_instance.config["UPLOAD_FOLDER"] = "static/flags"
     app_instance.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 MB limit
@@ -780,7 +830,8 @@ def register_countries_routes(app_instance):
     )
 
     # Register country route
-    # Cache is short (30s) since users viewing their own country need fresh data after edits
+    # Cache is short (30s) since users viewing their own country
+    # need fresh data after edits
     app_instance.add_url_rule(
         "/country/id=<cId>",
         "country",
