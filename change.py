@@ -1,5 +1,6 @@
 from flask import request, render_template, session, redirect, flash
 from helpers import login_required, error
+
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 import os
 from dotenv import load_dotenv
@@ -11,9 +12,8 @@ from database import get_db_cursor
 
 load_dotenv()
 
-import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+# sendgrid imports are performed lazily inside sendEmail to avoid import-time
+# failures in environments where the package is not installed
 
 
 def generateResetCode():
@@ -44,11 +44,21 @@ def sendEmail(recipient, code):
 
     logger = logging.getLogger(__name__)
 
+    try:
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+    except Exception:
+        logger.error("SendGrid not available; skipping email send")
+        return
+
     message = Mail(
         from_email=os.getenv("MAIL_USERNAME"),
         to_emails=recipient,
         subject="Affairs & Order | Password change request",
-        html_content=f"Click this URL and complete further steps to change your password. {url}. If you did not request a password change, ignore this email.",
+        html_content=(
+            "Click this URL and complete further steps to change your password. "
+            f"{url}. If you did not request a password change, ignore this email."
+        ),
     )
     try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
@@ -58,7 +68,7 @@ def sendEmail(recipient, code):
         logger.error(f"Failed to send email: {str(e)}")
 
 
-# Route for requesting the reset of a password, after which the user can reset his password.
+# Route for requesting a password reset. After this, user can reset their password.
 def request_password_reset():
     code = generateResetCode()
 
@@ -78,13 +88,16 @@ def request_password_reset():
             result = db.fetchone()
             if not result:
                 # Don't reveal whether an email exists; behave as if request succeeded
-                flash("If an account exists with that email, a reset link has been sent.")
+                flash(
+                    "If an account exists with that email, a reset link has been sent."
+                )
                 return redirect("/forgot_password")
             cId = result[0]
 
         # Insert reset code record for the user (always)
         db.execute(
-            "INSERT INTO reset_codes (url_code, user_id, created_at) VALUES (%s, %s, %s)",
+            "INSERT INTO reset_codes (url_code, user_id, created_at) "
+            "VALUES (%s, %s, %s)",
             (code, cId, int(datetime.now().timestamp())),
         )
 
@@ -131,23 +144,43 @@ def reset_password(code):
                 user_id = result[0]
 
                 hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
-                db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
-                db.execute("DELETE FROM reset_codes WHERE url_code=%s", (code,))
+                db.execute(
+                    "UPDATE users SET hash=%s WHERE id=%s",
+                    (hashed, user_id),
+                )
+                db.execute(
+                    "DELETE FROM reset_codes WHERE url_code=%s",
+                    (code,),
+                )
         except Exception as e:
             # Send to Sentry if available and return friendly id
             try:
                 import sentry_sdk
+
                 event_id = sentry_sdk.capture_exception(e)
             except Exception:
                 import logging as _logging
+
                 _logger = _logging.getLogger(__name__)
                 event_id = None
                 _logger.exception(f"Error resetting password for code {code}: {e}")
 
             if event_id:
-                return error(500, f"An error occurred while resetting your password. Please report this id: {event_id}")
+                return error(
+                    500,
+                    (
+                        "An error occurred while resetting your password. "
+                        f"Please report this id: {event_id}"
+                    ),
+                )
             else:
-                return error(500, "An error occurred while resetting your password. Please try again later.")
+                return error(
+                    500,
+                    (
+                        "An error occurred while resetting your password. "
+                        "Please try again later."
+                    ),
+                )
 
         return redirect("/")
 
@@ -180,6 +213,16 @@ def change():
 
 def register_change_routes(app_instance):
     """Register all change routes with the Flask app instance"""
-    app_instance.add_url_rule("/request_password_reset", "request_password_reset", request_password_reset, methods=["POST"])
-    app_instance.add_url_rule("/reset_password/<code>", "reset_password", reset_password, methods=["GET", "POST"])
+    app_instance.add_url_rule(
+        "/request_password_reset",
+        "request_password_reset",
+        request_password_reset,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/reset_password/<code>",
+        "reset_password",
+        reset_password,
+        methods=["GET", "POST"],
+    )
     app_instance.add_url_rule("/change", "change", change, methods=["POST"])

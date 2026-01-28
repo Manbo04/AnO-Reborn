@@ -1,5 +1,6 @@
 import ast
-import sys, os
+import sys
+import os
 from flask import (
     Flask,
     request,
@@ -7,8 +8,6 @@ from flask import (
     session,
     redirect,
     send_from_directory,
-    jsonify,
-    make_response,
 )
 from flask_compress import Compress
 import traceback
@@ -83,7 +82,7 @@ except Exception:
 
 
 # Debug test route for logging verification (must be after app is defined)
-## Only one debugtest route should exist, after app = Flask(__name__)
+# Only one debugtest route should exist, after app = Flask(__name__)
 
 
 # Add global 403 error handler after app is defined
@@ -175,9 +174,6 @@ policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
 
 # Configure OAuth2 SECRET_KEY from login module
-from dotenv import load_dotenv
-
-load_dotenv()
 oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
 if oauth2_secret:
     app.config["SECRET_KEY"] = oauth2_secret
@@ -235,7 +231,10 @@ app.jinja_env.globals["asset"] = asset
 
 
 # LOGGING
-logging_format = "====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+logging_format = (
+    "====\n%(levelname)s (%(created)f - %(asctime)s) "
+    "(LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+)
 logging.basicConfig(
     level=logging.ERROR,
     format=logging_format,
@@ -245,8 +244,8 @@ logger = logging.getLogger(__name__)
 
 
 # Thread-safe queue for Discord webhook messages
-import threading
-import queue as queue_module
+import threading  # noqa: E402
+import queue as queue_module  # noqa: E402
 
 _webhook_queue = queue_module.Queue()
 _webhook_thread = None
@@ -314,13 +313,20 @@ class RequestsHandler(logging.Handler):
 Markdown(app)
 
 
+@app.route("/health")
+def health():
+    """Simple health endpoint used by CI to verify the app is up."""
+    return "ok", 200
+
+
 # Initialize database with proper defaults for existing provinces
 def _init_province_defaults():
     """Ensure all provinces have proper default values for stats"""
     try:
         with get_db_connection() as conn:
             db = conn.cursor()
-            # Update provinces with 0 happiness/productivity to have neutral 50% defaults
+            # Update provinces with 0 happiness/productivity
+            # to have neutral 50% defaults
             db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
             db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
             db.execute(
@@ -334,7 +340,7 @@ def _init_province_defaults():
 _init_province_defaults()
 
 # register blueprints
-import military
+import military  # noqa: E402
 
 app.register_blueprint(military.bp)
 app.register_blueprint(province.bp)
@@ -342,7 +348,7 @@ app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
 
-import config  # Parse Railway environment variables
+import config  # Parse Railway environment variables  # noqa: E402
 
 # Attempt to ensure critical tables exist at startup. This helps avoid
 # import-time UndefinedTable errors in production when the DB hasn't
@@ -369,7 +375,8 @@ else:
     app.secret_key = config.get_secret_key()
 
 # Import written packages
-# Don't put these above app = Flask(__name__), because it will cause a circular import error
+# Don't put these above app = Flask(__name__)
+# because it will cause a circular import error
 
 
 def generate_error_code():
@@ -389,7 +396,7 @@ def page_not_found(error):
 
 @app.errorhandler(405)
 def method_not_allowed(error):
-    message = f"This request method is not allowed!"
+    message = "This request method is not allowed!"
     return render_template("error.html", code=405, message=message)
 
 
@@ -522,7 +529,10 @@ def get_resources():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
         try:
             db.execute(
-                "SELECT * FROM resources INNER JOIN stats ON resources.id=stats.id WHERE stats.id=%s",
+                (
+                    "SELECT * FROM resources INNER JOIN stats "
+                    "ON resources.id=stats.id WHERE stats.id=%s"
+                ),
                 (target_user_id,),
             )
             resources = dict(db.fetchone())
@@ -613,7 +623,8 @@ def serve_flag(flag_type, flag_id):
         if row and row[0]:
             try:
                 return send_from_directory("static/flags", row[0])
-            except:
+            except Exception:
+                # Ignore file system access errors for backwards compatibility
                 pass
 
         return send_from_directory("static/flags", "default_flag.jpg")
@@ -640,7 +651,10 @@ def recruitments():
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
+            (
+                "SELECT id, name, type, description, flag "
+                "FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
+            )
         )
         cols = db.fetchall()
     return render_template("recruitments.html", coalitions=cols)
@@ -704,8 +718,8 @@ def war():
     return redirect("/wars")
 
 
-## Deprecated: warresult route moved to `wars` blueprint. Keep the lowercased route for
-## compatibility by redirecting to the war result page for logged-in users in the blueprint.
+# Deprecated: warresult route moved to `wars` blueprint.
+# Keep a lowercase route that redirects to the new war result page for logged-in users.
 @app.route("/warresult", methods=["GET"])
 def warresult_deprecated():
     # Redirect to canonical /warResult route when accessed from legacy code
@@ -718,7 +732,11 @@ def mass_purchase():
     cId = session["user_id"]
     with get_db_cursor() as db:
         db.execute(
-            "SELECT id, provinceName as name, CAST(cityCount AS INTEGER) as cityCount, land FROM provinces WHERE userId=%s ORDER BY provinceName",
+            (
+                "SELECT id, provinceName as name, "
+                "CAST(cityCount AS INTEGER) as cityCount, "
+                "land FROM provinces WHERE userId=%s ORDER BY provinceName"
+            ),
             (cId,),
         )
         provinces = db.fetchall()
@@ -739,6 +757,7 @@ def admin_init_database():
 
 
 if __name__ == "__main__":
-    # Use port 5000 by default for local development/testing to match test suite expectations
+    # Use port 5000 by default for local development/testing
+    # to match test suite expectations
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, use_reloader=False)

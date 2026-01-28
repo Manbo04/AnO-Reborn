@@ -1,6 +1,5 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from flask import request, redirect, session
-import os
 from dotenv import load_dotenv
 from database import get_db_cursor
 
@@ -47,7 +46,7 @@ def get_policies_from_request(type, prange, form):
     policies = []
     for i in range(1, prange + 1):
         value = form.get(f"{type}{i}")
-        if value != None:
+        if value is not None:
             policies.append(int(value))
     return policies
 
@@ -69,4 +68,6 @@ def policies():
 
 def register_policies_routes(app_instance):
     """Register all policies routes with the Flask app instance"""
-    app_instance.add_url_rule("/policies/update", "policies_update", policies, methods=["POST"])
+    app_instance.add_url_rule(
+        "/policies/update", "policies_update", policies, methods=["POST"]
+    )
