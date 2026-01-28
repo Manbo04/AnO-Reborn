@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS col_applications (
+    id SERIAL PRIMARY KEY,
+    colId INTEGER NOT NULL,
+    userId INTEGER NOT NULL,
+    message TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);

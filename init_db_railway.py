@@ -26,6 +26,7 @@ def create_database():
         "colBanks",
         "colBanksRequests",
         "colNames",
+        "col_applications",
         "keys",
         "military",
         "offers",

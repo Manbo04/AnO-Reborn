@@ -1,8 +1,7 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from helpers import login_required, error
-from database import get_db_cursor, get_db_connection
+from database import get_db_cursor, get_db_connection, invalidate_user_cache
 from flask import request, render_template, session, redirect, flash
-import os
 import variables
 
 
@@ -73,6 +72,17 @@ def give_resource(giver_id, taker_id, resource, amount):
 
         conn.commit()
 
+        # Invalidate caches affected by this resource transfer so the UI shows
+        # fresh data immediately (resources/influence caches are per-user).
+        try:
+            if giver_id != "bank":
+                invalidate_user_cache(giver_id)
+            if taker_id != "bank":
+                invalidate_user_cache(taker_id)
+        except Exception:
+            # Cache invalidation failures should not affect the transaction itself
+            pass
+
     return True
 
 
@@ -118,49 +128,54 @@ def market():
 
             # Use JOIN query instead of loop to fetch all data at once
             if filter_resource is not None:
-                query = """
-                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                    FROM offers o
-                    INNER JOIN users u ON o.user_id = u.id
-                    WHERE o.resource = %s
-                    ORDER BY o.price ASC
-                """
+                query = (
+                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                    "o.offer_id, u.username "
+                    "FROM offers o "
+                    "INNER JOIN users u ON o.user_id = u.id "
+                    "WHERE o.resource = %s "
+                    "ORDER BY o.price ASC"
+                )
                 db.execute(query, (filter_resource,))
             elif offer_type is not None and price_type is not None:
                 order_dir = "ASC" if price_type == "ASC" else "DESC"
-                query = f"""
-                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                    FROM offers o
-                    INNER JOIN users u ON o.user_id = u.id
-                    WHERE o.type = %s
-                    ORDER BY o.price {order_dir}
-                """
+                query = (
+                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                    "o.offer_id, u.username "
+                    "FROM offers o "
+                    "INNER JOIN users u ON o.user_id = u.id "
+                    "WHERE o.type = %s "
+                    f"ORDER BY o.price {order_dir}"
+                )
                 db.execute(query, (offer_type,))
             elif offer_type is not None:
-                query = """
-                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                    FROM offers o
-                    INNER JOIN users u ON o.user_id = u.id
-                    WHERE o.type = %s
-                    ORDER BY o.price ASC
-                """
+                query = (
+                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                    "o.offer_id, u.username "
+                    "FROM offers o "
+                    "INNER JOIN users u ON o.user_id = u.id "
+                    "WHERE o.type = %s "
+                    "ORDER BY o.price ASC"
+                )
                 db.execute(query, (offer_type,))
             elif price_type is not None:
                 order_dir = "ASC" if price_type == "ASC" else "DESC"
-                query = f"""
-                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                    FROM offers o
-                    INNER JOIN users u ON o.user_id = u.id
-                    ORDER BY o.price {order_dir}
-                """
+                query = (
+                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                    "o.offer_id, u.username "
+                    "FROM offers o "
+                    "INNER JOIN users u ON o.user_id = u.id "
+                    f"ORDER BY o.price {order_dir}"
+                )
                 db.execute(query)
             else:
-                query = """
-                    SELECT o.user_id, o.type, o.resource, o.amount, o.price, o.offer_id, u.username
-                    FROM offers o
-                    INNER JOIN users u ON o.user_id = u.id
-                    ORDER BY o.price ASC
-                """
+                query = (
+                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
+                    "o.offer_id, u.username "
+                    "FROM offers o "
+                    "INNER JOIN users u ON o.user_id = u.id "
+                    "ORDER BY o.price ASC"
+                )
                 db.execute(query)
 
             offers_data = db.fetchall()
@@ -228,7 +243,7 @@ def buy_market_offer(offer_id):
             return error(400, "Amount cannot be less than 1")
 
         if amount_wanted > total_amount:
-            return error(400, "Amount wanted cant be higher than total amount")
+            return error(400, "Requested amount exceeds available amount")
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
         buyers_gold = int(db.fetchone()[0])
@@ -290,10 +305,7 @@ def sell_market_offer(offer_id):
             return error(400, "Amount cannot be less than 1")
 
         if amount_wanted > total_amount:
-            return error(
-                400,
-                "The amount of resources you're selling is higher than what the buyer wants",
-            )
+            return error(400, "Requested amount exceeds desired amount")
 
         # Checks if it's less than what the seller wants to sell
         if sellers_resource < amount_wanted:
@@ -305,7 +317,7 @@ def sell_market_offer(offer_id):
         # Takes away the money used for buying from the buyer and gives it to the seller
         give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
 
-        # Generates the new amount, after the buyer has got his resources from the seller
+        # Calculate new offer amount after sale
         new_offer_amount = total_amount - amount_wanted
 
         if new_offer_amount == 0:  # Checks if the new offer amount is equal to 0
@@ -380,7 +392,10 @@ def post_offer(offer_type):
 
             # Creates a new offer
             db.execute(
-                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    "INSERT INTO offers (user_id, type, resource, amount, price) "
+                    "VALUES (%s, %s, %s, %s, %s)"
+                ),
                 (
                     cId,
                     offer_type,
@@ -392,7 +407,10 @@ def post_offer(offer_type):
 
         elif offer_type == "buy":
             db.execute(
-                "INSERT INTO offers (user_id, type, resource, amount, price) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    "INSERT INTO offers (user_id, type, resource, amount, price) "
+                    "VALUES (%s, %s, %s, %s, %s)"
+                ),
                 (
                     cId,
                     offer_type,
@@ -421,27 +439,32 @@ def my_offers():
     offers = {}
     with get_db_cursor() as db:
         db.execute(
-            """
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offeree, users.username
-FROM trades INNER JOIN users ON trades.offeree=users.id
-WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC
-""",
+            (
+                "SELECT trades.offer_id, trades.price, trades.resource, "
+                "trades.amount, trades.type, trades.offeree, users.username "
+                "FROM trades INNER JOIN users ON trades.offeree=users.id "
+                "WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC"
+            ),
             (cId,),
         )
         offers["outgoing"] = db.fetchall()
 
         db.execute(
-            """
-SELECT trades.offer_id, trades.price, trades.resource, trades.amount, trades.type, trades.offerer, users.username
-FROM trades INNER JOIN users ON trades.offerer=users.id
-WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC
-""",
+            (
+                "SELECT trades.offer_id, trades.price, trades.resource, "
+                "trades.amount, trades.type, trades.offerer, users.username "
+                "FROM trades INNER JOIN users ON trades.offerer=users.id "
+                "WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC"
+            ),
             (cId,),
         )
         offers["incoming"] = db.fetchall()
 
         db.execute(
-            "SELECT offer_id, price, resource, amount, type FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC",
+            (
+                "SELECT offer_id, price, resource, amount, type "
+                "FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC"
+            ),
             (cId,),
         )
         offers["market"] = db.fetchall()
@@ -554,13 +577,21 @@ def trade_offer(offer_type, offeree_id):
 
                 # Creates a new offer
                 db.execute(
-                    "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (
+                        "INSERT INTO trades (offerer, type, resource, amount, price, "
+                        "offeree) "
+                        "VALUES (%s, %s, %s, %s, %s, %s)"
+                    ),
                     (cId, offer_type, resource, amount, price, offeree_id),
                 )
 
             elif offer_type == "buy":
                 db.execute(
-                    "INSERT INTO trades (offerer, type, resource, amount, price, offeree) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (
+                        "INSERT INTO trades (offerer, type, resource, amount, price, "
+                        "offeree) "
+                        "VALUES (%s, %s, %s, %s, %s, %s)"
+                    ),
                     (cId, offer_type, resource, amount, price, offeree_id),
                 )
 
@@ -589,7 +620,10 @@ def decline_trade(trade_id):
         db = connection.cursor()
 
         db.execute(
-            "SELECT offeree, offerer, type, resource, amount, price FROM trades WHERE offer_id=(%s)",
+            (
+                "SELECT offeree, offerer, type, resource, amount, price "
+                "FROM trades WHERE offer_id=(%s)",
+            ),
             (trade_id,),
         )
         offeree, offerer, type, resource, amount, price = db.fetchone()
@@ -628,7 +662,10 @@ def accept_trade(trade_id):
         db = connection.cursor()
 
         db.execute(
-            "SELECT offeree, type, offerer, resource, amount, price FROM trades WHERE offer_id=(%s)",
+            (
+                "SELECT offeree, type, offerer, resource, amount, price "
+                "FROM trades WHERE offer_id=(%s)",
+            ),
             (trade_id,),
         )
         offeree, trade_type, offerer, resource, amount, price = db.fetchone()
@@ -665,7 +702,7 @@ def transfer(transferee):
         except (ValueError, TypeError):
             return error(400, "Amount must be a valid number")
 
-        ### DEFINITIONS ###
+        # DEFINITIONS
 
         # user - the user transferring the resource, whose id is 'cId'
         # transferee - the user upon whom the resource is transferred
@@ -736,6 +773,14 @@ def transfer(transferee):
                 transferee_update_statement,
                 (new_transferee_resource_amount, transferee),
             )
+
+        # Invalidate caches for both the sender and recipient so the UI sees
+        # fresh resource totals immediately (non-fatal if this fails).
+        try:
+            invalidate_user_cache(cId)
+            invalidate_user_cache(transferee)
+        except Exception:
+            pass
 
     return redirect(f"/country/id={transferee}")
 
