@@ -836,11 +836,9 @@ def generate_province_revenue():  # Runs each hour
             return
 
         db.execute(
-            (
-                "INSERT INTO task_runs (task_name, last_run) "
-                "VALUES (%s, now()) ON CONFLICT (task_name) "
-                "DO UPDATE SET last_run = now()",
-            ),
+            "INSERT INTO task_runs (task_name, last_run) "
+            "VALUES (%s, now()) ON CONFLICT (task_name) "
+            "DO UPDATE SET last_run = now()",
             ("generate_province_revenue",),
         )
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
