@@ -358,6 +358,11 @@
         <!--Revenue-->
         <div class="revenue" id="revenue">
 
+            {# Macro to show theoretical (original) gross and projected actual value #}
+            {% macro show_gross(resource) %}
+                {{ revenue['gross_theoretical'].get(resource, 0) | commas }}
+                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) | commas }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) | commas }}</small>
+            {% endmacro %}
 
             {% if status %}
             <div class="templatedivflex2">
@@ -386,25 +391,25 @@
                         {% if revenue["gross"]["oil"] > 0 %}
                         <tr>
                             <td>Oil:</td>
-                            <td>{{ revenue["gross"]["oil"] | commas }}</td>
+                            <td>{{ show_gross('oil') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["coal"] > 0 %}
                         <tr>
                             <td>Coal:</td>
-                            <td>{{ revenue["gross"]["coal"] | commas }}</td>
+                            <td>{{ show_gross('coal') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["uranium"] > 0 %}
                         <tr>
                             <td>Uranium:</td>
-                            <td>{{ revenue["gross"]["uranium"] | commas }}</td>
+                            <td>{{ show_gross('uranium') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["iron"] > 0 %}
                         <tr>
                             <td>Iron:</td>
-                            <td>{{ revenue["gross"]["iron"] | commas }}</td>
+                            <td>{{ show_gross('iron') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lead"] > 0 %}
@@ -416,19 +421,19 @@
                         {% if revenue["gross"]["bauxite"] > 0 %}
                         <tr>
                             <td>Bauxite:</td>
-                            <td>{{ revenue["gross"]["bauxite"] | commas }}</td>
+                            <td>{{ show_gross('bauxite') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["copper"] > 0 %}
                         <tr>
                             <td>Copper:</td>
-                            <td>{{ revenue["gross"]["copper"] | commas }}</td>
+                            <td>{{ show_gross('copper') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lumber"] > 0 %}
                         <tr>
                             <td>Lumber:</td>
-                            <td>{{ revenue["gross"]["lumber"] | commas }}</td>
+                            <td>{{ show_gross('lumber') }}</td>
                         </tr>
                         {% endif %}
                         <tr>
@@ -439,31 +444,31 @@
                         {% if revenue["gross"]["components"] > 0 %}
                         <tr>
                             <td>Components:</td>
-                            <td>{{ revenue["gross"]["components"] | commas }}</td>
+                            <td>{{ show_gross('components') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["steel"] > 0 %}
                         <tr>
                             <td>Steel:</td>
-                            <td>{{ revenue["gross"]["steel"] | commas }}</td>
+                            <td>{{ show_gross('steel') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["consumer_goods"] > 0 %}
                         <tr>
                             <td>Consumer goods:</td>
-                            <td>{{ revenue["gross"]["consumer_goods"] | commas }} </td>
+                            <td>{{ show_gross('consumer_goods') }} </td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["aluminium"] > 0 %}
                         <tr>
                             <td>Aluminum:</td>
-                            <td>{{ revenue["gross"]["aluminium"] | commas }}</td>
+                            <td>{{ show_gross('aluminium') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["gasoline"] > 0 %}
                         <tr>
                             <td>Gasoline:</td>
-                            <td>{{ revenue["gross"]["gasoline"] | commas}}</td>
+                            <td>{{ show_gross('gasoline') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["ammunition"] > 0 %}
