@@ -120,34 +120,11 @@ def ensure_signup_attempts_table():
                 logging.getLogger(__name__).debug("ensure: ip add error %s", e)
 
             # Attempt to drop NOT NULL on `ip` if it exists.
-            # This uses a DO block to avoid errors when column is missing.
+            # Use a simple ALTER inside try/except; if it fails, rollback the
+            # transaction so subsequent ALTERs can proceed.
             try:
-                db.execute(
-                    """
-                    DO $$
-                    BEGIN
-                      IF EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='signup_attempts' AND column_name='ip'
-                      ) THEN
-                        BEGIN
-      EXECUTE 'ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL';
-                        EXCEPTION WHEN others THEN
-                          -- ignore any error dropping NOT NULL (e.g., if it's already
-                          nullable)
-                        END;
-                      END IF;
-                    END$$;
-                """
-                )
-                import logging
-
-                logging.getLogger(__name__).debug(
-                    "ensure: attempted drop NOT NULL on ip (if existed)"
-                )
+                db.execute("ALTER TABLE signup_attempts ALTER COLUMN ip DROP NOT NULL")
             except Exception as e:
-                # If the DO block fails, the current transaction may be aborted.
-                # Rollback the cursor's connection to allow subsequent ALTERs to run.
                 try:
                     db.connection.rollback()
                 except Exception:
