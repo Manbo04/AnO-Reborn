@@ -308,6 +308,85 @@ def test_sell_market_offer_full_match_success(monkeypatch):
     # offer removed
     assert 2 not in state["offers"]
 
+
+def test_concurrent_transfers_invalidate_cache(monkeypatch):
+    # Simulate two transfers in quick succession affecting same user
+    state = {
+        "stats": {500: {"gold": 1000}, 600: {"gold": 100}},
+        "resources": {500: {"rations": 100}, 600: {"rations": 0}},
+    }
+
+    # seed cache
+    query_cache.set("resources_500", {"rations": 100}, ttl_seconds=30)
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+
+    with test_app.test_request_context(
+        "/", method="POST", data={"amount": "10", "resource": "rations"}
+    ):
+        from flask import session
+
+        session["user_id"] = 500
+        # call transfer endpoint logic directly (transfer returns a redirect response)
+        res1 = market.transfer(600)
+
+    # Do a second transfer
+    with test_app.test_request_context(
+        "/", method="POST", data={"amount": "20", "resource": "rations"}
+    ):
+        from flask import session
+
+        session["user_id"] = 500
+        res2 = market.transfer(600)
+
+    # both succeeded
+    assert res1.status_code == 302
+    assert res2.status_code == 302
+
+    # final resources: 100 - 10 - 20 = 70
+    assert state["resources"][500]["rations"] == 70
+    assert state["resources"][600]["rations"] == 30
+
+    # cache invalidated after operations
+    assert query_cache.get("resources_500") is None
+
+
+def test_transfer_insufficient_resources(monkeypatch):
+    state = {
+        "stats": {700: {"gold": 0}, 800: {"gold": 0}},
+        "resources": {700: {"lumber": 5}, 800: {"lumber": 0}},
+    }
+
+    query_cache.set("resources_700", {"lumber": 5}, ttl_seconds=30)
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+    # avoid Jinja template rendering in tests for error paths
+    monkeypatch.setattr(
+        "helpers.render_template", lambda *a, **kw: f"error:{kw.get('message','')}"
+    )
+    with test_app.test_request_context(
+        "/", method="POST", data={"amount": "20", "resource": "lumber"}
+    ):
+        from flask import session
+
+        session["user_id"] = 700
+        res = market.transfer(800)
+
+    # Expect error tuple returned and no mutation
+    assert isinstance(res, tuple) and res[1] == 400
+    assert state["resources"][700]["lumber"] == 5
+    assert query_cache.get("resources_700") is not None
+
     # caches invalidated
     assert query_cache.get("resources_300") is None
     assert query_cache.get("resources_400") is None
