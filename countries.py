@@ -171,7 +171,7 @@ def get_revenue(cId):
         land_by_id = {row[0]: row[1] for row in province_rows}
         prod_by_id = {row[0]: row[2] for row in province_rows}
 
-        revenue = {"gross": {}, "net": {}}
+        revenue = {"gross": {}, "gross_theoretical": {}, "net": {}}
 
         infra = variables.NEW_INFRA
         # Copy to avoid mutating global state; repeated extends were exploding the list
@@ -179,6 +179,7 @@ def get_revenue(cId):
         resources.extend(["money", "energy"])
         for resource in resources:
             revenue["gross"][resource] = 0
+            revenue["gross_theoretical"][resource] = 0
             revenue["net"][resource] = 0
 
         # Define proinfra columns once (outside loop)
@@ -250,6 +251,9 @@ def get_revenue(cId):
                         land = land_by_id.get(province, 0)
                         amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
 
+                    # Compute theoretical production (no productivity multiplier)
+                    theoretical_total = build_count * amount
+
                     # Apply productivity multiplier to match actual generation behavior
                     productivity = prod_by_id.get(province, 50)
                     if productivity is not None:
@@ -261,12 +265,15 @@ def get_revenue(cId):
                     else:
                         multiplier = 1
 
-                    total = build_count * amount * multiplier
+                    adjusted_total = build_count * amount * multiplier
                     # Normalize to integer to mirror production rounding
-                    total = math.ceil(total)
+                    adjusted_total = math.ceil(adjusted_total)
 
-                    revenue["gross"][resource] += total
-                    revenue["net"][resource] += total
+                    # Record both the theoretical (original-style)
+                    # and the actual (projected) values
+                    revenue["gross_theoretical"][resource] += theoretical_total
+                    revenue["gross"][resource] += adjusted_total
+                    revenue["net"][resource] += adjusted_total
 
                 minus = infra[building].get("minus", {})
                 for resource, amount in minus.items():
