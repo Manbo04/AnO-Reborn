@@ -16,7 +16,7 @@ def ensure_key_present(key_value):
         port=os.getenv("PG_PORT"),
     )
     db = conn.cursor()
-    db.execute("SELECT id FROM keys WHERE key=%s", (key_value,))
+    db.execute("SELECT key FROM keys WHERE key=%s", (key_value,))
     if not db.fetchone():
         db.execute("INSERT INTO keys (key) VALUES (%s)", (key_value,))
         conn.commit()
