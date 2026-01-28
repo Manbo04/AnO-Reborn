@@ -4,23 +4,23 @@ Provides connection pooling, query helpers, and unified database access patterns
 """
 
 import psycopg2
-from psycopg2 import pool
 from psycopg2.extras import RealDictCursor, execute_batch
 import os
 from contextlib import contextmanager
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Tuple
 import logging
-from functools import lru_cache, wraps
+from functools import wraps
 from time import time
 import threading
 import queue
+from urllib.parse import urlparse
 
 load_dotenv()
-import config  # Parse Railway DATABASE_URL
+import config  # Parse Railway DATABASE_URL  # noqa: E402
 
-# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL) for pool creation (force override)
-from urllib.parse import urlparse
+# Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL).
+# Parse and set PG_* environment variables used by the connection pool below.
 
 db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 if db_url:
@@ -38,43 +38,57 @@ logger = logging.getLogger(__name__)
 
 # Simple query result cache for frequently accessed, slowly-changing data
 class QueryCache:
-    """Simple in-memory cache with TTL for database query results"""
+    """Simple in-memory cache with optional per-key TTL support.
+
+    Each cache entry is stored as (value, expiry_timestamp). Per-key TTLs may
+    override the instance default for specific items.
+    """
 
     MAX_CACHE_SIZE = 10000  # Prevent unbounded memory growth
 
-    def __init__(self, ttl_seconds=300):  # 5 minute default TTL
-        self.cache = {}
+    def __init__(self, ttl_seconds=300):  # default TTL (seconds)
+        self.cache = {}  # key -> (value, expiry_timestamp)
         self.ttl = ttl_seconds
 
     def get(self, key):
-        """Get cached value if not expired"""
-        if key in self.cache:
-            value, timestamp = self.cache[key]
-            if time() - timestamp < self.ttl:
-                return value
-            else:
-                # expired: remove once and return None
-                try:
-                    del self.cache[key]
-                except KeyError:
-                    pass
+        """Get cached value if not expired. Returns None if missing/expired."""
+        entry = self.cache.get(key)
+        if not entry:
+            return None
+        value, expiry = entry
+        # expiry == 0 means 'never expire'
+        if expiry == 0 or time() < expiry:
+            return value
+        # expired - remove and return None
+        try:
+            del self.cache[key]
+        except KeyError:
+            pass
         return None
 
-    def set(self, key, value):
-        """Cache a value with current timestamp"""
+    def set(self, key, value, ttl_seconds: int | None = None):
+        """Cache a value with an optional per-key TTL in seconds.
+
+        If ttl_seconds is None, the instance default TTL is used. If ttl_seconds
+        is 0, the value will not expire (use with caution).
+        """
         # Evict expired entries periodically to prevent unbounded growth
         if len(self.cache) > self.MAX_CACHE_SIZE:
             self._evict_expired()
         # If still over limit, clear oldest half
         if len(self.cache) > self.MAX_CACHE_SIZE:
             self._evict_oldest(len(self.cache) // 2)
-        self.cache[key] = (value, time())
+
+        if ttl_seconds is None:
+            ttl_seconds = self.ttl
+        expiry = 0 if ttl_seconds == 0 else (time() + ttl_seconds)
+        self.cache[key] = (value, expiry)
 
     def _evict_expired(self):
         """Remove all expired entries"""
         current_time = time()
         self.cache = {
-            k: v for k, v in self.cache.items() if current_time - v[1] < self.ttl
+            k: v for k, v in self.cache.items() if v[1] == 0 or current_time < v[1]
         }
 
     def _evict_oldest(self, count):
@@ -164,6 +178,18 @@ def fetchone_first(db, default=None):
 query_cache = QueryCache(ttl_seconds=300)
 
 
+def invalidate_user_cache(user_id: int) -> None:
+    """Invalidate common caches related to a specific user.
+
+    This removes cached resources and influence entries for the given user id.
+    Use when user resources, provinces, or stats are updated to ensure
+    subsequent reads return fresh data.
+    """
+    # Remove specific user caches by pattern match
+    query_cache.invalidate(pattern=f"resources_{user_id}")
+    query_cache.invalidate(pattern=f"influence_{user_id}")
+
+
 class DatabasePool:
     """Singleton database connection pool with timeout support"""
 
@@ -202,7 +228,8 @@ class DatabasePool:
                 self._available = None
 
             try:
-                # With multiple instances (EU, Singapore, etc.), use fewer connections per instance
+                # In multi-region deployments (EU, Singapore, ...),
+                # use fewer connections per instance
                 maxconn = int(os.getenv("DB_MAX_CONNECTIONS", "20"))
                 self._pool = psycopg2.pool.ThreadedConnectionPool(
                     minconn=1,
@@ -276,7 +303,7 @@ class DatabasePool:
                 self._pool.putconn(conn, close=True)
                 conn = self._pool.getconn()
             return conn
-        except Exception as e:
+        except Exception:
             # Put the slot back if we failed to get connection
             try:
                 self._available.put(True, block=False)
@@ -363,12 +390,12 @@ def get_db_connection(cursor_factory=None):
         close_on_return = True
         logger.error(f"Database connection error: {e}")
         raise
-    except Exception as e:
+    except Exception as exc:
         try:
             conn.rollback()
         except Exception:
             close_on_return = True  # Connection may be broken
-        logger.error(f"Database error: {e}")
+        logger.error(f"Database error: {exc}")
         raise
     finally:
         db_pool.return_connection(conn, close=close_on_return)
@@ -505,7 +532,7 @@ class QueryHelper:
 
     @staticmethod
     def execute_many(query: str, params_list: List[tuple]) -> None:
-        """Execute a query with multiple parameter sets using execute_batch for efficiency"""
+        """Execute a query for many parameter sets efficiently."""
         with get_db_cursor() as cursor:
             execute_batch(cursor, query, params_list)
 
@@ -524,8 +551,22 @@ class UserQueries:
     def get_user_resources(user_id: int) -> Dict[str, int]:
         """Get all resources for a user in a single query"""
         query = """
-            SELECT rations, oil, coal, uranium, bauxite, iron, lead, copper,
-                   lumber, components, steel, consumer_goods, aluminium, gasoline, ammunition
+            SELECT
+                rations,
+                oil,
+                coal,
+                uranium,
+                bauxite,
+                iron,
+                lead,
+                copper,
+                lumber,
+                components,
+                steel,
+                consumer_goods,
+                aluminium,
+                gasoline,
+                ammunition
             FROM resources WHERE id = %s
         """
         result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
@@ -677,7 +718,7 @@ class CoalitionQueries:
     @staticmethod
     def get_coalition_influence(coalition_id: int) -> int:
         """Calculate total coalition influence efficiently"""
-        # This would need the influence calculation logic, but we can pre-aggregate much of it
+        # Pre-aggregate core influence metrics (military/resources scoring to be added)
         query = """
             SELECT
                 c.userId,
@@ -725,9 +766,22 @@ class BatchOperations:
         for user_id, resource, amount in user_resources:
             grouped[resource].append((amount, user_id))
 
+        affected_user_ids = set()
         for resource, updates in grouped.items():
             query = f"UPDATE resources SET {resource} = {resource} + %s WHERE id = %s"
             QueryHelper.execute_many(query, updates)
+
+            # Track affected user ids for cache invalidation
+            for _, user_id in updates:
+                affected_user_ids.add(user_id)
+
+        # Invalidate caches for all affected users so future reads are fresh
+        try:
+            for uid in affected_user_ids:
+                invalidate_user_cache(uid)
+        except Exception:
+            # Cache invalidation should not raise from batch operation
+            pass
 
     @staticmethod
     def batch_update_military(user_units: List[Tuple[int, str, int]]) -> None:
@@ -744,9 +798,19 @@ class BatchOperations:
         for user_id, unit_type, amount in user_units:
             grouped[unit_type].append((amount, user_id))
 
+        affected_user_ids = set()
         for unit_type, updates in grouped.items():
             query = f"UPDATE military SET {unit_type} = {unit_type} + %s WHERE id = %s"
             QueryHelper.execute_many(query, updates)
+
+            for _, user_id in updates:
+                affected_user_ids.add(user_id)
+
+        try:
+            for uid in affected_user_ids:
+                invalidate_user_cache(uid)
+        except Exception:
+            pass
 
 
 # Utility functions for common operations
