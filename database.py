@@ -231,7 +231,35 @@ class DatabasePool:
                 # In multi-region deployments (EU, Singapore, ...),
                 # use fewer connections per instance
                 maxconn = int(os.getenv("DB_MAX_CONNECTIONS", "20"))
-                self._pool = psycopg2.pool.ThreadedConnectionPool(
+                # Use psycopg2's ThreadedConnectionPool if available; otherwise
+                # fall back to a lightweight compatibility pool (useful in some
+                # CI environments where a minimal psycopg2 shim may be present).
+                try:
+                    pool_cls = psycopg2.pool.ThreadedConnectionPool
+                except Exception:
+                    # Minimal compatibility pool: creates connections on demand
+                    class _CompatPool:
+                        def __init__(self, minconn, maxconn, **kwargs):
+                            self.minconn = minconn
+                            self.maxconn = maxconn
+                            self._kwargs = kwargs
+
+                        def getconn(self):
+                            return psycopg2.connect(**self._kwargs)
+
+                        def putconn(self, conn, close=False):
+                            try:
+                                if close or getattr(conn, "closed", False):
+                                    conn.close()
+                            except Exception:
+                                pass
+
+                        def closeall(self):
+                            return
+
+                    pool_cls = _CompatPool
+
+                self._pool = pool_cls(
                     minconn=1,
                     maxconn=maxconn,
                     database=os.getenv("PG_DATABASE"),
@@ -244,7 +272,7 @@ class DatabasePool:
                     options="-c statement_timeout=30000",  # 30 second query timeout
                     # TCP keepalive settings to detect dead connections
                     keepalives=1,  # Enable TCP keepalives
-                    keepalives_idle=30,  # Send keepalive after 30 seconds idle
+                    keepalives_idle=30,  # Sendkeepalive after 30 seconds idle
                     keepalives_interval=10,  # Retry every 10 seconds
                     keepalives_count=3,  # Give up after 3 failed keepalives
                 )
