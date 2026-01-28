@@ -3677,6 +3677,16 @@ button {
 }
 
 
+/* Small, muted label used for projected revenue values */
+.muted {
+    color: inherit; /* keep color consistent with theme */
+    opacity: 0.7; /* visually subtle */
+    font-size: 0.85em; /* slightly smaller */
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: help; /* hint that a tooltip is available */
+}
+
 /*FOOTER*/
 
 footer {
