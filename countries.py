@@ -160,11 +160,16 @@ def get_revenue(cId):
 
         _ = cg_need(cId)
 
-        # Prefetch province ids and land to avoid per-province lookups later
-        db.execute("SELECT id, land FROM provinces WHERE userId=%s", (cId,))
+        # Prefetch province ids, land and productivity
+        # to avoid per-province lookups later
+        db.execute(
+            "SELECT id, land, productivity FROM provinces WHERE userId=%s",
+            (cId,),
+        )
         province_rows = db.fetchall()
         provinces = [row[0] for row in province_rows]
         land_by_id = {row[0]: row[1] for row in province_rows}
+        prod_by_id = {row[0]: row[2] for row in province_rows}
 
         revenue = {"gross": {}, "net": {}}
 
@@ -245,7 +250,21 @@ def get_revenue(cId):
                         land = land_by_id.get(province, 0)
                         amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
 
-                    total = build_count * amount
+                    # Apply productivity multiplier to match actual generation behavior
+                    productivity = prod_by_id.get(province, 50)
+                    if productivity is not None:
+                        multiplier = (
+                            1
+                            + (productivity - 50)
+                            * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER
+                        )
+                    else:
+                        multiplier = 1
+
+                    total = build_count * amount * multiplier
+                    # Normalize to integer to mirror production rounding
+                    total = math.ceil(total)
+
                     revenue["gross"][resource] += total
                     revenue["net"][resource] += total
 
