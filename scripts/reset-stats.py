@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 import psycopg2
-import sys
 
 conn = psycopg2.connect(
     database=os.getenv("PG_DATABASE"),
