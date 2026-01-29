@@ -260,6 +260,17 @@ def createprovince():
                 "UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId)
             )
 
+            # Invalidate cached provinces page for this user
+            # so the new province appears immediately
+            try:
+                from database import query_cache
+
+                pattern = f"provinces_{cId}_"
+                query_cache.invalidate(pattern=pattern)
+            except Exception:
+                # Best-effort: cache invalidation should not raise on failure
+                pass
+
         return redirect("/provinces")
     else:
         price = get_province_price(cId)
