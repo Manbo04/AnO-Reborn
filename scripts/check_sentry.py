@@ -39,7 +39,8 @@ def main():
 
     if not token or not org or not project:
         print(
-            "Sentry check skipped: missing SENTRY_AUTH_TOKEN, SENTRY_ORG or SENTRY_PROJECT env vars"
+            "Sentry check skipped: missing SENTRY_AUTH_TOKEN, "
+            "SENTRY_ORG or SENTRY_PROJECT env vars"
         )
         return 0
 
@@ -70,7 +71,8 @@ def main():
 
         if recent:
             print(
-                f"Sentry: Found {len(recent)} recent issue(s) in environment '{env}' (last {args.lookback_minutes} minutes)"
+                f"Sentry: Found {len(recent)} recent issue(s) in environment '{env}' "
+                f"(last {args.lookback_minutes} minutes)"
             )
             for i in recent:
                 print(f"- {i['id']}: {i['title']} (lastSeen={i['lastSeen']})")
@@ -78,7 +80,8 @@ def main():
             return 2
         else:
             print(
-                f"Sentry: No recent issues in environment '{env}' (last {args.lookback_minutes} minutes)"
+                f"Sentry: No recent issues in environment '{env}' "
+                f"(last {args.lookback_minutes} minutes)"
             )
             return 0
 
