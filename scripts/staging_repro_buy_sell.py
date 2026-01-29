@@ -163,84 +163,93 @@ def get_units_from_db(uid):
 
 def main():
     # Use a single auth user for province ownership to avoid ownership mismatch
-    username, password, uid = create_user_with_password("password123")
-    print("Created auth user:", username, uid)
+    username = password = None
+    uid = None
+    try:
+        username, password, uid = create_user_with_password("password123")
+        print("Created auth user:", username, uid)
 
-    # Ensure the cookie uses the same secret key as the deployed app
-    if os.environ.get("SECRET_KEY"):
-        app.secret_key = os.environ.get("SECRET_KEY")
+        # Ensure the cookie uses the same secret key as the deployed app
+        if os.environ.get("SECRET_KEY"):
+            app.secret_key = os.environ.get("SECRET_KEY")
 
-    session = requests.Session()
-    # Login via the website to get a session cookie from the real app
-    login_url = f"{TARGET_HOST}/login"
-    resp = session.post(
-        login_url,
-        data={"username": username, "password": password},
-        allow_redirects=True,
-    )
-    print("Login status:", resp.status_code)
+        session = requests.Session()
+        # Login via the website to get a session cookie from the real app
+        login_url = f"{TARGET_HOST}/login"
+        resp = session.post(
+            login_url,
+            data={"username": username, "password": password},
+            allow_redirects=True,
+        )
+        print("Login status:", resp.status_code)
 
-    # Snapshot before
-    print("Before resources:", get_resources_from_db(uid))
-    print("Before units:", get_units_from_db(uid))
+        # Snapshot before
+        print("Before resources:", get_resources_from_db(uid))
+        print("Before units:", get_units_from_db(uid))
 
-    # BUY farms: POST to /buy/farms/<province_id>
-    print("Buying 4 farms...")
-    resp = session.post(
-        f"{TARGET_HOST}/buy/farms/{uid}",
-        data={"farms": "4"},
-        allow_redirects=False,
-    )
-    print("buy resp status:", resp.status_code)
-    if resp.status_code != 302:
-        print("buy resp headers:", resp.headers)
-        try:
-            body = resp.text
-            print("buy resp body snippet:\n", body[:4000])
-        except Exception:
-            pass
-    time.sleep(1)
-    print("After buy resources:", get_resources_from_db(uid))
-    print("After buy units:", get_units_from_db(uid))
+        # BUY farms: POST to /buy/farms/<province_id>
+        print("Buying 4 farms...")
+        resp = session.post(
+            f"{TARGET_HOST}/buy/farms/{uid}",
+            data={"farms": "4"},
+            allow_redirects=False,
+        )
+        print("buy resp status:", resp.status_code)
+        if resp.status_code != 302:
+            print("buy resp headers:", resp.headers)
+            try:
+                body = resp.text
+                print("buy resp body snippet:\n", body[:4000])
+            except Exception:
+                pass
+        time.sleep(1)
+        print("After buy resources:", get_resources_from_db(uid))
+        print("After buy units:", get_units_from_db(uid))
 
-    # SELL 4 farms
-    print("Selling 4 farms...")
-    resp = session.post(
-        f"{TARGET_HOST}/sell/farms/{uid}",
-        data={"farms": "4"},
-        allow_redirects=False,
-    )
-    print("sell resp status:", resp.status_code)
-    if resp.status_code != 302:
-        try:
-            print("sell resp body snippet:\n", resp.text[:4000])
-        except Exception:
-            pass
-    time.sleep(1)
-    print("After sell resources:", get_resources_from_db(uid))
-    print("After sell units:", get_units_from_db(uid))
+        # SELL 4 farms
+        print("Selling 4 farms...")
+        resp = session.post(
+            f"{TARGET_HOST}/sell/farms/{uid}",
+            data={"farms": "4"},
+            allow_redirects=False,
+        )
+        print("sell resp status:", resp.status_code)
+        if resp.status_code != 302:
+            try:
+                print("sell resp body snippet:\n", resp.text[:4000])
+            except Exception:
+                pass
+        time.sleep(1)
+        print("After sell resources:", get_resources_from_db(uid))
+        print("After sell units:", get_units_from_db(uid))
 
-    # BUY again
-    print("Buying 4 farms again...")
-    resp = session.post(
-        f"{TARGET_HOST}/buy/farms/{uid}",
-        data={"farms": "4"},
-        allow_redirects=False,
-    )
-    print("buy2 resp status:", resp.status_code)
-    if resp.status_code != 302:
-        try:
-            print("buy2 resp body snippet:\n", resp.text[:4000])
-        except Exception:
-            pass
-    time.sleep(1)
-    print("After buy2 resources:", get_resources_from_db(uid))
-    print("After buy2 units:", get_units_from_db(uid))
+        # BUY again
+        print("Buying 4 farms again...")
+        resp = session.post(
+            f"{TARGET_HOST}/buy/farms/{uid}",
+            data={"farms": "4"},
+            allow_redirects=False,
+        )
+        print("buy2 resp status:", resp.status_code)
+        if resp.status_code != 302:
+            try:
+                print("buy2 resp body snippet:\n", resp.text[:4000])
+            except Exception:
+                pass
+        time.sleep(1)
+        print("After buy2 resources:", get_resources_from_db(uid))
+        print("After buy2 units:", get_units_from_db(uid))
 
-    # Cleanup
-    print("Cleaning up test user and province...")
-    cleanup_test_user(uid)
-    print("Done.")
+    except KeyboardInterrupt:
+        print("Interrupted by user")
+    finally:
+        if uid:
+            try:
+                print("Cleaning up test user and province...")
+                cleanup_test_user(uid)
+                print("Done.")
+            except Exception as e:
+                print("cleanup failed:", e)
 
 
 if __name__ == "__main__":
