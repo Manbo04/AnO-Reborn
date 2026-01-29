@@ -1,14 +1,12 @@
 from flask import request, render_template, session, redirect, flash, current_app
 from helpers import login_required, error
-from helpers import get_coalition_influence
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-import variables
-from operator import itemgetter
-import datetime
-from database import get_db_cursor, cache_response
+import variables  # noqa: E402
+import datetime  # noqa: E402
+from database import get_db_cursor, cache_response  # noqa: E402
 
 
 # Function for getting the coalition role of a user
@@ -28,10 +26,15 @@ def coalition(colId):
         # OPTIMIZATION: Single query for basic coalition info + member count + total influence
         db.execute(
             """
-            SELECT 
+            SELECT
                 c.name, c.type, c.description, c.flag,
                 COUNT(DISTINCT coal.userId) AS members_count,
-                COALESCE(SUM((SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)), 0) AS total_influence
+                COALESCE(
+                    SUM(
+                        (SELECT COALESCE(SUM(population), 0)
+                         FROM provinces WHERE userId = coal.userId)
+                    ), 0
+                ) AS total_influence
             FROM colNames c
             LEFT JOIN coalitions coal ON c.id = coal.colId
             WHERE c.id = %s
@@ -47,7 +50,9 @@ def coalition(colId):
 
         try:
             db.execute(
-                "SELECT coalitions.userId, users.username FROM coalitions INNER JOIN users ON coalitions.userId=users.id WHERE coalitions.role='leader' AND coalitions.colId=%s",
+                "SELECT coalitions.userId, users.username "
+                "FROM coalitions INNER JOIN users ON coalitions.userId=users.id "
+                "WHERE coalitions.role='leader' AND coalitions.colId=%s",
                 (colId,),
             )
             leaders = db.fetchall()
@@ -110,7 +115,9 @@ def coalition(colId):
             # Fetch pending applications for leaders
             try:
                 db.execute(
-                    "SELECT a.id, a.userId, u.username, a.message, a.status, a.created_at FROM col_applications a JOIN users u ON a.userId = u.id WHERE a.colId=%s ORDER BY a.created_at DESC",
+                    "SELECT a.id, a.userId, u.username, a.message, a.status, a.created_at "
+                    "FROM col_applications a JOIN users u ON a.userId = u.id "
+                    "WHERE a.colId=%s ORDER BY a.created_at DESC",
                     (colId,),
                 )
                 pending_applications = db.fetchall()
@@ -185,7 +192,7 @@ def coalition(colId):
                 ingoing_treaties = {}
                 ingoing_length = 0
 
-            #### ACTIVE ####
+            # ACTIVE
             try:
                 try:
                     db.execute(
@@ -314,7 +321,7 @@ def coalition(colId):
             requests = []
             requestIds = []
 
-        ### BANK STUFF
+        # COALITION BANK STUFF
         if user_role == "leader" and userInCurCol:
             # Use JOIN query to fetch bank requests with usernames
             db.execute(
@@ -369,7 +376,7 @@ def establish_coalition():
         existing = db.fetchone()
         if existing:
             return error(403, "You are already in a coalition")
-    
+
     if request.method == "POST":
         with get_db_cursor() as db:
             cType = request.form.get("type")
@@ -397,10 +404,10 @@ def establish_coalition():
                 )
             else:
                 date = str(datetime.date.today())
-                recruiting = True if request.form.get('recruiting') == 'on' else False
+                recruiting = True if request.form.get("recruiting") == "on" else False
                 db.execute(
-                "INSERT INTO colNames (name, type, description, date, recruiting) VALUES (%s, %s, %s, %s, %s)",
-                (name, cType, desc, date, recruiting),
+                    "INSERT INTO colNames (name, type, description, date, recruiting) VALUES (%s, %s, %s, %s, %s)",
+                    (name, cType, desc, date, recruiting),
                 )
 
                 db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
@@ -437,7 +444,7 @@ def coalitions():
         # This replaces N+1 queries (one per coalition) with a single query
         db.execute(
             """
-            SELECT 
+            SELECT
                 c.id,
                 c.type,
                 c.name,
@@ -457,11 +464,11 @@ def coalitions():
         coalitions_list = []
         for row in coalitionsDb:
             col_id, col_type, name, flag, members, col_date, influence = row
-            
+
             # Apply search filter
             if search and search.lower() not in name.lower():
                 continue
-                
+
             # Apply type filter
             if sort == "invite_only" and col_type == "Open":
                 continue
@@ -475,16 +482,18 @@ def coalitions():
             except (ValueError, TypeError):
                 unix = 0
 
-            coalitions_list.append({
-                'id': col_id,
-                'type': col_type,
-                'name': name,
-                'flag': flag,
-                'members': members,
-                'date': col_date,
-                'influence': influence,
-                'unix': unix
-            })
+            coalitions_list.append(
+                {
+                    "id": col_id,
+                    "type": col_type,
+                    "name": name,
+                    "flag": flag,
+                    "members": members,
+                    "date": col_date,
+                    "influence": influence,
+                    "unix": unix,
+                }
+            )
 
         # Default sorting
         if not sort or sort in ["open", "invite_only"]:
@@ -496,11 +505,11 @@ def coalitions():
 
         # Sort the results
         if sort == "influence":
-            coalitions_list.sort(key=lambda x: x['influence'], reverse=reverse)
+            coalitions_list.sort(key=lambda x: x["influence"], reverse=reverse)
         elif sort == "members":
-            coalitions_list.sort(key=lambda x: x['members'], reverse=reverse)
+            coalitions_list.sort(key=lambda x: x["members"], reverse=reverse)
         elif sort == "age":
-            coalitions_list.sort(key=lambda x: x['unix'], reverse=not reverse)
+            coalitions_list.sort(key=lambda x: x["unix"], reverse=not reverse)
 
         return render_template(
             "coalitions.html",
@@ -625,7 +634,9 @@ def give_position():
         # The user id for the person being given the role
         try:
             db.execute(
-                "SELECT users.id, coalitions.colid, coalitions.role FROM users INNER JOIN coalitions ON users.id=coalitions.userid WHERE users.username=%s",
+                "SELECT users.id, coalitions.colid, coalitions.role "
+                "FROM users INNER JOIN coalitions ON users.id=coalitions.userid "
+                "WHERE users.username=%s",
                 (username,),
             )
             roleer, roleer_col, current_roleer_role = db.fetchone()
@@ -909,7 +920,10 @@ def withdraw(resource, amount, user_id, colId):
         db.execute(update_statement, (new_resource, colId))
 
         current_app.logger.info(
-            f"withdraw: colId={colId} resource={resource} amount={amount} bank_before={current_resource} bank_after={new_resource}"
+            (
+                f"withdraw: colId={colId} resource={resource} amount={amount} "
+                f"bank_before={current_resource} bank_after={new_resource}"
+            )
         )
 
         # Gives the leader his resource
@@ -923,7 +937,10 @@ def withdraw(resource, amount, user_id, colId):
 
             db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
             current_app.logger.info(
-                f"withdraw: user_id={user_id} gold_before={current_money} gold_after={new_money}"
+                (
+                    f"withdraw: user_id={user_id} gold_before={current_money} "
+                    f"gold_after={new_money}"
+                )
             )
 
         # If the resource is not money, gives him that resource
@@ -938,7 +955,10 @@ def withdraw(resource, amount, user_id, colId):
             update_statement = f"UPDATE resources SET {resource}=%s WHERE id=%s"
             db.execute(update_statement, (new_resource, user_id))
             current_app.logger.info(
-                f"withdraw: user_id={user_id} {resource}_before={user_current} {resource}_after={new_resource}"
+                (
+                    f"withdraw: user_id={user_id} {resource}_before={user_current} "
+                    f"{resource}_after={new_resource}"
+                )
             )
 
 
@@ -1223,6 +1243,7 @@ def register_coalitions_routes(app_instance):
     # Apply to coalition (GET form + POST submit)
     def apply_to_coalition(colId):
         from flask import request
+
         with get_db_cursor() as db:
             # Check coalition exists
             db.execute("SELECT name FROM colNames WHERE id=%s", (colId,))
@@ -1247,7 +1268,9 @@ def register_coalitions_routes(app_instance):
                     (colId, user_id),
                 )
                 if db.fetchone():
-                    return error(400, "You already have a pending application to this coalition")
+                    return error(
+                        400, "You already have a pending application to this coalition"
+                    )
 
                 db.execute(
                     "INSERT INTO col_applications (colId, userId, message) VALUES (%s, %s, %s)",
@@ -1272,13 +1295,23 @@ def register_coalitions_routes(app_instance):
                             (leader_id, notif),
                         )
 
-                return render_template("verification_pending.html", email=None, message="Application submitted!")
+                return render_template(
+                    "verification_pending.html",
+                    email=None,
+                    message="Application submitted!",
+                )
 
             # GET - render form
-            return render_template("apply_to_coalition.html", coalition_name=coalition_name)
+            return render_template(
+                "apply_to_coalition.html", coalition_name=coalition_name
+            )
 
     apply_to_coalition_wrapped = login_required(apply_to_coalition)
-    app_instance.add_url_rule("/coalition/<colId>/apply", view_func=apply_to_coalition_wrapped, methods=["GET","POST"])
+    app_instance.add_url_rule(
+        "/coalition/<colId>/apply",
+        view_func=apply_to_coalition_wrapped,
+        methods=["GET", "POST"],
+    )
     app_instance.add_url_rule(
         "/establish_coalition",
         view_func=establish_coalition_wrapped,

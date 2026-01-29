@@ -27,48 +27,57 @@ def give_resource(giver_id, taker_id, resource, amount):
 
         if resource in ["gold", "money"]:
             if giver_id != "bank":
-                db.execute("SELECT gold FROM stats WHERE id=%s", (giver_id,))
-                current_giver_money = db.fetchone()[0]
-
-                if current_giver_money < amount:
+                # Atomically decrement gold only when sufficient balance exists
+                db.execute(
+                    (
+                        "UPDATE stats SET gold=gold-%s "
+                        "WHERE id=%s AND gold>=%s "
+                        "RETURNING gold"
+                    ),
+                    (amount, giver_id, amount),
+                )
+                if db.fetchone() is None:
                     return (
                         "Giver doesn't have enough resources to transfer such amount."
                     )
 
-                db.execute(
-                    "UPDATE stats SET gold=gold-%s WHERE id=%s", (amount, giver_id)
-                )
-
             if taker_id != "bank":
+                # Increment gold for taker and return the new value
                 db.execute(
-                    "UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, taker_id)
+                    (
+                        "UPDATE stats SET gold=gold+%s "
+                        "WHERE id=%s "
+                        "RETURNING gold"
+                    ),
+                    (amount, taker_id),
                 )
+                db.fetchone()
 
         else:
             if giver_id != "bank":
-                current_resource_statement = (
-                    f"SELECT {resource} FROM resources WHERE " + "id=%s"
+                # Atomically decrement resource only when sufficient amount exists
+                db.execute(
+                    (
+                        f"UPDATE resources SET {resource}={resource}-%s "
+                        + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
+                    ),
+                    (amount, giver_id, amount),
                 )
-                db.execute(current_resource_statement, (giver_id,))
-                current_giver_resource = db.fetchone()[0]
-
-                if current_giver_resource < amount:
+                if db.fetchone() is None:
                     return (
                         "Giver doesn't have enough resources to transfer such amount."
                     )
 
-                giver_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}-{amount}"
-                    + " WHERE id=%s"
-                )
-                db.execute(giver_update_statement, (giver_id,))
-
             if taker_id != "bank":
-                taker_update_statement = (
-                    f"UPDATE resources SET {resource}={resource}+{amount}"
-                    + " WHERE id=%s"
+                # Increment taker's resource
+                db.execute(
+                    (
+                        f"UPDATE resources SET {resource}={resource}+%s "
+                        f"WHERE id=%s RETURNING {resource}"
+                    ),
+                    (amount, taker_id),
                 )
-                db.execute(taker_update_statement, (taker_id,))
+                db.fetchone()
 
         conn.commit()
 

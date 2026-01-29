@@ -5,6 +5,7 @@ This provides persistent flag storage that survives Railway deployments.
 
 Run: python scripts/migrate_flags_to_db.py
 """
+
 import os
 import sys
 import base64

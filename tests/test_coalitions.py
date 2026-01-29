@@ -1,5 +1,4 @@
 from test_auth import login_session
-import requests
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -37,12 +36,12 @@ def establish_coalition():
             "SELECT * FROM colNames WHERE name=%s AND description=%s AND type=%s",
             (coalition_name, coalition_desc, coalition_type),
         )
-        result = db.fetchone()[0]
-    except:
+        _ = db.fetchone()[0]
+    except Exception:
         return False
 
     return True
 
 
 def test_establish_coalition():
-    assert establish_coalition() == True
+    assert establish_coalition() is True
