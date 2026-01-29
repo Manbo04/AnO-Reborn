@@ -1,4 +1,3 @@
-import pytest
 from app import app
 from database import get_db_connection
 

@@ -1,8 +1,7 @@
 # FULLY MIGRATED
 
-import os
 from flask import redirect, render_template, session, request
-from functools import wraps, lru_cache
+from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
 from database import get_db_cursor, query_cache
@@ -15,50 +14,50 @@ load_dotenv()
 def compress_flag_image(file_storage, max_size=300, quality=85):
     """
     Compress and resize a flag image for efficient database storage.
-    
+
     Args:
         file_storage: Flask FileStorage object
         max_size: Maximum width/height in pixels (default 300px)
         quality: JPEG quality 1-100 (default 85)
-    
+
     Returns:
         tuple: (base64_encoded_data, extension)
     """
     try:
         from PIL import Image
-        
+
         # Read the image
         img = Image.open(file_storage)
-        
+
         # Convert RGBA to RGB if needed (for JPEG)
-        if img.mode in ('RGBA', 'P'):
-            img = img.convert('RGB')
-        
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
         # Resize if larger than max_size
         if img.width > max_size or img.height > max_size:
             img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
+
         # Save to buffer as JPEG with compression
         buffer = BytesIO()
-        img.save(buffer, format='JPEG', quality=quality, optimize=True)
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
         buffer.seek(0)
-        
+
         # Encode to base64
-        flag_data = base64.b64encode(buffer.read()).decode('utf-8')
-        
-        return flag_data, 'jpg'
-        
+        flag_data = base64.b64encode(buffer.read()).decode("utf-8")
+
+        return flag_data, "jpg"
+
     except ImportError:
         # PIL not available, fall back to raw storage
         file_storage.seek(0)
-        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
-        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        flag_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[1].lower()
         return flag_data, extension
-    except Exception as e:
+    except Exception:
         # On any error, fall back to raw storage
         file_storage.seek(0)
-        flag_data = base64.b64encode(file_storage.read()).decode('utf-8')
-        extension = file_storage.filename.rsplit('.', 1)[1].lower()
+        flag_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[1].lower()
         return flag_data, extension
 
 
@@ -101,9 +100,10 @@ def login_required(f):
 
         logger = logging.getLogger(__name__)
         if not session.get("user_id", None):
-            logger.debug(
-                f"login_required: session user_id={session.get('user_id', None)} path={getattr(request, 'path', None)}"
-            )
+            uid = session.get("user_id", None)
+            path = getattr(request, "path", None)
+            logger.debug(f"login_required: session user_id={uid}")
+            logger.debug(f"login_required: path={path}")
             logger.debug("login_required: user_id missing, redirecting to /login")
             return redirect("/login")
         return f(*args, **kwargs)
@@ -173,7 +173,11 @@ def get_influence(country_id):
             ) prov ON u.id = prov.userId
             LEFT JOIN (
                 SELECT id,
-                       (oil + rations + coal + uranium + bauxite + iron + lead + copper + lumber + components + steel + consumer_goods + aluminium + gasoline + ammunition) as total_resources
+                       (
+                           oil + rations + coal + uranium + bauxite + iron
+                           + lead + copper + lumber + components + steel
+                           + consumer_goods + aluminium + gasoline + ammunition
+                       ) as total_resources
                 FROM resources
             ) r ON u.id = r.id
             WHERE u.id = %s
@@ -320,7 +324,11 @@ def get_bulk_influence(user_ids):
             ) prov ON u.id = prov.userId
             LEFT JOIN (
                 SELECT id,
-                       (oil + rations + coal + uranium + bauxite + iron + lead + copper + lumber + components + steel + consumer_goods + aluminium + gasoline + ammunition) as total_resources
+                       (
+                           oil + rations + coal + uranium + bauxite + iron
+                           + lead + copper + lumber + components + steel
+                           + consumer_goods + aluminium + gasoline + ammunition
+                       ) as total_resources
                 FROM resources
             ) r ON u.id = r.id
             WHERE u.id = ANY(%s)

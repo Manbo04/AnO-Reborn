@@ -5,11 +5,9 @@ from helpers import login_required, error
 from attack_scripts import Military
 import time
 from random import random
-import os
 from dotenv import load_dotenv
 import variables
 import random as rand
-import time
 from database import get_db_cursor
 from psycopg2.extras import RealDictCursor
 
@@ -34,7 +32,11 @@ def intelligence():
         try:
             with get_db_cursor(cursor_factory=RealDictCursor) as db:
                 db.execute(
-                    "SELECT spyinfo.*, users.username FROM spyinfo LEFT JOIN users ON spyinfo.spyee=users.id WHERE spyinfo.spyer=%s ORDER BY date ASC",
+                    (
+                        "SELECT spyinfo.*, users.username FROM spyinfo "
+                        "LEFT JOIN users ON spyinfo.spyee=users.id "
+                        "WHERE spyinfo.spyer=%s ORDER BY date ASC"
+                    ),
                     (cId,),
                 )
                 info = db.fetchall()
@@ -111,7 +113,7 @@ def spyAmount():
             spies_result = db.fetchone()
             eSpies = spies_result[0] if spies_result and spies_result[0] else 1
 
-        # calculate what values have been revealed based on prep, amount, edefcon, espies
+        # calculate revealed values based on prep, amount, edefcon, and espies
         resources = variables.RESOURCES
 
         # Prevent division by zero - use max(1, ...) to ensure positive denominator
@@ -132,8 +134,7 @@ def spyAmount():
         else:
             spyEntry["defaultdefense"] = "false"
 
-        # insert spyEntry into spytable with
-        date = time.time()
+        # insert spyEntry into spytable (timestamp will be written later)
 
         # sessionize spyResult jinja
         session["eId"] = eId
@@ -186,18 +187,21 @@ def spyResult():
 
             current_time = time.time()
             if spyee != eId and current_time - date < 3600 * 12:
+                secs_left = int(current_time - date)
                 return error(
                     400,
-                    f"12 hour cooldown for spying on another country. {current_time-date} seconds left.",
+                    f"12 hour cooldown for spying on another country. "
+                    f"{secs_left} seconds left.",
                 )
-
             db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
             actual_spies = db.fetchone()[0]
 
             if spies > actual_spies:
+                missing = actual_spies - spies
                 return error(
                     400,
-                    f"You don't have enough spies ({spies}/{actual_spies}). Missing {actual_spies-spies} spies",
+                    f"You don't have enough spies ({spies}/{actual_spies}). "
+                    f"Missing {missing} spies",
                 )
 
             db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
@@ -208,7 +212,10 @@ def spyResult():
             uncovered = {}
 
             db.execute(
-                "INSERT INTO spyinfo (spyer, spyee, date) VALUES (%s, %s, %s) RETURNING id",
+                (
+                    "INSERT INTO spyinfo (spyer, spyee, date) "
+                    "VALUES (%s, %s, %s) RETURNING id"
+                ),
                 (cId, eId, time.time()),
             )
             operation_id = db.fetchone()[0]
@@ -262,7 +269,8 @@ def spyResult():
 
                     if len(update_objects) > 0:
                         spyinfo_update = (
-                            f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
+                            f"UPDATE spyinfo SET {update_objects_string}"
+                            + " WHERE id=%s"
                         )
                         db.execute(spyinfo_update, (operation_id,))
 
