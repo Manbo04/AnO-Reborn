@@ -16,7 +16,8 @@ IGNORED_TABLES = set(["schema_migrations"])  # add more if needed
 os.makedirs(OUTDIR, exist_ok=True)
 print("Writing table CSVs to", OUTDIR)
 
-# Read connection info from PG_* env vars (database.py already sets these from DATABASE_URL)
+# Read connection info from PG_* env vars
+# (database.py already sets these from DATABASE_URL)
 conn_params = {
     "dbname": os.getenv("PG_DATABASE"),
     "user": os.getenv("PG_USER"),
@@ -36,7 +37,10 @@ except Exception as e:
 try:
     cur = conn.cursor()
     cur.execute(
-        "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'"
+        (
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema='public' AND table_type='BASE TABLE'"
+        )
     )
     tables = [r[0] for r in cur.fetchall()]
 

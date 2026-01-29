@@ -84,7 +84,8 @@ try:
 
     conn.commit()
     print(
-        f"Granted user {user_id}: +{gold_amount} gold, +{resource_amount} to each resource"
+        f"Granted user {user_id}: +{gold_amount} gold, "
+        f"+{resource_amount} to each resource"
     )
 except Exception as e:
     conn.rollback()
