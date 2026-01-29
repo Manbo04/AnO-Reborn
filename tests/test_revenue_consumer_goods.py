@@ -82,5 +82,6 @@ def test_get_revenue_consumer_goods_net_subtracts_taxes(monkeypatch):
 
     # malls produce 30 consumer goods (per variables.INFRA); gross should be 30
     assert rev["gross"]["consumer_goods"] == 30
-    # Net should be production (30) minus consumed (50) == -20
-    assert rev["net"]["consumer_goods"] == -20
+    # With a money-aware simulation, the mall won't operate if the user
+    # cannot afford upkeep, so net consumer goods = 0 (no production) - 50 (consumed)
+    assert rev["net"]["consumer_goods"] == -50

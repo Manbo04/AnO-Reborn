@@ -231,6 +231,14 @@ def get_revenue(cId):
             for row in db.fetchall():
                 proinfra_by_id[row[0]] = dict(zip(proinfra_columns, row))
 
+        # Fetch current funds to simulate money-constrained operation for `net`
+        db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+        gold_row = db.fetchone()
+        current_money = gold_row[0] if gold_row and gold_row[0] is not None else 0
+
+        # Simulated funds used while computing `net`; do not mutate DB
+        simulated_funds = current_money
+
         for province in provinces:
             buildings = proinfra_by_id.get(province)
             if buildings is None:
@@ -243,7 +251,18 @@ def get_revenue(cId):
                     continue
 
                 operating_costs = infra[building]["money"] * build_count
-                revenue["net"]["money"] -= operating_costs
+
+                # Add to gross/net resource production only if this building would
+                # actually operate given the player's money. We keep `gross` and
+                # `gross_theoretical` as unconditional projections, but `net`
+                # reflects a simple money-constrained simulation similar to the
+                # actual task runner so UI `net` is consistent with what will
+                # actually happen.
+                will_operate = simulated_funds >= operating_costs
+
+                if will_operate:
+                    simulated_funds -= operating_costs
+                    revenue["net"]["money"] -= operating_costs
 
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
@@ -269,19 +288,26 @@ def get_revenue(cId):
                     # Normalize to integer to mirror production rounding
                     adjusted_total = math.ceil(adjusted_total)
 
-                    # Record both the theoretical (original-style)
-                    # and the actual (projected) values
+                    # Record the theoretical and gross projections
                     revenue["gross_theoretical"][resource] += theoretical_total
                     revenue["gross"][resource] += adjusted_total
-                    revenue["net"][resource] += adjusted_total
+
+                    # Only add to `net` if the building will operate
+                    if will_operate:
+                        revenue["net"][resource] += adjusted_total
 
                 minus = infra[building].get("minus", {})
                 for resource, amount in minus.items():
                     total = build_count * amount
-                    revenue["net"][resource] -= total
+                    # Only subtract upkeep from net if building operates
+                    if will_operate:
+                        revenue["net"][resource] -= total
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-        current_rations = db.fetchone()[0]
+        rations_row = db.fetchone()
+        current_rations = (
+            rations_row[0] if rations_row and rations_row[0] is not None else 0
+        )
 
         ti_money, ti_cg = calc_ti(cId)
 
@@ -317,7 +343,8 @@ def next_turn_rations(cId, prod_rations):
         provinces = db.fetchall()
 
         db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-        current_rations = db.fetchone()[0] + prod_rations
+        rr = db.fetchone()
+        current_rations = (rr[0] if rr and rr[0] is not None else 0) + prod_rations
 
         for pId in provinces:
             rations, _ = calc_pg(pId, current_rations)
