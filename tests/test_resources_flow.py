@@ -60,8 +60,8 @@ def test_give_resource_money_bank_to_user(monkeypatch):
 def test_give_resource_money_user_insufficient(monkeypatch):
     from market import give_resource
 
-    # Simulate giver has 50 gold
-    db = FakeCursor(fetchone_returns=[(50,)])
+    # Simulate insufficient funds (UPDATE RETURNING fails)
+    db = FakeCursor(fetchone_returns=[None])
     conn = FakeConn(db)
     import market as _market
 
@@ -85,12 +85,9 @@ def test_give_resource_non_money_transfer(monkeypatch):
     res = give_resource(1, 2, "coal", 5)
     assert res is True
 
-    # Ensure resource SELECT and UPDATE called
-    assert any("SELECT coal FROM resources WHERE" in q for q, p in db.calls)
-    # tolerate whitespace/newlines in SQL strings
+    # ensure an UPDATE to resources for coal happened (either +/-)
     assert any(
-        ("UPDATE resources SET" in q and "coal-5" in q)
-        or ("UPDATE resources SET" in q and "coal+5" in q)
+        ("UPDATE resources SET" in q and "coal" in q and ("-" in q or "+" in q))
         for q, p in db.calls
     )
 

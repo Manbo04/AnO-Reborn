@@ -36,13 +36,11 @@ class _FileCacheMixin:
 
                 lock_class = FileLock
         except ImportError:
-            notice = dedent(
-                """
+            notice = dedent("""
             NOTE: In order to use the FileCache you must have
             filelock installed. You can install it via pip:
               pip install cachecontrol[filecache]
-            """
-            )
+            """)
             raise ImportError(notice)
 
         self.directory = directory
@@ -87,7 +85,7 @@ class _FileCacheMixin:
 
         with self.lock_class(path + ".lock"):
             # Write our actual file
-            (fd, name) = tempfile.mkstemp(dir=dirname)
+            fd, name = tempfile.mkstemp(dir=dirname)
             try:
                 os.write(fd, data)
             finally:

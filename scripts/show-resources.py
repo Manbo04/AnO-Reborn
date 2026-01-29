@@ -3,6 +3,7 @@
 Usage: python show-resources.py <user_id>
 Use with `railway run python scripts/show-resources.py <id>` in production.
 """
+
 import os
 import sys
 from urllib.parse import urlparse

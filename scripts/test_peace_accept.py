@@ -2,7 +2,7 @@
 # Usage: run with the project's venv python to perform an acceptance flow using Flask test_client
 
 from app import app
-from database import get_db_connection, get_db_cursor
+from database import get_db_connection
 
 # Use the test client
 with app.test_client() as client:
@@ -10,9 +10,8 @@ with app.test_client() as client:
     from dotenv import load_dotenv
 
     load_dotenv()
-    import bcrypt
-    import os
-    from tests.credentials import username as u1_name
+    import bcrypt  # noqa: F401
+    from tests.credentials import username as u1_name  # noqa: F401
 
     # Insert two test users (or use existing debug users) and create war and peace offers
     with get_db_connection() as conn:

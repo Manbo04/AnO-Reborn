@@ -1,0 +1,28 @@
+{% extends "layout.html" %} {% block title %} Resources {% endblock %} {% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">inventory_2</span>Resources</h1>
+    </div>
+    <div class="templatedivcontent">
+        <h2 class="templatecontentheadercenter">Overview</h2>
+        <p class="templatecontentpleft">Resources are produced by provinces and used for projects, military, and trade. Each resource has specific uses and may be more or less valuable depending on the market.</p>
+
+        <h3 class="templatecontentheader">FAQ: My resource totals didn't change after buying/selling</h3>
+        <p class="templatecontentpleft">If your resource totals don't immediately reflect purchases or sales, try the following:</p>
+        <ul class="templatecontentpleft">
+            <li>Refresh the page — some UI data is cached in the browser and updates on reload.</li>
+            <li>Check the <em>Market</em> page and your <em>Country</em> page to confirm the transaction succeeded (offers show in your trade history).</li>
+            <li>Some changes are applied inside background tasks (e.g., supply/regeneration). Wait a short moment and re-check or trigger a manual action (buy/sell) to force an update.</li>
+            <li>If the problem persists, note the exact steps (what you bought/sold, province, and quantities) and report it — we'll investigate and fix any server-side application bug.</li>
+        </ul>
+
+        <h3 class="templatecontentheader">Key resources</h3>
+        <ul class="templatecontentpleft">
+            <li><strong>Rations</strong> - food: sustains population and growth.</li>
+            <li><strong>Oil / Gasoline</strong> - fuels military and projects.</li>
+            <li><strong>Steel / Iron / Components</strong> - used for infrastructure, upgrades, and military units.</li>
+            <li><strong>Consumer Goods</strong> - increases tax income (see Consumer Goods page).</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

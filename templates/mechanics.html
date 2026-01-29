@@ -1,0 +1,55 @@
+{% extends "layout.html" %} {% block title %} Mechanics {% endblock %} {% block body %}
+<div class="templatediv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            build
+            </span>Mechanics</h1>
+    </div>
+
+    <div class="templatedivcontent">
+
+        <h2 class="templatecontentheadercenter">How the game mechanics work</h2>
+        <p class="templatecontentpleft landingpagecontent">This page summarizes the core mechanics so you can make informed decisions about economy, provinces, resources and war. Use the links below to dive deeper into each mechanic.</p>
+
+        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader">Generating Gold (Cash) 💰</h3>
+                <p class="templatecontentpleft">Your primary source of gold is taxes collected from your population. Taxes depend on population, productivity, and consumer goods availability. You can also earn gold by selling resources on the market or completing projects.</p>
+                <p class="templatecontentpleft"><a href="/mechanics/revenue" class="templatedivbutton">Read more about Revenue</a></p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader">Consumer Goods</h3>
+                <p class="templatecontentpleft">Consumer goods are advanced manufactured items that increase tax income. Keep supply roughly 1 per 80k people to maximize tax yield.</p>
+                <p class="templatecontentpleft"><a href="/mechanics/consumer_goods" class="templatedivbutton">Read more about Consumer Goods</a></p>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader">Resources & Uses</h3>
+                <p class="templatecontentpleft">Resources (e.g., rations, oil, coal, iron, lumber, components, etc.) are produced by provinces and consumed for building infrastructure, military, and projects.</p>
+                <p class="templatecontentpleft"><a href="/mechanics/resources" class="templatedivbutton">Read more about Resources</a></p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader">War Mechanics</h3>
+                <p class="templatecontentpleft">Declaring war requires target eligibility and no active truce; wars use morale and supplies and can transfer resources on victory.</p>
+                <p class="templatecontentpleft"><a href="/mechanics/war" class="templatedivbutton">Read more about War</a></p>
+            </div>
+        </div>
+
+        <h3 class="templatecontentheader">Tips to Make Cash</h3>
+        <ul class="templatecontentpleft">
+            <li>Increase population and productivity — more people pay more taxes.</li>
+            <li>Balance consumer goods production to match population needs to maximize tax yield.</li>
+            <li>Sell surplus resources on the market during high prices.</li>
+            <li>Complete projects or sell infrastructure where appropriate for one-time gains.</li>
+        </ul>
+
+        <h3 class="templatecontentheader">Further Reading</h3>
+        <p class="templatecontentpleft">See the <a href="/tutorial">Tutorial</a> for a guided walkthrough and this page for quick reference.</p>
+
+    </div>
+
+</div>
+{% endblock %}

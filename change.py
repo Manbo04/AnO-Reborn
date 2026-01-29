@@ -152,18 +152,19 @@ def reset_password(code):
                     "DELETE FROM reset_codes WHERE url_code=%s",
                     (code,),
                 )
-        except Exception as e:
+        except Exception as exc:
             # Send to Sentry if available and return friendly id
             try:
                 import sentry_sdk
 
-                event_id = sentry_sdk.capture_exception(e)
+                # capture_exception supports passing the exception instance
+                event_id = sentry_sdk.capture_exception(exc)
             except Exception:
                 import logging as _logging
 
                 _logger = _logging.getLogger(__name__)
                 event_id = None
-                _logger.exception(f"Error resetting password for code {code}: {e}")
+                _logger.exception("Error resetting password for code %s", code)
 
             if event_id:
                 return error(

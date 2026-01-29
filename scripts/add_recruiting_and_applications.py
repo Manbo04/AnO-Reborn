@@ -3,6 +3,7 @@
 
 Run: python scripts/add_recruiting_and_applications.py
 """
+
 from database import get_db_connection
 
 if __name__ == "__main__":
