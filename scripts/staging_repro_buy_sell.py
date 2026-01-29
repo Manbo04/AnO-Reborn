@@ -1,6 +1,7 @@
 """Run a harmless buy→sell→buy reproduction against the deployed site.
 
-Usage: set RAILWAY_PUBLIC_DOMAIN or use RAILWAY_SERVICE_WEB_URL from railway variables.
+Usage: set RAILWAY_PUBLIC_DOMAIN or use
+RAILWAY_SERVICE_WEB_URL from railway variables.
 This script will:
  - create a test user and a single province for them (safely, with unique username)
  - craft a signed Flask session cookie so requests authenticate as that user
@@ -9,7 +10,9 @@ This script will:
  - GET the homepage after each step to verify the UI shows updated totals
  - clean up the test data when done
 
-IMPORTANT: This runs against the DB pointed to by the environment variables (DATABASE_URL). Be cautious.
+IMPORTANT: This runs against the DB pointed to by the environment variables
+(DATABASE_URL).
+Be cautious.
 """
 
 import time

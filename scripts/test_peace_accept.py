@@ -1,5 +1,6 @@
 # Temporary test script to reproduce and validate peace acceptance
-# Usage: run with the project's venv python to perform an acceptance flow using Flask test_client
+# Usage: run with the project's venv python to perform an acceptance flow
+# using Flask test_client
 
 from app import app
 from database import get_db_connection
@@ -13,16 +14,23 @@ with app.test_client() as client:
     import bcrypt  # noqa: F401
     from tests.credentials import username as u1_name  # noqa: F401
 
-    # Insert two test users (or use existing debug users) and create war and peace offers
+    # Insert two test users (or use existing debug users)
+    # and create war and peace offers
     with get_db_connection() as conn:
         db = conn.cursor()
         # Create two users
         db.execute("DELETE FROM users WHERE username LIKE 'testuser_peace%';")
         db.execute(
-            "INSERT INTO users (username,email,hash,date,auth_type) VALUES ('testuser_peace_a','a@a.com','hash', '2020-01-01', 'normal')"
+            (
+                "INSERT INTO users (username,email,hash,date,auth_type) "
+                "VALUES ('testuser_peace_a','a@a.com','hash', '2020-01-01', 'normal')"
+            )
         )
         db.execute(
-            "INSERT INTO users (username,email,hash,date,auth_type) VALUES ('testuser_peace_b','b@b.com','hash', '2020-01-01', 'normal')"
+            (
+                "INSERT INTO users (username,email,hash,date,auth_type) "
+                "VALUES ('testuser_peace_b','b@b.com','hash', '2020-01-01', 'normal')"
+            )
         )
         db.execute("SELECT id FROM users WHERE username='testuser_peace_a'")
         a_id = db.fetchone()[0]
@@ -54,14 +62,20 @@ with app.test_client() as client:
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute(
-            "SELECT id FROM wars WHERE attacker=%s AND defender=%s ORDER BY id DESC LIMIT 1",
+            (
+                "SELECT id FROM wars WHERE attacker=%s AND defender=%s "
+                "ORDER BY id DESC LIMIT 1"
+            ),
             (a_id, b_id),
         )
         war_id = db.fetchone()[0]
 
         # create a peace offer by attacker demanding resources
         db.execute(
-            "INSERT INTO peace (author, demanded_resources, demanded_amount) VALUES (%s, %s, %s)",
+            (
+                "INSERT INTO peace (author, demanded_resources, demanded_amount) "
+                "VALUES (%s, %s, %s)"
+            ),
             (a_id, "rations", "100"),
         )
         db.execute("SELECT CURRVAL('peace_id_seq')")

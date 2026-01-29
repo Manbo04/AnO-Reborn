@@ -67,7 +67,9 @@ def optimize_css_files():
 
         reduction = ((original_size - minified_size) / original_size) * 100
         print(
-            f"  Original: {original_size}B → Minified: {minified_size}B (saved {reduction:.1f}%)"
+            "  Original: "
+            f"{original_size}B → Minified: {minified_size}B "
+            f"(saved {reduction:.1f}%)"
         )
 
 
@@ -92,7 +94,9 @@ def optimize_js_files():
 
         reduction = ((original_size - minified_size) / original_size) * 100
         print(
-            f"  Original: {original_size}B → Minified: {minified_size}B (saved {reduction:.1f}%)"
+            "  Original: "
+            f"{original_size}B → Minified: {minified_size}B "
+            f"(saved {reduction:.1f}%)"
         )
 
 
