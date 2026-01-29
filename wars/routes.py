@@ -732,10 +732,12 @@ def declare_war():
             logger = logging.getLogger(__name__)
             attacker = Economy(int(session.get("user_id")))
             defender = Economy(defender_id)
-            logger.debug("declare_war: attacker=%s defender=%s", attacker.id, defender.id)
+            logger.debug(
+                "declare_war: attacker=%s defender=%s", attacker.id, defender.id
+            )
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
-            logger.debug('declare_war: checking existing wars')
+            logger.debug("declare_war: checking existing wars")
             db.execute(
                 (
                     "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) OR "
@@ -743,16 +745,27 @@ def declare_war():
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
-            logger.debug('declare_war: after select, db.closed=%s', getattr(db, 'closed', 'unknown'))
+            logger.debug(
+                "declare_war: after select, db.closed=%s",
+                getattr(db, "closed", "unknown"),
+            )
             if db.fetchone():
                 return error(400, "You're already in a war with this country!")
             # Query provinces count directly using the current cursor to avoid
             # nested DB contexts which have previously caused cursor closure errors.
-            db.execute("SELECT COUNT(id) FROM provinces WHERE userId=%s", (attacker.id,))
+            db.execute(
+                "SELECT COUNT(id) FROM provinces WHERE userId=%s", (attacker.id,)
+            )
             attacker_provinces = db.fetchone()[0] or 0
-            db.execute("SELECT COUNT(id) FROM provinces WHERE userId=%s", (defender.id,))
+            db.execute(
+                "SELECT COUNT(id) FROM provinces WHERE userId=%s", (defender.id,)
+            )
             defender_provinces = db.fetchone()[0] or 0
-            logger.debug('declare_war: attacker_provinces=%s defender_provinces=%s', attacker_provinces, defender_provinces)
+            logger.debug(
+                "declare_war: attacker_provinces=%s defender_provinces=%s",
+                attacker_provinces,
+                defender_provinces,
+            )
             if attacker_provinces - defender_provinces > 1:
                 return error(
                     400,

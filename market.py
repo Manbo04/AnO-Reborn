@@ -44,11 +44,7 @@ def give_resource(giver_id, taker_id, resource, amount):
             if taker_id != "bank":
                 # Increment gold for taker and return the new value
                 db.execute(
-                    (
-                        "UPDATE stats SET gold=gold+%s "
-                        "WHERE id=%s "
-                        "RETURNING gold"
-                    ),
+                    ("UPDATE stats SET gold=gold+%s " "WHERE id=%s " "RETURNING gold"),
                     (amount, taker_id),
                 )
                 db.fetchone()
