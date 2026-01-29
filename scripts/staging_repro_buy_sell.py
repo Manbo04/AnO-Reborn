@@ -184,10 +184,10 @@ def main():
     print("Before resources:", get_resources_from_db(uid))
     print("Before units:", get_units_from_db(uid))
 
-    # BUY farms: POST to /province/buy/farms/<province_id>
+    # BUY farms: POST to /buy/farms/<province_id>
     print("Buying 4 farms...")
     resp = session.post(
-        f"{TARGET_HOST}/province/buy/farms/{uid}",
+        f"{TARGET_HOST}/buy/farms/{uid}",
         data={"farms": "4"},
         allow_redirects=False,
     )
@@ -206,7 +206,7 @@ def main():
     # SELL 4 farms
     print("Selling 4 farms...")
     resp = session.post(
-        f"{TARGET_HOST}/province/sell/farms/{uid}",
+        f"{TARGET_HOST}/sell/farms/{uid}",
         data={"farms": "4"},
         allow_redirects=False,
     )
@@ -223,7 +223,7 @@ def main():
     # BUY again
     print("Buying 4 farms again...")
     resp = session.post(
-        f"{TARGET_HOST}/province/buy/farms/{uid}",
+        f"{TARGET_HOST}/buy/farms/{uid}",
         data={"farms": "4"},
         allow_redirects=False,
     )
