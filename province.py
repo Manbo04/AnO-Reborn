@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import variables
 from helpers import get_date
 from upgrades import get_upgrades
-from database import get_db_cursor, cache_response
+from database import get_db_cursor, cache_response, invalidate_user_cache
 import math
 
 bp = Blueprint("province", __name__)
@@ -20,8 +20,11 @@ def provinces():
         cId = session["user_id"]
 
         db.execute(
-            """SELECT CAST(cityCount AS INTEGER) as cityCount, population, provinceName, id, land, happiness, productivity, energy
-        FROM provinces WHERE userId=(%s) ORDER BY id ASC""",
+            (
+                "SELECT CAST(cityCount AS INTEGER) as cityCount, population, "
+                "provinceName, id, land, happiness, "
+                "productivity, energy FROM provinces WHERE userId=(%s) ORDER BY id ASC"
+            ),
             (cId,),
         )
         provinces = db.fetchall()
@@ -38,26 +41,25 @@ def province(pId):
 
     cId = session["user_id"]
 
-    # OPTIMIZED: Single query to fetch province + infrastructure + resources + stats + upgrades
+    # OPTIMIZED: Single query to fetch province + infra + resources + stats
+    # + upgrades
     with get_db_connection() as conn:
         db = conn.cursor(cursor_factory=RealDictCursor)
 
         # Combined query - reduces 7+ queries to 1
         db.execute(
-            """
-            SELECT
-                p.id, p.userId AS user, p.provinceName AS name, p.population, p.pollution,
-                p.happiness, p.productivity, p.consumer_spending,
-                CAST(p.citycount AS INTEGER) as citycount, p.land, p.energy AS electricity,
-                s.location,
-                r.consumer_goods, r.rations,
-                pi.*
-            FROM provinces p
-            LEFT JOIN stats s ON p.userId = s.id
-            LEFT JOIN resources r ON p.userId = r.id
-            LEFT JOIN proInfra pi ON p.id = pi.id
-            WHERE p.id = %s
-            """,
+            (
+                "SELECT p.id, p.userId AS user, p.provinceName AS name, p.population, "
+                "p.pollution, p.happiness, p.productivity, p.consumer_spending, "
+                "CAST(p.citycount AS INTEGER) as citycount, "
+                "p.land, p.energy AS electricity, "
+                "s.location, r.consumer_goods, r.rations, pi.* "
+                "FROM provinces p "
+                "LEFT JOIN stats s ON p.userId = s.id "
+                "LEFT JOIN resources r ON p.userId = r.id "
+                "LEFT JOIN proInfra pi ON p.id = pi.id "
+                "WHERE p.id = %s"
+            ),
             (pId,),
         )
         result = db.fetchone()
@@ -243,7 +245,10 @@ def createprovince():
                 return error(400, "You don't have enough money.")
 
             db.execute(
-                "INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id",
+                (
+                    "INSERT INTO provinces (userId, provinceName) "
+                    "VALUES (%s, %s) RETURNING id"
+                ),
                 (cId, pName),
             )
             province_id = db.fetchone()[0]
@@ -418,9 +423,9 @@ def province_sell_buy(way, units, province_id):
         def sum_cost_linear(
             base_price, increment_per_item, current_owned, num_purchased
         ):
-            """Linear pricing: O(1) formula instead of O(n) loop
-            Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
-            = numPurchased * basePrice + increment * (numPurchased * currentOwned + numPurchased*(numPurchased-1)/2)
+            """Linear pricing: O(1) closed-form for arithmetic sum.
+            Sum over i=0..n-1 of (basePrice + (currentOwned + i) * increment).
+            Uses closed-form to avoid O(n) loops.
             """
             total_cost = num_purchased * base_price + increment_per_item * (
                 num_purchased * current_owned + num_purchased * (num_purchased - 1) / 2
@@ -447,9 +452,9 @@ def province_sell_buy(way, units, province_id):
 
         # All the unit prices in this format:
         """
-        unit_price: <the of the unit>,
-        unit_resource (optional): {resource_name: amount} (how many of what resources it takes to build)
-        unit_resource2 (optional): same as one, just for second resource
+        unit_price: <price of the unit>
+        unit_resource (optional): {resource_name: amount}
+        unit_resource2 (optional): second resource dict (if applicable)
         """
         # TODO: change the unit_resource and unit_resource2 into list based system
         unit_prices = variables.PROVINCE_UNIT_PRICES
@@ -488,7 +493,7 @@ def province_sell_buy(way, units, province_id):
         except KeyError:
             resources_data = {}
 
-        # Use parameterized query - build statement safely without f-string for column name
+        # Use parameterized query; avoid f-strings for column names
         if units in ["land", "cityCount"]:
             curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
         else:
@@ -509,53 +514,40 @@ def province_sell_buy(way, units, province_id):
 
         def resource_stuff(resources_data, way):
             for resource, amount in resources_data:
+                qty = amount * wantedUnits
                 if way == "buy":
-                    current_resource_stat = (
-                        f"SELECT {resource} FROM resources" + " WHERE id=%s"
+                    # Atomically subtract resource if user has enough
+                    db.execute(
+                        (
+                            f"UPDATE resources SET {resource}={resource}-%s "
+                            + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
+                        ),
+                        (qty, cId, qty),
                     )
-                    db.execute(current_resource_stat, (cId,))
-                    current_resource = int(db.fetchone()[0])
-
-                    new_resource = current_resource - (amount * wantedUnits)
-
-                    if new_resource < 0:
+                    if db.fetchone() is None:
+                        # Not enough resource
+                        # Fetch current amount for informative error
+                        db.execute(
+                            f"SELECT {resource} FROM resources WHERE id=%s", (cId,)
+                        )
+                        current_resource = int(db.fetchone()[0])
                         return {
                             "fail": True,
                             "resource": resource,
                             "current_amount": current_resource,
-                            "difference": current_resource - (amount * wantedUnits),
+                            "difference": current_resource - qty,
                         }
 
-                    resource_update_stat = (
-                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    )
-                    db.execute(
-                        resource_update_stat,
-                        (
-                            new_resource,
-                            cId,
-                        ),
-                    )
-
                 elif way == "sell":
-                    current_resource_stat = (
-                        f"SELECT {resource} FROM resources" + " WHERE id=%s"
-                    )
-                    db.execute(current_resource_stat, (cId,))
-                    current_resource = db.fetchone()[0]
-
-                    new_resource = current_resource + (amount * wantedUnits)
-
-                    resource_update_stat = (
-                        f"UPDATE resources SET {resource}=" + "%s WHERE id=%s"
-                    )
+                    # Increment resource on sell
                     db.execute(
-                        resource_update_stat,
                         (
-                            new_resource,
-                            cId,
+                            f"UPDATE resources SET {resource}={resource}+%s "
+                            f"WHERE id=%s RETURNING {resource}"
                         ),
+                        (qty, cId),
                     )
+                    db.fetchone()
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
@@ -577,17 +569,13 @@ def province_sell_buy(way, units, province_id):
                 return error("You don't have enough money.", 400)
 
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
-                return error(
-                    400,
-                    f"You don't have enough {slot_type} to buy {wantedUnits} units. Buy more {slot_type} to fix this problem",
-                )
+                return error(400, f"Not enough {slot_type} slots for {wantedUnits}")
 
             res_error = resource_stuff(resources_data, way)
             if res_error:
-                return error(
-                    400,
-                    f"Not enough resources. Missing {res_error['difference']*-1} {res_error['resource']}.",
-                )
+                missing_count = res_error["difference"] * -1
+                missing_res = res_error["resource"]
+                return error(400, f"Missing {missing_count} {missing_res}")
 
             db.execute(
                 "UPDATE stats SET gold=gold-%s WHERE id=(%s)",
@@ -609,7 +597,10 @@ def province_sell_buy(way, units, province_id):
         description = ""
 
         db.execute(
-            "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (
+                "INSERT INTO revenue (user_id, type, name, description, "
+                "date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            ),
             (
                 cId,
                 rev_type,
@@ -620,5 +611,12 @@ def province_sell_buy(way, units, province_id):
                 wantedUnits,
             ),
         )
+
+        # Invalidate caches for this user so UI and influence calculations reflect
+        # the recent changes immediately
+        try:
+            invalidate_user_cache(cId)
+        except Exception:
+            pass
 
     return redirect(f"/province/{province_id}")

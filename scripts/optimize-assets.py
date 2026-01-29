@@ -3,8 +3,8 @@
 Asset optimization script for reducing file sizes
 Run: python3 scripts/optimize-assets.py
 """
+
 import re
-import os
 from pathlib import Path
 
 
