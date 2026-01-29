@@ -463,9 +463,7 @@ def signup():
 
         remote = request.remote_addr
         forwarded = request.headers.get("X-Forwarded-For")
-        logging.getLogger(__name__).debug(
-            f"signup request remote_addr={remote} X-Forwarded-For={forwarded}"
-        )
+        logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
 
         # IP rate limiting: max 3 attempts per IP per day
         # Prefer X-Forwarded-For when present (app may run behind a proxy)
@@ -554,9 +552,7 @@ def signup():
         confirmation = request.form.get("confirmation").encode("utf-8")
 
         # Additional debug logging to help diagnose flaky test failures
-        import logging
-
-        logging.getLogger(__name__).debug(
+        logger.debug(
             "signup form values: username=%s email=%s continent=%s",
             username,
             email,
