@@ -1036,6 +1036,9 @@ def request_from_bank(colId):
         if len(requested_resources) > 1:
             return error(400, "You can only request one resource at a time")
 
+        if not requested_resources:
+            return error(400, "You must specify a resource and amount to request")
+
         requested_resources = tuple(requested_resources[0])
 
         amount = requested_resources[1]
