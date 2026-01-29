@@ -1467,6 +1467,35 @@ def generate_province_revenue():  # Runs each hour
             except Exception:
                 pass
         duration = time.time() - start_time
+
+        # Optional verbose logging for diagnostics. When VERBOSE_REVENUE_LOGS is
+        # enabled, we emit expected gross production for resources per user so
+        # operations teams can investigate discrepancies between theoretical
+        # production and actual DB deltas observed after the task runs.
+        if VERBOSE_REVENUE_LOGS:
+            try:
+                import countries
+
+                for uid in all_user_ids:
+                    try:
+                        rev = countries.get_revenue(uid)
+                        exp = rev.get("gross", {})
+                        coal_exp = exp.get("coal", 0)
+                        lumber_exp = exp.get("lumber", 0)
+                        if coal_exp or lumber_exp:
+                            log_verbose(
+                                (
+                                    f"Revenue expected for user {uid}: "
+                                    f"coal={coal_exp}, lumber={lumber_exp}"
+                                )
+                            )
+                    except Exception as e:
+                        log_verbose(
+                            f"Failed to compute expected revenue for user {uid}: {e}"
+                        )
+            except Exception as e:
+                log_verbose(f"Verbose revenue logging failed: {e}")
+
         print(
             f"generate_province_revenue: processed {processed} provinces in "
             f"{duration:.2f}s (skipped={skipped_for_lock})"
