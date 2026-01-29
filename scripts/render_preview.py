@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import jinja2
 from pathlib import Path
+from datetime import datetime as _dt
 
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 env = jinja2.Environment(
@@ -63,7 +64,6 @@ except Exception:
     env.filters["markdown"] = lambda text: text or ""
 
 # days_old -> compute days difference for YYYY-MM-DD strings
-from datetime import datetime as _dt
 
 
 def days_old(date_string):
@@ -136,6 +136,5 @@ if __name__ == "__main__":
             print("--- snippet ---")
             print(s)
             print()
-    print(
-        "Rendered previews saved to /tmp/preview_index.html and /tmp/preview_country.html"
-    )
+    print("Rendered previews saved to /tmp/preview_index.html and")
+    print("/tmp/preview_country.html")
