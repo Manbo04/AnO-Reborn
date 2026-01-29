@@ -297,7 +297,12 @@ def get_revenue(cId):
 
         # Filter to only show resources with positive gross production
         # or non-zero net (for special cases like rations)
-        filtered_revenue = {"gross": revenue["gross"], "net": revenue["net"]}
+        # Keep `gross_theoretical` present so templates can always access it
+        filtered_revenue = {
+            "gross": revenue["gross"],
+            "gross_theoretical": revenue["gross_theoretical"],
+            "net": revenue["net"],
+        }
 
         return filtered_revenue
 
