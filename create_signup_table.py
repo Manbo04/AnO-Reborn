@@ -61,7 +61,7 @@ def main():
             "signup_attempts table ensured (columns added if missing)"
         )
         return 0
-    except Exception as e:
+    except Exception:
         conn.rollback()
         logging.getLogger(__name__).exception("Failed to create signup_attempts table")
         return 2

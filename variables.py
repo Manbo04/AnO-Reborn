@@ -1,4 +1,5 @@
-# File for variables that are repeated multiple times in other files (for example, the resources list)
+# File for variables that are repeated multiple times in other files
+# (for example, the resources list)
 
 DEFAULT_TAX_INCOME = 0.025
 CONSUMER_GOODS_TAX_MULTIPLIER = 1.5
@@ -166,7 +167,7 @@ UPGRADES = {"oil_burners"}
 
 # Dictionary for which units give what resources, etc ()
 INFRA = {  # (OLD INFRA)
-    ### Electricity (done) ###
+    # Electricity (done)
     "coal_burners_plus": {"energy": 4},  # Energy increase
     "coal_burners_convert_minus": [{"coal": 11}],  # Resource upkeep cost
     "coal_burners_money": 7800,  # Monetary upkeep cost
@@ -183,7 +184,7 @@ INFRA = {  # (OLD INFRA)
     "solar_fields_plus": {"energy": 3},
     "solar_fields_money": 11000,
     ####################
-    ### Retail ### (Done)
+    # Retail (Done)
     "gas_stations_plus": {"consumer_goods": 12},
     "gas_stations_effect": [{"pollution": 4}],
     "gas_stations_money": 20000,
@@ -199,7 +200,7 @@ INFRA = {  # (OLD INFRA)
     "malls_effect": [{"pollution": 9}],
     "malls_money": 450000,  # Costs $750k
     ##############
-    ### Public Works ### (Done)
+    # Public Works (Done)
     "city_parks_effect": [{"happiness": 5}],
     "city_parks_effect_minus": {"pollution": 6},
     "city_parks_money": 25000,
@@ -213,14 +214,14 @@ INFRA = {  # (OLD INFRA)
     "monorails_effect_minus": {"pollution": 20},
     "monorails_money": 270000,
     ###################
-    ### Military (Done) ###
+    # Military (Done)
     "army_bases_money": 25000,  # Costs $25k
     "harbours_money": 35000,
     "aerodomes_money": 55000,
     "admin_buildings_money": 90000,
     "silos_money": 340000,
     ################
-    ### Industry (Done) ###
+    # Industry (Done)
     "farms_money": 3000,  # Costs $3k
     "farms_plus": {"rations": 12},
     "farms_effect": [{"pollution": 1}],
@@ -249,7 +250,7 @@ INFRA = {  # (OLD INFRA)
     "lumber_mills_plus": {"lumber": 35},
     "lumber_mills_effect": [{"pollution": 1}],
     ################
-    ### Processing (Done) ###
+    # Processing (Done)
     "component_factories_money": 50000,  # Costs $220k
     "component_factories_convert_minus": [
         {"copper": 20},
@@ -277,7 +278,7 @@ INFRA = {  # (OLD INFRA)
 }
 
 MILDICT = {
-    ## LAND
+    # LAND
     "soldiers": {"price": 200, "resources": {"rations": 2}, "manpower": 1},
     "tanks": {"price": 8000, "resources": {"steel": 5, "components": 5}, "manpower": 4},
     "artillery": {
@@ -285,7 +286,7 @@ MILDICT = {
         "resources": {"steel": 12, "components": 3},
         "manpower": 2,
     },
-    ## AIR
+    # AIR
     "bombers": {
         "price": 25000,
         "resources": {"aluminium": 20, "steel": 5, "components": 6},
@@ -301,7 +302,7 @@ MILDICT = {
         "resources": {"aluminium": 8, "steel": 2, "components": 4},
         "manpower": 1,
     },
-    ## WATER
+    # WATER
     "destroyers": {
         "price": 30000,
         "resources": {"steel": 30, "components": 7},
@@ -317,7 +318,7 @@ MILDICT = {
         "resources": {"steel": 20, "components": 8},
         "manpower": 6,
     },
-    ## SPECIAL
+    # SPECIAL
     "spies": {
         "price": 25000,  # Cost 25k
         "resources": {"rations": 50},  # Costs 50 rations

@@ -8,6 +8,7 @@ Example (give 100B gold and 1M resources):
 Intended to run via Railway:
   railway run python scripts/grant-resources.py 8 100000000000 1000000
 """
+
 import os
 import sys
 from urllib.parse import urlparse

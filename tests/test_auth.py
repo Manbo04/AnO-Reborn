@@ -22,6 +22,12 @@ def delete_user(username, email, session):
 
     db = conn.cursor()
 
+    # Ensure the session is logged in before attempting account deletion
+    try:
+        login(session)
+    except Exception:
+        pass
+
     session.post(f"{BASE_URL}/delete_own_account")
 
     try:
@@ -29,8 +35,8 @@ def delete_user(username, email, session):
             "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
             (username, email),
         )
-        result = db.fetchone()[0]
-    except:
+        _ = db.fetchone()[0]
+    except Exception:
         return True
     return False
 
@@ -84,8 +90,8 @@ def register(session):
             "SELECT id FROM users WHERE username=%s AND email=%s AND auth_type='normal'",
             (credentials.username, credentials.email),
         )
-        result = db.fetchone()[0]
-    except:
+        _ = db.fetchone()[0]
+    except Exception:
         return False
 
     return True
@@ -108,12 +114,12 @@ def logout(session):
 
 
 def test_register():
-    assert register(register_session) == True
+    assert register(register_session) is True
 
 
 def test_logout():
-    assert logout(register_session) == True
+    assert logout(register_session) is True
 
 
 def test_login():
-    assert login(login_session) == True
+    assert login(login_session) is True

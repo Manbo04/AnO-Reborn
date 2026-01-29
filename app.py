@@ -536,7 +536,8 @@ def get_resources():
                 (target_user_id,),
             )
             resources = dict(db.fetchone())
-            query_cache.set(cache_key, resources)
+            # Resources change frequently, cache them for a short time only
+            query_cache.set(cache_key, resources, ttl_seconds=15)
             return resources
         except TypeError:
             return {}
@@ -693,6 +694,31 @@ def logout():
 @app.route("/tutorial", methods=["GET"])
 def tutorial():
     return render_template("tutorial.html")
+
+
+@app.route("/mechanics", methods=["GET"])
+def mechanics():
+    return render_template("mechanics.html")
+
+
+@app.route("/mechanics/consumer_goods", methods=["GET"])
+def mechanics_consumer_goods():
+    return render_template("mechanics/consumer_goods.html")
+
+
+@app.route("/mechanics/revenue", methods=["GET"])
+def mechanics_revenue():
+    return render_template("mechanics/revenue.html")
+
+
+@app.route("/mechanics/resources", methods=["GET"])
+def mechanics_resources():
+    return render_template("mechanics/resources.html")
+
+
+@app.route("/mechanics/war", methods=["GET"])
+def mechanics_war():
+    return render_template("mechanics/war.html")
 
 
 @app.route("/forgot_password", methods=["GET"])

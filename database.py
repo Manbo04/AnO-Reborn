@@ -184,10 +184,28 @@ def invalidate_user_cache(user_id: int) -> None:
     This removes cached resources and influence entries for the given user id.
     Use when user resources, provinces, or stats are updated to ensure
     subsequent reads return fresh data.
+
+    This function is defensive: it tries a direct key delete first and falls
+    back to pattern-based invalidation to tolerate tests and edge cases.
     """
-    # Remove specific user caches by pattern match
-    query_cache.invalidate(pattern=f"resources_{user_id}")
-    query_cache.invalidate(pattern=f"influence_{user_id}")
+    key_res = f"resources_{user_id}"
+    key_inf = f"influence_{user_id}"
+    try:
+        # Directly remove exact keys when present
+        if key_res in query_cache.cache:
+            del query_cache.cache[key_res]
+        else:
+            query_cache.invalidate(pattern=key_res)
+    except Exception as e:
+        logger.exception("Failed to invalidate resources cache for %s: %s", user_id, e)
+
+    try:
+        if key_inf in query_cache.cache:
+            del query_cache.cache[key_inf]
+        else:
+            query_cache.invalidate(pattern=key_inf)
+    except Exception as e:
+        logger.exception("Failed to invalidate influence cache for %s: %s", user_id, e)
 
 
 class DatabasePool:
@@ -409,6 +427,8 @@ def get_db_connection(cursor_factory=None):
             cursor.execute("SELECT ...")
     """
     conn = db_pool.get_connection()
+    import logging
+    logging.getLogger(__name__).debug('get_db_connection: got conn type=%s closed=%s', type(conn), getattr(conn,'closed',None))
     close_on_return = False
     try:
         yield conn
@@ -444,48 +464,44 @@ def get_db_cursor(cursor_factory=None):
     # if an error occurs. Using a dedicated connection for the cursor
     # prevents accidental reuse/closure races where a cursor from the
     # pool could be closed by another context.
-    conn = None
+    # Use a dedicated connection for cursors to avoid accidental closure
+    # when nested database contexts obtain pooled connections.
     used_pool = False
     close_on_return = False
-    try:
+    conn = psycopg2.connect(
+        database=os.getenv("PG_DATABASE"),
+        user=os.getenv("PG_USER"),
+        password=os.getenv("PG_PASSWORD"),
+        host=os.getenv("PG_HOST"),
+        port=os.getenv("PG_PORT"),
+        connect_timeout=10,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=3,
+    )
+
+    # If the connection appears closed for any reason, create a fresh one
+    if getattr(conn, "closed", 0):
         try:
-            conn = db_pool.get_connection()
-            used_pool = True
+            conn.close()
         except Exception:
-            # Pool might not be initialized or available; create a fresh connection
-            conn = psycopg2.connect(
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-                connect_timeout=10,
-                keepalives=1,
-                keepalives_idle=30,
-                keepalives_interval=10,
-                keepalives_count=3,
-            )
+            pass
+        conn = psycopg2.connect(
+            database=os.getenv("PG_DATABASE"),
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
+            host=os.getenv("PG_HOST"),
+            port=os.getenv("PG_PORT"),
+            connect_timeout=10,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=3,
+        )
+        used_pool = False
 
-        # If the connection appears closed for any reason, create a fresh one
-        if getattr(conn, "closed", 0):
-            try:
-                conn.close()
-            except Exception:
-                pass
-            conn = psycopg2.connect(
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                host=os.getenv("PG_HOST"),
-                port=os.getenv("PG_PORT"),
-                connect_timeout=10,
-                keepalives=1,
-                keepalives_idle=30,
-                keepalives_interval=10,
-                keepalives_count=3,
-            )
-            used_pool = False
-
+    try:
         cursor = conn.cursor(cursor_factory=cursor_factory)
         try:
             yield cursor
