@@ -67,6 +67,8 @@ def test_tax_income_uses_positive_cg(monkeypatch):
 
     # Validate: one of the calls should be the consumer goods update with (3, 1)
     # Validate presence of call that updates consumer goods for the user
-    expected_q = "UPDATE resources SET consumer_goods=GREATEST(consumer_goods-%s, 0) WHERE id=%s"
+    expected_q = (
+        "UPDATE resources SET consumer_goods=GREATEST(consumer_goods-%s, 0) WHERE id=%s"
+    )
     cg_called = any((expected_q in q and (3, 1) in seq) for q, seq in recorded["calls"])
     assert cg_called, "Consumer goods update not recorded (clamped to 0)"

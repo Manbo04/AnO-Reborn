@@ -1,6 +1,5 @@
 import random
 
-
 # TODO: get nation names from DB, get amount of fighters and bombers
 # from DB, add infra damage, make aircraft consume resources
 # TODO: figure out how calculate bomber and fighter losses separately

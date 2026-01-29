@@ -55,11 +55,13 @@ class FakeCursor:
                 del self.state["offers"][offer_key]
             else:
                 del self.state["offers"][int(offer_key)]
-        # UPDATE resources SET <res>=%s WHERE id=%s
+        # UPDATE resources SET <res>=%s WHERE id=%s or with RETURNING
         # Non-parameterized resource updates, e.g.:
         # "UPDATE resources SET rations=rations+5 WHERE id=%s"
-        elif "update resources set" in sql_lower and (
-            "=" in sql_lower and ("+" in sql_lower or "-" in sql_lower)
+        elif (
+            "update resources set" in sql_lower
+            and ("=" in sql_lower and ("+" in sql_lower or "-" in sql_lower))
+            and "returning" not in sql_lower
         ):
             left = sql_lower.split("set", 1)[1].split("where")[0].strip()
             resource, expr = [p.strip() for p in left.split("=")]
@@ -78,8 +80,12 @@ class FakeCursor:
                 self.state["resources"][uid][resource] = (
                     self.state["resources"][uid].get(resource, 0) - amount
                 )
-        # Parameterized updates, e.g. "UPDATE resources SET lumber=%s WHERE id=%s"
-        elif "update resources set" in sql_lower and "%s" in sql_lower:
+        # Parameterized updates without RETURNING (e.g. UPDATE resources SET lumber=%s WHERE id=%s)
+        elif (
+            "update resources set" in sql_lower
+            and "%s" in sql_lower
+            and "returning" not in sql_lower
+        ):
             # Sometimes we also see patterns like
             # "...rations=rations+5 WHERE id=%s" with params=(id,)
             if len(params) == 1:
@@ -103,11 +109,43 @@ class FakeCursor:
                 left = sql.split("SET", 1)[1].split("WHERE")[0].strip()
                 resource = left.split("=")[0].strip()
                 self.state["resources"][uid][resource] = new_amount
-        # UPDATE stats SET gold=gold-%s WHERE id=(%s)
+        # Parameterized updates with RETURNING (atomic checks)
+        elif "update resources set" in sql_lower and "returning" in sql_lower:
+            # Expect params like (amt, id, amt) for '-' case or (amt, id) for '+'.
+            # Parse resource name
+            left = sql_lower.split("set", 1)[1].split("where")[0].strip()
+            resource = left.split("=")[0].strip()
+            if "-" in left:
+                amt = params[0]
+                uid = params[1]
+                required = params[2]
+                if self.state["resources"][uid].get(resource, 0) < required:
+                    self._last = None
+                else:
+                    self.state["resources"][uid][resource] -= amt
+                    self._last = (self.state["resources"][uid][resource],)
+            else:
+                amt = params[0]
+                uid = params[1]
+                self.state["resources"][uid][resource] += amt
+                self._last = (self.state["resources"][uid][resource],)
+
+        # UPDATE stats SET gold=gold-%s WHERE id=(%s) (may include RETURNING)
         elif "update stats set gold=gold-%s" in sql_lower:
-            amt = params[0]
-            uid = params[1]
-            self.state["stats"][uid]["gold"] -= amt
+            # If RETURNING is present and a conditional WHERE, params may be (amt, uid, amt)
+            if "returning" in sql_lower:
+                amt = params[0]
+                uid = params[1]
+                required = params[2]
+                if self.state["stats"][uid]["gold"] < required:
+                    self._last = None
+                else:
+                    self.state["stats"][uid]["gold"] -= amt
+                    self._last = (self.state["stats"][uid]["gold"],)
+            else:
+                amt = params[0]
+                uid = params[1]
+                self.state["stats"][uid]["gold"] -= amt
         # UPDATE stats SET gold=gold+%s WHERE id=%s
         elif (
             "update stats set gold=gold+%s" in sql_lower

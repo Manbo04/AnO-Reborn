@@ -70,3 +70,30 @@ def test_country_shows_theoretical_and_projected(monkeypatch):
         # Projected small label with tooltip should be present
         assert "Projected: 77" in data or "Projected: 77" in resp.get_data(as_text=True)
         assert "Projected (applies productivity & rounding): 77" in data
+
+
+def test_country_handles_missing_gross_theoretical(monkeypatch):
+    import countries
+
+    # Prepare DB user
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute("DELETE FROM users WHERE username=%s", ("ui_revenue_test2",))
+        conn.commit()
+        uid = make_user(db, "ui_revenue_test2")
+        ensure_stats(db, uid)
+        conn.commit()
+
+    # Simulate get_revenue returning no 'gross_theoretical' key
+    def minimal_revenue(cid):
+        return {"gross": {"lumber": 10}, "net": {"lumber": 10}}
+
+    monkeypatch.setattr(countries, "get_revenue", minimal_revenue)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user_id"] = uid
+
+        resp = client.get(f"/country/id={uid}")
+        # Should not 500 even if gross_theoretical missing
+        assert resp.status_code == 200

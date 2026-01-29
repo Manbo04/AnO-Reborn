@@ -4,6 +4,7 @@
 Run this in production once after deployment to avoid race conditions where tasks
 try to `CREATE TABLE IF NOT EXISTS` concurrently.
 """
+
 from database import get_db_connection
 
 if __name__ == "__main__":
