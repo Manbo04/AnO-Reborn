@@ -74,3 +74,4 @@ jobs:
         run: pytest -q tests -q
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
+          PYTHONPATH: ${{ github.workspace }}

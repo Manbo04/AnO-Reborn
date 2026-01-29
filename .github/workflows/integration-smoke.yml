@@ -37,6 +37,7 @@ jobs:
       - name: Run integration smoke tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           # Run just the critical integration tests and resource-cache tests
           pytest -q tests/test_resource_cache.py tests/test_integration_give_resource.py \
