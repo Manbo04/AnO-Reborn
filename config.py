@@ -2,6 +2,7 @@
 Configuration helper for Railway deployment
 Parses DATABASE_URL and REDIS_URL into individual components
 """
+
 import os
 from urllib.parse import urlparse
 

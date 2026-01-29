@@ -1,6 +1,7 @@
-from flask import request, render_template, session
+from flask import render_template
 from helpers import login_required
 from database import get_db_cursor
+
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
 
@@ -25,7 +26,7 @@ def statistics():
         # OPTIMIZATION: Fetch all resource stats in ONE query instead of 21 queries
         db.execute(
             """
-            SELECT resource, 
+            SELECT resource,
                    ROUND(AVG(price)) as avg_price,
                    MAX(price) as max_price,
                    MIN(price) as min_price
@@ -35,11 +36,11 @@ def statistics():
             """,
             (tuple(resources),),
         )
-        
+
         # Initialize all resources with default values
         for resource in resources:
             market_stats[resource] = {"avg": 0, "max": 0, "min": 0}
-        
+
         # Populate with actual data
         for row in db.fetchall():
             resource, avg_price, max_price, min_price = row

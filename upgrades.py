@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect
 from helpers import login_required, error
-from database import get_db_cursor, query_cache
+from database import get_db_cursor, query_cache, invalidate_user_cache
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 from dotenv import load_dotenv
@@ -119,37 +119,37 @@ def upgrade_sell_buy(ttype, thing):
         cId = session["user_id"]
 
         if ttype == "buy":
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            current_gold = db.fetchone()[0]
+            # Atomically withdraw money only if sufficient
+            db.execute(
+                "UPDATE stats SET gold=gold-%s WHERE id=%s AND gold>=%s RETURNING gold",
+                (money, cId, money),
+            )
+            if db.fetchone() is None:
+                return error(400, "You don't have enough money to buy this upgrade.")
 
-            if current_gold < money:
-                return error(400, f"You don't have enough money to buy this upgrade.")
-
+            # Atomically consume resources required for the upgrade
             for resource, amount in resources.items():
-                db.execute(f"SELECT {resource} FROM resources WHERE id=%s", (cId,))
-                current_amount = db.fetchone()[0]
-                if current_amount < amount:
+                db.execute(
+                    (
+                        f"UPDATE resources SET {resource}={resource}-%s "
+                        + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
+                    ),
+                    (amount, cId, amount),
+                )
+                if db.fetchone() is None:
                     return error(
                         400,
                         f"You don't have enough {resource.upper()} to buy this upgrade.",
                     )
 
-            db.execute(
-                "UPDATE stats SET gold=gold-%s WHERE id=%s",
-                (
-                    money,
-                    cId,
-                ),
-            )
-            for resource, amount in resources.items():
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource}-%s WHERE id=%s",
-                    (
-                        amount,
-                        cId,
-                    ),
-                )
             db.execute(f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s", (cId,))
+            try:
+                invalidate_user_cache(cId)
+                query_cache.invalidate(
+                    pattern=f"upgrades_{cId}",
+                )
+            except Exception:
+                pass
 
         elif ttype == "sell":
             db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
@@ -162,5 +162,10 @@ def upgrade_sell_buy(ttype, thing):
                     ),
                 )
             db.execute(f"UPDATE upgrades SET {thing_key}=0 WHERE user_id=%s", (cId,))
+            try:
+                invalidate_user_cache(cId)
+                query_cache.invalidate(pattern=f"upgrades_{cId}")
+            except Exception:
+                pass
 
     return redirect("/upgrades")

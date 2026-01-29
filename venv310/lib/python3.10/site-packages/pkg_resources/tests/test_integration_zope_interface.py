@@ -23,16 +23,13 @@ def test_interop_pkg_resources_iter_entry_points(tmp_path, venv):
     """
     project = {
         "pkg": {
-            "foo.py": cleandoc(
-                """
+            "foo.py": cleandoc("""
                 from pkg_resources import iter_entry_points
 
                 def bar():
                     print("Print me if you can")
-                """
-            ),
-            "setup.py": cleandoc(
-                """
+                """),
+            "setup.py": cleandoc("""
                 from setuptools import setup, find_packages
 
                 setup(
@@ -43,8 +40,7 @@ def test_interop_pkg_resources_iter_entry_points(tmp_path, venv):
                         ],
                     },
                 )
-                """
-            ),
+                """),
         }
     }
     jaraco.path.build(project, prefix=tmp_path)

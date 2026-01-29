@@ -369,9 +369,11 @@ def uts46_remap(
         code_point = ord(char)
         try:
             uts46row = uts46data[
-                code_point
-                if code_point < 256
-                else bisect.bisect_left(uts46data, (code_point, "Z")) - 1
+                (
+                    code_point
+                    if code_point < 256
+                    else bisect.bisect_left(uts46data, (code_point, "Z")) - 1
+                )
             ]
             status = uts46row[1]
             replacement: Optional[str] = None

@@ -463,7 +463,9 @@ def signup():
 
         remote = request.remote_addr
         forwarded = request.headers.get("X-Forwarded-For")
-        logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
+        logging.getLogger(__name__).debug(
+            f"signup request remote_addr={remote} X-Forwarded-For={forwarded}"
+        )
 
         # IP rate limiting: max 3 attempts per IP per day
         # Prefer X-Forwarded-For when present (app may run behind a proxy)

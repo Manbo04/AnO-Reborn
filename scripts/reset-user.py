@@ -1,9 +1,7 @@
-import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
-import psycopg2
-import sys
 
 sys.path.append(".")
 from database import get_db_cursor

@@ -61,7 +61,10 @@ def add_indexes():
             "Index on wars.peace_date for active war filtering",
         ),
         (
-            "CREATE INDEX IF NOT EXISTS idx_wars_peace_offer_id ON wars(peace_offer_id);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_wars_peace_offer_id "
+                "ON wars(peace_offer_id);"
+            ),
             "Index on wars.peace_offer_id for peace offer lookups",
         ),
         # Stats and resources
@@ -79,7 +82,10 @@ def add_indexes():
             "Index on offers.user_id for user offer lookups",
         ),
         (
-            "CREATE INDEX IF NOT EXISTS idx_offers_resource_type ON offers(resource, type);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_offers_resource_type "
+                "ON offers(resource, type);"
+            ),
             "Composite index on offers for market queries",
         ),
         # Users
@@ -89,7 +95,10 @@ def add_indexes():
         ),
         # News
         (
-            "CREATE INDEX IF NOT EXISTS idx_news_destination_id ON news(destination_id);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_news_destination_id "
+                "ON news(destination_id);"
+            ),
             "Index on news.destination_id for user news lookups",
         ),
         # Coalition related

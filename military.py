@@ -26,9 +26,11 @@ def military():
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             # Single query for all military data including manpower
             db.execute(
-                """SELECT tanks, soldiers, artillery, bombers, fighters, apaches,
-                   destroyers, cruisers, submarines, spies, ICBMs as icbms, nukes, manpower
-                   FROM military WHERE id=%s""",
+                (
+                    "SELECT tanks, soldiers, artillery, bombers, fighters, apaches, "
+                    "destroyers, cruisers, submarines, spies, ICBMs as icbms, nukes, "
+                    "manpower FROM military WHERE id=%s"
+                ),
                 (cId,),
             )
             mil_data = db.fetchone()
@@ -116,10 +118,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
             if way == "sell":
                 if wantedUnits > currentUnits:
-                    return error(
-                        400,
-                        f"You don't have enough {units} to sell ({wantedUnits}/{currentUnits})",
-                    )
+                    return error(400, f"Not enough {units} (have {currentUnits})")
 
                 for resource, amount in resources.items():
                     addResources = wantedUnits * amount
@@ -162,16 +161,13 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 if wantedUnits > limits[units]:
                     return error(
                         400,
-                        f"You exceeded the unit buy limit, you might want to buy more military buildings. You can buy {limits[units]}/{wantedUnits} {units}.",
+                        f"Unit buy limit exceeded (allowed {limits[units]})",
                     )
 
                 if (
                     totalPrice > gold
                 ):  # checks if user wants to buy more units than he has gold
-                    return error(
-                        400,
-                        f"You don't have enough money for that ({gold}/{totalPrice}). You need {totalPrice-gold} more money.",
-                    )
+                    return error(400, f"Not enough money ({gold}/{totalPrice})")
 
                 # OPTIMIZATION: Batch fetch all required resources in ONE query
                 resource_names = list(resources.keys())
@@ -191,7 +187,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                     if requiredResources > currentResources:
                         return error(
                             400,
-                            f"You have {currentResources}/{requiredResources} {resource}, meaning you need {requiredResources-currentResources} more.",
+                            f"{resource}: need {requiredResources-currentResources}",
                         )
 
                 for resource, amount in resources.items():
@@ -216,7 +212,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             else:
                 return error(404, "Page not found")
 
-            ####### UPDATING REVENUE #############
+            # UPDATING REVENUE
             if way == "buy":
                 rev_type = "expense"
             elif way == "sell":
@@ -225,7 +221,10 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             description = ""
 
             db.execute(
-                "INSERT INTO revenue (user_id, type, name, description, date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (
+                    "INSERT INTO revenue (user_id, type, name, description, "
+                    "date, resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                ),
                 (
                     cId,
                     rev_type,
