@@ -314,6 +314,8 @@ def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
 
     with get_db_cursor() as db:
+        import logging
+
         try:
             db.execute(
                 "SELECT id FROM provinces WHERE id=%s AND userId=%s",
@@ -322,12 +324,19 @@ def province_sell_buy(way, units, province_id):
                     cId,
                 ),
             )
-            ownProvince = db.fetchone()[0]
-            ownProvince = True
-        except TypeError:
+            row = db.fetchone()
+            ownProvince = bool(row)
+        except Exception:
             ownProvince = False
 
         if not ownProvince:
+            logger = logging.getLogger(__name__)
+            logger.debug(
+                "Unauthorized province action: user %s attempted %s on province %s",
+                cId,
+                way,
+                province_id,
+            )
             return error(400, "You don't own this province")
 
         allUnits = [

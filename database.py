@@ -428,7 +428,12 @@ def get_db_connection(cursor_factory=None):
     """
     conn = db_pool.get_connection()
     import logging
-    logging.getLogger(__name__).debug('get_db_connection: got conn type=%s closed=%s', type(conn), getattr(conn,'closed',None))
+
+    logging.getLogger(__name__).debug(
+        "get_db_connection: got conn type=%s closed=%s",
+        type(conn),
+        getattr(conn, "closed", None),
+    )
     close_on_return = False
     try:
         yield conn
