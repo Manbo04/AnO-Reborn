@@ -639,4 +639,15 @@ def province_sell_buy(way, units, province_id):
         except Exception:
             pass
 
+        # Also invalidate page-level caches (provinces list and province pages)
+        # so the UI reflects the new units/land immediately instead of waiting
+        # for TTL expiry.
+        try:
+            from database import query_cache
+
+            query_cache.invalidate(pattern=f"provinces_{cId}_")
+            query_cache.invalidate(pattern=f"province_{cId}_")
+        except Exception:
+            pass
+
     return redirect(f"/province/{province_id}")
