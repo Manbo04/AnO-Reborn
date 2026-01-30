@@ -1,14 +1,6 @@
-import pytest
 from database import get_db_connection
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Flaky: import-order affects Nations.get_particular_resources implementation;"
-        " temporary unblock"
-    ),
-    strict=False,
-)
 def test_get_particular_resources_returns_existing_values():
     # Create a temporary user with a known steel value
     import time
