@@ -242,7 +242,10 @@ def buy_market_offer(offer_id):
             "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
             (offer_id,),
         )
-        resource, total_amount, price_for_one, seller_id = db.fetchone()
+        row = db.fetchone()
+        if not row:
+            return error(400, "Offer not found")
+        resource, total_amount, price_for_one, seller_id = row
 
         if amount_wanted < 1:
             return error(400, "Amount cannot be less than 1")
@@ -260,8 +263,12 @@ def buy_market_offer(offer_id):
         ):  # Checks if buyer doesnt have enough gold for buyin
             return error(400, "You don't have enough money.")  # Returns error if true
 
-        give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
-        give_resource(cId, seller_id, "money", total_price)  # Gives the money
+        res = give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
+        if res is not True:
+            return error(400, str(res))
+        res = give_resource(cId, seller_id, "money", total_price)  # Gives the money
+        if res is not True:
+            return error(400, str(res))
 
         new_offer_amount = total_amount - amount_wanted
 
@@ -299,7 +306,10 @@ def sell_market_offer(offer_id):
             "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
             (offer_id,),
         )
-        resource, total_amount, price_for_one, buyer_id = db.fetchone()
+        row = db.fetchone()
+        if not row:
+            return error(400, "Offer not found")
+        resource, total_amount, price_for_one, buyer_id = row
 
         # Sees how much of the resource the seller has
         resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
@@ -317,11 +327,14 @@ def sell_market_offer(offer_id):
             return error(400, "You don't have enough of that resource")
 
         # Removes the resource from the seller and gives it to the buyer
-        give_resource(seller_id, buyer_id, resource, amount_wanted)
+        res = give_resource(seller_id, buyer_id, resource, amount_wanted)
+        if res is not True:
+            return error(400, str(res))
 
         # Takes away the money used for buying from the buyer and gives it to the seller
-        give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
-
+        res = give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
+        if res is not True:
+            return error(400, str(res))
         # Calculate new offer amount after sale
         new_offer_amount = total_amount - amount_wanted
 
@@ -572,8 +585,9 @@ def trade_offer(offer_type, offeree_id):
                 realAmount = int(db.fetchone()[0])
 
                 if amount > realAmount:  # Checks if user wants to sell more than he has
-                    return error("400", "Selling amount is higher the amount you have.")
-
+                    return error(
+                        400, "Selling amount is higher than the amount you have."
+                    )
                 # Calculates the resource amount the seller should have
                 newResourceAmount = realAmount - amount
 
@@ -631,7 +645,10 @@ def decline_trade(trade_id):
             ),
             (trade_id,),
         )
-        offeree, offerer, type, resource, amount, price = db.fetchone()
+        row = db.fetchone()
+        if not row:
+            return error(400, "Trade not found")
+        offeree, offerer, type, resource, amount, price = row
 
         if cId not in [offeree, offerer]:
             return error(400, "You haven't been sent that offer")
@@ -673,17 +690,29 @@ def accept_trade(trade_id):
             ),
             (trade_id,),
         )
-        offeree, trade_type, offerer, resource, amount, price = db.fetchone()
+        row = db.fetchone()
+        if not row:
+            return error(400, "Trade not found")
+        offeree, trade_type, offerer, resource, amount, price = row
 
         if offeree != cId:
             return error(400, "You can't accept that offer")
 
+        # Use give_resource and check results; on failure return a friendly error
         if trade_type == "sell":
-            give_resource(offeree, offerer, "money", amount * price)
-            give_resource(offerer, offeree, resource, amount)
+            res = give_resource(offeree, offerer, "money", amount * price)
+            if res is not True:
+                return error(400, str(res))
+            res = give_resource(offerer, offeree, resource, amount)
+            if res is not True:
+                return error(400, str(res))
         elif trade_type == "buy":
-            give_resource(offerer, offeree, "money", amount * price)
-            give_resource(offeree, offerer, resource, amount)
+            res = give_resource(offerer, offeree, "money", amount * price)
+            if res is not True:
+                return error(400, str(res))
+            res = give_resource(offeree, offerer, resource, amount)
+            if res is not True:
+                return error(400, str(res))
 
         db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
 
