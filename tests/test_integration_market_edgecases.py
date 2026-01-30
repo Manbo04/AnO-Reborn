@@ -1,6 +1,7 @@
 from flask import Flask
 from database import query_cache
 import market
+import sys
 
 
 class FakeCursor:
@@ -485,6 +486,44 @@ def test_buy_market_offer_give_resource_failure(monkeypatch):
     # caches should not be invalidated on failure
     assert query_cache.get("resources_1000") is not None
     assert query_cache.get("resources_2000") is not None
+
+
+def test_report_trade_error_with_sentry(monkeypatch):
+    # Ensure that _report_trade_error attaches extras and calls Sentry in a safe way
+    called = {"msg": None, "extras": None}
+
+    class DummyScope:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_extra(self, k, v):
+            if not hasattr(self, "extras"):
+                self.extras = {}
+            self.extras[k] = v
+
+    class DummySentry:
+        def __init__(self):
+            self.captured = []
+
+        def push_scope(self):
+            return DummyScope()
+
+        def capture_message(self, msg):
+            called["msg"] = msg
+
+        def capture_exception(self, exc):
+            called["msg"] = f"exc:{exc}"
+
+    dummy = DummySentry()
+    monkeypatch.setitem(sys.modules, "sentry_sdk", dummy)
+
+    import market as mkt
+
+    mkt._report_trade_error("boom", extra={"user_id": 999, "offer_id": 13})
+    assert called["msg"] == "boom"
 
 
 def test_accept_trade_give_resource_failure(monkeypatch):
