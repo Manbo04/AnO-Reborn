@@ -9,19 +9,42 @@ logger = logging.getLogger(__name__)
 
 
 def _report_trade_error(msg, exc=None, extra=None):
-    """Log trade-related errors and attempt to send to Sentry if available."""
+    """Log trade-related errors and attempt to send to Sentry if available.
+
+    `extra` should be a dict of additional context (user_id, trade_id, offer_id,
+    resource, amount, price, etc). This will be attached as extras to Sentry
+    if available and included in the logger output.
+    """
     try:
-        logger.error(msg)
+        if extra:
+            logger.error("%s | extra=%s", msg, extra)
+        else:
+            logger.error(msg)
+
         # Try to send to Sentry if configured
         try:
             import sentry_sdk
 
-            if exc:
-                sentry_sdk.capture_exception(exc)
+            # If extra context is supplied, push a scope so it is attached to the event
+            if extra:
+                with sentry_sdk.push_scope() as scope:
+                    for k, v in (extra or {}).items():
+                        try:
+                            scope.set_extra(k, v)
+                        except Exception:
+                            # Some Sentry SDK versions may differ; ignore failures
+                            pass
+                    if exc:
+                        sentry_sdk.capture_exception(exc)
+                    else:
+                        sentry_sdk.capture_message(msg)
             else:
-                sentry_sdk.capture_message(msg)
+                if exc:
+                    sentry_sdk.capture_exception(exc)
+                else:
+                    sentry_sdk.capture_message(msg)
         except Exception:
-            # Sentry not configured or failed; continue
+            # Sentry not configured or failed; don't raise from here
             pass
     except Exception:
         # Logging should never raise and crash handlers
@@ -289,13 +312,29 @@ def buy_market_offer(offer_id):
         res = give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
         if res is not True:
             _report_trade_error(
-                f"buy_market_offer: give_resource(bank -> buyer) failed: {res}"
+                f"buy_market_offer: give_resource(bank -> buyer) failed: {res}",
+                extra={
+                    "user_id": cId,
+                    "offer_id": offer_id,
+                    "resource": resource,
+                    "amount": amount_wanted,
+                    "price": price_for_one,
+                    "seller_id": seller_id,
+                },
             )
             return error(400, str(res))
         res = give_resource(cId, seller_id, "money", total_price)  # Gives the money
         if res is not True:
             _report_trade_error(
-                f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}"
+                f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}",
+                extra={
+                    "user_id": cId,
+                    "offer_id": offer_id,
+                    "resource": resource,
+                    "amount": amount_wanted,
+                    "price": price_for_one,
+                    "seller_id": seller_id,
+                },
             )
             return error(400, str(res))
 
@@ -359,15 +398,40 @@ def sell_market_offer(offer_id):
         res = give_resource(seller_id, buyer_id, resource, amount_wanted)
         if res is not True:
             _report_trade_error(
-                f"sell_market_offer: give_resource(seller -> buyer) failed: {res}"
+                f"sell_market_offer: give_resource(seller -> buyer) failed: {res}",
+                extra={
+                    "user_id": seller_id,
+                    "offer_id": offer_id,
+                    "resource": resource,
+                    "amount": amount_wanted,
+                    "price": price_for_one,
+                    "buyer_id": buyer_id,
+                },
             )
             return error(400, str(res))
 
         # Takes away the money used for buying from the buyer and gives it to the seller
-        res = give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
+        res = give_resource(
+            buyer_id,
+            seller_id,
+            "money",
+            price_for_one * amount_wanted,
+        )
         if res is not True:
+            msg = (
+                "sell_market_offer: give_resource(buyer -> seller money) failed: "
+                + str(res)
+            )
             _report_trade_error(
-                f"sell_market_offer: give_resource(buyer -> seller money) failed: {res}"
+                msg,
+                extra={
+                    "user_id": seller_id,
+                    "offer_id": offer_id,
+                    "resource": resource,
+                    "amount": amount_wanted,
+                    "price": price_for_one,
+                    "buyer_id": buyer_id,
+                },
             )
             return error(400, str(res))
         # Calculate new offer amount after sale
@@ -741,7 +805,19 @@ def accept_trade(trade_id):
                     "accept_trade: give_resource(offeree -> offerer money) failed: "
                     f"{res}"
                 )
-                _report_trade_error(msg)
+                _report_trade_error(
+                    msg,
+                    extra={
+                        "user_id": cId,
+                        "trade_id": trade_id,
+                        "trade_type": trade_type,
+                        "offerer": offerer,
+                        "offeree": offeree,
+                        "resource": resource,
+                        "amount": amount,
+                        "price": price,
+                    },
+                )
                 return error(400, str(res))
             res = give_resource(offerer, offeree, resource, amount)
             if res is not True:
@@ -749,7 +825,19 @@ def accept_trade(trade_id):
                     "accept_trade: give_resource(offerer -> offeree resource) failed: "
                     f"{res}"
                 )
-                _report_trade_error(msg)
+                _report_trade_error(
+                    msg,
+                    extra={
+                        "user_id": cId,
+                        "trade_id": trade_id,
+                        "trade_type": trade_type,
+                        "offerer": offerer,
+                        "offeree": offeree,
+                        "resource": resource,
+                        "amount": amount,
+                        "price": price,
+                    },
+                )
                 return error(400, str(res))
         elif trade_type == "buy":
             res = give_resource(offerer, offeree, "money", amount * price)
@@ -758,7 +846,19 @@ def accept_trade(trade_id):
                     "accept_trade: give_resource(offerer -> offeree money) failed: "
                     f"{res}"
                 )
-                _report_trade_error(msg)
+                _report_trade_error(
+                    msg,
+                    extra={
+                        "user_id": cId,
+                        "trade_id": trade_id,
+                        "trade_type": trade_type,
+                        "offerer": offerer,
+                        "offeree": offeree,
+                        "resource": resource,
+                        "amount": amount,
+                        "price": price,
+                    },
+                )
                 return error(400, str(res))
             res = give_resource(offeree, offerer, resource, amount)
             if res is not True:
@@ -766,7 +866,19 @@ def accept_trade(trade_id):
                     "accept_trade: give_resource(offeree -> offerer resource) failed: "
                     f"{res}"
                 )
-                _report_trade_error(msg)
+                _report_trade_error(
+                    msg,
+                    extra={
+                        "user_id": cId,
+                        "trade_id": trade_id,
+                        "trade_type": trade_type,
+                        "offerer": offerer,
+                        "offeree": offeree,
+                        "resource": resource,
+                        "amount": amount,
+                        "price": price,
+                    },
+                )
                 return error(400, str(res))
 
         db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
