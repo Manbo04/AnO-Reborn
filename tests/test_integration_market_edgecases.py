@@ -9,6 +9,9 @@ class FakeCursor:
         self._last = None
 
     def execute(self, sql, params=None):
+        # Some call sites (oops) pass a tuple containing the SQL; normalize that.
+        if isinstance(sql, (tuple, list)):
+            sql = sql[0]
         sql_lower = sql.lower()
         # SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)
         offer_select = (
@@ -38,6 +41,14 @@ class FakeCursor:
             resource = parts[1]
             uid = params[0]
             self._last = (self.state["resources"][uid].get(resource, 0),)
+        # SELECT ... FROM trades WHERE offer_id=(%s)
+        elif "from trades where offer_id" in sql_lower:
+            tid = params[0]
+            # allow numeric or string keys
+            trade = self.state.get("trades", {}).get(tid) or self.state.get(
+                "trades", {}
+            ).get(int(tid))
+            self._last = trade
         # UPDATE offers SET amount=(%s) WHERE offer_id=(%s)
         elif "update offers set amount" in sql_lower:
             new_amount = params[0]
@@ -80,7 +91,8 @@ class FakeCursor:
                 self.state["resources"][uid][resource] = (
                     self.state["resources"][uid].get(resource, 0) - amount
                 )
-        # Parameterized updates without RETURNING (e.g. UPDATE resources SET lumber=%s WHERE id=%s)
+        # Parameterized updates without RETURNING
+        # e.g. UPDATE resources SET lumber=%s WHERE id=%s
         elif (
             "update resources set" in sql_lower
             and "%s" in sql_lower
@@ -132,7 +144,8 @@ class FakeCursor:
 
         # UPDATE stats SET gold=gold-%s WHERE id=(%s) (may include RETURNING)
         elif "update stats set gold=gold-%s" in sql_lower:
-            # If RETURNING is present and a conditional WHERE, params may be (amt, uid, amt)
+            # If RETURNING is present and a conditional WHERE,
+            # params may be (amt, uid, amt)
             if "returning" in sql_lower:
                 amt = params[0]
                 uid = params[1]
@@ -428,3 +441,85 @@ def test_transfer_insufficient_resources(monkeypatch):
     # caches invalidated
     assert query_cache.get("resources_300") is None
     assert query_cache.get("resources_400") is None
+
+
+def test_buy_market_offer_give_resource_failure(monkeypatch):
+    # Simulate give_resource failing when bank -> buyer transfer attempted
+    state = {
+        "stats": {1000: {"gold": 1000}, 2000: {"gold": 100}},
+        "resources": {1000: {"rations": 0}, 2000: {"rations": 10}},
+        "offers": {
+            10: {"resource": "rations", "amount": 10, "price": 10, "user_id": 2000}
+        },
+    }
+
+    query_cache.set("resources_1000", {"rations": 0}, ttl_seconds=30)
+    query_cache.set("resources_2000", {"rations": 10}, ttl_seconds=30)
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    # Make give_resource fail for the bank -> buyer transfer
+    monkeypatch.setattr(
+        "market.give_resource", lambda *a, **kw: "insufficient funds in bank"
+    )
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+    # avoid Jinja template rendering in tests for error paths
+    monkeypatch.setattr(
+        "helpers.render_template", lambda *a, **kw: f"error:{kw.get('message','')}"
+    )
+
+    with test_app.test_request_context("/", method="POST", data={"amount_10": "5"}):
+        from flask import session
+
+        session["user_id"] = 1000
+        res = market.buy_market_offer("10")
+
+    # Expect friendly error and no state change
+    assert isinstance(res, tuple) and res[1] == 400
+    assert state["offers"][10]["amount"] == 10
+    assert state["resources"][1000]["rations"] == 0
+    # caches should not be invalidated on failure
+    assert query_cache.get("resources_1000") is not None
+    assert query_cache.get("resources_2000") is not None
+
+
+def test_accept_trade_give_resource_failure(monkeypatch):
+    # Simulate a trade where give_resource fails during acceptance
+    # trade row is (offeree, type, offerer, resource, amount, price)
+    state = {
+        "stats": {3000: {"gold": 1000}, 4000: {"gold": 100}},
+        "resources": {3000: {"rations": 0}, 4000: {"rations": 10}},
+        "trades": {42: (3000, "sell", 4000, "rations", 5, 10)},
+    }
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    # Force give_resource to fail (e.g., money transfer fails)
+    monkeypatch.setattr("market.give_resource", lambda *a, **kw: "transfer failed")
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+
+    # avoid Jinja template rendering in tests for error paths
+    monkeypatch.setattr(
+        "helpers.render_template", lambda *a, **kw: f"error:{kw.get('message','')}"
+    )
+
+    with test_app.test_request_context("/", method="POST", data={}):
+        from flask import session
+
+        session["user_id"] = 3000
+        res = market.accept_trade("42")
+
+    # Expect an error (400) and the trade should still exist (not deleted)
+    assert isinstance(res, tuple) and res[1] == 400
+    assert 42 in state["trades"]
+    # Ensure no resource or money mutation happened
+    assert state["resources"][3000]["rations"] == 0
+    assert state["stats"][4000]["gold"] == 100
