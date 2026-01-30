@@ -3,6 +3,29 @@ from helpers import login_required, error
 from database import get_db_cursor, get_db_connection, invalidate_user_cache
 from flask import request, render_template, session, redirect, flash
 import variables
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def _report_trade_error(msg, exc=None, extra=None):
+    """Log trade-related errors and attempt to send to Sentry if available."""
+    try:
+        logger.error(msg)
+        # Try to send to Sentry if configured
+        try:
+            import sentry_sdk
+
+            if exc:
+                sentry_sdk.capture_exception(exc)
+            else:
+                sentry_sdk.capture_message(msg)
+        except Exception:
+            # Sentry not configured or failed; continue
+            pass
+    except Exception:
+        # Logging should never raise and crash handlers
+        pass
 
 
 def give_resource(giver_id, taker_id, resource, amount):
@@ -265,9 +288,15 @@ def buy_market_offer(offer_id):
 
         res = give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
         if res is not True:
+            _report_trade_error(
+                f"buy_market_offer: give_resource(bank -> buyer) failed: {res}"
+            )
             return error(400, str(res))
         res = give_resource(cId, seller_id, "money", total_price)  # Gives the money
         if res is not True:
+            _report_trade_error(
+                f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}"
+            )
             return error(400, str(res))
 
         new_offer_amount = total_amount - amount_wanted
@@ -329,11 +358,17 @@ def sell_market_offer(offer_id):
         # Removes the resource from the seller and gives it to the buyer
         res = give_resource(seller_id, buyer_id, resource, amount_wanted)
         if res is not True:
+            _report_trade_error(
+                f"sell_market_offer: give_resource(seller -> buyer) failed: {res}"
+            )
             return error(400, str(res))
 
         # Takes away the money used for buying from the buyer and gives it to the seller
         res = give_resource(buyer_id, seller_id, "money", price_for_one * amount_wanted)
         if res is not True:
+            _report_trade_error(
+                f"sell_market_offer: give_resource(buyer -> seller money) failed: {res}"
+            )
             return error(400, str(res))
         # Calculate new offer amount after sale
         new_offer_amount = total_amount - amount_wanted
@@ -702,16 +737,36 @@ def accept_trade(trade_id):
         if trade_type == "sell":
             res = give_resource(offeree, offerer, "money", amount * price)
             if res is not True:
+                msg = (
+                    "accept_trade: give_resource(offeree -> offerer money) failed: "
+                    f"{res}"
+                )
+                _report_trade_error(msg)
                 return error(400, str(res))
             res = give_resource(offerer, offeree, resource, amount)
             if res is not True:
+                msg = (
+                    "accept_trade: give_resource(offerer -> offeree resource) failed: "
+                    f"{res}"
+                )
+                _report_trade_error(msg)
                 return error(400, str(res))
         elif trade_type == "buy":
             res = give_resource(offerer, offeree, "money", amount * price)
             if res is not True:
+                msg = (
+                    "accept_trade: give_resource(offerer -> offeree money) failed: "
+                    f"{res}"
+                )
+                _report_trade_error(msg)
                 return error(400, str(res))
             res = give_resource(offeree, offerer, resource, amount)
             if res is not True:
+                msg = (
+                    "accept_trade: give_resource(offeree -> offerer resource) failed: "
+                    f"{res}"
+                )
+                _report_trade_error(msg)
                 return error(400, str(res))
 
         db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
