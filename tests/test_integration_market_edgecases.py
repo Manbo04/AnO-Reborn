@@ -562,3 +562,44 @@ def test_accept_trade_give_resource_failure(monkeypatch):
     # Ensure no resource or money mutation happened
     assert state["resources"][3000]["rations"] == 0
     assert state["stats"][4000]["gold"] == 100
+
+
+def test_accept_buy_offer_seller_lacks_resource_does_not_double_charge(monkeypatch):
+    # Buyer posted a buy offer and had funds removed at posting.
+    # Seller has no resources.
+    state = {
+        "stats": {100: {"gold": 950}, 200: {"gold": 0}},
+        "resources": {100: {"rations": 0}, 200: {"rations": 0}},
+        # trade format in this file's tests:
+        # trades[id] = (offeree, type, offerer, resource, amount, price)
+        # Here offerer=100 (buyer), offeree=200 (seller), type='buy'
+        "trades": {42: (200, "buy", 100, "rations", 5, 10)},
+    }
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+
+    # avoid Jinja template rendering in tests for error paths
+    monkeypatch.setattr(
+        "helpers.render_template", lambda *a, **kw: f"error:{kw.get('message','')}"
+    )
+
+    with test_app.test_request_context("/", method="POST", data={}):
+        from flask import session
+
+        session["user_id"] = 200  # seller trying to accept
+        res = market.accept_trade("42")
+
+    # Should return a 400 error because seller lacks resources; trade still present
+    assert isinstance(res, tuple) and res[1] == 400
+    assert 42 in state["trades"]
+    # Ensure buyer was not double-charged (remains at 950)
+    assert state["stats"][100]["gold"] == 950
+    # Ensure seller didn't receive money
+    assert state["stats"][200]["gold"] == 0
+    # Ensure no resource mutation occurred
+    assert state["resources"][200]["rations"] == 0
