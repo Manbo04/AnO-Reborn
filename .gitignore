@@ -33,3 +33,6 @@ venv310/
 
 # Local backups and test output
 backups/
+
+# Local debug scripts kept out of repo
+/scripts/debug/
