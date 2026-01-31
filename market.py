@@ -799,12 +799,12 @@ def accept_trade(trade_id):
 
         # Use give_resource and check results; on failure return a friendly error
         if trade_type == "sell":
+            # For sell offers the seller already removed resources when posting.
+            # Transfer money from buyer -> seller.
+            # Then credit buyer from bank (resource escrow).
             res = give_resource(offeree, offerer, "money", amount * price)
             if res is not True:
-                msg = (
-                    "accept_trade: give_resource(offeree -> offerer money) failed: "
-                    f"{res}"
-                )
+                msg = "accept_trade: give_resource(offeree->offerer money) failed"
                 _report_trade_error(
                     msg,
                     extra={
@@ -819,12 +819,12 @@ def accept_trade(trade_id):
                     },
                 )
                 return error(400, str(res))
-            res = give_resource(offerer, offeree, resource, amount)
+
+            # Resource was already removed from seller at posting.
+            # Credit buyer from bank
+            res = give_resource("bank", offeree, resource, amount)
             if res is not True:
-                msg = (
-                    "accept_trade: give_resource(offerer -> offeree resource) failed: "
-                    f"{res}"
-                )
+                msg = "accept_trade: give_resource(bank->offeree resource) failed"
                 _report_trade_error(
                     msg,
                     extra={
@@ -840,12 +840,23 @@ def accept_trade(trade_id):
                 )
                 return error(400, str(res))
         elif trade_type == "buy":
-            res = give_resource(offerer, offeree, "money", amount * price)
+            # For buy offers the buyer already had funds removed at posting.
+            # Ensure seller still has the resource before any transfers.
+            # Transfer the resource first, then credit seller from escrow (bank).
+            try:
+                db.execute(f"SELECT {resource} FROM resources WHERE id=%s", (offerer,))
+                seller_row = db.fetchone()
+                seller_has = seller_row[0] if seller_row else 0
+            except Exception:
+                seller_has = 0
+
+            if seller_has < amount:
+                return error(400, "Seller doesn't have enough of that resource")
+
+            # Move resource from seller -> buyer
+            res = give_resource(offerer, offeree, resource, amount)
             if res is not True:
-                msg = (
-                    "accept_trade: give_resource(offerer -> offeree money) failed: "
-                    f"{res}"
-                )
+                msg = "accept_trade: give_resource(offerer->offeree resource) failed"
                 _report_trade_error(
                     msg,
                     extra={
@@ -860,12 +871,12 @@ def accept_trade(trade_id):
                     },
                 )
                 return error(400, str(res))
-            res = give_resource(offeree, offerer, resource, amount)
+
+            # Credit seller from escrow (bank).
+            # Buyer funds were already taken at post
+            res = give_resource("bank", offerer, "money", amount * price)
             if res is not True:
-                msg = (
-                    "accept_trade: give_resource(offeree -> offerer resource) failed: "
-                    f"{res}"
-                )
+                msg = "accept_trade: give_resource(bank->offerer money) failed"
                 _report_trade_error(
                     msg,
                     extra={
