@@ -50,6 +50,15 @@ def cleanup_user(uid):
         db.execute("DELETE FROM users WHERE id=%s", (uid,))
         conn.commit()
 
+    # Ensure any in-memory caches do not keep stale entries for this test user
+    try:
+        from database import invalidate_user_cache
+
+        invalidate_user_cache(uid)
+    except Exception:
+        # Tests should not fail due to cache invalidation problems
+        pass
+
 
 def test_revenue_end_to_end_small_run(monkeypatch):
     uid = create_test_user()
