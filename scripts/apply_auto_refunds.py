@@ -29,10 +29,8 @@ def gather_candidates(cutoff_days=CUTOFF_DAYS, max_refund=MAX_REFUND):
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute(
-            (
-                "SELECT id, user_id, details, created_at FROM repairs "
-                "WHERE change_type=%s AND created_at >= %s",
-            ),
+            "SELECT id, user_id, details, created_at FROM repairs "
+            "WHERE change_type=%s AND created_at >= %s",
             ("negative_gold_reset", cutoff),
         )
         rows = db.fetchall()
