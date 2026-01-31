@@ -799,66 +799,43 @@ def accept_trade(trade_id):
 
         # Use give_resource and check results; on failure return a friendly error
         if trade_type == "sell":
-            # For sell offers the seller already removed resources when posting.
-            # Transfer money from buyer -> seller.
-            # Then credit buyer from bank (resource escrow).
-            res = give_resource(offeree, offerer, "money", amount * price)
-            if res is not True:
-                msg = "accept_trade: give_resource(offeree->offerer money) failed"
-                _report_trade_error(
-                    msg,
-                    extra={
-                        "user_id": cId,
-                        "trade_id": trade_id,
-                        "trade_type": trade_type,
-                        "offerer": offerer,
-                        "offeree": offeree,
-                        "resource": resource,
-                        "amount": amount,
-                        "price": price,
-                    },
-                )
-                return error(400, str(res))
-
-            # Resource was already removed from seller at posting.
-            # Credit buyer from bank
-            res = give_resource("bank", offeree, resource, amount)
-            if res is not True:
-                msg = "accept_trade: give_resource(bank->offeree resource) failed"
-                _report_trade_error(
-                    msg,
-                    extra={
-                        "user_id": cId,
-                        "trade_id": trade_id,
-                        "trade_type": trade_type,
-                        "offerer": offerer,
-                        "offeree": offeree,
-                        "resource": resource,
-                        "amount": amount,
-                        "price": price,
-                    },
-                )
-                return error(400, str(res))
-        elif trade_type == "buy":
-            # For buy offers the buyer already had funds removed at posting.
-            # Ensure seller still has the resource before any transfers.
-            # Transfer the resource first, then credit seller from escrow (bank).
+            # Transactionally move money from buyer -> seller
+            # and credit buyer's resource
             try:
-                db.execute(f"SELECT {resource} FROM resources WHERE id=%s", (offerer,))
-                seller_row = db.fetchone()
-                seller_has = seller_row[0] if seller_row else 0
-            except Exception:
-                seller_has = 0
+                # Deduct buyer gold only if sufficient
+                db.execute(
+                    (
+                        "UPDATE stats SET gold=gold-%s "
+                        "WHERE id=%s AND gold>=%s RETURNING gold",
+                    ),
+                    (amount * price, offeree, amount * price),
+                )
+                row = db.fetchone()
+                if not row:
+                    return error(400, "Buyer doesn't have enough money")
 
-            if seller_has < amount:
-                return error(400, "Seller doesn't have enough of that resource")
+                # Credit seller gold
+                db.execute(
+                    "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
+                    (amount * price, offerer),
+                )
+                if db.fetchone() is None:
+                    raise Exception("Failed to credit seller")
 
-            # Move resource from seller -> buyer
-            res = give_resource(offerer, offeree, resource, amount)
-            if res is not True:
-                msg = "accept_trade: give_resource(offerer->offeree resource) failed"
+                # Credit buyer with resource from escrow
+                db.execute(
+                    f"UPDATE resources SET {resource}={resource} + %s "
+                    "WHERE id=%s RETURNING {resource}",
+                    (amount, offeree),
+                )
+                if db.fetchone() is None:
+                    raise Exception("Failed to credit buyer resource")
+
+            except Exception as exc:
+                # Any exception will rollback due to get_db_connection context
                 _report_trade_error(
-                    msg,
+                    "accept_trade: transactional sell failed",
+                    exc=exc,
                     extra={
                         "user_id": cId,
                         "trade_id": trade_id,
@@ -870,15 +847,44 @@ def accept_trade(trade_id):
                         "price": price,
                     },
                 )
-                return error(400, str(res))
+                return error(400, "Trade acceptance failed")
 
-            # Credit seller from escrow (bank).
-            # Buyer funds were already taken at post
-            res = give_resource("bank", offerer, "money", amount * price)
-            if res is not True:
-                msg = "accept_trade: give_resource(bank->offerer money) failed"
+        elif trade_type == "buy":
+            # Transactionally move resource from seller -> buyer and credit seller
+            try:
+                # Check and deduct seller resource atomically
+                db.execute(
+                    f"UPDATE resources SET {resource}={resource} - %s"
+                    " WHERE id=%s AND " + f"{resource} >= %s RETURNING {resource}",
+                    (amount, offeree, amount),
+                )
+                row = db.fetchone()
+                if not row:
+                    return error(400, "Seller doesn't have enough of that resource")
+
+                # Credit buyer resource
+                db.execute(
+                    (
+                        f"UPDATE resources SET {resource}={resource} + %s "
+                        "WHERE id=%s RETURNING {resource}"
+                    ),
+                    (amount, offerer),
+                )
+                if db.fetchone() is None:
+                    raise Exception("Failed to credit buyer resource")
+
+                # Credit seller gold from escrow (buyer funds were removed at posting)
+                db.execute(
+                    "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
+                    (amount * price, offeree),
+                )
+                if db.fetchone() is None:
+                    raise Exception("Failed to credit seller")
+
+            except Exception as exc:
                 _report_trade_error(
-                    msg,
+                    "accept_trade: transactional buy failed",
+                    exc=exc,
                     extra={
                         "user_id": cId,
                         "trade_id": trade_id,
@@ -890,9 +896,16 @@ def accept_trade(trade_id):
                         "price": price,
                     },
                 )
-                return error(400, str(res))
+                return error(400, "Trade acceptance failed")
 
         db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+
+        # Invalidate caches so UI shows fresh resource/gold values
+        try:
+            invalidate_user_cache(offerer)
+            invalidate_user_cache(offeree)
+        except Exception:
+            pass
 
     return redirect("/my_offers")
 
