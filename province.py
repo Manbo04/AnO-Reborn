@@ -576,9 +576,12 @@ def province_sell_buy(way, units, province_id):
             unitUpd = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
             db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
 
-            new_money = gold + (wantedUnits * price)
-
-            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
+            # Use an atomic increment to avoid races with background tasks
+            # that also modify `stats.gold` (do not overwrite concurrent updates)
+            db.execute(
+                "UPDATE stats SET gold = gold + %s WHERE id = %s",
+                (wantedUnits * price, cId),
+            )
 
             resource_stuff(resources_data, way)
 
