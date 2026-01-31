@@ -528,36 +528,38 @@ def countries():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
+        # Parse and coerce query params
         search = request.values.get("search")
-        lowerinf = request.values.get("lowerinf")
-        upperinf = request.values.get("upperinf")
-        province_range = request.values.get("province_range")
+        lowerinf = request.values.get("lowerinf", type=float)
+        upperinf = request.values.get("upperinf", type=float)
+        province_range = request.values.get("province_range", default=0, type=int)
         sort = request.values.get("sort")
         sortway = request.values.get("sortway")
         page = request.values.get("page", default=1, type=int)
 
         if sort == "war_range":
             target = target_data(cId)
-            lowerinf = target["lower"]
-            upperinf = target["upper"]
-            province_range = target["province_range"]
-
-        if not province_range:
-            province_range = 0
+            lowerinf = float(target.get("lower", 0))
+            upperinf = float(target.get("upper", 0))
+            province_range = int(target.get("province_range", 0))
 
         # First, get total count without pagination for result info
         db.execute(
-            """SELECT COUNT(DISTINCT users.id) as total
-FROM USERS
-LEFT JOIN provinces ON users.id = provinces.userId
-LEFT JOIN coalitions ON users.id = coalitions.userId
-LEFT JOIN colNames ON colNames.id = coalitions.colId
-GROUP BY users.id
-HAVING COUNT(provinces.id) >= %s;""",
+            """
+            SELECT COUNT(*) FROM (
+                SELECT users.id
+                FROM users
+                LEFT JOIN provinces ON users.id = provinces.userId
+                LEFT JOIN coalitions ON users.id = coalitions.userId
+                LEFT JOIN colNames ON colNames.id = coalitions.colId
+                GROUP BY users.id
+                HAVING COUNT(provinces.id) >= %s
+            ) t;
+            """,
             (province_range,),
         )
         try:
-            total_count = db.fetchone()[0]
+            total_count = db.fetchone()[0] or 0
         except (TypeError, IndexError):
             total_count = 0
 
@@ -575,7 +577,7 @@ HAVING COUNT(provinces.id) >= %s;""",
                    coalitions.colId,
                    colNames.name,
                    COUNT(provinces.id) as provinces_count
-            FROM USERS
+            FROM users
             LEFT JOIN provinces ON users.id = provinces.userId
             LEFT JOIN coalitions ON users.id = coalitions.userId
             LEFT JOIN colNames ON colNames.id = coalitions.colId
@@ -603,18 +605,29 @@ HAVING COUNT(provinces.id) >= %s;""",
         influence = influences.get(user_id, 0)
 
         user_date = user[2]
-        date = datetime.fromisoformat(user_date)
+        # Handle both date objects and ISO strings
+        try:
+            date = datetime.fromisoformat(user_date)
+        except Exception:
+            # Fallback if already a date object
+            date = user_date
         unix = int((date - datetime(1970, 1, 1)).total_seconds())
 
         user.append(influence)
         user.append(unix)
-        if search and search not in user[1]:  # user[1] - username
+
+        # Case-insensitive search
+        if search and search.lower() not in (user[1] or "").lower():
             addUser = False
-        if lowerinf and influence < float(lowerinf):
+
+        # Numeric bounds (None indicates 'no bound')
+        if lowerinf is not None and influence < lowerinf:
             addUser = False
-        if upperinf and influence > float(upperinf):
+        if upperinf is not None and influence > upperinf:
             addUser = False
-        if province_range and user[7] > int(province_range):  # user[7] - province count
+
+        # province_range behaves as a MINIMUM cutoff (>=)
+        if province_range and user[7] < int(province_range):  # user[7] - province count
             addUser = False
 
         if addUser:
