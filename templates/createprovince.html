@@ -18,7 +18,7 @@
 
             <div class="templatedivflex2 menuflex">
                 <div class="templatedivflex2left">
-                    <form action="/createprovince" method="POST">
+                    <form action="/createprovince" method="POST" id="createProvinceForm" onsubmit="return handleSubmit(this)">
                         <div class="infodiv">
                             <ul class="resourceparent middle">Your next province costs <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />{{ price | commas }}</ul>
                             <div class="templatedivflex2 divflex2center">
@@ -29,7 +29,7 @@
                                 </div>
                                 <div class="templatedivflex2left">
 
-                                    <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
+                                    <button type="submit" class="templatedivbutton templatecenteredbutton" id="createBtn"><span class="material-icons-outlined">
                                 add_circle_outline
                                 </span>Create</button>
 
@@ -47,4 +47,16 @@
         </div>
     </div>
 </div>
+
+<script>
+function handleSubmit(form) {
+    var btn = document.getElementById('createBtn');
+    if (btn.disabled) {
+        return false; // Already submitting
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span>Creating...';
+    return true;
+}
+</script>
 {% endblock %}
