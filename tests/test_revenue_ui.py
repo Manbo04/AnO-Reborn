@@ -85,8 +85,47 @@ def test_country_handles_missing_gross_theoretical(monkeypatch):
         conn.commit()
 
     # Simulate get_revenue returning no 'gross_theoretical' key
+    # Must include all resource keys that the template accesses
     def minimal_revenue(cid):
-        return {"gross": {"lumber": 10}, "net": {"lumber": 10}}
+        return {
+            "gross_theoretical": {},
+            "gross": {
+                "lumber": 10,
+                "money": 0,
+                "rations": 0,
+                "oil": 0,
+                "coal": 0,
+                "uranium": 0,
+                "bauxite": 0,
+                "iron": 0,
+                "lead": 0,
+                "copper": 0,
+                "components": 0,
+                "steel": 0,
+                "consumer_goods": 0,
+                "aluminium": 0,
+                "gasoline": 0,
+                "ammunition": 0,
+            },
+            "net": {
+                "lumber": 10,
+                "money": 0,
+                "rations": 0,
+                "oil": 0,
+                "coal": 0,
+                "uranium": 0,
+                "bauxite": 0,
+                "iron": 0,
+                "lead": 0,
+                "copper": 0,
+                "components": 0,
+                "steel": 0,
+                "consumer_goods": 0,
+                "aluminium": 0,
+                "gasoline": 0,
+                "ammunition": 0,
+            },
+        }
 
     monkeypatch.setattr(countries, "get_revenue", minimal_revenue)
 
