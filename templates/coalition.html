@@ -679,7 +679,7 @@
                                     <button type="submit" formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">
                                 check_circle_outline
                                             </span></button>
-                                    <button type="submit" formaction="/decline_treaty/{{ id[0] }}"><span class="material-icons iconred">
+                                    <button type="submit" formaction="/decline_treaty/{{ id[0] }}" onclick="return confirm('Decline this treaty offer?')"><span class="material-icons iconred">
                                 remove_circle_outline
                                             </span></button>
                                 </td>
@@ -711,7 +711,7 @@
                             <td>{{ treaty_name }}</td>
                             <td>{{ treaty_description }}</td>
                             <form method="POST">
-                                <td><button type="submit" formaction="/break_treaty/{{ id }}"><span class="material-icons iconred">
+                                <td><button type="submit" formaction="/break_treaty/{{ id }}" onclick="return confirm('Break treaty with {{ col_name }}? This may have diplomatic consequences!')"><span class="material-icons iconred">
                                                 remove_circle_outline
                                                     </span></button></td>
                             </form>
@@ -1009,7 +1009,7 @@
                         {% if user_role == "leader" %}
                         <div class="templatedivflex2left">
 
-                            <button type="submit" formaction="/delete_coalition/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"><span class="material-icons-outlined">
+                            <button type="submit" formaction="/delete_coalition/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to DELETE this coalition? This cannot be undone!')"><span class="material-icons-outlined">
                                 highlight_off
                                 </span>Delete Coalition</button>
 
@@ -1017,7 +1017,7 @@
                         {% endif %} {% if userInCurCol and user_role != "leader" %}
                         <div class="templatedivflex2left">
 
-                            <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"><span class="material-icons-outlined">
+                            <button type="submit" formaction="/leave/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to leave this coalition?')"><span class="material-icons-outlined">
                                 arrow_forward
                                 </span>Leave Coalition</button>
 
@@ -1150,7 +1150,7 @@
             <div class="infodiv">
                 <form action="/leave/{{ colId }}" method="POST">
 
-                    <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit"><span class="material-icons-outlined">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to leave this coalition?')"><span class="material-icons-outlined">
                     arrow_forward
                     </span>Leave Coalition</button>
 
