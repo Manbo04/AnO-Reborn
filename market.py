@@ -856,10 +856,8 @@ def accept_trade(trade_id):
                 # Deduct buyer gold and credit seller gold as the final step
                 try:
                     db.execute(
-                        (
-                            "UPDATE stats SET gold=gold-%s "
-                            "WHERE id=%s AND gold>=%s RETURNING gold",
-                        ),
+                        "UPDATE stats SET gold=gold-%s "
+                        "WHERE id=%s AND gold>=%s RETURNING gold",
                         (amount * price, offeree, amount * price),
                     )
                     row = db.fetchone()
