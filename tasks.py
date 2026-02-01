@@ -625,8 +625,16 @@ def calc_pg(pId, rations):
             rations_needed_percent = 1
 
         # Slower, controlled population growth (prevents snowballing)
-        # Max 0.5% growth with perfect rations
-        growth_rate = rations_needed_percent * 0.5
+        # Base rate reduced from 0.5% to 0.15% for more realistic growth
+        base_growth_rate = rations_needed_percent * 0.15
+
+        # Diminishing returns: growth slows as population approaches max
+        # At 0% of max: full growth rate
+        # At 50% of max: 75% of growth rate
+        # At 90% of max: only 10% of growth rate
+        pop_ratio = curPop / maxPop if maxPop > 0 else 1
+        diminishing_factor = max(0.05, 1 - (pop_ratio**2))
+        growth_rate = base_growth_rate * diminishing_factor
 
         # Calculates the new rations of the player
         new_rations = rations - rations_needed
@@ -738,7 +746,16 @@ def population_growth():  # Function for growing population
                 rations_ratio = 1
 
             # Slower, controlled population growth (prevents snowballing)
-            growth_rate = rations_ratio * 0.5
+            # Base rate reduced from 0.5% to 0.15% for more realistic growth
+            base_growth_rate = rations_ratio * 0.15
+
+            # Diminishing returns: growth slows as population approaches max
+            # At 0% of max: full growth rate
+            # At 50% of max: 75% of growth rate
+            # At 90% of max: only 10% of growth rate
+            pop_ratio = curPop / maxPop if maxPop > 0 else 1
+            diminishing_factor = max(0.05, 1 - (pop_ratio**2))
+            growth_rate = base_growth_rate * diminishing_factor
 
             new_rations = current_rations - rations_needed
             if new_rations < 0:
