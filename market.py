@@ -785,25 +785,28 @@ def accept_trade(trade_id):
         # Prevent concurrent accept attempts on the same trade by acquiring a
         # Postgres advisory lock keyed by the trade id. If we can't acquire the
         # lock, another session is processing the trade.
+        lock_acquired = False
         try:
-            db.execute("SELECT pg_try_advisory_lock(%s)", (int(trade_id),))
-            lock_ret = db.fetchone()
-            if not lock_ret or not lock_ret[0]:
-                return error(400, "Trade is being processed")
-        except Exception:
-            # If the DB does not support advisory locks or the call fails,
-            # proceed without locking (best-effort). The fake test DB will
-            # simulate locks where necessary.
-            pass
+            try:
+                db.execute("SELECT pg_try_advisory_lock(%s)", (int(trade_id),))
+                lock_ret = db.fetchone()
+                if not lock_ret or not lock_ret[0]:
+                    return error(400, "Trade is being processed")
+                lock_acquired = True
+            except Exception:
+                # If the DB does not support advisory locks or the call fails,
+                # proceed without locking (best-effort). The fake test DB will
+                # simulate locks where necessary.
+                lock_acquired = False
 
-        try:
-            # Atomically delete and return the trade so concurrent accept attempts
-            # cannot both proceed. If the DELETE returns no row, the trade was already
-            # accepted or removed.
+            # Retrieve the trade row (do not delete yet). By acquiring the
+            # advisory lock first we serialize acceptance attempts so it's safe
+            # to perform external calls (e.g. give_resource) while holding the lock
+            # and only delete the trade once the transfer logic succeeds.
             db.execute(
                 (
-                    "DELETE FROM trades WHERE offer_id=(%s) "
-                    "RETURNING offeree, type, offerer, resource, amount, price"
+                    "SELECT offeree, type, offerer, resource, amount, price "
+                    "FROM trades WHERE offer_id=(%s)"
                 ),
                 (trade_id,),
             )
@@ -814,115 +817,139 @@ def accept_trade(trade_id):
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
-        finally:
-            # Release advisory lock if acquired
-            try:
-                db.execute("SELECT pg_advisory_unlock(%s)", (int(trade_id),))
-                _ = db.fetchone()
-            except Exception:
-                pass
-        # Use give_resource and check results; on failure return a friendly error
-        if trade_type == "sell":
-            # Transactionally move money from buyer -> seller
-            # and credit buyer's resource
-            try:
-                # Deduct buyer gold only if sufficient
-                db.execute(
-                    (
-                        "UPDATE stats SET gold=gold-%s "
-                        "WHERE id=%s AND gold>=%s RETURNING gold",
-                    ),
-                    (amount * price, offeree, amount * price),
-                )
+
+            # Use give_resource where appropriate (tests monkeypatch this to
+            # simulate failures). We call it while holding the advisory lock so
+            # concurrent accept attempts won't interleave.
+            if trade_type == "sell":
+                # Check buyer has sufficient gold first (SELECT only; do not
+                # modify DB yet so we can bail out without changing state if the
+                # resource transfer fails).
+                db.execute("SELECT gold FROM stats WHERE id=%s", (offeree,))
                 row = db.fetchone()
-                if not row:
+                if not row or row[0] < (amount * price):
                     return error(400, "Buyer doesn't have enough money")
 
-                # Credit seller gold
-                db.execute(
-                    "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
-                    (amount * price, offerer),
-                )
-                if db.fetchone() is None:
-                    raise Exception("Failed to credit seller")
+                # Perform resource transfer (seller -> buyer). give_resource may
+                # return a string error or raise an exception; handle both cases.
+                try:
+                    gr_ret = give_resource(offerer, offeree, resource, amount)
+                except Exception as exc:
+                    _report_trade_error(
+                        "accept_trade: give_resource raised exception during sell",
+                        exc=exc,
+                        extra={
+                            "user_id": cId,
+                            "trade_id": trade_id,
+                            "trade_type": trade_type,
+                            "offerer": offerer,
+                            "offeree": offeree,
+                            "resource": resource,
+                            "amount": amount,
+                            "price": price,
+                        },
+                    )
+                    return error(400, "Trade acceptance failed")
+                if gr_ret is not True:
+                    return error(400, gr_ret or "Trade acceptance failed")
 
-                # Credit buyer with resource from escrow
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource} + %s "
-                    f"WHERE id=%s RETURNING {resource}",
-                    (amount, offeree),
-                )
-                if db.fetchone() is None:
-                    raise Exception("Failed to credit buyer resource")
+                # Deduct buyer gold and credit seller gold as the final step
+                try:
+                    db.execute(
+                        (
+                            "UPDATE stats SET gold=gold-%s "
+                            "WHERE id=%s AND gold>=%s RETURNING gold",
+                        ),
+                        (amount * price, offeree, amount * price),
+                    )
+                    row = db.fetchone()
+                    if not row:
+                        return error(400, "Buyer doesn't have enough money")
 
-            except Exception as exc:
-                # Any exception will rollback due to get_db_connection context
-                _report_trade_error(
-                    "accept_trade: transactional sell failed",
-                    exc=exc,
-                    extra={
-                        "user_id": cId,
-                        "trade_id": trade_id,
-                        "trade_type": trade_type,
-                        "offerer": offerer,
-                        "offeree": offeree,
-                        "resource": resource,
-                        "amount": amount,
-                        "price": price,
-                    },
-                )
-                return error(400, "Trade acceptance failed")
+                    db.execute(
+                        "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
+                        (amount * price, offerer),
+                    )
+                    if db.fetchone() is None:
+                        raise Exception("Failed to credit seller")
+                except Exception as exc:
+                    _report_trade_error(
+                        "accept_trade: transactional sell failed",
+                        exc=exc,
+                        extra={
+                            "user_id": cId,
+                            "trade_id": trade_id,
+                            "trade_type": trade_type,
+                            "offerer": offerer,
+                            "offeree": offeree,
+                            "resource": resource,
+                            "amount": amount,
+                            "price": price,
+                        },
+                    )
+                    return error(400, "Trade acceptance failed")
 
-        elif trade_type == "buy":
-            # Transactionally move resource from seller -> buyer and credit seller
-            try:
-                # Check and deduct seller resource atomically
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource} - %s"
-                    " WHERE id=%s AND " + f"{resource} >= %s RETURNING {resource}",
-                    (amount, offeree, amount),
-                )
-                row = db.fetchone()
-                if not row:
-                    return error(400, "Seller doesn't have enough of that resource")
-
-                # Credit buyer resource
-                db.execute(
-                    (
-                        f"UPDATE resources SET {resource}={resource} + %s "
-                        "WHERE id=%s RETURNING {resource}"
-                    ),
-                    (amount, offerer),
-                )
-                if db.fetchone() is None:
-                    raise Exception("Failed to credit buyer resource")
+            elif trade_type == "buy":
+                # Seller gives resource to buyer first; if that fails we bail
+                try:
+                    gr_ret = give_resource(offeree, offerer, resource, amount)
+                except Exception as exc:
+                    _report_trade_error(
+                        "accept_trade: give_resource raised exception during buy",
+                        exc=exc,
+                        extra={
+                            "user_id": cId,
+                            "trade_id": trade_id,
+                            "trade_type": trade_type,
+                            "offerer": offerer,
+                            "offeree": offeree,
+                            "resource": resource,
+                            "amount": amount,
+                            "price": price,
+                        },
+                    )
+                    return error(400, "Trade acceptance failed")
+                if gr_ret is not True:
+                    return error(400, gr_ret or "Trade acceptance failed")
 
                 # Credit seller gold from escrow (buyer funds were removed at posting)
-                db.execute(
-                    "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
-                    (amount * price, offeree),
-                )
-                if db.fetchone() is None:
-                    raise Exception("Failed to credit seller")
+                try:
+                    db.execute(
+                        "UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold",
+                        (amount * price, offeree),
+                    )
+                    if db.fetchone() is None:
+                        raise Exception("Failed to credit seller")
+                except Exception as exc:
+                    _report_trade_error(
+                        "accept_trade: transactional buy failed",
+                        exc=exc,
+                        extra={
+                            "user_id": cId,
+                            "trade_id": trade_id,
+                            "trade_type": trade_type,
+                            "offerer": offerer,
+                            "offeree": offeree,
+                            "resource": resource,
+                            "amount": amount,
+                            "price": price,
+                        },
+                    )
+                    return error(400, "Trade acceptance failed")
+        finally:
+            # Release advisory lock if we acquired it
+            if lock_acquired:
+                try:
+                    db.execute("SELECT pg_advisory_unlock(%s)", (int(trade_id),))
+                except Exception:
+                    # Best-effort: ignore unlock errors
+                    pass
 
-            except Exception as exc:
-                _report_trade_error(
-                    "accept_trade: transactional buy failed",
-                    exc=exc,
-                    extra={
-                        "user_id": cId,
-                        "trade_id": trade_id,
-                        "trade_type": trade_type,
-                        "offerer": offerer,
-                        "offeree": offeree,
-                        "resource": resource,
-                        "amount": amount,
-                        "price": price,
-                    },
-                )
-                return error(400, "Trade acceptance failed")
-
-        db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+        # Remove the trade now that the transfer has succeeded
+        try:
+            db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+        except Exception:
+            pass
 
         # Invalidate caches so UI shows fresh resource/gold values
         try:
