@@ -291,7 +291,8 @@ class FakeCursor:
                 self._last = None
 
     def fetchone(self):
-        return self._last
+        with FAKE_DB_LOCK:
+            return self._last
 
     def fetchall(self):
         # not used in these tests, but provide empty

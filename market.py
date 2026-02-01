@@ -786,19 +786,24 @@ def accept_trade(trade_id):
         # Postgres advisory lock keyed by the trade id. If we can't acquire the
         # lock, another session is processing the trade.
         lock_acquired = False
+        lock_blocked = False
         try:
-            try:
-                db.execute("SELECT pg_try_advisory_lock(%s)", (int(trade_id),))
-                lock_ret = db.fetchone()
-                if not lock_ret or not lock_ret[0]:
-                    return error(400, "Trade is being processed")
+            db.execute("SELECT pg_try_advisory_lock(%s)", (int(trade_id),))
+            lock_ret = db.fetchone()
+            if not lock_ret or not lock_ret[0]:
+                lock_blocked = True
+            else:
                 lock_acquired = True
-            except Exception:
-                # If the DB does not support advisory locks or the call fails,
-                # proceed without locking (best-effort). The fake test DB will
-                # simulate locks where necessary.
-                lock_acquired = False
+        except Exception:
+            # If the DB does not support advisory locks or the call fails,
+            # proceed without locking (best-effort).
+            lock_acquired = False
 
+        # Return error OUTSIDE the try/except to avoid catching template errors
+        if lock_blocked:
+            return error(400, "Trade is being processed")
+
+        try:
             # Retrieve the trade row (do not delete yet). By acquiring the
             # advisory lock first we serialize acceptance attempts so it's safe
             # to perform external calls (e.g. give_resource) while holding the lock
