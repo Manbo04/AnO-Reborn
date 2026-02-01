@@ -40,6 +40,16 @@ def server():
         pass
 
 
+@pytest.fixture
+def client():
+    """Flask test client fixture for testing routes."""
+    from app import app
+
+    app.config["TESTING"] = True
+    with app.test_client() as test_client:
+        yield test_client
+
+
 # Short-term safety net: ensure tests see a robust get_particular_resources
 # implementation even when import/reload order is unusual. This fixture is
 # autouse and session-scoped and will be removed once the module-level fix
