@@ -1185,7 +1185,7 @@ def generate_province_revenue():  # Runs each hour
                     plus = infra[unit].get("plus", {})
 
                     # BETTER ENGINEERING
-                    if unit == "nuclear_reactors" and upgrades["betterengineering"]:
+                    if unit == "nuclear_reactors" and upgrades.get("betterengineering"):
                         plus["energy"] += 6
 
                     eff = infra[unit].get("eff", {})
@@ -1195,12 +1195,12 @@ def generate_province_revenue():  # Runs each hour
                         eff["happiness"] *= 1.10
 
                     if unit == "hospitals":
-                        if upgrades["nationalhealthinstitution"]:
+                        if upgrades.get("nationalhealthinstitution"):
                             eff["happiness"] *= 1.3
                             eff["happiness"] = int(eff["happiness"])
 
                     if unit == "monorails":
-                        if upgrades["highspeedrail"]:
+                        if upgrades.get("highspeedrail"):
                             eff["productivity"] *= 1.2
                             eff["productivity"] = int(eff["productivity"])
 
@@ -1210,12 +1210,12 @@ def generate_province_revenue():  # Runs each hour
                     print(f"Remove ${operating_costs} as operating costs")
                     print(f"\n")
                     """
-                    if unit == "bauxite_mines" and upgrades["strongerexplosives"]:
+                    if unit == "bauxite_mines" and upgrades.get("strongerexplosives"):
                         # TODO: fix this plus_amount variable
                         plus_amount_multiplier += 0.45
 
                     if unit == "farms":
-                        if upgrades["advancedmachinery"]:
+                        if upgrades.get("advancedmachinery"):
                             plus_amount_multiplier += 0.5
 
                         plus_amount += int(
