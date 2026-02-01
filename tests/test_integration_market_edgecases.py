@@ -3,6 +3,7 @@ from database import query_cache
 import market
 import sys
 import threading
+import copy
 
 # Global lock to make FakeCursor.execute atomic across threads in tests
 FAKE_DB_LOCK = threading.Lock()
@@ -11,8 +12,12 @@ FAKE_ADVISORY_LOCKS = set()
 
 
 class FakeCursor:
-    def __init__(self, state):
+    def __init__(self, state, global_state=None):
+        # `state` is the working copy for this connection, `global_state` is
+        # the shared state visible to all connections. Some operations (like
+        # DELETE ... RETURNING) need to be atomic against the global state.
         self.state = state
+        self._global_state = global_state if global_state is not None else state
         self._last = None
 
     def execute(self, sql, params=None):
@@ -30,11 +35,23 @@ class FakeCursor:
                     lock_id = int(lock_id)
                 except Exception:
                     pass
+                print("[FAKE_DB] advisory locks before try:", FAKE_ADVISORY_LOCKS)
                 if lock_id in FAKE_ADVISORY_LOCKS:
                     self._last = (False,)
+                    print(f"[FAKE_DB] pg_try_advisory_lock({lock_id}) -> False")
                 else:
                     FAKE_ADVISORY_LOCKS.add(lock_id)
+                    # When a lock is acquired in a connection, refresh the
+                    # connection's working snapshot to reflect the latest global
+                    # state so subsequent SELECTs see the most recent data.
+                    try:
+                        self.state.clear()
+                        self.state.update(copy.deepcopy(self._global_state))
+                    except Exception:
+                        pass
                     self._last = (True,)
+                    print(f"[FAKE_DB] pg_try_advisory_lock({lock_id}) -> True")
+                    print(f"[FAKE_DB] advisory locks after add: {FAKE_ADVISORY_LOCKS}")
                 return
             if "pg_advisory_unlock" in sql_lower:
                 lock_id = params[0]
@@ -75,7 +92,10 @@ class FakeCursor:
                 uid = params[0]
                 self._last = (self.state["resources"][uid].get(resource, 0),)
             # SELECT ... FROM trades WHERE offer_id=(%s)
-            elif "from trades where offer_id" in sql_lower:
+            elif (
+                "from trades where offer_id" in sql_lower
+                and sql_lower.strip().startswith("select")
+            ):
                 tid = params[0]
                 # allow numeric or string keys
                 trade = self.state.get("trades", {}).get(tid) or self.state.get(
@@ -101,7 +121,26 @@ class FakeCursor:
                     del self.state["offers"][int(offer_key)]
             # DELETE FROM trades WHERE offer_id=(%s) or with RETURNING
             elif "delete from trades where offer_id" in sql_lower:
+                print(
+                    "[FAKE_DB] matched delete from trades branch; returning?",
+                    "returning" in sql_lower,
+                )
                 tid = params[0]
+                # Truncate long sql string for readability
+                try:
+                    preview = sql_lower[:120]
+                except Exception:
+                    preview = sql_lower
+                print(
+                    "[FAKE_DB] delete branch entry:",
+                    preview,
+                    "params=",
+                    params,
+                    "tid=",
+                    tid,
+                    "type=",
+                    type(tid),
+                )
                 # If a RETURNING clause is present, return the trade first then delete
                 if "returning" in sql_lower:
                     try:
@@ -109,23 +148,37 @@ class FakeCursor:
                     except Exception:
                         tid_int = None
 
-                    # Remove the trade before returning it to simulate atomic
-                    # DELETE RETURNING
-                    popped_str = self.state.get("trades", {}).pop(tid, None)
-                    popped_int = None
-                    if tid_int is not None:
-                        popped_int = self.state.get("trades", {}).pop(tid_int, None)
-                    # Choose whichever popped a value (prefer string key)
-                    trade = popped_str or popped_int
+                    print(
+                        "[FAKE_DB] trades before delete: "
+                        f"{list(self.state.get('trades', {}).keys())}"
+                    )
+
+                    # Remove the trade from the GLOBAL state to simulate an
+                    # atomic DELETE ... RETURNING across connections. We still
+                    # set the cursor's last row to the popped trade so fetchone
+                    # returns it.
+                    popped = None
+                    popped_key = None
+                    if tid_int is not None and tid_int in (
+                        self._global_state.get("trades", {}) or {}
+                    ):
+                        popped = self._global_state["trades"].pop(tid_int)
+                        # also remove from working copy so commits don't reintroduce it
+                        self.state.get("trades", {}).pop(tid_int, None)
+                        popped_key = tid_int
+                    elif tid in (self._global_state.get("trades", {}) or {}):
+                        popped = self._global_state["trades"].pop(tid)
+                        self.state.get("trades", {}).pop(tid, None)
+                        popped_key = tid
+
                     print(
                         "[FAKE_DB] POP results: "
-                        f"popped_str={popped_str!r}, "
-                        f"popped_int={popped_int!r}, trade={trade!r}"
+                        f"popped_key={popped_key!r}, trade={popped!r}"
                     )
-                    self._last = trade
+                    self._last = popped
                     print(
                         "[FAKE_DB] trades keys after delete: "
-                        f"{list(self.state.get('trades', {}).keys())}"
+                        f"{list(self._global_state.get('trades', {}).keys())}"
                     )
                 else:
                     if tid in self.state.get("trades", {}):
@@ -247,21 +300,58 @@ class FakeCursor:
 
 class FakeConn:
     def __init__(self, state):
-        self.state = state
+        # Keep a reference to the global state and work on a deep copy to
+        # simulate transactional behavior: uncommitted changes are local to
+        # the connection until commit() is called (on normal exit of the
+        # context manager). Record a snapshot so we can detect concurrent
+        # modifications and avoid clobbering newer data.
+        self._global_state = state
+        self.state = copy.deepcopy(state)
+        self._snapshot = copy.deepcopy(state)
 
     def cursor(self):
-        return FakeCursor(self.state)
+        return FakeCursor(self.state, self._global_state)
 
     def commit(self):
-        pass
+        # Merge working copy back to the global state, but only overwrite
+        # values that haven't changed since we opened the connection (i.e.,
+        # where the global value equals our snapshot). This prevents an
+        # outer connection from clobbering newer commits made by inner
+        # connections.
+        for table, data in self.state.items():
+            if isinstance(data, dict):
+                g = self._global_state.setdefault(table, {})
+                snap = self._snapshot.get(table, {}) or {}
+                for k, v in copy.deepcopy(data).items():
+                    # Safe to overwrite if the global value hasn't changed
+                    if k not in g or g.get(k) == snap.get(k):
+                        g[k] = v
+                # Handle deletions: if a key existed in our snapshot but not in
+                # our working copy, and the global still matches the snapshot,
+                # then remove it globally (we deleted it in our transaction).
+                removed = set((snap or {}).keys()) - set((data or {}).keys())
+                for k in removed:
+                    if g.get(k) == snap.get(k):
+                        g.pop(k, None)
+            else:
+                if self._global_state.get(table) == self._snapshot.get(table):
+                    self._global_state[table] = copy.deepcopy(data)
 
 
 def fake_get_db_connection_factory(state):
     class CM:
         def __enter__(self):
-            return FakeConn(state)
+            self._conn = FakeConn(state)
+            return self._conn
 
         def __exit__(self, exc_type, exc, tb):
+            if exc_type is None:
+                # Normal exit -> commit
+                try:
+                    self._conn.commit()
+                except Exception:
+                    pass
+            # Do not suppress exceptions
             return False
 
     return CM
@@ -270,15 +360,68 @@ def fake_get_db_connection_factory(state):
 # Tests
 
 
-def test_buy_market_offer_insufficient_gold(monkeypatch):
-    # Buyer has insufficient gold
+def test_fake_delete_returning_pops_trade_sequential(monkeypatch):
+    state = {"trades": {99: (300, "sell", 400, "rations", 5, 10)}}
+    cm = fake_get_db_connection_factory(state)()
+    with cm as conn:
+        db1 = conn.cursor()
+        sql = (
+            "DELETE FROM trades "
+            "WHERE offer_id=(%s) "
+            "RETURNING offeree, type, offerer, resource, amount, price"
+        )
+        db1.execute(sql, (99,))
+        first = db1.fetchone()
+        assert first is not None
+
+        db2 = conn.cursor()
+        sql2 = (
+            "DELETE FROM trades "
+            "WHERE offer_id=(%s) "
+            "RETURNING offeree, type, offerer, "
+            "resource, amount, price"
+        )
+        db2.execute(sql2, (99,))
+        second = db2.fetchone()
+        assert second is None
+
+
+def test_fake_delete_returning_under_concurrency(monkeypatch):
+    # Two threads calling DELETE ... RETURNING should not both return a trade
     state = {
-        "stats": {100: {"gold": 20}, 200: {"gold": 500}},
-        "resources": {100: {"rations": 0}, 200: {"rations": 50}},
-        "offers": {
-            1: {"resource": "rations", "amount": 10, "price": 10, "user_id": 200}
-        },
+        "trades": {99: (300, "sell", 400, "rations", 5, 10)},
+        "stats": {},
+        "resources": {},
     }
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    results = []
+
+    def do_delete():
+        cm = fake_get_db_connection_factory(state)()
+        with cm as conn:
+            db = conn.cursor()
+            sql = (
+                "DELETE FROM trades "
+                "WHERE offer_id=(%s) "
+                "RETURNING offeree, type, offerer, "
+                "resource, amount, price"
+            )
+            db.execute(sql, ("99",))  # simulate string param as well
+            results.append(db.fetchone())
+
+    # Run concurrently using top-level threading import
+    t1 = threading.Thread(target=do_delete)
+    t2 = threading.Thread(target=do_delete)
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+    # Exactly one should have returned a trade tuple
+    assert sum(1 for r in results if r) == 1
 
     # seed caches to ensure invalidation would occur on success
     query_cache.set("resources_100", {"rations": 0}, ttl_seconds=30)
@@ -627,6 +770,43 @@ def test_accept_trade_give_resource_failure(monkeypatch):
     # Ensure no resource or money mutation happened
     assert state["resources"][3000]["rations"] == 0
     assert state["stats"][4000]["gold"] == 100
+
+
+def test_accept_trade_give_resource_raises_exception(monkeypatch):
+    # Simulate a trade where give_resource raises an exception during acceptance
+    state = {
+        "stats": {7000: {"gold": 1000}, 8000: {"gold": 500}},
+        "resources": {7000: {"rations": 0}, 8000: {"rations": 10}},
+        "trades": {99: (7000, "sell", 8000, "rations", 3, 10)},
+    }
+
+    monkeypatch.setattr(
+        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+    )
+
+    def raising_give(*a, **kw):
+        raise Exception("boom")
+
+    monkeypatch.setattr("market.give_resource", raising_give)
+
+    test_app = Flask(__name__)
+    test_app.secret_key = "test-secret"
+
+    monkeypatch.setattr(
+        "helpers.render_template", lambda *a, **kw: f"error:{kw.get('message','')}"
+    )
+
+    with test_app.test_request_context("/", method="POST", data={}):
+        from flask import session
+
+        session["user_id"] = 7000
+        res = market.accept_trade("99")
+
+    # Should return friendly error (400) and trade remains
+    assert isinstance(res, tuple) and res[1] == 400
+    assert 99 in state["trades"]
+    assert state["resources"][7000]["rations"] == 0
+    assert state["stats"][8000]["gold"] == 500
 
 
 def test_accept_buy_offer_seller_lacks_resource_does_not_double_charge(monkeypatch):
