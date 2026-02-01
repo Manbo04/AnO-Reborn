@@ -79,7 +79,7 @@
                     </td>
                     <!-- Delete button -->
                     <td>
-                        <form name="delete_offer{{ offer_id }}" action="/delete_offer/{{ offer_id }}" method="POST">
+                        <form name="delete_offer{{ offer_id }}" action="/delete_offer/{{ offer_id }}" method="POST" onsubmit="return confirm('Delete this market offer?')">
                             <div class="templatedivflex2 divflex2center">
                                 <span onclick="delete_offer{{ offer_id }}.submit()" class="material-icons iconred">
                                         remove_circle_outline
@@ -167,7 +167,7 @@
                         <form method="POST">
                             <div class="templatedivflex2 divflex2center">
                                 <div class="templatedivflex2left">
-                                    <button type="submit" formaction="/decline_trade/{{ offer_id }}" class="material-icons iconred">
+                                    <button type="submit" formaction="/decline_trade/{{ offer_id }}" class="material-icons iconred" onclick="return confirm('Cancel this trade offer?')">
                                             remove_circle_outline
                                         </button>
                                 </div>
@@ -260,7 +260,7 @@
                                     </button>
                                 </div>
                                 <div class="templatedivflex2left">
-                                    <button type="submit" formaction="/decline_trade/{{ offer_id }}" class="material-icons iconred">
+                                    <button type="submit" formaction="/decline_trade/{{ offer_id }}" class="material-icons iconred" onclick="return confirm('Decline this trade offer?')">
                                             remove_circle_outline
                                         </button>
                                 </div>
