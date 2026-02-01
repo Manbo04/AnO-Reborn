@@ -5,6 +5,7 @@ import variables
 from helpers import get_date
 from upgrades import get_upgrades
 from database import get_db_cursor, cache_response, invalidate_user_cache
+import os
 import math
 
 bp = Blueprint("province", __name__)
@@ -576,12 +577,68 @@ def province_sell_buy(way, units, province_id):
             unitUpd = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
             db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
 
-            # Use an atomic increment to avoid races with background tasks
-            # that also modify `stats.gold` (do not overwrite concurrent updates)
+            # Capture gold before and perform atomic increment
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            gold_before = db.fetchone()[0]
+
             db.execute(
                 "UPDATE stats SET gold = gold + %s WHERE id = %s",
                 (wantedUnits * price, cId),
             )
+
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            gold_after = db.fetchone()[0]
+
+            # Audit the sell event for later analysis
+            create_audit_sql = (
+                "CREATE TABLE IF NOT EXISTS purchase_audit ("
+                "id SERIAL PRIMARY KEY, user_id INT, province_id INT, unit TEXT, "
+                "units INT, gold_before BIGINT, gold_after BIGINT, note TEXT, "
+                "created_at TIMESTAMP WITH TIME ZONE DEFAULT now())"
+            )
+            db.execute(create_audit_sql)
+
+            insert_audit_sql = (
+                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+            )
+            db.execute(
+                insert_audit_sql,
+                (
+                    cId,
+                    province_id,
+                    units,
+                    wantedUnits,
+                    gold_before,
+                    gold_after,
+                    f"sell_{units}",
+                ),
+            )
+
+            # If purchase/sell is large, send a Sentry message (env-controlled)
+            try:
+                THRESH = int(os.getenv("PURCHASE_SENTRY_THRESHOLD", "1000000"))
+                diff = abs(gold_after - gold_before)
+                if diff >= THRESH:
+                    try:
+                        import sentry_sdk
+
+                        with sentry_sdk.push_scope() as scope:
+                            scope.set_extra("user_id", cId)
+                            scope.set_extra("province_id", province_id)
+                            scope.set_extra("unit", units)
+                            scope.set_extra("units", wantedUnits)
+                            scope.set_extra("gold_before", gold_before)
+                            scope.set_extra("gold_after", gold_after)
+                            msg = (
+                                f"Large sell: {units} x{wantedUnits} by user {cId} "
+                                f"({diff} gold)"
+                            )
+                            sentry_sdk.capture_message(msg)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
             resource_stuff(resources_data, way)
 
@@ -600,16 +657,68 @@ def province_sell_buy(way, units, province_id):
                 missing_res = res_error["resource"]
                 return error(400, f"Missing {missing_count} {missing_res}")
 
-            db.execute(
-                "UPDATE stats SET gold=gold-%s WHERE id=(%s)",
-                (
-                    totalPrice,
-                    cId,
-                ),
-            )
+            # Capture gold before and perform atomic decrement
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            gold_before = db.fetchone()[0]
+
+            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId))
+
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            gold_after = db.fetchone()[0]
 
             updStat = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
             db.execute(updStat, ((currentUnits + wantedUnits), province_id))
+
+            # Audit the buy event
+            create_audit_sql = (
+                "CREATE TABLE IF NOT EXISTS purchase_audit ("
+                "id SERIAL PRIMARY KEY, user_id INT, province_id INT, unit TEXT, "
+                "units INT, gold_before BIGINT, gold_after BIGINT, note TEXT, "
+                "created_at TIMESTAMP WITH TIME ZONE DEFAULT now())"
+            )
+            db.execute(create_audit_sql)
+
+            insert_audit_sql = (
+                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+            )
+            db.execute(
+                insert_audit_sql,
+                (
+                    cId,
+                    province_id,
+                    units,
+                    wantedUnits,
+                    gold_before,
+                    gold_after,
+                    f"buy_{units}",
+                ),
+            )
+
+            # Sentry alert for large purchases
+            try:
+                THRESH = int(os.getenv("PURCHASE_SENTRY_THRESHOLD", "1000000"))
+                diff = abs(gold_before - gold_after)
+                if diff >= THRESH:
+                    try:
+                        import sentry_sdk
+
+                        with sentry_sdk.push_scope() as scope:
+                            scope.set_extra("user_id", cId)
+                            scope.set_extra("province_id", province_id)
+                            scope.set_extra("unit", units)
+                            scope.set_extra("units", wantedUnits)
+                            scope.set_extra("gold_before", gold_before)
+                            scope.set_extra("gold_after", gold_after)
+                            msg = (
+                                f"Large buy: {units} x{wantedUnits} by user {cId} "
+                                f"({diff} gold)"
+                            )
+                            sentry_sdk.capture_message(msg)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         if way == "buy":
             rev_type = "expense"
