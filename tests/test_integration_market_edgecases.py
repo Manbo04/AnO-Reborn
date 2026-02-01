@@ -2,6 +2,12 @@ from flask import Flask
 from database import query_cache
 import market
 import sys
+import threading
+
+# Global lock to make FakeCursor.execute atomic across threads in tests
+FAKE_DB_LOCK = threading.Lock()
+# Simulated advisory locks for pg_try_advisory_lock / pg_advisory_unlock
+FAKE_ADVISORY_LOCKS = set()
 
 
 class FakeCursor:
@@ -10,167 +16,226 @@ class FakeCursor:
         self._last = None
 
     def execute(self, sql, params=None):
-        # Some call sites (oops) pass a tuple containing the SQL; normalize that.
-        if isinstance(sql, (tuple, list)):
-            sql = sql[0]
-        sql_lower = sql.lower()
-        # SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)
-        offer_select = (
-            "select resource, amount, price, user_id " "from offers where offer_id"
-        )
-        if offer_select in sql_lower:
-            # params may be strings; support string or int keys
-            offer_id = params[0]
-            offer = self.state["offers"].get(offer_id)
-            if offer is None:
-                offer = self.state["offers"].get(int(offer_id))
-            self._last = (
-                offer["resource"],
-                offer["amount"],
-                offer["price"],
-                offer["user_id"],
+        with FAKE_DB_LOCK:
+            # Debug: show SQL being executed
+            # print may be captured by pytest; use it for diagnosis
+            if isinstance(sql, (tuple, list)):
+                sql = sql[0]
+            sql_lower = sql.lower()
+            print(f"[FAKE_DB] EXECUTE: {sql_lower} params={params}")
+            # Simulate advisory lock calls
+            if "pg_try_advisory_lock" in sql_lower:
+                lock_id = params[0]
+                try:
+                    lock_id = int(lock_id)
+                except Exception:
+                    pass
+                if lock_id in FAKE_ADVISORY_LOCKS:
+                    self._last = (False,)
+                else:
+                    FAKE_ADVISORY_LOCKS.add(lock_id)
+                    self._last = (True,)
+                return
+            if "pg_advisory_unlock" in sql_lower:
+                lock_id = params[0]
+                try:
+                    lock_id = int(lock_id)
+                except Exception:
+                    pass
+                FAKE_ADVISORY_LOCKS.discard(lock_id)
+                self._last = (True,)
+                return
+            # SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)
+            offer_select = (
+                "select resource, amount, price, user_id " "from offers where offer_id"
             )
-        # SELECT gold FROM stats WHERE id=(%s)
-        elif "select gold from stats" in sql_lower:
-            uid = params[0]
-            self._last = (self.state["stats"][uid]["gold"],)
-        # SELECT <resource> FROM resources WHERE id=%s
-        elif "from resources where id" in sql_lower and sql_lower.strip().startswith(
-            "select"
-        ):
-            parts = sql_lower.split()
-            resource = parts[1]
-            uid = params[0]
-            self._last = (self.state["resources"][uid].get(resource, 0),)
-        # SELECT ... FROM trades WHERE offer_id=(%s)
-        elif "from trades where offer_id" in sql_lower:
-            tid = params[0]
-            # allow numeric or string keys
-            trade = self.state.get("trades", {}).get(tid) or self.state.get(
-                "trades", {}
-            ).get(int(tid))
-            self._last = trade
-        # UPDATE offers SET amount=(%s) WHERE offer_id=(%s)
-        elif "update offers set amount" in sql_lower:
-            new_amount = params[0]
-            offer_key = params[1]
-            # support string keys coming from request
-            offer = self.state["offers"].get(offer_key)
-            if offer is None:
-                offer = self.state["offers"].get(int(offer_key))
-            if offer is not None:
-                offer["amount"] = new_amount
-        # DELETE FROM offers WHERE offer_id=(%s)
-        elif "delete from offers where offer_id" in sql_lower:
-            offer_key = params[0]
-            if offer_key in self.state["offers"]:
-                del self.state["offers"][offer_key]
-            else:
-                del self.state["offers"][int(offer_key)]
-        # UPDATE resources SET <res>=%s WHERE id=%s or with RETURNING
-        # Non-parameterized resource updates, e.g.:
-        # "UPDATE resources SET rations=rations+5 WHERE id=%s"
-        elif (
-            "update resources set" in sql_lower
-            and ("=" in sql_lower and ("+" in sql_lower or "-" in sql_lower))
-            and "returning" not in sql_lower
-        ):
-            left = sql_lower.split("set", 1)[1].split("where")[0].strip()
-            resource, expr = [p.strip() for p in left.split("=")]
-            if "+" in expr:
-                amount = int(expr.split("+")[1])
-                op = "+"
-            else:
-                amount = int(expr.split("-")[1])
-                op = "-"
-            uid = params[0]
-            if op == "+":
-                self.state["resources"][uid][resource] = (
-                    self.state["resources"][uid].get(resource, 0) + amount
+            if offer_select in sql_lower:
+                # params may be strings; support string or int keys
+                offer_id = params[0]
+                offer = self.state["offers"].get(offer_id)
+                if offer is None:
+                    offer = self.state["offers"].get(int(offer_id))
+                self._last = (
+                    offer["resource"],
+                    offer["amount"],
+                    offer["price"],
+                    offer["user_id"],
                 )
-            else:
-                self.state["resources"][uid][resource] = (
-                    self.state["resources"][uid].get(resource, 0) - amount
-                )
-        # Parameterized updates without RETURNING
-        # e.g. UPDATE resources SET lumber=%s WHERE id=%s
-        elif (
-            "update resources set" in sql_lower
-            and "%s" in sql_lower
-            and "returning" not in sql_lower
-        ):
-            # Sometimes we also see patterns like
-            # "...rations=rations+5 WHERE id=%s" with params=(id,)
-            if len(params) == 1:
-                # fallback to parsing non-parameterized expression
+            # SELECT gold FROM stats WHERE id=(%s)
+            elif "select gold from stats" in sql_lower:
                 uid = params[0]
+                self._last = (self.state["stats"][uid]["gold"],)
+            # SELECT <resource> FROM resources WHERE id=%s
+            elif (
+                "from resources where id" in sql_lower
+                and sql_lower.strip().startswith("select")
+            ):
+                parts = sql_lower.split()
+                resource = parts[1]
+                uid = params[0]
+                self._last = (self.state["resources"][uid].get(resource, 0),)
+            # SELECT ... FROM trades WHERE offer_id=(%s)
+            elif "from trades where offer_id" in sql_lower:
+                tid = params[0]
+                # allow numeric or string keys
+                trade = self.state.get("trades", {}).get(tid) or self.state.get(
+                    "trades", {}
+                ).get(int(tid))
+                self._last = trade
+            # UPDATE offers SET amount=(%s) WHERE offer_id=(%s)
+            elif "update offers set amount" in sql_lower:
+                new_amount = params[0]
+                offer_key = params[1]
+                # support string keys coming from request
+                offer = self.state["offers"].get(offer_key)
+                if offer is None:
+                    offer = self.state["offers"].get(int(offer_key))
+                if offer is not None:
+                    offer["amount"] = new_amount
+            # DELETE FROM offers WHERE offer_id=(%s)
+            elif "delete from offers where offer_id" in sql_lower:
+                offer_key = params[0]
+                if offer_key in self.state["offers"]:
+                    del self.state["offers"][offer_key]
+                else:
+                    del self.state["offers"][int(offer_key)]
+            # DELETE FROM trades WHERE offer_id=(%s) or with RETURNING
+            elif "delete from trades where offer_id" in sql_lower:
+                tid = params[0]
+                # If a RETURNING clause is present, return the trade first then delete
+                if "returning" in sql_lower:
+                    try:
+                        tid_int = int(tid)
+                    except Exception:
+                        tid_int = None
+
+                    # Remove the trade before returning it to simulate atomic
+                    # DELETE RETURNING
+                    popped_str = self.state.get("trades", {}).pop(tid, None)
+                    popped_int = None
+                    if tid_int is not None:
+                        popped_int = self.state.get("trades", {}).pop(tid_int, None)
+                    # Choose whichever popped a value (prefer string key)
+                    trade = popped_str or popped_int
+                    print(
+                        "[FAKE_DB] POP results: "
+                        f"popped_str={popped_str!r}, "
+                        f"popped_int={popped_int!r}, trade={trade!r}"
+                    )
+                    self._last = trade
+                    print(
+                        "[FAKE_DB] trades keys after delete: "
+                        f"{list(self.state.get('trades', {}).keys())}"
+                    )
+                else:
+                    if tid in self.state.get("trades", {}):
+                        del self.state["trades"][tid]
+                    else:
+                        del self.state["trades"][int(tid)]
+            # UPDATE resources SET <res>=%s WHERE id=%s or with RETURNING
+            # Non-parameterized resource updates, e.g.:
+            # "UPDATE resources SET rations=rations+5 WHERE id=%s"
+            elif (
+                "update resources set" in sql_lower
+                and ("=" in sql_lower and ("+" in sql_lower or "-" in sql_lower))
+                and "returning" not in sql_lower
+            ):
                 left = sql_lower.split("set", 1)[1].split("where")[0].strip()
                 resource, expr = [p.strip() for p in left.split("=")]
                 if "+" in expr:
                     amount = int(expr.split("+")[1])
+                    op = "+"
+                else:
+                    amount = int(expr.split("-")[1])
+                    op = "-"
+                uid = params[0]
+                if op == "+":
                     self.state["resources"][uid][resource] = (
                         self.state["resources"][uid].get(resource, 0) + amount
                     )
                 else:
-                    amount = int(expr.split("-")[1])
                     self.state["resources"][uid][resource] = (
                         self.state["resources"][uid].get(resource, 0) - amount
                     )
-            else:
-                new_amount = params[0]
-                uid = params[1]
-                left = sql.split("SET", 1)[1].split("WHERE")[0].strip()
+            # Parameterized updates without RETURNING
+            # e.g. UPDATE resources SET lumber=%s WHERE id=%s
+            elif (
+                "update resources set" in sql_lower
+                and "%s" in sql_lower
+                and "returning" not in sql_lower
+            ):
+                # Sometimes we also see patterns like
+                # "...rations=rations+5 WHERE id=%s" with params=(id,)
+                if len(params) == 1:
+                    # fallback to parsing non-parameterized expression
+                    uid = params[0]
+                    left = sql_lower.split("set", 1)[1].split("where")[0].strip()
+                    resource, expr = [p.strip() for p in left.split("=")]
+                    if "+" in expr:
+                        amount = int(expr.split("+")[1])
+                        self.state["resources"][uid][resource] = (
+                            self.state["resources"][uid].get(resource, 0) + amount
+                        )
+                    else:
+                        amount = int(expr.split("-")[1])
+                        self.state["resources"][uid][resource] = (
+                            self.state["resources"][uid].get(resource, 0) - amount
+                        )
+                else:
+                    new_amount = params[0]
+                    uid = params[1]
+                    left = sql.split("SET", 1)[1].split("WHERE")[0].strip()
+                    resource = left.split("=")[0].strip()
+                    self.state["resources"][uid][resource] = new_amount
+            # Parameterized updates with RETURNING (atomic checks)
+            elif "update resources set" in sql_lower and "returning" in sql_lower:
+                # Expect params like (amt, id, amt) for '-' case or (amt, id) for '+'
+                # Parse resource name
+                left = sql_lower.split("set", 1)[1].split("where")[0].strip()
                 resource = left.split("=")[0].strip()
-                self.state["resources"][uid][resource] = new_amount
-        # Parameterized updates with RETURNING (atomic checks)
-        elif "update resources set" in sql_lower and "returning" in sql_lower:
-            # Expect params like (amt, id, amt) for '-' case or (amt, id) for '+'.
-            # Parse resource name
-            left = sql_lower.split("set", 1)[1].split("where")[0].strip()
-            resource = left.split("=")[0].strip()
-            if "-" in left:
-                amt = params[0]
-                uid = params[1]
-                required = params[2]
-                if self.state["resources"][uid].get(resource, 0) < required:
-                    self._last = None
+                if "-" in left:
+                    amt = params[0]
+                    uid = params[1]
+                    required = params[2]
+                    if self.state["resources"][uid].get(resource, 0) < required:
+                        self._last = None
+                    else:
+                        self.state["resources"][uid][resource] -= amt
+                        self._last = (self.state["resources"][uid][resource],)
                 else:
-                    self.state["resources"][uid][resource] -= amt
+                    amt = params[0]
+                    uid = params[1]
+                    self.state["resources"][uid][resource] += amt
                     self._last = (self.state["resources"][uid][resource],)
-            else:
-                amt = params[0]
-                uid = params[1]
-                self.state["resources"][uid][resource] += amt
-                self._last = (self.state["resources"][uid][resource],)
 
-        # UPDATE stats SET gold=gold-%s WHERE id=(%s) (may include RETURNING)
-        elif "update stats set gold=gold-%s" in sql_lower:
-            # If RETURNING is present and a conditional WHERE,
-            # params may be (amt, uid, amt)
-            if "returning" in sql_lower:
-                amt = params[0]
-                uid = params[1]
-                required = params[2]
-                if self.state["stats"][uid]["gold"] < required:
-                    self._last = None
+            # UPDATE stats SET gold=gold-%s WHERE id=(%s) (may include RETURNING)
+            elif "update stats set gold=gold-%s" in sql_lower:
+                # If RETURNING is present and a conditional WHERE,
+                # params may be (amt, uid, amt)
+                if "returning" in sql_lower:
+                    amt = params[0]
+                    uid = params[1]
+                    required = params[2]
+                    if self.state["stats"][uid]["gold"] < required:
+                        self._last = None
+                    else:
+                        self.state["stats"][uid]["gold"] -= amt
+                        self._last = (self.state["stats"][uid]["gold"],)
                 else:
+                    amt = params[0]
+                    uid = params[1]
                     self.state["stats"][uid]["gold"] -= amt
-                    self._last = (self.state["stats"][uid]["gold"],)
-            else:
+            # UPDATE stats SET gold=gold+%s WHERE id=%s
+            elif (
+                "update stats set gold=gold+%s" in sql_lower
+                or "update stats set gold=gold+%s where id=%s" in sql_lower
+            ):
                 amt = params[0]
                 uid = params[1]
-                self.state["stats"][uid]["gold"] -= amt
-        # UPDATE stats SET gold=gold+%s WHERE id=%s
-        elif (
-            "update stats set gold=gold+%s" in sql_lower
-            or "update stats set gold=gold+%s where id=%s" in sql_lower
-        ):
-            amt = params[0]
-            uid = params[1]
-            self.state["stats"][uid]["gold"] += amt
-        # INSERT INTO offers ... (only used in post_offer not in these tests)
-        else:
-            self._last = None
+                self.state["stats"][uid]["gold"] += amt
+            # INSERT INTO offers ... (only used in post_offer not in these tests)
+            else:
+                self._last = None
 
     def fetchone(self):
         return self._last

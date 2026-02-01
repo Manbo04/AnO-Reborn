@@ -782,21 +782,45 @@ def accept_trade(trade_id):
     with get_db_connection() as connection:
         db = connection.cursor()
 
-        db.execute(
-            (
-                "SELECT offeree, type, offerer, resource, amount, price "
-                "FROM trades WHERE offer_id=(%s)",
-            ),
-            (trade_id,),
-        )
-        row = db.fetchone()
-        if not row:
-            return error(400, "Trade not found")
-        offeree, trade_type, offerer, resource, amount, price = row
+        # Prevent concurrent accept attempts on the same trade by acquiring a
+        # Postgres advisory lock keyed by the trade id. If we can't acquire the
+        # lock, another session is processing the trade.
+        try:
+            db.execute("SELECT pg_try_advisory_lock(%s)", (int(trade_id),))
+            lock_ret = db.fetchone()
+            if not lock_ret or not lock_ret[0]:
+                return error(400, "Trade is being processed")
+        except Exception:
+            # If the DB does not support advisory locks or the call fails,
+            # proceed without locking (best-effort). The fake test DB will
+            # simulate locks where necessary.
+            pass
 
-        if offeree != cId:
-            return error(400, "You can't accept that offer")
+        try:
+            # Atomically delete and return the trade so concurrent accept attempts
+            # cannot both proceed. If the DELETE returns no row, the trade was already
+            # accepted or removed.
+            db.execute(
+                (
+                    "DELETE FROM trades WHERE offer_id=(%s) "
+                    "RETURNING offeree, type, offerer, resource, amount, price"
+                ),
+                (trade_id,),
+            )
+            row = db.fetchone()
+            if not row:
+                return error(400, "Trade not found")
+            offeree, trade_type, offerer, resource, amount, price = row
 
+            if offeree != cId:
+                return error(400, "You can't accept that offer")
+        finally:
+            # Release advisory lock if acquired
+            try:
+                db.execute("SELECT pg_advisory_unlock(%s)", (int(trade_id),))
+                _ = db.fetchone()
+            except Exception:
+                pass
         # Use give_resource and check results; on failure return a friendly error
         if trade_type == "sell":
             # Transactionally move money from buyer -> seller
@@ -825,7 +849,7 @@ def accept_trade(trade_id):
                 # Credit buyer with resource from escrow
                 db.execute(
                     f"UPDATE resources SET {resource}={resource} + %s "
-                    "WHERE id=%s RETURNING {resource}",
+                    f"WHERE id=%s RETURNING {resource}",
                     (amount, offeree),
                 )
                 if db.fetchone() is None:
