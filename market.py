@@ -51,26 +51,49 @@ def _report_trade_error(msg, exc=None, extra=None):
         pass
 
 
-def give_resource(giver_id, taker_id, resource, amount):
+def give_resource(giver_id, taker_id, resource, amount, cursor=None):
+    """Transfer a resource between users.
+
+    Args:
+        giver_id: User ID giving the resource, or "bank" for system grants
+        taker_id: User ID receiving the resource, or "bank" for removal
+        resource: The resource type to transfer
+        amount: Amount to transfer
+        cursor: Optional existing DB cursor to reuse (avoids opening new connection).
+                If provided, caller is responsible for commit/rollback.
+                If None, opens a new connection and commits immediately.
+
+    Returns:
+        True on success, or error string on failure.
+    """
     # If giver_id is bank, don't remove any resources from anyone
     # If taker_id is bank, just remove the resources from the player
 
-    # Use connection pool instead of direct connection
-    with get_db_connection() as conn:
+    if giver_id != "bank":
+        giver_id = int(giver_id)
+    if taker_id != "bank":
+        taker_id = int(taker_id)
+    amount = int(amount)
+
+    resources_list = variables.RESOURCES
+
+    # Returns error if resource doesn't exist
+    if resource not in resources_list and resource != "money":
+        return "No such resource"
+
+    # Track whether we own the connection (need to commit) or reusing caller's
+    owns_connection = cursor is None
+
+    if owns_connection:
+        # Open our own connection - caller didn't provide one
+        conn = get_db_connection().__enter__()
         db = conn.cursor()
+    else:
+        # Reuse caller's cursor for better performance
+        db = cursor
+        conn = None
 
-        if giver_id != "bank":
-            giver_id = int(giver_id)
-        if taker_id != "bank":
-            taker_id = int(taker_id)
-        amount = int(amount)
-
-        resources_list = variables.RESOURCES
-
-        # Returns error if resource doesn't exist
-        if resource not in resources_list and resource != "money":
-            return "No such resource"
-
+    try:
         if resource in ["gold", "money"]:
             if giver_id != "bank":
                 # Atomically decrement gold only when sufficient balance exists
@@ -121,20 +144,31 @@ def give_resource(giver_id, taker_id, resource, amount):
                 )
                 db.fetchone()
 
-        conn.commit()
+        # Only commit if we own the connection
+        if owns_connection:
+            conn.commit()
 
         # Invalidate caches affected by this resource transfer so the UI shows
         # fresh data immediately (resources/influence caches are per-user).
-        try:
-            if giver_id != "bank":
-                invalidate_user_cache(giver_id)
-            if taker_id != "bank":
-                invalidate_user_cache(taker_id)
-        except Exception:
-            # Cache invalidation failures should not affect the transaction itself
-            pass
+        # Only do this if we own the connection (caller will handle otherwise)
+        if owns_connection:
+            try:
+                if giver_id != "bank":
+                    invalidate_user_cache(giver_id)
+                if taker_id != "bank":
+                    invalidate_user_cache(taker_id)
+            except Exception:
+                # Cache invalidation failures should not affect the transaction itself
+                pass
 
-    return True
+        return True
+
+    finally:
+        if owns_connection and conn is not None:
+            try:
+                get_db_connection().__exit__(None, None, None)
+            except Exception:
+                pass
 
 
 @login_required
@@ -309,7 +343,10 @@ def buy_market_offer(offer_id):
         ):  # Checks if buyer doesnt have enough gold for buyin
             return error(400, "You don't have enough money.")  # Returns error if true
 
-        res = give_resource("bank", cId, resource, amount_wanted)  # Gives the resource
+        # Pass cursor to reuse connection (avoids opening new connection)
+        res = give_resource(
+            "bank", cId, resource, amount_wanted, cursor=db
+        )  # Gives the resource
         if res is not True:
             _report_trade_error(
                 f"buy_market_offer: give_resource(bank -> buyer) failed: {res}",
@@ -323,7 +360,10 @@ def buy_market_offer(offer_id):
                 },
             )
             return error(400, str(res))
-        res = give_resource(cId, seller_id, "money", total_price)  # Gives the money
+        # Pass cursor to reuse connection (avoids opening new connection)
+        res = give_resource(
+            cId, seller_id, "money", total_price, cursor=db
+        )  # Gives the money
         if res is not True:
             _report_trade_error(
                 f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}",
@@ -347,6 +387,13 @@ def buy_market_offer(offer_id):
                 "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
                 (new_offer_amount, offer_id),
             )
+
+    # Invalidate caches after transaction commits (outside the with block)
+    try:
+        invalidate_user_cache(cId)
+        invalidate_user_cache(seller_id)
+    except Exception:
+        pass
 
     return redirect("/market")
 
@@ -395,7 +442,8 @@ def sell_market_offer(offer_id):
             return error(400, "You don't have enough of that resource")
 
         # Removes the resource from the seller and gives it to the buyer
-        res = give_resource(seller_id, buyer_id, resource, amount_wanted)
+        # Pass cursor to reuse connection (avoids opening new connection)
+        res = give_resource(seller_id, buyer_id, resource, amount_wanted, cursor=db)
         if res is not True:
             _report_trade_error(
                 f"sell_market_offer: give_resource(seller -> buyer) failed: {res}",
@@ -411,11 +459,13 @@ def sell_market_offer(offer_id):
             return error(400, str(res))
 
         # Takes away the money used for buying from the buyer and gives it to the seller
+        # Pass cursor to reuse connection (avoids opening new connection)
         res = give_resource(
             buyer_id,
             seller_id,
             "money",
             price_for_one * amount_wanted,
+            cursor=db,
         )
         if res is not True:
             msg = (
@@ -447,6 +497,13 @@ def sell_market_offer(offer_id):
                 "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
                 (new_offer_amount, offer_id),
             )  # Updates the database with the new amount
+
+    # Invalidate caches after transaction commits (outside the with block)
+    try:
+        invalidate_user_cache(seller_id)
+        invalidate_user_cache(buyer_id)
+    except Exception:
+        pass
 
     return redirect("/market")
 
@@ -505,7 +562,8 @@ def post_offer(offer_type):
                 return error(400, "Selling amount is higher than the amount you have.")
 
             # Calculates the resource amount the seller should have
-            give_resource(cId, "bank", resource, amount)
+            # Pass cursor to reuse connection
+            give_resource(cId, "bank", resource, amount, cursor=db)
 
             # Creates a new offer
             db.execute(
@@ -544,7 +602,8 @@ def post_offer(offer_type):
             if current_money < money_to_take_away:
                 return error(400, "You don't have enough money.")
 
-            give_resource(cId, "bank", "money", money_to_take_away)
+            # Pass cursor to reuse connection
+            give_resource(cId, "bank", "money", money_to_take_away, cursor=db)
 
         flash("You just posted a market offer")
     return redirect("/market")
@@ -615,14 +674,16 @@ def delete_offer(offer_id):
                 "SELECT amount, price FROM offers WHERE offer_id=(%s)", (offer_id,)
             )
             amount, price = db.fetchone()
-            give_resource("bank", cId, "money", price * amount)
+            # Pass cursor to reuse connection
+            give_resource("bank", cId, "money", price * amount, cursor=db)
 
         elif offer_type == "sell":
             db.execute(
                 "SELECT amount, resource FROM offers WHERE offer_id=(%s)", (offer_id,)
             )
             amount, resource = db.fetchone()
-            give_resource("bank", cId, resource, amount)
+            # Pass cursor to reuse connection
+            give_resource("bank", cId, resource, amount, cursor=db)
 
         db.execute(
             "DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)
@@ -837,8 +898,11 @@ def accept_trade(trade_id):
 
                 # Perform resource transfer (seller -> buyer). give_resource may
                 # return a string error or raise an exception; handle both cases.
+                # Pass cursor to reuse connection (avoids opening new connection)
                 try:
-                    gr_ret = give_resource(offerer, offeree, resource, amount)
+                    gr_ret = give_resource(
+                        offerer, offeree, resource, amount, cursor=db
+                    )
                 except Exception as exc:
                     _report_trade_error(
                         "accept_trade: give_resource raised exception during sell",
@@ -894,8 +958,11 @@ def accept_trade(trade_id):
 
             elif trade_type == "buy":
                 # Seller gives resource to buyer first; if that fails we bail
+                # Pass cursor to reuse connection (avoids opening new connection)
                 try:
-                    gr_ret = give_resource(offeree, offerer, resource, amount)
+                    gr_ret = give_resource(
+                        offeree, offerer, resource, amount, cursor=db
+                    )
                 except Exception as exc:
                     _report_trade_error(
                         "accept_trade: give_resource raised exception during buy",
@@ -954,12 +1021,16 @@ def accept_trade(trade_id):
         except Exception:
             pass
 
-        # Invalidate caches so UI shows fresh resource/gold values
-        try:
-            invalidate_user_cache(offerer)
-            invalidate_user_cache(offeree)
-        except Exception:
-            pass
+        # Store IDs for cache invalidation after commit
+        _offerer = offerer
+        _offeree = offeree
+
+    # Invalidate caches after transaction commits (outside the with block)
+    try:
+        invalidate_user_cache(_offerer)
+        invalidate_user_cache(_offeree)
+    except Exception:
+        pass
 
     return redirect("/my_offers")
 
