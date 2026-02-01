@@ -391,8 +391,11 @@ def test_fake_delete_returning_under_concurrency(monkeypatch):
     # Two threads calling DELETE ... RETURNING should not both return a trade
     state = {
         "trades": {99: (300, "sell", 400, "rations", 5, 10)},
-        "stats": {},
-        "resources": {},
+        "stats": {100: {"gold": 0}, 200: {"gold": 100}},
+        "resources": {100: {"rations": 0}, 200: {"rations": 50}},
+        "offers": {
+            1: {"resource": "rations", "amount": 10, "price": 10, "user_id": 200}
+        },
     }
     monkeypatch.setattr(
         "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
