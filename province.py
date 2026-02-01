@@ -234,43 +234,64 @@ def createprovince():
     cId = session["user_id"]
 
     if request.method == "POST":
-        with get_db_cursor() as db:
+        from database import get_db_connection
+
+        with get_db_connection() as conn:
+            db = conn.cursor()
             pName = request.form.get("name")
 
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            current_user_money = int(db.fetchone()[0])
+            # Acquire advisory lock to prevent double-submit race condition
+            # Lock key is based on user ID to prevent same user creating multiple
+            # provinces simultaneously
+            lock_key = 100000 + cId  # Offset to avoid collision with other locks
+            db.execute("SELECT pg_try_advisory_lock(%s)", (lock_key,))
+            lock_result = db.fetchone()
+            if not lock_result or not lock_result[0]:
+                return error(400, "Province creation already in progress, please wait")
 
-            province_price = get_province_price(cId)
-
-            if province_price > current_user_money:
-                return error(400, "You don't have enough money.")
-
-            db.execute(
-                (
-                    "INSERT INTO provinces (userId, provinceName) "
-                    "VALUES (%s, %s) RETURNING id"
-                ),
-                (cId, pName),
-            )
-            province_id = db.fetchone()[0]
-
-            db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
-
-            new_user_money = current_user_money - province_price
-            db.execute(
-                "UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_user_money, cId)
-            )
-
-            # Invalidate cached provinces page for this user
-            # so the new province appears immediately
             try:
-                from database import query_cache
+                # Use atomic gold deduction to prevent race conditions
+                province_price = get_province_price(cId)
 
-                pattern = f"provinces_{cId}_"
-                query_cache.invalidate(pattern=pattern)
-            except Exception:
-                # Best-effort: cache invalidation should not raise on failure
-                pass
+                db.execute(
+                    "UPDATE stats SET gold = gold - %s "
+                    "WHERE id = %s AND gold >= %s RETURNING gold",
+                    (province_price, cId, province_price),
+                )
+                result = db.fetchone()
+                if not result:
+                    return error(400, "You don't have enough money.")
+
+                db.execute(
+                    (
+                        "INSERT INTO provinces (userId, provinceName) "
+                        "VALUES (%s, %s) RETURNING id"
+                    ),
+                    (cId, pName),
+                )
+                province_id = db.fetchone()[0]
+
+                db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
+
+                # Commit the transaction
+                conn.commit()
+
+                # Invalidate cached provinces page for this user
+                # so the new province appears immediately
+                try:
+                    from database import query_cache
+
+                    pattern = f"provinces_{cId}_"
+                    query_cache.invalidate(pattern=pattern)
+                except Exception:
+                    # Best-effort: cache invalidation should not raise on failure
+                    pass
+            finally:
+                # Always release the advisory lock
+                try:
+                    db.execute("SELECT pg_advisory_unlock(%s)", (lock_key,))
+                except Exception:
+                    pass
 
         return redirect("/provinces")
     else:
