@@ -718,7 +718,29 @@ def population_growth():  # Function for growing population
         )
         policy_map = {row["user_id"]: row["education"] for row in dbdict.fetchall()}
 
-        def calc_pg_cached(province_row):
+        # PHASE 1: Calculate total rations needed per user (sum across all provinces)
+        user_total_rations_needed = {}
+        for province_row in provinces:
+            user_id = province_row["userid"]
+            curPop = province_row["population"] or 0
+            rations_needed = curPop // variables.RATIONS_PER
+            if rations_needed < 1:
+                rations_needed = 1
+            user_total_rations_needed[user_id] = (
+                user_total_rations_needed.get(user_id, 0) + rations_needed
+            )
+
+        # PHASE 2: Calculate new rations for each user (one deduction per user)
+        user_new_rations = {}
+        for user_id, total_needed in user_total_rations_needed.items():
+            current_rations = ration_map.get(user_id, 0) or 0
+            new_rations = current_rations - total_needed
+            if new_rations < 0:
+                new_rations = 0
+            user_new_rations[user_id] = int(new_rations)
+
+        def calc_population_growth(province_row):
+            """Calculate population growth for a single province."""
             user_id = province_row["userid"]
             curPop = province_row["population"] or 0
             cities = province_row["citycount"] or 0
@@ -741,12 +763,10 @@ def population_growth():  # Function for growing population
             if maxPop < variables.DEFAULT_MAX_POPULATION:
                 maxPop = variables.DEFAULT_MAX_POPULATION
 
-            rations_needed = curPop // variables.RATIONS_PER
-            if rations_needed < 1:
-                rations_needed = 1
-
+            # For growth rate, use the user's overall ration coverage
+            total_needed = user_total_rations_needed.get(user_id, 1)
             current_rations = ration_map.get(user_id, 0) or 0
-            rations_ratio = current_rations / rations_needed
+            rations_ratio = current_rations / total_needed if total_needed > 0 else 0
             if rations_ratio > 1:
                 rations_ratio = 1
 
@@ -762,11 +782,6 @@ def population_growth():  # Function for growing population
             diminishing_factor = max(0.05, 1 - (pop_ratio**2))
             growth_rate = base_growth_rate * diminishing_factor
 
-            new_rations = current_rations - rations_needed
-            if new_rations < 0:
-                new_rations = 0
-            new_rations = int(new_rations)
-
             newPop = int(round((maxPop / 100) * growth_rate))
 
             policies = policy_map.get(user_id) or []
@@ -777,19 +792,22 @@ def population_growth():  # Function for growing population
             if fullPop < 0:
                 fullPop = 0
 
-            return user_id, new_rations, fullPop
+            return fullPop
 
-        rations_updates = []
+        # PHASE 3: Calculate population updates for each province
         population_updates = []
-
         for province_row in provinces:
             try:
-                user_id, rations, population = calc_pg_cached(province_row)
-                rations_updates.append((rations, user_id))
+                population = calc_population_growth(province_row)
                 population_updates.append((population, province_row["id"]))
             except Exception as e:
                 handle_exception(e)
                 continue
+
+        # PHASE 4: Apply rations updates (one per user, not per province!)
+        rations_updates = [
+            (new_rations, uid) for uid, new_rations in user_new_rations.items()
+        ]
 
         if rations_updates:
             execute_batch(
@@ -801,8 +819,9 @@ def population_growth():  # Function for growing population
             )
 
         print(
-            f"population_growth: updated {len(population_updates)} provinces across "
-            f"{len(unique_user_ids)} users"
+            f"population_growth: updated {len(population_updates)} provinces "
+            f"across {len(unique_user_ids)} users, "
+            f"consumed rations from {len(rations_updates)} users"
         )
 
 
