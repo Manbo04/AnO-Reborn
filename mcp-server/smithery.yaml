@@ -1,0 +1,21 @@
+# Smithery configuration for ano-mcp-server
+# This allows the server to be published to Smithery registry
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      DATABASE_URL:
+        type: string
+        description: PostgreSQL connection string for the game database
+    required:
+      - DATABASE_URL
+  commandFunction: |
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        DATABASE_URL: config.DATABASE_URL
+      }
+    })
