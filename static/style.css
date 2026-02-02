@@ -2020,6 +2020,13 @@ button {
     border-radius: 4px;
 }
 
+/* Ensure all tables in flex columns have consistent width */
+.templatedivflex2left .templatetable,
+.templatedivflex2right .templatetable {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .flex2rightfloatright {
     text-align: right;
 }
