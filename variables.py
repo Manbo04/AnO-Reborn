@@ -24,7 +24,7 @@ DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER = 0.009  # 9%
 LAND_FARM_PRODUCTION_ADDITION = 3
 
 CONSUMER_GOODS_PER = 80000  # 1 Consumer good per x population
-RATIONS_PER = 25000  # 1 Ration per x population (lower = more rations needed)
+RATIONS_PER = 50000  # 1 Ration per x population (lower = more rations needed)
 
 UNITS = [
     "soldiers",
