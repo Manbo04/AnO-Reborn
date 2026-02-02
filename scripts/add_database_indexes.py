@@ -127,6 +127,27 @@ def add_indexes():
             "CREATE INDEX IF NOT EXISTS idx_policies_user_id ON policies(user_id);",
             "Index on policies.user_id for policy lookups",
         ),
+        # Additional performance indexes
+        (
+            "CREATE INDEX IF NOT EXISTS idx_col_applications_colId ON col_applications(colId);",
+            "Index on col_applications.colId for pending application lookups",
+        ),
+        (
+            "CREATE INDEX IF NOT EXISTS idx_col_applications_userId ON col_applications(userId);",
+            "Index on col_applications.userId for user application lookups",
+        ),
+        (
+            "CREATE INDEX IF NOT EXISTS idx_revenue_user_id ON revenue(user_id);",
+            "Index on revenue.user_id for revenue history lookups",
+        ),
+        (
+            "CREATE INDEX IF NOT EXISTS idx_provinces_userId_population ON provinces(userId, population);",
+            "Composite index for countries list aggregation",
+        ),
+        (
+            "CREATE INDEX IF NOT EXISTS idx_colbanksrequests_colId ON colBanksRequests(colId);",
+            "Index on colBanksRequests.colId for bank request lookups",
+        ),
     ]
 
     for sql, description in indexes:

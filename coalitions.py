@@ -35,19 +35,20 @@ def coalition(colId):
         cId = session["user_id"]
 
         # OPTIMIZATION: Single query for basic coalition info + member count + total influence
+        # Uses a pre-aggregated subquery to avoid N+1 per-member population lookups
         db.execute(
             """
             SELECT
                 c.name, c.type, c.description, c.flag,
                 COUNT(DISTINCT coal.userId) AS members_count,
-                COALESCE(
-                    SUM(
-                        (SELECT COALESCE(SUM(population), 0)
-                         FROM provinces WHERE userId = coal.userId)
-                    ), 0
-                ) AS total_influence
+                COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
             LEFT JOIN coalitions coal ON c.id = coal.colId
+            LEFT JOIN (
+                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
+                FROM provinces
+                GROUP BY userId
+            ) prov ON coal.userId = prov.userId
             WHERE c.id = %s
             GROUP BY c.id, c.name, c.type, c.description, c.flag
             """,
@@ -107,16 +108,21 @@ def coalition(colId):
 
         try:
             # stats table has no influence column; keep list lightweight and avoid bad column reference
+            # Uses pre-aggregated subquery to avoid N+1 per-member province count lookups
             db.execute(
                 """
                 SELECT coalitions.userId,
                        users.username,
                        coalitions.role,
                        0 AS influence,
-                       (SELECT COUNT(*) FROM provinces WHERE userId =
-                 coalitions.userId) AS province_count
+                       COALESCE(prov.province_count, 0) AS province_count
                 FROM coalitions
                 INNER JOIN users ON coalitions.userId = users.id
+                LEFT JOIN (
+                    SELECT userId, COUNT(*) AS province_count
+                    FROM provinces
+                    GROUP BY userId
+                ) prov ON coalitions.userId = prov.userId
                 WHERE coalitions.colId = %s
                 """,
                 (colId,),
@@ -340,21 +346,13 @@ def coalition(colId):
         # flag already fetched in initial query above
 
         if user_role == "leader" and colType != "Open" and userInCurCol:
-            db.execute(
-                "SELECT message FROM requests WHERE colId=(%s) ORDER BY reqId ASC",
-                (colId,),
-            )
-            requestMessages = db.fetchall()
-            db.execute(
-                "SELECT reqId FROM requests WHERE colId=(%s) ORDER BY reqId ASC",
-                (colId,),
-            )
-            # Use JOIN query to fetch request IDs and names together
+            # Use single JOIN query to fetch request IDs, names, and messages together
             db.execute(
                 """SELECT r.reqId, u.username, r.message
                    FROM requests r
                    INNER JOIN users u ON r.reqId = u.id
-                   WHERE r.colId=%s""",
+                   WHERE r.colId=%s
+                   ORDER BY r.reqId ASC""",
                 (colId,),
             )
             request_data = db.fetchall()
@@ -498,7 +496,7 @@ def coalitions():
         sortway = request.values.get("sortway")
 
         # Single optimized query: get all coalition data with pre-calculated influence
-        # This replaces N+1 queries (one per coalition) with a single query
+        # Uses pre-aggregated subquery to avoid N+1 per-member population lookups
         db.execute(
             """
             SELECT
@@ -508,11 +506,14 @@ def coalitions():
                 c.flag,
                 COUNT(DISTINCT coal.userId) AS members,
                 c.date,
-                COALESCE(SUM(
-                    (SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = coal.userId)
-                ), 0) AS total_influence
+                COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
             INNER JOIN coalitions coal ON c.id = coal.colId
+            LEFT JOIN (
+                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
+                FROM provinces
+                GROUP BY userId
+            ) prov ON coal.userId = prov.userId
             GROUP BY c.id, c.type, c.name, c.flag, c.date
             """
         )
