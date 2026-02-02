@@ -4,50 +4,268 @@
     <div class="templatedivtopper noboxshadowtopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
             build
-            </span>Mechanics</h1>
+            </span>Game Mechanics</h1>
     </div>
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheadercenter">How the game mechanics work</h2>
-        <p class="templatecontentpleft landingpagecontent">This page summarizes the core mechanics so you can make informed decisions about economy, provinces, resources and war. Use the links below to dive deeper into each mechanic.</p>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader">Generating Gold (Cash) 💰</h3>
-                <p class="templatecontentpleft">Your primary source of gold is taxes collected from your population. Taxes depend on population, productivity, and consumer goods availability. You can also earn gold by selling resources on the market or completing projects.</p>
-                <p class="templatecontentpleft"><a href="/mechanics/revenue" class="templatedivbutton">Read more about Revenue</a></p>
+        <!-- Quick Navigation -->
+        <div class="templatedivflex2 menuflex2">
+            <div class="templatedivflex2left" onclick="document.getElementById('economy').scrollIntoView({behavior: 'smooth'})">
+                <h3 class="smallheader"><span class="material-icons-outlined">account_balance</span> Economy</h3>
             </div>
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader">Consumer Goods</h3>
-                <p class="templatecontentpleft">Consumer goods are advanced manufactured items that increase tax income. Keep supply roughly 1 per 80k people to maximize tax yield.</p>
-                <p class="templatecontentpleft"><a href="/mechanics/consumer_goods" class="templatedivbutton">Read more about Consumer Goods</a></p>
+            <div class="templatedivflex2left" onclick="document.getElementById('population').scrollIntoView({behavior: 'smooth'})">
+                <h3 class="smallheader"><span class="material-icons-outlined">people</span> Population</h3>
             </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader">Resources & Uses</h3>
-                <p class="templatecontentpleft">Resources (e.g., rations, oil, coal, iron, lumber, components, etc.) are produced by provinces and consumed for building infrastructure, military, and projects.</p>
-                <p class="templatecontentpleft"><a href="/mechanics/resources" class="templatedivbutton">Read more about Resources</a></p>
+            <div class="templatedivflex2left" onclick="document.getElementById('resources').scrollIntoView({behavior: 'smooth'})">
+                <h3 class="smallheader"><span class="material-icons-outlined">inventory_2</span> Resources</h3>
             </div>
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader">War Mechanics</h3>
-                <p class="templatecontentpleft">Declaring war requires target eligibility and no active truce; wars use morale and supplies and can transfer resources on victory.</p>
-                <p class="templatecontentpleft"><a href="/mechanics/war" class="templatedivbutton">Read more about War</a></p>
+            <div class="templatedivflex2left" onclick="document.getElementById('military').scrollIntoView({behavior: 'smooth'})">
+                <h3 class="smallheader"><span class="material-icons-outlined">military_tech</span> Military</h3>
             </div>
         </div>
 
-        <h3 class="templatecontentheader">Tips to Make Cash</h3>
-        <ul class="templatecontentpleft">
-            <li>Increase population and productivity — more people pay more taxes.</li>
-            <li>Balance consumer goods production to match population needs to maximize tax yield.</li>
-            <li>Sell surplus resources on the market during high prices.</li>
-            <li>Complete projects or sell infrastructure where appropriate for one-time gains.</li>
-        </ul>
+        <!-- ECONOMY SECTION -->
+        <div id="economy">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">account_balance</span> Economy & Gold</th>
+                </tr>
+            </table>
 
-        <h3 class="templatecontentheader">Further Reading</h3>
-        <p class="templatecontentpleft">See the <a href="/tutorial">Tutorial</a> for a guided walkthrough and this page for quick reference.</p>
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">paid</span> Tax Income</h3>
+                    <p class="templatecontentpleft">Your primary gold source. Each citizen pays <strong>$0.025 per hour</strong> in base taxes.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Base Rate</strong></td><td>$0.025 per citizen/hour</td></tr>
+                        <tr><td><strong>Consumer Goods Bonus</strong></td><td>+50% when fully supplied</td></tr>
+                        <tr><td><strong>No Rations Penalty</strong></td><td>-30% tax income</td></tr>
+                        <tr><td><strong>No Energy Penalty</strong></td><td>-15% tax income</td></tr>
+                        <tr><td><strong>Land Bonus</strong></td><td>+2% per land slot (max +100%)</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Productivity</h3>
+                    <p class="templatecontentpleft">Productivity affects resource production from all infrastructure.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Base Effect</strong></td><td>+0.9% output per % productivity</td></tr>
+                        <tr><td><strong>At 50%</strong></td><td>Normal production</td></tr>
+                        <tr><td><strong>At 100%</strong></td><td>+45% bonus production</td></tr>
+                        <tr><td><strong>Increased By</strong></td><td>Schools, Factories, Research Labs</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">shopping_cart</span> Consumer Goods</h3>
+                    <p class="templatecontentpleft">Manufactured goods that boost your economy when supplied to citizens.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Requirement</strong></td><td>1 per 80,000 population</td></tr>
+                        <tr><td><strong>When Supplied</strong></td><td>+50% tax income</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Factories (uses components)</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">bolt</span> Energy</h3>
+                    <p class="templatecontentpleft">Power is essential for infrastructure to operate efficiently.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Without Power</strong></td><td>-15% tax income</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Power Plants, Nuclear Plants, Wind/Solar</td></tr>
+                        <tr><td><strong>Consumed By</strong></td><td>Most infrastructure (1 per building)</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- POPULATION SECTION -->
+        <div id="population">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">people</span> Population & Growth</th>
+                </tr>
+            </table>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Population Growth</h3>
+                    <p class="templatecontentpleft">Population grows each hour based on rations, happiness, and available capacity.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Base Growth Rate</strong></td><td>0.15% of max capacity/hour</td></tr>
+                        <tr><td><strong>Rations Required</strong></td><td>1 per 50,000 population</td></tr>
+                        <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                        <tr><td><strong>Diminishing Returns</strong></td><td>Growth slows near max capacity</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">domain</span> Max Population</h3>
+                    <p class="templatecontentpleft">Your maximum population is determined by cities, land, and happiness.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Base Maximum</strong></td><td>1,000,000</td></tr>
+                        <tr><td><strong>Per City</strong></td><td>+750,000</td></tr>
+                        <tr><td><strong>Per Land Slot</strong></td><td>+120,000</td></tr>
+                        <tr><td><strong>Happiness Bonus</strong></td><td>+0.08% per % above 50</td></tr>
+                        <tr><td><strong>Pollution Penalty</strong></td><td>-0.04% per % above 50</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">sentiment_satisfied</span> Happiness</h3>
+                    <p class="templatecontentpleft">Happy citizens grow faster and increase max population.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Effect</strong></td><td>+4% growth per point above 50</td></tr>
+                        <tr><td><strong>Increased By</strong></td><td>Parks, Stadiums, low pollution</td></tr>
+                        <tr><td><strong>Decreased By</strong></td><td>High pollution, wars</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">cloud</span> Pollution</h3>
+                    <p class="templatecontentpleft">Industrial activity increases pollution, limiting growth.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Effect</strong></td><td>-2% growth per point above 50</td></tr>
+                        <tr><td><strong>Increased By</strong></td><td>Factories, Mines, Power Plants</td></tr>
+                        <tr><td><strong>Decreased By</strong></td><td>Parks, Green infrastructure</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESOURCES SECTION -->
+        <div id="resources">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">inventory_2</span> Resources</th>
+                </tr>
+            </table>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rations (Food)</h3>
+                    <p class="templatecontentpleft">Essential for population survival and growth.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Consumption</strong></td><td>1 per 50,000 population/hour</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Farms (+3 per land slot bonus)</td></tr>
+                        <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_gas_station</span> Oil</h3>
+                    <p class="templatecontentpleft">Fuel for military operations and advanced manufacturing.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Produced By</strong></td><td>Pumpjacks, Refineries</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>Tanks, Aircraft, Ships</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Components</h3>
+                    <p class="templatecontentpleft">Advanced parts for manufacturing consumer goods and military equipment.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Produced By</strong></td><td>Component Factories</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>Consumer Goods, Military Units</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">construction</span> Raw Materials</h3>
+                    <p class="templatecontentpleft">Iron, Coal, Bauxite, Uranium, Lead, and Lumber.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Iron</strong></td><td>Steel production, construction</td></tr>
+                        <tr><td><strong>Coal</strong></td><td>Power plants, steel</td></tr>
+                        <tr><td><strong>Uranium</strong></td><td>Nuclear power, weapons</td></tr>
+                        <tr><td><strong>Bauxite</strong></td><td>Aluminum for aircraft</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MILITARY SECTION -->
+        <div id="military">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">military_tech</span> Military & War</th>
+                </tr>
+            </table>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Manpower</h3>
+                    <p class="templatecontentpleft">Manpower is required to recruit soldiers and operate military equipment.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Generation</strong></td><td>Based on population</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>All military recruitment</td></tr>
+                        <tr><td><strong>Recovery</strong></td><td>Every 4 hours</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">gavel</span> War Declaration</h3>
+                    <p class="templatecontentpleft">Requirements and consequences of declaring war.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Requirement</strong></td><td>No active truce with target</td></tr>
+                        <tr><td><strong>Score Range</strong></td><td>Target within war range</td></tr>
+                        <tr><td><strong>On Victory</strong></td><td>Resource transfer, reparations</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Units</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Soldiers</strong></td><td>Basic infantry, cheap to produce</td></tr>
+                        <tr><td><strong>Tanks</strong></td><td>Heavy armor, requires oil</td></tr>
+                        <tr><td><strong>Artillery</strong></td><td>Long-range bombardment</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Fighters</strong></td><td>Air superiority</td></tr>
+                        <tr><td><strong>Bombers</strong></td><td>Strategic strikes</td></tr>
+                        <tr><td><strong>Destroyers</strong></td><td>Naval combat</td></tr>
+                        <tr><td><strong>Submarines</strong></td><td>Stealth naval</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK TIPS -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">lightbulb</span> Quick Tips for Success</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">attach_money</span> Maximizing Income</h3>
+                <ul class="templatecontentpleft">
+                    <li>Build schools and factories to boost productivity</li>
+                    <li>Maintain consumer goods supply (1 per 80k pop)</li>
+                    <li>Keep rations stocked to avoid -30% penalty</li>
+                    <li>Ensure power supply for full efficiency</li>
+                    <li>Buy more land for +2% tax bonus per slot</li>
+                </ul>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">speed</span> Growing Fast</h3>
+                <ul class="templatecontentpleft">
+                    <li>Build cities early (+750k max pop each)</li>
+                    <li>Surplus farms to ensure ration supply</li>
+                    <li>Build parks to increase happiness</li>
+                    <li>Balance industry to control pollution</li>
+                    <li>Land also increases farm output (+3 per slot)</li>
+                </ul>
+            </div>
+        </div>
+
+        <p class="templatecontentpleft" style="text-align: center; margin-top: 20px;">
+            <a href="/tutorial" class="templatedivbutton"><span class="material-icons-outlined">school</span> View Full Tutorial</a>
+        </p>
 
     </div>
 
