@@ -464,8 +464,9 @@ def country(cId):
         idd = int(cId)
         news = []
         news_amount = 0
-        if idd == session["user_id"]:
-            # TODO: handle this as country/id=<int:cId>
+        current_user_id = session.get("user_id")
+        if current_user_id and idd == current_user_id:
+            # Only show news to the owner of the nation
             db.execute(
                 "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
             )
@@ -902,12 +903,13 @@ def register_countries_routes(app_instance):
     )
 
     # Register country route
+    # Public route - anyone can view a nation's page
     # Cache is short (30s) since users viewing their own country
     # need fresh data after edits
     app_instance.add_url_rule(
         "/country/id=<cId>",
         "country",
-        login_required(cache_response(ttl_seconds=30)(country)),
+        cache_response(ttl_seconds=30)(country),
         methods=["GET"],
     )
 
