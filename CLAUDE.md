@@ -33,6 +33,14 @@ The AI has access to:
 4. **Use type hints** where the codebase uses them.
 5. **Comments for non-obvious logic** - especially for database queries and game mechanics.
 
+### On Performance
+1. **Never degrade performance.** Any new feature, fix, or change must not increase loading times or server load.
+2. **Avoid N+1 queries.** Use JOINs and pre-aggregated subqueries instead of correlated subqueries.
+3. **Fix inefficiencies when found.** If you encounter slow code during your work, fix it - don't leave it.
+4. **Use database indexes.** Check that queries have appropriate indexes; add them if missing.
+5. **Minimize database round-trips.** Batch queries where possible, avoid redundant fetches.
+6. **Test performance impact.** For significant changes, verify query plans and execution times.
+
 ### On Testing
 1. **Use the designated test account for ALL testing**: `Tester of the Game` (user ID: 16)
 2. **Never test on real player accounts** - always query/modify the test account
