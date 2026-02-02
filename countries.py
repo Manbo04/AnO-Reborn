@@ -335,22 +335,35 @@ def get_revenue(cId):
 
 
 def next_turn_rations(cId, prod_rations):
+    """Calculate next turn rations after consumption - optimized single query version."""
     from database import get_db_connection
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
-        provinces = db.fetchall()
 
+        # Get current rations
         db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
         rr = db.fetchone()
         current_rations = (rr[0] if rr and rr[0] is not None else 0) + prod_rations
 
-        for pId in provinces:
-            rations, _ = calc_pg(pId, current_rations)
-            current_rations = rations
+        # Get total rations needed from all provinces in one query
+        db.execute(
+            "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s",
+            (cId,),
+        )
+        total_population = db.fetchone()[0]
 
-        return current_rations
+        # Calculate total consumption (same formula as population_growth)
+        total_rations_needed = total_population // variables.RATIONS_PER
+        if total_rations_needed < 1:
+            total_rations_needed = 1
+
+        # Calculate remaining rations after consumption
+        remaining_rations = current_rations - total_rations_needed
+        if remaining_rations < 0:
+            remaining_rations = 0
+
+        return int(remaining_rations)
 
 
 def delete_news(id):

@@ -4,14 +4,98 @@
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">attach_money</span> Revenue & Taxes</h1>
     </div>
     <div class="templatedivcontent">
-        <h2 class="templatecontentheadercenter">How tax income is calculated</h2>
-        <p class="templatecontentpleft">Tax income is derived from population, productivity of provinces, and consumer goods availability. Productivity and upgrades multiply base per-capita tax; consumer goods increase the effective tax per person when in supply.</p>
-        <h3 class="templatecontentheader">Maximizing income</h3>
-        <ul class="templatecontentpleft">
-            <li>Invest in productivity-related infrastructure (schools, factories) to raise per-capita taxes.</li>
-            <li>Ensure consumer goods supply is sufficient for population to avoid lower tax yields.</li>
-            <li>Use the market to sell low-value surplus resources for quick gold.</li>
-        </ul>
+
+        <p class="templatecontentpleft" style="margin-bottom: 20px;">
+            <a href="/mechanics" class="templatedivbutton"><span class="material-icons-outlined">arrow_back</span> Back to Mechanics</a>
+        </p>
+
+        <!-- Tax Income -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">paid</span> Tax Income Formula</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">calculate</span> Base Calculation</h3>
+                <p class="templatecontentpleft">Every citizen pays taxes each hour. The base rate is modified by various factors.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Base Tax Rate</strong></td><td>$0.025 per citizen per hour</td></tr>
+                    <tr><td><strong>Example (1M pop)</strong></td><td>$25,000 per hour base</td></tr>
+                    <tr><td><strong>Example (10M pop)</strong></td><td>$250,000 per hour base</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tune</span> Modifiers</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Consumer Goods Supplied</strong></td><td>+50% taxes</td></tr>
+                    <tr><td><strong>No Rations</strong></td><td>-30% taxes</td></tr>
+                    <tr><td><strong>No Energy</strong></td><td>-15% taxes</td></tr>
+                    <tr><td><strong>Land Slots</strong></td><td>+2% per slot (max +100%)</td></tr>
+                    <tr><td><strong>Education Policy #1</strong></td><td>+1% taxes</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Productivity -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">trending_up</span> Productivity & Production</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">speed</span> How Productivity Works</h3>
+                <p class="templatecontentpleft">Productivity affects all resource production from infrastructure.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Formula</strong></td><td>+0.9% output per % productivity</td></tr>
+                    <tr><td><strong>At 50% (baseline)</strong></td><td>100% normal production</td></tr>
+                    <tr><td><strong>At 75%</strong></td><td>+22.5% production bonus</td></tr>
+                    <tr><td><strong>At 100%</strong></td><td>+45% production bonus</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">school</span> Increasing Productivity</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Schools</strong></td><td>Best productivity boost</td></tr>
+                    <tr><td><strong>Libraries</strong></td><td>Moderate boost</td></tr>
+                    <tr><td><strong>Universities</strong></td><td>High-tier boost</td></tr>
+                    <tr><td><strong>Factories</strong></td><td>Minor boost</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Operating Costs -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">payments</span> Operating Costs</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">warning</span> Infrastructure Upkeep</h3>
+                <p class="templatecontentpleft">Each building has hourly operating costs deducted from your gold.</p>
+                <table class="templatetable">
+                    <tr><td><strong>How It Works</strong></td><td>Costs deducted automatically each hour</td></tr>
+                    <tr><td><strong>If Broke</strong></td><td>Buildings stop producing</td></tr>
+                    <tr><td><strong>View Costs</strong></td><td>Check province page tooltips</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">lightbulb</span> Tips to Maximize Income</h3>
+                <ul class="templatecontentpleft">
+                    <li>Keep rations and energy supplied to avoid penalties</li>
+                    <li>Match consumer goods to population (1 per 80k)</li>
+                    <li>Build productivity infrastructure early</li>
+                    <li>Buy land slots for +2% tax bonus each</li>
+                    <li>Sell surplus resources on the market</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}

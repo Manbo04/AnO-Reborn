@@ -1,19 +1,142 @@
 {% extends "layout.html" %} {% block title %} War Mechanics {% endblock %} {% block body %}
 <div class="templatediv">
     <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">military_tech</span>War Mechanics</h1>
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">military_tech</span> War Mechanics</h1>
     </div>
     <div class="templatedivcontent">
-        <h2 class="templatecontentheadercenter">Declaring War</h2>
-        <p class="templatecontentpleft">You can declare war on countries within allowed province difference and when not under truce. Declare from the Wars page; the game enforces truce timers and province bounds.</p>
-        <h3 class="templatecontentheader">Combat basics</h3>
-        <p class="templatecontentpleft">Wars use morale and supplies. Attacks cost supplies; morale loss may lead to surrender and resource transfers. Upgrades and unit composition change the effectiveness of armies.</p>
-        <h3 class="templatecontentheader">Best practices</h3>
-        <ul class="templatecontentpleft">
-            <li>Ensure sufficient supplies before large offensives.</li>
-            <li>Scout enemy strengths and aim for favorable matchups.</li>
-            <li>Use coalitions to coordinate attacks and defense.</li>
-        </ul>
+
+        <p class="templatecontentpleft" style="margin-bottom: 20px;">
+            <a href="/mechanics" class="templatedivbutton"><span class="material-icons-outlined">arrow_back</span> Back to Mechanics</a>
+        </p>
+
+        <!-- Declaring War -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">gavel</span> Declaring War</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">checklist</span> Requirements</h3>
+                <table class="templatetable">
+                    <tr><td><strong>No Active Truce</strong></td><td>Cannot attack nations you have truce with</td></tr>
+                    <tr><td><strong>Score Range</strong></td><td>Target must be within war range</td></tr>
+                    <tr><td><strong>Not Already at War</strong></td><td>Limited active wars allowed</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">flag</span> How to Declare</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Step 1</strong></td><td>Find target via Nations or Rankings</td></tr>
+                    <tr><td><strong>Step 2</strong></td><td>Visit their nation page</td></tr>
+                    <tr><td><strong>Step 3</strong></td><td>Click "Actions" tab</td></tr>
+                    <tr><td><strong>Step 4</strong></td><td>Select "Declare War"</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Military Units -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">shield</span> Military Units</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Ground Forces</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Soldiers</strong></td><td>Basic infantry, requires manpower</td></tr>
+                    <tr><td><strong>Tanks</strong></td><td>Heavy armor, requires oil + steel</td></tr>
+                    <tr><td><strong>Artillery</strong></td><td>Long-range, requires ammunition</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air Forces</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Fighters</strong></td><td>Air superiority, fast</td></tr>
+                    <tr><td><strong>Bombers</strong></td><td>Strategic strikes, high damage</td></tr>
+                    <tr><td><strong>Apaches</strong></td><td>Attack helicopters</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">sailing</span> Naval Forces</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Destroyers</strong></td><td>Fast naval combat</td></tr>
+                    <tr><td><strong>Cruisers</strong></td><td>Heavy naval firepower</td></tr>
+                    <tr><td><strong>Submarines</strong></td><td>Stealth attacks</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">visibility</span> Special Units</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Spies</strong></td><td>Intelligence operations</td></tr>
+                    <tr><td><strong>ICBMs</strong></td><td>Long-range missiles</td></tr>
+                    <tr><td><strong>Nukes</strong></td><td>Weapons of mass destruction</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Combat -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">sports_mma</span> Combat System</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">psychology</span> Morale</h3>
+                <p class="templatecontentpleft">Morale determines your nation's will to fight.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Losing Battles</strong></td><td>Decreases morale</td></tr>
+                    <tr><td><strong>0% Morale</strong></td><td>Forced surrender</td></tr>
+                    <tr><td><strong>Recovery</strong></td><td>Slowly regenerates over time</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">inventory</span> Supplies</h3>
+                <p class="templatecontentpleft">Attacks consume supplies and resources.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Ground Attack</strong></td><td>Uses ammunition, oil</td></tr>
+                    <tr><td><strong>Air Strike</strong></td><td>Uses oil, ammunition</td></tr>
+                    <tr><td><strong>Naval Attack</strong></td><td>Uses oil, ammunition</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Victory -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">emoji_events</span> Victory & Defeat</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">celebration</span> On Victory</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Resource Transfer</strong></td><td>Claim enemy resources</td></tr>
+                    <tr><td><strong>Reparations</strong></td><td>Daily gold payments</td></tr>
+                    <tr><td><strong>Truce Timer</strong></td><td>Cannot be attacked back immediately</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> War Tips</h3>
+                <ul class="templatecontentpleft">
+                    <li>Stock up on supplies before attacking</li>
+                    <li>Scout enemy military strength first</li>
+                    <li>Coordinate with coalition allies</li>
+                    <li>Diversify your military composition</li>
+                    <li>Don't overextend - watch your morale</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}

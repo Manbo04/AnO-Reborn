@@ -1,28 +1,137 @@
 {% extends "layout.html" %} {% block title %} Resources {% endblock %} {% block body %}
 <div class="templatediv">
     <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">inventory_2</span>Resources</h1>
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">inventory_2</span> Resources</h1>
     </div>
     <div class="templatedivcontent">
-        <h2 class="templatecontentheadercenter">Overview</h2>
-        <p class="templatecontentpleft">Resources are produced by provinces and used for projects, military, and trade. Each resource has specific uses and may be more or less valuable depending on the market.</p>
 
-        <h3 class="templatecontentheader">FAQ: My resource totals didn't change after buying/selling</h3>
-        <p class="templatecontentpleft">If your resource totals don't immediately reflect purchases or sales, try the following:</p>
-        <ul class="templatecontentpleft">
-            <li>Refresh the page — some UI data is cached in the browser and updates on reload.</li>
-            <li>Check the <em>Market</em> page and your <em>Country</em> page to confirm the transaction succeeded (offers show in your trade history).</li>
-            <li>Some changes are applied inside background tasks (e.g., supply/regeneration). Wait a short moment and re-check or trigger a manual action (buy/sell) to force an update.</li>
-            <li>If the problem persists, note the exact steps (what you bought/sold, province, and quantities) and report it — we'll investigate and fix any server-side application bug.</li>
-        </ul>
+        <p class="templatecontentpleft" style="margin-bottom: 20px;">
+            <a href="/mechanics" class="templatedivbutton"><span class="material-icons-outlined">arrow_back</span> Back to Mechanics</a>
+        </p>
 
-        <h3 class="templatecontentheader">Key resources</h3>
-        <ul class="templatecontentpleft">
-            <li><strong>Rations</strong> - food: sustains population and growth.</li>
-            <li><strong>Oil / Gasoline</strong> - fuels military and projects.</li>
-            <li><strong>Steel / Iron / Components</strong> - used for infrastructure, upgrades, and military units.</li>
-            <li><strong>Consumer Goods</strong> - increases tax income (see Consumer Goods page).</li>
-        </ul>
+        <!-- Essential Resources -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">star</span> Essential Resources</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rations (Food)</h3>
+                <p class="templatecontentpleft">The most critical resource - without rations, your population cannot grow.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Consumption Rate</strong></td><td>1 per 50,000 population/hour</td></tr>
+                    <tr><td><strong>Produced By</strong></td><td>Farms</td></tr>
+                    <tr><td><strong>Farm Bonus</strong></td><td>+3 rations per land slot</td></tr>
+                    <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">bolt</span> Energy</h3>
+                <p class="templatecontentpleft">Powers your infrastructure. Without energy, buildings operate inefficiently.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Without Power</strong></td><td>-15% tax income</td></tr>
+                    <tr><td><strong>Coal Burners</strong></td><td>Uses coal, produces energy</td></tr>
+                    <tr><td><strong>Oil Burners</strong></td><td>Uses oil, produces energy</td></tr>
+                    <tr><td><strong>Nuclear Plants</strong></td><td>Uses uranium, high output</td></tr>
+                    <tr><td><strong>Solar/Hydro</strong></td><td>No fuel cost</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Raw Materials -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">construction</span> Raw Materials</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mining Resources</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Coal</strong></td><td>Coal Mines → Power, Steel</td></tr>
+                    <tr><td><strong>Iron</strong></td><td>Iron Mines → Steel production</td></tr>
+                    <tr><td><strong>Bauxite</strong></td><td>Bauxite Mines → Aluminum</td></tr>
+                    <tr><td><strong>Uranium</strong></td><td>Uranium Mines → Nuclear power, weapons</td></tr>
+                    <tr><td><strong>Lead</strong></td><td>Lead Mines → Ammunition</td></tr>
+                    <tr><td><strong>Copper</strong></td><td>Copper Mines → Electronics</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">park</span> Other Raw Materials</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Oil</strong></td><td>Pumpjacks → Fuel, Military</td></tr>
+                    <tr><td><strong>Lumber</strong></td><td>Lumber Mills → Construction</td></tr>
+                </table>
+                <h3 class="templatecontentheader" style="margin-top: 15px;"><span class="material-icons-outlined">settings</span> Processed Materials</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Steel</strong></td><td>Steel Mills (iron + coal)</td></tr>
+                    <tr><td><strong>Aluminum</strong></td><td>Refineries (bauxite)</td></tr>
+                    <tr><td><strong>Components</strong></td><td>Component Factories</td></tr>
+                    <tr><td><strong>Ammunition</strong></td><td>Ammo Factories (lead)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Resource Tips -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">lightbulb</span> Resource Management Tips</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Maximizing Production</h3>
+                <ul class="templatecontentpleft">
+                    <li>Build productivity infrastructure (schools) first</li>
+                    <li>Productivity at 100% gives +45% resource output</li>
+                    <li>Buy more land to boost farm output</li>
+                    <li>Upgrades like Advanced Machinery increase yields</li>
+                </ul>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">store</span> Trading Resources</h3>
+                <ul class="templatecontentpleft">
+                    <li>Check market prices before selling</li>
+                    <li>Buy resources you don't produce efficiently</li>
+                    <li>Some resources are more valuable than others</li>
+                    <li>Bot offers provide baseline market prices</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">help</span> FAQ</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">sync_problem</span> Resources Not Updating?</h3>
+                <p class="templatecontentpleft">If your resource totals don't immediately reflect purchases or sales:</p>
+                <ul class="templatecontentpleft">
+                    <li>Refresh the page - some data is cached</li>
+                    <li>Check Market page for transaction history</li>
+                    <li>Some changes apply in background tasks</li>
+                    <li>Wait a moment and re-check</li>
+                </ul>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">schedule</span> When Do Resources Update?</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Tax Income</strong></td><td>Every hour at :00</td></tr>
+                    <tr><td><strong>Resource Production</strong></td><td>Every hour at :25</td></tr>
+                    <tr><td><strong>Population Growth</strong></td><td>Every hour at :45</td></tr>
+                    <tr><td><strong>Manpower</strong></td><td>Every 4 hours</td></tr>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
