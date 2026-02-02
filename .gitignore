@@ -36,3 +36,4 @@ backups/
 
 # Local debug scripts kept out of repo
 /scripts/debug/
+.vscode/mcp.json

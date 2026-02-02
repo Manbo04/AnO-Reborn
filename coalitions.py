@@ -59,6 +59,37 @@ def coalition(colId):
         name, colType, description, flag, members_count, total_influence = result
         average_influence = total_influence // members_count if members_count > 0 else 0
 
+        # Calculate coalition statistics (provinces, cities, land, GDP)
+        db.execute(
+            """
+            SELECT
+                COALESCE(COUNT(p.id), 0) AS total_provinces,
+                COALESCE(SUM(p.cityCount), 0) AS total_cities,
+                COALESCE(SUM(p.land), 0) AS total_land
+            FROM coalitions coal
+            LEFT JOIN provinces p ON coal.userId = p.userId
+            WHERE coal.colId = %s
+            """,
+            (colId,),
+        )
+        stats_result = db.fetchone()
+        coalition_provinces = stats_result[0] if stats_result else 0
+        coalition_cities = stats_result[1] if stats_result else 0
+        coalition_land = stats_result[2] if stats_result else 0
+
+        # Calculate averages per member
+        coalition_avg_provinces = (
+            coalition_provinces // members_count if members_count > 0 else 0
+        )
+        coalition_avg_cities = (
+            coalition_cities // members_count if members_count > 0 else 0
+        )
+        coalition_avg_land = coalition_land // members_count if members_count > 0 else 0
+
+        # GDP is the same as total influence (population-based)
+        coalition_gdp = total_influence
+        coalition_gdp_per_capita = average_influence
+
         try:
             db.execute(
                 (
@@ -378,6 +409,15 @@ def coalition(colId):
             requestIds=requestIds,
             members=members,
             pending_applications=pending_applications,
+            # Coalition statistics
+            coalitionProvinces=coalition_provinces,
+            coalitionAverageProvinces=coalition_avg_provinces,
+            coalitionCities=coalition_cities,
+            coalitionAverageCities=coalition_avg_cities,
+            coalitionLand=coalition_land,
+            coalitionAverageLand=coalition_avg_land,
+            coalitiongpd=coalition_gdp,
+            coalitiongpdPerCapita=coalition_gdp_per_capita,
         )
 
 
