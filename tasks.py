@@ -562,55 +562,36 @@ def calc_pg(pId, rations):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        db.execute("SELECT population FROM provinces WHERE id=%s", (pId,))
-        pop_row = db.fetchone()
-        curPop = pop_row[0] if pop_row and pop_row[0] is not None else 0
+        # Single query to get all province data at once
+        db.execute(
+            """SELECT p.population, p.cityCount, p.land, p.happiness, p.pollution, p.userId,
+                      pol.education
+               FROM provinces p
+               LEFT JOIN policies pol ON pol.user_id = p.userId
+               WHERE p.id=%s""",
+            (pId,),
+        )
+        row = db.fetchone()
+        if not row:
+            return rations, 0
+
+        curPop = row[0] if row[0] is not None else 0
+        cities = row[1] if row[1] is not None else 0
+        land = row[2] if row[2] is not None else 0
+        happiness = int(row[3]) if row[3] is not None else 0
+        pollution = row[4] if row[4] is not None else 0
+        policies = row[6] if row[6] is not None else []
 
         maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
+        maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION  # Each city adds 750,000
+        maxPop += land * variables.LAND_MAX_POPULATION_ADDITION  # Each land slot adds 120,000
 
-        try:
-            db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
-            cities = db.fetchone()[0]
-        except TypeError:
-            cities = 0
-
-        maxPop += (
-            cities * variables.CITY_MAX_POPULATION_ADDITION
-        )  # Each city adds 750,000 population
-
-        try:
-            db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
-            land = db.fetchone()[0]
-        except TypeError:
-            land = 0
-
-        maxPop += (
-            land * variables.LAND_MAX_POPULATION_ADDITION
-        )  # Each land slot adds 120,000 population
-
-        try:
-            db.execute("SELECT happiness FROM provinces WHERE id=%s", (pId,))
-            happiness = int(db.fetchone()[0])
-        except TypeError:
-            happiness = 0
-
-        try:
-            db.execute("SELECT pollution FROM provinces WHERE id=%s", (pId,))
-            pollution = db.fetchone()[0]
-        except TypeError:
-            pollution = 0
         # Calculate happiness impact on max population
-        # At 50% happiness: neutral (0% impact)
-        # At 100% happiness: +6% to max population
-        # At 0% happiness: -6% to max population
         happiness_multiplier = (
             (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
         )
 
         # Calculate pollution impact on max population
-        # At 50% pollution: neutral (0% impact)
-        # At 100% pollution: -3% to max population
-        # At 0% pollution: +3% to max population
         pollution_multiplier = (
             (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
         )
@@ -630,13 +611,9 @@ def calc_pg(pId, rations):
             rations_needed_percent = 1
 
         # Slower, controlled population growth (prevents snowballing)
-        # Base rate reduced from 0.5% to 0.15% for more realistic growth
         base_growth_rate = rations_needed_percent * 0.15
 
         # Diminishing returns: growth slows as population approaches max
-        # At 0% of max: full growth rate
-        # At 50% of max: 75% of growth rate
-        # At 90% of max: only 10% of growth rate
         pop_ratio = curPop / maxPop if maxPop > 0 else 1
         diminishing_factor = max(0.05, 1 - (pop_ratio**2))
         growth_rate = base_growth_rate * diminishing_factor
@@ -648,19 +625,6 @@ def calc_pg(pId, rations):
         new_rations = int(new_rations)
 
         newPop = int(round((maxPop / 100) * growth_rate))
-
-        try:
-            db.execute("SELECT userid FROM provinces WHERE id=%s", (pId,))
-            owner_row = db.fetchone()
-            owner = owner_row[0] if owner_row and owner_row[0] is not None else None
-
-            if owner is None:
-                policies = []
-            else:
-                db.execute("SELECT education FROM policies WHERE user_id=%s", (owner,))
-                policies = db.fetchone()[0]
-        except (TypeError, AttributeError, IndexError):
-            policies = []
 
         if 5 in policies:
             newPop = int(round(newPop * 1.2))  # 20% boost from education policy

@@ -1,18 +1,99 @@
 {% extends "layout.html" %} {% block title %} Consumer Goods {% endblock %} {% block body %}
 <div class="templatediv">
     <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">build</span>Consumer Goods</h1>
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">shopping_cart</span> Consumer Goods</h1>
     </div>
     <div class="templatedivcontent">
-        <h2 class="templatecontentheadercenter">What are Consumer Goods?</h2>
-        <p class="templatecontentpleft">Consumer goods are advanced manufactured items that your population consumes. They increase tax income and stability: the more consumer goods your population consumes (up to supply), the higher your per-capita tax yield.</p>
-        <h3 class="templatecontentheader">How to produce them</h3>
-        <p class="templatecontentpleft">Build and upgrade infrastructure that produces or refines materials into consumer goods (factories, component lines). Projects and upgrades can increase consumer goods production efficiency.</p>
-        <h3 class="templatecontentheader">Practical tips</h3>
-        <ul class="templatecontentpleft">
-            <li>Match consumer goods to population: roughly 1 consumer good per ~80,000 people improves tax yield.</li>
-            <li>Sell surplus consumer goods on the market for gold when prices are favourable.</li>
-        </ul>
+
+        <p class="templatecontentpleft" style="margin-bottom: 20px;">
+            <a href="/mechanics" class="templatedivbutton"><span class="material-icons-outlined">arrow_back</span> Back to Mechanics</a>
+        </p>
+
+        <!-- What Are Consumer Goods -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">info</span> What Are Consumer Goods?</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">description</span> Overview</h3>
+                <p class="templatecontentpleft">Consumer goods are manufactured items your citizens consume. When supplied adequately, they significantly boost your tax revenue.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Requirement</strong></td><td>1 consumer good per 80,000 population</td></tr>
+                    <tr><td><strong>Tax Bonus</strong></td><td>+50% when fully supplied</td></tr>
+                    <tr><td><strong>If Undersupplied</strong></td><td>Proportionally reduced bonus</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">calculate</span> Example Calculation</h3>
+                <table class="templatetable">
+                    <tr><td><strong>1 Million Population</strong></td><td>Needs 13 consumer goods</td></tr>
+                    <tr><td><strong>5 Million Population</strong></td><td>Needs 63 consumer goods</td></tr>
+                    <tr><td><strong>10 Million Population</strong></td><td>Needs 125 consumer goods</td></tr>
+                    <tr><td><strong>25 Million Population</strong></td><td>Needs 313 consumer goods</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Production -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">factory</span> Producing Consumer Goods</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Production Chain</h3>
+                <p class="templatecontentpleft">Consumer goods require components to manufacture.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Step 1</strong></td><td>Build Component Factories</td></tr>
+                    <tr><td><strong>Step 2</strong></td><td>Component Factories produce components</td></tr>
+                    <tr><td><strong>Step 3</strong></td><td>Factories convert components → consumer goods</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> Tips</h3>
+                <ul class="templatecontentpleft">
+                    <li>Balance component production with factory consumption</li>
+                    <li>Check net production on your country page</li>
+                    <li>Buy consumer goods on market if short</li>
+                    <li>Sell surplus for gold when prices are high</li>
+                    <li>Advanced Machinery upgrade boosts production</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Impact on Economy -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">analytics</span> Economic Impact</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Tax Revenue Impact</h3>
+                <table class="templatetable">
+                    <tr><td><strong>100% Supplied</strong></td><td>+50% tax income</td></tr>
+                    <tr><td><strong>50% Supplied</strong></td><td>+25% tax income</td></tr>
+                    <tr><td><strong>0% Supplied</strong></td><td>No bonus (baseline)</td></tr>
+                </table>
+                <p class="templatecontentpleft">The bonus scales linearly with supply coverage.</p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">account_balance_wallet</span> Gold Comparison</h3>
+                <p class="templatecontentpleft">Example: 10M population, $250k/hr base taxes</p>
+                <table class="templatetable">
+                    <tr><td><strong>Without Consumer Goods</strong></td><td>$250,000/hr</td></tr>
+                    <tr><td><strong>With Consumer Goods</strong></td><td>$375,000/hr</td></tr>
+                    <tr><td><strong>Difference</strong></td><td>+$125,000/hr</td></tr>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
