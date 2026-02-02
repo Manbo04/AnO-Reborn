@@ -132,17 +132,24 @@ def release_pg_advisory_lock(conn, lock_id: int):
         pass
 
 
-# Returns how many rations a player needs
+# Returns how many rations a player needs (matching population_growth consumption logic)
 def rations_needed(cId):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        # Use aggregated query instead of loop
-        db.execute(
-            "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s", (cId,)
-        )
-        total_population = db.fetchone()[0]
-        return total_population // variables.RATIONS_PER
+        # Get population per province since each province has minimum 1 ration consumption
+        db.execute("SELECT population FROM provinces WHERE userId=%s", (cId,))
+        provinces = db.fetchall()
+
+        total_needed = 0
+        for (pop,) in provinces:
+            province_pop = pop if pop else 0
+            province_consumption = province_pop // variables.RATIONS_PER
+            if province_consumption < 1:
+                province_consumption = 1
+            total_needed += province_consumption
+
+        return total_needed if total_needed > 0 else 1
 
 
 # Returns energy production and consumption from a certain province

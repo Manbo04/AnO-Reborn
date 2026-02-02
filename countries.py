@@ -346,16 +346,24 @@ def next_turn_rations(cId, prod_rations):
         rr = db.fetchone()
         current_rations = (rr[0] if rr and rr[0] is not None else 0) + prod_rations
 
-        # Get total rations needed from all provinces in one query
+        # Get population per province to calculate consumption correctly
+        # (each province consumes at minimum 1 ration, matching population_growth task)
         db.execute(
-            "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s",
+            "SELECT population FROM provinces WHERE userId=%s",
             (cId,),
         )
-        pop_row = db.fetchone()
-        total_population = pop_row[0] if pop_row and pop_row[0] is not None else 0
+        provinces = db.fetchall()
 
-        # Calculate total consumption (same formula as population_growth)
-        total_rations_needed = total_population // variables.RATIONS_PER
+        # Calculate total consumption matching the population_growth task logic
+        total_rations_needed = 0
+        for (pop,) in provinces:
+            province_pop = pop if pop else 0
+            province_consumption = province_pop // variables.RATIONS_PER
+            if province_consumption < 1:
+                province_consumption = 1
+            total_rations_needed += province_consumption
+
+        # If no provinces, still need minimum 1
         if total_rations_needed < 1:
             total_rations_needed = 1
 
