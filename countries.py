@@ -351,7 +351,8 @@ def next_turn_rations(cId, prod_rations):
             "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=%s",
             (cId,),
         )
-        total_population = db.fetchone()[0]
+        pop_row = db.fetchone()
+        total_population = pop_row[0] if pop_row and pop_row[0] is not None else 0
 
         # Calculate total consumption (same formula as population_growth)
         total_rations_needed = total_population // variables.RATIONS_PER
