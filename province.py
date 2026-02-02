@@ -84,7 +84,8 @@ def province(pId):
             "citycount": result["citycount"],
             "land": result["land"],
             "electricity": result["electricity"],
-            "location": result["location"],
+            "location": result["location"]
+            or "Grassland",  # Default to Grassland if NULL
         }
 
         # Build units dict from proInfra columns
