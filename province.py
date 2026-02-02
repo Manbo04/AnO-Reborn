@@ -125,7 +125,8 @@ def province(pId):
             "aluminium_refineries",
             "oil_refineries",
         ]
-        units = {col: result.get(col, 0) for col in proinfra_columns}
+        # Handle None values from LEFT JOIN when proInfra is missing
+        units = {col: (result.get(col) or 0) for col in proinfra_columns}
 
         # Calculate free slots in-memory (no extra queries)
         city_buildings = [
