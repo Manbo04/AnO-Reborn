@@ -72,6 +72,13 @@
         </div>
         </form>
 
+        <!-- Result count info -->
+        {% if total_count is defined %}
+        <p style="text-align: center; margin: 10px 0; color: #888;">
+            Showing {{ offers|length }} of {{ total_count }} offers
+        </p>
+        {% endif %}
+
         <div class="templatedivflex2 divflex2center">
             <div class="templatedivflex2left">
 
@@ -171,13 +178,6 @@
                 {% endfor %}
             </table>
         </div>
-
-        <!-- Result count info -->
-        {% if total_count is defined %}
-        <p style="text-align: center; margin: 10px 0; color: #888;">
-            Showing {{ offers|length if offers is iterable else 0 }} of {{ total_count }} offers
-        </p>
-        {% endif %}
 
         <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
