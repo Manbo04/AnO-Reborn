@@ -701,14 +701,9 @@ def population_growth():  # Function for growing population
                 user_total_rations_needed.get(user_id, 0) + rations_needed
             )
 
-        # PHASE 2: Calculate new rations for each user (one deduction per user)
-        user_new_rations = {}
-        for user_id, total_needed in user_total_rations_needed.items():
-            current_rations = ration_map.get(user_id, 0) or 0
-            new_rations = current_rations - total_needed
-            if new_rations < 0:
-                new_rations = 0
-            user_new_rations[user_id] = int(new_rations)
+        # PHASE 2: We'll deduct rations atomically in DB (not calculated here)
+        # Just keep track of how much each user needs to deduct
+        user_rations_to_deduct = user_total_rations_needed  # Same dict, clearer name
 
         def calc_population_growth(province_row):
             """Calculate population growth for a single province."""
@@ -775,14 +770,18 @@ def population_growth():  # Function for growing population
                 handle_exception(e)
                 continue
 
-        # PHASE 4: Apply rations updates (one per user, not per province!)
+        # PHASE 4: Apply rations updates atomically (one per user, not per province!)
+        # Use GREATEST to ensure rations never go below 0
         rations_updates = [
-            (new_rations, uid) for uid, new_rations in user_new_rations.items()
+            (deduct_amount, uid)
+            for uid, deduct_amount in user_rations_to_deduct.items()
         ]
 
         if rations_updates:
             execute_batch(
-                db, "UPDATE resources SET rations=%s WHERE id=%s", rations_updates
+                db,
+                "UPDATE resources SET rations = GREATEST(0, rations - %s) WHERE id=%s",
+                rations_updates,
             )
         if population_updates:
             execute_batch(
@@ -947,6 +946,10 @@ def generate_province_revenue():  # Runs each hour
             )
             for row in dbdict.fetchall():
                 resources_map[row["id"]] = dict(row)
+
+        # Track resource DELTAS (changes) for atomic updates
+        # This avoids race conditions with other tasks modifying resources
+        resource_deltas = {uid: {} for uid in all_user_ids}
 
         # Ensure all users have resource rows (batch insert)
         if all_user_ids:
@@ -1136,6 +1139,11 @@ def generate_province_revenue():  # Runs each hour
                     for resource, amount in minus.items():
                         amount *= unit_amount
                         current_resource = resources.get(resource, 0)
+                        # Account for any pending deltas in this run
+                        pending_delta = resource_deltas.get(user_id, {}).get(
+                            resource, 0
+                        )
+                        effective_current = current_resource + pending_delta
 
                         # AUTOMATION INTEGRATION
                         if unit == "component_factories" and upgrades.get(
@@ -1146,7 +1154,7 @@ def generate_province_revenue():  # Runs each hour
                         if unit == "steel_mills" and upgrades.get("largerforges"):
                             amount *= 0.7
 
-                        new_resource = current_resource - amount
+                        new_resource = effective_current - amount
 
                         if new_resource < 0:
                             has_enough_stuff["status"] = False
@@ -1163,16 +1171,20 @@ def generate_province_revenue():  # Runs each hour
                                     unit_amount,
                                     amount,
                                     resource,
-                                    current_resource,
+                                    effective_current,
                                 )
                             )
                         else:
-                            # Update local cache and track for batch update
-                            resources_map[user_id][resource] = new_resource
+                            # Track delta for atomic batch update
+                            if user_id not in resource_deltas:
+                                resource_deltas[user_id] = {}
+                            resource_deltas[user_id][resource] = (
+                                resource_deltas[user_id].get(resource, 0) - amount
+                            )
                             log_verbose(
                                 (
                                     "S | MINUS | USER: %s | PROVINCE: %s | %s (%s) | "
-                                    "%s %s=%s (-%s)"
+                                    "%s %s delta=-%s"
                                 )
                                 % (
                                     user_id,
@@ -1180,9 +1192,8 @@ def generate_province_revenue():  # Runs each hour
                                     unit,
                                     unit_amount,
                                     resource,
-                                    current_resource,
-                                    new_resource,
-                                    current_resource - new_resource,
+                                    effective_current,
+                                    amount,
                                 )
                             )
 
@@ -1271,14 +1282,15 @@ def generate_province_revenue():  # Runs each hour
                             log_verbose(msg)
 
                         elif resource in user_resources:
-                            # Update resources_map cache for batch write later
-                            current_val = resources_map.get(user_id, {}).get(
-                                resource, 0
+                            # Track delta for atomic batch update
+                            if user_id not in resource_deltas:
+                                resource_deltas[user_id] = {}
+                            resource_deltas[user_id][resource] = (
+                                resource_deltas[user_id].get(resource, 0) + amount
                             )
-                            resources_map[user_id][resource] = current_val + amount
                             msg = (
                                 f"S | PLUS | U:{user_id} | P:{province_id} | {unit} "
-                                f"({unit_amount}) | ADDING | {resource} | {amount}"
+                                f"({unit_amount}) | ADDING | {resource} | delta=+{amount}"
                             )
                             log_verbose(msg)
 
@@ -1439,19 +1451,22 @@ def generate_province_revenue():  # Runs each hour
             conn.rollback()
             handle_exception(e)
 
-        # Write all resource changes in batch
+        # Write all resource changes atomically using deltas
+        # This prevents race conditions with other tasks (e.g., population_growth)
         try:
-            if resources_map:
-                # Use variables.RESOURCES so all game resources are persisted
-                resource_columns = list(variables.RESOURCES)
-                for user_id, res_data in resources_map.items():
-                    # Build dynamic update for each user with their resource values
+            if resource_deltas:
+                for user_id, deltas in resource_deltas.items():
+                    if not deltas:
+                        continue
+                    # Build atomic update: resource = GREATEST(0, resource + delta)
                     set_clauses = []
                     values = []
-                    for col in resource_columns:
-                        if col in res_data:
-                            set_clauses.append(f"{col} = %s")
-                            values.append(max(0, res_data[col]))
+                    for col, delta in deltas.items():
+                        if delta != 0:
+                            set_clauses.append(
+                                f"{col} = GREATEST(0, COALESCE({col}, 0) + %s)"
+                            )
+                            values.append(delta)
                     if set_clauses and values:
                         values.append(user_id)
                         sql = (
@@ -1461,7 +1476,9 @@ def generate_province_revenue():  # Runs each hour
                         )
                         db.execute(sql, values)
 
-                log_verbose(f"Batch updated resources for {len(resources_map)} users")
+                log_verbose(
+                    f"Atomically updated resources for {len(resource_deltas)} users"
+                )
         except Exception as e:
             conn.rollback()
             handle_exception(e)
