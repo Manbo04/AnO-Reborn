@@ -1,11 +1,12 @@
 from flask import render_template
 from helpers import login_required
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
 
 @login_required
+@cache_response(ttl_seconds=120)  # Cache statistics for 2 minutes
 def statistics():
     """Display market statistics and nation stats"""
 
