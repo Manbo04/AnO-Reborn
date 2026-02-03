@@ -133,7 +133,9 @@ def cache_response(ttl_seconds=60):
             from flask import session, request
 
             user_id = session.get("user_id", "anon")
-            page_id = request.path if hasattr(request, "path") else ""
+            # Include full URL with query string so different
+            # pages/filters get cached separately
+            page_id = request.full_path if hasattr(request, "full_path") else ""
             cache_key = f"{f.__name__}_{user_id}_{page_id}"
 
             # Check if response is cached
