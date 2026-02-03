@@ -290,8 +290,17 @@ def market():
                 offer_ids.append(offer_id)
                 names.append(username)
 
-            offers = zip(
-                ids, types, names, resources, amounts, prices, offer_ids, total_prices
+            offers = list(
+                zip(
+                    ids,
+                    types,
+                    names,
+                    resources,
+                    amounts,
+                    prices,
+                    offer_ids,
+                    total_prices,
+                )
             )
 
             return render_template(
