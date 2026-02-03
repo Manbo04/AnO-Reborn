@@ -1,7 +1,7 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
-from tasks import calc_pg, calc_ti, rations_needed
+from tasks import calc_ti, rations_needed
 import os
 import variables
 from dotenv import load_dotenv
@@ -315,8 +315,21 @@ def get_revenue(cId):
         revenue["gross"]["money"] += ti_money
         revenue["net"]["money"] += ti_money
 
-        # Consumer goods removed by taxes should reduce net consumer goods
-        revenue["net"]["consumer_goods"] -= ti_cg
+        # For net consumer goods, use the theoretical citizen need (cg_need)
+        # rather than ti_cg (which is based on current stockpile).
+        # This shows users: net = gross production - citizen consumption need
+        # which is what they expect to see for understanding production balance.
+        # Get population to calculate theoretical cg need
+        db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (cId,))
+        pop_row = db.fetchone()
+        total_population = pop_row[0] if pop_row and pop_row[0] else 0
+        citizen_cg_need = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
+
+        # Net consumer goods = gross production - citizen need
+        # (gross already includes production from buildings that would operate)
+        revenue["net"]["consumer_goods"] = (
+            revenue["gross"]["consumer_goods"] - citizen_cg_need
+        )
 
         prod_rations = revenue["gross"]["rations"]
         new_rations = next_turn_rations(cId, prod_rations)
@@ -335,7 +348,7 @@ def get_revenue(cId):
 
 
 def next_turn_rations(cId, prod_rations):
-    """Calculate next turn rations after consumption - optimized single query version."""
+    """Calculate next turn rations after consumption."""
     from database import get_db_connection
 
     with get_db_connection() as conn:
