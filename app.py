@@ -716,6 +716,11 @@ def mechanics_resources():
     return render_template("mechanics/resources.html")
 
 
+@app.route("/mechanics/rations", methods=["GET"])
+def mechanics_rations():
+    return render_template("mechanics/rations.html")
+
+
 @app.route("/mechanics/war", methods=["GET"])
 def mechanics_war():
     return render_template("mechanics/war.html")
