@@ -488,17 +488,78 @@ def establish_coalition():
 
 # Route for viewing all existing coalitions
 def coalitions():
-    """Coalition rankings page - optimized single query"""
+    """Coalition rankings page - optimized with SQL search/filter and pagination"""
     with get_db_cursor() as db:
-        search = request.values.get("search")
+        search = request.values.get("search", "").strip()
         raw_sort = request.values.get("sort")
         sort = raw_sort
         sortway = request.values.get("sortway")
+        page = request.values.get("page", default=1, type=int)
+        per_page = request.values.get("per_page", default=50, type=int)
+        if per_page not in [50, 100, 150]:
+            per_page = 50
 
-        # Single optimized query: get all coalition data with pre-calculated influence
-        # Uses pre-aggregated subquery to avoid N+1 per-member population lookups
-        db.execute(
-            """
+        # Build WHERE clause for search and type filter
+        where_conditions = []
+        params = []
+
+        if search:
+            # Search by coalition name or ID
+            if search.isdigit():
+                where_conditions.append("c.id = %s")
+                params.append(int(search))
+            else:
+                where_conditions.append("LOWER(c.name) LIKE LOWER(%s)")
+                params.append(f"%{search}%")
+
+        # Type filter
+        if sort == "invite_only":
+            where_conditions.append("c.type = 'Invite Only'")
+        elif sort == "open":
+            where_conditions.append("c.type = 'Open'")
+
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
+
+        # Determine ORDER BY clause
+        actual_sort = (
+            sort if sort and sort not in ["open", "invite_only"] else "influence"
+        )
+        if not sortway:
+            sortway = "desc"
+
+        order_dir = "DESC" if sortway == "desc" else "ASC"
+        if actual_sort == "influence":
+            order_by = f"total_influence {order_dir}"
+        elif actual_sort == "members":
+            order_by = f"members {order_dir}"
+        elif actual_sort == "age":
+            # Age: older = smaller date, so reverse the direction
+            order_by = f"c.date {'ASC' if sortway == 'desc' else 'DESC'}"
+        else:
+            order_by = f"total_influence {order_dir}"
+
+        # Count total matching coalitions
+        count_query = f"""
+            SELECT COUNT(DISTINCT c.id)
+            FROM colNames c
+            INNER JOIN coalitions coal ON c.id = coal.colId
+            {where_clause}
+        """
+        db.execute(count_query, tuple(params))
+        total_count = db.fetchone()[0] or 0
+
+        # Calculate pagination
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        if page < 1:
+            page = 1
+        if page > total_pages:
+            page = total_pages
+        offset = (page - 1) * per_page
+
+        # Main query with pagination - all filtering/sorting in SQL
+        main_query = f"""
             SELECT
                 c.id,
                 c.type,
@@ -514,26 +575,19 @@ def coalitions():
                 FROM provinces
                 GROUP BY userId
             ) prov ON coal.userId = prov.userId
+            {where_clause}
             GROUP BY c.id, c.type, c.name, c.flag, c.date
-            """
-        )
+            ORDER BY {order_by}
+            LIMIT %s OFFSET %s
+        """
+        db.execute(main_query, tuple(params) + (per_page, offset))
         coalitionsDb = db.fetchall()
 
         coalitions_list = []
         for row in coalitionsDb:
             col_id, col_type, name, flag, members, col_date, influence = row
 
-            # Apply search filter
-            if search and search.lower() not in name.lower():
-                continue
-
-            # Apply type filter
-            if sort == "invite_only" and col_type == "Open":
-                continue
-            if sort == "open" and col_type == "Invite Only":
-                continue
-
-            # Calculate unix timestamp for age sorting
+            # Calculate unix timestamp for display
             try:
                 date_obj = datetime.datetime.fromisoformat(str(col_date))
                 unix = int((date_obj - datetime.datetime(1970, 1, 1)).total_seconds())
@@ -553,29 +607,17 @@ def coalitions():
                 }
             )
 
-        # Default sorting
-        if not sort or sort in ["open", "invite_only"]:
-            sort = "influence"
-            if not sortway:
-                sortway = "desc"
-
-        reverse = sortway == "desc"
-
-        # Sort the results
-        if sort == "influence":
-            coalitions_list.sort(key=lambda x: x["influence"], reverse=reverse)
-        elif sort == "members":
-            coalitions_list.sort(key=lambda x: x["members"], reverse=reverse)
-        elif sort == "age":
-            coalitions_list.sort(key=lambda x: x["unix"], reverse=not reverse)
-
         return render_template(
             "coalitions.html",
             coalitions=coalitions_list,
-            sort=sort,
+            sort=actual_sort,
             sortway=sortway,
             search=search,
             selected_sort=raw_sort,
+            current_page=page,
+            total_pages=total_pages,
+            total_count=total_count,
+            per_page=per_page,
         )
 
 
