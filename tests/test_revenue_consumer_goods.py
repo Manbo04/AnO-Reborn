@@ -45,18 +45,22 @@ class FakeConn:
         pass
 
 
-def test_get_revenue_consumer_goods_net_subtracts_taxes(monkeypatch):
-    """If tax income consumes consumer goods, net consumer goods should
-    be reduced (gross - consumed), not increased."""
+def test_get_revenue_consumer_goods_net_subtracts_citizen_need(monkeypatch):
+    """Net consumer goods should be gross - citizen need (population-based),
+    not based on tax income consumption from stockpile."""
     import countries
+    import variables
 
-    # Province: id=100, land=0, productivity=50
+    # Province: id=100, land=0, productivity=50, population=1000
     infra_ids = [(100, 0, 50)]
 
     # db is non-dict cursor used by get_revenue
-    # Provide two fetchone returns to satisfy any earlier checks and the
-    # rations SELECT in next_turn_rations
-    db = FakeCursor(fetchone_returns=[(0,), (0,)], fetchall_return=[])
+    # Provide fetchone returns for:
+    # 1) any earlier checks
+    # 2) rations SELECT in next_turn_rations
+    # 3) SUM(population) query for citizen_cg_need calculation
+    population = 1000  # This gives citizen_cg_need = ceil(1000 / CONSUMER_GOODS_PER)
+    db = FakeCursor(fetchone_returns=[(0,), (0,), (population,)], fetchall_return=[])
 
     # First fetchall -> provinces (id, land, productivity)
     # Second fetchall -> proInfra row.
@@ -67,9 +71,9 @@ def test_get_revenue_consumer_goods_net_subtracts_taxes(monkeypatch):
     conn = FakeConn(db, db)
 
     monkeypatch.setattr("database.get_db_connection", lambda: conn)
-    # Avoid cg_need DB calls
+    # cg_need is not used for net calculation anymore, but mock it anyway
     monkeypatch.setattr(countries, "cg_need", lambda cid: 0)
-    # Simulate tax income consuming 50 consumer goods
+    # calc_ti returns (money, cg) - but ti_cg is no longer used for net CG
     monkeypatch.setattr(countries, "calc_ti", lambda cid: (0, 50))
 
     # Ensure cache miss
@@ -82,6 +86,10 @@ def test_get_revenue_consumer_goods_net_subtracts_taxes(monkeypatch):
 
     # malls produce 30 consumer goods (per variables.INFRA); gross should be 30
     assert rev["gross"]["consumer_goods"] == 30
-    # With a money-aware simulation, the mall won't operate if the user
-    # cannot afford upkeep, so net consumer goods = 0 (no production) - 50 (consumed)
-    assert rev["net"]["consumer_goods"] == -50
+    # Net consumer goods = gross - citizen_cg_need
+    # citizen_cg_need = ceil(population / CONSUMER_GOODS_PER) = ceil(1000 / 1000) = 1
+    import math
+
+    expected_citizen_need = math.ceil(population / variables.CONSUMER_GOODS_PER)
+    expected_net = 30 - expected_citizen_need  # 30 - 1 = 29
+    assert rev["net"]["consumer_goods"] == expected_net
