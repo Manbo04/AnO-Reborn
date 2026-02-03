@@ -38,22 +38,27 @@
             <div class="templatedivflex2right">
 
                 <select name="offer_type" class="templateselect">
-
-                    <option disabled="true" selected="selected">Type</option>
-                    <option value="sell" class="templateoption">Selling</option>
-                    <option value="buy" class="templateoption">Buying</option>
-
+                    <option disabled="true" {% if not offer_type %}selected{% endif %}>Type</option>
+                    <option value="sell" class="templateoption" {% if offer_type == 'sell' %}selected{% endif %}>Selling</option>
+                    <option value="buy" class="templateoption" {% if offer_type == 'buy' %}selected{% endif %}>Buying</option>
                 </select>
 
             </div>
             <div class="templatedivflex2left">
 
                 <select name="price_type" class="templateselect">
+                    <option disabled="true" {% if not price_type %}selected{% endif %}>Sort</option>
+                    <option value="ASC" class="templateoption" {% if price_type == 'ASC' %}selected{% endif %}>Ascending</option>
+                    <option value="DESC" class="templateoption" {% if price_type == 'DESC' %}selected{% endif %}>Descending</option>
+                </select>
 
-                    <option disabled="true" selected="selected">Sort</option>
-                    <option value="ASC" class="templateoption">Ascending</option>
-                    <option value="DESC" class="templateoption">Descending</option>
+            </div>
+            <div class="templatedivflex2left">
 
+                <select name="per_page" class="templateselect">
+                    <option value="50" class="templateoption" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                    <option value="100" class="templateoption" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+                    <option value="150" class="templateoption" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
                 </select>
 
             </div>
@@ -166,6 +171,39 @@
                 {% endfor %}
             </table>
         </div>
+
+        <!-- Result count info -->
+        {% if total_count is defined %}
+        <p style="text-align: center; margin: 10px 0; color: #888;">
+            Showing {{ offers|length if offers is iterable else 0 }} of {{ total_count }} offers
+        </p>
+        {% endif %}
+
+        <!-- Pagination controls -->
+        {% if total_pages and total_pages > 1 %}
+        <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('market', page=1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
+                <a href="{{ url_for('market', page=current_page - 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
+            {% endif %}
+
+            {% set start_page = [current_page - 2, 1] | max %}
+            {% set end_page = [current_page + 2, total_pages] | min %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == current_page %}
+                    <span class="templatedivbutton smallactionbutton" style="background: #444;">{{ p }}</span>
+                {% else %}
+                    <a href="{{ url_for('market', page=p, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('market', page=current_page + 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Next →</a>
+                <a href="{{ url_for('market', page=total_pages, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 

@@ -196,6 +196,12 @@ def market():
             except TypeError:
                 offer_type = None
 
+            # Pagination parameters
+            page = request.values.get("page", default=1, type=int)
+            per_page = request.values.get("per_page", default=50, type=int)
+            if per_page not in [50, 100, 150]:
+                per_page = 50
+
             # Processing of query parameters into database statements
             if price_type is not None:
                 list_of_price_types = ["ASC", "DESC"]
@@ -206,63 +212,54 @@ def market():
             if filter_resource is not None:
                 resources_list = variables.RESOURCES
 
-                if (
-                    filter_resource not in resources_list
-                ):  # Checks if the resource the user selected actually exists
+                if filter_resource not in resources_list:
                     return error(400, "No such resource")
 
-            # Use JOIN query instead of loop to fetch all data at once
-            if filter_resource is not None:
-                query = (
-                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
-                    "o.offer_id, u.username "
-                    "FROM offers o "
-                    "INNER JOIN users u ON o.user_id = u.id "
-                    "WHERE o.resource = %s "
-                    "ORDER BY o.price ASC"
-                )
-                db.execute(query, (filter_resource,))
-            elif offer_type is not None and price_type is not None:
-                order_dir = "ASC" if price_type == "ASC" else "DESC"
-                query = (
-                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
-                    "o.offer_id, u.username "
-                    "FROM offers o "
-                    "INNER JOIN users u ON o.user_id = u.id "
-                    "WHERE o.type = %s "
-                    f"ORDER BY o.price {order_dir}"
-                )
-                db.execute(query, (offer_type,))
-            elif offer_type is not None:
-                query = (
-                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
-                    "o.offer_id, u.username "
-                    "FROM offers o "
-                    "INNER JOIN users u ON o.user_id = u.id "
-                    "WHERE o.type = %s "
-                    "ORDER BY o.price ASC"
-                )
-                db.execute(query, (offer_type,))
-            elif price_type is not None:
-                order_dir = "ASC" if price_type == "ASC" else "DESC"
-                query = (
-                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
-                    "o.offer_id, u.username "
-                    "FROM offers o "
-                    "INNER JOIN users u ON o.user_id = u.id "
-                    f"ORDER BY o.price {order_dir}"
-                )
-                db.execute(query)
-            else:
-                query = (
-                    "SELECT o.user_id, o.type, o.resource, o.amount, o.price, "
-                    "o.offer_id, u.username "
-                    "FROM offers o "
-                    "INNER JOIN users u ON o.user_id = u.id "
-                    "ORDER BY o.price ASC"
-                )
-                db.execute(query)
+            # Build WHERE clause and params
+            where_conditions = []
+            params = []
 
+            if filter_resource is not None:
+                where_conditions.append("o.resource = %s")
+                params.append(filter_resource)
+
+            if offer_type is not None:
+                where_conditions.append("o.type = %s")
+                params.append(offer_type)
+
+            where_clause = ""
+            if where_conditions:
+                where_clause = "WHERE " + " AND ".join(where_conditions)
+
+            # Order direction
+            order_dir = "ASC"
+            if price_type == "DESC":
+                order_dir = "DESC"
+
+            # Count total matching offers
+            count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
+            db.execute(count_query, tuple(params))
+            total_count = db.fetchone()[0] or 0
+
+            # Calculate pagination
+            total_pages = max(1, (total_count + per_page - 1) // per_page)
+            if page < 1:
+                page = 1
+            if page > total_pages:
+                page = total_pages
+            offset = (page - 1) * per_page
+
+            # Main query with pagination
+            query = f"""
+                SELECT o.user_id, o.type, o.resource, o.amount, o.price,
+                       o.offer_id, u.username
+                FROM offers o
+                INNER JOIN users u ON o.user_id = u.id
+                {where_clause}
+                ORDER BY o.price {order_dir}
+                LIMIT %s OFFSET %s
+            """
+            db.execute(query, tuple(params) + (per_page, offset))
             offers_data = db.fetchall()
 
             # Process results
@@ -295,10 +292,19 @@ def market():
 
             offers = zip(
                 ids, types, names, resources, amounts, prices, offer_ids, total_prices
-            )  # Zips everything into 1 list
+            )
 
             return render_template(
-                "market.html", offers=offers, price_type=price_type, cId=cId
+                "market.html",
+                offers=offers,
+                price_type=price_type,
+                cId=cId,
+                current_page=page,
+                total_pages=total_pages,
+                total_count=total_count,
+                per_page=per_page,
+                filtered_resource=filter_resource,
+                offer_type=offer_type,
             )
 
 

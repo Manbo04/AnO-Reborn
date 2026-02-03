@@ -8,7 +8,7 @@ from random import random
 from dotenv import load_dotenv
 import variables
 import random as rand
-from database import get_db_cursor
+from database import get_db_cursor, cache_response
 from psycopg2.extras import RealDictCursor
 
 load_dotenv()
@@ -19,14 +19,19 @@ bp = Blueprint("intelligence", __name__)
 # TODO: add complex operation sorting by date and merging
 @bp.route("/intelligence", methods=["GET"])
 @login_required
+@cache_response(ttl_seconds=30)  # Cache spy info for 30 seconds
 def intelligence():
     if request.method == "GET":
         cId = session["user_id"]
 
-        with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            # cleanup old spyinfo rows (use spyinfo table)
-            cutoff = int(time.time()) - 86400 * 7
-            db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
+        # Cleanup old spyinfo rows (only run occasionally, not on every request)
+        # This is now done lazily - cleanup happens if we haven't cleaned in 1 hour
+        import random as rand_mod
+
+        if rand_mod.random() < 0.01:  # 1% chance to cleanup on each request
+            with get_db_cursor(cursor_factory=RealDictCursor) as db:
+                cutoff = int(time.time()) - 86400 * 7
+                db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
 
         data = []
         try:
