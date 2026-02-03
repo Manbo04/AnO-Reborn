@@ -36,22 +36,38 @@
 
                 <div class="templatedivflex2left">
 
-                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search" value="{{ search or '' }}" />
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name or ID" value="{{ search or '' }}" />
 
                 </div>
                 <div class="templatedivflex2right">
 
+                    <select name="per_page" class="templateselect">
+                        <option value="50" class="templateoption" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                        <option value="100" class="templateoption" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+                        <option value="150" class="templateoption" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
+                    </select>
+
+                </div>
+
+                <div class="templatedivflex2left">
                     <button class="center templatedivbutton smallactionbutton" type="submit"><span class="material-icons-outlined">
                         arrow_forward
                         </span>Submit</button>
-
                 </div>
 
             </div>
         </form>
 
+        <!-- Result count info -->
+        {% if total_count is defined %}
+        <p style="text-align: center; margin: 10px 0; color: #888;">
+            Showing {{ countries|length }} of {{ total_count }} nations
+            {% if search %} matching "{{ search }}"{% endif %}
+        </p>
+        {% endif %}
+
         <!-- Hidden preserved-link for tests and clients: keeps current query params present in HTML -->
-        <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" style="display:none;">preserve</a>
+        <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" style="display:none;">preserve</a>
 
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
@@ -93,15 +109,25 @@
         {% if total_pages and total_pages > 1 %}
         <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
             {% if current_page > 1 %}
-                <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" class="templatedivbutton smallactionbutton">First</a>
-                <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" class="templatedivbutton smallactionbutton">← Previous</a>
+                <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
+                <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
             {% endif %}
 
-            <span style="margin: 0 10px;">Page {{ current_page }} of {{ total_pages }}</span>
+            <!-- Page number links -->
+            {% set start_page = [current_page - 2, 1] | max %}
+            {% set end_page = [current_page + 2, total_pages] | min %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == current_page %}
+                    <span class="templatedivbutton smallactionbutton" style="background: #444;">{{ p }}</span>
+                {% else %}
+                    <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
 
             {% if current_page < total_pages %}
-                <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" class="templatedivbutton smallactionbutton">Next →</a>
-                <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range) }}" class="templatedivbutton smallactionbutton">Last</a>
+                <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Next →</a>
+                <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Last</a>
             {% endif %}
         </div>
         {% endif %}

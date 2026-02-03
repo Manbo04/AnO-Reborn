@@ -561,50 +561,59 @@ def country(cId):
 
 
 def countries():
+    from helpers import get_bulk_influence
+
+    cId = session["user_id"]
+
+    # Parse and coerce query params
+    search = request.values.get("search", "").strip()
+    lowerinf = request.values.get("lowerinf", type=float)
+    upperinf = request.values.get("upperinf", type=float)
+    province_range = request.values.get("province_range", default=0, type=int)
+    sort = request.values.get("sort")
+    sortway = request.values.get("sortway")
+    page = request.values.get("page", default=1, type=int)
+    # Allow users to choose page size: 50, 100, or 150
+    per_page = request.values.get("per_page", default=50, type=int)
+    if per_page not in [50, 100, 150]:
+        per_page = 50
+
+    if sort == "war_range":
+        target = target_data(cId)
+        lowerinf = float(target.get("lower", 0))
+        upperinf = float(target.get("upper", 0))
+        province_range = int(target.get("province_range", 0))
+
+    # Default sort
+    if not sort:
+        sort = "influence"
+        sortway = "desc"
+    if not sortway:
+        sortway = "desc"
+
+    # Build dynamic WHERE clause for search (by ID or username)
+    search_conditions = []
+    search_params = []
+
+    if search:
+        # Check if search is a numeric ID
+        if search.isdigit():
+            search_conditions.append("users.id = %s")
+            search_params.append(int(search))
+        else:
+            # Search by username (case-insensitive)
+            search_conditions.append("LOWER(users.username) LIKE LOWER(%s)")
+            search_params.append(f"%{search}%")
+
+    # Build the WHERE clause
+    where_clause = ""
+    if search_conditions:
+        where_clause = "WHERE " + " OR ".join(search_conditions)
+
     with get_db_cursor() as db:
-        cId = session["user_id"]
-
-        # Parse and coerce query params
-        search = request.values.get("search")
-        lowerinf = request.values.get("lowerinf", type=float)
-        upperinf = request.values.get("upperinf", type=float)
-        province_range = request.values.get("province_range", default=0, type=int)
-        sort = request.values.get("sort")
-        sortway = request.values.get("sortway")
-        page = request.values.get("page", default=1, type=int)
-
-        if sort == "war_range":
-            target = target_data(cId)
-            lowerinf = float(target.get("lower", 0))
-            upperinf = float(target.get("upper", 0))
-            province_range = int(target.get("province_range", 0))
-
-        # First, get total count without pagination for result info
-        db.execute(
-            """
-            SELECT COUNT(*) FROM (
-                SELECT users.id
-                FROM users
-                LEFT JOIN provinces ON users.id = provinces.userId
-                LEFT JOIN coalitions ON users.id = coalitions.userId
-                LEFT JOIN colNames ON colNames.id = coalitions.colId
-                GROUP BY users.id
-                HAVING COUNT(provinces.id) >= %s
-            ) t;
-            """,
-            (province_range,),
-        )
-        try:
-            total_count = db.fetchone()[0] or 0
-        except (TypeError, IndexError):
-            total_count = 0
-
-        # Fetch paginated results with optimized query
-        page_size = 50
-        offset = (page - 1) * page_size
-
-        db.execute(
-            """
+        # First, get ALL matching user IDs with their influence for proper filtering
+        # We need influence for filtering by lowerinf/upperinf, so we compute it here
+        base_query = f"""
             SELECT users.id,
                    users.username,
                    users.date,
@@ -617,25 +626,23 @@ def countries():
             LEFT JOIN provinces ON users.id = provinces.userId
             LEFT JOIN coalitions ON users.id = coalitions.userId
             LEFT JOIN colNames ON colNames.id = coalitions.colId
+            {where_clause}
             GROUP BY users.id, coalitions.colId, colNames.name
             HAVING COUNT(provinces.id) >= %s
-            ORDER BY users.id DESC
-            LIMIT %s OFFSET %s;
-            """,
-            (province_range, page_size, offset),
-        )
-        dbResults = db.fetchall()
+        """
 
-    # Batch load all influence values for this page using bulk query (single DB call)
-    from helpers import get_bulk_influence
+        # Execute to get all matching users (we'll filter and paginate in Python
+        # since we need influence values which require a separate lookup)
+        db.execute(base_query, tuple(search_params) + (province_range,))
+        all_results = db.fetchall()
 
-    user_ids = [user[0] for user in dbResults]
-    influences = get_bulk_influence(user_ids)
+    # Get all user IDs for bulk influence lookup
+    user_ids = [user[0] for user in all_results]
+    influences = get_bulk_influence(user_ids) if user_ids else {}
 
-    # Process results with cached influences
-    results = []
-    for user in dbResults:
-        addUser = True
+    # Process results with influences and apply filters
+    processed_results = []
+    for user in all_results:
         user_id = user[0]
         user = list(user)
         influence = influences.get(user_id, 0)
@@ -643,55 +650,66 @@ def countries():
         user_date = user[2]
         # Handle both date objects and ISO strings
         try:
-            date = datetime.fromisoformat(user_date)
+            date = datetime.fromisoformat(str(user_date))
         except Exception:
-            # Fallback if already a date object
             date = user_date
-        unix = int((date - datetime(1970, 1, 1)).total_seconds())
+        try:
+            unix = int((date - datetime(1970, 1, 1)).total_seconds())
+        except Exception:
+            unix = 0
 
-        user.append(influence)
-        user.append(unix)
+        user.append(influence)  # index 8
+        user.append(unix)  # index 9
 
-        # Case-insensitive search
-        if search and search.lower() not in (user[1] or "").lower():
-            addUser = False
-
-        # Numeric bounds (None indicates 'no bound')
+        # Apply influence range filters
         if lowerinf is not None and influence < lowerinf:
-            addUser = False
+            continue
         if upperinf is not None and influence > upperinf:
-            addUser = False
+            continue
 
-        # province_range behaves as a MINIMUM cutoff (>=)
-        if province_range and user[7] < int(province_range):  # user[7] - province count
-            addUser = False
+        processed_results.append(user)
 
-        if addUser:
-            results.append(user)
-
-    if not sort:
-        sortway = "desc"
-        sort = "influence"
-
-    reverse = False
-    if sortway == "desc":
-        reverse = True
+    # Sort results
+    reverse = sortway == "desc"
     if sort == "influence":
-        results = sorted(results, key=itemgetter(8), reverse=reverse)
-    if sort == "age":
-        results = sorted(results, key=itemgetter(9), reverse=reverse)
-    if sort == "population":
-        results = sorted(results, key=itemgetter(4), reverse=reverse)
-    if sort == "provinces":
-        results = sorted(results, key=itemgetter(7), reverse=reverse)
+        processed_results = sorted(
+            processed_results, key=itemgetter(8), reverse=reverse
+        )
+    elif sort == "age":
+        processed_results = sorted(
+            processed_results, key=itemgetter(9), reverse=reverse
+        )
+    elif sort == "population":
+        processed_results = sorted(
+            processed_results, key=itemgetter(4), reverse=reverse
+        )
+    elif sort == "provinces":
+        processed_results = sorted(
+            processed_results, key=itemgetter(7), reverse=reverse
+        )
 
-    total_pages = (total_count + page_size - 1) // page_size
+    # Calculate pagination
+    total_count = len(processed_results)
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+
+    # Ensure page is within valid range
+    if page < 1:
+        page = 1
+    if page > total_pages:
+        page = total_pages
+
+    # Apply pagination
+    offset = (page - 1) * per_page
+    paginated_results = processed_results[offset : offset + per_page]
+
     return render_template(
         "countries.html",
-        countries=results,
+        countries=paginated_results,
         current_user_id=cId,
         current_page=page,
         total_pages=total_pages,
+        total_count=total_count,
+        per_page=per_page,
         sort=sort,
         sortway=sortway,
         search=search,
