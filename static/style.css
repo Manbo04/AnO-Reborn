@@ -1778,7 +1778,7 @@ label {
 
 .templateselect {
     padding: 10px;
-    margin: 8px;
+    margin: 8px auto;
     outline: none;
     font-size: 16px;
     transition: all 0.2s;
@@ -1791,6 +1791,7 @@ label {
     background-position: -50% 0%;
     float: none;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .templateselect:hover {
@@ -1889,16 +1890,18 @@ label {
 .infodiv {
     background: var(--foreground);
     border: 1.5px solid var(--border);
-    padding: 8px;
-    width: max-content;
+    padding: 16px;
+    width: fit-content;
+    width: -moz-fit-content;
     max-width: 95%;
-    margin: auto;
+    margin: 16px auto;
     box-shadow: rgba(0, 0, 0, 0.05) 0 16px 26px 0;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .infodiv div div {
-    padding: 12px 40px;
+    padding: 8px 20px;
     margin: auto;
 }
 
@@ -2019,6 +2022,7 @@ button {
     flex-direction: column;
     flex-wrap: wrap;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 
 /* Ensure all tables in flex columns have consistent width */
@@ -2026,6 +2030,11 @@ button {
 .templatedivflex2right .templatetable {
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Ensure equal flex sizing */
+.templatedivflex2 {
+    align-items: stretch;
 }
 
 .flex2rightfloatright {
@@ -2943,7 +2952,7 @@ button {
     font-size: 16px;
     transition: all 0.2s;
     display: block;
-    margin: 14px auto;
+    margin: 8px auto;
     transition: all 0.3s ease-in-out;
     background: linear-gradient(-90deg, var(--foregroundFive) 50%, var(--foregroundFour) 50%);
     border: 1.5px solid var(--border);
@@ -2954,6 +2963,7 @@ button {
     border-radius: 4px;
     line-height: normal;
     font-weight: 400;
+    box-sizing: border-box;
 }
 
 .loginsignupinput:focus {
@@ -3792,4 +3802,95 @@ footer {
     text-align: center;
     padding: 40px;
     color: #888;
+}
+/* ============================================
+   LAYOUT CONSISTENCY FIXES
+   ============================================ */
+
+/* Consistent form grid layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-grid.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.form-grid.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media all and (max-width: 600px) {
+    .form-grid,
+    .form-grid.cols-3,
+    .form-grid.cols-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+/* Make inputs and selects same size when in flex containers */
+.infodiv .templatedivflex2left,
+.infodiv .templatedivflex2right {
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+    padding: 4px;
+    margin: 4px;
+}
+
+.infodiv .loginsignupinput,
+.infodiv .templateselect {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 8px 0;
+}
+
+/* Ensure consistent flex child sizing */
+.templatedivflex2left,
+.templatedivflex2right {
+    box-sizing: border-box;
+}
+
+/* Two-column content alignment fix */
+.templatedivcontent .templatedivflex2 {
+    align-items: flex-start;
+}
+
+/* Fix revenue page alignment */
+.revenue-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
+@media all and (max-width: 800px) {
+    .revenue-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Consistent table in two-column layout */
+.templatedivflex2left .infotable,
+.templatedivflex2right .infotable {
+    width: 100%;
+}
+
+/* Fix for uneven padding in flex children */
+.templatedivflex2 > div {
+    box-sizing: border-box;
+}
+
+/* Ensure buttons in flex containers align properly */
+.templatedivflex2 .templatedivbutton {
+    white-space: nowrap;
 }
