@@ -53,6 +53,11 @@ celery_beat_schedule = {
         # Run daily at 00:30 UTC to ensure market has essential resources
         "schedule": crontab(minute="30", hour="0"),
     },
+    "execute_trade_agreements": {
+        "task": "tasks.task_execute_trade_agreements",
+        # Run every 15 minutes to check for due trade agreements
+        "schedule": crontab(minute="*/15"),
+    },
 }
 
 celery.conf.update(
@@ -590,8 +595,12 @@ def calc_pg(pId, rations):
         policies = row[6] if row[6] is not None else []
 
         maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
-        maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION  # Each city adds 750,000
-        maxPop += land * variables.LAND_MAX_POPULATION_ADDITION  # Each land slot adds 120,000
+        maxPop += (
+            cities * variables.CITY_MAX_POPULATION_ADDITION
+        )  # Each city adds 750,000
+        maxPop += (
+            land * variables.LAND_MAX_POPULATION_ADDITION
+        )  # Each land slot adds 120,000
 
         # Calculate happiness impact on max population
         happiness_multiplier = (
@@ -1821,3 +1830,64 @@ def task_refresh_bot_offers():
 @celery.task()
 def task_backfill_missing_resources():
     _run_with_deadlock_retries(backfill_missing_resources, "backfill_missing_resources")
+
+
+# =============================================================================
+# TRADE AGREEMENTS - Automatic recurring trades
+# =============================================================================
+
+
+def execute_due_trade_agreements():
+    """Find and execute all trade agreements that are due."""
+    from trade_agreements import execute_trade_agreement
+    from database import get_db_connection
+
+    conn = get_db_connection()
+    db = conn.cursor()
+
+    try:
+        # Find all active agreements where next_execution is due
+        db.execute(
+            """
+            SELECT id FROM trade_agreements
+            WHERE status = 'active'
+              AND next_execution IS NOT NULL
+              AND next_execution <= now()
+            ORDER BY next_execution
+            LIMIT 100
+        """
+        )
+
+        due_agreements = db.fetchall()
+
+        if not due_agreements:
+            return
+
+        executed = 0
+        failed = 0
+
+        for (agreement_id,) in due_agreements:
+            try:
+                success, msg = execute_trade_agreement(agreement_id)
+                if success:
+                    executed += 1
+                else:
+                    failed += 1
+                    print(f"Trade agreement {agreement_id} failed: {msg}")
+            except Exception as e:
+                failed += 1
+                print(f"Trade agreement {agreement_id} error: {e}")
+
+        print(f"Trade agreements: executed={executed}, failed={failed}")
+
+    except Exception as e:
+        print(f"Error in execute_due_trade_agreements: {e}")
+    finally:
+        db.close()
+        conn.close()
+
+
+@celery.task()
+def task_execute_trade_agreements():
+    """Celery task to execute due trade agreements."""
+    _run_with_deadlock_retries(execute_due_trade_agreements, "execute_trade_agreements")
