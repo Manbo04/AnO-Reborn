@@ -1,7 +1,7 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
-from tasks import calc_ti, rations_needed
+from tasks import rations_needed
 import os
 import variables
 from dotenv import load_dotenv
@@ -158,7 +158,8 @@ def get_revenue(cId):
     with get_db_connection() as conn:
         db = conn.cursor()
 
-        _ = cg_need(cId)
+        # Removed cg_need() call - it opens a separate connection
+        # We calculate it inline below with data we already have
 
         # Prefetch province ids, land and productivity
         # to avoid per-province lookups later
@@ -309,7 +310,47 @@ def get_revenue(cId):
             rations_row[0] if rations_row and rations_row[0] is not None else 0
         )
 
-        ti_money, ti_cg = calc_ti(cId)
+        # INLINED calc_ti() to avoid opening another DB connection
+        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (cId,))
+        cg_result = db.fetchone()
+        consumer_goods = int(cg_result[0] if cg_result else 0)
+
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
+            policies_row = db.fetchone()
+            policies = policies_row[0] if policies_row else []
+        except Exception:
+            policies = []
+
+        db.execute("SELECT population, land FROM provinces WHERE userId=%s", (cId,))
+        ti_provinces = db.fetchall()
+
+        ti_money = 0
+        if ti_provinces:
+            for population, land in ti_provinces:
+                land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
+                if land_multiplier > 1:
+                    land_multiplier = 1
+                base_multiplier = variables.DEFAULT_TAX_INCOME
+                if policies and 1 in policies:
+                    base_multiplier *= 1.01
+                if policies and 6 in policies:
+                    base_multiplier *= 0.98
+                if policies and 4 in policies:
+                    base_multiplier *= 0.98
+                multiplier = base_multiplier + (base_multiplier * land_multiplier)
+                ti_money += multiplier * population
+
+            total_pop_ti = sum(p for p, _ in ti_provinces)
+            max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
+            if consumer_goods != 0 and max_cg != 0:
+                if max_cg <= consumer_goods:
+                    ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                else:
+                    cg_multiplier = consumer_goods / max_cg
+                    ti_money *= 1 + (0.5 * cg_multiplier)
+
+        ti_money = math.floor(ti_money)
 
         # Updates money
         revenue["gross"]["money"] += ti_money
@@ -332,7 +373,25 @@ def get_revenue(cId):
         )
 
         prod_rations = revenue["gross"]["rations"]
-        new_rations = next_turn_rations(cId, prod_rations)
+        # Calculate next turn rations inline to avoid opening new connection
+        # Get current rations (already have it from earlier query)
+        current_rations_for_calc = current_rations + prod_rations
+        # Calculate consumption
+        db.execute(
+            "SELECT population FROM provinces WHERE userId=%s",
+            (cId,),
+        )
+        prov_pops = db.fetchall()
+        total_rations_needed = 0
+        for (pop,) in prov_pops:
+            province_pop = pop if pop else 0
+            province_consumption = province_pop // variables.RATIONS_PER
+            if province_consumption < 1:
+                province_consumption = 1
+            total_rations_needed += province_consumption
+        if total_rations_needed < 1:
+            total_rations_needed = 1
+        new_rations = max(0, current_rations_for_calc - total_rations_needed)
         revenue["net"]["rations"] = new_rations - current_rations
 
         # Filter to only show resources with positive gross production
@@ -343,6 +402,9 @@ def get_revenue(cId):
             "gross_theoretical": revenue["gross_theoretical"],
             "net": revenue["net"],
         }
+
+        # Cache the result for 60 seconds (revenue doesn't change often)
+        query_cache.set(cache_key, filtered_revenue, ttl_seconds=60)
 
         return filtered_revenue
 
