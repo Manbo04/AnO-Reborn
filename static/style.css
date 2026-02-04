@@ -3763,10 +3763,33 @@ footer {
     color: rgb(255, 69, 0);
 }
 
-color: rgb(255,
-69,
-0);
-
+/* Trade Agreements button styles */
+.successbutton {
+    background: rgb(26, 196, 26) !important;
 }
 
+.successbutton:hover {
+    background: rgb(20, 160, 20) !important;
+}
+
+.dangerbutton {
+    background: #dc3545 !important;
+}
+
+.dangerbutton:hover {
+    background: #c82333 !important;
+}
+
+.warningtext {
+    color: #ffc107;
+}
+
+.successtext {
+    color: rgb(26, 196, 26);
+}
+
+.templatecenteredcontent {
+    text-align: center;
+    padding: 40px;
+    color: #888;
 }

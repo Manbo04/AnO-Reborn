@@ -11,97 +11,84 @@
     </div>
 
     <div class="templatedivcontent">
+        <p class="templatecontentpleft landingpagecontent">
+            Create automatic recurring trades with other players. Once accepted, trades execute automatically at the interval you set.
+        </p>
+
         <!-- Create New Agreement Form -->
-        <div class="templatecontentheaderleft" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Create New Trade Agreement</h2>
+        <div class="infodiv">
+            <form action="{{ url_for('create_trade_agreement') }}" method="POST">
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+                        <select name="receiver_id" required class="templateselect">
+                            <option value="" disabled selected>Select a player...</option>
+                            {% for uid, uname in users %}
+                            <option value="{{ uid }}" class="templateoption">{{ uname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2right">
+                        <select name="interval_hours" required class="templateselect">
+                            <option value="1" class="templateoption">Every 1 hour</option>
+                            <option value="6" class="templateoption">Every 6 hours</option>
+                            <option value="12" class="templateoption">Every 12 hours</option>
+                            <option value="24" selected class="templateoption">Every 24 hours</option>
+                            <option value="48" class="templateoption">Every 48 hours</option>
+                            <option value="72" class="templateoption">Every 3 days</option>
+                            <option value="168" class="templateoption">Every week</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+                        <input class="loginsignupinput" name="proposer_amount" type="number" min="1" placeholder="You give (amount)" required/>
+                    </div>
+                    <div class="templatedivflex2right">
+                        <select name="proposer_resource" required class="templateselect">
+                            {% for res in resources %}
+                            <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+                        <input class="loginsignupinput" name="receiver_amount" type="number" min="1" placeholder="You receive (amount)" required/>
+                    </div>
+                    <div class="templatedivflex2right">
+                        <select name="receiver_resource" required class="templateselect">
+                            {% for res in resources %}
+                            <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+                        <input class="loginsignupinput" name="max_executions" type="number" min="1" placeholder="Max trades (optional)"/>
+                    </div>
+                    <div class="templatedivflex2right">
+                        <input class="loginsignupinput" name="message" type="text" maxlength="200" placeholder="Message (optional)"/>
+                    </div>
+                </div>
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton">
+                            <span class="material-icons-outlined">send</span>
+                            Send Proposal
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-
-        <form action="{{ url_for('create_trade_agreement') }}" method="POST" class="trade-agreement-form" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <!-- Trade Partner -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Trade Partner</label>
-                    <select name="receiver_id" required class="templateinput" style="width: 100%;">
-                        <option value="">Select a player...</option>
-                        {% for uid, uname in users %}
-                        <option value="{{ uid }}">{{ uname }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- You Give -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">You Give</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="number" name="proposer_amount" min="1" placeholder="Amount" required
-                               class="templateinput" style="flex: 1;">
-                        <select name="proposer_resource" required class="templateinput" style="flex: 1;">
-                            {% for res in resources %}
-                            <option value="{{ res }}">{{ res | replace('_', ' ') | title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- You Receive -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">You Receive</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="number" name="receiver_amount" min="1" placeholder="Amount" required
-                               class="templateinput" style="flex: 1;">
-                        <select name="receiver_resource" required class="templateinput" style="flex: 1;">
-                            {% for res in resources %}
-                            <option value="{{ res }}">{{ res | replace('_', ' ') | title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Interval -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Trade Interval</label>
-                    <select name="interval_hours" required class="templateinput" style="width: 100%;">
-                        <option value="1">Every 1 hour</option>
-                        <option value="6">Every 6 hours</option>
-                        <option value="12">Every 12 hours</option>
-                        <option value="24" selected>Every 24 hours (Daily)</option>
-                        <option value="48">Every 48 hours</option>
-                        <option value="72">Every 3 days</option>
-                        <option value="168">Every week</option>
-                    </select>
-                </div>
-
-                <!-- Max Executions -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Max Trades (optional)</label>
-                    <input type="number" name="max_executions" min="1" placeholder="Unlimited"
-                           class="templateinput" style="width: 100%;">
-                    <small style="color: #888;">Leave empty for unlimited</small>
-                </div>
-
-                <!-- Message -->
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Message (optional)</label>
-                    <input type="text" name="message" maxlength="200" placeholder="Optional note..."
-                           class="templateinput" style="width: 100%;">
-                </div>
-            </div>
-
-            <div style="margin-top: 15px; text-align: right;">
-                <button type="submit" class="templatedivbutton smallactionbutton">
-                    <span class="material-icons-outlined" style="vertical-align: middle;">send</span>
-                    Send Proposal
-                </button>
-            </div>
-        </form>
 
         <!-- Pending Agreements (Incoming) -->
         {% set pending_incoming = agreements | selectattr('12', 'equalto', 'pending') | selectattr('4', 'equalto', user_id) | list %}
         {% if pending_incoming | length > 0 %}
-        <h2 class="templatecontentheaderleft" style="color: #ffc107;">
-            <span class="material-icons-outlined" style="vertical-align: middle;">notifications</span>
+        <h3 class="templatecontentheaderleft warningtext">
+            <span class="material-icons-outlined">notifications</span>
             Incoming Proposals ({{ pending_incoming | length }})
-        </h2>
+        </h3>
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
@@ -114,36 +101,42 @@
                 </tr>
                 {% for agreement in pending_incoming %}
                 <tr>
-                    <td><a href="/country/{{ agreement[1] }}">{{ agreement[15] }}</a></td>
+                    <td><a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a></td>
                     <td>
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                        <div class="middle">
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                        </div>
                     </td>
                     <td>
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                        <div class="middle">
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                        </div>
                     </td>
                     <td>
                         {% if agreement[7] == 1 %}Hourly
                         {% elif agreement[7] == 24 %}Daily
                         {% elif agreement[7] == 168 %}Weekly
                         {% else %}Every {{ agreement[7] }}h{% endif %}
-                        {% if agreement[10] %}(max {{ agreement[10] }} trades){% endif %}
+                        {% if agreement[10] %}<br><small>(max {{ agreement[10] }})</small>{% endif %}
                     </td>
                     <td>{{ agreement[14] or '-' }}</td>
                     <td>
-                        <form action="{{ url_for('accept_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #28a745;">
-                                Accept
-                            </button>
-                        </form>
-                        <form action="{{ url_for('reject_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #dc3545;">
-                                Reject
-                            </button>
-                        </form>
+                        <div class="templatedivflex2 divflex2center">
+                            <form action="{{ url_for('accept_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                                <button type="submit" class="templatedivbutton smallactionbutton successbutton">
+                                    <span class="material-icons-outlined">check</span>
+                                </button>
+                            </form>
+                            <form action="{{ url_for('reject_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                                <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
+                                    <span class="material-icons-outlined">close</span>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -154,10 +147,10 @@
         <!-- Pending Agreements (Outgoing) -->
         {% set pending_outgoing = agreements | selectattr('12', 'equalto', 'pending') | selectattr('1', 'equalto', user_id) | list %}
         {% if pending_outgoing | length > 0 %}
-        <h2 class="templatecontentheaderleft">
-            <span class="material-icons-outlined" style="vertical-align: middle;">hourglass_empty</span>
+        <h3 class="templatecontentheaderleft">
+            <span class="material-icons-outlined">hourglass_empty</span>
             Pending Proposals ({{ pending_outgoing | length }})
-        </h2>
+        </h3>
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
@@ -169,16 +162,20 @@
                 </tr>
                 {% for agreement in pending_outgoing %}
                 <tr>
-                    <td><a href="/country/{{ agreement[4] }}">{{ agreement[16] }}</a></td>
+                    <td><a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a></td>
                     <td>
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                        <div class="middle">
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                        </div>
                     </td>
                     <td>
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                        <div class="middle">
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                        </div>
                     </td>
                     <td>
                         {% if agreement[7] == 1 %}Hourly
@@ -187,9 +184,9 @@
                         {% else %}Every {{ agreement[7] }}h{% endif %}
                     </td>
                     <td>
-                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #dc3545;">
-                                Cancel
+                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                            <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
+                                <span class="material-icons-outlined">close</span> Cancel
                             </button>
                         </form>
                     </td>
@@ -202,10 +199,10 @@
         <!-- Active Agreements -->
         {% set active = agreements | selectattr('12', 'equalto', 'active') | list %}
         {% if active | length > 0 %}
-        <h2 class="templatecontentheaderleft" style="color: #28a745;">
-            <span class="material-icons-outlined" style="vertical-align: middle;">autorenew</span>
+        <h3 class="templatecontentheaderleft successtext">
+            <span class="material-icons-outlined">autorenew</span>
             Active Agreements ({{ active | length }})
-        </h2>
+        </h3>
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
@@ -213,40 +210,44 @@
                     <th>You Give</th>
                     <th>You Receive</th>
                     <th>Interval</th>
-                    <th>Executions</th>
-                    <th>Next Trade</th>
+                    <th>Trades</th>
+                    <th>Next</th>
                     <th>Actions</th>
                 </tr>
                 {% for agreement in active %}
                 <tr>
                     <td>
                         {% if agreement[1] == user_id %}
-                        <a href="/country/{{ agreement[4] }}">{{ agreement[16] }}</a>
+                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
                         {% else %}
-                        <a href="/country/{{ agreement[1] }}">{{ agreement[15] }}</a>
+                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
                         {% endif %}
                     </td>
                     <td>
-                        {% if agreement[1] == user_id %}
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
-                        {% else %}
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
-                        {% endif %}
+                        <div class="middle">
+                            {% if agreement[1] == user_id %}
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {% endif %}
+                        </div>
                     </td>
                     <td>
-                        {% if agreement[1] == user_id %}
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
-                        {% else %}
-                        <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                             class="resource resourcesmall" onerror="this.style.display='none'"/>
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
-                        {% endif %}
+                        <div class="middle">
+                            {% if agreement[1] == user_id %}
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
+                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {% endif %}
+                        </div>
                     </td>
                     <td>
                         {% if agreement[7] == 1 %}Hourly
@@ -254,20 +255,16 @@
                         {% elif agreement[7] == 168 %}Weekly
                         {% else %}Every {{ agreement[7] }}h{% endif %}
                     </td>
-                    <td>
-                        {{ agreement[11] }}{% if agreement[10] %} / {{ agreement[10] }}{% endif %}
-                    </td>
+                    <td>{{ agreement[11] }}{% if agreement[10] %}/{{ agreement[10] }}{% endif %}</td>
                     <td>
                         {% if agreement[8] %}
-                        {{ agreement[8].strftime('%Y-%m-%d %H:%M') }} UTC
-                        {% else %}
-                        -
-                        {% endif %}
+                        {{ agreement[8].strftime('%m/%d %H:%M') }}
+                        {% else %}-{% endif %}
                     </td>
                     <td>
-                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #dc3545;">
-                                Cancel
+                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                            <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
+                                <span class="material-icons-outlined">close</span> End
                             </button>
                         </form>
                     </td>
@@ -280,55 +277,61 @@
         <!-- Paused Agreements -->
         {% set paused = agreements | selectattr('12', 'equalto', 'paused') | list %}
         {% if paused | length > 0 %}
-        <h2 class="templatecontentheaderleft" style="color: #ffc107;">
-            <span class="material-icons-outlined" style="vertical-align: middle;">pause_circle</span>
+        <h3 class="templatecontentheaderleft warningtext">
+            <span class="material-icons-outlined">pause_circle</span>
             Paused Agreements ({{ paused | length }})
-        </h2>
-        <p style="color: #888; margin-bottom: 10px;">These agreements paused due to insufficient resources. Resume when both parties have enough.</p>
+        </h3>
+        <p class="templatecontentpleft">Paused due to insufficient resources. Resume when both parties have enough.</p>
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>Partner</th>
                     <th>You Give</th>
                     <th>You Receive</th>
-                    <th>Executions</th>
+                    <th>Trades</th>
                     <th>Actions</th>
                 </tr>
                 {% for agreement in paused %}
                 <tr>
                     <td>
                         {% if agreement[1] == user_id %}
-                        <a href="/country/{{ agreement[4] }}">{{ agreement[16] }}</a>
+                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
                         {% else %}
-                        <a href="/country/{{ agreement[1] }}">{{ agreement[15] }}</a>
+                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
                         {% endif %}
                     </td>
                     <td>
-                        {% if agreement[1] == user_id %}
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
-                        {% else %}
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
-                        {% endif %}
+                        <div class="middle">
+                            {% if agreement[1] == user_id %}
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {% else %}
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {% endif %}
+                        </div>
                     </td>
                     <td>
-                        {% if agreement[1] == user_id %}
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
-                        {% else %}
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
-                        {% endif %}
+                        <div class="middle">
+                            {% if agreement[1] == user_id %}
+                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {% else %}
+                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {% endif %}
+                        </div>
                     </td>
-                    <td>{{ agreement[11] }}{% if agreement[10] %} / {{ agreement[10] }}{% endif %}</td>
+                    <td>{{ agreement[11] }}{% if agreement[10] %}/{{ agreement[10] }}{% endif %}</td>
                     <td>
-                        <form action="{{ url_for('resume_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #28a745;">
-                                Resume
-                            </button>
-                        </form>
-                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="templatedivbutton smallactionbutton" style="background: #dc3545;">
-                                Cancel
-                            </button>
-                        </form>
+                        <div class="templatedivflex2 divflex2center">
+                            <form action="{{ url_for('resume_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                                <button type="submit" class="templatedivbutton smallactionbutton successbutton">
+                                    <span class="material-icons-outlined">play_arrow</span>
+                                </button>
+                            </form>
+                            <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
+                                <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
+                                    <span class="material-icons-outlined">close</span>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -339,24 +342,24 @@
         <!-- Completed Agreements -->
         {% set completed = agreements | selectattr('12', 'equalto', 'completed') | list %}
         {% if completed | length > 0 %}
-        <h2 class="templatecontentheaderleft" style="color: #6c757d;">
-            <span class="material-icons-outlined" style="vertical-align: middle;">check_circle</span>
+        <h3 class="templatecontentheaderleft">
+            <span class="material-icons-outlined">check_circle</span>
             Completed Agreements ({{ completed | length }})
-        </h2>
+        </h3>
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>Partner</th>
                     <th>Terms</th>
-                    <th>Total Executions</th>
+                    <th>Total Trades</th>
                 </tr>
                 {% for agreement in completed %}
                 <tr>
                     <td>
                         {% if agreement[1] == user_id %}
-                        <a href="/country/{{ agreement[4] }}">{{ agreement[16] }}</a>
+                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
                         {% else %}
-                        <a href="/country/{{ agreement[1] }}">{{ agreement[15] }}</a>
+                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
                         {% endif %}
                     </td>
                     <td>
@@ -373,10 +376,12 @@
 
         <!-- No agreements message -->
         {% if agreements | length == 0 %}
-        <div style="text-align: center; padding: 40px; color: #888;">
-            <span class="material-icons-outlined" style="font-size: 48px;">handshake</span>
-            <p>You don't have any trade agreements yet.</p>
-            <p>Create one above to start automatic recurring trades with another player!</p>
+        <div class="templatedivflex2 divflex2center">
+            <div class="templatedivflex2left templatecenteredcontent">
+                <span class="material-icons-outlined iconlarge">handshake</span>
+                <p>You don't have any trade agreements yet.</p>
+                <p>Create one above to start automatic recurring trades!</p>
+            </div>
         </div>
         {% endif %}
 
