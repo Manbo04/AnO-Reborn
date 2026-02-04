@@ -3894,3 +3894,62 @@ footer {
 .templatedivflex2 .templatedivbutton {
     white-space: nowrap;
 }
+
+/* ============================================
+   UTILITY CLASSES (reduce inline styles)
+   ============================================ */
+
+/* Margins */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-10 { margin-bottom: 10px !important; }
+.mb-20 { margin-bottom: 20px !important; }
+.mb-30 { margin-bottom: 30px !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+.m-12 { margin: 12px 0 !important; }
+
+/* Text alignment */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Full width */
+.w-full { width: 100% !important; }
+.w-100 { width: 100% !important; }
+
+/* Colors */
+.text-green { color: #4CAF50 !important; }
+.text-red { color: #dc3545 !important; }
+.text-yellow { color: #ffc107 !important; }
+.text-muted { color: #888 !important; }
+.text-light { color: #ccc !important; }
+
+/* Display */
+.d-inline-block { display: inline-block !important; }
+.d-block { display: block !important; }
+.d-flex { display: flex !important; }
+
+/* Vertical alignment */
+.valign-middle { vertical-align: middle !important; }
+
+/* Progress bar widths for dynamic styles */
+.progressbarchild {
+    transition: width 0.3s ease;
+}
+
+/* Coalition flag inline style replacement */
+.col-flag-small {
+    width: 24px;
+    height: 16px;
+    vertical-align: middle;
+    margin-right: 6px;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+/* Result count info styling (replaces inline) */
+.result-info {
+    text-align: center;
+    margin: 10px 0;
+    color: #888;
+}
