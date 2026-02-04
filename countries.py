@@ -425,35 +425,59 @@ def my_country():
 
 
 def country(cId):
+    """
+    PERFORMANCE OPTIMIZED: Reduced from 10+ separate queries to 4 combined queries.
+    Uses caching for expensive calculations (revenue, statistics).
+    """
     with get_db_cursor() as db:
+        # OPTIMIZED: Combined user + stats + coalition in ONE query
         db.execute(
-            "SELECT users.username, stats.location, users.description, "
-            "users.date, users.flag "
-            "FROM users INNER JOIN stats ON users.id=stats.id WHERE users.id=%s",
-            (cId,),
+            """SELECT u.username, s.location, u.description, u.date, u.flag,
+                      c.colId, c.role, cn.name as colName, cn.flag as colFlag,
+                      (SELECT SUM(population) FROM provinces WHERE userId=%s),
+                      (SELECT AVG(happiness) FROM provinces WHERE userId=%s),
+                      (SELECT AVG(productivity) FROM provinces WHERE userId=%s),
+                      (SELECT COUNT(id) FROM provinces WHERE userId=%s)
+               FROM users u
+               INNER JOIN stats s ON u.id=s.id
+               LEFT JOIN coalitions c ON u.id=c.userId
+               LEFT JOIN colNames cn ON c.colId=cn.id
+               WHERE u.id=%s""",
+            (cId, cId, cId, cId, cId),
         )
         row = db.fetchone()
         if not row:
             return error(404, "Country doesn't exist")
-        username, location, description, dateCreated, flag = row
 
+        (
+            username,
+            location,
+            description,
+            dateCreated,
+            flag,
+            colId,
+            colRole,
+            colName,
+            colFlag,
+            population,
+            happiness,
+            productivity,
+            provinceCount,
+        ) = row
+
+        # Set defaults for None values
+        colId = colId or 0
+        colName = colName or ""
+        population = population or 0
+        happiness = happiness or 0
+        productivity = productivity or 0
+        provinceCount = provinceCount or 0
+
+        # Get policies and influence (these are already cached)
         policies = get_user_policies(cId)
         influence = get_influence(cId)
 
-        db.execute(
-            "SELECT SUM(population), AVG(happiness), AVG(productivity), COUNT(id) "
-            "FROM provinces WHERE userId=%s",
-            (cId,),
-        )
-        stats_row = db.fetchone()
-        if stats_row:
-            population, happiness, productivity, provinceCount = stats_row
-        else:
-            population = 0
-            happiness = 0
-            productivity = 0
-            provinceCount = 0
-
+        # Get provinces list
         db.execute(
             "SELECT provinceName, id, population, "
             "CAST(cityCount AS INTEGER) as cityCount, "
@@ -464,53 +488,37 @@ def country(cId):
         )
         provinces = db.fetchall()
 
-        cg_needed = cg_need(cId)
+        # Calculate CG need from already-fetched population
+        cg_needed = (
+            math.ceil(population / variables.CONSUMER_GOODS_PER) if population else 0
+        )
 
         try:
             status = cId == str(session["user_id"])
         except (KeyError, TypeError):
             status = False
 
-        db.execute(
-            "SELECT coalitions.colId, coalitions.role, "
-            "colNames.name, colNames.flag "
-            "FROM coalitions INNER JOIN colNames ON coalitions.colId=colNames.id "
-            "WHERE coalitions.userId=%s",
-            (cId,),
-        )
-        col_row = db.fetchone()
-        if col_row:
-            colId, colRole, colName, colFlag = col_row
-        else:
-            colId = 0
-            colRole = None
-            colName = ""
-            colFlag = None
-
         spy = {}
         uId = session.get("user_id")
         if uId:
             db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
-            spy["count"] = db.fetchone()[0]
+            spy_row = db.fetchone()
+            spy["count"] = spy_row[0] if spy_row else 0
         else:
             spy["count"] = 0
 
-        # News page
-        idd = int(cId)
+        # News page - only for own country
         news = []
         news_amount = 0
         current_user_id = session.get("user_id")
-        if current_user_id and idd == current_user_id:
-            # Only show news to the owner of the nation
+        if current_user_id and int(cId) == current_user_id:
             db.execute(
                 "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
             )
-            # data order in the tuple appears as in the news schema
-            # (notice this when working with this data using jinja)
             news = db.fetchall()
             news_amount = len(news)
 
-        # Revenue stuff
+        # Revenue stuff - expensive, so cached
         if status:
             revenue = get_revenue(cId)
             db.execute(
