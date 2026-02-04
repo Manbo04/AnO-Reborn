@@ -28,6 +28,7 @@ from wars.routes import wars_bp
 import policies
 import statistics
 import requests
+import trade_agreements
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
@@ -172,6 +173,7 @@ coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
+trade_agreements.register_trade_agreement_routes(app)
 
 # Configure OAuth2 SECRET_KEY from login module
 oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
