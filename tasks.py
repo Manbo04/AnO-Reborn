@@ -137,12 +137,13 @@ def release_pg_advisory_lock(conn, lock_id: int):
         pass
 
 
-# Returns how many rations a player needs (matching population_growth consumption logic)
+# Returns how many rations a player needs
+# (matching population_growth consumption logic)
 def rations_needed(cId):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        # Get population per province since each province has minimum 1 ration consumption
+        # Get population per province - each province has minimum 1 ration
         db.execute("SELECT population FROM provinces WHERE userId=%s", (cId,))
         provinces = db.fetchall()
 
@@ -576,8 +577,8 @@ def calc_pg(pId, rations):
     with get_db_cursor() as db:
         # Single query to get all province data at once
         db.execute(
-            """SELECT p.population, p.cityCount, p.land, p.happiness, p.pollution, p.userId,
-                      pol.education
+            """SELECT p.population, p.cityCount, p.land, p.happiness,
+                      p.pollution, p.userId, pol.education
                FROM provinces p
                LEFT JOIN policies pol ON pol.user_id = p.userId
                WHERE p.id=%s""",
@@ -657,9 +658,46 @@ def calc_pg(pId, rations):
 def population_growth():  # Function for growing population
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
+    import datetime
 
     with get_db_connection() as conn:
+        # Acquire advisory lock to prevent concurrent runs
+        if not try_pg_advisory_lock(conn, 9003, "population_growth"):
+            return
+
         db = conn.cursor()
+
+        # Ensure single run within a short window to prevent duplicate hourly updates
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_runs (
+                task_name TEXT PRIMARY KEY,
+                last_run TIMESTAMP WITH TIME ZONE
+            )
+        """
+        )
+        db.execute(
+            "SELECT last_run FROM task_runs WHERE task_name=%s",
+            ("population_growth",),
+        )
+        row = db.fetchone()
+        now = datetime.datetime.now(datetime.timezone.utc)
+        # Skip if this task ran within the last 90 seconds
+        if row and row[0] and (now - row[0]).total_seconds() < 90:
+            print("population_growth: last run too recent, skipping")
+            try:
+                release_pg_advisory_lock(conn, 9003)
+            except Exception:
+                pass
+            return
+
+        db.execute(
+            "INSERT INTO task_runs (task_name, last_run) "
+            "VALUES (%s, now()) ON CONFLICT (task_name) "
+            "DO UPDATE SET last_run = now()",
+            ("population_growth",),
+        )
+
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         # Preload all provinces with the fields needed for growth calculations
@@ -797,11 +835,22 @@ def population_growth():  # Function for growing population
                 db, "UPDATE provinces SET population=%s WHERE id=%s", population_updates
             )
 
+        # Commit and release lock
+        try:
+            conn.commit()
+        except Exception:
+            pass
+
         print(
             f"population_growth: updated {len(population_updates)} provinces "
             f"across {len(unique_user_ids)} users, "
             f"consumed rations from {len(rations_updates)} users"
         )
+
+        try:
+            release_pg_advisory_lock(conn, 9003)
+        except Exception:
+            pass
 
 
 def find_unit_category(unit):
@@ -1298,8 +1347,8 @@ def generate_province_revenue():  # Runs each hour
                                 resource_deltas[user_id].get(resource, 0) + amount
                             )
                             msg = (
-                                f"S | PLUS | U:{user_id} | P:{province_id} | {unit} "
-                                f"({unit_amount}) | ADDING | {resource} | delta=+{amount}"
+                                f"S | PLUS | U:{user_id} | P:{province_id} | "
+                                f"{unit} ({unit_amount}) | {resource} | +{amount}"
                             )
                             log_verbose(msg)
 
