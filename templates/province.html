@@ -2268,9 +2268,9 @@
                                 <p class="templatecontentpleft">Steel mills produce steel from iron and coal, an incredibly robust material</p>
 
                                 {% if upgrades["largerforges"] %}
-                                <ul>Steel mills cost {{ (infra["steel_mills_money"] * 0.7) | int | commas }} per hour and convert {{ (infra["steel_mills_convert_minus"][0]["iron"] * 0.7) | int }} iron and {{ (infra["steel_mills_convert_minus"][1]["coal"] * 0.7) | int }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Steel mills cost {{ (infra["steel_mills_money"] * 0.7) | int | commas }} per hour and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * 0.7) | int }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * 0.7) | int }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
                                 {% else %}
-                                <ul>Steel mills cost {{ infra["steel_mills_money"] | commas }} per hour and convert {{ infra["steel_mills_convert_minus"][0]["iron"] }} iron and {{ infra["steel_mills_convert_minus"][1]["coal"] }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Steel mills cost {{ infra["steel_mills_money"] | commas }} per hour and convert {{ infra["steel_mills_convert_minus"][1]["iron"] }} iron and {{ infra["steel_mills_convert_minus"][0]["coal"] }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <ul>{{ "steel_mills" | prores }}</ul>
 
