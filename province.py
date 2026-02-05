@@ -3,7 +3,6 @@ from helpers import login_required, error
 from dotenv import load_dotenv
 import variables
 from helpers import get_date
-from upgrades import get_upgrades
 from database import get_db_cursor, cache_response, invalidate_user_cache
 import os
 import math
@@ -38,29 +37,30 @@ def provinces():
 @cache_response(ttl_seconds=15)  # Short cache for province page (updates frequently)
 def province(pId):
     from psycopg2.extras import RealDictCursor
-    from database import get_db_connection
+    from database import get_db_connection, query_cache
 
     cId = session["user_id"]
 
     # OPTIMIZED: Single query to fetch province + infra + resources + stats
-    # + upgrades
+    # + upgrades - all in ONE database connection
     with get_db_connection() as conn:
         db = conn.cursor(cursor_factory=RealDictCursor)
 
         # Combined query - reduces 7+ queries to 1
+        # Now also includes upgrades to avoid second connection
         db.execute(
-            (
-                "SELECT p.id, p.userId AS user, p.provinceName AS name, p.population, "
-                "p.pollution, p.happiness, p.productivity, p.consumer_spending, "
-                "CAST(p.citycount AS INTEGER) as citycount, "
-                "p.land, p.energy AS electricity, "
-                "s.location, r.consumer_goods, r.rations, pi.* "
-                "FROM provinces p "
-                "LEFT JOIN stats s ON p.userId = s.id "
-                "LEFT JOIN resources r ON p.userId = r.id "
-                "LEFT JOIN proInfra pi ON p.id = pi.id "
-                "WHERE p.id = %s"
-            ),
+            """
+            SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
+                   p.pollution, p.happiness, p.productivity, p.consumer_spending,
+                   CAST(p.citycount AS INTEGER) as citycount,
+                   p.land, p.energy AS electricity,
+                   s.location, r.consumer_goods, r.rations, pi.*
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            LEFT JOIN resources r ON p.userId = r.id
+            LEFT JOIN proInfra pi ON p.id = pi.id
+            WHERE p.id = %s
+            """,
             (pId,),
         )
         result = db.fetchone()
@@ -70,6 +70,16 @@ def province(pId):
 
         # Convert to dict for template
         result = dict(result)
+
+        # Get upgrades in the SAME connection (avoid opening new connection)
+        user_id = result["user"]
+        cache_key = f"upgrades_{user_id}"
+        upgrades = query_cache.get(cache_key)
+        if upgrades is None:
+            db.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
+            upg_row = db.fetchone()
+            upgrades = dict(upg_row) if upg_row else {}
+            query_cache.set(cache_key, upgrades)
 
         # Build province dict from result
         province = {
@@ -198,8 +208,7 @@ def province(pId):
         energy = {"consumption": energy_consumption, "production": energy_production}
         has_power = energy_production >= energy_consumption
 
-        # Get upgrades (single query, already cached in get_upgrades)
-        upgrades = get_upgrades(cId)
+        # upgrades already fetched in same connection above
 
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
