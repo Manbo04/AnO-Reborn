@@ -20,7 +20,9 @@
         };
     </script>
     <link href="{{ url_for('static', filename='style.css') }}?v=3" rel="stylesheet" type="text/css" />
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
     <!-- Google Fonts -->
@@ -36,43 +38,10 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
     <script src="{{ url_for('static', filename='scroller.js') }}"></script>
-    <!-- Fallback icon shim: replace material icon ligatures with emoji when fonts unavailable -->
+    <!-- Hide dropdown arrows in navbar -->
     <style>
-    .iconfallback{ font-size: 18px; vertical-align: middle; display:inline-block; }
+    .dropbtnchild .iconright { display: none; }
     </style>
-    <script>
-    document.addEventListener('DOMContentLoaded', function(){
-        try{
-            const map = {
-                'school':'🏫',
-                'person_add_alt_1':'➕',
-                'add_circle_outline':'➕',
-                'login':'🔑',
-                'keyboard_arrow_down':'▾',
-                'refresh':'🔄',
-                'add_circle':'➕',
-                'outbond':'↗'
-            };
-            // Only apply the emoji fallback if the Material Icons fonts are NOT available.
-            const fontsAvailable = (document.fonts && (document.fonts.check('12px "Material Icons"') || document.fonts.check('12px "Material Icons Outlined"')));
-            if(!fontsAvailable){
-                const spans = document.querySelectorAll('span.material-icons-outlined, span.material-icons');
-                spans.forEach(s => {
-                    const key = s.textContent.trim();
-                    if(!key) return;
-                    const emoji = map[key];
-                    if(emoji){
-                        s.textContent = '';
-                        const em = document.createElement('span');
-                        em.className = 'iconfallback';
-                        em.textContent = emoji;
-                        s.appendChild(em);
-                    }
-                });
-            }
-        }catch(e){console.error('icon fallback error',e)}
-    });
-    </script>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
     <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
