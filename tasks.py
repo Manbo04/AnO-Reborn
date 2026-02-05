@@ -1888,52 +1888,107 @@ def task_backfill_missing_resources():
 
 def execute_due_trade_agreements():
     """Find and execute all trade agreements that are due."""
+    import time
+    import traceback
     from trade_agreements import execute_trade_agreement
     from database import get_db_connection
 
-    conn = get_db_connection()
-    db = conn.cursor()
+    start_time = time.time()
 
-    try:
-        # Find all active agreements where next_execution is due
-        db.execute(
-            """
-            SELECT id FROM trade_agreements
-            WHERE status = 'active'
-              AND next_execution IS NOT NULL
-              AND next_execution <= now()
-            ORDER BY next_execution
-            LIMIT 100
-        """
-        )
+    with get_db_connection() as conn:
+        db = conn.cursor()
 
-        due_agreements = db.fetchall()
-
-        if not due_agreements:
+        # Advisory lock to prevent concurrent execution (lock ID 9004)
+        db.execute("SELECT pg_try_advisory_lock(9004)")
+        got_lock = db.fetchone()[0]
+        if not got_lock:
+            print(
+                "execute_trade_agreements: another run is already in progress, skipping"
+            )
             return
 
-        executed = 0
-        failed = 0
+        try:
+            # Check last run time to prevent duplicate runs
+            db.execute(
+                "SELECT last_run FROM task_runs "
+                "WHERE task_name = 'execute_trade_agreements'"
+            )
+            row = db.fetchone()
+            if row and row[0]:
+                elapsed = time.time() - row[0].timestamp()
+                # 55 second threshold - protect against duplicate runs
+                if elapsed < 55:
+                    print("trade_agreements: last run too recent, skipping")
+                    return
+                    return
 
-        for (agreement_id,) in due_agreements:
-            try:
-                success, msg = execute_trade_agreement(agreement_id)
-                if success:
-                    executed += 1
-                else:
+            # Find all active agreements where next_execution is due
+            db.execute(
+                """
+                SELECT id FROM trade_agreements
+                WHERE status = 'active'
+                  AND next_execution IS NOT NULL
+                  AND next_execution <= now()
+                ORDER BY next_execution
+                LIMIT 100
+            """
+            )
+
+            due_agreements = db.fetchall()
+
+            if not due_agreements:
+                # Update last run even if nothing to do
+                db.execute(
+                    """
+                    INSERT INTO task_runs (task_name, last_run)
+                    VALUES ('execute_trade_agreements', now())
+                    ON CONFLICT (task_name) DO UPDATE SET last_run = now()
+                """
+                )
+                conn.commit()
+                return
+
+            executed = 0
+            failed = 0
+
+            for (agreement_id,) in due_agreements:
+                try:
+                    success, msg = execute_trade_agreement(agreement_id)
+                    if success:
+                        executed += 1
+                    else:
+                        failed += 1
+                        print(
+                            f"trade_agreements: agreement {agreement_id} "
+                            f"failed: {msg}"
+                        )
+                except Exception as e:
                     failed += 1
-                    print(f"Trade agreement {agreement_id} failed: {msg}")
-            except Exception as e:
-                failed += 1
-                print(f"Trade agreement {agreement_id} error: {e}")
+                    print(f"trade_agreements: agreement {agreement_id} error: {e}")
+                    traceback.print_exc()
 
-        print(f"Trade agreements: executed={executed}, failed={failed}")
+            # Update last run time
+            db.execute(
+                """
+                INSERT INTO task_runs (task_name, last_run)
+                VALUES ('execute_trade_agreements', now())
+                ON CONFLICT (task_name) DO UPDATE SET last_run = now()
+            """
+            )
+            conn.commit()
 
-    except Exception as e:
-        print(f"Error in execute_due_trade_agreements: {e}")
-    finally:
-        db.close()
-        conn.close()
+            elapsed_time = time.time() - start_time
+            print(
+                f"trade_agreements: executed={executed}, failed={failed} "
+                f"in {elapsed_time:.2f}s"
+            )
+
+        except Exception as e:
+            print(f"execute_trade_agreements: error - {e}")
+            traceback.print_exc()
+        finally:
+            db.execute("SELECT pg_advisory_unlock(9004)")
+            conn.commit()
 
 
 @celery.task()
