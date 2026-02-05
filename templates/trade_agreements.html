@@ -106,14 +106,14 @@
                         <div class="middle">
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                         </div>
                     </td>
                     <td>
                         <div class="middle">
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                         </div>
                     </td>
                     <td>
@@ -167,14 +167,14 @@
                         <div class="middle">
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                         </div>
                     </td>
                     <td>
                         <div class="middle">
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                         </div>
                     </td>
                     <td>
@@ -228,11 +228,11 @@
                             {% if agreement[1] == user_id %}
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                             {% else %}
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                             {% endif %}
                         </div>
                     </td>
@@ -241,11 +241,11 @@
                             {% if agreement[1] == user_id %}
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                             {% else %}
                             <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
                                  class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                             {% endif %}
                         </div>
                     </td>
@@ -303,18 +303,18 @@
                     <td>
                         <div class="middle">
                             {% if agreement[1] == user_id %}
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                             {% else %}
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                             {% endif %}
                         </div>
                     </td>
                     <td>
                         <div class="middle">
                             {% if agreement[1] == user_id %}
-                            {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                            {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                             {% else %}
-                            {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                            {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                             {% endif %}
                         </div>
                     </td>
@@ -363,9 +363,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ agreement[3] | commas }} {{ agreement[2] | replace('_', ' ') | title }}
+                        {{ agreement[3] | fmt }} {{ agreement[2] | replace('_', ' ') | title }}
                         ⇄
-                        {{ agreement[6] | commas }} {{ agreement[5] | replace('_', ' ') | title }}
+                        {{ agreement[6] | fmt }} {{ agreement[5] | replace('_', ' ') | title }}
                     </td>
                     <td>{{ agreement[11] }}</td>
                 </tr>

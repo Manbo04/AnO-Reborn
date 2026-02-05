@@ -159,7 +159,7 @@
                                 people_alt
                             </span>Population:</strong>
                         </td>
-                        <td>{{ province['population'] | commas }}</td>
+                        <td>{{ province['population'] | fmt }}</td>
                     </tr>
                     {% if province['happiness'] < 50 %}
                     <tr>
@@ -230,7 +230,7 @@
                             <div class="tooltip">Electricity allows for certain infrastructure to function, and affects tax income</div><span class="material-icons-outlined">
                             power
                             </span>Electricity:</strong></td>
-                                <td>{{ energy['production'] | commas }} produced / {{ energy['consumption'] | commas }} needed</td>
+                                <td>{{ energy['production'] | fmt }} produced / {{ energy['consumption'] | fmt }} needed</td>
                                 <!-- production / consumption for clarity -->
                             </tr>
                 </table>
@@ -476,7 +476,7 @@
 
                                 <p class="templatecontentpleft">Coal power plants are a cheap way to produce power for a developing nation. While they cost less to build and opperate, they contribute lots of pollution.</p>
 
-                                <ul>Coal power plants cost {{ infra["coal_burners_money"] | commas }} per hour, takes {{ infra["coal_burners_convert_minus"][0]["coal"] }} coal per hour, and produces +{{ infra["coal_burners_plus"]["energy"] }} electricity
+                                <ul>Coal power plants cost {{ infra["coal_burners_money"] | fmt }} per hour, takes {{ infra["coal_burners_convert_minus"][0]["coal"] }} coal per hour, and produces +{{ infra["coal_burners_plus"]["energy"] }} electricity
                                     and +{{ infra["coal_burners_effect"][0]["pollution"] }}% pollution
                                 </ul>
                                 <ul>{{ "coal_burners" | prores }}</ul>
@@ -524,7 +524,7 @@
 
                                 <p class="templatecontentpleft">Oil power plants cost more to opperate and build than coal power plants, but produce less pollution. They are ideal for a nation pursuing tax income as a primary revenue source.</p>
 
-                                <ul>Oil power plants cost {{ infra["oil_burners_money"] | commas }} per hour, takes {{ infra["oil_burners_convert_minus"][0]["oil"] }} oil per hour, and contributes +{{ infra["oil_burners_plus"]["energy"] }} electricity and
+                                <ul>Oil power plants cost {{ infra["oil_burners_money"] | fmt }} per hour, takes {{ infra["oil_burners_convert_minus"][0]["oil"] }} oil per hour, and contributes +{{ infra["oil_burners_plus"]["energy"] }} electricity and
                                     +{{ infra["oil_burners_effect"][0]["pollution"] }}% pollution
                                 </ul>
                                 <ul>{{ "oil_burners" | prores }}
@@ -574,7 +574,7 @@
 
                                 <p class="templatecontentpleft">Solar fields are a hefty investment, but in return produce no pollution. They are ideal for developed nations.</p>
 
-                                <ul>Solar cost {{ infra["solar_fields_money"] | commas }} per hour and contribute +{{ infra["solar_fields_plus"]["energy"]}} electricity
+                                <ul>Solar cost {{ infra["solar_fields_money"] | fmt }} per hour and contribute +{{ infra["solar_fields_plus"]["energy"]}} electricity
                                 </ul>
                                 <ul>{{ "solar_fields" | prores }}
                                 </ul>
@@ -666,9 +666,9 @@
                                 <p class="templatecontentpleft">Nuclear reactors are a sign of a world power. While they are costly to build and even more to mantain, it is fully compensated for by the massive amount of electricity it contributes to your province.</p>
 
                                 {% if upgrades["better_engineering"] %}
-                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | commas }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"] }} uranium per hour and contribute {{ infra["nuclear_reactors_plus"]["energy"] + 6 }} electricity</ul>
+                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | fmt }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"] }} uranium per hour and contribute {{ infra["nuclear_reactors_plus"]["energy"] + 6 }} electricity</ul>
                                 {% else %}
-                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | commas }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"] }} uranium per hour and contribute {{ infra["nuclear_reactors_plus"]["energy"] }} electricity</ul>
+                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | fmt }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"] }} uranium per hour and contribute {{ infra["nuclear_reactors_plus"]["energy"] }} electricity</ul>
                                 {% endif %}
                                 <ul>{{ "nuclear_reactors" | prores }}</ul>
 
@@ -733,9 +733,9 @@
                                 <p class="templatecontentpleft">Gas stations allow your citizens to fuel their cars and to grab some groceries. They contribute a small amount of consumer goods to the economy.</p>
 
                                 {% if upgrades["governmentregulation"] %}
-                                <ul>Gas stations cost {{ infra["gas_stations_money"] | commas }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"]}} consumer goods per hour, as well as +{{ (infra["gas_stations_effect"][0]["pollution"] * 0.75) | int }}% pollution</ul>
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"]}} consumer goods per hour, as well as +{{ (infra["gas_stations_effect"][0]["pollution"] * 0.75) | int }}% pollution</ul>
                                 {% else %}
-                                <ul>Gas stations cost {{ infra["gas_stations_money"] | commas }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"]}} consumer goods per hour, as well as +{{ infra["gas_stations_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"]}} consumer goods per hour, as well as +{{ infra["gas_stations_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <p class="templatecontentpleft small">Note: Retail buildings (gas stations, stores, malls) increase consumer goods but add ongoing operating costs which reduce net income each hour (see listed "cost per hour"). If you see an immediate gold drop after buying, it's usually the purchase cost and the first upkeep being accounted for.</p>
                                 <ul>{{ "gas_stations" | prores }}</ul>
@@ -782,8 +782,8 @@
 
                                 <p class="templatecontentpleft">General stores allow your citizens to pick up everyday items necessary for your economy to function.</p>
 
-                                <ul>General stores cost {{ infra["general_stores_money"] | commas }} per hour and contribute +{{ infra["general_stores_plus"]["consumer_goods"]}} consumer goods per hour, as well as {% if upgrades["governmentregulation"] %}
-                                    +{{ (infra["general_stores_effect"][0]["pollution"] * 0.75) | commas }}% pollution</ul>
+                                <ul>General stores cost {{ infra["general_stores_money"] | fmt }} per hour and contribute +{{ infra["general_stores_plus"]["consumer_goods"]}} consumer goods per hour, as well as {% if upgrades["governmentregulation"] %}
+                                    +{{ (infra["general_stores_effect"][0]["pollution"] * 0.75) | fmt }}% pollution</ul>
                                 {% else %} +{{ infra["general_stores_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <ul>{{ "general_stores" | prores }}</ul>
@@ -830,8 +830,8 @@
 
                                 <p class="templatecontentpleft">Farmers markets provide fresh produce to your population without any middle man. They are perfect for producing consumer goods with little pollution.</p>
 
-                                <ul>Farmers markets cost {{ infra["farmers_markets_money"] | commas }} per hour and contribute {{ infra["farmers_markets_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% if upgrades["governmentregulation"]
-                                    %} +{{ (infra["farmers_markets_effect"][0]["pollution"] * 0.75) | commas }}% pollution</ul>
+                                <ul>Farmers markets cost {{ infra["farmers_markets_money"] | fmt }} per hour and contribute {{ infra["farmers_markets_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% if upgrades["governmentregulation"]
+                                    %} +{{ (infra["farmers_markets_effect"][0]["pollution"] * 0.75) | fmt }}% pollution</ul>
                                 {% else %} +{{ infra["farmers_markets_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <ul>{{ "farmers_markets" | prores }}</ul>
@@ -875,7 +875,7 @@
 
                                 <p class="templatecontentpleft">Banks help produce a thriving debt-based economy that drastically increases production of consumer goods. Banks produce no pollution.</p>
 
-                                <ul>Banks cost {{ infra["banks_money"] | commas }} per hour and contribute +{{ infra["banks_plus"]["consumer_goods"] }} consumer goods per hour</ul>
+                                <ul>Banks cost {{ infra["banks_money"] | fmt }} per hour and contribute +{{ infra["banks_plus"]["consumer_goods"] }} consumer goods per hour</ul>
                                 <ul>{{ "banks" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -921,9 +921,9 @@
                                 <p class="templatecontentpleft">{{ malls_name }} are supercenters of consumer spending. Dozens of stores make up a mall and get consumers to spend money at every store. {{ malls_name }} produce lots of pollution.</p>
 
                                 {% if upgrades["onlineshopping"] %}
-                                <ul>{{ malls_name }} cost {{ (infra["malls_money"] * 0.7) | commas }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% else %}
-                                    <ul>{{ malls_name }} cost {{ infra["malls_money"] | commas }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% endif %} {% if upgrades["governmentregulation"] %}
-                                        +{{ (infra["malls_effect"][0]["pollution"] * 0.75) | commas }}% pollution</ul>
+                                <ul>{{ malls_name }} cost {{ (infra["malls_money"] * 0.7) | fmt }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% else %}
+                                    <ul>{{ malls_name }} cost {{ infra["malls_money"] | fmt }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"] }} consumer goods per hour, as well as {% endif %} {% if upgrades["governmentregulation"] %}
+                                        +{{ (infra["malls_effect"][0]["pollution"] * 0.75) | fmt }}% pollution</ul>
                                     {% else %} +{{ infra["malls_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
 
@@ -976,7 +976,7 @@
 
                                 <p class="templatecontentpleft">City parks are perfect establishments to increase happiness of your population, and to absorb some pollution.</p>
 
-                                <ul>City parks cost {{ infra["city_parks_money"] | commas }} per hour and contribute +{{ infra["city_parks_effect"][0]["happiness"] }}% happiness and -{{ infra["city_parks_effect_minus"]["pollution"] }}% pollution</ul>
+                                <ul>City parks cost {{ infra["city_parks_money"] | fmt }} per hour and contribute +{{ infra["city_parks_effect"][0]["happiness"] }}% happiness and -{{ infra["city_parks_effect_minus"]["pollution"] }}% pollution</ul>
                                 <ul>{{ "city_parks" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1021,7 +1021,7 @@
 
                                 <p class="templatecontentpleft">Libraries are places for your citizens to enjoy a book and learn from them to become more productive.</p>
 
-                                <ul>Libraries cost {{ infra["libraries_money"] | commas }} per hour and contribute +{{ infra["libraries_effect"][0]["happiness"] }}% happiness and +{{ infra["libraries_effect"][1]["productivity"] }}% productivity</ul>
+                                <ul>Libraries cost {{ infra["libraries_money"] | fmt }} per hour and contribute +{{ infra["libraries_effect"][0]["happiness"] }}% happiness and +{{ infra["libraries_effect"][1]["productivity"] }}% productivity</ul>
                                 <ul>{{ "libraries" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1063,7 +1063,7 @@
 
                                 <p class="templatecontentpleft">Hospitals are equiped with advanced medical equipment and staff, allowing for the drastic increase in people who survive childbirth and deadly illnesses. People live longer and such are happier.</p>
 
-                                <ul>Hospitals cost {{ infra["hospitals_money"] | commas }} per hour and {% if upgrades["nationalhealthinstitution"] %} contribute +{{ (infra["hospitals_effect"][0]["happiness"] * 1.3) | round(2) }}% happiness {% else %} contribute +{{ infra["hospitals_effect"][0]["happiness"] }}% happiness {% endif %}</ul>
+                                <ul>Hospitals cost {{ infra["hospitals_money"] | fmt }} per hour and {% if upgrades["nationalhealthinstitution"] %} contribute +{{ (infra["hospitals_effect"][0]["happiness"] * 1.3) | round(2) }}% happiness {% else %} contribute +{{ infra["hospitals_effect"][0]["happiness"] }}% happiness {% endif %}</ul>
                                 <ul>{{ "hospitals" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1108,7 +1108,7 @@
 
                                 <p class="templatecontentpleft">Universities help educate your population, making them far more productive. University gives their students some great memories.</p>
 
-                                <ul>Universities cost {{ infra["universities_money"] | commas }} per hour and contribute +{{ infra["universities_effect"][0]["productivity"] }}% productivity and +{{ new_infra["universities"]["eff"]["happiness"] }}% happiness</ul>
+                                <ul>Universities cost {{ infra["universities_money"] | fmt }} per hour and contribute +{{ infra["universities_effect"][0]["productivity"] }}% productivity and +{{ new_infra["universities"]["eff"]["happiness"] }}% happiness</ul>
                                 <ul>{{ "universities" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1153,7 +1153,7 @@
 
                                 <p class="templatecontentpleft">{{ monorails_name }} astronimically increase the productivity of your citizens by deceasing the time it takes for them to get to work. They also reduce pollution drastically by cutting down on the use of cars.</p>
 
-                                <ul>{{ monorails_name }} cost {{ infra["monorails_money"] | commas }} per hour and {% if upgrades["highspeedrail"] %} contribute +{{ infra["monorails_effect"][0]["productivity"] * 1.2 }}% productivity {% else %} contribute
+                                <ul>{{ monorails_name }} cost {{ infra["monorails_money"] | fmt }} per hour and {% if upgrades["highspeedrail"] %} contribute +{{ infra["monorails_effect"][0]["productivity"] * 1.2 }}% productivity {% else %} contribute
                                     +{{ infra["monorails_effect"][0]["productivity"] }}% productivity {% endif %} and -{{ infra["monorails_effect_minus"]["pollution"] }}% pollution</ul>
                                 <ul>{{ monorails_name | prores }}</ul>
 
@@ -1296,7 +1296,7 @@
 
                                 <p class="templatecontentpleft">Army bases allow you to recruit and house soldiers, and to store tanks and artillery.</p>
 
-                                <ul>Army bases cost {{ infra["army_bases_money"] | commas }} per hour</ul>
+                                <ul>Army bases cost {{ infra["army_bases_money"] | fmt }} per hour</ul>
                                 <ul>{{ "army_bases" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1344,7 +1344,7 @@
 
                                 <p class="templatecontentpleft">Air Bases allow for the storage and production of all air units.</p>
 
-                                <ul>Air Bases cost {{ infra["aerodomes_money"] | commas }} per hour</ul>
+                                <ul>Air Bases cost {{ infra["aerodomes_money"] | fmt }} per hour</ul>
                                 <ul>{{ "aerodomes" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1391,7 +1391,7 @@
 
                                 <p class="templatecontentpleft">Naval Bases allow for the storage and production of all naval units.</p>
 
-                                <ul>Naval Bases cost {{ infra["harbours_money"] | commas }} per hour</ul>
+                                <ul>Naval Bases cost {{ infra["harbours_money"] | fmt }} per hour</ul>
                                 <ul>{{ "harbours" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1437,7 +1437,7 @@
 
                                 <p class="templatecontentpleft">Admin buildings provide capabilities to recruit spies and perform opperations on adversaries.</p>
 
-                                <ul>Admin buildings cost {{ infra["admin_buildings_money"] | commas }} per hour</ul>
+                                <ul>Admin buildings cost {{ infra["admin_buildings_money"] | fmt }} per hour</ul>
                                 <ul>{{ "admin_buildings" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1483,7 +1483,7 @@
 
                                 <p class="templatecontentpleft">Silos allow for the production, storage, and launch of Ballistic Missiles and nukes once prerequisites are acquired.</p>
 
-                                <ul>Silos cost {{ infra["silos_money"] | commas }} per hour</ul>
+                                <ul>Silos cost {{ infra["silos_money"] | fmt }} per hour</ul>
                                 <ul>{{ "silos" | prores }}/ul>
 
                                 <div class="purchasemilitarydiv">
@@ -1533,8 +1533,8 @@
                                 <p class="templatecontentpleft">Farms produce rations to feed your nation. Farms are best suited for established nations that own lots of land, as land influences farm production.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Farms cost {{ (infra["farms_money"] * 0.8) | commas}} per hour {% else %}
-                                    <ul>Farms cost {{ infra["farms_money"] | commas }} per hour {% endif %} {% if upgrades["advancedmachinery"] %} and contribute +{{ (infra["farms_plus"]["rations"] * 1.5) | int }} rations per hour, {% else %} and contribute {{ infra["farms_plus"]["rations"] }} rations per hour, {% endif %} and add +{{ infra["farms_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Farms cost {{ (infra["farms_money"] * 0.8) | fmt}} per hour {% else %}
+                                    <ul>Farms cost {{ infra["farms_money"] | fmt }} per hour {% endif %} {% if upgrades["advancedmachinery"] %} and contribute +{{ (infra["farms_plus"]["rations"] * 1.5) | int }} rations per hour, {% else %} and contribute {{ infra["farms_plus"]["rations"] }} rations per hour, {% endif %} and add +{{ infra["farms_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "farms" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1587,8 +1587,8 @@
                                 <p class="templatecontentpleft">Iron mines produce iron which is necessary to produce steel.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Iron mines cost {{ (infra["iron_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Iron mines cost {{ infra["iron_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["iron_mines_plus"]["iron"] }} iron per hour, as well as +{{ infra["iron_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Iron mines cost {{ (infra["iron_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Iron mines cost {{ infra["iron_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["iron_mines_plus"]["iron"] }} iron per hour, as well as +{{ infra["iron_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "iron_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1638,8 +1638,8 @@
                                 <p class="templatecontentpleft">Coal mines produce coal. Coal can be used to fuel coal power plants, or can be combined with iron to produce steel.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | commas }} per hour {% endif %}
+                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %}
                                         <ul>and produce {{ infra["coal_mines_plus"]["coal"] }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
                                         <ul>{{ "coal_mines" | prores }}</ul>
 
@@ -1690,8 +1690,8 @@
                                 <p class="templatecontentpleft">Copper mines produce copper for your nation. Copper can be used to manufacture ammunution</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Copper mines cost {{ (infra["copper_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Copper mines cost {{ infra["copper_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["copper_mines_plus"]["copper"] }} copper per hour, as well as +{{ infra["copper_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Copper mines cost {{ (infra["copper_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Copper mines cost {{ infra["copper_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["copper_mines_plus"]["copper"] }} copper per hour, as well as +{{ infra["copper_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "copper_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1738,8 +1738,8 @@
                                 <p class="templatecontentpleft">Pumpjacks harvest oil from the ground, providing a resource that can be processed into gasoline.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | commas }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"] }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"] }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "pumpjacks" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1785,8 +1785,8 @@
                                 <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | commas }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1834,8 +1834,8 @@
                                 <p class="templatecontentpleft">Lead mines allow for the production of lead, which is valuable for its use in ammunition.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Lead mines cost {{ (infra["lead_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Lead mines cost {{ infra["lead_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["lead_mines_plus"]["lead"] }} lead per hour, as well as +{{ infra["lead_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Lead mines cost {{ (infra["lead_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lead mines cost {{ infra["lead_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["lead_mines_plus"]["lead"] }} lead per hour, as well as +{{ infra["lead_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lead_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1882,8 +1882,8 @@
                                 <p class="templatecontentpleft">Bauxite mines make bauxite for your country. Bauxite can be processed into aluminium.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"] }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"] }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "bauxite_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1929,8 +1929,8 @@
                                 <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | commas }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -1978,8 +1978,8 @@
                                 <p class="templatecontentpleft">Pumpjacks harvest oil from the ground, providing a resource that can be processed into gasoline.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | commas }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"] }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"] }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "pumpjacks" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -2025,9 +2025,9 @@
                                 <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | commas }} per hour
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour
                                 {% else %}
-                                <ul>Lumber mills cost {{ infra["lumber_mills_money"] | commas }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"] }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -2072,8 +2072,8 @@
                                 <p class="templatecontentpleft">Uranium mines harvest uranium, which can be used to fuel nuclear reactors, or in nuclear weapons.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Uranium mines cost {{ (infra["uranium_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Uranium mines cost {{ infra["uranium_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["uranium_mines_plus"]["uranium"] }} uranium per hour, as well as +{{ infra["uranium_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uranium mines cost {{ (infra["uranium_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Uranium mines cost {{ infra["uranium_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["uranium_mines_plus"]["uranium"] }} uranium per hour, as well as +{{ infra["uranium_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "uranium_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -2119,8 +2119,8 @@
                                 <p class="templatecontentpleft">Bauxite mines make bauxite for your country. Bauxite can be processed into aluminium.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"] }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"] }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "bauxite_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -2167,8 +2167,8 @@
                                 <p class="templatecontentpleft">Coal mines produce coal. Coal can be used to fuel coal power plants, or can be combined with iron to produce steel.</p>
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | commas }} per hour {% else %}
-                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | commas }} per hour {% endif %} and produce {{ infra["coal_mines_plus"]["coal"] }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["coal_mines_plus"]["coal"] }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "coal_mines" | prores }}</ul>
 
                                     <div class="purchasemilitarydiv">
@@ -2219,9 +2219,9 @@
                                 <p class="templatecontentpleft">Components factories produce components for your country from copper, steel, and aluminium. Components are incredibly valuable which are used in advanced machinery.</p>
 
                                 {% if upgrades["automationintegration"] %}
-                                <ul>Components factories cost {{ infra["component_factories_money"] | commas }} per hour, and convert {{ (infra["component_factories_convert_minus"][0]["copper"] * 0.75) | int }} copper, {{ (infra["component_factories_convert_minus"][1]["steel"] * 0.75) | int }} steel, and {{ (infra["component_factories_convert_minus"][2]["aluminium"] * 0.75) | int }} aluminium into {{ infra["component_factories_plus"]["components"] }} components per hour, producing +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Components factories cost {{ infra["component_factories_money"] | fmt }} per hour, and convert {{ (infra["component_factories_convert_minus"][0]["copper"] * 0.75) | int }} copper, {{ (infra["component_factories_convert_minus"][1]["steel"] * 0.75) | int }} steel, and {{ (infra["component_factories_convert_minus"][2]["aluminium"] * 0.75) | int }} aluminium into {{ infra["component_factories_plus"]["components"] }} components per hour, producing +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
                                 {% else %}
-                                <ul>Components factories cost {{ infra["component_factories_money"] | commas }} per hour, and convert {{ infra["component_factories_convert_minus"][0]["copper"] }} copper, {{ infra["component_factories_convert_minus"][1]["steel"] }} steel, and {{ infra["component_factories_convert_minus"][2]["aluminium"] }} aluminium into {{ infra["component_factories_plus"]["components"] }} components per hour, producing +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Components factories cost {{ infra["component_factories_money"] | fmt }} per hour, and convert {{ infra["component_factories_convert_minus"][0]["copper"] }} copper, {{ infra["component_factories_convert_minus"][1]["steel"] }} steel, and {{ infra["component_factories_convert_minus"][2]["aluminium"] }} aluminium into {{ infra["component_factories_plus"]["components"] }} components per hour, producing +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <ul>{{ "component_factories" | prores }}</ul>
 
@@ -2268,9 +2268,9 @@
                                 <p class="templatecontentpleft">Steel mills produce steel from iron and coal, an incredibly robust material</p>
 
                                 {% if upgrades["largerforges"] %}
-                                <ul>Steel mills cost {{ (infra["steel_mills_money"] * 0.7) | int | commas }} per hour and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * 0.7) | int }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * 0.7) | int }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Steel mills cost {{ (infra["steel_mills_money"] * 0.7) | int | fmt }} per hour and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * 0.7) | int }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * 0.7) | int }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
                                 {% else %}
-                                <ul>Steel mills cost {{ infra["steel_mills_money"] | commas }} per hour and convert {{ infra["steel_mills_convert_minus"][1]["iron"] }} iron and {{ infra["steel_mills_convert_minus"][0]["coal"] }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Steel mills cost {{ infra["steel_mills_money"] | fmt }} per hour and convert {{ infra["steel_mills_convert_minus"][1]["iron"] }} iron and {{ infra["steel_mills_convert_minus"][0]["coal"] }} coal into {{ infra["steel_mills_plus"]["steel"] }} steel per hour, producing +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
                                 {% endif %}
                                 <ul>{{ "steel_mills" | prores }}</ul>
 
@@ -2318,7 +2318,7 @@
 
                                 <p class="templatecontentpleft">Ammunition factories allows you to convert copper and lead into ammunition, which is necessary for war machines and useful for soldiers to fight in war.</p>
 
-                                <ul>Ammunition factories cost {{ infra["ammunition_factories_money"] | commas }} per hour and convert {{ infra["ammunition_factories_convert_minus"][0]["copper"] }} copper and {{ infra["ammunition_factories_convert_minus"][1]["lead"] }} lead into {{ infra["ammunition_factories_plus"]["ammunition"] }} ammunition per hour, producing +{{ infra["ammunition_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Ammunition factories cost {{ infra["ammunition_factories_money"] | fmt }} per hour and convert {{ infra["ammunition_factories_convert_minus"][0]["copper"] }} copper and {{ infra["ammunition_factories_convert_minus"][1]["lead"] }} lead into {{ infra["ammunition_factories_plus"]["ammunition"] }} ammunition per hour, producing +{{ infra["ammunition_factories_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "ammunition_factories" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -2363,7 +2363,7 @@
 
                                 <p class="templatecontentpleft">Aluminium refineries allow you to convert bauxite into aluminium, a general use material.</p>
 
-                                <ul>Aluminium refineries cost {{ infra["aluminium_refineries_money"] | commas }} per hour and convert {{ infra["aluminium_refineries_convert_minus"][0]["bauxite"] }} bauxite into {{ infra["aluminium_refineries_plus"]["aluminium"] }} aluminium per hour, producing +{{ infra["aluminium_refineries_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Aluminium refineries cost {{ infra["aluminium_refineries_money"] | fmt }} per hour and convert {{ infra["aluminium_refineries_convert_minus"][0]["bauxite"] }} bauxite into {{ infra["aluminium_refineries_plus"]["aluminium"] }} aluminium per hour, producing +{{ infra["aluminium_refineries_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "aluminium_refineries" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
@@ -2407,7 +2407,7 @@
 
                                 <p class="templatecontentpleft">Oil refineries convert oil into gasoline, used for fueling your war machines.</p>
 
-                                <ul>Oil refineries cost {{ infra["oil_refineries_money"] | commas }} per hour and convert {{ infra["oil_refineries_convert_minus"][0]["oil"] }} oil into {{ infra["oil_refineries_plus"]["gasoline"] }} gasoline per hour, producing +{{ infra["oil_refineries_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Oil refineries cost {{ infra["oil_refineries_money"] | fmt }} per hour and convert {{ infra["oil_refineries_convert_minus"][0]["oil"] }} oil into {{ infra["oil_refineries_plus"]["gasoline"] }} gasoline per hour, producing +{{ infra["oil_refineries_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "oil_refineries" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">

@@ -426,6 +426,51 @@ def commas(value):
     return returned
 
 
+# Jinja2 filter for human-readable numbers (1K, 1.5M, 2B, etc.)
+@app.template_filter()
+def fmt(value):
+    """Format numbers in human-readable format:
+    - Under 10,000: show as-is with commas (1, 100, 1,000, 9,999)
+    - 10K-999K: show as K (10K, 100K, 500K)
+    - 1M-999M: show as M (1M, 1.5M, 100M)
+    - 1B+: show as B (1B, 1.5B)
+    """
+    try:
+        num = float(value)
+        if num < 0:
+            return "-" + fmt(abs(num))
+
+        if num < 10000:
+            # Under 10K: show with commas
+            if num == int(num):
+                return "{:,}".format(int(num))
+            return "{:,.1f}".format(num)
+        elif num < 1000000:
+            # 10K - 999K
+            k = num / 1000
+            if k == int(k):
+                return "{:,}K".format(int(k))
+            return (
+                "{:,.1f}K".format(k).rstrip("0").rstrip(".") + "K"
+                if k != int(k)
+                else "{:,}K".format(int(k))
+            )
+        elif num < 1000000000:
+            # 1M - 999M
+            m = num / 1000000
+            if m == int(m):
+                return "{}M".format(int(m))
+            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
+        else:
+            # 1B+
+            b = num / 1000000000
+            if b == int(b):
+                return "{}B".format(int(b))
+            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
+    except (TypeError, ValueError):
+        return value
+
+
 # Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
 
 

@@ -262,97 +262,97 @@
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["gold"] | commas }}</p>
+                <p class="resourcetag">{{ resources["gold"] | fmt }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
             <br />
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["rations"] | commas }}</p>
+                <p class="resourcetag">{{ resources["rations"] | fmt }}</p>
                 <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["oil"] | commas }}</p>
+                <p class="resourcetag">{{ resources["oil"] | fmt }}</p>
                 <div class="resourceinfo">Oil can be used to make power, and can be refined into gasoline for fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["coal"] | commas }}</p>
+                <p class="resourcetag">{{ resources["coal"] | fmt }}</p>
                 <div class="resourceinfo">Coal is a cheap but pollution intensive fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["uranium"] | commas }}</p>
+                <p class="resourcetag">{{ resources["uranium"] | fmt }}</p>
                 <div class="resourceinfo">Uranium is capable of fueling large nuclear power plants, or being a reactant in nuclear weapons.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["bauxite"] | commas }}</p>
+                <p class="resourcetag">{{ resources["bauxite"] | fmt }}</p>
                 <div class="resourceinfo">Bauxite is a valuable mineral when manufactured into aluminium</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["iron"] | commas }}</p>
+                <p class="resourcetag">{{ resources["iron"] | fmt }}</p>
                 <div class="resourceinfo">Iron is incredibly useful when refined with coke into steel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["lead"] | commas }}</p>
+                <p class="resourcetag">{{ resources["lead"] | fmt }}</p>
                 <div class="resourceinfo">Lead is useful for war, as it can be refined into ammunition.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["copper"] | commas }}</p>
+                <p class="resourcetag">{{ resources["copper"] | fmt }}</p>
                 <div class="resourceinfo">copper can be refined into consumer goods</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["lumber"] | commas}}</p>
+                <p class="resourcetag">{{ resources["lumber"] | fmt}}</p>
                 <div class="resourceinfo">Lumber is a common bulding material.</div>
 
             </div>
             <br />
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/rescomponents.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["components"] | commas }}</p>
+                <p class="resourcetag">{{ resources["components"] | fmt }}</p>
                 <div class="resourceinfo">Components are necessary for advanced war machines and country projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/ressteel.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["steel"] | commas }}</p>
+                <p class="resourcetag">{{ resources["steel"] | fmt }}</p>
                 <div class="resourceinfo">Steel is invaluable for building infrastructure, military machines, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resconsumer_goods.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["consumer_goods"] | commas }}</p>
+                <p class="resourcetag">{{ resources["consumer_goods"] | fmt }}</p>
                 <div class="resourceinfo">Consumer goods are advanced manufactured goods that can drastically increase tax income. Every 80000 people consume 1 consumer good</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resaluminium.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["aluminium"] | commas}}</p>
+                <p class="resourcetag">{{ resources["aluminium"] | fmt}}</p>
                 <div class="resourceinfo">Aluminium is a useful material for infrastructure, military, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resgasoline.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["gasoline"] | commas }}</p>
+                <p class="resourcetag">{{ resources["gasoline"] | fmt }}</p>
                 <div class="resourceinfo">Gasoline is necessary to mantian a functioning military in war, fueling all types of vehicles.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resammunition.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["ammunition"] | commas }}</p>
+                <p class="resourcetag">{{ resources["ammunition"] | fmt }}</p>
                 <div class="resourceinfo">Ammunition allows for both your soldiers to be more effective, and for your military machines to fight in war.</div>
 
             </div>
