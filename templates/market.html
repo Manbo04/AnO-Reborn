@@ -137,20 +137,20 @@
                             <img src="{{ url_for( 'static', filename='images/resaluminium.png' ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "gasoline" %}
                             <img src="{{ url_for( 'static', filename='images/resgasoline.png' ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "ammunition" %}
                             <img src="{{ url_for( 'static', filename='images/resammunition.png' ) }}?v=2" class="resource resourcesmall" /> {% endif %}
-                            <span class="hidden">{{ resource }}</span>{{ amount | commas }}</td>
+                            <span class="hidden">{{ resource }}</span>{{ amount | fmt }}</td>
                     </div>
                     <td>
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
+                                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource resourcesmall" />${{ price | fmt }} Each
 
                             </div>
                         </div>
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource resourcesmall" /> {{ total_price | commas }} Total
+                                <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource resourcesmall" /> {{ total_price | fmt }} Total
 
                             </div>
                         </div>
@@ -159,7 +159,7 @@
                         <form method="POST">
                             <div class="templatedivflex2 divflex2center">
                                 <div class="templatedivflex2left">
-                                    <input class="loginsignupinput" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount | commas }}" required/>
+                                    <input class="loginsignupinput" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount | fmt }}" required/>
                                 </div>
                                 <div class="templatedivflex2left">
                                     {% if type == "sell" %}
