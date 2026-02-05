@@ -46,18 +46,20 @@
         <div class="templatedivflex2 menuflex tutorialdiv">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Ground Forces</h3>
+                <p class="templatecontentpleft"><strong>Requires:</strong> Army Bases</p>
                 <table class="templatetable">
-                    <tr><td><strong>Soldiers</strong></td><td>Basic infantry, requires manpower</td></tr>
-                    <tr><td><strong>Tanks</strong></td><td>Heavy armor, requires oil + steel</td></tr>
-                    <tr><td><strong>Artillery</strong></td><td>Long-range, requires ammunition</td></tr>
+                    <tr><td><strong>Soldiers</strong></td><td>Basic infantry, 100 per army base</td></tr>
+                    <tr><td><strong>Tanks</strong></td><td>Heavy armor, 8 per army base</td></tr>
+                    <tr><td><strong>Artillery</strong></td><td>Long-range, 8 per army base</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air Forces</h3>
+                <p class="templatecontentpleft"><strong>Requires:</strong> Aerodromes</p>
                 <table class="templatetable">
-                    <tr><td><strong>Fighters</strong></td><td>Air superiority, fast</td></tr>
-                    <tr><td><strong>Bombers</strong></td><td>Strategic strikes, high damage</td></tr>
-                    <tr><td><strong>Apaches</strong></td><td>Attack helicopters</td></tr>
+                    <tr><td><strong>Fighters</strong></td><td>Air superiority, 5 per aerodrome (shared)</td></tr>
+                    <tr><td><strong>Bombers</strong></td><td>Strategic strikes, 5 per aerodrome (shared)</td></tr>
+                    <tr><td><strong>Apaches</strong></td><td>Attack helicopters, 5 per aerodrome (shared)</td></tr>
                 </table>
             </div>
         </div>
@@ -65,19 +67,88 @@
         <div class="templatedivflex2 menuflex tutorialdiv">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">sailing</span> Naval Forces</h3>
+                <p class="templatecontentpleft"><strong>Requires:</strong> Harbours</p>
                 <table class="templatetable">
-                    <tr><td><strong>Destroyers</strong></td><td>Fast naval combat</td></tr>
-                    <tr><td><strong>Cruisers</strong></td><td>Heavy naval firepower</td></tr>
-                    <tr><td><strong>Submarines</strong></td><td>Stealth attacks</td></tr>
+                    <tr><td><strong>Destroyers</strong></td><td>Fast naval, 3 per harbour (shared)</td></tr>
+                    <tr><td><strong>Submarines</strong></td><td>Stealth attacks, 3 per harbour (shared)</td></tr>
+                    <tr><td><strong>Cruisers</strong></td><td>Heavy firepower, 2 per harbour</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">visibility</span> Special Units</h3>
+                <p class="templatecontentpleft"><strong>Requires:</strong> Admin Buildings & Silos</p>
                 <table class="templatetable">
-                    <tr><td><strong>Spies</strong></td><td>Intelligence operations</td></tr>
-                    <tr><td><strong>ICBMs</strong></td><td>Long-range missiles</td></tr>
-                    <tr><td><strong>Nukes</strong></td><td>Weapons of mass destruction</td></tr>
+                    <tr><td><strong>Spies</strong></td><td>Intel ops, 1 per admin building</td></tr>
+                    <tr><td><strong>ICBMs</strong></td><td>Long-range missiles (see below)</td></tr>
+                    <tr><td><strong>Nukes</strong></td><td>Mass destruction (see below)</td></tr>
                 </table>
+            </div>
+        </div>
+
+        <!-- WMD Section -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">rocket_launch</span> Weapons of Mass Destruction (WMDs)</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">rocket</span> Ballistic Missiles (ICBMs)</h3>
+                <p class="templatecontentpleft">Long-range missiles that devastate enemy infrastructure and military units.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Cost</strong></td><td>$16,000,000 + 550 Steel</td></tr>
+                    <tr><td><strong>Build Limit</strong></td><td>Silos + 1 (can build 1 without silos)</td></tr>
+                    <tr><td><strong>Launch Requirement</strong></td><td>Need at least 1 Silo to launch</td></tr>
+                    <tr><td><strong>Target</strong></td><td>Enemy military units + random province damage</td></tr>
+                </table>
+                <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You can purchase 1 ICBM from the Military page without any silos, but you need silos to store more and to actually launch them in war.</em></p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">dangerous</span> Nuclear Weapons (Nukes)</h3>
+                <p class="templatecontentpleft">The ultimate weapon - causes massive destruction to infrastructure and morale.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Cost</strong></td><td>$80,000,000 + 1,200 Uranium + 900 Steel</td></tr>
+                    <tr><td><strong>Build Limit</strong></td><td>1 per Silo (requires silos)</td></tr>
+                    <tr><td><strong>Launch Requirement</strong></td><td>Need at least 1 Silo to launch</td></tr>
+                    <tr><td><strong>Target</strong></td><td>Enemy military + severe province destruction</td></tr>
+                </table>
+                <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You cannot build nukes without silos. Each silo allows you to store 1 nuke.</em></p>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">construction</span> Building Silos</h3>
+                <p class="templatecontentpleft">Silos are military infrastructure built in your provinces.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Build Cost</strong></td><td>$21,000,000 + 540 Steel + 240 Aluminium</td></tr>
+                    <tr><td><strong>Location</strong></td><td>Province → Infrastructure → Military tab</td></tr>
+                    <tr><td><strong>Provides</strong></td><td>+1 ICBM capacity, +1 Nuke capacity</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> WMD Projects</h3>
+                <p class="templatecontentpleft">National projects enhance your WMD capabilities.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Ballistic Missile Silo</strong></td><td>$280M - Required before building any ICBMs</td></tr>
+                    <tr><td><strong>ICBM Silo</strong></td><td>$355M - Increases ICBM effectiveness</td></tr>
+                    <tr><td><strong>Nuclear Testing Facility</strong></td><td>$575M - Required before building nukes</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv" style="background: rgba(255, 100, 100, 0.1); border-left: 4px solid #ff6464; padding: 15px;">
+            <div class="templatedivflex2left" style="width: 100%;">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">warning</span> How to Use WMDs in War</h3>
+                <ol class="templatecontentpleft">
+                    <li><strong>Declare war</strong> on an enemy nation</li>
+                    <li>Go to the <strong>Wars</strong> page and select the active war</li>
+                    <li>Click <strong>"Attack"</strong> to enter combat</li>
+                    <li>Select <strong>"Special Attack"</strong> (missiles/nukes option)</li>
+                    <li>Choose your WMD and target enemy units</li>
+                    <li>WMDs consume 1 unit per launch and damage random enemy province</li>
+                </ol>
             </div>
         </div>
 
@@ -109,6 +180,55 @@
             </div>
         </div>
 
+        <!-- Attack Types -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">ads_click</span> Attack Types</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">terrain</span> Ground Attack</h3>
+                <p class="templatecontentpleft">Use soldiers, tanks, and artillery against enemy ground forces.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Units</strong></td><td>Soldiers, Tanks, Artillery</td></tr>
+                    <tr><td><strong>Resources</strong></td><td>Ammunition, Oil</td></tr>
+                    <tr><td><strong>Effective vs</strong></td><td>Enemy ground forces & infrastructure</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">flight_takeoff</span> Air Attack</h3>
+                <p class="templatecontentpleft">Use fighters, bombers, and apaches for air superiority.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Units</strong></td><td>Fighters, Bombers, Apaches</td></tr>
+                    <tr><td><strong>Resources</strong></td><td>Oil, Ammunition</td></tr>
+                    <tr><td><strong>Effective vs</strong></td><td>Enemy air forces & infrastructure</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">directions_boat</span> Naval Attack</h3>
+                <p class="templatecontentpleft">Use destroyers, cruisers, and submarines for naval combat.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Units</strong></td><td>Destroyers, Cruisers, Submarines</td></tr>
+                    <tr><td><strong>Resources</strong></td><td>Oil, Ammunition</td></tr>
+                    <tr><td><strong>Effective vs</strong></td><td>Enemy naval forces</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">rocket_launch</span> Special Attack</h3>
+                <p class="templatecontentpleft">Launch ICBMs or nukes for devastating strikes.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Units</strong></td><td>ICBMs, Nukes</td></tr>
+                    <tr><td><strong>Requirement</strong></td><td>At least 1 Silo</td></tr>
+                    <tr><td><strong>Effect</strong></td><td>Destroy units + damage random province</td></tr>
+                </table>
+            </div>
+        </div>
+
         <!-- Victory -->
         <table class="templatetable">
             <tr>
@@ -129,10 +249,11 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> War Tips</h3>
                 <ul class="templatecontentpleft">
                     <li>Stock up on supplies before attacking</li>
-                    <li>Scout enemy military strength first</li>
+                    <li>Scout enemy military strength with spies first</li>
                     <li>Coordinate with coalition allies</li>
                     <li>Diversify your military composition</li>
                     <li>Don't overextend - watch your morale</li>
+                    <li>Build silos before investing in WMDs</li>
                 </ul>
             </div>
         </div>
