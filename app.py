@@ -518,9 +518,29 @@ def get_resources():
     """Get user's resources with short-term caching to avoid repeated DB queries"""
     from database import query_cache
 
+    # Default resources dict with all expected keys (prevents template errors)
+    default_resources = {
+        "gold": 0,
+        "rations": 0,
+        "oil": 0,
+        "coal": 0,
+        "uranium": 0,
+        "bauxite": 0,
+        "iron": 0,
+        "lead": 0,
+        "copper": 0,
+        "lumber": 0,
+        "components": 0,
+        "steel": 0,
+        "consumer_goods": 0,
+        "aluminium": 0,
+        "gasoline": 0,
+        "ammunition": 0,
+    }
+
     target_user_id = session.get("user_id")
     if not target_user_id:
-        return {}
+        return default_resources
 
     # Check cache first (30 second TTL for resources - they change frequently)
     cache_key = f"resources_{target_user_id}"
@@ -537,12 +557,15 @@ def get_resources():
                 ),
                 (target_user_id,),
             )
-            resources = dict(db.fetchone())
-            # Resources change frequently, cache them for a short time only
-            query_cache.set(cache_key, resources, ttl_seconds=15)
-            return resources
-        except TypeError:
-            return {}
+            row = db.fetchone()
+            if row:
+                resources = dict(row)
+                # Resources change frequently, cache them for a short time only
+                query_cache.set(cache_key, resources, ttl_seconds=15)
+                return resources
+            return default_resources
+        except Exception:
+            return default_resources
 
 
 @app.context_processor
