@@ -1,7 +1,6 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
-from tasks import rations_needed
 import os
 import variables
 from dotenv import load_dotenv
@@ -597,7 +596,17 @@ def country(cId):
             expenses = []
             statistics = {}
 
-        rations_need = rations_needed(cId)
+        # Calculate rations need from already-fetched provinces data
+        # Each province needs at least 1 ration, or population // RATIONS_PER
+        rations_need = 0
+        for prov in provinces:
+            pop = prov[2] if prov[2] else 0  # index 2 is population
+            consumption = pop // variables.RATIONS_PER
+            if consumption < 1:
+                consumption = 1
+            rations_need += consumption
+        if rations_need < 1:
+            rations_need = 1
 
     return render_template(
         "country.html",
