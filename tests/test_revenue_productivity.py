@@ -47,7 +47,7 @@ def test_get_revenue_applies_productivity(monkeypatch):
 
     monkeypatch.setattr("database.get_db_connection", lambda: FakeConn(db, dbdict))
     monkeypatch.setattr("database.query_cache.get", lambda k: None)
-    monkeypatch.setattr("database.query_cache.set", lambda k, v: None)
+    monkeypatch.setattr("database.query_cache.set", lambda k, v, ttl_seconds=None: None)
 
     rev = countries.get_revenue(900)
     # With productivity 0, multiplier = 0.55 -> 4 * 35 * 0.55 = 77

@@ -33,14 +33,13 @@ def test_buy_gas_stations_does_not_change_raw_taxes(monkeypatch):
     monkeypatch.setattr("database.get_db_connection", lambda: conn_before)
     # Ensure cg_need doesn't interfere
     monkeypatch.setattr(countries, "cg_need", lambda cid: 0)
-    # Fix calc_ti to a stable value so we assert concrete equality
-    monkeypatch.setattr(countries, "calc_ti", lambda cid: (12345, 0))
+    # calc_ti is now inlined in get_revenue, no need to monkeypatch
 
     # Avoid cache
     from database import query_cache
 
     monkeypatch.setattr(query_cache, "get", lambda key: None)
-    monkeypatch.setattr(query_cache, "set", lambda key, val: None)
+    monkeypatch.setattr(query_cache, "set", lambda key, val, ttl_seconds=None: None)
 
     rev_before = countries.get_revenue(1)
 
