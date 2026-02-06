@@ -53,34 +53,55 @@ def test_get_revenue_consumer_goods_net_subtracts_citizen_need(monkeypatch):
 
     # Province: id=100, land=0, productivity=50, population=1000
     infra_ids = [(100, 0, 50)]
+    population = 1000  # This gives citizen_cg_need = ceil(1000 / CONSUMER_GOODS_PER)
 
     # db is non-dict cursor used by get_revenue
-    # Provide fetchone returns for:
-    # 1) any earlier checks
-    # 2) rations SELECT in next_turn_rations
-    # 3) SUM(population) query for citizen_cg_need calculation
-    population = 1000  # This gives citizen_cg_need = ceil(1000 / CONSUMER_GOODS_PER)
-    db = FakeCursor(fetchone_returns=[(0,), (0,), (population,)], fetchall_return=[])
+    # Provide fetchone returns in order:
+    # 1) gold: for money constraints check
+    # 2) rations: SELECT rations FROM resources
+    # 3) consumer_goods: for inlined calc_ti (SELECT consumer_goods FROM resources)
+    # 4) policies: for inlined calc_ti (SELECT education FROM policies)
+    # 5) SUM(population) query for citizen_cg_need calculation
+    # 6) rations for next_turn_rations
+    # 7+) various other queries in next_turn_rations
+    db = FakeCursor(
+        fetchone_returns=[
+            (100000,),  # gold - sufficient to operate buildings
+            (0,),  # rations
+            (0,),  # consumer_goods for calc_ti
+            (None,),  # policies (no education)
+            (population,),  # SUM(population) for citizen_cg_need
+            (0,),  # rations for next_turn_rations
+            (population,),  # population for next_turn_rations
+        ],
+        fetchall_return=[],
+    )
 
-    # First fetchall -> provinces (id, land, productivity)
-    # Second fetchall -> proInfra row.
-    # We include at least 10 entries so 'malls' index maps.
+    # Fetchall queue:
+    # 1) provinces (id, land, productivity)
+    # 2) proInfra row
+    # 3) ti_provinces (population, land) for inlined calc_ti
+    # 4) provinces population for next_turn_rations
     proinfra_row = [100] + [0] * 8 + [1]  # malls at index 9
-    db._queue = [infra_ids, [tuple(proinfra_row)]]
+    db._queue = [
+        infra_ids,  # provinces
+        [tuple(proinfra_row)],  # proInfra
+        [(population, 0)],  # ti_provinces for calc_ti
+        [(population,)],  # provinces population for next_turn_rations
+    ]
 
     conn = FakeConn(db, db)
 
     monkeypatch.setattr("database.get_db_connection", lambda: conn)
     # cg_need is not used for net calculation anymore, but mock it anyway
     monkeypatch.setattr(countries, "cg_need", lambda cid: 0)
-    # calc_ti returns (money, cg) - but ti_cg is no longer used for net CG
-    monkeypatch.setattr(countries, "calc_ti", lambda cid: (0, 50))
+    # calc_ti is now inlined in get_revenue, no need to monkeypatch
 
     # Ensure cache miss
     from database import query_cache
 
     monkeypatch.setattr(query_cache, "get", lambda key: None)
-    monkeypatch.setattr(query_cache, "set", lambda key, val: None)
+    monkeypatch.setattr(query_cache, "set", lambda key, val, ttl_seconds=None: None)
 
     rev = countries.get_revenue(1)
 
