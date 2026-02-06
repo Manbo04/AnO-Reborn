@@ -108,6 +108,40 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-02-06
+
+**Task**: Game unplayably slow - find and fix performance issues
+
+**Root Causes Found**:
+1. **Missing database index on `upgrades.user_id`**: 96,000 sequential scans with only 296 index scans - every query on upgrades was doing a full table scan
+2. **Task overlap causing deadlocks**: Background tasks (revenue, population) could run simultaneously and lock each other
+3. **Redundant database connection** in `country()` - `rations_needed()` opened its own connection when data was already available
+
+**What Was Done**:
+- Added missing index: `CREATE INDEX idx_upgrades_user_id ON upgrades(user_id)` - directly on production
+- Added missing index: `CREATE INDEX idx_news_destination_id ON news(destination_id)`
+- Ran `ANALYZE` on key tables (policies, upgrades, provinces, proinfra, stats, resources, military, users) to update query planner
+- Fixed `countries.py` to calculate rations_need from already-fetched provinces data instead of calling `rations_needed()`
+- Added `FOR UPDATE` row locking in task_runs table to serialize task executions
+- Improved resource delta batching in `generate_province_revenue()` using `execute_batch()`
+- Commit: `4f0de6ad` - pushed to master
+
+**What To Watch**:
+- Monitor Railway logs for any deadlock errors after deploy
+- Background tasks now use row-level locking (`FOR UPDATE`) - shouldn't overlap
+- The ~2 second latency seen in local testing is network latency to Railway DB (normal for remote connections)
+
+**Performance Verification**:
+- Seq scans on upgrades table should now use index (verify via `pg_stat_user_tables` after some traffic)
+- Caching is working correctly (revenue cached calls: 0.0ms)
+
+**Next Steps**:
+- Consider adding `@cache_response` decorator to more routes if slowness persists
+- The market page doesn't have caching - could add if it's slow
+- Monitor for any remaining N+1 query patterns in logs
+
+---
+
 ### Session: 2026-02-02
 
 **Task**: Fix province page 500 error for all players
