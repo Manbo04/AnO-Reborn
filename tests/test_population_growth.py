@@ -1,10 +1,17 @@
 class FakeCursor:
-    def __init__(self, fetchall_return=None):
+    def __init__(self, fetchall_return=None, fetchone_returns=None):
         self._fetchall = fetchall_return or []
+        self._fetchone_returns = list(fetchone_returns or [])
         self.calls = []
 
     def execute(self, query, params=None):
         self.calls.append((query, params))
+
+    def fetchone(self):
+        if self._fetchone_returns:
+            return self._fetchone_returns.pop(0)
+        # Default: return True for advisory lock queries
+        return (True,)
 
     def fetchall(self):
         # Support queued fetchall returns for multiple queries in a single run
@@ -25,6 +32,9 @@ class FakeConn:
 
     def cursor(self, cursor_factory=None):
         return self._cursor
+
+    def commit(self):
+        pass
 
     def __enter__(self):
         return self
@@ -61,7 +71,10 @@ def test_population_growth_updates(monkeypatch):
     ]
 
     # Prepare dbdict to return provinces first, then resources second
-    dbdict = FakeCursor()
+    # Also prepare fetchone returns for:
+    # 1) advisory lock: (True,)
+    # 2) task_runs last_run: (None,) to skip rate limit check
+    dbdict = FakeCursor(fetchone_returns=[(True,), (None,)])
     dbdict._queue = [provinces, [{"id": 1, "rations": 100}]]
     conn = FakeConn(dbdict)
 

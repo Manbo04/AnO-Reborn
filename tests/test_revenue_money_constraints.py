@@ -46,9 +46,15 @@ def test_get_revenue_respects_money_constraints(monkeypatch):
     # Mall money cost is 450000 (see variables.INFRA)
 
     # Setup provinces list: one province id=100
-    # fetchone sequence: cg_need -> returns 0 population, gold -> 10, rations -> 0
+    # fetchone sequence:
+    # 1) gold (for money constraints): 10
+    # 2) rations: 0
+    # 3) consumer_goods (for inlined calc_ti): 0
+    # 4) policies (for inlined calc_ti): None
+    # 5) SUM(population) for citizen_cg_need: 1000
     db = FakeCursor(
-        fetchone_returns=[(0,), (10,), (0,)], fetchall_return=[(100, 0, 50)]
+        fetchone_returns=[(10,), (0,), (0,), (None,), (1000,)],
+        fetchall_return=[],
     )
 
     # proInfra row: index corresponds to building; place 1 mall at its index
@@ -61,20 +67,25 @@ def test_get_revenue_respects_money_constraints(monkeypatch):
     row[9] = 1
     proinfra_row = tuple(row)
 
-    # set queue for proInfra fetch
-    db._fetchall = [(100, 0, 50)]  # provinces
+    # Queue for fetchall calls:
+    # 1) provinces (id, land, productivity)
+    # 2) proInfra data
+    # 3) ti_provinces (population, land) for inlined calc_ti
+    db._queue = [
+        [(100, 0, 50)],  # provinces
+        [proinfra_row],  # proInfra
+        [(1000, 0)],  # ti_provinces for calc_ti
+    ]
 
-    # dict cursor will return proInfra row and any subsequent queries
-    dict_cursor = FakeCursor(fetchone_returns=[None], fetchall_return=[proinfra_row])
-
-    conn = FakeConn(db, dict_cursor)
+    # dict cursor not used in current get_revenue implementation
+    conn = FakeConn(db, db)
 
     monkeypatch.setattr("database.get_db_connection", lambda: conn)
     # Ensure cache miss
     from database import query_cache
 
     monkeypatch.setattr(query_cache, "get", lambda key: None)
-    monkeypatch.setattr(query_cache, "set", lambda key, val: None)
+    monkeypatch.setattr(query_cache, "set", lambda key, val, ttl_seconds=None: None)
 
     # next_turn_rations triggers nested db calls; stub it to avoid heavy simulation
     monkeypatch.setattr(countries, "next_turn_rations", lambda cId, prod: 0)

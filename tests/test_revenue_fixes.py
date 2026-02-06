@@ -60,14 +60,13 @@ def test_get_revenue_does_not_mutate_variables_resources(monkeypatch):
     conn = FakeConn(db, dbdict)
 
     monkeypatch.setattr("database.get_db_connection", lambda: conn)
-    # Make calc_ti cheap and deterministic
-    monkeypatch.setattr("countries.calc_ti", lambda cId: (0, 0))
+    # calc_ti is now inlined in get_revenue, no need to monkeypatch
 
     # Ensure cache miss
     from database import query_cache
 
     monkeypatch.setattr(query_cache, "get", lambda key: None)
-    monkeypatch.setattr(query_cache, "set", lambda key, val: None)
+    monkeypatch.setattr(query_cache, "set", lambda key, val, ttl_seconds=None: None)
 
     countries.get_revenue(1)
 
