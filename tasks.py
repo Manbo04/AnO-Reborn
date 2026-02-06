@@ -14,49 +14,63 @@ import config  # Parse Railway environment variables  # noqa: E402
 # Toggle noisy per-building revenue logs (default off in production)
 VERBOSE_REVENUE_LOGS = os.getenv("VERBOSE_REVENUE_LOGS") == "1"
 
+# Configurable task timing thresholds (seconds)
+TASK_RUN_THRESHOLDS = {
+    "tax_income": int(os.getenv("TAX_INCOME_MIN_INTERVAL", "65")),
+    "population_growth": int(os.getenv("POP_GROWTH_MIN_INTERVAL", "100")),
+    "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "100")),
+    "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
+}
+
+
+# Optionally allow celery beat schedule to be loaded from env/config
+def get_crontab_env(var, default):
+    val = os.getenv(var)
+    if val:
+        # Support formats like "0" or "*/15" or "5,35"
+        return crontab(minute=val)
+    return default
+
+
 redis_url = config.get_redis_url()
 celery = Celery("app", broker=redis_url)
 celery.conf.update(
     broker_url=redis_url, result_backend=redis_url, CELERY_BROKER_URL=redis_url
 )
 
+# Allow schedule override via env, fallback to defaults
 celery_beat_schedule = {
-    # Staggered to reduce concurrent writes and deadlocks
     "tax_income": {
         "task": "tasks.task_tax_income",
-        "schedule": crontab(minute="0"),  # at minute 0 each hour
+        "schedule": get_crontab_env("TAX_INCOME_CRON", crontab(minute="0")),
     },
     "generate_province_revenue": {
         "task": "tasks.task_generate_province_revenue",
-        "schedule": crontab(minute="25"),  # at minute 25 each hour (increased from 10)
+        "schedule": get_crontab_env("PROV_REV_CRON", crontab(minute="25")),
     },
     "population_growth": {
         "task": "tasks.task_population_growth",
-        "schedule": crontab(minute="45"),  # at minute 45 each hour (increased from 20)
+        "schedule": get_crontab_env("POP_GROWTH_CRON", crontab(minute="45")),
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
-        # Run every day at midnight (UTC)
-        "schedule": crontab(minute="0", hour="0"),
+        "schedule": get_crontab_env("WAR_REP_CRON", crontab(minute="0", hour="0")),
     },
     "manpower_increase": {
         "task": "tasks.task_manpower_increase",
-        "schedule": crontab(minute="5", hour="*/4"),  # Run every 4 hours, minute 5
+        "schedule": get_crontab_env("MANPOWER_CRON", crontab(minute="5", hour="*/4")),
     },
     "backfill_missing_resources": {
         "task": "tasks.task_backfill_missing_resources",
-        # Run daily 01:15 UTC to repair missing rows quietly
-        "schedule": crontab(minute="15", hour="1"),
+        "schedule": get_crontab_env("BACKFILL_CRON", crontab(minute="15", hour="1")),
     },
     "refresh_bot_offers": {
         "task": "tasks.task_refresh_bot_offers",
-        # Run daily at 00:30 UTC to ensure market has essential resources
-        "schedule": crontab(minute="30", hour="0"),
+        "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="30", hour="0")),
     },
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
-        # Run every 15 minutes to check for due trade agreements
-        "schedule": crontab(minute="*/15"),
+        "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),
     },
 }
 
@@ -67,6 +81,18 @@ celery.conf.update(
     result_serializer="json",
     beat_schedule=celery_beat_schedule,
 )
+
+
+# Centralized helper for last_run threshold check
+def should_skip_task(row, task_name):
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    threshold = TASK_RUN_THRESHOLDS.get(task_name, 90)
+    if row and row[0] and (now - row[0]).total_seconds() < threshold:
+        print(f"{task_name}: last run too recent, skipping (interval={threshold}s)")
+        return True
+    return False
 
 
 # Handles exception for an error
@@ -359,12 +385,7 @@ def tax_income():
                 ("tax_income",),
             )
             row = db.fetchone()
-            import datetime
-
-            now = datetime.datetime.now(datetime.timezone.utc)
-            # Skip if last run was within the last 55 seconds
-            if row and row[0] and (now - row[0]).total_seconds() < 55:
-                print("tax_income: last run too recent, skipping")
+            if should_skip_task(row, "tax_income"):
                 try:
                     release_pg_advisory_lock(conn, 9001)
                 except Exception:
@@ -375,7 +396,7 @@ def tax_income():
                 ("UPDATE task_runs SET last_run = now() WHERE task_name = %s"),
                 ("tax_income",),
             )
-            start = time.time()
+            start = time.perf_counter()
             dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
             db.execute("SELECT id FROM users")
@@ -553,7 +574,7 @@ def tax_income():
                     pass
                 handle_exception(e)
 
-            duration = time.time() - start
+            duration = time.perf_counter() - start
             print(
                 f"tax_income: updated {len(money_updates)} users in {duration:.2f}s "
                 f"(cg updates: {len(cg_updates)})"
@@ -658,7 +679,6 @@ def calc_pg(pId, rations):
 def population_growth():  # Function for growing population
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
-    import datetime
 
     with get_db_connection() as conn:
         # Acquire advisory lock to prevent concurrent runs
@@ -686,10 +706,7 @@ def population_growth():  # Function for growing population
             ("population_growth",),
         )
         row = db.fetchone()
-        now = datetime.datetime.now(datetime.timezone.utc)
-        # Skip if this task ran within the last 90 seconds
-        if row and row[0] and (now - row[0]).total_seconds() < 90:
-            print("population_growth: last run too recent, skipping")
+        if should_skip_task(row, "population_growth"):
             try:
                 release_pg_advisory_lock(conn, 9003)
             except Exception:
@@ -878,7 +895,7 @@ def generate_province_revenue():  # Runs each hour
     from database import get_db_connection
     from psycopg2.extras import RealDictCursor, execute_batch
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     processed = 0
     skipped_for_lock = False
 
@@ -906,13 +923,7 @@ def generate_province_revenue():  # Runs each hour
             ("generate_province_revenue",),
         )
         row = db.fetchone()
-        import datetime
-
-        now = datetime.datetime.now(datetime.timezone.utc)
-        # Skip if this task ran within the last 90 seconds
-        # (allow some leeway for long runs)
-        if row and row[0] and (now - row[0]).total_seconds() < 90:
-            print("generate_province_revenue: last run too recent, skipping")
+        if should_skip_task(row, "generate_province_revenue"):
             try:
                 release_pg_advisory_lock(conn, 9002)
             except Exception:
@@ -1563,7 +1574,7 @@ def generate_province_revenue():  # Runs each hour
                 conn.rollback()
             except Exception:
                 pass
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time
 
         # Optional verbose logging for diagnostics. When VERBOSE_REVENUE_LOGS is
         # enabled, we emit expected gross production for resources per user so
@@ -1903,7 +1914,7 @@ def execute_due_trade_agreements():
     from trade_agreements import execute_trade_agreement
     from database import get_db_connection
 
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     with get_db_connection() as conn:
         db = conn.cursor()
@@ -1925,11 +1936,12 @@ def execute_due_trade_agreements():
             )
             row = db.fetchone()
             if row and row[0]:
-                elapsed = time.time() - row[0].timestamp()
-                # 55 second threshold - protect against duplicate runs
-                if elapsed < 55:
-                    print("trade_agreements: last run too recent, skipping")
-                    return
+                import datetime
+
+                now = datetime.datetime.now(datetime.timezone.utc)
+                threshold = TASK_RUN_THRESHOLDS.get("execute_trade_agreements", 65)
+                if (now - row[0]).total_seconds() < threshold:
+                    print(f"trade_agreements: last run recent ({threshold}s), skipping")
                     return
 
             # Find all active agreements where next_execution is due
@@ -1987,7 +1999,7 @@ def execute_due_trade_agreements():
             )
             conn.commit()
 
-            elapsed_time = time.time() - start_time
+            elapsed_time = time.perf_counter() - start_time
             print(
                 f"trade_agreements: executed={executed}, failed={failed} "
                 f"in {elapsed_time:.2f}s"
