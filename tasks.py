@@ -677,7 +677,12 @@ def population_growth():  # Function for growing population
         """
         )
         db.execute(
-            "SELECT last_run FROM task_runs WHERE task_name=%s",
+            "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+            "ON CONFLICT DO NOTHING",
+            ("population_growth",),
+        )
+        db.execute(
+            "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
             ("population_growth",),
         )
         row = db.fetchone()
@@ -692,9 +697,7 @@ def population_growth():  # Function for growing population
             return
 
         db.execute(
-            "INSERT INTO task_runs (task_name, last_run) "
-            "VALUES (%s, now()) ON CONFLICT (task_name) "
-            "DO UPDATE SET last_run = now()",
+            "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
             ("population_growth",),
         )
 
@@ -894,7 +897,12 @@ def generate_province_revenue():  # Runs each hour
         """
         )
         db.execute(
-            "SELECT last_run FROM task_runs WHERE task_name=%s",
+            "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+            "ON CONFLICT DO NOTHING",
+            ("generate_province_revenue",),
+        )
+        db.execute(
+            "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
             ("generate_province_revenue",),
         )
         row = db.fetchone()
@@ -912,9 +920,7 @@ def generate_province_revenue():  # Runs each hour
             return
 
         db.execute(
-            "INSERT INTO task_runs (task_name, last_run) "
-            "VALUES (%s, now()) ON CONFLICT (task_name) "
-            "DO UPDATE SET last_run = now()",
+            "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
             ("generate_province_revenue",),
         )
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
@@ -1513,30 +1519,34 @@ def generate_province_revenue():  # Runs each hour
         # This prevents race conditions with other tasks (e.g., population_growth)
         try:
             if resource_deltas:
-                for user_id, deltas in resource_deltas.items():
-                    if not deltas:
-                        continue
-                    # Build atomic update: resource = GREATEST(0, resource + delta)
-                    set_clauses = []
-                    values = []
-                    for col, delta in deltas.items():
-                        if delta != 0:
-                            set_clauses.append(
-                                f"{col} = GREATEST(0, COALESCE({col}, 0) + %s)"
-                            )
-                            values.append(delta)
-                    if set_clauses and values:
-                        values.append(user_id)
-                        sql = (
-                            "UPDATE resources SET "
-                            + ", ".join(set_clauses)
-                            + " WHERE id = %s"
-                        )
-                        db.execute(sql, values)
+                resource_cols = list(user_resources)
+                if resource_cols:
+                    set_clause = ", ".join(
+                        [
+                            f"{col} = GREATEST(0, COALESCE({col}, 0) + %s)"
+                            for col in resource_cols
+                        ]
+                    )
+                    sql = f"UPDATE resources SET {set_clause} WHERE id = %s"
+                    batch_values = []
+                    for user_id, deltas in resource_deltas.items():
+                        if not deltas:
+                            continue
+                        row_values = []
+                        has_nonzero = False
+                        for col in resource_cols:
+                            delta = deltas.get(col, 0) or 0
+                            if delta != 0:
+                                has_nonzero = True
+                            row_values.append(delta)
+                        if not has_nonzero:
+                            continue
+                        row_values.append(user_id)
+                        batch_values.append(tuple(row_values))
 
-                log_verbose(
-                    f"Atomically updated resources for {len(resource_deltas)} users"
-                )
+                    if batch_values:
+                        execute_batch(db, sql, batch_values, page_size=200)
+                        log_verbose(f"Updated resources for {len(batch_values)} users")
         except Exception as e:
             conn.rollback()
             handle_exception(e)
