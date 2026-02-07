@@ -262,7 +262,8 @@
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />
-                <p class="resourcetag">{{ resources["gold"] | fmt }}</p>
+                <!-- Show full precise money with commas to avoid misleading rounding -->
+                <p class="resourcetag" title="${{ resources['gold'] | commas }}">${{ resources["gold"] | commas }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
             <br />
