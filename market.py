@@ -1066,6 +1066,16 @@ def accept_trade(trade_id):
         # Logging should never interfere with behavior
         pass
 
+    # Record trade audit (best-effort)
+    try:
+        from helpers import record_trade_event
+
+        record_trade_event(
+            trade_id, offerer, offeree, resource, amount, price, trade_type
+        )
+    except Exception:
+        pass
+
     return redirect("/my_offers")
 
 
