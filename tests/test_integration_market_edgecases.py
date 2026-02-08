@@ -319,7 +319,8 @@ class FakeConn:
         self.state = copy.deepcopy(state)
         self._snapshot = copy.deepcopy(state)
 
-    def cursor(self):
+    def cursor(self, cursor_factory=None, **kwargs):
+        # Accept and ignore cursor_factory/kwargs so tests can simulate psycopg2
         return FakeCursor(self.state, self._global_state)
 
     def commit(self):
