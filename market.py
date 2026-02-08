@@ -1047,6 +1047,25 @@ def accept_trade(trade_id):
     except Exception:
         pass
 
+    # Emit structured log for audit/metrics: trade executed
+    try:
+        logger.info(
+            "trade_executed",
+            extra={
+                "offer_id": trade_id,
+                "resource": resource,
+                "amount": int(amount),
+                "price": int(price),
+                "total": int(amount) * int(price),
+                "offerer": int(offerer),
+                "offeree": int(offeree),
+                "trade_type": trade_type,
+            },
+        )
+    except Exception:
+        # Logging should never interfere with behavior
+        pass
+
     return redirect("/my_offers")
 
 
