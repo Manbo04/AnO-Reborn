@@ -201,4 +201,21 @@ Copy the output and use it as your SECRET_KEY in Railway.
 Just push to GitHub and follow the Railway deployment steps. Your game will be live in minutes! 🎮
 
 **Good luck with your deployment!** 🚀
+
+---
+
+## ⚠️ Runtime & Dependency Compatibility (important)
+
+We recently fixed a production startup crash caused by old, tightly pinned dependencies (notably Werkzeug/Jinja/Flask) that are incompatible with newer Python runtimes. Changes made:
+
+- **Updated** `requirements.txt` to allow modern, compatible versions of **Werkzeug**, **Jinja2**, **Flask**, **MarkupSafe**, and **itsdangerous**.
+- **Added CI** that tests the test-suite on **Python 3.8, 3.10 and 3.14** to prevent regressions.
+
+Action items for deployment:
+
+1. You can keep `runtime.txt` as `python-3.8.18` for parity with current Railway settings, or update it to `python-3.10.x` if you want a more modern baseline. Our dependency updates make the app safe to run on newer Python versions, but pin the runtime explicitly in Railway to avoid accidental mismatches.
+2. Redeploy on Railway (trigger a new build). If you still see the "Application failed to respond" page, check the Railway deploy logs and the Request ID displayed in the error page, then share the logs and I will analyze them.
+
+If you'd like, I can also add a short note to `README.md` with the supported Python versions and the CI matrix.
+
 # Deployment fix
