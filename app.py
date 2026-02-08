@@ -321,6 +321,25 @@ def health():
     return "ok", 200
 
 
+@app.route("/ready")
+def ready():
+    """Readiness probe that verifies DB connectivity. Returns 200 when the app
+    is fully ready to accept traffic, otherwise 503.
+    """
+    try:
+        from database import get_db_connection
+
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute("SELECT 1")
+            db.fetchone()
+        return "ok", 200
+    except Exception as e:
+        # Log at warning level so the platform logs show the reason for unready state
+        app.logger.warning("Readiness check failed: %s", e)
+        return "not ready", 503
+
+
 # Initialize database with proper defaults for existing provinces
 def _init_province_defaults():
     """Ensure all provinces have proper default values for stats"""
@@ -856,6 +875,10 @@ def mass_purchase():
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 
+
+# Emit an explicit startup message so we can detect successful initialisation
+# in the platform logs
+app.logger.info("App fully initialized and ready to serve requests")
 
 if __name__ == "__main__":
     # Use port 5000 by default for local development/testing
