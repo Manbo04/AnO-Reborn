@@ -6,6 +6,7 @@ This guide will help you deploy the Affairs & Order game to Railway.app.
 
 - GitHub account with AnO repository
 - Railway account (sign up at https://railway.app)
+- **Python runtime**: Recommended `python-3.10.x` (we test on 3.8, 3.10 and 3.14 in CI). Set `runtime.txt` to `python-3.10.19` for consistent Railway builds.
 - All changes committed and pushed to your repository
 
 ## Architecture Overview

@@ -7,12 +7,16 @@ Affairs & order is a nation simulation game, where you can make your own nation,
 1. Install Git and add Git to PATH. https://stackoverflow.com/questions/26620312/installing-git-in-path-with-github-client-for-windows
 2. Type `git clone https://github.com/delivey/AnO.git` in the folder you want the repo to be cloned in.
 
-## Flask
+## Flask / Requirements
 
-1. Install Python (Preferrably 3.8) https://www.python.org/downloads/release/python-380/.
-2. Run `pip install -r requirements.txt`, this will install all the modules needed for this repo.
-3. Type `flask run` in this repo's folder on your own PC.
-4. Navigate to `http://127.0.0.1:5000/` or the url flask gave you in your browser. The website should run
+1. Install Python (Recommended: 3.10.x). This project is tested on **Python 3.8, 3.10 and 3.14** (CI matrix). For production deployments on Railway we recommend using `python-3.10.19` in `runtime.txt` or setting the service runtime to Python 3.10.x.
+2. Create and activate a virtual environment (recommended):
+   - `python3 -m venv .venv`
+   - `source .venv/bin/activate`
+3. Run `pip install -r requirements.txt` to install the project's dependencies.
+4. Start the app for development:
+   - `flask run`
+5. Visit `http://127.0.0.1:5000/` in your browser to use the site.
 
 ## PostgresQL
 
