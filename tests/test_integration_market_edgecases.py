@@ -102,6 +102,15 @@ class FakeCursor:
                     "trades", {}
                 ).get(int(tid))
                 self._last = trade
+            # SELECT ... FROM trade_agreements WHERE id = %s AND status = 'active'
+            elif "from trade_agreements" in sql_lower and sql_lower.strip().startswith(
+                "select"
+            ):
+                aid = params[0]
+                agr = self.state.get("trade_agreements", {}).get(aid) or self.state.get(
+                    "trade_agreements", {}
+                ).get(int(aid))
+                self._last = agr
             # UPDATE offers SET amount=(%s) WHERE offer_id=(%s)
             elif "update offers set amount" in sql_lower:
                 new_amount = params[0]

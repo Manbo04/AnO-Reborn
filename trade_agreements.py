@@ -173,6 +173,24 @@ def execute_trade_agreement(agreement_id, cursor=None):
         except Exception:
             pass
 
+        # Emit structured log for audit/metrics: trade agreement executed
+        try:
+            logger.info(
+                "trade_agreement_executed",
+                extra={
+                    "agreement_id": aid,
+                    "proposer_id": proposer_id,
+                    "receiver_id": receiver_id,
+                    "proposer_resource": proposer_resource,
+                    "proposer_amount": int(proposer_amount),
+                    "receiver_resource": receiver_resource,
+                    "receiver_amount": int(receiver_amount),
+                    "execution_count": new_execution_count,
+                },
+            )
+        except Exception:
+            pass
+
         return True, f"Trade executed successfully (execution #{new_execution_count})"
 
     except Exception as e:
@@ -182,7 +200,14 @@ def execute_trade_agreement(agreement_id, cursor=None):
         return False, str(e)
     finally:
         if owns_connection and conn:
-            conn.__exit__(None, None, None)
+            try:
+                # Some DB connection objects implement __exit__ on their context
+                # manager; FakeConn used in tests may not have it so guard the call.
+                if hasattr(conn, "__exit__"):
+                    conn.__exit__(None, None, None)
+            except Exception:
+                # Best-effort: do not let connection cleanup errors affect flow
+                pass
 
 
 @login_required
