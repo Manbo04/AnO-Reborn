@@ -129,6 +129,147 @@ def error(code, message):
     return render_template("error.html", code=code, message=message), code
 
 
+# ------------------ Metrics / Auditing helpers ------------------
+# Lightweight helpers to persist audit events and task metrics. These are
+# best-effort: failures should never break user flows. If Prometheus client is
+# available, we'll emit metrics to it as well for scraping.
+try:
+    from prometheus_client import Histogram, Counter
+
+    _PROM_AVAILABLE = True
+    TASK_DURATION_HISTOGRAM = Histogram(
+        "ano_task_duration_seconds", "Task duration seconds", ["task_name"]
+    )
+    TRADE_COUNTER = Counter(
+        "ano_trade_count", "Number of trades executed", ["trade_type"]
+    )
+except Exception:
+    _PROM_AVAILABLE = False
+    TASK_DURATION_HISTOGRAM = None
+    TRADE_COUNTER = None
+
+
+def record_task_metric(task_name: str, duration_seconds: float):
+    """Record a task duration. Best-effort: writes to DB and emits Prometheus.
+
+    Args:
+        task_name: Logical name of the task (e.g., 'tax_income')
+        duration_seconds: Wall-clock duration in seconds
+    """
+    try:
+        # Emit to Prometheus if available
+        if _PROM_AVAILABLE and TASK_DURATION_HISTOGRAM is not None:
+            try:
+                TASK_DURATION_HISTOGRAM.labels(task_name=task_name).observe(
+                    duration_seconds
+                )
+            except Exception:
+                pass
+        # Persist to DB for long-term analysis
+        try:
+            from database import get_db_connection
+
+            with get_db_connection() as conn:
+                db = conn.cursor()
+                db.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS task_metrics (
+                        id SERIAL PRIMARY KEY,
+                        task_name TEXT,
+                        duration_seconds DOUBLE PRECISION,
+                        measured_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                    )
+                """
+                )
+                db.execute(
+                    (
+                        "INSERT INTO task_metrics (task_name, duration_seconds) "
+                        "VALUES (%s, %s)"
+                    ),
+                    (task_name, float(duration_seconds)),
+                )
+        except Exception:
+            # Swallow DB errors - not critical
+            pass
+    except Exception:
+        pass
+
+
+def record_trade_event(
+    offer_id, offerer, offeree, resource, amount, price, trade_type: str = None
+):
+    """Record a trade event for audit.
+
+    Args:
+        offer_id: trade/offer id (string or int)
+        offerer: id of the user offering
+        offeree: id of the user accepting
+        resource: resource name (e.g., 'copper')
+        amount: integer amount
+        price: price per unit
+        trade_type: 'sell' or 'buy' (optional)
+    """
+    try:
+        total = (
+            int(amount) * int(price)
+            if amount is not None and price is not None
+            else None
+        )
+        # Prometheus counter
+        if _PROM_AVAILABLE and TRADE_COUNTER is not None and trade_type is not None:
+            try:
+                TRADE_COUNTER.labels(trade_type=trade_type).inc()
+            except Exception:
+                pass
+        # Persist to DB
+        try:
+            from database import get_db_connection
+
+            with get_db_connection() as conn:
+                db = conn.cursor()
+                db.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS trade_events (
+                        id SERIAL PRIMARY KEY,
+                        offer_id TEXT,
+                        offerer INTEGER,
+                        offeree INTEGER,
+                        resource TEXT,
+                        amount INTEGER,
+                        price INTEGER,
+                        total INTEGER,
+                        trade_type TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                    )
+                """
+                )
+                db.execute(
+                    (
+                        "INSERT INTO trade_events (offer_id, offerer, offeree, "
+                        "resource, amount, price, total, trade_type) "
+                        "VALUES (%s,%s,%s,%s,"
+                        "%s,%s,%s,%s)"
+                    ),
+                    (
+                        str(offer_id),
+                        int(offerer),
+                        int(offeree),
+                        resource,
+                        int(amount),
+                        int(price),
+                        total,
+                        trade_type,
+                    ),
+                )
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
+# ------------------------------------------------------------------
+
+
 def get_influence(country_id):
     # Check cache first
     cache_key = f"influence_{country_id}"
