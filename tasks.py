@@ -579,6 +579,14 @@ def tax_income():
                 f"tax_income: updated {len(money_updates)} users in {duration:.2f}s "
                 f"(cg updates: {len(cg_updates)})"
             )
+
+            # Emit a metric (best-effort)
+            try:
+                from helpers import record_task_metric
+
+                record_task_metric("tax_income", duration)
+            except Exception:
+                pass
     except psycopg2.InterfaceError as e:
         print(
             f"Database connection error in tax_income: {e}. Skipping tax income update."
@@ -1575,6 +1583,14 @@ def generate_province_revenue():  # Runs each hour
             except Exception:
                 pass
         duration = time.perf_counter() - start_time
+
+        # Emit metric for generate_province_revenue
+        try:
+            from helpers import record_task_metric
+
+            record_task_metric("generate_province_revenue", duration)
+        except Exception:
+            pass
 
         # Optional verbose logging for diagnostics. When VERBOSE_REVENUE_LOGS is
         # enabled, we emit expected gross production for resources per user so
