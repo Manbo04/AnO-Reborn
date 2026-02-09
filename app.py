@@ -385,11 +385,24 @@ def db_diagnostics():
             )
             long_queries = cur.fetchall()
 
+            # Convert non-JSON-serializable types (e.g., timedelta) to strings
+            import datetime as _dt
+
+            serialized_long = []
+            for row in long_queries:
+                r = dict(row)
+                if isinstance(r.get("duration"), _dt.timedelta):
+                    r["duration"] = str(r["duration"])
+                if "query" in r and isinstance(r["query"], str):
+                    # truncate to avoid massive payloads
+                    r["query"] = r["query"][:1000]
+                serialized_long.append(r)
+
             out = {
                 "max_connections": max_conn,
                 "active_connections": active,
                 "states": states,
-                "long_queries": long_queries,
+                "long_queries": serialized_long,
             }
 
             try:
