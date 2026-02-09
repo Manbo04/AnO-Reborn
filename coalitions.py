@@ -1161,7 +1161,9 @@ def request_from_bank(colId):
             )
         except Exception as e:
             current_app.logger.warning("colBanksRequests insert failed: %s", e)
-            return error(500, "Error submitting bank request; please try again or contact admins")
+            return error(
+                500, "Error submitting bank request; please try again or contact admins"
+            )
 
     return redirect(f"/coalition/{colId}")
 

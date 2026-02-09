@@ -170,6 +170,26 @@ At the end of each session or major task, document:
 
 ---
 
+### Session: 2026-02-09
+
+**Task**: Coalition bank withdraw request failure (500) when new members request withdraw + leader panel non-responsiveness
+
+**What Was Done**:
+- Fixed incorrect error handling that caused a 500: replaced `redirect(400, ...)` with `error(400, ...)` in `deposit_into_bank()` and `request_from_bank()` to return proper 400 responses for non-members
+- Hardened `request_from_bank()` DB INSERT with try/except, logging and a friendly 500 error message on insert failure
+- Added `tests/test_coalitions_bank_flow.py` which exercises: create leader, establish coalition, create member, submit bank request, leader accepts, and cleanup
+- Commits made locally: `7443c66d` (use error() fix), `8bd353f6` (DB insert error handling). Push attempts failed due to GitHub 503/500. Changes are committed locally and will be pushed when GitHub is available.
+
+**What To Watch**:
+- Verify in production after deployment that the leader panel shows bank requests created by new members and that acceptance removes the requests correctly
+- Watch logs for any `colBanksRequests insert failed` warnings
+- Confirm the new integration test passes in CI
+
+**Next Steps**:
+- Add an automated CI job to run the coalition bank test as part of integration suite
+- Retry pushing the commits and open a PR to trigger CI + deployment once GitHub is healthy
+- Optionally add UI-level E2E test to validate the leader accept flow from a browser automation perspective
+
 ## 🛠️ Development Commands
 
 ```bash
