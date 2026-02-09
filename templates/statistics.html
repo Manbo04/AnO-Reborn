@@ -83,6 +83,10 @@
                         <td>Lumber:</td>
                         <td>{{ market_stats.get('lumber', {}).get('avg', 'N/A') }}</td>
                     </tr>
+                    <tr>
+                        <td>Components:</td>
+                        <td>{{ market_stats.get('components', {}).get('avg', 'N/A') }}</td>
+                    </tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -127,6 +131,10 @@
                         <td>Lumber:</td>
                         <td>{{ market_stats.get('lumber', {}).get('max', 'N/A') }}</td>
                     </tr>
+                    <tr>
+                        <td>Components:</td>
+                        <td>{{ market_stats.get('components', {}).get('max', 'N/A') }}</td>
+                    </tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -164,6 +172,10 @@
                     <tr>
                         <td>Lumber:</td>
                         <td>{{ market_stats.get('lumber', {}).get('min', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Components:</td>
+                        <td>{{ market_stats.get('components', {}).get('min', 'N/A') }}</td>
                     </tr>
                 </table>
 
