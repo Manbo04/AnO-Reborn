@@ -83,13 +83,38 @@ def test_generate_province_revenue_records_metric(monkeypatch):
             self._last = None
 
         def execute(self, sql, params=None):
-            if "SELECT proInfra.id" in sql:
+            sql_lower = sql.strip().lower()
+            # Return one province id from the chunked select
+            if "select proinfra.id, provinces.userid" in sql_lower:
                 # Return one province row: (proInfra.id, userId, land, productivity)
                 self._last = [(1, 1, 1, 50)]
-            elif sql.strip().lower().startswith("select last_id from task_cursors"):
+            elif sql_lower.startswith("select last_id from task_cursors"):
                 self._last = (0,)
-            elif sql.strip().lower().startswith("select last_run from task_runs"):
+            elif sql_lower.startswith("select last_run from task_runs"):
                 self._last = (None,)
+            elif sql_lower.startswith("select * from proinfra"):
+                # Return a dict-like row compatible with RealDictCursor usage
+                try:
+                    import variables
+
+                    proinfra_row = {b: 0 for b in variables.BUILDINGS}
+                except Exception:
+                    proinfra_row = {"coal_burners": 0}
+                proinfra_row["id"] = 1
+                self._last = [proinfra_row]
+            elif sql_lower.startswith("select id, happiness"):
+                # provinces row returned to compute defaults
+                self._last = [
+                    {
+                        "id": 1,
+                        "happiness": 50,
+                        "productivity": 50,
+                        "pollution": 0,
+                        "consumer_spending": 50,
+                        "energy": 0,
+                        "population": 0,
+                    }
+                ]
             else:
                 self._last = None
 
