@@ -95,9 +95,13 @@ def test_coalition_bank_request_flow():
     assert row, "coalition not found in DB"
     colId = row[0]
 
-    # Create a member user and have them request money from the bank
+    # Create a member user and have them join the coalition and request money
     ok, member_username, member_email = create_user(s_member)
     assert ok, "member signup failed"
+
+    # Member joins the coalition (Open coalition)
+    r = s_member.post(f"{BASE_URL}/join/{colId}", data={}, allow_redirects=True)
+    assert r.status_code in (200, 302), "member failed to join coalition"
 
     # Member posts a bank request (money)
     request_data = {"money": "10"}

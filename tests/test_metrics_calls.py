@@ -73,6 +73,9 @@ def test_generate_province_revenue_records_metric(monkeypatch):
 
     monkeypatch.setattr("helpers.record_task_metric", fake_metric)
 
+    # Ensure advisory lock check won't skip the task in this test
+    monkeypatch.setattr("tasks.try_pg_advisory_lock", lambda conn, lock_id, label: True)
+
     # Call the function directly
     tasks.generate_province_revenue()
 
