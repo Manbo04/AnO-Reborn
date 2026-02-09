@@ -396,6 +396,12 @@ def db_diagnostics():
                             "SELECT id, gold FROM stats "
                             "ORDER BY id ASC LIMIT 500;"
                         )
+                    elif kind == "stats_full":
+                        sql = (
+                            "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) "
+                            "SELECT id, gold FROM stats WHERE id IN "
+                            "(SELECT id FROM users) LIMIT 10000;"
+                        )
                     else:
                         return {"error": "unknown explain target"}, 400
 
