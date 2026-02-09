@@ -763,13 +763,23 @@ def trade_offer(offer_type, offeree_id):
                     return error(
                         400, "Selling amount is higher than the amount you have."
                     )
-                # Calculates the resource amount the seller should have
-                newResourceAmount = realAmount - amount
 
-                upStatement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-                db.execute(upStatement, (newResourceAmount, cId))
+                # Reserve the resource into bank escrow so buyers can accept safely
+                res = give_resource(cId, "bank", resource, amount, cursor=db)
+                if res is not True:
+                    _report_trade_error(
+                        f"trade_offer: escrow reserve failed: {res}",
+                        extra={
+                            "user_id": cId,
+                            "resource": resource,
+                            "amount": amount,
+                            "price": price,
+                            "offeree_id": offeree_id,
+                        },
+                    )
+                    return error(400, str(res))
 
-                # Creates a new offer
+                # Creates a new offer (escrowed)
                 db.execute(
                     (
                         "INSERT INTO trades (offerer, type, resource, amount, price, "
@@ -794,9 +804,15 @@ def trade_offer(offer_type, offeree_id):
                 current_money = db.fetchone()[0]
                 if current_money < money_to_take_away:
                     return error(400, "You don't have enough money.")
-                new_money = current_money - money_to_take_away
 
-                db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
+                # Move buyer funds into bank escrow atomically
+                res = give_resource(cId, "bank", "money", money_to_take_away, cursor=db)
+                if res is not True:
+                    _report_trade_error(
+                        f"trade_offer: escrow take money failed: {res}",
+                        extra={"user_id": cId, "amount": amount, "price": price},
+                    )
+                    return error(400, str(res))
 
                 flash("You just posted a market offer")
 
@@ -831,22 +847,19 @@ def decline_trade(trade_id):
         db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
 
         if type == "sell":  # Give back resources, not money
-            query = f"UPDATE resources SET {resource}={resource}" + "+%s WHERE id=%s"
-            db.execute(
-                query,
-                (
-                    amount,
-                    offerer,
-                ),
-            )
+            # Return resource from escrow (bank) to the offerer
+            try:
+                give_resource("bank", offerer, resource, amount, cursor=db)
+            except Exception:
+                # Best-effort: do not raise here
+                pass
         elif type == "buy":
-            db.execute(
-                "UPDATE stats SET gold=gold+%s WHERE id=%s",
-                (
-                    amount * price,
-                    offerer,
-                ),
-            )
+            # Refund buyer funds from escrow
+            try:
+                give_resource("bank", offerer, "money", amount * price, cursor=db)
+            except Exception:
+                # Best-effort: do not raise here
+                pass
 
     return redirect("/my_offers")
 
@@ -914,6 +927,10 @@ def accept_trade(trade_id):
                 # Perform resource transfer (seller -> buyer). give_resource may
                 # return a string error or raise an exception; handle both cases.
                 # Pass cursor to reuse connection (avoids opening new connection)
+                # Prefer transferring directly from seller -> buyer if seller still
+                # has the resource (backwards compatible with older trades). If
+                # that fails because seller lacks the resource (e.g. resource was
+                # removed at post time), fall back to bank escrow -> buyer.
                 try:
                     gr_ret = give_resource(
                         offerer, offeree, resource, amount, cursor=db
@@ -934,8 +951,38 @@ def accept_trade(trade_id):
                         },
                     )
                     return error(400, "Trade acceptance failed")
-                if gr_ret is not True:
-                    return error(400, gr_ret or "Trade acceptance failed")
+
+                if gr_ret is True:
+                    # Successful direct transfer
+                    pass
+                else:
+                    # If seller couldn't transfer (insufficient resources), try
+                    # transferring from escrow (bank -> buyer) as a fallback.
+                    try:
+                        gr_ret2 = give_resource(
+                            "bank", offeree, resource, amount, cursor=db
+                        )
+                    except Exception as exc:
+                        _report_trade_error(
+                            "accept_trade: fallback give_resource raised exception",
+                            exc=exc,
+                            extra={
+                                "user_id": cId,
+                                "trade_id": trade_id,
+                                "trade_type": trade_type,
+                                "offerer": offerer,
+                                "offeree": offeree,
+                                "resource": resource,
+                                "amount": amount,
+                                "price": price,
+                            },
+                        )
+                        return error(400, "Trade acceptance failed")
+                    if gr_ret2 is not True:
+                        # Return original error or the fallback error
+                        return error(
+                            400, gr_ret or (gr_ret2 or "Trade acceptance failed")
+                        )
 
                 # Deduct buyer gold and credit seller gold as the final step
                 try:
