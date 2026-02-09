@@ -189,11 +189,15 @@ def add_cache_headers(response):
 
     if hasattr(request, "start_time") and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
         elapsed = time() - request.start_time
-        if elapsed > 2.0:  # Log requests taking more than 2 seconds
+        # Lower threshold to 0.5s to catch inefficiencies earlier (will be noisy
+        # if too low; monitor and raise if necessary)
+        if elapsed > 0.5:
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.warning(f"SLOW REQUEST: {request.path} took {elapsed:.2f}s")
+            logger.info(
+                f"SLOW REQUEST: {request.method} {request.path} took {elapsed:.2f}s"
+            )
 
     # Cache static assets for 1 month (2592000 seconds)
     if request.path.startswith("/static/"):
