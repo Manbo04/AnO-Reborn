@@ -418,6 +418,18 @@ def db_diagnostics():
             except Exception:
                 out["pg_stat_statements"] = "unavailable"
 
+            # Ensure everything is JSON-serializable by coercing unknown types to str
+            def _make_serializable(obj):
+                if isinstance(obj, dict):
+                    return {k: _make_serializable(v) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [_make_serializable(v) for v in obj]
+                if isinstance(obj, (str, int, float, bool)) or obj is None:
+                    return obj
+                return str(obj)
+
+            out = _make_serializable(out)
+
         return out, 200
     except Exception as e:
         app.logger.exception("DB diagnostics failed")
