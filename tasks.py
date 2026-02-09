@@ -401,11 +401,37 @@ def tax_income():
             start = time.perf_counter()
             dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
-            db.execute("SELECT id FROM users")
+            # Use a cursor table to process users in chunks to avoid large spikes
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS task_cursors ("
+                "task_name TEXT PRIMARY KEY, last_id BIGINT)"
+            )
+            db.execute(
+                "INSERT INTO task_cursors (task_name, last_id) "
+                "VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                ("tax_income", 0),
+            )
+            db.execute(
+                "SELECT last_id FROM task_cursors WHERE task_name=%s", ("tax_income",)
+            )
+            last_row = db.fetchone()
+            last_id = last_row[0] if last_row and last_row[0] is not None else 0
+
+            chunk_size = int(os.getenv("TAX_INCOME_CHUNK_SIZE", "500"))
+            db.execute(
+                "SELECT id FROM users WHERE id > %s ORDER BY id ASC LIMIT %s",
+                (last_id, chunk_size),
+            )
             users = db.fetchall()
             all_user_ids = [u[0] for u in users]
 
             if not all_user_ids:
+                # completed; reset cursor for next scheduled run
+                db.execute(
+                    "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
+                    ("tax_income",),
+                )
+                conn.commit()
                 return
 
             # Bulk load all data upfront to eliminate N+1 queries
@@ -575,6 +601,22 @@ def tax_income():
                 except Exception:
                     pass
                 handle_exception(e)
+
+            # Update the progress cursor to the last processed user so subsequent
+            # task runs resume from the next ID and avoid reprocessing the same set
+            try:
+                if all_user_ids:
+                    last_processed = max(all_user_ids)
+                    db.execute(
+                        "UPDATE task_cursors SET last_id=%s WHERE task_name=%s",
+                        (last_processed, "tax_income"),
+                    )
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
+            except Exception as e:
+                print(f"Failed to update task cursor for tax_income: {e}")
 
             duration = time.perf_counter() - start
             print(
@@ -968,15 +1010,46 @@ def generate_province_revenue():  # Runs each hour
         infra = variables.NEW_INFRA
 
         try:
+            # Chunked select to process a limited number of provinces per run
             db.execute(
-                (
-                    "SELECT proInfra.id, provinces.userId, provinces.land, "
-                    "provinces.productivity FROM proInfra "
-                    "INNER JOIN provinces ON proInfra.id=provinces.id "
-                    "ORDER BY id ASC"
-                )
+                "CREATE TABLE IF NOT EXISTS task_cursors ("
+                "task_name TEXT PRIMARY KEY, last_id BIGINT)"
+            )
+            db.execute(
+                "INSERT INTO task_cursors (task_name, last_id) "
+                "VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                ("generate_province_revenue", 0),
+            )
+            db.execute(
+                "SELECT last_id FROM task_cursors WHERE task_name=%s",
+                ("generate_province_revenue",),
+            )
+            last_row = db.fetchone()
+            last_proc = last_row[0] if last_row and last_row[0] is not None else 0
+            chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "500"))
+            db.execute(
+                "SELECT proInfra.id, provinces.userId, provinces.land, "
+                "provinces.productivity "
+                "FROM proInfra INNER JOIN provinces "
+                "ON proInfra.id=provinces.id "
+                "WHERE proInfra.id > %s ORDER BY proInfra.id ASC LIMIT %s",
+                (last_proc, chunk),
             )
             infra_ids = db.fetchall()
+            # If this chunk has no rows, reset cursor so we start over next run
+            if not infra_ids:
+                try:
+                    db.execute(
+                        "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
+                        ("generate_province_revenue",),
+                    )
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                return
         except Exception:
             infra_ids = []
 
@@ -1626,6 +1699,22 @@ def generate_province_revenue():  # Runs each hour
             f"generate_province_revenue: processed {processed} provinces in "
             f"{duration:.2f}s (skipped={skipped_for_lock})"
         )
+
+        # Update progress cursor to the last processed province id so subsequent
+        # runs continue from the next id and avoid reprocessing large sets
+        try:
+            if all_province_ids:
+                last_processed_pid = max(all_province_ids)
+                db.execute(
+                    "UPDATE task_cursors SET last_id=%s WHERE task_name=%s",
+                    (last_processed_pid, "generate_province_revenue"),
+                )
+                try:
+                    conn.commit()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"Failed to update task cursor for generate_province_revenue: {e}")
 
         try:
             release_pg_advisory_lock(conn, 9002)
