@@ -111,6 +111,10 @@ def test_coalition_bank_request_flow():
     r = s_member.post(f"{BASE_URL}/join/{colId}", data={}, allow_redirects=True)
     assert r.status_code in (200, 302), "member failed to join coalition"
 
+    # Seed the coalition bank with money so the leader can accept requests
+    db.execute("UPDATE colBanks SET money=%s WHERE colId=%s", (1000, colId))
+    conn.commit()
+
     # Member posts a bank request (money)
     request_data = {"money": "10"}
     r = s_member.post(
