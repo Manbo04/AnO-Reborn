@@ -189,11 +189,15 @@ def add_cache_headers(response):
 
     if hasattr(request, "start_time") and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
         elapsed = time() - request.start_time
-        if elapsed > 2.0:  # Log requests taking more than 2 seconds
+        # Lower threshold to 0.5s to catch inefficiencies earlier (will be noisy
+        # if too low; monitor and raise if necessary)
+        if elapsed > 0.5:
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.warning(f"SLOW REQUEST: {request.path} took {elapsed:.2f}s")
+            logger.info(
+                f"SLOW REQUEST: {request.method} {request.path} took {elapsed:.2f}s"
+            )
 
     # Cache static assets for 1 month (2592000 seconds)
     if request.path.startswith("/static/"):
@@ -319,6 +323,25 @@ Markdown(app)
 def health():
     """Simple health endpoint used by CI to verify the app is up."""
     return "ok", 200
+
+
+@app.route("/ready")
+def ready():
+    """Readiness probe that verifies DB connectivity. Returns 200 when the app
+    is fully ready to accept traffic, otherwise 503.
+    """
+    try:
+        from database import get_db_connection
+
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute("SELECT 1")
+            db.fetchone()
+        return "ok", 200
+    except Exception as e:
+        # Log at warning level so the platform logs show the reason for unready state
+        app.logger.warning("Readiness check failed: %s", e)
+        return "not ready", 503
 
 
 # Initialize database with proper defaults for existing provinces
@@ -856,6 +879,10 @@ def mass_purchase():
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 
+
+# Emit an explicit startup message so we can detect successful initialisation
+# in the platform logs
+app.logger.info("App fully initialized and ready to serve requests")
 
 if __name__ == "__main__":
     # Use port 5000 by default for local development/testing
