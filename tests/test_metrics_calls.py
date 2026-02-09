@@ -76,6 +76,48 @@ def test_generate_province_revenue_records_metric(monkeypatch):
     # Ensure advisory lock check won't skip the task in this test
     monkeypatch.setattr("tasks.try_pg_advisory_lock", lambda conn, lock_id, label: True)
 
+    # Provide a tiny DB implementation that yields one province so the
+    # function runs its main loop and emits the metric
+    class SimpleCursor:
+        def __init__(self):
+            self._last = None
+
+        def execute(self, sql, params=None):
+            if "SELECT proInfra.id" in sql:
+                # Return one province row: (proInfra.id, userId, land, productivity)
+                self._last = [(1, 1, 1, 50)]
+            elif sql.strip().lower().startswith("select last_id from task_cursors"):
+                self._last = (0,)
+            elif sql.strip().lower().startswith("select last_run from task_runs"):
+                self._last = (None,)
+            else:
+                self._last = None
+
+        def fetchall(self):
+            if isinstance(self._last, list):
+                return self._last
+            return []
+
+        def fetchone(self):
+            if isinstance(self._last, tuple):
+                return self._last
+            return None
+
+    class SimpleConn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def cursor(self, cursor_factory=None, **kwargs):
+            return SimpleCursor()
+
+        def commit(self):
+            pass
+
+    monkeypatch.setattr("database.get_db_connection", lambda: SimpleConn())
+
     # Call the function directly
     tasks.generate_province_revenue()
 
