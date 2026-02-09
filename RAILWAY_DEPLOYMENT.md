@@ -54,7 +54,7 @@ Your Railway deployment will consist of:
 2. Go to **"Settings"** tab
 3. Set the **Start Command**:
    ```
-   gunicorn wsgi:app --workers 4 --timeout 120 --bind 0.0.0.0:$PORT
+   gunicorn wsgi:app --workers 4 --threads 2 --worker-class gthread --timeout 120 --bind 0.0.0.0:$PORT --access-logfile - --error-logfile - --log-level info --keep-alive 30 --max-requests 1000 --max-requests-jitter 100
    ```
 4. Add **Environment Variables** (Settings → Variables):
    ```
@@ -63,6 +63,8 @@ Your Railway deployment will consist of:
    DISCORD_WEBHOOK_URL=<your-discord-webhook-url>
    SENDGRID_API_KEY=<your-sendgrid-api-key>
    ```
+
+> Tip: Set the **Health Check / Readiness Path** in Railway to `/ready` (this endpoint validates DB connectivity).
 
    To generate a secure SECRET_KEY, run in terminal:
    ```bash

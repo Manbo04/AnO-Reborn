@@ -66,7 +66,7 @@ class QueryCache:
             pass
         return None
 
-    def set(self, key, value, ttl_seconds: int | None = None):
+    def set(self, key, value, ttl_seconds: Optional[int] = None):
         """Cache a value with an optional per-key TTL in seconds.
 
         If ttl_seconds is None, the instance default TTL is used. If ttl_seconds

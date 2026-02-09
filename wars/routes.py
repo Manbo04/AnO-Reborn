@@ -801,8 +801,9 @@ def declare_war():
             start_dates = time.time()
             db.execute(
                 (
-                    "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
-                    "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
+                    "INSERT INTO wars (attacker, defender, "
+                    "war_type, agressor_message, start_date, "
+                    "last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
                 ),
                 (
                     attacker.id,
@@ -815,10 +816,11 @@ def declare_war():
             )
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
             attacker_name = db.fetchone()[0]
-            # Insert news directly using the current cursor to avoid nested DB context issues
+            # Insert news directly using current cursor (avoid nested DB contexts)
+            attacker_news = f"{attacker_name} declared war!"
             db.execute(
                 "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
-                (defender.id, f"{attacker_name} declared war!"),
+                (defender.id, attacker_news),
             )
     except Exception as e:
         import logging
@@ -1018,13 +1020,16 @@ def find_targets():
                         "influence": tinfluence,
                     }
                 )
-            if len(targets_list) >= 20:
-                break
 
         # Handle filtering
         search = request.args.get("search", "").strip()
         sort = request.args.get("sort", "influence")
         sortway = request.args.get("sortway", "desc")
+
+        # Limit to 20 results after filtering and sorting
+        # (apply the slice after sort and search are applied so we don't drop
+        # candidates prematurely)
+        # the slice will be performed after sorting below
 
         if search:
             targets_list = [
@@ -1032,13 +1037,17 @@ def find_targets():
             ]
 
         if sort == "influence":
-            targets_list.sort(key=lambda x: x["influence"], reverse=(sortway == "desc"))
+            rev = sortway == "desc"
+            targets_list.sort(key=lambda x: x["influence"], reverse=rev)
         elif sort == "provinces":
-            targets_list.sort(key=lambda x: x["provinces"], reverse=(sortway == "desc"))
+            rev = sortway == "desc"
+            targets_list.sort(key=lambda x: x["provinces"], reverse=rev)
         elif sort == "username":
-            targets_list.sort(
-                key=lambda x: x["username"].lower(), reverse=(sortway == "desc")
-            )
+            rev = sortway == "desc"
+            targets_list.sort(key=lambda x: x["username"].lower(), reverse=rev)
+
+        # take the top 20 after filtering/sorting
+        targets_list = targets_list[:20]
 
         return render_template("find_targets.html", targets=targets_list)
     # POST - find a target by id or username and redirect
