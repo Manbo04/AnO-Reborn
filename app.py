@@ -377,6 +377,35 @@ def db_diagnostics():
                     # Return the error for visibility (coerce to str)
                     return {"enabled": False, "error": str(e)}, 500
 
+            # Admin action: run pre-approved EXPLAIN ANALYZE checks
+            if action and action.startswith("explain_"):
+                kind = action.split("explain_", 1)[1]
+                try:
+                    if kind == "infra":
+                        sql = (
+                            "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) "
+                            "SELECT proInfra.id, provinces.userId, "
+                            "provinces.land, provinces.productivity "
+                            "FROM proInfra "
+                            "INNER JOIN provinces ON proInfra.id = provinces.id "
+                            "ORDER BY proInfra.id ASC LIMIT 500;"
+                        )
+                    elif kind == "stats":
+                        sql = (
+                            "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) "
+                            "SELECT id, gold FROM stats "
+                            "ORDER BY id ASC LIMIT 500;"
+                        )
+                    else:
+                        return {"error": "unknown explain target"}, 400
+
+                    cur.execute(sql)
+                    rows = cur.fetchall()
+                    # rows is JSON plan in first column
+                    return {"result": rows}, 200
+                except Exception as e:
+                    return {"error": str(e)}, 500
+
             # Normal snapshot (same as before)
             cur.execute("SHOW max_connections;")
             max_conn = cur.fetchone()
