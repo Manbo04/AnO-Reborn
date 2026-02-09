@@ -27,7 +27,15 @@ def create_user(session, username=None, email=None, password="testpassword12345"
         "continent": "1",
     }
     r = session.post(f"{BASE_URL}/signup", data=data, allow_redirects=True)
-    return r.status_code in (200, 302), username, email
+    # Ensure the user is logged in for subsequent requests
+    # (some setups require explicit login)
+    login_r = session.post(
+        f"{BASE_URL}/login",
+        data={"username": username, "password": password},
+        allow_redirects=True,
+    )
+    ok = r.status_code in (200, 302) and login_r.status_code in (200, 302)
+    return ok, username, email
 
 
 def cleanup_user(username, email):
