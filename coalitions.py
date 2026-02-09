@@ -922,7 +922,7 @@ def deposit_into_bank(colId):
         )
         row = db.fetchone()
         if not row:
-            return redirect(400, "You aren't in this coalition")
+            return error(400, "You aren't in this coalition")
 
     resources = ["money"] + variables.RESOURCES
 
@@ -1123,7 +1123,7 @@ def request_from_bank(colId):
         )
         row = db.fetchone()
         if not row:
-            return redirect(400, "You aren't in this coalition")
+            return error(400, "You aren't in this coalition")
 
         resources = ["money"] + variables.RESOURCES
 
