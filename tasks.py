@@ -7,6 +7,8 @@ from attack_scripts import Economy
 import math
 from celery.schedules import crontab
 import variables
+import redis
+import urllib.parse
 
 load_dotenv()
 import config  # Parse Railway environment variables  # noqa: E402
@@ -1746,17 +1748,66 @@ def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
             continue
 
 
+# Leader-only decorator to avoid duplicate scheduled task executions
+# when multiple beat/scheduler instances are active (e.g., autoscaling).
+# It attempts to acquire a short-lived Redis lock and skips execution if
+# another instance holds the lock.
+
+
+def leader_only(ttl_seconds=60, key_prefix="task_lock"):
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            if redis is None:
+                # If redis not available, fall back to running the task
+                return fn(*args, **kwargs)
+            try:
+                url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+                if not url:
+                    return fn(*args, **kwargs)
+                parsed = urllib.parse.urlparse(url)
+                r = redis.Redis(
+                    host=parsed.hostname,
+                    port=parsed.port or 6379,
+                    password=parsed.password,
+                )
+                key = f"{key_prefix}:{fn.__name__}"
+                got = r.set(key, "1", nx=True, ex=ttl_seconds)
+                if not got:
+                    print(f"{fn.__name__}: skipped (leader lock not acquired)")
+                    return
+                try:
+                    return fn(*args, **kwargs)
+                finally:
+                    try:
+                        r.delete(key)
+                    except Exception:
+                        pass
+            except Exception as e:
+                print(f"leader_only decorator error for {fn.__name__}: {e}")
+                # If anything goes wrong, run the task to avoid data loss
+                return fn(*args, **kwargs)
+
+        wrapper.__name__ = fn.__name__
+        wrapper.__doc__ = fn.__doc__
+        return wrapper
+
+    return decorator
+
+
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_population_growth():
     _run_with_deadlock_retries(population_growth, "population_growth")
 
 
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_tax_income():
     tax_income()
 
 
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_generate_province_revenue():
     _run_with_deadlock_retries(generate_province_revenue, "generate_province_revenue")
 
@@ -1767,11 +1818,13 @@ def task_generate_province_revenue():
 
 
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_war_reparation_tax():
     war_reparation_tax()
 
 
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_manpower_increase():
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
@@ -1908,12 +1961,14 @@ def refresh_bot_offers():
 
 
 @celery.task
+@leader_only(ttl_seconds=300)
 def task_refresh_bot_offers():
     """Celery task to refresh bot market offers daily."""
     _run_with_deadlock_retries(refresh_bot_offers, "refresh_bot_offers")
 
 
 @celery.task()
+@leader_only(ttl_seconds=300)
 def task_backfill_missing_resources():
     _run_with_deadlock_retries(backfill_missing_resources, "backfill_missing_resources")
 
