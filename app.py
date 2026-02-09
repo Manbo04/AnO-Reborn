@@ -344,6 +344,73 @@ def ready():
         return "not ready", 503
 
 
+@app.route("/_admin/db_diagnostics")
+def db_diagnostics():
+    """Temporary admin-only endpoint to gather short DB diagnostics.
+
+    Security: Requires `ADMIN_DIAG_SECRET` env var and matching `X-DIAG-SECRET` header.
+    Output: JSON with max_connections, active connection counts, top non-idle queries,
+    and top pg_stat_statements if available. This endpoint is intended for short
+    introspection and will be removed when diagnostics are complete.
+    """
+    secret = os.getenv("ADMIN_DIAG_SECRET")
+    header = request.headers.get("X-DIAG-SECRET")
+    if not secret or header != secret:
+        return "Forbidden", 403
+
+    try:
+        from database import get_db_connection
+        from psycopg2.extras import RealDictCursor
+
+        with get_db_connection() as conn:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SHOW max_connections;")
+            max_conn = cur.fetchone()
+
+            cur.execute("SELECT count(*) FROM pg_stat_activity;")
+            active = cur.fetchone()
+
+            cur.execute("SELECT state, count(*) FROM pg_stat_activity GROUP BY state;")
+            states = cur.fetchall()
+
+            cur.execute(
+                """
+                SELECT pid, usename, state, now() - query_start AS duration,
+                       left(query, 1000) AS query
+                FROM pg_stat_activity
+                WHERE state <> 'idle' AND query <> '<IDLE>'
+                ORDER BY duration DESC
+                LIMIT 20
+                """
+            )
+            long_queries = cur.fetchall()
+
+            out = {
+                "max_connections": max_conn,
+                "active_connections": active,
+                "states": states,
+                "long_queries": long_queries,
+            }
+
+            try:
+                cur.execute(
+                    """
+                    SELECT query, calls, total_time, mean_time
+                    FROM pg_stat_statements
+                    ORDER BY total_time DESC
+                    LIMIT 20;
+                    """
+                )
+                out["pg_stat_statements"] = cur.fetchall()
+            except Exception:
+                out["pg_stat_statements"] = "unavailable"
+
+        return out, 200
+    except Exception as e:
+        app.logger.exception("DB diagnostics failed")
+        return {"error": str(e)}, 500
+
+
 # Initialize database with proper defaults for existing provinces
 def _init_province_defaults():
     """Ensure all provinces have proper default values for stats"""
