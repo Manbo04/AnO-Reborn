@@ -362,8 +362,22 @@ def db_diagnostics():
         from database import get_db_connection
         from psycopg2.extras import RealDictCursor
 
+        action = request.args.get("action")
+
         with get_db_connection() as conn:
             cur = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Admin action: enable pg_stat_statements extension if allowed
+            if action == "enable_pg_stat_statements":
+                try:
+                    cur.execute("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")
+                    conn.commit()
+                    return {"enabled": True}, 200
+                except Exception as e:
+                    # Return the error for visibility (coerce to str)
+                    return {"enabled": False, "error": str(e)}, 500
+
+            # Normal snapshot (same as before)
             cur.execute("SHOW max_connections;")
             max_conn = cur.fetchone()
 
