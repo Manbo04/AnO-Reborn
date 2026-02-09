@@ -9,6 +9,13 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    env:
+      PG_HOST: 127.0.0.1
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: anodb
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
     services:
       postgres:
         image: postgres:15
@@ -34,11 +41,16 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Initialize DB schema
+        run: |
+          python init_db_railway.py
+
       - name: Run integration smoke tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          # Run just the critical integration tests and resource-cache tests
+          # Run just the critical integration tests and coalition bank flow
           pytest -q tests/test_resource_cache.py tests/test_integration_give_resource.py \
-            tests/test_integration_province.py tests/test_integration_market_edgecases.py
+            tests/test_integration_province.py tests/test_integration_market_edgecases.py \
+            tests/test_coalitions_bank_flow.py
