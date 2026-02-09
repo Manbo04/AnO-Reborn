@@ -20,6 +20,7 @@ def statistics():
             "steel",
             "aluminium",
             "lumber",
+            "components",
         ]
 
         market_stats = {}
