@@ -1,4 +1,4 @@
-from test_auth import login_session
+from test_auth import login_session, login, register, register_session
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -17,6 +17,11 @@ def create_province():
     )
 
     db = conn.cursor()
+
+    # Ensure session is logged in
+    if not login(login_session):
+        register(register_session)
+        assert login(login_session), "Login failed in test setup"
 
     url = f"{BASE_URL}/createprovince"
     data = {"name": "test_province"}
