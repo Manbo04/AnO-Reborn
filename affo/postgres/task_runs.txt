@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS task_runs (
+    task_name TEXT PRIMARY KEY,
+    last_run TIMESTAMP WITH TIME ZONE
+);

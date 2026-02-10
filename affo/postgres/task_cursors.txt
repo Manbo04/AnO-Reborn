@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS task_cursors (
+    task_name TEXT PRIMARY KEY,
+    last_id BIGINT
+);
