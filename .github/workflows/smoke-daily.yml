@@ -1,0 +1,52 @@
+name: Daily smoke - statistics components
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  daily-smoke:
+    runs-on: ubuntu-latest
+    env:
+      PG_HOST: 127.0.0.1
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: anodb
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: anodb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Initialize DB schema
+        run: |
+          python init_db_railway.py
+
+      - name: Run components statistics smoke test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -q tests/test_statistics_components.py
