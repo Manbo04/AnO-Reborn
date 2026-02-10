@@ -48,6 +48,7 @@ def create_database():
         "reset_codes",
         "policies",
         "signup_attempts",
+        "purchase_audit",
         "task_runs",
         "task_cursors",
     ]
