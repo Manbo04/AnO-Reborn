@@ -190,6 +190,25 @@ At the end of each session or major task, document:
 - Monitor CI/Integration and production for any regressions from this change
 - Optionally add a UI-level E2E test to validate the leader accept flow from a browser automation perspective
 
+---
+
+**Task**: Market statistics missing components (UI showed no market stats for components)
+
+**What Was Done**:
+- Added `components` to the `resources` list in `statistics.py` so market statistics include components
+- Updated `templates/statistics.html` to show Components rows in Average/Highest/Lowest tables
+- Added integration test `tests/test_statistics_components.py` which inserts a components offer using the designated test account (id 16), visits `/statistics`, and asserts the Components row and price appear; the test logs in the client via session and cleans up the offer afterwards
+- Commits: `7b0f5711` (fix + test added), `e757cea8` (login fixture adjustment in the test)
+- Verified the new test passes locally and pushed the commits; CI will run on push
+
+**What To Watch**:
+- Ensure the integration-smoke workflow includes tests that surface market statistics regressions (add if missing)
+- Monitor the statistics page in production for expected Components averages once offers exist
+
+**Next Steps**:
+- Monitor CI runs and production logs for any regressions related to market statistics
+- Consider adding a smoke test that inserts a market offer for an under-represented resource to ensure visibility
+
 ## 🛠️ Development Commands
 
 ```bash
