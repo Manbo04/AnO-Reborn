@@ -70,6 +70,10 @@ def sendEmail(recipient, code):
 
 # Route for requesting a password reset. After this, user can reset their password.
 def request_password_reset():
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     code = generateResetCode()
 
     with get_db_cursor() as db:
@@ -94,12 +98,22 @@ def request_password_reset():
                 return redirect("/forgot_password")
             cId = result[0]
 
-        # Insert reset code record for the user (always)
+        # Insert or update reset code record for the user (idempotent)
         db.execute(
             "INSERT INTO reset_codes (url_code, user_id, created_at) "
-            "VALUES (%s, %s, %s)",
+            "VALUES (%s, %s, %s) "
+            "ON CONFLICT (user_id) DO UPDATE SET url_code = EXCLUDED.url_code, "
+            "created_at = EXCLUDED.created_at "
+            "RETURNING user_id",
             (code, cId, int(datetime.now().timestamp())),
         )
+        inserted = db.fetchone()
+        if inserted and inserted[0] == cId:
+            logger.info("request_password_reset: set reset code for user_id=%s", cId)
+        else:
+            logger.warning(
+                "request_password_reset: unexpected upsert result for user_id=%s", cId
+            )
 
     # Send email with reset link regardless of how request was initiated
     if email:

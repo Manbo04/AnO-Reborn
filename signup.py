@@ -666,15 +666,70 @@ def signup():
                 if not email_sent:
                     logger.warning(f"Failed to send verification email to {email}")
 
-            # Create all the user's game tables
-            # (needed for game to work after verification)
-            db.execute(
-                "INSERT INTO stats (id, location) VALUES (%s, %s)", (user_id, continent)
-            )
-            db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
-            db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
-            db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
-            db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+                # Create all the user's game tables
+                # (needed for game to work after verification)
+                # Create all the user's game tables (idempotent)
+                # Use ON CONFLICT DO NOTHING to tolerate duplicate inserts
+                # (e.g. retries or concurrent/duplicate requests)
+                db.execute(
+                    (
+                        "INSERT INTO stats (id, location) VALUES (%s, %s) "
+                        "ON CONFLICT DO NOTHING RETURNING id"
+                    ),
+                    (user_id, continent),
+                )
+                if not db.fetchone():
+                    logger.info(
+                        "signup: stats row already exists for user_id=%s", user_id
+                    )
+
+                db.execute(
+                    (
+                        "INSERT INTO military (id) VALUES (%s) "
+                        "ON CONFLICT DO NOTHING RETURNING id"
+                    ),
+                    (user_id,),
+                )
+                if not db.fetchone():
+                    logger.info(
+                        "signup: military row already exists for user_id=%s", user_id
+                    )
+
+                db.execute(
+                    (
+                        "INSERT INTO resources (id) VALUES (%s) "
+                        "ON CONFLICT DO NOTHING RETURNING id"
+                    ),
+                    (user_id,),
+                )
+                if not db.fetchone():
+                    logger.info(
+                        "signup: resources row already exists for user_id=%s", user_id
+                    )
+
+                db.execute(
+                    (
+                        "INSERT INTO upgrades (user_id) VALUES (%s) "
+                        "ON CONFLICT DO NOTHING RETURNING user_id"
+                    ),
+                    (user_id,),
+                )
+                if not db.fetchone():
+                    logger.info(
+                        "signup: upgrades row already exists for user_id=%s", user_id
+                    )
+
+                db.execute(
+                    (
+                        "INSERT INTO policies (user_id) VALUES (%s) "
+                        "ON CONFLICT DO NOTHING RETURNING user_id"
+                    ),
+                    (user_id,),
+                )
+                if not db.fetchone():
+                    logger.info(
+                        "signup: policies row already exists for user_id=%s", user_id
+                    )
 
             # If verification is enabled, redirect to pending page.
             # Otherwise, log them in
