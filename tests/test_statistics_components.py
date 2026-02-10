@@ -20,6 +20,10 @@ def test_components_show_in_market_stats(client):
             )
             offer_id = db.fetchone()[0]
 
+        # Ensure we're logged in as the designated test account
+        with client.session_transaction() as sess:
+            sess["user_id"] = 16
+
         r = client.get("/statistics")
         assert r.status_code == 200
         body = r.data.decode("utf-8")
