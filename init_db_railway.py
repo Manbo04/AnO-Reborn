@@ -48,6 +48,8 @@ def create_database():
         "reset_codes",
         "policies",
         "signup_attempts",
+        "task_runs",
+        "task_cursors",
     ]
 
     print("Initializing database...")
