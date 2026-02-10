@@ -589,6 +589,18 @@ def tax_income():
                             params,
                         )
 
+                # Invalidate cache for affected users (best-effort)
+                try:
+                    from database import invalidate_user_cache
+
+                    for _, uid in cg_updates:
+                        try:
+                            invalidate_user_cache(uid)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
             try:
                 try:
                     conn.commit()
@@ -1641,6 +1653,19 @@ def generate_province_revenue():  # Runs each hour
                     if batch_values:
                         execute_batch(db, sql, batch_values, page_size=200)
                         log_verbose(f"Updated resources for {len(batch_values)} users")
+
+                        # Invalidate resource cache for affected users so UI reflects
+                        # updated values immediately (best-effort; don't fail task)
+                        try:
+                            from database import invalidate_user_cache
+
+                            for uv in [bv[-1] for bv in batch_values]:
+                                try:
+                                    invalidate_user_cache(uv)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
         except Exception as e:
             conn.rollback()
             handle_exception(e)
