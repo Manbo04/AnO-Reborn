@@ -53,4 +53,4 @@ jobs:
           # Run just the critical integration tests and coalition bank flow
           pytest -q tests/test_resource_cache.py tests/test_integration_give_resource.py \
             tests/test_integration_province.py tests/test_integration_market_edgecases.py \
-            tests/test_coalitions_bank_flow.py
+            tests/test_coalitions_bank_flow.py tests/test_statistics_components.py
