@@ -680,7 +680,9 @@ def signup():
                 )
                 if not db.fetchone():
                     logger.info(
-                        "signup: stats row already exists for user_id=%s", user_id
+                        "signup: stats row already exists for user_id=%s ip=%s",
+                        user_id,
+                        request.remote_addr,
                     )
 
                 db.execute(
@@ -692,7 +694,9 @@ def signup():
                 )
                 if not db.fetchone():
                     logger.info(
-                        "signup: military row already exists for user_id=%s", user_id
+                        "signup: military row already exists for user_id=%s ip=%s",
+                        user_id,
+                        request.remote_addr,
                     )
 
                 db.execute(
@@ -704,7 +708,9 @@ def signup():
                 )
                 if not db.fetchone():
                     logger.info(
-                        "signup: resources row already exists for user_id=%s", user_id
+                        "signup: resources row already exists for user_id=%s ip=%s",
+                        user_id,
+                        request.remote_addr,
                     )
 
                 db.execute(
@@ -716,7 +722,9 @@ def signup():
                 )
                 if not db.fetchone():
                     logger.info(
-                        "signup: upgrades row already exists for user_id=%s", user_id
+                        "signup: upgrades row already exists for user_id=%s ip=%s",
+                        user_id,
+                        request.remote_addr,
                     )
 
                 db.execute(
@@ -728,7 +736,9 @@ def signup():
                 )
                 if not db.fetchone():
                     logger.info(
-                        "signup: policies row already exists for user_id=%s", user_id
+                        "signup: policies row already exists for user_id=%s ip=%s",
+                        user_id,
+                        request.remote_addr,
                     )
 
             # If verification is enabled, redirect to pending page.
