@@ -337,13 +337,27 @@ def generate_province_revenue_optimized():
             update_sql = f"UPDATE resources SET {set_clause} WHERE id=%s"
 
             batch_data = []
+            updated_user_ids = []
             for user_id, res_dict in resource_updates.items():
                 values = [res_dict.get(col, 0) for col in resource_cols]
                 values.append(user_id)
                 batch_data.append(tuple(values))
+                updated_user_ids.append(user_id)
 
             if batch_data:
                 execute_batch(db, update_sql, batch_data)
+
+                # Invalidate cache for affected users so UI sees fresh resources
+                try:
+                    from database import invalidate_user_cache
+
+                    for uid in set(updated_user_ids):
+                        try:
+                            invalidate_user_cache(uid)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
 
         # Batch update stats (gold) for all users
         if stats_map:
