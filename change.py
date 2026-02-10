@@ -108,11 +108,18 @@ def request_password_reset():
             (code, cId, int(datetime.now().timestamp())),
         )
         inserted = db.fetchone()
+        client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
         if inserted and inserted[0] == cId:
-            logger.info("request_password_reset: set reset code for user_id=%s", cId)
+            logger.info(
+                "request_password_reset: set reset code for user_id=%s ip=%s",
+                cId,
+                client_ip,
+            )
         else:
             logger.warning(
-                "request_password_reset: unexpected upsert result for user_id=%s", cId
+                "request_password_reset: unexpected upsert result for user_id=%s ip=%s",
+                cId,
+                client_ip,
             )
 
     # Send email with reset link regardless of how request was initiated
