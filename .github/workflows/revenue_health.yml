@@ -27,4 +27,5 @@ jobs:
           PG_DATABASE: postgres
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
         run: |
-          python scripts/check_revenue_task.py --threshold-hours 2
+          # Ensure test runner imports our package from the repository root
+          PYTHONPATH=. python scripts/check_revenue_task.py --threshold-hours 2
