@@ -78,6 +78,18 @@ def test_revenue_invalidates_resources_cache(monkeypatch):
                 "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
                 ("generate_province_revenue",),
             )
+            # ensure task_runs last_run is old so task doesn't skip due to recency
+            db.execute(
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, %s) "
+                "ON CONFLICT (task_name) DO UPDATE SET last_run = "
+                "now() - interval '1 day'",
+                ("generate_province_revenue", None),
+            )
+            db.execute(
+                "UPDATE task_runs SET last_run = now() - interval '1 day' "
+                "WHERE task_name=%s",
+                ("generate_province_revenue",),
+            )
             conn.commit()
 
         # run revenue

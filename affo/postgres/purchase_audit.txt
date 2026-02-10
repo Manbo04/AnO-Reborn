@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS purchase_audit (
+    id SERIAL PRIMARY KEY,
+    user_id INT,
+    province_id INT,
+    unit TEXT,
+    units INT,
+    gold_before BIGINT,
+    gold_after BIGINT,
+    note TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
