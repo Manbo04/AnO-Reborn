@@ -199,7 +199,9 @@ At the end of each session or major task, document:
 - Updated `templates/statistics.html` to show Components rows in Average/Highest/Lowest tables
 - Added integration test `tests/test_statistics_components.py` which inserts a components offer using the designated test account (id 16), visits `/statistics`, and asserts the Components row and price appear; the test logs in the client via session and cleans up the offer afterwards
 - Commits: `7b0f5711` (fix + test added), `e757cea8` (login fixture adjustment in the test)
-- Verified the new test passes locally and pushed the commits; CI will run on push
+- Updated `.github/workflows/integration-smoke.yml` to include `tests/test_statistics_components.py` (commit `9dc55699`) and pushed the change
+- Integration smoke run for commit `9dc55699` completed successfully (run id: `21847874476`)
+- Verified the new test passes locally and pushed the commits; CI ran and reported success
 
 **What To Watch**:
 - Ensure the integration-smoke workflow includes tests that surface market statistics regressions (add if missing)
