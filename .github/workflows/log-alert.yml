@@ -1,0 +1,79 @@
+name: "Log Alerts: UniqueViolation & Worker Timeout"
+
+# Runs every 15 minutes and reports matches by creating a GitHub issue
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  scan-logs:
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_ENVIRONMENT: production
+      SERVICES: web,celery-worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (railway + jq)
+        run: |
+          sudo apt-get update -y >/dev/null
+          sudo apt-get install -y jq >/dev/null
+          # Install Railway CLI
+          npm config set update-notifier false
+          npm i -g @railwayapp/cli
+
+      - name: Scan logs for problems
+        id: scan_logs
+        run: |
+          set -euo pipefail
+          rm -f matches.txt || true
+          touch matches.txt
+
+          for svc in ${SERVICES//,/ } ; do
+            echo "--- service: $svc ---" >> matches.txt
+            # Fetch last 1000 lines and extract messages only
+            railway logs --service "$svc" --environment "$RAILWAY_ENVIRONMENT" --json --lines 1000 2>/dev/null | jq -r '.message' 2>/dev/null | grep -i -E "UniqueViolation|WORKER TIMEOUT|CRITICAL WORKER TIMEOUT|duplicate key value|StringDataRightTruncation|psycopg2.errors.UniqueViolation" >> matches.txt || true
+          done
+
+          # Trim leading/trailing blank lines
+          sed -n '/./,$p' matches.txt > matches_trimmed.txt || true
+
+          if [ -s matches_trimmed.txt ]; then
+            echo "matches=true" >> $GITHUB_OUTPUT
+            # Limit output size to avoid huge issue bodies; include most recent 300 lines
+            tail -n 300 matches_trimmed.txt > matches_recent.txt
+            echo "matches_text<<EOF" >> $GITHUB_OUTPUT
+            cat matches_recent.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "matches=false" >> $GITHUB_OUTPUT
+            echo "matches_text<<EOF" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub issue when matches found
+        if: steps.scan_logs.outputs.matches == 'true'
+        uses: peter-evans/create-issue@v4
+        with:
+          title: "[Alert] Production logs: UniqueViolation / Worker Timeout detected"
+          body: |
+            The automated log scanner detected the following lines in production logs (most recent matches shown):
+
+            ```
+            ${{ steps.scan_logs.outputs.matches_text }}
+            ```
+
+            **Action:** Please investigate the occurrences and correlate with recent deploys or load spikes.
+          labels: logs, prod-alert, triage
+
+      - name: No matches found (debug)
+        if: steps.scan_logs.outputs.matches == 'false'
+        run: echo "No alertable log lines found in the last scan."
