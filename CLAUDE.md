@@ -188,6 +188,7 @@ At the end of each session or major task, document:
 
 **Next Steps**:
 - Monitor CI/Integration and production for any regressions from this change
+- Added a scheduled daily smoke job (`.github/workflows/smoke-daily.yml`, commit `70ddd666`) that runs `tests/test_statistics_components.py` to detect regressions early
 - Optionally add a UI-level E2E test to validate the leader accept flow from a browser automation perspective
 
 ---
