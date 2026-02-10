@@ -195,8 +195,15 @@ def add_cache_headers(response):
             import logging
 
             logger = logging.getLogger(__name__)
+            client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
+            ua = request.headers.get("User-Agent", "")
             logger.info(
-                f"SLOW REQUEST: {request.method} {request.path} took {elapsed:.2f}s"
+                "SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s",
+                request.method,
+                request.path,
+                elapsed,
+                client_ip,
+                ua[:200],
             )
 
     # Cache static assets for 1 month (2592000 seconds)
