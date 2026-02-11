@@ -16,8 +16,8 @@ class DummyUnits:
 @pytest.fixture(autouse=True)
 def monkey_units(monkeypatch):
     # Monkeypatch Units' DB-dependent getters to use static values
-    monkeypatch.setattr(Units, "get_military", DummyUnits.get_military)
-    monkeypatch.setattr(Units, "get_special", DummyUnits.get_special)
+    monkeypatch.setattr(Units, "get_military", staticmethod(DummyUnits.get_military))
+    monkeypatch.setattr(Units, "get_special", staticmethod(DummyUnits.get_special))
 
 
 def test_attach_three_unit_types_zero_amount_allowed():
