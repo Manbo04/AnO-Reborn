@@ -112,13 +112,39 @@ def create_province():
 
     url = f"{BASE_URL}/createprovince"
     data = {"name": "test_province"}
-    _ = login_session.post(url, data=data, allow_redirects=True)
+    resp = login_session.post(url, data=data, allow_redirects=True)
 
-    try:
-        db.execute("SELECT id FROM provinces WHERE provincename=%s", (data["name"],))
-        _ = db.fetchone()[0]
-    except Exception:
+    # Wait briefly for the province to be inserted
+    # (mitigates occasional CI timing races)
+    pid = None
+    for _ in range(25):
+        try:
+            db.execute(
+                "SELECT id FROM provinces WHERE provincename=%s", (data["name"],)
+            )
+            row = db.fetchone()
+            if row:
+                pid = row[0]
+                break
+        except Exception:
+            pass
+        time.sleep(0.2)
+
+    if pid is None:
+        # Emit helpful debug on failure to make CI logs actionable
+        try:
+            snippet = resp.text[:1000]
+        except Exception:
+            snippet = "<unavailable>"
+        print(
+            "DEBUG: createprovince failed",
+            f"status={resp.status_code}",
+            f"len={len(resp.text)}",
+        )
+        print("DEBUG: createprovince snippet:")
+        print(snippet)
         return False
+
     return True
 
 
