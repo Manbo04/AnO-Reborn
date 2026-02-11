@@ -50,6 +50,21 @@ def create_province():
         f"{BASE_URL}/signup", data=reg_data, allow_redirects=True
     )
 
+    # If signup fails (e.g., validation on CI), capture a short snippet of the
+    # response body to make failures actionable in CI logs.
+    if signup_resp.status_code != 200:
+        try:
+            snippet = signup_resp.text[:1000]
+        except Exception:
+            snippet = "<unavailable>"
+        print(
+            "DEBUG: signup failed",
+            f"status={signup_resp.status_code}",
+            f"len={len(signup_resp.text)}",
+        )
+        print("DEBUG: signup snippet:")
+        print(snippet)
+
     # Wait up to ~10s for the signup to appear in the DB (mitigates race in CI)
     uid = None
     for _ in range(50):
