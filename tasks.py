@@ -1505,7 +1505,13 @@ def generate_province_revenue():  # Runs each hour
                         if unit == "universities" and 3 in policies:
                             eff_amount *= 1.1
 
-                        eff_amount = math.ceil(eff_amount)
+                        # Round effect amounts to nearest integer instead of always
+                        # rounding up. Using `round` prevents an upward bias when
+                        # fractional multipliers (such as government regulation) are
+                        # applied which could otherwise cause small fractional
+                        # reductions to become full +1 increases via `ceil`, leading
+                        # to oscillation near high pollution values.
+                        eff_amount = int(round(eff_amount))
 
                         if sign == "+":
                             new_effect = current_effect + eff_amount
@@ -1587,8 +1593,33 @@ def generate_province_revenue():  # Runs each hour
         # (happiness, productivity, pollution, consumer_spending, energy, rations)
         try:
             if provinces_data:
+                # Snapshot pollution before we apply batch updates so we can detect
+                # unusually large changes and emit a best-effort metric for
+                # observability. Keep threshold conservative to avoid noise.
+                initial_province_pollution = {
+                    pid: data.get("pollution", 0)
+                    for pid, data in provinces_data.items()
+                }
+
                 province_updates = []
                 for pid, data in provinces_data.items():
+                    # Emit a metric if pollution changes by >= 6 percentage points
+                    try:
+                        new_poll = min(100, max(0, data.get("pollution", 0)))
+                        old_poll = initial_province_pollution.get(pid, 0)
+                        delta = new_poll - old_poll
+                        if abs(delta) >= 6:
+                            try:
+                                from helpers import record_task_metric
+
+                                record_task_metric(
+                                    "province_pollution_delta", float(delta)
+                                )
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
                     province_updates.append(
                         (
                             min(100, max(0, data.get("happiness", 50))),
