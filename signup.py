@@ -452,15 +452,28 @@ def discord_register():
                 session.permanent = True
                 session.modified = True
 
-                # Create all user tables
+                # Create all user tables (idempotent)
                 db.execute(
-                    "INSERT INTO stats (id, location) VALUES (%s, %s)",
+                    "INSERT INTO stats (id, location) VALUES (%s, %s) "
+                    "ON CONFLICT DO NOTHING",
                     (user_id, continent),
                 )
-                db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
-                db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
-                db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
-                db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+                db.execute(
+                    "INSERT INTO military (id) VALUES (%s) ON CONFLICT DO NOTHING",
+                    (user_id,),
+                )
+                db.execute(
+                    "INSERT INTO resources (id) VALUES (%s) ON CONFLICT DO NOTHING",
+                    (user_id,),
+                )
+                db.execute(
+                    "INSERT INTO upgrades (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
+                    (user_id,),
+                )
+                db.execute(
+                    "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
+                    (user_id,),
+                )
 
             # Mark attempt as successful
             with get_db_cursor() as db:
