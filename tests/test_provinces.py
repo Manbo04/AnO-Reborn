@@ -37,7 +37,7 @@ def create_province():
     except Exception:
         pass
 
-    # Register via the public endpoint
+    # Register via the public endpoint and wait for the DB to reflect the new user
     reg_data = {
         "username": username,
         "email": email,
@@ -48,9 +48,31 @@ def create_province():
     }
     _ = register_session.post(f"{BASE_URL}/signup", data=reg_data, allow_redirects=True)
 
+    # Wait up to ~3s for the signup to appear in the DB (mitigates race)
+    uid = None
+    for _ in range(10):
+        db.execute("SELECT id FROM users WHERE username=%s", (username,))
+        row = db.fetchone()
+        if row:
+            uid = row[0]
+            break
+        time.sleep(0.3)
+    assert uid is not None, "Signup did not complete in time"
+
     # Log the newly registered user into the session used for subsequent requests
     login_data = {"username": username, "password": password, "rememberme": "on"}
-    login_session.post(f"{BASE_URL}/login/", data=login_data, allow_redirects=False)
+    resp = login_session.post(
+        f"{BASE_URL}/login/", data=login_data, allow_redirects=False
+    )
+    # If login issued a redirect, follow it once
+    if resp.status_code in (302, 303):
+        login_session.get(f"{BASE_URL}/")
+
+    # Give the session a short moment to propagate cookies
+    for _ in range(10):
+        if login_session.cookies.get_dict():
+            break
+        time.sleep(0.1)
     assert login_session.cookies.get_dict() != {}, "Login failed for registered user"
 
     # Give the new user enough gold to purchase a province
