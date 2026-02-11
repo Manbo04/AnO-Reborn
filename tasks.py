@@ -614,6 +614,19 @@ def tax_income():
                     pass
                 handle_exception(e)
 
+            # Best-effort: invalidate user cache for all processed users so any
+            # caller reading resources/revenue doesn't hit stale values in cache.
+            try:
+                from database import invalidate_user_cache
+
+                for uid in all_user_ids:
+                    try:
+                        invalidate_user_cache(uid)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
             # Update the progress cursor to the last processed user so subsequent
             # task runs resume from the next ID and avoid reprocessing the same set
             try:

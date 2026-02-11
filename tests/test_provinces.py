@@ -3,6 +3,9 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 from init import BASE_URL
+import credentials
+
+load_dotenv()
 
 load_dotenv()
 
@@ -22,6 +25,19 @@ def create_province():
     if not login(login_session):
         register(register_session)
         assert login(login_session), "Login failed in test setup"
+
+    # Ensure account has enough gold to create a province
+    try:
+        db.execute("SELECT id FROM users WHERE username=%s", (credentials.username,))
+        uid = db.fetchone()[0]
+        db.execute(
+            "INSERT INTO stats (id, gold, location) VALUES (%s,%s,%s) "
+            "ON CONFLICT (id) DO UPDATE SET gold=%s, location=%s",
+            (uid, 1000000, "", 1000000, ""),
+        )
+        conn.commit()
+    except Exception:
+        pass
 
     url = f"{BASE_URL}/createprovince"
     data = {"name": "test_province"}
