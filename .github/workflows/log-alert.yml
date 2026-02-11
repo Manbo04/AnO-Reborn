@@ -39,7 +39,7 @@ jobs:
           for svc in ${SERVICES//,/ } ; do
             echo "--- service: $svc ---" >> matches.txt
             # Fetch last 1000 lines and extract messages only
-            railway logs --service "$svc" --environment "$RAILWAY_ENVIRONMENT" --json --lines 1000 2>/dev/null | jq -r '.message' 2>/dev/null | grep -i -E "UniqueViolation|WORKER TIMEOUT|CRITICAL WORKER TIMEOUT|duplicate key value|StringDataRightTruncation|psycopg2.errors.UniqueViolation" >> matches.txt || true
+            railway logs --service "$svc" --environment "$RAILWAY_ENVIRONMENT" --json --lines 1000 2>/dev/null | jq -r '.message' 2>/dev/null | grep -i -E "UniqueViolation|WORKER TIMEOUT|CRITICAL WORKER TIMEOUT|duplicate key value|StringDataRightTruncation|psycopg2.errors.UniqueViolation|\b502\b|Bad Gateway" >> matches.txt || true
           done
 
           # Trim leading/trailing blank lines
