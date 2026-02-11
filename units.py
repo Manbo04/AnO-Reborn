@@ -397,35 +397,50 @@ class Units(Military):
         available_units = normal_units.copy()
         available_units.update(special_units)
 
-        try:
-            while units_count:
-                current_unit = unit_types[units_count - 1]
-                if current_unit not in self.allUnits:
-                    return "Invalid unit type!"
+        # Validate selected unit types and amounts explicitly. We avoid the
+        # prior index-based loop which caused confusing IndexErrors when the
+        # submitted form omitted selections. Instead, validate the number of
+        # distinct unit types provided and ensure each type is valid.
+        unit_types = [u for u in unit_types if u]
 
-                if (selected_units[current_unit] > available_units[current_unit]) or (
-                    selected_units[current_unit] < 0
-                ):
+        if len(unit_types) != units_count:
+            return "Not enough unit type selected"
+
+        # Validate each declared unit type
+        for current_unit in unit_types:
+            if current_unit not in self.allUnits:
+                return "Invalid unit type!"
+
+            # Ensure a non-negative integer amount was provided (0 allowed at
+            # selection time; final checks are performed when concrete
+            # amounts are submitted in /waramount or /wartarget)
+            try:
+                amt = int(selected_units.get(current_unit, 0))
+            except Exception:
+                return "Invalid amount selected!"
+
+            if amt < 0:
+                return "Invalid amount selected!"
+
+            # If an actual amount (>0) was supplied, ensure user owns that many
+            # units and that supplies are sufficient. When amount==0 (selection
+            # stage) we skip supply-related checks to avoid spurious failures
+            # when wars have low available supplies (e.g., <200).
+            if amt > 0:
+                if amt > available_units.get(current_unit, 0):
                     return "Invalid amount selected!"
 
-                # Check for attack cost
+                # Check supply cost only when we will actually send units.
                 for interface in self.allUnitInterfaces:
                     if interface.unit_type == current_unit:
-                        supply_check = self.attack_cost(
-                            interface.supply_cost * selected_units[current_unit]
-                        )
-
+                        supply_check = self.attack_cost(interface.supply_cost * amt)
                         if supply_check:
                             return supply_check
                         break
-                units_count -= 1
-        except Exception:
-            return "Not enough unit type selected"
 
         # If the validation is ended successfully
-        else:
-            self.selected_units = selected_units
-            self.selected_units_list = list(selected_units.keys())
+        self.selected_units = selected_units
+        self.selected_units_list = list(selected_units.keys())
 
     # Attack with all units contained in selected_units
     def attack(self, attacker_unit: str, target: str) -> Union[str, tuple, None]:

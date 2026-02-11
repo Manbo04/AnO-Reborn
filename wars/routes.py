@@ -441,9 +441,23 @@ def warChoose(war_id):
             selected_units[special_unit] = 0
             unit_amount = 1
         else:
-            selected_units[request.form.get("u1")] = 0
-            selected_units[request.form.get("u2")] = 0
-            selected_units[request.form.get("u3")] = 0
+            # Validate that all three unit selections were submitted and are
+            # distinct. Return a helpful 400 if any are missing/duplicated to
+            # avoid passing None keys into Units.attach_units which caused
+            # "Not enough unit type selected" errors in production.
+            u1 = request.form.get("u1")
+            u2 = request.form.get("u2")
+            u3 = request.form.get("u3")
+            if not u1 or not u2 or not u3:
+                return error(400, "Please select three unit types")
+            if len({u1, u2, u3}) < 3:
+                return error(400, "Please select three different unit types")
+            # Validate they are known unit types
+            if any(u not in Military.allUnits for u in (u1, u2, u3)):
+                return error(400, "Invalid unit type selected")
+            selected_units[u1] = 0
+            selected_units[u2] = 0
+            selected_units[u3] = 0
             unit_amount = 3
         attack_units = Units(cId, war_id=war_id)
         return_error = attack_units.attach_units(selected_units, unit_amount)
