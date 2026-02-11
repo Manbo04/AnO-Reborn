@@ -27,11 +27,11 @@ def create_test_user_with_mall():
             "ON CONFLICT (id) DO NOTHING",
             (uid, 0, 0, 0, 0),
         )
-        # give a mall so we produce consumer_goods
+        # give a mall so we produce consumer_goods (and add solar_fields for energy)
         db.execute(
-            "INSERT INTO proInfra (id, malls) VALUES (%s,%s) "
+            "INSERT INTO proInfra (id, malls, solar_fields) VALUES (%s,%s,%s) "
             "ON CONFLICT (id) DO NOTHING",
-            (uid, 1),
+            (uid, 1, 1),
         )
         db.execute(
             "INSERT INTO provinces (id, userId, land, cityCount, productivity) "
