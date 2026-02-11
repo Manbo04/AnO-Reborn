@@ -70,9 +70,20 @@ def verify_recaptcha(response):
         return False
 
     payload = {"secret": secret, "response": response}
-    r = requests.post("https://www.google.com/recaptcha/api/siteverify", data=payload)
-    result = r.json()
-    return result.get("success", False)
+    try:
+        r = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data=payload,
+            timeout=3,
+        )
+        result = r.json()
+        return result.get("success", False)
+    except Exception as e:
+        # If recaptcha verification fails due to network issues, log and
+        # treat as failure (do not block indefinitely). In production we may
+        # want to allow a configurable leniency, but default to safe failure.
+        logger.warning("recaptcha verification failed: %s", e)
+        return False
 
 
 def token_updater(token):
@@ -353,8 +364,12 @@ def discord_register():
                 logger.warning("Discord signup failed - no token in session")
                 return error(400, "Discord authentication failed - no token")
 
-            response = discord.get(API_BASE_URL + "/users/@me")
-            discord_user = response.json()
+            try:
+                response = discord.get(API_BASE_URL + "/users/@me", timeout=3)
+                discord_user = response.json()
+            except Exception as e:
+                logger.error("Discord API user fetch failed: %s", e)
+                return error(400, "Discord API error: failed to fetch user info")
 
             discord_user_id = discord_user.get("id")
             email = discord_user.get("email")
