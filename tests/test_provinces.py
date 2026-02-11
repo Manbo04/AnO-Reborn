@@ -46,18 +46,25 @@ def create_province():
         "key": username,
         "continent": "europe",
     }
-    _ = register_session.post(f"{BASE_URL}/signup", data=reg_data, allow_redirects=True)
+    signup_resp = register_session.post(
+        f"{BASE_URL}/signup", data=reg_data, allow_redirects=True
+    )
 
-    # Wait up to ~3s for the signup to appear in the DB (mitigates race)
+    # Wait up to ~10s for the signup to appear in the DB (mitigates race in CI)
     uid = None
-    for _ in range(10):
+    for _ in range(50):
         db.execute("SELECT id FROM users WHERE username=%s", (username,))
         row = db.fetchone()
         if row:
             uid = row[0]
             break
-        time.sleep(0.3)
-    assert uid is not None, "Signup did not complete in time"
+        time.sleep(0.2)
+
+    assert uid is not None, (
+        "Signup did not complete in time. "
+        f"signup_status={signup_resp.status_code} "
+        f"login_resp_len={len(signup_resp.text)}"
+    )
 
     # Log the newly registered user into the session used for subsequent requests
     login_data = {"username": username, "password": password, "rememberme": "on"}
