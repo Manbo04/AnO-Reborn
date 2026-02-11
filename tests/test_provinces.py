@@ -37,7 +37,7 @@ def create_province():
     except Exception:
         pass
 
-    # Register via the public endpoint and log in
+    # Register via the public endpoint
     reg_data = {
         "username": username,
         "email": email,
@@ -47,7 +47,11 @@ def create_province():
         "continent": "europe",
     }
     _ = register_session.post(f"{BASE_URL}/signup", data=reg_data, allow_redirects=True)
-    assert login(login_session), "Login failed in test setup"
+
+    # Log the newly registered user into the session used for subsequent requests
+    login_data = {"username": username, "password": password, "rememberme": "on"}
+    login_session.post(f"{BASE_URL}/login/", data=login_data, allow_redirects=False)
+    assert login_session.cookies.get_dict() != {}, "Login failed for registered user"
 
     # Give the new user enough gold to purchase a province
     try:
