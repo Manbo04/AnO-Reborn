@@ -253,3 +253,31 @@ git push origin master  # Railway auto-deploys
 - [ ] Committed and pushed (if deployment needed)
 - [ ] Session log updated in this file
 # Trigger deploy Tue Feb  3 20:59:35 CST 2026
+
+---
+
+### Session: 2026-02-10
+
+**Task**: Reproduce and fix "pollution stuck/fluctuating" (player report: nation 4760)
+
+**What Was Done**:
+- Fixed an upward-biased rounding bug in `tasks.py` that used `math.ceil()` for building effects and could cause oscillation. Replaced with `int(round(...))` to avoid an upward bias. (File: `tasks.py`)
+- Added lightweight telemetry in `generate_province_revenue()` to emit a task metric `province_pollution_delta` when a province's pollution changes by >= 6 percentage points. This is best-effort and non-blocking. (File: `tasks.py`)
+- Added a deterministic regression test `tests/test_pollution_stability.py` that uses the designated test account (id 16), sets up a high-pollution province with both pollution sources and sinks, runs `generate_province_revenue()` multiple times, asserts stability, and restores original state. (File: `tests/test_pollution_stability.py`)
+- Added a sandbox repro script `scripts/repro_pollution_4760.py` that copies provinces from nation `4760` into the designated test account, runs the revenue task iteratively, records pollution timelines, and cleans up/ restores original state. This was run against production-like data and **left no trace**. (File: `scripts/repro_pollution_4760.py`)
+- Verified locally: the regression test passes and the sandbox repro shows provinces that previously oscillated (or were stuck near 98) are now stable (no wild oscillation). Some provinces remain high (98/100) when no sinks exist (expected behavior).
+
+**Commits**:
+- `5701b04c` - "repro(pollution): add sandbox repro for nation 4760; rounding fix; telemetry for large pollution deltas"
+
+**What To Watch**:
+- Monitor `province_pollution_delta` metrics in task metrics DB and Prometheus (if available) for repeated large deltas that indicate instability.
+- Watch CI for the new test; it should pass on all runners. If the test fails in CI due to DB timing, adjust task_runs preconditions in tests.
+
+**Next Steps**:
+- If production reports of oscillation continue, investigate the specific province/proInfra mix and consider adding targeted fixes (e.g., making pollution reductions more robust when near-clamped values exist).
+- Consider adding an alert rule to surface provinces that toggle > N times in M runs.
+
+---
+
+# Trigger deploy Tue Feb  3 20:59:35 CST 2026
