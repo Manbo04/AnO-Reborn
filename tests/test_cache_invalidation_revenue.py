@@ -28,9 +28,9 @@ def create_test_user_with_mall():
         )
         # give a mall so we produce consumer_goods
         db.execute(
-            "INSERT INTO proInfra (id, malls) VALUES (%s,%s) "
+            "INSERT INTO proInfra (id, malls, solar_fields) VALUES (%s,%s,%s) "
             "ON CONFLICT (id) DO NOTHING",
-            (uid, 1),
+            (uid, 1, 1),
         )
         db.execute(
             "INSERT INTO provinces (id, userId, land, cityCount, productivity) "
