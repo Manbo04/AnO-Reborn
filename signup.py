@@ -43,8 +43,22 @@ TOKEN_URL = API_BASE_URL + "/oauth2/token"
 def verify_recaptcha(response):
     # Allow tests and CI to skip real recaptcha validation via environment.
     # This keeps CI deterministic and avoids external network calls during tests.
-    if os.getenv("GITHUB_ACTIONS") or os.getenv("CI") or os.getenv("SKIP_RECAPTCHA"):
-        return True
+    try:
+        # Prefer explicit SKIP_RECAPTCHA or CI env flags first
+        if (
+            os.getenv("GITHUB_ACTIONS")
+            or os.getenv("CI")
+            or os.getenv("SKIP_RECAPTCHA")
+        ):
+            return True
+        # If running under Flask test mode, bypass recaptcha as well
+        from flask import current_app
+
+        if getattr(current_app, "testing", False):
+            return True
+    except Exception:
+        # If any import or check fails, fallthrough to normal behavior
+        pass
 
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
