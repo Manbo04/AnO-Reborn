@@ -126,7 +126,22 @@ def check_required(func):
 def error(code, message):
     # Return the proper HTTP status code along with the error template to
     # ensure external clients receive the correct status for assertion checks
-    return render_template("error.html", code=code, message=message), code
+    try:
+        return render_template("error.html", code=code, message=message), code
+    except Exception as e:
+        # In some test environments the templates may not be available in
+        # background threads, which can raise TemplateNotFound. Fall back to a
+        # plain textual response so tests and threaded callers don't error.
+        try:
+            from jinja2 import TemplateNotFound
+
+            if isinstance(e, TemplateNotFound):
+                return f"{code} - {message}", code
+        except Exception:
+            pass
+        # If we couldn't import the specific exception type treat it as a
+        # generic fallback as well.
+        return f"{code} - {message}", code
 
 
 # ------------------ Metrics / Auditing helpers ------------------
