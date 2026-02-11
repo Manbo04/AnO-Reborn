@@ -104,7 +104,10 @@ def create_province():
         db.execute(
             "INSERT INTO stats (id, gold, location) VALUES (%s,%s,%s) "
             "ON CONFLICT (id) DO UPDATE SET gold=%s, location=%s",
-            (uid, 1000000, "", 1000000, ""),
+            # Ensure the test user has ample gold to buy a province on any
+            # test run. The base province price is 8,000,000 so use a much
+            # larger value to avoid flakiness across environments.
+            (uid, 100000000, "", 100000000, ""),
         )
         conn.commit()
     except Exception:
