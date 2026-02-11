@@ -8,6 +8,10 @@ def _run_app():
     # Import inside function to avoid importing app at module import time
     from app import app
 
+    # Ensure the in-process test server sets testing mode so server-side
+    # checks (like reCAPTCHA) are bypassed during automated tests.
+    app.config["TESTING"] = True
+
     # Run without the reloader so we don't spawn extra processes
     app.run(host="127.0.0.1", port=5001, use_reloader=False, threaded=True)
 

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from init import BASE_URL
+from init import BASE_URL  # noqa: E402
 
 load_dotenv()
 
@@ -50,28 +50,47 @@ def users():
     # Clean up users and keys before test
     for user in users:
         db.execute(
-            "DELETE FROM stats WHERE id IN (SELECT id FROM users WHERE username=%s)",
+            "DELETE FROM stats WHERE id IN " "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM military WHERE id IN (SELECT id FROM users WHERE username=%s)",
+            "DELETE FROM military WHERE id IN "
+            "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM resources WHERE id IN (SELECT id FROM users WHERE username=%s)",
+            "DELETE FROM resources WHERE id IN "
+            "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM upgrades WHERE user_id IN (SELECT id FROM users WHERE username=%s)",
+            "DELETE FROM upgrades WHERE user_id IN "
+            "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
         db.execute(
-            "DELETE FROM policies WHERE user_id IN (SELECT id FROM users WHERE username=%s)",
+            "DELETE FROM policies WHERE user_id IN "
+            "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
         db.execute("DELETE FROM users WHERE username=%s", (user["username"],))
         db.execute("DELETE FROM keys WHERE key=%s", (user["key"],))
     conn.commit()
+
+    # Ensure users.id sequence is advanced to avoid duplicate-key errors when
+    # tests run against a database with pre-existing rows (sequence drift).
+    try:
+        db.execute("SELECT pg_get_serial_sequence('users','id')")
+        seq = db.fetchone()[0]
+        db.execute(
+            "SELECT setval(%s, (SELECT COALESCE(MAX(id),0)+1 FROM users), false)",
+            (seq,),
+        )
+        conn.commit()
+    except Exception:
+        # If sequence adjustment fails, continue and rely on ON CONFLICT guards.
+        pass
+
     # Create keys and users directly in DB
     for user in users:
         db.execute(
@@ -82,7 +101,8 @@ def users():
             user["password"].encode("utf-8"), bcrypt.gensalt(14)
         ).decode("utf-8")
         db.execute(
-            "INSERT INTO users (username, email, date, hash, auth_type) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO users (username, email, date, hash, auth_type) "
+            "VALUES (%s, %s, %s, %s, %s) ON CONFLICT (username) DO NOTHING",
             (
                 user["username"],
                 user["email"],
@@ -94,13 +114,25 @@ def users():
         db.execute("SELECT id FROM users WHERE username = (%s)", (user["username"],))
         user_id = db.fetchone()[0]
         db.execute(
-            "INSERT INTO stats (id, location) VALUES (%s, %s)",
+            "INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING",
             (user_id, user["continent"]),
         )
-        db.execute("INSERT INTO military (id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO resources (id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO upgrades (user_id) VALUES (%s)", (user_id,))
-        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+        db.execute(
+            "INSERT INTO military (id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (user_id,),
+        )
+        db.execute(
+            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (user_id,),
+        )
+        db.execute(
+            "INSERT INTO upgrades (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (user_id,),
+        )
+        db.execute(
+            "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (user_id,),
+        )
         conn.commit()
     return users
 
@@ -146,7 +178,8 @@ def test_declare_war(login_session, users):
     r = login_session.post(f"{BASE_URL}/declare_war", data=data, allow_redirects=True)
     assert r.status_code == 200 or r.status_code == 302
     db.execute(
-        "SELECT * FROM wars WHERE attacker=(SELECT id FROM users WHERE username=%s) AND defender=%s AND peace_date IS NULL",
+        "SELECT * FROM wars WHERE attacker=(SELECT id FROM users "
+        "WHERE username=%s) AND defender=%s AND peace_date IS NULL",
         (users[0]["username"], defender_id),
     )
     war = db.fetchone()
