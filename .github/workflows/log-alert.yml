@@ -61,18 +61,26 @@ jobs:
 
       - name: Create GitHub issue when matches found
         if: steps.scan_logs.outputs.matches == 'true'
-        uses: peter-evans/create-issue@v4
-        with:
-          title: "[Alert] Production logs: UniqueViolation / Worker Timeout detected"
-          body: |
-            The automated log scanner detected the following lines in production logs (most recent matches shown):
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Build issue body file (trim any leading/trailing whitespace)
+          cat > /tmp/issue_body.md <<'ISSUE'
+          The automated log scanner detected the following lines in production logs (most recent matches shown):
 
-            ```
-            ${{ steps.scan_logs.outputs.matches_text }}
-            ```
+          ```
+          ${{ steps.scan_logs.outputs.matches_text }}
+          ```
 
-            **Action:** Please investigate the occurrences and correlate with recent deploys or load spikes.
-          labels: logs, prod-alert, triage
+          **Action:** Please investigate the occurrences and correlate with recent deploys or load spikes.
+          ISSUE
+
+          # Create GitHub issue via the REST API (avoid depending on external actions)
+          jq -n --arg title "[Alert] Production logs: UniqueViolation / Worker Timeout detected" --arg body "$(sed -e 's/"/\\"/g' /tmp/issue_body.md)" '{title: $title, body: $body, labels: ["logs","prod-alert","triage"] }' > /tmp/issue_payload.json
+
+          curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/issues -d @/tmp/issue_payload.json
+
+          echo "Issue created (if API call succeeded)."
 
       - name: No matches found (debug)
         if: steps.scan_logs.outputs.matches == 'false'
