@@ -1,0 +1,47 @@
+name: Detect Province Deletes
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  detect-deletes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install psql
+        run: |
+          sudo apt-get update -y >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+      - name: Query admin_actions for recent province deletions
+        id: check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          read -r count <<< $(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM admin_actions WHERE action='province_deleted' AND created_at > now() - interval '1 hour';") || true
+          echo "count=$count" >> $GITHUB_OUTPUT
+          if [ "$count" -gt 0 ]; then
+            read -r rows <<< $(psql "$DATABASE_URL" -t -A -c "SELECT to_char(created_at,'YYYY-MM-DD HH24:MI:SS') || ' actor=' || COALESCE(actor,'<unknown>') || ' user='|| COALESCE(user_id::text,'<unknown>') || ' details='|| COALESCE(details::text,'{}') FROM admin_actions WHERE action='province_deleted' AND created_at > now() - interval '1 hour' ORDER BY created_at DESC LIMIT 50;") || true
+            echo "rows<<EOF" >> $GITHUB_OUTPUT
+            echo "$rows" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+      - name: Create GitHub issue when deletes found
+        if: steps.check.outputs.count != '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          rows: ${{ steps.check.outputs.rows }}
+        run: |
+          cat > /tmp/issue_body.md <<'ISSUE'
+          The automated audit detected province deletions in production in the last hour.
+
+          Recent entries:
+
+          $rows
+
+          **Action:** Investigate immediately and correlate with operator actions and backups.
+          ISSUE
+
+          jq -n --arg title "[ALERT] Province deletions detected in production" --arg body "$(sed -e 's/"/\\"/g' /tmp/issue_body.md)" '{title: $title, body: $body, labels: ["prod-alert","logs","triage"] }' > /tmp/issue_payload.json
+          curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/issues -d @/tmp/issue_payload.json
