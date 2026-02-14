@@ -347,7 +347,11 @@ def coalition(colId):
 
         # Leaders, deputy leaders and domestic ministers should be able to
         # view and act on incoming join requests for Invite-Only coalitions.
-        if user_role in ["leader", "deputy_leader", "domestic_minister"] and colType != "Open" and userInCurCol:
+        if (
+            user_role in ["leader", "deputy_leader", "domestic_minister"]
+            and colType != "Open"
+            and userInCurCol
+        ):
             # Use a single JOIN query to fetch request IDs, names, and messages
             db.execute(
                 """SELECT r.reqId, u.username, r.message
@@ -363,9 +367,10 @@ def coalition(colId):
             requestNames = [r[1] for r in request_data]
             requestMessages = [r[2] for r in request_data]
 
-            requests = zip(requestIds, requestNames, requestMessages)
+            # Use an explicit name to avoid colliding with external modules or globals
+            join_requests = zip(requestIds, requestNames, requestMessages)
         else:
-            requests = []
+            join_requests = []
             requestIds = []
 
         # COALITION BANK STUFF
@@ -392,7 +397,7 @@ def coalition(colId):
             description=description,
             colType=colType,
             userInCol=userInCol,
-            requests=requests,
+            join_requests=join_requests,
             userInCurCol=userInCurCol,
             total_influence=total_influence,
             average_influence=average_influence,
