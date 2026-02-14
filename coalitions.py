@@ -801,6 +801,8 @@ def give_position():
             return error(400, "Can't edit role for a person higher rank than you.")
 
         db.execute("UPDATE coalitions SET role=%s WHERE userId=%s", (role, roleer))
+        # Diagnostic: confirm role update in test logs
+        print(f"give_position: set role={role} for userId={roleer}", flush=True)
 
         return redirect("/my_coalition")
 
