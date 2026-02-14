@@ -31,7 +31,8 @@ jobs:
           fi
 
           # Query safely, default to 0 on error
-          count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM admin_actions WHERE action='province_deleted' AND created_at > now() - interval '1 hour';" 2>/dev/null || echo 0)
+          # Consider both trigger-based deletions (province_deleted) and script-based audits (delete_provinces)
+          count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM admin_actions WHERE action IN ('province_deleted','delete_provinces') AND created_at > now() - interval '1 hour';" 2>/dev/null || echo 0)
 
           # Ensure numeric
           if ! echo "$count" | grep -Eq '^[0-9]+$'; then
@@ -42,12 +43,13 @@ jobs:
           echo "count=$count" >> $GITHUB_OUTPUT
 
           if [ "$count" -gt 0 ]; then
-            rows=$(psql "$DATABASE_URL" -t -A -c "SELECT to_char(created_at,'YYYY-MM-DD HH24:MI:SS') || ' actor=' || COALESCE(actor,'<unknown>') || ' user='|| COALESCE(user_id::text,'<unknown>') || ' details='|| COALESCE(details::text,'{}') FROM admin_actions WHERE action='province_deleted' AND created_at > now() - interval '1 hour' ORDER BY created_at DESC LIMIT 50;" 2>/dev/null || true)
+            rows=$(psql "$DATABASE_URL" -t -A -c "SELECT to_char(created_at,'YYYY-MM-DD HH24:MI:SS') || ' actor=' || COALESCE(actor,'<unknown>') || ' user='|| COALESCE(user_id::text,'<unknown>') || ' action='|| COALESCE(action,'<unknown>') || ' details='|| COALESCE(details::text,'{}') FROM admin_actions WHERE action IN ('province_deleted','delete_provinces') AND created_at > now() - interval '1 hour' ORDER BY created_at DESC LIMIT 50;" 2>/dev/null || true)
             echo "rows<<EOF" >> $GITHUB_OUTPUT
             echo "$rows" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           fi
       - name: Create GitHub issue when deletes found
+        id: create_issue
         if: steps.check.outputs.count != '' && steps.check.outputs.count != '0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,11 +60,6 @@ jobs:
           # Check if issues are enabled on this repo
           repo_info=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }})
           has_issues=$(echo "$repo_info" | jq -r .has_issues)
-          if [ "$has_issues" != "true" ]; then
-            echo "Repository has issues disabled; skipping issue creation." >&2
-            echo "$repo_info" >&2
-            exit 0
-          fi
 
           cat > /tmp/issue_body.md <<'ISSUE'
           The automated audit detected province deletions in production in the last hour.
@@ -74,5 +71,44 @@ jobs:
           **Action:** Investigate immediately and correlate with operator actions and backups.
           ISSUE
 
+          # Default: issues enabled
+          echo "issues_disabled=false" >> $GITHUB_OUTPUT
+
+          if [ "$has_issues" != "true" ]; then
+            echo "Repository has issues disabled; will attempt fallback alert or upload artifact." >&2
+            echo "issues_disabled=true" >> $GITHUB_OUTPUT
+            # Keep the issue body on disk for artifact or fallback repo creation
+            exit 0
+          fi
+
           jq -n --arg title "[ALERT] Province deletions detected in production" --arg body "$(sed -e 's/"/\\"/g' /tmp/issue_body.md)" '{title: $title, body: $body, labels: ["prod-alert","logs","triage"] }' > /tmp/issue_payload.json
           curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/issues -d @/tmp/issue_payload.json
+
+      - name: Fallback: create issue in fallback repo
+        if: steps.create_issue.outputs.issues_disabled == 'true' && env.FALLBACK_ALERT_REPO != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FALLBACK_ALERT_REPO: ${{ secrets.FALLBACK_ALERT_REPO }}
+          rows: ${{ steps.check.outputs.rows }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FALLBACK_ALERT_REPO:-}" ]; then
+            echo "No FALLBACK_ALERT_REPO configured; skipping fallback issue creation." >&2
+            exit 0
+          fi
+          jq -n --arg title "[ALERT] Province deletions detected in production (fallback)" --arg body "$(sed -e 's/"/\\"/g' /tmp/issue_body.md)" '{title: $title, body: $body, labels: ["prod-alert","logs","triage"] }' > /tmp/issue_payload.json
+          curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$FALLBACK_ALERT_REPO/issues -d @/tmp/issue_payload.json
+
+      - name: Upload artifact when issues disabled and no fallback
+        if: steps.create_issue.outputs.issues_disabled == 'true' && env.FALLBACK_ALERT_REPO == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: province_deletes_alert
+          path: /tmp/issue_body.md
+
+      - name: Archive detection output (always)
+        if: steps.check.outputs.count != '' && steps.check.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: province_deletes_${{ github.run_id }}
+          path: /tmp/issue_body.md
