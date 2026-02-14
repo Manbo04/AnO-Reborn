@@ -345,8 +345,10 @@ def coalition(colId):
 
         # flag already fetched in initial query above
 
-        if user_role == "leader" and colType != "Open" and userInCurCol:
-            # Use single JOIN query to fetch request IDs, names, and messages together
+        # Leaders, deputy leaders and domestic ministers should be able to
+        # view and act on incoming join requests for Invite-Only coalitions.
+        if user_role in ["leader", "deputy_leader", "domestic_minister"] and colType != "Open" and userInCurCol:
+            # Use a single JOIN query to fetch request IDs, names, and messages
             db.execute(
                 """SELECT r.reqId, u.username, r.message
                    FROM requests r
@@ -367,8 +369,8 @@ def coalition(colId):
             requestIds = []
 
         # COALITION BANK STUFF
-        if user_role == "leader" and userInCurCol:
-            # Use JOIN query to fetch bank requests with usernames
+        # Bank requests may be actioned by leader, deputy leaders and bankers
+        if user_role in ["leader", "deputy_leader", "banker"] and userInCurCol:
             db.execute(
                 """SELECT br.reqId, br.amount, br.resource, br.id, u.username
                    FROM colBanksRequests br
