@@ -887,9 +887,9 @@
                         <!--for every applicant make a row-->
                         {% for id, name, message in join_requests %}
                         <tr>
-                            <td><a href="/country/id={{ id[0] }}">{{ name[0] }}</a></td>
+                            <td><a href="/country/id={{ id[0] }}">{{ name }}</a></td>
                             <td></td>
-                            <td class="templatesmalltd">{{ message[0] }}</td>
+                            <td class="templatesmalltd">{{ message }}</td>
                             <td>
                                 <form method="POST">
                                     <div class="templatedivflex2 menuflex">
