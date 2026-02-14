@@ -147,8 +147,14 @@ def coalition(colId):
             userInCurCol = False
 
         try:
-            user_role = get_user_role(cId)
-        except (TypeError, AttributeError, IndexError):
+            # Determine the user's role for THIS coalition (avoid returning a role from another coalition)
+            db.execute(
+                "SELECT role FROM coalitions WHERE userId=%s AND colId=%s",
+                (cId, colId),
+            )
+            row = db.fetchone()
+            user_role = row[0] if row else None
+        except Exception:
             user_role = None
 
         if (
@@ -800,7 +806,10 @@ def give_position():
         ) < roles.index(user_role):
             return error(400, "Can't edit role for a person higher rank than you.")
 
-        db.execute("UPDATE coalitions SET role=%s WHERE userId=%s", (role, roleer))
+        db.execute(
+            "UPDATE coalitions SET role=%s WHERE userId=%s AND colId=%s",
+            (role, roleer, colId),
+        )
         # Diagnostic: confirm role update in test logs
         print(f"give_position: set role={role} for userId={roleer}", flush=True)
 
