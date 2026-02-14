@@ -730,7 +730,9 @@ def join_col(colId):
             # Invalidate cached coalition page so leaders/deputies see the new
             # join request immediately (avoid serving a stale cached page).
             try:
-                coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+                from database import invalidate_view_cache
+
+                invalidate_view_cache("coalition", page=f"/coalition/{colId}")
                 print(
                     f"join_col: invalidated coalition cache for colId={colId}",
                     flush=True,
@@ -844,7 +846,11 @@ def give_position():
         # Invalidate cached coalition page(s) so the promoted user (and
         # other viewers) see the updated role / applicants immediately.
         try:
-            coalition_wrapped.invalidate(user_id=roleer, page=f"/coalition/{colId}")
+            from database import invalidate_view_cache
+
+            invalidate_view_cache(
+                "coalition", user_id=roleer, page=f"/coalition/{colId}"
+            )
             print(
                 f"give_position: invalidated coalition cache for userId={roleer} colId={colId}",
                 flush=True,
@@ -877,7 +883,9 @@ def adding(uId):
 
         # Invalidate coalition page cache so leaders/deputies see the new member
         try:
-            coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+            from database import invalidate_view_cache
+
+            invalidate_view_cache("coalition", page=f"/coalition/{colId}")
             print(f"adding: invalidated coalition cache for colId={colId}", flush=True)
         except Exception as e:
             print(f"adding: cache invalidation failed: {e}", flush=True)
@@ -905,7 +913,9 @@ def removing_requests(uId):
 
         # Invalidate cached coalition page so applicants/leader panel updates
         try:
-            coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+            from database import invalidate_view_cache
+
+            invalidate_view_cache("coalition", page=f"/coalition/{colId}")
             print(
                 f"removing_requests: invalidated coalition cache for colId={colId}",
                 flush=True,
@@ -1010,7 +1020,9 @@ def update_col_info(colId):
             # Invalidate cached coalition page so viewers see the new application
             # type immediately instead of a cached version.
             try:
-                coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+                from database import invalidate_view_cache
+
+                invalidate_view_cache("coalition", page=f"/coalition/{colId}")
                 print(
                     f"update_col_info: invalidated coalition cache for colId={colId}",
                     flush=True,
