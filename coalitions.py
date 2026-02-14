@@ -709,6 +709,12 @@ def join_col(colId):
                 "INSERT INTO requests (colId, reqId, message) VALUES (%s, %s, %s)",
                 (colId, cId, message),
             )
+            # Invalidate cached coalition page so leaders/deputies see the new
+            # join request immediately (avoid serving a stale cached page).
+            try:
+                coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+            except Exception:
+                pass
 
         return redirect(
             f"/coalition/{colId}"
@@ -813,6 +819,13 @@ def give_position():
         # Diagnostic: confirm role update in test logs
         print(f"give_position: set role={role} for userId={roleer}", flush=True)
 
+        # Invalidate cached coalition page(s) so the promoted user (and
+        # other viewers) see the updated role / applicants immediately.
+        try:
+            coalition_wrapped.invalidate(user_id=roleer, page=f"/coalition/{colId}")
+        except Exception:
+            pass
+
         return redirect("/my_coalition")
 
 
@@ -836,6 +849,12 @@ def adding(uId):
             "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)", (colId, uId)
         )
 
+        # Invalidate coalition page cache so leaders/deputies see the new member
+        try:
+            coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+        except Exception:
+            pass
+
         return redirect(f"/coalition/{colId}")
 
 
@@ -856,6 +875,12 @@ def removing_requests(uId):
             return error(400, "You are not the leader of the coalition")
 
         db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
+
+        # Invalidate cached coalition page so applicants/leader panel updates
+        try:
+            coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+        except Exception:
+            pass
 
         return redirect(f"/coalition/{colId}")
 
@@ -951,6 +976,12 @@ def update_col_info(colId):
             db.execute(
                 "UPDATE colNames SET type=%s WHERE id=%s", (application_type, colId)
             )
+            # Invalidate cached coalition page so viewers see the new application
+            # type immediately instead of a cached version.
+            try:
+                coalition_wrapped.invalidate(page=f"/coalition/{colId}")
+            except Exception:
+                pass
 
         # Description
         description = request.form.get("description")
