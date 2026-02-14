@@ -418,11 +418,17 @@ def coalition(colId):
             req_ids = [r[0] for r in requestIds] if requestIds else []
         except Exception:
             req_ids = []
-        current_app.logger.info(
-            "coalition debug: colId=%s userInCurCol=%s user_role=%s pending_ids=%s requestIds=%s",
+        # Use warning level so CI captures these diagnostic messages reliably
+        current_app.logger.warning(
+            "coalition debug: colId=%s colType=%s userInCurCol=%s user_role=%s pending_count=%s request_count=%s pending_ids=%s requestIds=%s",
             colId,
+            colType,
             userInCurCol,
             user_role,
+            len(pending_applications)
+            if isinstance(pending_applications, (list, tuple))
+            else "unknown",
+            len(requestIds) if isinstance(requestIds, (list, tuple)) else "unknown",
             app_pending_ids,
             req_ids,
         )
