@@ -389,6 +389,16 @@ def coalition(colId):
             )
             request_data = db.fetchall()
 
+            # Debug: show request rows when rendering Applicants view
+            try:
+                print(
+                    f"coalition.requests_on_page: colId={colId} user={cId} "
+                    f"user_role={user_role} userInCurCol={userInCurCol} requests={request_data}",
+                    flush=True,
+                )
+            except Exception:
+                pass
+
             requestIds = [(r[0],) for r in request_data]
             requestNames = [r[1] for r in request_data]
             requestMessages = [r[2] for r in request_data]
