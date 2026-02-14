@@ -162,11 +162,19 @@ def test_deputy_can_view_and_accept_applicants():
 
     coalition_name = "coal_deputy_" + random_str(6)
     data = {"type": "Open", "name": coalition_name, "description": "test coalition"}
-    r = s_leader.post(f"{BASE_URL}/establish_coalition", data=data, allow_redirects=True)
+    r = s_leader.post(
+        f"{BASE_URL}/establish_coalition", data=data, allow_redirects=True
+    )
     assert r.status_code in (200, 302)
 
     # Get coalition id
-    conn = psycopg2.connect(database=os.getenv("PG_DATABASE"), user=os.getenv("PG_USER"), password=os.getenv("PG_PASSWORD"), host=os.getenv("PG_HOST"), port=os.getenv("PG_PORT"))
+    conn = psycopg2.connect(
+        database=os.getenv("PG_DATABASE"),
+        user=os.getenv("PG_USER"),
+        password=os.getenv("PG_PASSWORD"),
+        host=os.getenv("PG_HOST"),
+        port=os.getenv("PG_PORT"),
+    )
     db = conn.cursor()
     db.execute("SELECT id FROM colNames WHERE name=%s", (coalition_name,))
     colId = db.fetchone()[0]
@@ -182,15 +190,34 @@ def test_deputy_can_view_and_accept_applicants():
     r = s_leader.post(f"{BASE_URL}/give_position", data=give_data, allow_redirects=True)
     assert r.status_code in (200, 302)
 
+    # Verify the promotion persisted in the database. This prevents
+    # silent race/selection bugs during the test.
+    db.execute(
+        "SELECT role FROM coalitions "
+        "WHERE userId=(SELECT id FROM users WHERE username=%s) "
+        "AND colId=%s",
+        (deputy_username, colId),
+    )
+    assert db.fetchone()[0] == "deputy_leader", "DB did not persist deputy promotion"
+
     # Leader switches coalition to Invite Only
-    r = s_leader.post(f"{BASE_URL}/update_col_info/{colId}", data={"application_type": "Invite Only"}, allow_redirects=True)
+    r = s_leader.post(
+        f"{BASE_URL}/update_col_info/{colId}",
+        data={"application_type": "Invite Only"},
+        allow_redirects=True,
+    )
     assert r.status_code in (200, 302)
 
-    # Applicant signs up and applies (via /join for Invite Only -> creates a requests row)
+    # Applicant signs up and applies.
+    # (Joining an Invite-Only coalition creates a requests row)
     ok, applicant_username, applicant_email = create_user(s_applicant)
     assert ok, "applicant signup failed"
     apply_data = {"message": "Please accept me"}
-    r = s_applicant.post(f"{BASE_URL}/join/{colId}", data=apply_data, allow_redirects=True)
+    r = s_applicant.post(
+        f"{BASE_URL}/join/{colId}",
+        data=apply_data,
+        allow_redirects=True,
+    )
     assert r.status_code in (200, 302)
 
     # Deputy views coalition page and should see the applicant listed
@@ -207,7 +234,10 @@ def test_deputy_can_view_and_accept_applicants():
     assert r.status_code in (200, 302)
 
     # Verify applicant was added to coalition
-    db.execute("SELECT userId FROM coalitions WHERE userId=%s AND colId=%s", (applicant_id, colId))
+    db.execute(
+        "SELECT userId FROM coalitions WHERE userId=%s AND colId=%s",
+        (applicant_id, colId),
+    )
     assert db.fetchone() is not None, "Applicant was not added to coalition by deputy"
 
     # Cleanup DB state
