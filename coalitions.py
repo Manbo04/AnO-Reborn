@@ -177,6 +177,26 @@ def coalition(colId):
             except Exception:
                 pending_applications = []
 
+            # Also include simple /join() requests (requests table) for Invite-Only coalitions
+            # so leaders/deputies see applicant usernames in the Leader Panel.
+            try:
+                db.execute(
+                    "SELECT r.reqId, u.username, r.message FROM requests r JOIN users u ON r.reqId = u.id WHERE r.colId=%s ORDER BY r.reqId ASC",
+                    (colId,),
+                )
+                join_reqs = db.fetchall()
+                # append to pending_applications in the same tuple-shape used by the template
+                for jr in join_reqs:
+                    req_id, req_username, req_message = jr
+                    # avoid duplicates (userId already present)
+                    if not any(pa[1] == req_id for pa in pending_applications):
+                        pending_applications.append(
+                            (None, req_id, req_username, req_message, None, None)
+                        )
+            except Exception:
+                # non-fatal; leave pending_applications as-is
+                pass
+
             # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
             db.execute(
                 "SELECT role, COUNT(userId) FROM coalitions WHERE colId=%s GROUP BY role",
