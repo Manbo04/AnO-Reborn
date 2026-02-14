@@ -220,6 +220,14 @@ def test_deputy_can_view_and_accept_applicants():
     )
     assert r.status_code in (200, 302)
 
+    # Verify request recorded in DB (helps detect join_col insertion failures)
+    db.execute(
+        "SELECT reqId FROM requests WHERE colId=%s "
+        "AND reqId=(SELECT id FROM users WHERE username=%s)",
+        (colId, applicant_username),
+    )
+    assert db.fetchone() is not None, "join request not recorded in DB"
+
     # Deputy views coalition page and should see the applicant listed
     r = s_deputy.get(f"{BASE_URL}/coalition/{colId}")
     assert r.status_code == 200
