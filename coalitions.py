@@ -409,6 +409,24 @@ def coalition(colId):
 
         # Members list is now logged elsewhere for debugging if needed
 
+        # Debugging info for failing deputy-applicant integration test
+        try:
+            app_pending_ids = [p[1] for p in pending_applications]
+        except Exception:
+            app_pending_ids = []
+        try:
+            req_ids = [r[0] for r in requestIds] if requestIds else []
+        except Exception:
+            req_ids = []
+        current_app.logger.info(
+            "coalition debug: colId=%s userInCurCol=%s user_role=%s pending_ids=%s requestIds=%s",
+            colId,
+            userInCurCol,
+            user_role,
+            app_pending_ids,
+            req_ids,
+        )
+
         return render_template(
             "coalition.html",
             name=name,
