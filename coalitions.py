@@ -435,8 +435,16 @@ def coalition(colId):
         except Exception:
             req_ids = []
         # Print diagnostic info so it appears in CI logs regardless of logger level
+        try:
+            db.execute("SELECT username FROM users WHERE id=%s", (cId,))
+            _urow = db.fetchone()
+            cur_username = _urow[0] if _urow else None
+        except Exception:
+            cur_username = None
+
         print(
-            f"coalition debug: colId={colId} colType={colType} userInCurCol={userInCurCol} user_role={user_role} "
+            f"coalition debug: colId={colId} colType={colType} user={cId}:{cur_username} "
+            f"userInCurCol={userInCurCol} user_role={user_role} "
             f"pending_count={len(pending_applications) if isinstance(pending_applications, (list, tuple)) else 'unknown'} "
             f"request_count={len(requestIds) if isinstance(requestIds, (list, tuple)) else 'unknown'} "
             f"pending_ids={app_pending_ids} requestIds={req_ids}",
