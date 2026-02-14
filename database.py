@@ -155,6 +155,9 @@ def cache_response(ttl_seconds=60):
         # function so callers (routes/handlers) can invalidate cached pages
         # when underlying data changes (e.g. role changes, join requests).
         decorated_function._response_cache = cache
+        # Register the cache so other modules can invalidate it even if they
+        # don't have a direct reference to the decorated function object.
+        response_cache_registry[f.__name__] = cache
 
         def invalidate(
             pattern: str | None = None,
@@ -225,6 +228,43 @@ def fetchone_first(db, default=None):
 
 # Global query cache (5-minute TTL for slower-changing data)
 query_cache = QueryCache(ttl_seconds=300)
+
+# Registry for per-view response caches created by `cache_response`.
+# Maps view function name -> the internal `cache` dict used by the decorator.
+response_cache_registry: Dict[str, dict] = {}
+
+
+def invalidate_view_cache(
+    view_name: str,
+    user_id: int | None = None,
+    page: str | None = None,
+    pattern: str | None = None,
+) -> None:
+    """Invalidate entries from a cached view response registry.
+
+    This is a helper so route handlers can clear cached HTML responses when
+    related data changes (e.g. role changes, join requests). It is resilient
+    if a view has no registered cache.
+    """
+    cache = response_cache_registry.get(view_name)
+    if not cache:
+        return
+    keys = list(cache.keys())
+    for k in keys:
+        remove = False
+        if pattern and pattern in k:
+            remove = True
+        if user_id is not None and f"_{user_id}_" in k:
+            remove = True
+        if page and page in k:
+            remove = True
+        if pattern is None and user_id is None and page is None:
+            remove = True
+        if remove:
+            try:
+                del cache[k]
+            except KeyError:
+                pass
 
 
 def invalidate_user_cache(user_id: int) -> None:
