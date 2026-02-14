@@ -151,6 +151,53 @@ def cache_response(ttl_seconds=60):
             cache[cache_key] = (response, time())
             return response
 
+        # Expose the internal cache and invalidation helpers on the decorated
+        # function so callers (routes/handlers) can invalidate cached pages
+        # when underlying data changes (e.g. role changes, join requests).
+        decorated_function._response_cache = cache
+
+        def invalidate(
+            pattern: str | None = None,
+            user_id: int | None = None,
+            page: str | None = None,
+        ):
+            """Invalidate cached responses for this decorated view.
+
+            - pattern: substring to match against cache keys
+            - user_id: remove keys for a specific user id
+            - page: remove keys which include the page path (e.g. '/coalition/2')
+
+            If multiple arguments are provided they are OR'ed (any match will
+            cause removal). If all are None the entire cache for this view is
+            cleared.
+            """
+
+            keys = list(cache.keys())
+            for k in keys:
+                remove = False
+                if pattern and pattern in k:
+                    remove = True
+                if user_id is not None and f"_{user_id}_" in k:
+                    remove = True
+                if page and page in k:
+                    remove = True
+                if pattern is None and user_id is None and page is None:
+                    remove = True
+
+                if remove:
+                    try:
+                        del cache[k]
+                    except KeyError:
+                        pass
+
+        def clear_cache():
+            """Clear the full cache for this decorated view."""
+
+            cache.clear()
+
+        decorated_function.invalidate = invalidate
+        decorated_function.clear_cache = clear_cache
+
         return decorated_function
 
     return decorator
