@@ -1,0 +1,124 @@
+Starting Container
+    . db -> celerybeat-schedule
+Configuration ->
+    . broker -> redis://default:**@redis.railway.internal:6379//
+    . loader -> celery.loaders.app.AppLoader
+    . scheduler -> celery.beat.PersistentScheduler
+    . logfile -> [stderr]@%INFO
+    . maxinterval -> 5.00 minutes (300s)
+[2026-02-08 17:18:01,886: INFO/MainProcess] beat: Starting...
+/root/.local/lib/python3.10/site-packages/click/core.py:1223: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  parser = self.make_parser(ctx)
+/root/.local/lib/python3.10/site-packages/click/core.py:1216: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  self.parse_args(ctx, args)
+celery beat v5.2.2 (dawn-chorus) is starting.
+__    -    ... __   -        _
+LocalTime -> 2026-02-08 17:18:01
+Starting Container
+/root/.local/lib/python3.10/site-packages/click/core.py:1223: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  parser = self.make_parser(ctx)
+/root/.local/lib/python3.10/site-packages/click/core.py:1216: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  self.parse_args(ctx, args)
+celery beat v5.2.2 (dawn-chorus) is starting.
+__    -    ... __   -        _
+LocalTime -> 2026-02-08 17:18:04
+Configuration ->
+    . broker -> redis://default:**@redis.railway.internal:6379//
+    . loader -> celery.loaders.app.AppLoader
+    . scheduler -> celery.beat.PersistentScheduler
+    . db -> celerybeat-schedule
+    . logfile -> [stderr]@%INFO
+    . maxinterval -> 5.00 minutes (300s)
+[2026-02-08 17:18:04,035: INFO/MainProcess] beat: Starting...
+Starting Container
+/root/.local/lib/python3.10/site-packages/click/core.py:1223: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  parser = self.make_parser(ctx)
+/root/.local/lib/python3.10/site-packages/click/core.py:1216: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  self.parse_args(ctx, args)
+celery beat v5.2.2 (dawn-chorus) is starting.
+__    -    ... __   -        _
+LocalTime -> 2026-02-08 17:18:09
+Configuration ->
+    . broker -> redis://default:**@redis.railway.internal:6379//
+    . loader -> celery.loaders.app.AppLoader
+    . scheduler -> celery.beat.PersistentScheduler
+    . db -> celerybeat-schedule
+    . logfile -> [stderr]@%INFO
+    . maxinterval -> 5.00 minutes (300s)
+[2026-02-08 17:18:09,860: INFO/MainProcess] beat: Starting...
+Starting Container
+Configuration ->
+    . broker -> redis://default:**@redis.railway.internal:6379//
+    . loader -> celery.loaders.app.AppLoader
+    . scheduler -> celery.beat.PersistentScheduler
+    . db -> celerybeat-schedule
+    . logfile -> [stderr]@%INFO
+/root/.local/lib/python3.10/site-packages/click/core.py:1223: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+    . maxinterval -> 5.00 minutes (300s)
+  parser = self.make_parser(ctx)
+[2026-02-08 17:18:41,217: INFO/MainProcess] beat: Starting...
+/root/.local/lib/python3.10/site-packages/click/core.py:1216: UserWarning: The parameter --uid is used more than once. Remove its duplicate as parameters should be unique.
+  self.parse_args(ctx, args)
+celery beat v5.2.2 (dawn-chorus) is starting.
+__    -    ... __   -        _
+LocalTime -> 2026-02-08 17:18:41
+[2026-02-08 17:25:00,925: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 17:25:00,552: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 17:25:00,246: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 17:25:00,735: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 17:30:00,090: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:30:00,088: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:30:00,091: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:30:00,093: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:45:00,090: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 17:45:00,366: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:45:00,092: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 17:45:00,105: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:45:00,090: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 17:45:00,544: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 17:45:00,054: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 17:45:00,579: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:00:00,092: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 18:00:00,628: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:00:00,092: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 18:00:00,112: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:00:00,107: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 18:00:00,583: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:00:00,090: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 18:00:00,371: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:15:00,091: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:15:00,086: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:15:00,090: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:15:00,091: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:25:00,090: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 18:25:00,092: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 18:25:00,090: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 18:25:00,087: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 18:30:00,121: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:30:00,092: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:30:00,095: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:30:00,026: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:45:00,091: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:45:00,281: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 18:45:00,088: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:45:00,393: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 18:45:00,112: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 18:45:00,127: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:45:00,089: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 18:45:00,436: INFO/MainProcess] Scheduler: Sending due task population_growth (tasks.task_population_growth)
+[2026-02-08 19:00:00,086: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:00:00,103: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 19:00:00,418: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 19:00:00,073: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:00:00,092: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:00:00,279: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 19:00:00,094: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:00:00,402: INFO/MainProcess] Scheduler: Sending due task tax_income (tasks.task_tax_income)
+[2026-02-08 19:15:00,070: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:15:00,087: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:15:00,092: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:15:00,009: INFO/MainProcess] Scheduler: Sending due task execute_trade_agreements (tasks.task_execute_trade_agreements)
+[2026-02-08 19:25:00,089: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 19:25:00,093: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 19:25:00,091: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)
+[2026-02-08 19:25:00,090: INFO/MainProcess] Scheduler: Sending due task generate_province_revenue (tasks.task_generate_province_revenue)

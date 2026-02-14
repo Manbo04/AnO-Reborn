@@ -1,0 +1,122 @@
+Starting Container
+[2026-02-08 17:18:04 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-02-08 17:18:04 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-02-08 17:18:04 +0000] [1] [INFO] Using worker: sync
+[2026-02-08 17:18:04 +0000] [2] [INFO] Booting worker with pid: 2
+Starting Container
+Starting Container
+[2026-02-08 17:18:08 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-02-08 17:18:08 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-02-08 17:18:08 +0000] [1] [INFO] Using worker: sync
+[2026-02-08 17:18:08 +0000] [2] [INFO] Booting worker with pid: 2
+[2026-02-08 17:18:09 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-02-08 17:18:09 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-02-08 17:18:09 +0000] [1] [INFO] Using worker: sync
+[2026-02-08 17:18:09 +0000] [2] [INFO] Booting worker with pid: 2
+Starting Container
+[2026-02-08 17:18:12 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-02-08 17:18:12 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-02-08 17:18:12 +0000] [1] [INFO] Using worker: sync
+[2026-02-08 17:18:12 +0000] [2] [INFO] Booting worker with pid: 2
+[2026-02-08 17:57:33 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:2)
+[2026-02-08 17:57:33 +0000] [2] [INFO] Worker exiting (pid: 2)
+[2026-02-08 17:57:33 +0000] [3] [INFO] Booting worker with pid: 3
+[2026-02-08 17:58:31 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:2)
+[2026-02-08 17:58:31 +0000] [2] [INFO] Worker exiting (pid: 2)
+[2026-02-08 17:58:31 +0000] [3] [INFO] Booting worker with pid: 3
+[2026-02-08 18:03:50 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:3)
+[2026-02-08 18:03:50 +0000] [3] [INFO] Worker exiting (pid: 3)
+[2026-02-08 18:03:51 +0000] [4] [INFO] Booting worker with pid: 4
+[2026-02-08 18:04:22 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:4)
+[2026-02-08 18:04:22 +0000] [4] [INFO] Worker exiting (pid: 4)
+[2026-02-08 18:04:22 +0000] [5] [INFO] Booting worker with pid: 5
+[2026-02-08 18:04:53 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:5)
+[2026-02-08 18:04:53 +0000] [5] [INFO] Worker exiting (pid: 5)
+[2026-02-08 18:04:53 +0000] [6] [INFO] Booting worker with pid: 6
+[2026-02-08 18:05:24 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:6)
+[2026-02-08 18:05:24 +0000] [6] [INFO] Worker exiting (pid: 6)
+[2026-02-08 18:05:24 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-02-08 18:05:55 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:7)
+[2026-02-08 18:05:55 +0000] [7] [INFO] Worker exiting (pid: 7)
+[2026-02-08 18:05:55 +0000] [8] [INFO] Booting worker with pid: 8
+[2026-02-08 18:06:27 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:8)
+[2026-02-08 18:06:27 +0000] [8] [INFO] Worker exiting (pid: 8)
+[2026-02-08 18:06:27 +0000] [9] [INFO] Booting worker with pid: 9
+[2026-02-08 18:06:58 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:9)
+[2026-02-08 18:06:58 +0000] [9] [INFO] Worker exiting (pid: 9)
+[2026-02-08 18:06:58 +0000] [10] [INFO] Booting worker with pid: 10
+[2026-02-08 18:07:52 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:10)
+[2026-02-08 18:07:52 +0000] [10] [INFO] Worker exiting (pid: 10)
+[2026-02-08 18:07:52 +0000] [11] [INFO] Booting worker with pid: 11
+[2026-02-08 18:08:52 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:11)
+[2026-02-08 18:08:52 +0000] [11] [INFO] Worker exiting (pid: 11)
+[2026-02-08 18:08:52 +0000] [12] [INFO] Booting worker with pid: 12
+[2026-02-08 18:09:23 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:12)
+[2026-02-08 18:09:23 +0000] [12] [INFO] Worker exiting (pid: 12)
+[2026-02-08 18:09:23 +0000] [13] [INFO] Booting worker with pid: 13
+[2026-02-08 18:09:55 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:13)
+[2026-02-08 18:09:55 +0000] [13] [INFO] Worker exiting (pid: 13)
+[2026-02-08 18:09:55 +0000] [14] [INFO] Booting worker with pid: 14
+[2026-02-08 18:10:26 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:14)
+[2026-02-08 18:10:26 +0000] [14] [INFO] Worker exiting (pid: 14)
+[2026-02-08 18:10:26 +0000] [15] [INFO] Booting worker with pid: 15
+[2026-02-08 18:11:04 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:15)
+[2026-02-08 18:11:04 +0000] [15] [INFO] Worker exiting (pid: 15)
+[2026-02-08 18:11:04 +0000] [16] [INFO] Booting worker with pid: 16
+[2026-02-08 18:11:35 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:16)
+[2026-02-08 18:11:35 +0000] [16] [INFO] Worker exiting (pid: 16)
+[2026-02-08 18:11:35 +0000] [17] [INFO] Booting worker with pid: 17
+[2026-02-08 18:12:14 +0000] [18] [INFO] Booting worker with pid: 18
+[2026-02-08 18:12:14 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:17)
+[2026-02-08 18:12:14 +0000] [17] [INFO] Worker exiting (pid: 17)
+[2026-02-08 18:13:06 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:18)
+[2026-02-08 18:13:06 +0000] [18] [INFO] Worker exiting (pid: 18)
+[2026-02-08 18:13:07 +0000] [19] [INFO] Booting worker with pid: 19
+[2026-02-08 18:13:38 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:19)
+[2026-02-08 18:13:38 +0000] [19] [INFO] Worker exiting (pid: 19)
+[2026-02-08 18:13:38 +0000] [20] [INFO] Booting worker with pid: 20
+[2026-02-08 18:14:33 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:20)
+[2026-02-08 18:14:33 +0000] [20] [INFO] Worker exiting (pid: 20)
+[2026-02-08 18:14:33 +0000] [21] [INFO] Booting worker with pid: 21
+[2026-02-08 18:18:05 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:21)
+[2026-02-08 18:18:05 +0000] [21] [INFO] Worker exiting (pid: 21)
+[2026-02-08 18:18:05 +0000] [22] [INFO] Booting worker with pid: 22
+[2026-02-08 18:19:08 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:22)
+[2026-02-08 18:19:08 +0000] [22] [INFO] Worker exiting (pid: 22)
+[2026-02-08 18:19:08 +0000] [23] [INFO] Booting worker with pid: 23
+[2026-02-08 18:19:39 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:23)
+[2026-02-08 18:19:39 +0000] [23] [INFO] Worker exiting (pid: 23)
+[2026-02-08 18:19:39 +0000] [24] [INFO] Booting worker with pid: 24
+[2026-02-08 18:26:35 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:24)
+[2026-02-08 18:26:35 +0000] [24] [INFO] Worker exiting (pid: 24)
+[2026-02-08 18:26:35 +0000] [25] [INFO] Booting worker with pid: 25
+[2026-02-08 18:27:06 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:25)
+[2026-02-08 18:27:06 +0000] [25] [INFO] Worker exiting (pid: 25)
+[2026-02-08 18:27:07 +0000] [26] [INFO] Booting worker with pid: 26
+[2026-02-08 18:28:58 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:26)
+[2026-02-08 18:28:58 +0000] [26] [INFO] Worker exiting (pid: 26)
+[2026-02-08 18:28:58 +0000] [27] [INFO] Booting worker with pid: 27
+[2026-02-08 18:29:29 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:27)
+[2026-02-08 18:29:29 +0000] [27] [INFO] Worker exiting (pid: 27)
+[2026-02-08 18:29:29 +0000] [28] [INFO] Booting worker with pid: 28
+[2026-02-08 18:30:00 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:28)
+[2026-02-08 18:30:00 +0000] [28] [INFO] Worker exiting (pid: 28)
+[2026-02-08 18:30:00 +0000] [29] [INFO] Booting worker with pid: 29
+[2026-02-08 18:30:53 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:29)
+[2026-02-08 18:30:53 +0000] [29] [INFO] Worker exiting (pid: 29)
+[2026-02-08 18:30:53 +0000] [30] [INFO] Booting worker with pid: 30
+[2026-02-08 18:31:24 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:30)
+[2026-02-08 18:31:24 +0000] [30] [INFO] Worker exiting (pid: 30)
+[2026-02-08 18:31:25 +0000] [31] [INFO] Booting worker with pid: 31
+[2026-02-08 18:31:56 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:31)
+[2026-02-08 18:31:56 +0000] [31] [INFO] Worker exiting (pid: 31)
+[2026-02-08 18:31:56 +0000] [32] [INFO] Booting worker with pid: 32
+[2026-02-08 18:32:27 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:32)
+[2026-02-08 18:32:27 +0000] [32] [INFO] Worker exiting (pid: 32)
+[2026-02-08 18:32:27 +0000] [33] [INFO] Booting worker with pid: 33
+[2026-02-08 18:32:58 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:33)
+[2026-02-08 18:32:58 +0000] [33] [INFO] Worker exiting (pid: 33)
+[2026-02-08 18:32:58 +0000] [34] [INFO] Booting worker with pid: 34
+[2026-02-08 18:38:21 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:34)
+[2026-02-08 18:38:21 +0000] [34] [INFO] Worker exiting (pid: 34)
+[2026-02-08 18:38:21 +0000] [35] [INFO] Booting worker with pid: 35
