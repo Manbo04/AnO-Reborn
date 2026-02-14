@@ -731,8 +731,12 @@ def join_col(colId):
             # join request immediately (avoid serving a stale cached page).
             try:
                 coalition_wrapped.invalidate(page=f"/coalition/{colId}")
-            except Exception:
-                pass
+                print(
+                    f"join_col: invalidated coalition cache for colId={colId}",
+                    flush=True,
+                )
+            except Exception as e:
+                print(f"join_col: cache invalidation failed: {e}", flush=True)
 
         return redirect(
             f"/coalition/{colId}"
@@ -841,8 +845,12 @@ def give_position():
         # other viewers) see the updated role / applicants immediately.
         try:
             coalition_wrapped.invalidate(user_id=roleer, page=f"/coalition/{colId}")
-        except Exception:
-            pass
+            print(
+                f"give_position: invalidated coalition cache for userId={roleer} colId={colId}",
+                flush=True,
+            )
+        except Exception as e:
+            print(f"give_position: cache invalidation failed: {e}", flush=True)
 
         return redirect("/my_coalition")
 
@@ -870,8 +878,9 @@ def adding(uId):
         # Invalidate coalition page cache so leaders/deputies see the new member
         try:
             coalition_wrapped.invalidate(page=f"/coalition/{colId}")
-        except Exception:
-            pass
+            print(f"adding: invalidated coalition cache for colId={colId}", flush=True)
+        except Exception as e:
+            print(f"adding: cache invalidation failed: {e}", flush=True)
 
         return redirect(f"/coalition/{colId}")
 
@@ -897,8 +906,12 @@ def removing_requests(uId):
         # Invalidate cached coalition page so applicants/leader panel updates
         try:
             coalition_wrapped.invalidate(page=f"/coalition/{colId}")
-        except Exception:
-            pass
+            print(
+                f"removing_requests: invalidated coalition cache for colId={colId}",
+                flush=True,
+            )
+        except Exception as e:
+            print(f"removing_requests: cache invalidation failed: {e}", flush=True)
 
         return redirect(f"/coalition/{colId}")
 
@@ -998,8 +1011,12 @@ def update_col_info(colId):
             # type immediately instead of a cached version.
             try:
                 coalition_wrapped.invalidate(page=f"/coalition/{colId}")
-            except Exception:
-                pass
+                print(
+                    f"update_col_info: invalidated coalition cache for colId={colId}",
+                    flush=True,
+                )
+            except Exception as e:
+                print(f"update_col_info: cache invalidation failed: {e}", flush=True)
 
         # Description
         description = request.form.get("description")
