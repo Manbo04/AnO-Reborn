@@ -885,7 +885,7 @@
                             <th>Action</th>
                         </tr>
                         <!--for every applicant make a row-->
-                        {% for id, name, message in requests %}
+                        {% for id, name, message in join_requests %}
                         <tr>
                             <td><a href="/country/id={{ id[0] }}">{{ name[0] }}</a></td>
                             <td></td>
