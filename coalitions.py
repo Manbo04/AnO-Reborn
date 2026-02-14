@@ -687,12 +687,10 @@ def join_col(colId):
                 "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)", (colId, cId)
             )
         else:
+            # Check for existing join request (SELECT 1 is explicit and avoids SQL syntax errors)
             db.execute(
-                "SELECT FROM requests WHERE colId=%s and reqId=%s",
-                (
-                    colId,
-                    cId,
-                ),
+                "SELECT 1 FROM requests WHERE colId=%s AND reqId=%s",
+                (colId, cId),
             )
             duplicate = db.fetchone()
             if duplicate is not None:
@@ -700,7 +698,7 @@ def join_col(colId):
                     400, "You've already submitted a request to join this coalition"
                 )
 
-            message = request.form["message"]
+            message = request.form.get("message", "")
             db.execute(
                 "INSERT INTO requests (colId, reqId, message) VALUES (%s, %s, %s)",
                 (colId, cId, message),
