@@ -794,28 +794,17 @@ class Military(Nation):
 
         dealt_infra_damage = 0
 
-        for attacker_unit, defender_unit in zip(
-            attacker.selected_units_list, defender.selected_units_list
-        ):
-            # Unit amount chance - this way still get bonuses even if no counter unit_type
-            defender_unit_amount_bonuses += (
-                defender.selected_units[defender_unit] / 150
-            )  # is dict
-            attacker_unit_amount_bonuses += attacker.selected_units[attacker_unit] / 150
+        # Delegate inner engagement calculations to a helper so this file
+        # can be progressively refactored into smaller, testable units.
+        from attack_scripts.combat_helpers import compute_engagement_metrics
 
-            # Compare attacker agains defender
-            for unit in defender.selected_units_list:
-                attack_effects = attacker.attack(attacker_unit, unit)
-                attacker_bonus += calculate_bonuses(attack_effects, defender, unit)
-                # used to be += attacker.attack(attacker_unit, unit, defender)[1]
-
-                dealt_infra_damage += attack_effects[0]
-
-            # Compare defender against attacker
-            for unit in attacker.selected_units_list:
-                defender_bonus += calculate_bonuses(
-                    defender.attack(defender_unit, unit), attacker, unit
-                )
+        (
+            attacker_unit_amount_bonuses,
+            defender_unit_amount_bonuses,
+            attacker_bonus,
+            defender_bonus,
+            dealt_infra_damage,
+        ) = compute_engagement_metrics(attacker, defender)
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
         #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
@@ -1012,7 +1001,7 @@ class Military(Nation):
             return unit_lst  # this is a list of the format [100, 50, 50]
 
     @staticmethod
-    def get_military(cId):  # int -> dict
+    def get_military(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
 
@@ -1027,27 +1016,23 @@ class Military(Nation):
             return dict(result) if result else {}
 
     @staticmethod
-    def get_limits(cId):  # int -> dict
+    def get_limits(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
 
-        with get_db_cursor() as db:
-            # Use aggregated query instead of loop
-            db.execute(
-                """SELECT
-                    COALESCE(SUM(pi.army_bases), 0) as army_bases,
-                    COALESCE(SUM(pi.harbours), 0) as harbours,
-                    COALESCE(SUM(pi.aerodomes), 0) as aerodomes,
-                    COALESCE(SUM(pi.admin_buildings), 0) as admin_buildings,
-                    COALESCE(SUM(pi.silos), 0) as silos
-                FROM proinfra pi
-                INNER JOIN provinces p ON pi.id = p.id
-                WHERE p.userID=%s""",
-                (cId,),
-            )
-            result = db.fetchone()
-            army_bases, harbours, aerodomes, admin_buildings, silos = result
+        # Aggregate proInfra using the infra helper so `Nations.py` can be
+        # progressively simplified and the SQL is easier to test in isolation.
+        from attack_scripts.infra_helpers import aggregate_proinfra_for_user
 
-            # these numbers determine the upper limit of how many of each military unit can be built per day
+        (
+            army_bases,
+            harbours,
+            aerodomes,
+            admin_buildings,
+            silos,
+        ) = aggregate_proinfra_for_user(cId)
+
+        # these numbers determine the upper limit of how many of each military unit can be built per day
+        with get_db_cursor() as db:
             db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
             _manpower = fetchone_first(db, 0)
 
