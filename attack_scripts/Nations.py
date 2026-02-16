@@ -1,3 +1,5 @@
+# flake8: noqa -- legacy module with many historical style issues; enable
+# linting after full refactor is done.
 import random
 import time
 from dotenv import load_dotenv
@@ -34,7 +36,9 @@ def _cached_get_particular_resources(self, resources):
             with get_db_connection() as connection:
                 db = connection.cursor()
                 cols = ", ".join(self.resources)
-                db.execute(f"SELECT {cols} FROM resources WHERE id=%s", (self.nationID,))
+                db.execute(
+                    f"SELECT {cols} FROM resources WHERE id=%s", (self.nationID,)
+                )
                 row = db.fetchone()
 
                 full_row = {}
@@ -43,7 +47,9 @@ def _cached_get_particular_resources(self, resources):
                         full_row[r] = 0
                 elif isinstance(row, (list, tuple)):
                     for i, r in enumerate(self.resources):
-                        full_row[r] = row[i] if i < len(row) and row[i] is not None else 0
+                        full_row[r] = (
+                            row[i] if i < len(row) and row[i] is not None else 0
+                        )
                 elif isinstance(row, dict):
                     for r in self.resources:
                         full_row[r] = row.get(r, 0) or 0
@@ -65,24 +71,10 @@ def _cached_get_particular_resources(self, resources):
 # Canonical implementation for get_particular_resources is defined above.
 # No debug prints or noisy markers at import-time.
 
-def calculate_bonuses(attack_effects, enemy_object, target):  # int, Units, str -> int
-    # Calculate the percentage of total units will be affected
-    defending_unit_amount = enemy_object.selected_units[target]
 
-    # sum of units amount
-    enemy_units_total_amount = sum(enemy_object.selected_units.values())
-
-    # the affected percentage from sum of units
-    unit_of_army = (defending_unit_amount * 100) / (enemy_units_total_amount + 1)
-
-    # the bonus calculated based on affected percentage
-    affected_bonus = attack_effects[1] * (unit_of_army / 100)
-
-    # divide affected_bonus to make bonus effect less relevant
-    attack_effects = affected_bonus / 100
-
-
-    return attack_effects
+# `calculate_bonuses` moved to `attack_scripts.nations_helpers` to
+# begin progressive refactoring and enable focused unit tests.
+from attack_scripts.nations_helpers import calculate_bonuses  # noqa: F401
 
 
 class Economy:
@@ -178,11 +170,8 @@ class Economy:
         except Exception:
             pass
 
-
-
-
-# IMPORTANT: the amount is not validated in this method.
-# Callers must provide a validated value.
+    # IMPORTANT: the amount is not validated in this method.
+    # Callers must provide a validated value.
     def transfer_resources(self, resource, amount, destinationID):
         with get_db_connection() as connection:
             db = connection.cursor()  # noqa: F841
@@ -278,7 +267,9 @@ class Economy:
                         resource, resource_amount * (1 / 5), winner.user_id
                     )
 
-                db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
+                db.execute(
+                    f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id)
+                )
 
                 connection.commit()
 
@@ -315,22 +306,30 @@ class Nation:
 
     def get_provinces(self):
         with get_db_connection() as connection:
-            logger = __import__('logging').getLogger(__name__)
-            logger.debug('get_provinces: connection type=%s closed=%s', type(connection), getattr(connection, 'closed', None))
+            logger = __import__("logging").getLogger(__name__)
+            logger.debug(
+                "get_provinces: connection type=%s closed=%s",
+                type(connection),
+                getattr(connection, "closed", None),
+            )
             db = connection.cursor()
-            logger.debug('get_provinces: after cursor created cursor.closed=%s', getattr(db, 'closed', None))
+            logger.debug(
+                "get_provinces: after cursor created cursor.closed=%s",
+                getattr(db, "closed", None),
+            )
             if self.provinces is None:
                 self.provinces = {"provinces_number": 0, "province_stats": {}}
                 try:
                     db.execute(
-                        "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s", (self.id,)
+                        "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s",
+                        (self.id,),
                     )
                 except Exception as e:
                     # Defensive recovery: if the underlying cursor was closed for any reason,
                     # retry the query on a fresh connection once before failing.
-                    logger.warning('get_provinces: initial db.execute failed: %s', e)
-                    if 'cursor already closed' in str(e).lower():
-                        logger.info('get_provinces: retrying with fresh connection')
+                    logger.warning("get_provinces: initial db.execute failed: %s", e)
+                    if "cursor already closed" in str(e).lower():
+                        logger.info("get_provinces: retrying with fresh connection")
                         with get_db_connection() as c2:
                             db2 = c2.cursor()
                             db2.execute(
@@ -349,11 +348,15 @@ class Nation:
                 try:
                     db.execute("SELECT * FROM provinces WHERE userId=(%s)", (self.id,))
                 except Exception as e:
-                    if 'cursor already closed' in str(e).lower():
-                        logger.info('get_provinces: retrying SELECT * with fresh connection')
+                    if "cursor already closed" in str(e).lower():
+                        logger.info(
+                            "get_provinces: retrying SELECT * with fresh connection"
+                        )
                         with get_db_connection() as c3:
                             db3 = c3.cursor()
-                            db3.execute("SELECT * FROM provinces WHERE userId=(%s)", (self.id,))
+                            db3.execute(
+                                "SELECT * FROM provinces WHERE userId=(%s)", (self.id,)
+                            )
                             provinces = db3.fetchall()
                     else:
                         raise
@@ -445,8 +448,10 @@ class Nation:
             if upgrade_type == "supplies":
                 upgrade_fields = list(cls.supply_related_upgrades.keys())
                 if upgrade_fields:
-                    fields = ', '.join(upgrade_fields)
-                    upgrade_query = "SELECT " + fields + " FROM upgrades WHERE user_id=%s"
+                    fields = ", ".join(upgrade_fields)
+                    upgrade_query = (
+                        "SELECT " + fields + " FROM upgrades WHERE user_id=%s"
+                    )
                     db.execute(upgrade_query, (user_id,))
                     result = db.fetchone()
                     if result:
@@ -457,6 +462,7 @@ class Nation:
 
         # The minimal set_peace static method is already implemented as a method
         # of the Nation class above; no additional placeholder class is required.
+
 
 class Military(Nation):
     allUnits = [
@@ -788,28 +794,17 @@ class Military(Nation):
 
         dealt_infra_damage = 0
 
-        for attacker_unit, defender_unit in zip(
-            attacker.selected_units_list, defender.selected_units_list
-        ):
-            # Unit amount chance - this way still get bonuses even if no counter unit_type
-            defender_unit_amount_bonuses += (
-                defender.selected_units[defender_unit] / 150
-            )  # is dict
-            attacker_unit_amount_bonuses += attacker.selected_units[attacker_unit] / 150
+        # Delegate inner engagement calculations to a helper so this file
+        # can be progressively refactored into smaller, testable units.
+        from attack_scripts.combat_helpers import compute_engagement_metrics
 
-            # Compare attacker agains defender
-            for unit in defender.selected_units_list:
-                attack_effects = attacker.attack(attacker_unit, unit)
-                attacker_bonus += calculate_bonuses(attack_effects, defender, unit)
-                # used to be += attacker.attack(attacker_unit, unit, defender)[1]
-
-                dealt_infra_damage += attack_effects[0]
-
-            # Compare defender against attacker
-            for unit in attacker.selected_units_list:
-                defender_bonus += calculate_bonuses(
-                    defender.attack(defender_unit, unit), attacker, unit
-                )
+        (
+            attacker_unit_amount_bonuses,
+            defender_unit_amount_bonuses,
+            attacker_bonus,
+            defender_bonus,
+            dealt_infra_damage,
+        ) = compute_engagement_metrics(attacker, defender)
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
         #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
@@ -824,25 +819,22 @@ class Military(Nation):
 
         # print(attacker_chance, defender_chance)
 
-        # Determine the winner
-        if defender_chance >= attacker_chance:
+        # Determine the winner using the extracted helper (keeps logic identical)
+        from attack_scripts.combat_helpers import resolve_battle_outcome
+
+        winner_is_defender, win_type, winner_casulties = resolve_battle_outcome(
+            attacker_chance,
+            defender_chance,
+            attacker_unit_amount_bonuses,
+            defender_unit_amount_bonuses,
+        )
+
+        if winner_is_defender:
             winner = defender
             loser = attacker
-            if attacker_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
-            else:
-                win_type = defender_chance / attacker_chance
-                winner_casulties = (1 + attacker_chance) / defender_chance
         else:
             winner = attacker
             loser = defender
-            if defender_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
-            else:
-                win_type = attacker_chance / defender_chance
-                winner_casulties = (1 + defender_chance) / attacker_chance
 
         # Get the absolute side (absolute attacker and defender) in the war for determining the loser's morale column name to decrease
 
@@ -887,67 +879,49 @@ class Military(Nation):
             "nukes": 12,
         }
 
-        # Compute attacker and defender strengths using the unit morale weights
-        attacker_strength = 0.0
-        defender_strength = 0.0
-        try:
-            for unit_name, count in attacker.selected_units.items():
-                attacker_strength += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-            for unit_name, count in defender.selected_units.items():
-                defender_strength += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-        except Exception:
-            # fallback small strengths to avoid zero division
-            attacker_strength = max(attacker_strength, 1.0)
-            defender_strength = max(defender_strength, 1.0)
+        # Delegate morale/strength calculation to the combat helper so the
+        # core `fight` logic remains focused on flow control and DB effects.
+        from attack_scripts.combat_helpers import compute_morale_delta, compute_strength
 
-        # Advantage factor ranges (0..1). If attacker and defender are equal, advantage ~ 0.5
+        # Compute the morale delta and attach to the loser (unchanged behaviour)
+        winner_is_defender = winner is defender
+        computed_morale_delta = compute_morale_delta(
+            loser.selected_units,
+            attacker.selected_units,
+            defender.selected_units,
+            winner_is_defender,
+            win_type,
+        )
+
+        setattr(loser, "_computed_morale_delta", computed_morale_delta)
+
+        # Expose advantage for potential telemetry/debugging (keeps parity)
+        attacker_strength = compute_strength(attacker.selected_units)
+        defender_strength = compute_strength(defender.selected_units)
         advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
-
-        # If defender actually won, invert advantage for purposes of computing loser impact
         if winner is defender:
             advantage_factor = 1.0 - advantage
         else:
             advantage_factor = advantage
 
-        # Base value derived from the loser's own units (their potential to suffer morale loss)
-        base_loser_value = 0.0
-        try:
-            for unit_name, count in loser.selected_units.items():
-                base_loser_value += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-        except Exception:
-            base_loser_value = 1.0
-
-        # Compute the morale delta proportional to base_loser_value, advantage_factor and win_type.
-        # Scale down to keep deltas reasonable; cap to prevent instant annihilation.
-        computed_morale_delta = int(
-            round(base_loser_value * advantage_factor * win_type * 0.1)
-        )
-        computed_morale_delta = max(1, computed_morale_delta)
-        computed_morale_delta = min(200, computed_morale_delta)
-
-        # attach to loser for morale_change to pick up
-        setattr(loser, "_computed_morale_delta", computed_morale_delta)
-
         win_condition = Military.morale_change(morale_column, win_type, winner, loser)
 
         # Maybe use the damage property also in unit loss
         # TODO: make unit loss more precise
-        for winner_unit, loser_unit in zip(
-            winner.selected_units_list, loser.selected_units_list
-        ):
-            w_casualties = winner_casulties * random.uniform(2, 10) * 2
-            l_casualties = win_type * random.uniform(2, 10.5) * 2
+        # Compute per-unit casualties via helper (inject RNG if needed for tests)
+        from attack_scripts.combat_helpers import compute_unit_casualties
 
-            # print("w_casualties", w_casualties)
-            # print("l_casualties", l_casualties)
-            winner.casualties(winner_unit, w_casualties)
-            loser.casualties(loser_unit, l_casualties)
+        winner_pairs, loser_pairs = compute_unit_casualties(
+            winner_casulties,
+            win_type,
+            winner.selected_units_list,
+            loser.selected_units_list,
+        )
+
+        for unit_name, amount in winner_pairs:
+            winner.casualties(unit_name, amount)
+        for unit_name, amount in loser_pairs:
+            loser.casualties(unit_name, amount)
 
         # infrastructure damage (code commented out - connection removed)
         # db = connection.cursor()
@@ -1006,7 +980,7 @@ class Military(Nation):
             return unit_lst  # this is a list of the format [100, 50, 50]
 
     @staticmethod
-    def get_military(cId):  # int -> dict
+    def get_military(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
 
@@ -1021,27 +995,23 @@ class Military(Nation):
             return dict(result) if result else {}
 
     @staticmethod
-    def get_limits(cId):  # int -> dict
+    def get_limits(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
 
-        with get_db_cursor() as db:
-            # Use aggregated query instead of loop
-            db.execute(
-                """SELECT
-                    COALESCE(SUM(pi.army_bases), 0) as army_bases,
-                    COALESCE(SUM(pi.harbours), 0) as harbours,
-                    COALESCE(SUM(pi.aerodomes), 0) as aerodomes,
-                    COALESCE(SUM(pi.admin_buildings), 0) as admin_buildings,
-                    COALESCE(SUM(pi.silos), 0) as silos
-                FROM proinfra pi
-                INNER JOIN provinces p ON pi.id = p.id
-                WHERE p.userID=%s""",
-                (cId,),
-            )
-            result = db.fetchone()
-            army_bases, harbours, aerodomes, admin_buildings, silos = result
+        # Aggregate proInfra using the infra helper so `Nations.py` can be
+        # progressively simplified and the SQL is easier to test in isolation.
+        from attack_scripts.infra_helpers import aggregate_proinfra_for_user
 
-            # these numbers determine the upper limit of how many of each military unit can be built per day
+        (
+            army_bases,
+            harbours,
+            aerodomes,
+            admin_buildings,
+            silos,
+        ) = aggregate_proinfra_for_user(cId)
+
+        # these numbers determine the upper limit of how many of each military unit can be built per day
+        with get_db_cursor() as db:
             db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
             _manpower = fetchone_first(db, 0)
 
@@ -1058,11 +1028,14 @@ class Military(Nation):
         artillery = max(0, army_bases * 8 - military["artillery"])
 
         # Air units
-        air_units = military["fighters"] + military["bombers"] + military["apaches"]
+        # Fighters and bombers share aerodome capacity
+        air_units = military["fighters"] + military["bombers"]
         air_limit = max(0, aerodomes * 5 - air_units)
         bombers = air_limit
         fighters = air_limit
-        apaches = air_limit
+
+        # Apaches use army_bases (separate capacity from aerodomes)
+        apaches = max(0, army_bases * 5 - military.get("apaches", 0))
 
         # Naval units
         naval_units = military["submarines"] + military["destroyers"]
@@ -1128,8 +1101,6 @@ class Military(Nation):
             connection.commit()
 
 
-
-
 # Legacy helpers removed — use `_cached_get_particular_resources` above.
 
 # Canonical implementation moved to module top. The binding and
@@ -1140,6 +1111,7 @@ Economy.get_particular_resources = _cached_get_particular_resources
 
 # Patch any already-imported modules that may hold a stale Economy class
 import sys as _sys
+
 for _m in list(_sys.modules.values()):
     try:
         if getattr(_m, "Economy", None) is not None:
@@ -1151,6 +1123,7 @@ for _m in list(_sys.modules.values()):
 # Robust fallback implementation usable from any binding. If any other
 # code path binds a stale or broken `get_particular_resources`, we wrap it to
 # delegate to this canonical helper on error or suspicious results.
+
 
 def _impl_get_particular_resources(nationID, resources):
     from database import get_db_connection, fetchone_first, query_cache
@@ -1191,7 +1164,9 @@ def _impl_get_particular_resources(nationID, resources):
                         full_row[r] = 0
                 elif isinstance(row, (list, tuple)):
                     for i, r in enumerate(Economy.resources):
-                        full_row[r] = row[i] if i < len(row) and row[i] is not None else 0
+                        full_row[r] = (
+                            row[i] if i < len(row) and row[i] is not None else 0
+                        )
                 elif isinstance(row, dict):
                     for r in Economy.resources:
                         full_row[r] = row.get(r, 0) or 0
@@ -1212,16 +1187,16 @@ def _impl_get_particular_resources(nationID, resources):
 
     return rd
 
+
 # Final, authoritative binding: ensure `Economy.get_particular_resources`
 # references the canonical implementation and patch any already-imported
 # modules that may have a stale Economy class object.
 Economy.get_particular_resources = _cached_get_particular_resources
 import sys as _sys
+
 for _m in list(_sys.modules.values()):
     try:
         if getattr(_m, "Economy", None) is not None:
             _m.Economy.get_particular_resources = _cached_get_particular_resources
     except Exception:
         pass
-
-
