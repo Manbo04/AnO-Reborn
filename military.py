@@ -12,6 +12,36 @@ load_dotenv()
 bp = Blueprint("military", __name__)
 
 
+def compute_display_limits(cId, units_row=None):
+    """Return limits as shown on the military page (apaches limited by
+    army_bases, fighters/bombers limited by aerodomes).
+
+    - `units_row` may be passed (dict) to avoid an extra DB fetch when the
+      caller already has current military counts.
+    """
+    limits = Military.get_limits(cId)
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                "SELECT COALESCE(SUM(pi.army_bases),0) FROM proinfra pi "
+                "INNER JOIN provinces p ON pi.id = p.id WHERE p.userid=%s",
+                (cId,),
+            )
+            army_bases = db.fetchone()[0] or 0
+        # determine current apache count
+        if units_row and "apaches" in units_row:
+            current_apaches = units_row.get("apaches") or 0
+        else:
+            with get_db_cursor() as db:
+                db.execute("SELECT apaches FROM military WHERE id=%s", (cId,))
+                current_apaches = db.fetchone()[0] or 0
+        limits["apaches"] = max(0, army_bases * 5 - current_apaches)
+    except Exception:
+        # If anything goes wrong, fall back to the unadjusted limits
+        pass
+    return limits
+
+
 @bp.route("/military", methods=["GET", "POST"])
 @login_required
 @cache_response(ttl_seconds=10)  # Short cache for military page
@@ -43,7 +73,7 @@ def military():
                 manpower = 0
 
         upgrades = get_upgrades(cId)  # Now cached in upgrades.py
-        limits = Military.get_limits(cId)
+        limits = compute_display_limits(cId, units)
 
         return render_template(
             "military.html",
@@ -156,7 +186,9 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
                 # flash(f"You sold {wantedUnits} {units}")
             elif way == "buy":
-                limits = Military.get_limits(cId)
+                # Use the same display limits logic as the military page so the
+                # buy checks match what users see.
+                limits = compute_display_limits(cId)
 
                 if wantedUnits > limits[units]:
                     return error(

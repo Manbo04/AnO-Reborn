@@ -1,3 +1,5 @@
+# flake8: noqa -- legacy module with many historical style issues; enable
+# linting after full refactor is done.
 import random
 import time
 from dotenv import load_dotenv
@@ -34,7 +36,9 @@ def _cached_get_particular_resources(self, resources):
             with get_db_connection() as connection:
                 db = connection.cursor()
                 cols = ", ".join(self.resources)
-                db.execute(f"SELECT {cols} FROM resources WHERE id=%s", (self.nationID,))
+                db.execute(
+                    f"SELECT {cols} FROM resources WHERE id=%s", (self.nationID,)
+                )
                 row = db.fetchone()
 
                 full_row = {}
@@ -43,7 +47,9 @@ def _cached_get_particular_resources(self, resources):
                         full_row[r] = 0
                 elif isinstance(row, (list, tuple)):
                     for i, r in enumerate(self.resources):
-                        full_row[r] = row[i] if i < len(row) and row[i] is not None else 0
+                        full_row[r] = (
+                            row[i] if i < len(row) and row[i] is not None else 0
+                        )
                 elif isinstance(row, dict):
                     for r in self.resources:
                         full_row[r] = row.get(r, 0) or 0
@@ -65,6 +71,7 @@ def _cached_get_particular_resources(self, resources):
 # Canonical implementation for get_particular_resources is defined above.
 # No debug prints or noisy markers at import-time.
 
+
 def calculate_bonuses(attack_effects, enemy_object, target):  # int, Units, str -> int
     # Calculate the percentage of total units will be affected
     defending_unit_amount = enemy_object.selected_units[target]
@@ -80,7 +87,6 @@ def calculate_bonuses(attack_effects, enemy_object, target):  # int, Units, str 
 
     # divide affected_bonus to make bonus effect less relevant
     attack_effects = affected_bonus / 100
-
 
     return attack_effects
 
@@ -178,11 +184,8 @@ class Economy:
         except Exception:
             pass
 
-
-
-
-# IMPORTANT: the amount is not validated in this method.
-# Callers must provide a validated value.
+    # IMPORTANT: the amount is not validated in this method.
+    # Callers must provide a validated value.
     def transfer_resources(self, resource, amount, destinationID):
         with get_db_connection() as connection:
             db = connection.cursor()  # noqa: F841
@@ -278,7 +281,9 @@ class Economy:
                         resource, resource_amount * (1 / 5), winner.user_id
                     )
 
-                db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
+                db.execute(
+                    f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id)
+                )
 
                 connection.commit()
 
@@ -315,22 +320,30 @@ class Nation:
 
     def get_provinces(self):
         with get_db_connection() as connection:
-            logger = __import__('logging').getLogger(__name__)
-            logger.debug('get_provinces: connection type=%s closed=%s', type(connection), getattr(connection, 'closed', None))
+            logger = __import__("logging").getLogger(__name__)
+            logger.debug(
+                "get_provinces: connection type=%s closed=%s",
+                type(connection),
+                getattr(connection, "closed", None),
+            )
             db = connection.cursor()
-            logger.debug('get_provinces: after cursor created cursor.closed=%s', getattr(db, 'closed', None))
+            logger.debug(
+                "get_provinces: after cursor created cursor.closed=%s",
+                getattr(db, "closed", None),
+            )
             if self.provinces is None:
                 self.provinces = {"provinces_number": 0, "province_stats": {}}
                 try:
                     db.execute(
-                        "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s", (self.id,)
+                        "SELECT COUNT(provinceName) FROM provinces WHERE userId=%s",
+                        (self.id,),
                     )
                 except Exception as e:
                     # Defensive recovery: if the underlying cursor was closed for any reason,
                     # retry the query on a fresh connection once before failing.
-                    logger.warning('get_provinces: initial db.execute failed: %s', e)
-                    if 'cursor already closed' in str(e).lower():
-                        logger.info('get_provinces: retrying with fresh connection')
+                    logger.warning("get_provinces: initial db.execute failed: %s", e)
+                    if "cursor already closed" in str(e).lower():
+                        logger.info("get_provinces: retrying with fresh connection")
                         with get_db_connection() as c2:
                             db2 = c2.cursor()
                             db2.execute(
@@ -349,11 +362,15 @@ class Nation:
                 try:
                     db.execute("SELECT * FROM provinces WHERE userId=(%s)", (self.id,))
                 except Exception as e:
-                    if 'cursor already closed' in str(e).lower():
-                        logger.info('get_provinces: retrying SELECT * with fresh connection')
+                    if "cursor already closed" in str(e).lower():
+                        logger.info(
+                            "get_provinces: retrying SELECT * with fresh connection"
+                        )
                         with get_db_connection() as c3:
                             db3 = c3.cursor()
-                            db3.execute("SELECT * FROM provinces WHERE userId=(%s)", (self.id,))
+                            db3.execute(
+                                "SELECT * FROM provinces WHERE userId=(%s)", (self.id,)
+                            )
                             provinces = db3.fetchall()
                     else:
                         raise
@@ -445,8 +462,10 @@ class Nation:
             if upgrade_type == "supplies":
                 upgrade_fields = list(cls.supply_related_upgrades.keys())
                 if upgrade_fields:
-                    fields = ', '.join(upgrade_fields)
-                    upgrade_query = "SELECT " + fields + " FROM upgrades WHERE user_id=%s"
+                    fields = ", ".join(upgrade_fields)
+                    upgrade_query = (
+                        "SELECT " + fields + " FROM upgrades WHERE user_id=%s"
+                    )
                     db.execute(upgrade_query, (user_id,))
                     result = db.fetchone()
                     if result:
@@ -457,6 +476,7 @@ class Nation:
 
         # The minimal set_peace static method is already implemented as a method
         # of the Nation class above; no additional placeholder class is required.
+
 
 class Military(Nation):
     allUnits = [
@@ -1058,11 +1078,14 @@ class Military(Nation):
         artillery = max(0, army_bases * 8 - military["artillery"])
 
         # Air units
-        air_units = military["fighters"] + military["bombers"] + military["apaches"]
+        # Fighters and bombers share aerodome capacity
+        air_units = military["fighters"] + military["bombers"]
         air_limit = max(0, aerodomes * 5 - air_units)
         bombers = air_limit
         fighters = air_limit
-        apaches = air_limit
+
+        # Apaches use army_bases (separate capacity from aerodomes)
+        apaches = max(0, army_bases * 5 - military.get("apaches", 0))
 
         # Naval units
         naval_units = military["submarines"] + military["destroyers"]
@@ -1128,8 +1151,6 @@ class Military(Nation):
             connection.commit()
 
 
-
-
 # Legacy helpers removed — use `_cached_get_particular_resources` above.
 
 # Canonical implementation moved to module top. The binding and
@@ -1140,6 +1161,7 @@ Economy.get_particular_resources = _cached_get_particular_resources
 
 # Patch any already-imported modules that may hold a stale Economy class
 import sys as _sys
+
 for _m in list(_sys.modules.values()):
     try:
         if getattr(_m, "Economy", None) is not None:
@@ -1151,6 +1173,7 @@ for _m in list(_sys.modules.values()):
 # Robust fallback implementation usable from any binding. If any other
 # code path binds a stale or broken `get_particular_resources`, we wrap it to
 # delegate to this canonical helper on error or suspicious results.
+
 
 def _impl_get_particular_resources(nationID, resources):
     from database import get_db_connection, fetchone_first, query_cache
@@ -1191,7 +1214,9 @@ def _impl_get_particular_resources(nationID, resources):
                         full_row[r] = 0
                 elif isinstance(row, (list, tuple)):
                     for i, r in enumerate(Economy.resources):
-                        full_row[r] = row[i] if i < len(row) and row[i] is not None else 0
+                        full_row[r] = (
+                            row[i] if i < len(row) and row[i] is not None else 0
+                        )
                 elif isinstance(row, dict):
                     for r in Economy.resources:
                         full_row[r] = row.get(r, 0) or 0
@@ -1212,16 +1237,16 @@ def _impl_get_particular_resources(nationID, resources):
 
     return rd
 
+
 # Final, authoritative binding: ensure `Economy.get_particular_resources`
 # references the canonical implementation and patch any already-imported
 # modules that may have a stale Economy class object.
 Economy.get_particular_resources = _cached_get_particular_resources
 import sys as _sys
+
 for _m in list(_sys.modules.values()):
     try:
         if getattr(_m, "Economy", None) is not None:
             _m.Economy.get_particular_resources = _cached_get_particular_resources
     except Exception:
         pass
-
-
