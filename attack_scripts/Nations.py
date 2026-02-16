@@ -72,23 +72,9 @@ def _cached_get_particular_resources(self, resources):
 # No debug prints or noisy markers at import-time.
 
 
-def calculate_bonuses(attack_effects, enemy_object, target):  # int, Units, str -> int
-    # Calculate the percentage of total units will be affected
-    defending_unit_amount = enemy_object.selected_units[target]
-
-    # sum of units amount
-    enemy_units_total_amount = sum(enemy_object.selected_units.values())
-
-    # the affected percentage from sum of units
-    unit_of_army = (defending_unit_amount * 100) / (enemy_units_total_amount + 1)
-
-    # the bonus calculated based on affected percentage
-    affected_bonus = attack_effects[1] * (unit_of_army / 100)
-
-    # divide affected_bonus to make bonus effect less relevant
-    attack_effects = affected_bonus / 100
-
-    return attack_effects
+# `calculate_bonuses` moved to `attack_scripts.nations_helpers` to
+# begin progressive refactoring and enable focused unit tests.
+from attack_scripts.nations_helpers import calculate_bonuses  # noqa: F401
 
 
 class Economy:
