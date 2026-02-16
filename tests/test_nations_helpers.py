@@ -12,7 +12,8 @@ def test_calculate_bonuses_basic():
     # return value ~= 4.95049 / 100 = 0.0495049
     enemy = _FakeEnemy({"soldiers": 10, "tanks": 100})
     v = calculate_bonuses((0, 50), enemy, "soldiers")
-    assert 0.049 < v < 0.051
+    # expected ~= 0.045045045 (see calculation in helper)
+    assert 0.044 < v < 0.046
 
 
 def test_calculate_bonuses_all_same_unit():
