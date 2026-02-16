@@ -141,3 +141,60 @@ def compute_morale_delta(
     computed_morale_delta = max(1, computed_morale_delta)
     computed_morale_delta = min(200, computed_morale_delta)
     return computed_morale_delta
+
+
+def resolve_battle_outcome(
+    attacker_chance: float,
+    defender_chance: float,
+    attacker_unit_amount_bonuses: float,
+    defender_unit_amount_bonuses: float,
+) -> tuple:
+    """Determine winner/loser, win_type and winner_casulties using original logic.
+
+    Returns: (winner_is_defender: bool, win_type: float, winner_casulties: float)
+    """
+    if defender_chance >= attacker_chance:
+        # defender wins
+        if attacker_unit_amount_bonuses == 0:
+            return True, 5, 0
+        return (
+            True,
+            (defender_chance / attacker_chance),
+            ((1 + attacker_chance) / defender_chance),
+        )
+    else:
+        # attacker wins
+        if defender_unit_amount_bonuses == 0:
+            return False, 5, 0
+        return (
+            False,
+            (attacker_chance / defender_chance),
+            ((1 + defender_chance) / attacker_chance),
+        )
+
+
+def compute_unit_casualties(
+    winner_casulties: float,
+    win_type: float,
+    winner_units_list: list,
+    loser_units_list: list,
+    rng: object = None,
+) -> tuple:
+    """Compute casualty values for each unit pair in the engagement.
+
+    Returns two lists of (unit_name, casualties) for winner and loser respectively.
+    The function is pure if a deterministic RNG is provided (useful for tests).
+    """
+    import random as _random
+
+    _rng = rng or _random
+    winner_pairs = []
+    loser_pairs = []
+
+    for w_unit, l_unit in zip(winner_units_list, loser_units_list):
+        w_cas = winner_casulties * _rng.uniform(2, 10) * 2
+        l_cas = win_type * _rng.uniform(2, 10.5) * 2
+        winner_pairs.append((w_unit, w_cas))
+        loser_pairs.append((l_unit, l_cas))
+
+    return winner_pairs, loser_pairs

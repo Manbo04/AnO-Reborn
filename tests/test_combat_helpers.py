@@ -1,8 +1,12 @@
+import pytest
+
 from attack_scripts.combat_helpers import (
     compute_unit_amount_bonus,
     compute_engagement_metrics,
     compute_morale_delta,
     compute_strength,
+    resolve_battle_outcome,
+    compute_unit_casualties,
 )
 
 
@@ -61,3 +65,30 @@ def test_compute_morale_delta_and_strength():
     assert a_strength > 0
     assert d_strength > 0
     assert a_strength != d_strength
+
+
+def test_resolve_battle_outcome_and_casualties_deterministic():
+    # defender wins with attacker_unit_amount_bonuses == 0 -> special case
+    winner_is_def, win_type, winner_cas = resolve_battle_outcome(1.0, 2.0, 0.0, 0.1)
+    assert winner_is_def is True
+    assert win_type == 5
+    assert winner_cas == 0
+
+    # regular outcome where attacker wins
+    winner_is_def, win_type, winner_cas = resolve_battle_outcome(3.0, 1.0, 0.5, 0.5)
+    assert winner_is_def is False
+    assert win_type == pytest.approx(3.0 / 1.0)
+    assert winner_cas == pytest.approx((1 + 1.0) / 3.0)
+
+    # casualty computation deterministic with seeded RNG
+    import random
+
+    rng = random.Random(0)
+    winner_pairs, loser_pairs = compute_unit_casualties(
+        winner_cas, win_type, ["u1", "u2"], ["v1", "v2"], rng=rng
+    )
+    assert len(winner_pairs) == 2
+    assert len(loser_pairs) == 2
+    # casualty values should be positive floats
+    assert all(a > 0 for _, a in winner_pairs)
+    assert all(a > 0 for _, a in loser_pairs)
