@@ -819,25 +819,22 @@ class Military(Nation):
 
         # print(attacker_chance, defender_chance)
 
-        # Determine the winner
-        if defender_chance >= attacker_chance:
+        # Determine the winner using the extracted helper (keeps logic identical)
+        from attack_scripts.combat_helpers import resolve_battle_outcome
+
+        winner_is_defender, win_type, winner_casulties = resolve_battle_outcome(
+            attacker_chance,
+            defender_chance,
+            attacker_unit_amount_bonuses,
+            defender_unit_amount_bonuses,
+        )
+
+        if winner_is_defender:
             winner = defender
             loser = attacker
-            if attacker_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
-            else:
-                win_type = defender_chance / attacker_chance
-                winner_casulties = (1 + attacker_chance) / defender_chance
         else:
             winner = attacker
             loser = defender
-            if defender_unit_amount_bonuses == 0:
-                winner_casulties = 0
-                win_type = 5
-            else:
-                win_type = attacker_chance / defender_chance
-                winner_casulties = (1 + defender_chance) / attacker_chance
 
         # Get the absolute side (absolute attacker and defender) in the war for determining the loser's morale column name to decrease
 
@@ -911,16 +908,20 @@ class Military(Nation):
 
         # Maybe use the damage property also in unit loss
         # TODO: make unit loss more precise
-        for winner_unit, loser_unit in zip(
-            winner.selected_units_list, loser.selected_units_list
-        ):
-            w_casualties = winner_casulties * random.uniform(2, 10) * 2
-            l_casualties = win_type * random.uniform(2, 10.5) * 2
+        # Compute per-unit casualties via helper (inject RNG if needed for tests)
+        from attack_scripts.combat_helpers import compute_unit_casualties
 
-            # print("w_casualties", w_casualties)
-            # print("l_casualties", l_casualties)
-            winner.casualties(winner_unit, w_casualties)
-            loser.casualties(loser_unit, l_casualties)
+        winner_pairs, loser_pairs = compute_unit_casualties(
+            winner_casulties,
+            win_type,
+            winner.selected_units_list,
+            loser.selected_units_list,
+        )
+
+        for unit_name, amount in winner_pairs:
+            winner.casualties(unit_name, amount)
+        for unit_name, amount in loser_pairs:
+            loser.casualties(unit_name, amount)
 
         # infrastructure damage (code commented out - connection removed)
         # db = connection.cursor()
