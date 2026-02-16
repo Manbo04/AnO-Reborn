@@ -1,6 +1,8 @@
 from attack_scripts.combat_helpers import (
     compute_unit_amount_bonus,
     compute_engagement_metrics,
+    compute_morale_delta,
+    compute_strength,
 )
 
 
@@ -39,3 +41,23 @@ def test_compute_engagement_metrics_simple():
     assert 0.099 < att_bonus < 0.100
     assert 0.049 < def_bonus < 0.050
     assert dealt_infra_damage == 2.0
+
+
+def test_compute_morale_delta_and_strength():
+    attacker_units = {"soldiers": 100, "tanks": 5}
+    defender_units = {"soldiers": 80, "tanks": 2}
+    loser_units = defender_units
+
+    # If attacker wins (winner_is_defender=False) the computed delta should be > 0
+    delta = compute_morale_delta(
+        loser_units, attacker_units, defender_units, False, win_type=2
+    )
+    assert isinstance(delta, int)
+    assert delta >= 1 and delta <= 200
+
+    # Strength sanity checks
+    a_strength = compute_strength(attacker_units)
+    d_strength = compute_strength(defender_units)
+    assert a_strength > 0
+    assert d_strength > 0
+    assert a_strength != d_strength
