@@ -882,52 +882,30 @@ class Military(Nation):
             "nukes": 12,
         }
 
-        # Compute attacker and defender strengths using the unit morale weights
-        attacker_strength = 0.0
-        defender_strength = 0.0
-        try:
-            for unit_name, count in attacker.selected_units.items():
-                attacker_strength += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-            for unit_name, count in defender.selected_units.items():
-                defender_strength += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-        except Exception:
-            # fallback small strengths to avoid zero division
-            attacker_strength = max(attacker_strength, 1.0)
-            defender_strength = max(defender_strength, 1.0)
+        # Delegate morale/strength calculation to the combat helper so the
+        # core `fight` logic remains focused on flow control and DB effects.
+        from attack_scripts.combat_helpers import compute_morale_delta, compute_strength
 
-        # Advantage factor ranges (0..1). If attacker and defender are equal, advantage ~ 0.5
+        # Compute the morale delta and attach to the loser (unchanged behaviour)
+        winner_is_defender = winner is defender
+        computed_morale_delta = compute_morale_delta(
+            loser.selected_units,
+            attacker.selected_units,
+            defender.selected_units,
+            winner_is_defender,
+            win_type,
+        )
+
+        setattr(loser, "_computed_morale_delta", computed_morale_delta)
+
+        # Expose advantage for potential telemetry/debugging (keeps parity)
+        attacker_strength = compute_strength(attacker.selected_units)
+        defender_strength = compute_strength(defender.selected_units)
         advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
-
-        # If defender actually won, invert advantage for purposes of computing loser impact
         if winner is defender:
             advantage_factor = 1.0 - advantage
         else:
             advantage_factor = advantage
-
-        # Base value derived from the loser's own units (their potential to suffer morale loss)
-        base_loser_value = 0.0
-        try:
-            for unit_name, count in loser.selected_units.items():
-                base_loser_value += (count or 0) * unit_morale_weights.get(
-                    unit_name, 0.01
-                )
-        except Exception:
-            base_loser_value = 1.0
-
-        # Compute the morale delta proportional to base_loser_value, advantage_factor and win_type.
-        # Scale down to keep deltas reasonable; cap to prevent instant annihilation.
-        computed_morale_delta = int(
-            round(base_loser_value * advantage_factor * win_type * 0.1)
-        )
-        computed_morale_delta = max(1, computed_morale_delta)
-        computed_morale_delta = min(200, computed_morale_delta)
-
-        # attach to loser for morale_change to pick up
-        setattr(loser, "_computed_morale_delta", computed_morale_delta)
 
         win_condition = Military.morale_change(morale_column, win_type, winner, loser)
 
