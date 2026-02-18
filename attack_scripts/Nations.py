@@ -599,62 +599,12 @@ class Military(Nation):
 
     # Update the morale and give back the win type name
     @staticmethod
-    # def morale_change(war_id, morale, column, win_type, winner, loser):
     def morale_change(column, win_type, winner, loser):
-        with get_db_connection() as connection:
-            db = connection.cursor()
+        # Delegate DB persistence to the new war_orchestrator module to keep
+        # behaviour identical while centralising side-effects.
+        from attack_scripts.war_orchestrator import morale_change as _mc
 
-            db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
-                (winner.user_id, loser.user_id, winner.user_id, loser.user_id),
-            )
-            war_id = db.fetchall()[-1][0]
-
-            war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
-            db.execute(war_column_stat, (war_id,))
-            morale = fetchone_first(db, 0)
-
-            # annihilation
-            # 50 morale change
-            # Morale change tiers (reduced severity so wars require sustained action)
-            # annihilation: large defeat
-            if win_type >= 3:
-                morale = morale - 15
-                win_condition = "annihilation"
-
-            # definite victory: moderate defeat
-            elif win_type >= 2:
-                morale = morale - 10
-                win_condition = "definite victory"
-
-            # close victory: minor defeat
-            else:
-                morale = morale - 5
-                win_condition = "close victory"
-
-            # Win the war
-            if morale <= 0:
-                # TODO: need a method for give the winner the prize for winning the war (this is not negotiation because the enemy completly lost the war since morale is 0)
-                Nation.set_peace(db, connection, war_id)
-                eco = Economy(winner.user_id)
-
-                for resource in Economy.resources:
-                    resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
-                    db.execute(resource_sel_stat, (loser.user_id,))
-                    resource_amount = fetchone_first(db, 0)
-
-                    # transfer 20% of resource on hand (TODO: implement if and alliance won how to give it)
-                    eco.transfer_resources(
-                        resource, resource_amount * (1 / 5), winner.user_id
-                    )
-
-                # print("THE WAR IS OVER")
-
-            db.execute(f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id))
-
-            connection.commit()
-
-            return win_condition
+        return _mc(column, win_type, winner, loser)
 
     @staticmethod
     def special_fight(attacker, defender, target):  # Units, Units, int -> str, None
@@ -904,12 +854,9 @@ class Military(Nation):
         else:
             advantage_factor = advantage
 
-        win_condition = Military.morale_change(morale_column, win_type, winner, loser)
-
-        # Maybe use the damage property also in unit loss
-        # TODO: make unit loss more precise
         # Compute per-unit casualties via helper (inject RNG if needed for tests)
         from attack_scripts.combat_helpers import compute_unit_casualties
+        from attack_scripts.war_orchestrator import persist_fight_results
 
         winner_pairs, loser_pairs = compute_unit_casualties(
             winner_casulties,
@@ -918,10 +865,16 @@ class Military(Nation):
             loser.selected_units_list,
         )
 
-        for unit_name, amount in winner_pairs:
-            winner.casualties(unit_name, amount)
-        for unit_name, amount in loser_pairs:
-            loser.casualties(unit_name, amount)
+        # Persist casualties + morale change in a single transactional operation
+        win_condition = persist_fight_results(
+            winner,
+            loser,
+            winner_pairs,
+            loser_pairs,
+            morale_column,
+            computed_morale_delta,
+            win_type,
+        )
 
         # infrastructure damage (code commented out - connection removed)
         # db = connection.cursor()
