@@ -19,14 +19,37 @@ def create_test_user_with_mall():
         db.execute(
             "INSERT INTO stats (id, gold, location) VALUES (%s,%s,%s) "
             "ON CONFLICT (id) DO NOTHING",
-            (uid, 1000000, ""),
+            (uid, 100000000, ""),
         )
+        # populate all known resources with a large amount so production
+        # formulas aren't blocked by missing input resources during the
+        # generate_province_revenue run.  Other tests rely on this row being
+        # present but not necessarily having values, so we update after
+        # inserting to avoid schema mismatches.
         db.execute(
-            "INSERT INTO resources (id, lumber, coal, rations, consumer_goods) "
-            "VALUES (%s,%s,%s,%s,%s) "
-            "ON CONFLICT (id) DO NOTHING",
-            (uid, 0, 0, 0, 0),
+            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+            (uid,),
         )
+        # bulk update every resource column to a big number
+        all_res = [
+            "rations",
+            "oil",
+            "coal",
+            "uranium",
+            "bauxite",
+            "lead",
+            "copper",
+            "iron",
+            "lumber",
+            "components",
+            "steel",
+            "consumer_goods",
+            "aluminium",
+            "gasoline",
+            "ammunition",
+        ]
+        for r in all_res:
+            db.execute(f"UPDATE resources SET {r}=%s WHERE id=%s", (1000000, uid))
         # give a mall so we produce consumer_goods (and add solar_fields for energy)
         db.execute(
             "INSERT INTO proInfra (id, malls, solar_fields) VALUES (%s,%s,%s) "
