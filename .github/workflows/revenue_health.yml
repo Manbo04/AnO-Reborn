@@ -8,6 +8,13 @@ on:
 jobs:
   check-revenue:
     runs-on: ubuntu-latest
+    env:
+      PG_HOST: 127.0.0.1
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: postgres
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
     services:
       postgres:
         image: postgres:14
