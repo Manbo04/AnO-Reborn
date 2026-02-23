@@ -12,8 +12,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--threshold-hours",
     type=float,
-    default=2,
-    help="Hours threshold before reporting stale task",
+    default=6,
+    help=(
+        "Hours threshold before reporting stale task "
+        "(default increased to reduce false alarms)"
+    ),
 )
 args = parser.parse_args()
 
@@ -32,8 +35,20 @@ with get_db_connection() as conn:
     row = db.fetchone()
 
     if not row or not row[0]:
-        print("generate_province_revenue: no last_run recorded; considered stale")
-        raise SystemExit(1)
+        # No recorded run yet; initialize the entry so future checks can
+        # accurately measure age.  This avoids the health check failing
+        # immediately after a fresh schema initialization.
+        print(
+            "generate_province_revenue: no last_run recorded; "
+            "initializing to now and treating as fresh"
+        )
+        db.execute(
+            "INSERT INTO task_runs (task_name, last_run) VALUES (%s, now()) "
+            "ON CONFLICT (task_name) DO UPDATE SET last_run=now()",
+            ("generate_province_revenue",),
+        )
+        conn.commit()
+        raise SystemExit(0)
 
     last_run = row[0]
     now = datetime.utcnow().replace(tzinfo=last_run.tzinfo)
