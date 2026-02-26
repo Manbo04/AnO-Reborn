@@ -10,6 +10,10 @@ def run_script(threshold_hours: float):
     # Invoke the health‑check script with a given threshold and return
     # the CompletedProcess object.
     env = os.environ.copy()
+    # Make sure the repo root is on PYTHONPATH for the subprocess so
+    # the `database` module can be imported.  CI already sets PYTHONPATH,
+    # but tests execute locally too.
+    env["PYTHONPATH"] = env.get("PYTHONPATH", "") + os.pathsep + os.getcwd()
     # ensure we run with the same interpreter used for tests
     proc = subprocess.run(
         [

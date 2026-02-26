@@ -4,6 +4,16 @@ Exit code 0 if last_run is within threshold hours, 1 otherwise.
 Usage:
   python scripts/check_revenue_task.py --threshold-hours 2
 """
+import os
+import sys
+
+# Ensure repository root is on PYTHONPATH so imports such as `database`
+# resolve correctly when the script is executed via subprocess from tests
+# or from workflows where the cwd may not be the project root.
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+
 import argparse
 from datetime import datetime, timedelta
 from database import get_db_connection

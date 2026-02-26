@@ -43,6 +43,11 @@
                     </span>Your citizens do not have rations
                 </ul>
                 {% endif %}
+                {% if distribution_capacity is not none %}
+                <ul class="right vanilla notificationchild">
+                    Distribution buildings can serve {{ distribution_capacity }} population
+                </ul>
+                {% endif %}
             </div>
             <div class="left fit notificationchild">
                 <!--If they have-->

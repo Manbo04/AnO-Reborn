@@ -194,7 +194,17 @@ def province(pId):
         enough_consumer_goods = consumer_goods >= max_cg
 
         rations_minus = province["population"] // variables.RATIONS_PER
-        enough_rations = rations - rations_minus > 1
+        if variables.FEATURE_RATIONS_DISTRIBUTION:
+            from tasks import rations_distribution_capacity
+
+            # distribution cap for entire user; we require at least the
+            # province consumption to have rations available here
+            dist_cap = rations_distribution_capacity(cId) or 0
+            enough_rations = (rations - rations_minus > 1) and (
+                dist_cap >= rations_minus
+            )
+        else:
+            enough_rations = rations - rations_minus > 1
 
         # Calculate energy in-memory from proInfra data
         consumers = variables.ENERGY_CONSUMERS
@@ -225,6 +235,9 @@ def province(pId):
             upgrades=upgrades,
             prices=prices,
             new_infra=new_infra,
+            distribution_capacity=(
+                dist_cap if variables.FEATURE_RATIONS_DISTRIBUTION else None
+            ),
         )
 
 

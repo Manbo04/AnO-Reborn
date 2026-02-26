@@ -26,6 +26,20 @@ LAND_FARM_PRODUCTION_ADDITION = 3
 CONSUMER_GOODS_PER = 80000  # 1 Consumer good per x population
 RATIONS_PER = 50000  # 1 Ration per x population (lower = more rations needed)
 
+# Building-based distribution requirement for rations.  Each province must
+# not only have farms producing food but also enough retail/distribution
+# buildings to move the food around; otherwise the population effectively
+# has no rations even if the resource number is high.
+# NOTE: enabled by default following 2026‑02‑24 deployment.
+FEATURE_RATIONS_DISTRIBUTION = True  # toggle the new mechanic on/off
+RATIONS_DISTRIBUTION_BUILDINGS = [
+    "gas_stations",
+    "general_stores",
+    "farmers_markets",
+    "malls",
+]
+RATIONS_DISTRIBUTION_PER_BUILDING = 50000  # population served per building
+
 UNITS = [
     "soldiers",
     "tanks",
