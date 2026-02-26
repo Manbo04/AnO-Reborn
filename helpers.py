@@ -282,6 +282,93 @@ def record_trade_event(
         pass
 
 
+def record_war_event(
+    war_id,
+    winner,
+    loser,
+    winner_losses,
+    loser_losses,
+    morale_column,
+    morale_delta,
+    new_morale,
+    win_label,
+    concluded: bool,
+):
+    """Record a detailed war/fight event for auditing purposes.
+
+    This helper creates a lightweight `war_events` table (if missing) and
+    persists a row describing the fight outcome.  The structure mirrors the
+    existing trade audit helpers so that ops personnel can inspect every
+    engagement via simple SQL.
+
+    Args:
+        war_id: integer ID of the war row, or None if unknown
+        winner: user ID of the winning side
+        loser: user ID of the losing side
+        winner_losses: iterable of (unit, amount) pairs taken from winner
+        loser_losses: iterable of (unit, amount) pairs taken from loser
+        morale_column: which column was decremented (e.g. 'defender_morale')
+        morale_delta: amount the morale decreased by
+        new_morale: resulting morale value after subtraction
+        win_label: human-readable label returned by persist_fight_results
+        concluded: whether this fight ended the war (peace declared)
+    """
+    try:
+        from database import get_db_connection
+
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS war_events (
+                    id SERIAL PRIMARY KEY,
+                    war_id INTEGER,
+                    winner INTEGER,
+                    loser INTEGER,
+                    winner_losses TEXT,
+                    loser_losses TEXT,
+                    morale_column TEXT,
+                    morale_delta INTEGER,
+                    new_morale INTEGER,
+                    win_label TEXT,
+                    concluded BOOLEAN,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )
+                """
+            )
+            try:
+                import json
+
+                wtext = json.dumps(list(winner_losses))
+                ltext = json.dumps(list(loser_losses))
+            except Exception:
+                wtext = str(list(winner_losses))
+                ltext = str(list(loser_losses))
+
+            db.execute(
+                (
+                    "INSERT INTO war_events (war_id, winner, loser, winner_losses, "
+                    "loser_losses, morale_column, morale_delta, new_morale, win_label, concluded) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                ),
+                (
+                    war_id,
+                    winner,
+                    loser,
+                    wtext,
+                    ltext,
+                    morale_column,
+                    morale_delta,
+                    new_morale,
+                    win_label,
+                    concluded,
+                ),
+            )
+    except Exception:
+        # auditing is best-effort; do not propagate errors
+        pass
+
+
 # ------------------------------------------------------------------
 
 

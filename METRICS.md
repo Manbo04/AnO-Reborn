@@ -6,6 +6,7 @@ What was added:
 
 - `helpers.record_task_metric(task_name, duration_seconds)` — records task duration to DB (`task_metrics` table) and emits a Prometheus histogram if `prometheus_client` is available.
 - `helpers.record_trade_event(offer_id, offerer, offeree, resource, amount, price, trade_type)` — records trade events to DB (`trade_events` table) and increments a Prometheus counter when available.
+- `helpers.record_war_event(...)` — new in 2026; audits every fight persisted via `war_orchestrator.persist_fight_results`. Entries live in the `war_events` table and include casualty breakdowns, morale deltas, win label, and whether the war concluded.  Ops can query this table when investigating combat-related bugs.
 - Migration script: `scripts/add_metrics_tables.py` — creates `trade_events` and `task_metrics` tables when run.
 - Instrumentation:
   - `market.accept_trade` now calls `record_trade_event(...)` after successful trades.
