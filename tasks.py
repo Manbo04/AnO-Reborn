@@ -186,6 +186,24 @@ def rations_needed(cId):
         return total_needed if total_needed > 0 else 1
 
 
+def rations_distribution_capacity(user_id):
+    """Return the population that can be served by distribution buildings."""
+    if not variables.FEATURE_RATIONS_DISTRIBUTION:
+        return None
+
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
+        db.execute(
+            f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
+            "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
+            (user_id,),
+        )
+        bcount = db.fetchone()[0] or 0
+    return bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+
+
 # Returns energy production and consumption from a certain province
 def energy_info(province_id):
     from database import get_db_cursor
@@ -231,10 +249,33 @@ def food_stats(user_id):
         db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
         current_rations = db.fetchone()[0]
 
+        # compute distribution capacity if the feature is enabled
+        distribution_cap = None
+        if variables.FEATURE_RATIONS_DISTRIBUTION:
+            with get_db_cursor() as db:
+                # sum all distribution-building columns across the user's
+                # provinces; the proInfra table uses province id = users
+                # province id.
+                cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
+                db.execute(
+                    f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
+                    "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
+                    (user_id,),
+                )
+                bcount = db.fetchone()[0] or 0
+            distribution_cap = bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+
     if needed_rations == 0:
         needed_rations = 1
 
-    rcp = (current_rations / needed_rations) - 1  # Normalizes the score to 0.
+    # If the new feature is active, only rations covered by distribution
+    # buildings count towards the effective supply.
+    if distribution_cap is not None:
+        effective_rations = min(current_rations, distribution_cap)
+    else:
+        effective_rations = current_rations
+
+    rcp = (effective_rations / needed_rations) - 1  # Normalizes the score to 0.
     if rcp > 0:
         rcp = 0
 
