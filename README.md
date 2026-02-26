@@ -9,7 +9,7 @@ Affairs & order is a nation simulation game, where you can make your own nation,
 
 ## Flask / Requirements
 
-1. Install Python (Recommended: 3.10.x). This project is tested on **Python 3.8, 3.10 and 3.14** (CI matrix). For production deployments on Railway we recommend using `python-3.10.19` in `runtime.txt` or setting the service runtime to Python 3.10.x.
+1. Install Python (Recommended: 3.10.x). This project is tested on **Python 3.8, 3.10 and 3.14** (CI matrix) but you must also install the exact dependencies listed in `requirements.txt` before running the test suite – otherwise you may encounter import errors (older global packages, such as Werkzeug 0.16, are incompatible with modern interpreters). For production deployments on Railway we recommend using `python-3.10.19` in `runtime.txt` or setting the service runtime to Python 3.10.x.
 2. Create and activate a virtual environment (recommended):
    - `python3 -m venv .venv`
    - `source .venv/bin/activate`

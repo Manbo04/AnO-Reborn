@@ -2,6 +2,7 @@ import pytest
 from database import get_db_connection
 import variables
 import tasks
+import uuid
 
 
 def task_runs_table_exists():
@@ -23,11 +24,12 @@ def task_runs_table_exists():
 def test_buy_then_tasks_sequence():
     with get_db_connection() as conn:
         db = conn.cursor()
-        # create user
+        # create user with a random suffix to avoid collisions
+        name = f"seq_{uuid.uuid4().hex[:6]}"
         db.execute(
             "INSERT INTO users (username, email, date, hash) VALUES (%s,%s,%s,%s) "
             "RETURNING id",
-            ("seq_test", "seq@example.com", "2026-01-01", ""),
+            (name, f"{name}@example.com", "2026-01-01", ""),
         )
         uid = db.fetchone()[0]
         db.execute(
