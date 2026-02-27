@@ -20,4 +20,4 @@ repos:
     - id: trailing-whitespace
     - id: end-of-file-fixer
     - id: check-yaml
-      exclude: venv310/
+      exclude: venv310/|\.github/workflows/.*\.yml
