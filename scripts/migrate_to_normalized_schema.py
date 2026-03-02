@@ -95,9 +95,15 @@ def migrate_infrastructure(conn):
     column_map = create_column_to_building_map()
     print(f"✓ Mapped {len(column_map)} legacy columns to building types")
 
-    # Step 3: Read all proinfra data
+    # Step 3: Read all proinfra data joined with valid users
     print("\n[2/5] Reading legacy proinfra table...")
-    cursor.execute("SELECT * FROM proinfra")
+    cursor.execute(
+        """
+        SELECT p.*
+        FROM proinfra p
+        INNER JOIN users u ON p.id = u.id
+    """
+    )
     proinfra_rows = cursor.fetchall()
     print(f"✓ Found {len(proinfra_rows)} users with infrastructure data")
 
@@ -179,9 +185,15 @@ def migrate_research(conn):
     column_map = create_column_to_tech_map()
     print(f"✓ Mapped {len(column_map)} legacy upgrade columns to tech types")
 
-    # Step 3: Read all upgrades data
+    # Step 3: Read all upgrades data joined with valid users
     print("\n[2/5] Reading legacy upgrades table...")
-    cursor.execute("SELECT * FROM upgrades")
+    cursor.execute(
+        """
+        SELECT up.*
+        FROM upgrades up
+        INNER JOIN users u ON up.user_id = u.id
+    """
+    )
     upgrade_rows = cursor.fetchall()
     print(f"✓ Found {len(upgrade_rows)} users with upgrade data")
 
@@ -280,7 +292,8 @@ def verify_migration(conn):
     )
     result = cursor.fetchone()
     print(f"✓ Total user_tech records: {result['count']:,}")
-    print(f"✓ Total unlocked techs in new table: {result['unlocked']:,}")
+    unlocked_count = result["unlocked"] or 0
+    print(f"✓ Total unlocked techs in new table: {unlocked_count:,}")
 
     cursor.execute(
         """
