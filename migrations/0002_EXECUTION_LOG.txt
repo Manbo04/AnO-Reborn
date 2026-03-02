@@ -1,0 +1,25 @@
+-- Migration Execution Log
+-- Migration: 0002_normalize_economy_military.sql
+-- Executed: 2026-03-02
+-- Status: SUCCESS
+
+-- Tables Created:
+-- 1. resource_dictionary (15 rows seeded)
+-- 2. user_economy (mapping table)
+-- 3. unit_dictionary (11 rows seeded)
+-- 4. user_military (mapping table)
+
+-- Foreign Key Constraints Verified:
+-- fk_user_economy_user: user_economy.user_id -> users.id (ON DELETE CASCADE)
+-- fk_user_economy_resource: user_economy.resource_id -> resource_dictionary.resource_id (ON DELETE RESTRICT)
+-- fk_user_military_user: user_military.user_id -> users.id (ON DELETE CASCADE)
+-- fk_user_military_unit: user_military.unit_id -> unit_dictionary.unit_id (ON DELETE RESTRICT)
+
+-- Indexes Created:
+-- idx_user_economy_user_id
+-- idx_user_economy_resource_id
+-- idx_user_military_user_id
+-- idx_user_military_unit_id
+-- idx_user_military_combat_type
+
+-- All constraints are actively enforced at the database level.
