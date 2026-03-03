@@ -894,8 +894,27 @@ def declare_war():
 def defense():
     cId = session["user_id"]
     units = Military.get_military(cId)
-    defending_units = Military.get_defending_units(cId)
-    return render_template("defense.html", units=units, defending_units=defending_units)
+    current_defense = Military.get_defense(cId)
+
+    if request.method == "POST":
+        # Save the user's defense selection
+        selected_units = request.form.getlist("defense_units")
+        if len(selected_units) == 3:
+            defense_string = ",".join(selected_units)
+            nation = Military(cId)
+            result = nation.set_defense(defense_string)
+            if result:
+                return error(500, result)
+            # Update current defense after saving
+            current_defense = selected_units
+        else:
+            return error(400, "You must select exactly 3 unit types for defense.")
+
+    return render_template(
+        "defense.html",
+        units=units,
+        current_defense=current_defense,
+    )
 
 
 @wars_bp.route("/wars", methods=["GET", "POST"])
@@ -998,12 +1017,14 @@ def wars():
                 warsCount = db.fetchone()[0]
             except Exception:
                 warsCount = 0
+            current_defense = Military.get_defense(cId)
         return render_template(
             "wars.html",
             units=units,
             warsCount=warsCount,
             war_info=war_info,
             yourCountry=yourCountry,
+            current_defense=current_defense,
         )
 
 

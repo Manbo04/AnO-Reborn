@@ -5,47 +5,103 @@
     <div class="templatedivtopper wartopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
                 tune
-            </span>Defense</h1>
+            </span>Organize Defense</h1>
     </div>
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheaderleft">Defense is Automatic</h2>
+        <h2 class="templatecontentheaderleft">Manual Defense Selection</h2>
         <p class="templatecontentpleft landingpagecontent">
-            Default defense selection was removed. Your defense is now auto-selected from your strongest available unit types.
+            Select exactly 3 unit types to defend your nation. These units will take the brunt of enemy attacks and reduce damage to your provinces.
         </p>
 
-        <!-- Active Defending Units Section -->
-        <div class="templatecontentheader" style="margin-top: 2rem; margin-bottom: 1rem;">
-            <h3 class="templatecontentheadercenter" style="font-size: 1.1rem; color: #00cc00; margin-bottom: 1rem;">
-                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 0.5rem;">shield</span>
-                Currently Defending With
-            </h3>
-        </div>
+        <form method="POST" action="/defense" style="margin-top: 2rem;">
+            <h3 class="templatecontentheaderleft" style="margin-bottom: 1rem;">Select 3 Unit Types for Defense</h3>
+            <p class="templatecontentpleft" style="font-size: 0.9rem; color: #aaa; margin-bottom: 1.5rem;">
+                You currently have defending: <strong style="color: #00cc00;">
+                {% if current_defense %}
+                    {% for unit in current_defense %}{{ unit | title }}{% if not loop.last %}, {% endif %}{% endfor %}
+                {% else %}
+                    No defense assigned
+                {% endif %}
+                </strong>
+            </p>
 
-        <div class="templatedivflex2 menuflex unitcardparent" style="margin-bottom: 2rem;">
-            {% set unit_info = {
-                'soldiers': {'display': 'Soldiers', 'image': 'soldier.jpg'},
-                'tanks': {'display': 'Tanks', 'image': 'tank.jpg'},
-                'artillery': {'display': 'Artillery', 'image': 'artillery.jpg'},
-                'bombers': {'display': 'Bombers', 'image': 'bomber.jpg'},
-                'fighters': {'display': 'Fighter Jets', 'image': 'fighterjet.jpg'},
-                'apaches': {'display': 'Attack Helicopters', 'image': 'apache.jpg'},
-                'destroyers': {'display': 'Destroyers', 'image': 'destroyer.jpg'},
-                'cruisers': {'display': 'Cruisers', 'image': 'cruiser.jpg'},
-                'submarines': {'display': 'Submarines', 'image': 'submarine.jpg'}
-            } %}
+            <div class="templatedivflex2 menuflex unitcardparent">
+                {% set unit_info = {
+                    'soldiers': {'display': 'Soldiers', 'image': 'soldier.jpg'},
+                    'tanks': {'display': 'Tanks', 'image': 'tank.jpg'},
+                    'artillery': {'display': 'Artillery', 'image': 'artillery.jpg'},
+                    'bombers': {'display': 'Bombers', 'image': 'bomber.jpg'},
+                    'fighters': {'display': 'Fighter Jets', 'image': 'fighterjet.jpg'},
+                    'apaches': {'display': 'Attack Helicopters', 'image': 'apache.jpg'},
+                    'destroyers': {'display': 'Destroyers', 'image': 'destroyer.jpg'},
+                    'cruisers': {'display': 'Cruisers', 'image': 'cruiser.jpg'},
+                    'submarines': {'display': 'Submarines', 'image': 'submarine.jpg'}
+                } %}
 
-            {% for unit_name, quantity in defending_units.items() %}
-                {% set info = unit_info.get(unit_name, {}) %}
-                <div class="templatedivflex2left unitcard" style="border: 2px solid #00cc00; background: rgba(0, 204, 0, 0.05);">
-                    <ul class="bold medium" style="color: #00cc00;">{{ info.get('display', unit_name | title) }}</ul>
-                    <ul style="font-size: 1.3rem; color: #00ff00; font-weight: bold;">{{ quantity }}</ul>
-                    <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/' + info.get('image', 'default.jpg')) }}?v=2" alt="{{ info.get('display', unit_name) }}" style="opacity: 0.9;" />
-                    <span class="material-icons-outlined" style="position: absolute; top: 0.5rem; right: 0.5rem; color: #00cc00; font-size: 1.5rem;">check_circle</span>
-                </div>
-            {% endfor %}
-        </div>
+                {% for unit_name, info in unit_info.items() %}
+                    <label class="templatedivflex2left unitcard" style="cursor: pointer; transition: all 0.2s;">
+                        <ul class="bold medium">{{ info.display }}</ul>
+                        <ul>{{ units[unit_name] }}</ul>
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/' + info.image) }}?v=2" alt="{{ info.display }}" />
+
+                        <input type="checkbox" name="defense_units" value="{{ unit_name }}" class="warcheckbox defense-checkbox" {% if unit_name in current_defense %}checked{% endif %} />
+                        <span class="material-icons-outlined unitcardcheck defending-check" style="display: {% if unit_name in current_defense %}inline-block{% else %}none{% endif %};">
+                            check_circle
+                        </span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                <button type="submit" class="templatedivbutton templatecenteredbutton" style="flex: 1; max-width: 300px;">
+                    <span class="material-icons-outlined">shield</span>Save Defense Selection
+                </button>
+                <a href="/wars" class="templatedivbutton templatecenteredbutton" style="flex: 1; max-width: 300px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-icons-outlined">arrow_back</span>Back to Wars
+                </a>
+            </div>
+        </form>
+
+        <h2 class="templatecontentheadercenter" style="margin-top: 3rem; font-size: 1.1rem;">How Defense Works</h2>
+        <p class="templatecontentpleft landingpagecontent" style="max-width: 600px; margin: 1rem auto;">
+            Your selected defending units are automatically deployed when an enemy attacks your provinces.
+            These units reduce incoming damage and protect your economy. Choose units based on your military strength—typically your strongest unit types.
+        </p>
+
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.defense-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const label = this.closest('label');
+        const check = label.querySelector('.defending-check');
+        const checkedCount = document.querySelectorAll('.defense-checkbox:checked').length;
+
+        if (this.checked) {
+            check.style.display = 'inline-block';
+            label.style.borderColor = '#00cc00';
+            label.style.backgroundColor = 'rgba(0, 204, 0, 0.1)';
+        } else {
+            check.style.display = 'none';
+            label.style.borderColor = '';
+            label.style.backgroundColor = '';
+        }
+    });
+});
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const checkedCount = document.querySelectorAll('.defense-checkbox:checked').length;
+    if (checkedCount !== 3) {
+        e.preventDefault();
+        alert('You must select exactly 3 unit types for defense.');
+    }
+});
+</script>
+
+{% endblock %}
             <label for="1" class="templatedivflex2left unitcard">
 
                 <ul class="bold medium">Soldiers</ul>

@@ -28,10 +28,10 @@
 
             </div>
             <div class="templatedivflex2left">
-                <div class="center templatedivbutton smallactionbutton disabled" aria-disabled="true">
-                    <span class="material-icons-outlined">shield</span>
-                    Defense Auto-Selected
-                </div>
+                <a class="center templatedivbutton smallactionbutton" href="/defense"><span
+                            class="material-icons-outlined">
+                            shield
+                        </span>Organize Defense</a>
             </div>
             <div class="templatedivflex2right">
 
@@ -77,6 +77,14 @@
                     <td>{{ units["apaches"] }} Attack Helicopters</td>
                     <td>{{ units["destroyers"] }} Destroyers</td>
                     <td>{{ units["nukes"] }} Nukes</td>
+                </tr>
+                <tr style="background-color: rgba(0, 204, 0, 0.1); border-top: 2px solid #00cc00;">
+                    <td colspan="4" style="text-align: center; padding: 0.5rem; color: #00cc00; font-weight: bold;">
+                        🛡️ Defending With:
+                        {% for unit_name in current_defense %}
+                            {{ units[unit_name] }} {{ unit_name | title }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
                 </tr>
             </table>
         </div>
