@@ -36,8 +36,7 @@ def get_econ_statistics(cId):
             SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS total_quantity
             FROM user_buildings ub
             JOIN building_dictionary bd ON bd.building_id = ub.building_id
-            JOIN provinces p ON p.id = ub.province_id
-            WHERE p.userId = %s
+            WHERE ub.user_id = %s
             GROUP BY bd.name
             """,
             (cId,),
@@ -134,7 +133,7 @@ def get_revenue(cId):
         # Prefetch province ids, land and productivity
         # to avoid per-province lookups later
         db.execute(
-            "SELECT id, land, productivity FROM provinces WHERE userId=%s",
+            "SELECT id, land, productivity FROM provinces WHERE user_id=%s",
             (cId,),
         )
         province_rows = db.fetchall()
@@ -156,21 +155,25 @@ def get_revenue(cId):
         # OPTIMIZATION: Batch fetch all normalized building data in ONE query
         proinfra_by_id = {}
         if provinces:
-            placeholders = ",".join(["%s"] * len(provinces))
+            # user_buildings is per-user, not per-province,
+            # so we fetch all user buildings
             db.execute(
-                f"""
-                SELECT ub.province_id, bd.name, ub.quantity
+                """
+                SELECT bd.name, ub.quantity
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.province_id IN ({placeholders})
+                WHERE ub.user_id = %s
                 """,
-                tuple(provinces),
+                (cId,),
             )
+            # Since buildings are per-user now, distribute across all provinces equally
             for row in db.fetchall():
-                province_id, building_name, quantity = row
-                if province_id not in proinfra_by_id:
-                    proinfra_by_id[province_id] = {}
-                proinfra_by_id[province_id][building_name] = quantity or 0
+                building_name, quantity = row
+                # Distribute buildings across provinces for compatibility
+                for province_id in provinces:
+                    if province_id not in proinfra_by_id:
+                        proinfra_by_id[province_id] = {}
+                    proinfra_by_id[province_id][building_name] = quantity or 0
 
         # Fetch current funds to simulate money-constrained operation for `net`
         db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
@@ -264,7 +267,7 @@ def get_revenue(cId):
         except Exception:
             policies = []
 
-        db.execute("SELECT population, land FROM provinces WHERE userId=%s", (cId,))
+        db.execute("SELECT population, land FROM provinces WHERE user_id=%s", (cId,))
         ti_provinces = db.fetchall()
 
         ti_money = 0
@@ -303,7 +306,7 @@ def get_revenue(cId):
         # This shows users: net = gross production - citizen consumption need
         # which is what they expect to see for understanding production balance.
         # Get population to calculate theoretical cg need
-        db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (cId,))
+        db.execute("SELECT SUM(population) FROM provinces WHERE user_id=%s", (cId,))
         pop_row = db.fetchone()
         total_population = pop_row[0] if pop_row and pop_row[0] else 0
         citizen_cg_need = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
@@ -320,7 +323,7 @@ def get_revenue(cId):
         current_rations_for_calc = current_rations + prod_rations
         # Calculate consumption
         db.execute(
-            "SELECT population FROM provinces WHERE userId=%s",
+            "SELECT population FROM provinces WHERE user_id=%s",
             (cId,),
         )
         prov_pops = db.fetchall()
@@ -374,7 +377,7 @@ def next_turn_rations(cId, prod_rations):
         # Get population per province to calculate consumption correctly
         # (each province consumes at minimum 1 ration, matching population_growth task)
         db.execute(
-            "SELECT population FROM provinces WHERE userId=%s",
+            "SELECT population FROM provinces WHERE user_id=%s",
             (cId,),
         )
         provinces = db.fetchall()
@@ -419,7 +422,7 @@ def cg_need(user_id):
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("SELECT SUM(population) FROM provinces WHERE userId=%s", (user_id,))
+        db.execute("SELECT SUM(population) FROM provinces WHERE user_id=%s", (user_id,))
         population = db.fetchone()[0]
         if population is None:
             population = 0
@@ -481,10 +484,10 @@ def country(cId):
         db.execute(
             """SELECT u.username, s.location, u.description, u.date, u.flag,
                       c.coalition_id, cm.role, c.name as colName,
-                      (SELECT SUM(population) FROM provinces WHERE userId=%s),
-                      (SELECT AVG(happiness) FROM provinces WHERE userId=%s),
-                      (SELECT AVG(productivity) FROM provinces WHERE userId=%s),
-                      (SELECT COUNT(id) FROM provinces WHERE userId=%s)
+                      (SELECT SUM(population) FROM provinces WHERE user_id=%s),
+                      (SELECT AVG(happiness) FROM provinces WHERE user_id=%s),
+                      (SELECT AVG(productivity) FROM provinces WHERE user_id=%s),
+                      (SELECT COUNT(id) FROM provinces WHERE user_id=%s)
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalition_members cm ON u.id=cm.user_id
@@ -502,7 +505,7 @@ def country(cId):
             description,
             dateCreated,
             flag,
-            colId,
+            coalition_id,
             colRole,
             colName,
             population,
@@ -512,7 +515,7 @@ def country(cId):
         ) = row
 
         # Set defaults for None values
-        colId = colId or 0
+        coalition_id = coalition_id or 0
         colName = colName or ""
         colFlag = None
         population = population or 0
@@ -529,7 +532,7 @@ def country(cId):
             "SELECT provinceName, id, population, "
             "CAST(cityCount AS INTEGER) as cityCount, "
             "land, happiness, productivity "
-            "FROM provinces WHERE userId=(%s) "
+            "FROM provinces WHERE user_id=(%s) "
             "ORDER BY id ASC",
             (cId,),
         )
@@ -669,7 +672,7 @@ def country(cId):
         dateCreated=dateCreated,
         influence=influence,
         provinces=provinces,
-        colId=colId,
+        coalition_id=coalition_id,
         flag=flag,
         spy=spy,
         colFlag=colFlag,
@@ -748,15 +751,15 @@ def countries():
                    users.date,
                    users.flag,
                    COALESCE(SUM(provinces.population), 0) AS province_population,
-                   coalitions.colId,
+                   coalitions.coalition_id,
                    colNames.name,
                    COUNT(provinces.id) as provinces_count
             FROM users
-            LEFT JOIN provinces ON users.id = provinces.userId
-            LEFT JOIN coalitions ON users.id = coalitions.userId
-            LEFT JOIN colNames ON colNames.id = coalitions.colId
+            LEFT JOIN provinces ON users.id = provinces.user_id
+            LEFT JOIN coalitions ON users.id = coalitions.user_id
+            LEFT JOIN colNames ON colNames.id = coalitions.coalition_id
             {where_clause}
-            GROUP BY users.id, coalitions.colId, colNames.name
+            GROUP BY users.id, coalitions.coalition_id, colNames.name
             HAVING COUNT(provinces.id) >= %s
         """
 
@@ -954,7 +957,7 @@ def update_info():
             return error(400, "No such continent")
 
         if new_location not in ["", "none"]:
-            db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+            db.execute("SELECT id FROM provinces WHERE user_id=%s", (cId,))
             provinces = db.fetchall()
 
             # OPTIMIZATION: Batch update all provinces in ONE query instead of N queries
@@ -998,7 +1001,7 @@ def delete_own_account():
 
         # Deletes all the users provinces and their infrastructure
         # OPTIMIZATION: Batch delete instead of N+1 queries
-        db.execute("SELECT id FROM provinces WHERE userId=%s", (cId,))
+        db.execute("SELECT id FROM provinces WHERE user_id=%s", (cId,))
         province_ids = db.fetchall()
         if province_ids:
             ids = [p[0] for p in province_ids]
@@ -1035,11 +1038,12 @@ def delete_own_account():
         if coalition_role != "leader":
             pass
         else:
-            db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+            db.execute("SELECT coalition_id FROM coalitions WHERE user_id=%s", (cId,))
             user_coalition = db.fetchone()[0]
 
             db.execute(
-                "SELECT COUNT(userId) FROM coalitions WHERE role='leader' AND colId=%s",
+                "SELECT COUNT(user_id) FROM coalitions "
+                "WHERE role='leader' AND coalition_id=%s",
                 (user_coalition,),
             )
             leader_count = db.fetchone()[0]
@@ -1047,12 +1051,18 @@ def delete_own_account():
             if leader_count != 1:
                 pass
             else:
-                db.execute("DELETE FROM coalitions WHERE colId=%s", (user_coalition,))
+                db.execute(
+                    "DELETE FROM coalitions WHERE coalition_id=%s", (user_coalition,)
+                )
                 db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                db.execute("DELETE FROM colBanks WHERE colid=%s", (user_coalition,))
-                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+                db.execute(
+                    "DELETE FROM colBanks WHERE coalition_id=%s", (user_coalition,)
+                )
+                db.execute(
+                    "DELETE FROM requests WHERE coalition_id=%s", (user_coalition,)
+                )
 
-        db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("DELETE FROM coalitions WHERE user_id=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         try:

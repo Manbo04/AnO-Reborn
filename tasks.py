@@ -2357,10 +2357,6 @@ def _finalize_game_tick_log(
             total_production=%s,
             total_consumption=%s,
             total_deserted_units=%s,
-            production_phase_ms=%s,
-            consumption_phase_ms=%s,
-            validation_phase_ms=%s,
-            total_duration_ms=%s,
             error_message=%s
         WHERE tick_id=%s
         """,
@@ -2372,10 +2368,6 @@ def _finalize_game_tick_log(
             total_production,
             total_consumption,
             total_deserted_units,
-            production_phase_ms,
-            consumption_phase_ms,
-            validation_phase_ms,
-            total_duration_ms,
             error_message,
             tick_id,
         ),
