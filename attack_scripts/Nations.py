@@ -941,15 +941,14 @@ class Military(Nation):
         tanks = max(0, army_bases * 8 - military["tanks"])
         artillery = max(0, army_bases * 8 - military["artillery"])
 
-        # Air units
-        # Fighters and bombers share aerodome capacity
-        air_units = military["fighters"] + military["bombers"]
+        # Air units - all aircraft share aerodome capacity
+        air_units = (
+            military["fighters"] + military["bombers"] + military.get("apaches", 0)
+        )
         air_limit = max(0, aerodomes * 5 - air_units)
         bombers = air_limit
         fighters = air_limit
-
-        # Apaches use army_bases (separate capacity from aerodomes)
-        apaches = max(0, army_bases * 5 - military.get("apaches", 0))
+        apaches = air_limit
 
         # Naval units
         naval_units = military["submarines"] + military["destroyers"]
