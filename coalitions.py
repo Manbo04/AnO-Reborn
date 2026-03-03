@@ -631,6 +631,8 @@ def coalitions():
         offset = (page - 1) * per_page
 
         # Main query with pagination - all filtering/sorting in SQL
+        # flag_data is fetched here so templates can inline it as a data URI
+        # and avoid 22 separate /flag/coalition/X sub-requests per page.
         main_query = f"""
             SELECT
                 cn.id AS coalition_id,
@@ -639,7 +641,8 @@ def coalitions():
                 cn.flag,
                 COUNT(DISTINCT cm.userid) AS members,
                 cn.date AS date,
-                COALESCE(SUM(prov.total_pop), 0) AS total_influence
+                COALESCE(SUM(prov.total_pop), 0) AS total_influence,
+                cn.flag_data
             FROM colNames cn
             LEFT JOIN coalitions_legacy cm ON cn.id = cm.colid
             LEFT JOIN (
@@ -648,16 +651,47 @@ def coalitions():
                 GROUP BY userid
             ) prov ON cm.userid = prov.userid
             {where_clause}
-            GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date
+            GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date, cn.flag_data
             ORDER BY {order_by}
             LIMIT %s OFFSET %s
         """
         db.execute(main_query, tuple(params) + (per_page, offset))
         coalitionsDb = db.fetchall()
 
+        default_flag_src = "/static/flags/default_flag.jpg"
+
         coalitions_list = []
         for row in coalitionsDb:
-            col_id, col_type, name, flag, members, col_date, influence = row
+            (
+                col_id,
+                col_type,
+                name,
+                flag,
+                members,
+                col_date,
+                influence,
+                flag_data,
+            ) = row
+
+            # Build inline flag src to avoid per-row /flag/ sub-requests.
+            # If the coalition has a base64 blob, inline it as a data URI;
+            # otherwise fall back to the default static flag image.
+            if flag_data:
+                import base64 as _b64
+
+                try:
+                    raw = _b64.b64decode(flag_data)
+                    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+                        mime = "image/png"
+                    elif raw[:2] == b"\xff\xd8":
+                        mime = "image/jpeg"
+                    else:
+                        mime = "image/png"
+                    flag_src = f"data:{mime};base64,{flag_data}"
+                except Exception:
+                    flag_src = default_flag_src
+            else:
+                flag_src = default_flag_src
 
             # Calculate unix timestamp for display
             try:
@@ -672,6 +706,7 @@ def coalitions():
                     "type": col_type,
                     "name": name,
                     "flag": flag,
+                    "flag_src": flag_src,
                     "members": members,
                     "date": col_date,
                     "influence": influence,
