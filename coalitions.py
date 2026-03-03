@@ -718,8 +718,8 @@ def join_col(coalition_id):
 
         if colType == "Open":
             db.execute(
-                "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)",
-                (coalition_id, cId),
+                "INSERT INTO coalition_members (coalition_id, user_id, role) VALUES (%s, %s, %s)",
+                (coalition_id, cId, "member"),
             )
         else:
             # Check for existing join request (SELECT 1 is explicit and avoids SQL syntax errors)
@@ -853,7 +853,7 @@ def give_position():
             return error(400, "Can't edit role for a person higher rank than you.")
 
         db.execute(
-            "UPDATE coalitions SET role=%s WHERE userId=%s AND colId=%s",
+            "UPDATE coalition_members SET role=%s WHERE user_id=%s AND coalition_id=%s",
             (role, roleer, coalition_id),
         )
         # Diagnostic: confirm role update in test logs
@@ -897,8 +897,8 @@ def adding(uId):
             (uId, coalition_id),
         )
         db.execute(
-            "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)",
-            (coalition_id, uId),
+            "INSERT INTO coalition_members (coalition_id, user_id, role) VALUES (%s, %s, %s)",
+            (coalition_id, uId, "member"),
         )
 
         # Invalidate coalition page cache so leaders/deputies see the new member
@@ -968,7 +968,10 @@ def delete_coalition(coalition_id):
         coalition_name = row[0]
 
         db.execute("DELETE FROM colNames WHERE id=(%s)", (coalition_id,))
-        db.execute("DELETE FROM coalitions WHERE colId=(%s)", (coalition_id,))
+        db.execute(
+            "DELETE FROM coalition_members WHERE coalition_id=%s", (coalition_id,)
+        )
+        db.execute("DELETE FROM coalitions WHERE coalition_id=%s", (coalition_id,))
 
     flash(f"{coalition_name} coalition was deleted.")
 
