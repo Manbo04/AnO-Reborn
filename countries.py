@@ -751,15 +751,15 @@ def countries():
                    users.date,
                    users.flag,
                    COALESCE(SUM(provinces.population), 0) AS province_population,
-                   coalitions.colid,
-                   colNames.name,
+                   COALESCE(cm.coalition_id, NULL) AS colid,
+                   COALESCE(c.name, NULL) AS name,
                    COUNT(provinces.id) as provinces_count
             FROM users
             LEFT JOIN provinces ON users.id = provinces.userid
-            LEFT JOIN coalitions ON users.id = coalitions.userid
-            LEFT JOIN colNames ON colNames.id = coalitions.colid
+            LEFT JOIN coalition_members cm ON users.id = cm.user_id
+            LEFT JOIN coalitions c ON cm.coalition_id = c.coalition_id
             {where_clause}
-            GROUP BY users.id, coalitions.colid, colNames.name
+            GROUP BY users.id, cm.coalition_id, c.name
             HAVING COUNT(provinces.id) >= %s
         """
 
