@@ -16,7 +16,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">description</span> What Are Rations?</h3>
                 <p class="templatecontentpleft">Rations are the most critical resource in the game. They represent food that your population consumes to survive and grow. Without sufficient rations, your population cannot grow and your tax income suffers.</p>
@@ -29,11 +29,11 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">schedule</span> When Do Rations Update?</h3>
                 <p class="templatecontentpleft">Rations are processed hourly by two separate tasks:</p>
+                <p class="templatecontentpleft"><em>Your rations will increase at :25 (farms produce), then decrease at :45 (population eats).</em></p>
                 <table class="templatetable">
                     <tr><td><strong>Production</strong></td><td>Every hour at :25</td></tr>
                     <tr><td><strong>Consumption</strong></td><td>Every hour at :45</td></tr>
                 </table>
-                <p class="templatecontentpleft" style="margin-top: 10px;"><em>Your rations will increase at :25 (farms produce), then decrease at :45 (population eats).</em></p>
             </div>
         </div>
 
@@ -44,16 +44,16 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">calculate</span> Consumption Formula</h3>
                 <p class="templatecontentpleft">Each province consumes rations based on its population:</p>
+                <p class="templatecontentpleft"><strong>Important:</strong> Each province has a minimum consumption of 1 ration, even if population is very low.</p>
                 <table class="templatetable">
                     <tr><td><strong>Rate</strong></td><td>1 ration per 50,000 population</td></tr>
                     <tr><td><strong>Minimum</strong></td><td>1 ration per province</td></tr>
                     <tr><td><strong>Timing</strong></td><td>Every hour at :45</td></tr>
                 </table>
-                <p class="templatecontentpleft" style="margin-top: 10px;"><strong>Important:</strong> Each province has a minimum consumption of 1 ration, even if population is very low.</p>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">functions</span> Calculation Examples</h3>
@@ -76,7 +76,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">agriculture</span> Farms</h3>
                 <p class="templatecontentpleft">Farms are the only way to produce rations. Farm output depends on land owned.</p>
@@ -90,6 +90,7 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">functions</span> Production Formula</h3>
                 <p class="templatecontentpleft"><code>Rations = Farms × (12 + Land × 3) × Productivity%</code></p>
+                <p class="templatecontentpleft"><em>At 100% productivity: +45% bonus</em></p>
                 <table class="templatetable">
                     <tr><th>Land</th><th>Per Farm</th><th>10 Farms</th></tr>
                     <tr><td>1 slot</td><td>15</td><td>150</td></tr>
@@ -97,7 +98,6 @@
                     <tr><td>10 slots</td><td>42</td><td>420</td></tr>
                     <tr><td>20 slots</td><td>72</td><td>720</td></tr>
                 </table>
-                <p class="templatecontentpleft" style="margin-top: 10px;"><em>At 100% productivity: +45% bonus</em></p>
             </div>
         </div>
 
@@ -108,7 +108,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> How Productivity Affects Farms</h3>
                 <p class="templatecontentpleft">Province productivity directly multiplies farm output. Build universities and libraries to boost productivity.</p>
@@ -142,7 +142,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">calculate</span> Net = Production − Consumption</h3>
                 <p class="templatecontentpleft">The net rations shown on your country page is:</p>
@@ -172,7 +172,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">person</span> Example Nation</h3>
                 <table class="templatetable">
@@ -201,7 +201,7 @@
             </tr>
         </table>
 
-        <div class="templatedivflex2 menuflex tutorialdiv">
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">sync_problem</span> Why Are My Rations Going Down?</h3>
                 <ul class="templatecontentpleft">
