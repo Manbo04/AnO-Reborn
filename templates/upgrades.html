@@ -43,7 +43,7 @@
                         {% if tech_rows and tech_rows|length > 0 %}
                         {% for tech in tech_rows %}
                         <option value="{{ tech[0] }}">
-                            {{ tech[1] }} ({{ tech[2] | fmt }} {{ research_cost_resource }})
+                            {{ tech[1] }} ({{ tech[2] }} {{ research_cost_resource }})
                             {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
                         </option>
                         {% endfor %}
