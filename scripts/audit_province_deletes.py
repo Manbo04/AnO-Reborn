@@ -7,11 +7,12 @@ Usage:
 Writes JSON and CSV with rows from admin_actions where action in
 ('province_deleted','delete_provinces') within the given timeframe.
 """
+
 import argparse
 import json
 import csv
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 try:
     import psycopg2

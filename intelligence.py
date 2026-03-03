@@ -16,6 +16,50 @@ load_dotenv()
 bp = Blueprint("intelligence", __name__)
 
 
+def _get_unit_quantity(db, user_id, unit_name):
+    db.execute(
+        """
+        SELECT COALESCE(um.quantity, 0)
+        FROM unit_dictionary ud
+        LEFT JOIN user_military um
+            ON um.unit_id = ud.unit_id AND um.user_id = %s
+        WHERE ud.name = %s
+        """,
+        (user_id, unit_name),
+    )
+    row = db.fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
+
+
+def _decrease_unit_quantity(db, user_id, unit_name, amount):
+    db.execute(
+        """
+        SELECT unit_id FROM unit_dictionary WHERE name = %s
+        """,
+        (unit_name,),
+    )
+    row = db.fetchone()
+    if not row:
+        return
+    unit_id = row[0]
+    db.execute(
+        """
+        INSERT INTO user_military (user_id, unit_id, quantity)
+        VALUES (%s, %s, 0)
+        ON CONFLICT (user_id, unit_id) DO NOTHING
+        """,
+        (user_id, unit_id),
+    )
+    db.execute(
+        """
+        UPDATE user_military
+        SET quantity = GREATEST(0, quantity - %s)
+        WHERE user_id = %s AND unit_id = %s
+        """,
+        (amount, user_id, unit_id),
+    )
+
+
 # TODO: add complex operation sorting by date and merging
 @bp.route("/intelligence", methods=["GET"])
 @login_required
@@ -97,9 +141,7 @@ def spyAmount():
             yourCountry = yourCountry_row[0] if yourCountry_row else ""
 
             # fetch current spies count for this user to display in the form
-            db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
-            spies_row = db.fetchone()
-            spies = spies_row[0] if spies_row else 0
+            spies = _get_unit_quantity(db, cId, "spies")
 
         return render_template("spyAmount.html", yourCountry=yourCountry, spies=spies)
 
@@ -114,9 +156,9 @@ def spyAmount():
             defcon_result = db.fetchone()
             eDefcon = defcon_result[0] if defcon_result and defcon_result[0] else 1
 
-            db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
-            spies_result = db.fetchone()
-            eSpies = spies_result[0] if spies_result and spies_result[0] else 1
+            eSpies = _get_unit_quantity(db, eId, "spies")
+            if eSpies < 1:
+                eSpies = 1
 
         # calculate revealed values based on prep, amount, edefcon, and espies
         resources = variables.RESOURCES
@@ -198,8 +240,7 @@ def spyResult():
                     f"12 hour cooldown for spying on another country. "
                     f"{secs_left} seconds left.",
                 )
-            db.execute("SELECT spies FROM military WHERE id=%s", (cId,))
-            actual_spies = db.fetchone()[0]
+            actual_spies = _get_unit_quantity(db, cId, "spies")
 
             if spies > actual_spies:
                 missing = actual_spies - spies
@@ -209,8 +250,7 @@ def spyResult():
                     f"Missing {missing} spies",
                 )
 
-            db.execute("SELECT spies FROM military WHERE id=%s", (eId,))
-            enemy_spies = db.fetchone()[0]
+            enemy_spies = _get_unit_quantity(db, eId, "spies")
 
             executed_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
             uncovered_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
@@ -227,10 +267,8 @@ def spyResult():
 
             object_list = variables.RESOURCES
 
-            table = "resources"
             if spy_type == "units":
                 object_list = variables.UNITS
-                table = "military"
 
             for object in object_list:
                 if spies - executed_spies > 0:
@@ -258,29 +296,42 @@ def spyResult():
 
             uncovered_objects = [k for k, v in uncovered.items() if v]
             if uncovered_objects:
-                uncover_statement = (
-                    f"SELECT {', '.join(uncovered_objects)} FROM {table}"
-                    + " WHERE id=%s"
-                )
-                db.execute(uncover_statement, (eId,))
-                results = db.fetchall()
-                if results:
-                    objects = results[0]
+                if spy_type == "units":
+                    db.execute(
+                        """
+                        SELECT ud.name, COALESCE(um.quantity, 0)
+                        FROM unit_dictionary ud
+                        LEFT JOIN user_military um
+                            ON um.unit_id = ud.unit_id AND um.user_id = %s
+                        WHERE ud.name = ANY(%s)
+                        """,
+                        (eId, uncovered_objects),
+                    )
+                else:
+                    db.execute(
+                        """
+                        SELECT rd.name, COALESCE(ue.quantity, 0)
+                        FROM resource_dictionary rd
+                        LEFT JOIN user_economy ue
+                            ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+                        WHERE rd.name = ANY(%s)
+                        """,
+                        (eId, uncovered_objects),
+                    )
 
-                    update_objects = []
-                    for res, amo in zip(uncovered_objects, objects):
-                        update_objects.append(f"{res}={amo}")
-                    update_objects_string = ", ".join(update_objects)
+                revealed_map = {name: amount for name, amount in db.fetchall()}
+                update_objects = [
+                    f"{obj}={int(revealed_map.get(obj, 0))}"
+                    for obj in uncovered_objects
+                ]
+                update_objects_string = ", ".join(update_objects)
 
-                    if len(update_objects) > 0:
-                        spyinfo_update = (
-                            f"UPDATE spyinfo SET {update_objects_string}"
-                            + " WHERE id=%s"
-                        )
-                        db.execute(spyinfo_update, (operation_id,))
+                if update_objects_string:
+                    spyinfo_update = (
+                        f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
+                    )
+                    db.execute(spyinfo_update, (operation_id,))
 
-            db.execute(
-                "UPDATE military SET spies=spies-%s WHERE id=%s", (executed_spies, cId)
-            )
+            _decrease_unit_quantity(db, cId, "spies", executed_spies)
 
             return redirect("/intelligence")

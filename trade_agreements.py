@@ -24,7 +24,16 @@ def check_resource_balance(cursor, user_id, resource, amount):
     if resource == "money":
         cursor.execute("SELECT gold FROM stats WHERE id = %s", (user_id,))
     else:
-        cursor.execute(f"SELECT {resource} FROM resources WHERE id = %s", (user_id,))
+        cursor.execute(
+            """
+            SELECT COALESCE(ue.quantity, 0)
+            FROM resource_dictionary rd
+            LEFT JOIN user_economy ue
+                ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+            WHERE rd.name = %s
+            """,
+            (user_id, resource),
+        )
 
     row = cursor.fetchone()
     if not row:

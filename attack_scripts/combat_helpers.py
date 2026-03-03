@@ -3,6 +3,7 @@
 These functions are intentionally small and unit-testable so the large
 `Nations.py` can be refactored incrementally.
 """
+
 from typing import Dict, Tuple
 
 from attack_scripts.nations_helpers import calculate_bonuses

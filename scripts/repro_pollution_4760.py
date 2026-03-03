@@ -5,6 +5,7 @@ run generate_province_revenue repeatedly, capture pollution values, and restore 
 Follows CLAUDE.md rules: uses test account id 16 and leaves no trace (restores original
 provinces/proInfra/stats/resources after run).
 """
+
 from database import get_db_connection
 import json
 import time

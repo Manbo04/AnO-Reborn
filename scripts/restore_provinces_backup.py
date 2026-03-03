@@ -7,14 +7,13 @@ Usage:
 
 By default runs in dry-run mode and reports actions that would be taken.
 """
+
 import argparse
 import json
 import os
-from datetime import datetime
 
 try:
     import psycopg2
-    from psycopg2.extras import RealDictCursor
 except Exception:
     print("psycopg2 required; pip install psycopg2-binary")
     raise

@@ -18,7 +18,7 @@ CONTEXT: while updating tuple (3,20) in relation "provinces"
 - Even though staggered by 10 minutes, they can still overlap if previous task takes >10 minutes
 - Each task iterates through ALL users and ALL provinces, making 1000s of individual UPDATE queries
 
-**Impact**: 
+**Impact**:
 - Players experience 5-15 second delays when clicking anything during task execution
 - Server becomes unresponsive
 - Player actions timeout waiting for locks to release
@@ -40,11 +40,11 @@ for user_id in all_users:
             db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
             current_money = db.fetchone()[0]
             db.execute("UPDATE stats SET gold=gold-%s WHERE id=%s", (operating_costs, user_id))
-            
+
             db.execute("SELECT energy FROM provinces WHERE id=%s", (province_id,))
             current_energy = db.fetchone()[0]
             db.execute("UPDATE provinces SET energy=%s WHERE id=%s", (new_energy, province_id))
-            
+
             # This happens for EVERY building type and EVERY resource
             db.execute("UPDATE resources SET coal=%s WHERE id=%s", (amount, user_id))
             db.execute("UPDATE resources SET oil=%s WHERE id=%s", (amount, user_id))
@@ -79,7 +79,7 @@ db.execute(resource_u_statement, (new_resource, user_id))
 UPDATE resources SET coal=%s, oil=%s, uranium=%s, ... WHERE id=%s
 ```
 
-**Impact**: 
+**Impact**:
 - 15+ queries become 1 query per user
 - 100 users × 15 resources = 1,500 queries → becomes 100 queries
 - **94% reduction in query count**
@@ -120,7 +120,7 @@ Game frozen for 200+ seconds
 ```
 Batch update all users' resources in single queries:
 
-UPDATE resources SET coal=%s, oil=%s, uranium=%s... 
+UPDATE resources SET coal=%s, oil=%s, uranium=%s...
 WHERE id IN (%s, %s, %s...) RETURNING id
 
 Execution time: 100 queries × 1ms = 100ms
@@ -175,7 +175,7 @@ Game responsive
 
 ```
 Deadlock at 2026-01-01 23:43:36
-Deadlock at 2025-12-31 17:49:07  
+Deadlock at 2025-12-31 17:49:07
 Deadlock at 2025-12-31 17:45:27
 ```
 

@@ -1,6 +1,6 @@
 # UI/Backend Inconsistency Audit Report
-**Scan Date:** January 11, 2026  
-**Status:** Complete game-wide scan + user-reported bugs fixed  
+**Scan Date:** January 11, 2026
+**Status:** Complete game-wide scan + user-reported bugs fixed
 **Last Updated:** January 11, 2026 (Commit 191beb0a)
 
 ---
@@ -8,11 +8,11 @@
 ## ⚠️ NEWLY DISCOVERED CRITICAL BUGS (User Reported)
 
 ### BUG 1: **Power Status Check (production == consumption)** ✅ FIXED
-**Location:** `province.py` line 138  
-**Issue:** Province shows "unpowered" when production exactly equals consumption  
+**Location:** `province.py` line 138
+**Issue:** Province shows "unpowered" when production exactly equals consumption
 **User Report:**
 ```
-"I am currently producing 4 units of electricity and consuming 4 units 
+"I am currently producing 4 units of electricity and consuming 4 units
 of electricity, but it looks like my province is unpowered."
 ```
 
@@ -25,13 +25,13 @@ return production > consumption  # Returns False when 4 == 4
 return production >= consumption  # Returns True when 4 == 4
 ```
 
-**Status:** ✅ **FIXED** in commit 191beb0a  
+**Status:** ✅ **FIXED** in commit 191beb0a
 **Impact:** Users with balanced energy now correctly show as powered
 
 ---
 
 ### BUG 2: **Coal Power Plant Consumption Mismatch** ✅ FIXED
-**Location:** `variables.py` INFRA vs NEW_INFRA  
+**Location:** `variables.py` INFRA vs NEW_INFRA
 **User Report:**
 ```
 "I have two coal mines and get 62 units of coal per hour (31 each).
@@ -57,7 +57,7 @@ But I have a net gain of 51 coal per hour, meaning it only uses 11 coal."
 | malls | pollution | 10% | 9% | ✅ |
 | farms | rations | 20 | 12 | ✅ |
 
-**Status:** ✅ **FIXED** - All OLD INFRA values now match NEW_INFRA backend implementation  
+**Status:** ✅ **FIXED** - All OLD INFRA values now match NEW_INFRA backend implementation
 **Impact:** UI tooltips now display accurate resource consumption/production
 
 ---
@@ -65,7 +65,7 @@ But I have a net gain of 51 coal per hour, meaning it only uses 11 coal."
 ## CRITICAL INCONSISTENCIES FOUND (Previous Scan)
 
 ### 1. **HAPPINESS MULTIPLIER - Major Discrepancy** ⚠️
-**Location:** `templates/province.html` line 167 & 175  
+**Location:** `templates/province.html` line 167 & 175
 **UI Tooltip Claims:**
 ```
 "Each percent of happiness increases max population by 1.2%"
@@ -83,14 +83,14 @@ happiness_multiplier = (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MUL
 - At 100% happiness: +4% total impact (0.08% × 50 points) = **0.08% per point**
 - At 0% happiness: -4% total impact
 
-**Issue:** UI claims 1.2% per point, but implementation is only 0.08% per point  
-**Severity:** HIGH - **15× difference in claimed vs actual multiplier**  
+**Issue:** UI claims 1.2% per point, but implementation is only 0.08% per point
+**Severity:** HIGH - **15× difference in claimed vs actual multiplier**
 **Fix:** Change tooltip to "Each percent of happiness increases max population by 0.08%" (or adjust formula to match UI)
 
 ---
 
 ### 2. **POLLUTION MULTIPLIER - Major Discrepancy** ⚠️
-**Location:** `templates/province.html` line 207  
+**Location:** `templates/province.html` line 207
 **UI Tooltip Claims:**
 ```
 "Each percent of pollution decreases max population 0.85%"
@@ -108,8 +108,8 @@ pollution_multiplier = (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MU
 - At 100% pollution: -2% total impact (0.06% × 50 points)
 - At 0% pollution: +2% total impact
 
-**Issue:** UI claims 0.85% per point, but implementation is only 0.06% per point  
-**Severity:** HIGH - **14× difference in claimed vs actual multiplier**  
+**Issue:** UI claims 0.85% per point, but implementation is only 0.06% per point
+**Severity:** HIGH - **14× difference in claimed vs actual multiplier**
 **Fix:** Change tooltip to "Each percent of pollution decreases max population by 0.06%" (or adjust formula to match UI)
 
 ---
@@ -117,7 +117,7 @@ pollution_multiplier = (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MU
 ## VERIFIED CORRECT IMPLEMENTATIONS ✓
 
 ### 3. **PRODUCTIVITY MULTIPLIER** ✓
-**Location:** `templates/province.html` line 184 & 192  
+**Location:** `templates/province.html` line 184 & 192
 **UI Tooltip:**
 ```
 "Each percent of productivity increases resource output by 0.9%"
@@ -134,7 +134,7 @@ if productivity is not None:
 ---
 
 ### 4. **HOSPITAL UPGRADE (National Health Institution)** ✓
-**Location:** `templates/upgrades.html` line 184  
+**Location:** `templates/upgrades.html` line 184
 **UI Claim:**
 ```
 "increasing each hospital's happiness increase by 30%"
@@ -150,7 +150,7 @@ if unit == "hospitals":
 ---
 
 ### 5. **MONORAIL UPGRADE (High Speed Rail)** ✓
-**Location:** `templates/upgrades.html` line 220  
+**Location:** `templates/upgrades.html` line 220
 **UI Claim:**
 ```
 "increases productivity increase by 20%"
@@ -166,7 +166,7 @@ if unit == "monorails":
 ---
 
 ### 6. **FARM UPGRADE (Advanced Machinery)** ✓
-**Location:** `templates/upgrades.html` line 257  
+**Location:** `templates/upgrades.html` line 257
 **UI Claim:**
 ```
 "increases farm output by 50%"
@@ -182,7 +182,7 @@ if unit == "farms":
 ---
 
 ### 7. **BAUXITE UPGRADE (Stronger Explosives)** ✓
-**Location:** `templates/upgrades.html` line 291  
+**Location:** `templates/upgrades.html` line 291
 **UI Claim:**
 ```
 "increasing production by 45%"
@@ -197,7 +197,7 @@ if unit == "bauxite_mines" and upgrades["strongerexplosives"]:
 ---
 
 ### 8. **GOVERNMENT REGULATION UPGRADE** ✓
-**Location:** `templates/upgrades.html` line 150  
+**Location:** `templates/upgrades.html` line 150
 **UI Claim:**
 ```
 "retail producing 25% less pollution"
@@ -217,7 +217,7 @@ if (unit_category == "retail"
 ## SECONDARY CHECKS NEEDED
 
 ### 9. **CONSUMER GOODS TAX MULTIPLIER**
-**Location:** `templates/province.html` line 200  
+**Location:** `templates/province.html` line 200
 **UI Claim:**
 ```
 "When consumer spending is 100%, tax income is increased by 150%"
@@ -233,7 +233,7 @@ CONSUMER_GOODS_TAX_MULTIPLIER = 1.5
 ---
 
 ### 10. **LAND TAX INCOME BONUS**
-**Location:** `templates/province.html` line 222  
+**Location:** `templates/province.html` line 222
 **UI Claim:**
 ```
 "increases tax income by 2%"
@@ -249,7 +249,7 @@ multiplier = base_multiplier + (base_multiplier * land_multiplier)
 ---
 
 ### 11. **ELECTRICITY TAX INCOME IMPACT**
-**Location:** `templates/province.html` line 230  
+**Location:** `templates/province.html` line 230
 **UI Claim:**
 ```
 "Electricity allows for certain infrastructure to function, and affects tax income"
@@ -259,7 +259,7 @@ multiplier = base_multiplier + (base_multiplier * land_multiplier)
 ---
 
 ### 12. **LAND POPULATION BONUS**
-**Location:** `templates/province.html` line 222  
+**Location:** `templates/province.html` line 222
 **UI Claim:**
 ```
 "increases max population by 120,000"
@@ -274,7 +274,7 @@ maxPop += land * variables.LAND_MAX_POPULATION_ADDITION
 ---
 
 ### 13. **CITY POPULATION BONUS**
-**Location:** `templates/province.html` line 214  
+**Location:** `templates/province.html` line 214
 **UI Claim:**
 ```
 "increases max population by 750,000"

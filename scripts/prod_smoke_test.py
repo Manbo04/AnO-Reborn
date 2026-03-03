@@ -10,6 +10,7 @@ Actions (LEAVE NO TRACE):
 
 Run locally: python scripts/prod_smoke_test.py
 """
+
 import os
 import sys
 import time
@@ -377,18 +378,26 @@ finally:
                             "manpower=%s WHERE id=%s"
                         ),
                         (
-                            orig["military"][4]
-                            if orig["military"] and len(orig["military"]) > 4
-                            else 0,
-                            orig["military"][3]
-                            if orig["military"] and len(orig["military"]) > 3
-                            else 0,
-                            orig["military"][5]
-                            if orig["military"] and len(orig["military"]) > 5
-                            else 0,
-                            orig["military"][9]
-                            if orig["military"] and len(orig["military"]) > 9
-                            else 1000,
+                            (
+                                orig["military"][4]
+                                if orig["military"] and len(orig["military"]) > 4
+                                else 0
+                            ),
+                            (
+                                orig["military"][3]
+                                if orig["military"] and len(orig["military"]) > 3
+                                else 0
+                            ),
+                            (
+                                orig["military"][5]
+                                if orig["military"] and len(orig["military"]) > 5
+                                else 0
+                            ),
+                            (
+                                orig["military"][9]
+                                if orig["military"] and len(orig["military"]) > 9
+                                else 1000
+                            ),
                             TEST_UID,
                         ),
                     )

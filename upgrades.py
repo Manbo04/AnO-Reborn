@@ -10,6 +10,29 @@ load_dotenv()
 
 bp = Blueprint("upgrades", __name__)
 
+LEGACY_UPGRADE_TO_TECH = {
+    "betterengineering": "better_engineering",
+    "cheapermaterials": "cheaper_materials",
+    "onlineshopping": "online_shopping",
+    "governmentregulation": "government_regulation",
+    "nationalhealthinstitution": "national_health_institution",
+    "highspeedrail": "high_speed_rail",
+    "advancedmachinery": "advanced_machinery",
+    "strongerexplosives": "stronger_explosives",
+    "widespreadpropaganda": "widespread_propaganda",
+    "increasedfunding": "increased_funding",
+    "automationintegration": "automation_integration",
+    "largerforges": "larger_forges",
+    "lootingteams": "looting_teams",
+    "organizedsupplylines": "organized_supply_lines",
+    "largestorehouses": "large_storehouses",
+    "ballisticmissilesilo": "ballistic_missile_silo",
+    "icbmsilo": "icbm_silo",
+    "nucleartestingfacility": "nuclear_testing_facility",
+}
+
+TECH_TO_LEGACY_UPGRADE = {v: k for k, v in LEGACY_UPGRADE_TO_TECH.items()}
+
 
 def get_upgrades(cId):
     # Check cache first
@@ -19,13 +42,21 @@ def get_upgrades(cId):
         return cached
 
     with get_db_cursor() as db:
-        db.execute("SELECT * FROM upgrades WHERE user_id=%s", (cId,))
-        row = db.fetchone()
-        if not row:
-            result = {}
-        else:
-            colnames = [desc[0] for desc in db.description]
-            result = dict(zip(colnames, row))
+        result = {key: False for key in LEGACY_UPGRADE_TO_TECH.keys()}
+
+        db.execute(
+            """
+            SELECT td.name
+            FROM user_tech ut
+            JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+            WHERE ut.user_id=%s AND ut.is_unlocked=TRUE
+            """,
+            (cId,),
+        )
+        for (tech_name,) in db.fetchall():
+            legacy_key = TECH_TO_LEGACY_UPGRADE.get(tech_name)
+            if legacy_key:
+                result[legacy_key] = True
 
         # Cache for 5 minutes
         query_cache.set(cache_key, result)
@@ -94,135 +125,34 @@ def start_research_action():
 @bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
 @login_required
 def upgrade_sell_buy(ttype, thing):
-    prices = {
-        "betterengineering": {
-            "money": 254000000,
-            "resources": {"steel": 500, "aluminium": 420},
-        },
-        "cheapermaterials": {"money": 22000000, "resources": {"lumber": 220}},
-        "onlineshopping": {
-            "money": 184000000,
-            "resources": {"steel": 600, "aluminium": 450, "lumber": 800},
-        },
-        "governmentregulation": {
-            "money": 112000000,
-            "resources": {"steel": 980, "aluminium": 750},
-        },
-        "nationalhealthinstitution": {
-            "money": 95000000,
-            "resources": {"steel": 320, "aluminium": 80, "lumber": 675},
-        },
-        "highspeedrail": {
-            "money": 220000000,
-            "resources": {"steel": 1350, "aluminium": 450},
-        },
-        "advancedmachinery": {
-            "money": 180000000,
-            "resources": {"steel": 1400, "aluminium": 320, "lumber": 850},
-        },
-        "strongerexplosives": {"money": 65000000, "resources": {}},
-        "widespreadpropaganda": {"money": 150000000, "resources": {}},
-        "increasedfunding": {
-            "money": 225000000,
-            "resources": {"steel": 950, "aluminium": 450},
-        },
-        "automationintegration": {
-            "money": 420000000,
-            "resources": {"steel": 2200, "aluminium": 1150},
-        },
-        "largerforges": {
-            "money": 320000000,
-            "resources": {"steel": 1850, "aluminium": 650},
-        },
-        "lootingteams": {
-            "money": 140000000,
-            "resources": {"steel": 800, "aluminium": 350},
-        },
-        "organizedsupplylines": {
-            "money": 200000000,
-            "resources": {"steel": 1100, "aluminium": 550},
-        },
-        "largestorehouses": {
-            "money": 315000000,
-            "resources": {"steel": 1600, "aluminium": 900},
-        },
-        "ballisticmissilesilo": {
-            "money": 280000000,
-            "resources": {"steel": 1200, "aluminium": 450},
-        },
-        "icbmsilo": {
-            "money": 355000000,
-            "resources": {"steel": 1550, "aluminium": 700},
-        },
-        "nucleartestingfacility": {
-            "money": 575000000,
-            "resources": {"steel": 2250, "aluminium": 1050},
-        },
-    }
-
     thing_key = thing.lower()
-    if thing_key not in prices:
+    tech_name = LEGACY_UPGRADE_TO_TECH.get(thing_key)
+    if not tech_name:
         return error(400, f"Upgrade type '{thing}' does not exist.")
 
-    money = prices[thing_key]["money"]
-    resources = prices[thing_key]["resources"]
+    if ttype != "buy":
+        return error(400, "Selling upgrades is no longer supported.")
 
     with get_db_cursor() as db:
         cId = session["user_id"]
+        db.execute(
+            "SELECT tech_id FROM tech_dictionary WHERE name=%s",
+            (tech_name,),
+        )
+        row = db.fetchone()
+        if not row:
+            return error(400, "Technology definition not found.")
+        tech_id = row[0]
 
-        if ttype == "buy":
-            # Atomically withdraw money only if sufficient
-            db.execute(
-                "UPDATE stats SET gold=gold-%s WHERE id=%s AND gold>=%s RETURNING gold",
-                (money, cId, money),
-            )
-            if db.fetchone() is None:
-                return error(400, "You don't have enough money to buy this upgrade.")
+    try:
+        start_research(cId, tech_id)
+    except ActionLoopError as e:
+        return error(400, str(e))
 
-            # Atomically consume resources required for the upgrade
-            for resource, amount in resources.items():
-                db.execute(
-                    (
-                        f"UPDATE resources SET {resource}={resource}-%s "
-                        + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
-                    ),
-                    (amount, cId, amount),
-                )
-                if db.fetchone() is None:
-                    missing_resource = resource.upper()
-                    return error(
-                        400,
-                        f"You don't have enough {missing_resource} "
-                        "to buy this upgrade.",
-                    )
-
-            db.execute(
-                f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s",
-                (cId,),
-            )
-            try:
-                invalidate_user_cache(cId)
-                query_cache.invalidate(
-                    pattern=f"upgrades_{cId}",
-                )
-            except Exception:
-                pass
-
-        elif ttype == "sell":
-            db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (money, cId))
-            for resource, amount in resources.items():
-                db.execute(
-                    f"UPDATE resources SET {resource}={resource}+%s WHERE id=%s",
-                    (
-                        amount,
-                        cId,
-                    ),
-                )
-            db.execute(f"UPDATE upgrades SET {thing_key}=0 WHERE user_id=%s", (cId,))
-            try:
-                invalidate_user_cache(cId)
-                query_cache.invalidate(pattern=f"upgrades_{cId}")
-            except Exception:
-                pass
+    try:
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"upgrades_{cId}")
+    except Exception:
+        pass
 
     return redirect("/upgrades")

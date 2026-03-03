@@ -1,6 +1,7 @@
 """Login as a real user created with bcrypt and GET main pages to check for errors.
 Usage: PYTHONPATH=. venv python scripts/staging_smoke_auth.py
 """
+
 import time
 import requests
 import os

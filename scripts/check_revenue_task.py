@@ -4,6 +4,7 @@ Exit code 0 if last_run is within threshold hours, 1 otherwise.
 Usage:
   python scripts/check_revenue_task.py --threshold-hours 2
 """
+
 import os
 import sys
 

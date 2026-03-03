@@ -16,7 +16,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import time
 
 load_dotenv()
 TS = datetime.utcnow().strftime("%Y%m%d-%H%M%S")

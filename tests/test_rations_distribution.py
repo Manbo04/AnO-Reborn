@@ -1,4 +1,3 @@
-import time
 import psycopg2
 import os
 import uuid

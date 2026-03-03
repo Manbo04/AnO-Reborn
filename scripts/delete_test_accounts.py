@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Delete all test bot accounts from the database."""
+
 import os
 import psycopg2
 
