@@ -3926,12 +3926,18 @@ footer {
     flex-direction: column;
 }
 
-/* Push tables/lists that are last children to the bottom for perfect alignment */
-.card-align-row > .templatedivflex2left > table:last-child,
-.card-align-row > .templatedivflex2right > table:last-child,
-.card-align-row > .templatedivflex2left > ul:last-child,
-.card-align-row > .templatedivflex2right > ul:last-child {
-    margin-top: auto;
+/* Push tables/lists/divs to the bottom for perfect alignment, regardless of siblings.
+   Covers: tables, lists, and div wrappers around them. !important ensures this
+   overrides any margin applied to .templatetable (margin: 4px auto) */
+.card-align-row .templatedivflex2left > .templatetable,
+.card-align-row .templatedivflex2right > .templatetable,
+.card-align-row .templatedivflex2left > table,
+.card-align-row .templatedivflex2right > table,
+.card-align-row .templatedivflex2left > ul,
+.card-align-row .templatedivflex2right > ul,
+.card-align-row .templatedivflex2left > div:last-child,
+.card-align-row .templatedivflex2right > div:last-child {
+    margin-top: auto !important;
 }
 
 /* ============================================
