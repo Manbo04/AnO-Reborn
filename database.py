@@ -673,16 +673,46 @@ class UserQueries:
 
     @staticmethod
     def get_user_military(user_id: int) -> Dict[str, int]:
-        """Get all military units for a user in a single query"""
-        query = """
+        """Get all military units for a user using the normalized schema.
+
+        Returns a dict like {'soldiers': 100, 'tanks': 5, ...} with
+        every unit from unit_dictionary represented (0 when absent).
+        Also includes 'default_defense' from the stats table.
+        """
+        # Unit quantities from user_military + unit_dictionary
+        unit_query = """
             SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
             FROM unit_dictionary ud
             LEFT JOIN user_military um
                 ON um.unit_id = ud.unit_id AND um.user_id = %s
             WHERE ud.is_active = TRUE
         """
-        results = QueryHelper.fetch_all(query, (user_id,))
-        return {row[0]: int(row[1]) for row in results} if results else {}
+        rows = QueryHelper.fetch_all(
+            unit_query, (user_id,), dict_cursor=True
+        )
+        result: Dict[str, int] = {
+            row["name"]: int(row["quantity"]) for row in rows
+        }
+
+        # Supplement with stats-level fields
+        stats_query = (
+            "SELECT manpower, default_defense FROM stats WHERE id = %s"
+        )
+        stats_row = QueryHelper.fetch_one(
+            stats_query, (user_id,), dict_cursor=True
+        )
+        if stats_row:
+            result["manpower"] = int(
+                stats_row.get("manpower", 0) or 0
+            )
+            result["default_defense"] = stats_row.get(
+                "default_defense", ""
+            )
+        else:
+            result["manpower"] = 0
+            result["default_defense"] = ""
+
+        return result
 
     @staticmethod
     def get_user_stats(user_id: int) -> Dict[str, Any]:
@@ -886,25 +916,42 @@ class BatchOperations:
     @staticmethod
     def batch_update_military(user_units: List[Tuple[int, str, int]]) -> None:
         """
-        Batch update military units for multiple users
+        Batch update military units for multiple users using the normalized schema.
 
         Args:
-            user_units: List of tuples (user_id, unit_type, amount)
+            user_units: List of tuples (user_id, unit_name, amount)
         """
-        from collections import defaultdict
+        if not user_units:
+            return
 
-        grouped = defaultdict(list)
+        # Resolve unit names to unit_ids once
+        distinct_names = list({name for _, name, _ in user_units})
+        name_query = "SELECT unit_id, name FROM unit_dictionary WHERE name = ANY(%s)"
+        rows = QueryHelper.fetch_all(name_query, (distinct_names,), dict_cursor=True)
+        name_to_id = {row["name"]: row["unit_id"] for row in rows}
 
-        for user_id, unit_type, amount in user_units:
-            grouped[unit_type].append((amount, user_id))
-
+        # Build upsert values: (user_id, unit_id, amount)
+        upsert_values = []
         affected_user_ids = set()
-        for unit_type, updates in grouped.items():
-            query = f"UPDATE military SET {unit_type} = {unit_type} + %s WHERE id = %s"
-            QueryHelper.execute_many(query, updates)
+        for user_id, unit_name, amount in user_units:
+            unit_id = name_to_id.get(unit_name)
+            if unit_id is None:
+                continue
+            upsert_values.append((user_id, unit_id, amount))
+            affected_user_ids.add(user_id)
 
-            for _, user_id in updates:
-                affected_user_ids.add(user_id)
+        if upsert_values:
+            upsert_query = """
+                INSERT INTO user_military (user_id, unit_id, quantity, updated_at)
+                VALUES (%s, %s, %s, now())
+                ON CONFLICT (user_id, unit_id)
+                DO UPDATE SET
+                    quantity = GREATEST(
+                        user_military.quantity + EXCLUDED.quantity, 0
+                    ),
+                    updated_at = now()
+            """
+            QueryHelper.execute_many(upsert_query, upsert_values)
 
         try:
             for uid in affected_user_ids:
