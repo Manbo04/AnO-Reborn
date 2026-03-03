@@ -542,8 +542,14 @@ def establish_coalition():
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
-                    "INSERT INTO coalitions (colId, userId, role) VALUES (%s, %s, %s)",
+                    "INSERT INTO coalition_members (coalition_id, user_id, role) VALUES (%s, %s, %s)",
                     (coalition_id, session["user_id"], "leader"),
+                )
+
+                # Create the coalition metadata entry
+                db.execute(
+                    "INSERT INTO coalitions (coalition_id, name, founder_id, created_at, is_active) VALUES (%s, %s, %s, NOW(), true)",
+                    (coalition_id, name, session["user_id"]),
                 )
 
                 # Inserts the coalition into the table for coalition banks
@@ -760,7 +766,7 @@ def leave_col(coalition_id):
             return error(400, "Can't leave coalition, you're the leader")
 
         db.execute(
-            "DELETE FROM coalitions WHERE userId=(%s) AND colId=(%s)",
+            "DELETE FROM coalition_members WHERE user_id=%s AND coalition_id=%s",
             (cId, coalition_id),
         )
 
@@ -823,8 +829,8 @@ def give_position():
         # The user id for the person being given the role
         try:
             db.execute(
-                "SELECT users.id, coalitions.colid, coalitions.role "
-                "FROM users INNER JOIN coalitions ON users.id=coalitions.userid "
+                "SELECT users.id, coalition_members.coalition_id, coalition_members.role "
+                "FROM users INNER JOIN coalition_members ON users.id=coalition_members.user_id "
                 "WHERE users.username=%s",
                 (username,),
             )
