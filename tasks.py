@@ -211,11 +211,12 @@ def rations_distribution_capacity(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
         db.execute(
-            f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
-            "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
-            (user_id,),
+            "SELECT COALESCE(SUM(ub.quantity), 0) "
+            "FROM user_buildings ub "
+            "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
+            "WHERE ub.user_id = %s AND bd.name = ANY(%s)",
+            (user_id, variables.RATIONS_DISTRIBUTION_BUILDINGS),
         )
         bcount = db.fetchone()[0] or 0
     return bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
@@ -263,24 +264,18 @@ def food_stats(user_id):
     with get_db_cursor() as db:
         needed_rations = rations_needed(user_id)
 
-        db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
+        db.execute(
+            "SELECT COALESCE(ue.quantity, 0) FROM user_economy ue "
+            "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id "
+            "WHERE ue.user_id = %s AND rd.name = 'rations'",
+            (user_id,),
+        )
         current_rations = db.fetchone()[0]
 
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
-            with get_db_cursor() as db:
-                # sum all distribution-building columns across the user's
-                # provinces; the proInfra table uses province id = users
-                # province id.
-                cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
-                db.execute(
-                    f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
-                    "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
-                    (user_id,),
-                )
-                bcount = db.fetchone()[0] or 0
-            distribution_cap = bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+            distribution_cap = rations_distribution_capacity(user_id)
 
     if needed_rations == 0:
         needed_rations = 1
@@ -341,7 +336,12 @@ def calc_ti(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
+        db.execute(
+            "SELECT COALESCE(ue.quantity, 0) FROM user_economy ue "
+            "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id "
+            "WHERE ue.user_id = %s AND rd.name = 'consumer_goods'",
+            (user_id,),
+        )
         cg_result = db.fetchone()
         consumer_goods = int(cg_result[0] if cg_result else 0)
 
@@ -513,7 +513,10 @@ def tax_income():
             # Load all consumer_goods
             cg_map = {}
             dbdict.execute(
-                "SELECT id, consumer_goods FROM resources WHERE id = ANY(%s)",
+                "SELECT ue.user_id AS id, ue.quantity AS consumer_goods "
+                "FROM user_economy ue "
+                "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id "
+                "WHERE ue.user_id = ANY(%s) AND rd.name = 'consumer_goods'",
                 (all_user_ids,),
             )
             for row in dbdict.fetchall():
@@ -633,8 +636,10 @@ def tax_income():
             if cg_updates:
                 try:
                     cg_sql = (
-                        "UPDATE resources SET consumer_goods=GREATEST("
-                        "consumer_goods-%s, 0) WHERE id=%s"
+                        "UPDATE user_economy SET quantity = GREATEST(quantity - %s, 0), "
+                        "updated_at = now() "
+                        "WHERE user_id = %s AND resource_id = ("
+                        "SELECT resource_id FROM resource_dictionary WHERE name = 'consumer_goods')"
                     )
                     execute_batch(db, cg_sql, cg_updates, page_size=100)
                 except AttributeError:
@@ -642,8 +647,10 @@ def tax_income():
                     # fall back to individual updates
                     for params in cg_updates:
                         db.execute(
-                            "UPDATE resources SET consumer_goods=GREATEST("
-                            "consumer_goods-%s, 0) WHERE id=%s",
+                            "UPDATE user_economy SET quantity = GREATEST(quantity - %s, 0), "
+                            "updated_at = now() "
+                            "WHERE user_id = %s AND resource_id = ("
+                            "SELECT resource_id FROM resource_dictionary WHERE name = 'consumer_goods')",
                             params,
                         )
 
@@ -872,16 +879,22 @@ def population_growth():  # Function for growing population
         user_ids = [row["userid"] for row in provinces]
         unique_user_ids = sorted(set(user_ids))
 
-        # Ensure resources rows exist for every user once, not per province
+        # Ensure user_economy rows exist for rations for every user once
         execute_batch(
             db,
-            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
+            "INSERT INTO user_economy (user_id, resource_id, quantity) "
+            "SELECT %s, resource_id, 0 FROM resource_dictionary WHERE name = 'rations' "
+            "ON CONFLICT (user_id, resource_id) DO NOTHING",
             [(uid,) for uid in unique_user_ids],
         )
 
         # Preload rations and policies into dicts for O(1) lookups
         dbdict.execute(
-            "SELECT id, rations FROM resources WHERE id = ANY(%s)", (unique_user_ids,)
+            "SELECT ue.user_id AS id, ue.quantity AS rations "
+            "FROM user_economy ue "
+            "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id "
+            "WHERE ue.user_id = ANY(%s) AND rd.name = 'rations'",
+            (unique_user_ids,),
         )
         ration_map = {row["id"]: row["rations"] for row in dbdict.fetchall()}
 
@@ -982,7 +995,10 @@ def population_growth():  # Function for growing population
         if rations_updates:
             execute_batch(
                 db,
-                "UPDATE resources SET rations = GREATEST(0, rations - %s) WHERE id=%s",
+                "UPDATE user_economy SET quantity = GREATEST(0, quantity - %s), "
+                "updated_at = now() "
+                "WHERE user_id = %s AND resource_id = ("
+                "SELECT resource_id FROM resource_dictionary WHERE name = 'rations')",
                 rations_updates,
             )
         if population_updates:
@@ -2526,6 +2542,7 @@ def global_tick():
             # Consumption phase
             # -----------------------------------------------------------------
             consumption_start = time.time()
+            validation_start = time.time()
             dbdict.execute(
                 """
                 SELECT
