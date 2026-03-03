@@ -834,9 +834,25 @@ def robots():
 
 @app.route("/flag/<flag_type>/<int:flag_id>")
 def serve_flag(flag_type, flag_id):
-    """Serve flag images from database storage (persistent across deployments)"""
+    """Serve flag images from database storage (persistent across deployments).
+
+    Uses an in-memory LRU cache so repeated requests for the same flag
+    (e.g. from a listing page that still uses <img src="/flag/...">) don't
+    hit the database on every request.
+    """
     import base64
     from flask import Response
+
+    # Check module-level cache first (survives across requests in the same worker)
+    cache_key = f"{flag_type}_{flag_id}"
+    if not hasattr(serve_flag, "_cache"):
+        serve_flag._cache = {}
+    cached = serve_flag._cache.get(cache_key)
+    if cached is not None:
+        body, mimetype = cached
+        response = Response(body, mimetype=mimetype)
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return response
 
     with get_db_cursor() as cur:
         if flag_type == "country":
@@ -861,6 +877,10 @@ def serve_flag(flag_type, flag_id):
                 else:
                     mimetype = "image/png"
 
+                # Store in cache (cap at 500 entries to bound memory)
+                if len(serve_flag._cache) < 500:
+                    serve_flag._cache[cache_key] = (flag_data, mimetype)
+
                 response = Response(flag_data, mimetype=mimetype)
                 response.headers[
                     "Cache-Control"
@@ -884,6 +904,16 @@ def serve_flag(flag_type, flag_id):
             except Exception:
                 # Ignore file system access errors for backwards compatibility
                 pass
+
+        # Cache the default flag too so we never hit DB again for this key
+        default_path = os.path.join(app.static_folder, "flags", "default_flag.jpg")
+        try:
+            with open(default_path, "rb") as f:
+                default_bytes = f.read()
+            if len(serve_flag._cache) < 500:
+                serve_flag._cache[cache_key] = (default_bytes, "image/jpeg")
+        except Exception:
+            pass
 
         return send_from_directory("static/flags", "default_flag.jpg")
 
