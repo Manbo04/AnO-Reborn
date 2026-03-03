@@ -488,7 +488,7 @@ def country(cId):
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
-               LEFT JOIN colnames c ON cm.colid=c.id
+               LEFT JOIN colNames c ON cm.colid=c.id
                LEFT JOIN (
                    SELECT userid,
                           SUM(population) AS total_pop,
@@ -763,7 +763,7 @@ def countries():
             FROM users
             LEFT JOIN provinces ON users.id = provinces.userid
             LEFT JOIN coalitions_legacy cm ON users.id = cm.userid
-            LEFT JOIN colnames c ON cm.colid = c.id
+            LEFT JOIN colNames c ON cm.colid = c.id
             {where_clause}
             GROUP BY users.id, cm.colid, c.name
             HAVING COUNT(provinces.id) >= %s
