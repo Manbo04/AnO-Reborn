@@ -424,9 +424,11 @@ def buy_market_offer(offer_id):
         buyers_gold = int(db.fetchone()[0])
 
         total_price = amount_wanted * price_for_one
+        market_fee = int(total_price * 0.05)  # 5% market fee
+        total_cost_to_buyer = total_price + market_fee
 
         if (
-            total_price > buyers_gold
+            total_cost_to_buyer > buyers_gold
         ):  # Checks if buyer doesnt have enough gold for buyin
             return error(400, "You don't have enough money.")  # Returns error if true
 
@@ -464,6 +466,20 @@ def buy_market_offer(offer_id):
                 },
             )
             return error(400, str(res))
+
+        # Deduct 5% market fee from buyer, add to global revenue (bank money)
+        if market_fee > 0:
+            res = give_resource(cId, "bank", "money", market_fee, cursor=db)
+            if res is not True:
+                _report_trade_error(
+                    f"buy_market_offer: give_resource(buyer -> bank fee) failed: {res}",
+                    extra={
+                        "user_id": cId,
+                        "offer_id": offer_id,
+                        "market_fee": market_fee,
+                    },
+                )
+                return error(400, str(res))
 
         new_offer_amount = total_amount - amount_wanted
 
