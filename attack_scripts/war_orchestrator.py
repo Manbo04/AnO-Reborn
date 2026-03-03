@@ -22,6 +22,10 @@ Implementation notes:
 from typing import Iterable, Tuple, Optional
 from database import get_db_connection, fetchone_first
 from helpers import record_war_event
+from attack_scripts.combat_helpers import compute_user_army_strength
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _apply_casualties(db, user_id: int, pairs: Iterable[Tuple[str, float]]) -> None:
@@ -38,14 +42,37 @@ def _apply_casualties(db, user_id: int, pairs: Iterable[Tuple[str, float]]) -> N
         except Exception:
             loss = int(float(amount))
 
-        sel = f"SELECT {unit_name} FROM military WHERE id=(%s)"
-        db.execute(sel, (user_id,))
+        db.execute(
+            "SELECT unit_id FROM unit_dictionary WHERE LOWER(name)=LOWER(%s) "
+            "AND is_active=TRUE",
+            (unit_name,),
+        )
+        unit_row = db.fetchone()
+        if not unit_row:
+            continue
+        unit_id = unit_row[0]
+
+        db.execute(
+            """
+            INSERT INTO user_military (user_id, unit_id, quantity)
+            VALUES (%s, %s, 0)
+            ON CONFLICT (user_id, unit_id) DO NOTHING
+            """,
+            (user_id, unit_id),
+        )
+        db.execute(
+            "SELECT COALESCE(quantity, 0) "
+            "FROM user_military WHERE user_id=%s AND unit_id=%s",
+            (user_id, unit_id),
+        )
         row = db.fetchone()
         available = row[0] if row and row[0] is not None else 0
         if loss > available:
             loss = available
-        upd = f"UPDATE military SET {unit_name}=(%s) WHERE id=(%s)"
-        db.execute(upd, (available - loss, user_id))
+        db.execute(
+            "UPDATE user_military SET quantity=%s WHERE user_id=%s AND unit_id=%s",
+            (available - loss, user_id, unit_id),
+        )
 
 
 def _determine_win_label(win_type: Optional[int]) -> str:
@@ -81,9 +108,15 @@ def persist_fight_results(
     with get_db_connection() as connection:
         db = connection.cursor()
 
+        winner_strength_before = compute_user_army_strength(winner.user_id)
+        loser_strength_before = compute_user_army_strength(loser.user_id)
+
         # Persist casualties for both sides in one transaction
         _apply_casualties(db, winner.user_id, winner_pairs)
         _apply_casualties(db, loser.user_id, loser_pairs)
+
+        winner_strength_after = compute_user_army_strength(winner.user_id)
+        loser_strength_after = compute_user_army_strength(loser.user_id)
 
         # Locate the active war row (preserve legacy behaviour of using the
         # most-recent matching row). Use the same selection filter as the
@@ -135,23 +168,73 @@ def persist_fight_results(
                 # Transfer 20% of every resource from loser to winner
                 for resource in Economy.resources:
                     db.execute(
-                        f"SELECT {resource} FROM resources WHERE id=%s",
-                        (loser.user_id,),
+                        """
+                        SELECT COALESCE(ue.quantity, 0)
+                        FROM resource_dictionary rd
+                        LEFT JOIN user_economy ue
+                            ON ue.resource_id = rd.resource_id AND ue.user_id=%s
+                        WHERE rd.name=%s AND rd.is_active=TRUE
+                        """,
+                        (loser.user_id, resource),
                     )
                     resource_amount = fetchone_first(db, 0) or 0
                     transfer_amount = int(resource_amount * 0.2)
+
                     db.execute(
-                        f"UPDATE resources SET {resource}=(%s) WHERE id=%s",
-                        (resource_amount - transfer_amount, loser.user_id),
+                        """
+                        INSERT INTO user_economy (user_id, resource_id, quantity)
+                        SELECT %s, rd.resource_id, 0
+                        FROM resource_dictionary rd
+                        WHERE rd.name=%s AND rd.is_active=TRUE
+                        ON CONFLICT (user_id, resource_id) DO NOTHING
+                        """,
+                        (loser.user_id, resource),
                     )
                     db.execute(
-                        f"SELECT {resource} FROM resources WHERE id=%s",
-                        (winner.user_id,),
+                        """
+                        INSERT INTO user_economy (user_id, resource_id, quantity)
+                        SELECT %s, rd.resource_id, 0
+                        FROM resource_dictionary rd
+                        WHERE rd.name=%s AND rd.is_active=TRUE
+                        ON CONFLICT (user_id, resource_id) DO NOTHING
+                        """,
+                        (winner.user_id, resource),
+                    )
+
+                    db.execute(
+                        """
+                        UPDATE user_economy ue
+                        SET quantity = %s
+                        FROM resource_dictionary rd
+                        WHERE ue.user_id=%s
+                          AND ue.resource_id = rd.resource_id
+                          AND rd.name=%s
+                          AND rd.is_active=TRUE
+                        """,
+                        (resource_amount - transfer_amount, loser.user_id, resource),
+                    )
+                    db.execute(
+                        """
+                        SELECT COALESCE(ue.quantity, 0)
+                        FROM resource_dictionary rd
+                        LEFT JOIN user_economy ue
+                            ON ue.resource_id = rd.resource_id AND ue.user_id=%s
+                        WHERE rd.name=%s AND rd.is_active=TRUE
+                        """,
+                        (winner.user_id, resource),
                     )
                     winner_amount = fetchone_first(db, 0) or 0
                     db.execute(
-                        f"UPDATE resources SET {resource}=(%s) WHERE id=%s",
-                        (winner_amount + transfer_amount, winner.user_id),
+                        """
+                        UPDATE user_economy ue
+                        SET quantity = %s
+                        FROM resource_dictionary rd
+                        WHERE ue.user_id=%s
+                          AND ue.resource_id = rd.resource_id
+                          AND rd.name=%s
+                          AND rd.is_active=TRUE
+                        """,
+                        (winner_amount + transfer_amount, winner.user_id, resource),
                     )
 
             # Persist the new morale value
@@ -181,6 +264,22 @@ def persist_fight_results(
             except Exception:
                 pass
 
+            try:
+                logger.info(
+                    "war_strength_snapshot",
+                    extra={
+                        "war_id": war_id,
+                        "winner": winner.user_id,
+                        "loser": loser.user_id,
+                        "winner_strength_before": winner_strength_before,
+                        "winner_strength_after": winner_strength_after,
+                        "loser_strength_before": loser_strength_before,
+                        "loser_strength_after": loser_strength_after,
+                    },
+                )
+            except Exception:
+                pass
+
         connection.commit()
 
     return _determine_win_label(win_type)
@@ -188,7 +287,7 @@ def persist_fight_results(
 
 # Backwards-compatible alias used by existing callers in the codebase
 def morale_change(column, win_type, winner, loser):
-    # Preserve the original signature and behavior by delegating to persist_fight_results
+    # Preserve signature/behavior by delegating to persist_fight_results.
     # (the `computed_morale_delta` is expected to be attached to `loser` by callers)
     computed = getattr(loser, "_computed_morale_delta", None)
     return persist_fight_results(
