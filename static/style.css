@@ -3912,6 +3912,22 @@ footer {
     white-space: nowrap;
 }
 
+/* Mechanics page: keep paired cards equal-height and align tables */
+.mechanics-row {
+    align-items: stretch;
+}
+
+.mechanics-row .templatedivflex2left,
+.mechanics-row .templatedivflex2right {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.mechanics-row .templatetable {
+    margin-top: auto;
+}
+
 /* ============================================
    UTILITY CLASSES (reduce inline styles)
    ============================================ */
