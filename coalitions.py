@@ -1089,13 +1089,24 @@ def deposit_into_bank(colId):
 
         # If it isn't, removes the resource from the giver
         else:
-            current_resource_statement = (
-                f"SELECT {resource} FROM resources" + " WHERE id=%s"
+            # Get resource_id from resource_dictionary
+            db.execute(
+                "SELECT resource_id FROM resource_dictionary WHERE name = %s",
+                (resource,),
             )
+            resource_row = db.fetchone()
+            if not resource_row:
+                return error(400, f"Invalid resource: {resource}")
+            resource_id = resource_row[0]
 
-            db.execute(current_resource_statement, (cId,))
+            # Query user_economy for current quantity
+            db.execute(
+                "SELECT COALESCE(quantity, 0) FROM user_economy "
+                "WHERE user_id = %s AND resource_id = %s",
+                (cId, resource_id),
+            )
             row = db.fetchone()
-            current_resource = int(row[0]) if row and row[0] is not None else 0
+            current_resource = int(row[0]) if row else 0
 
             if amount < 1:
                 return error(400, "Amount cannot be less than 1")
@@ -1105,8 +1116,16 @@ def deposit_into_bank(colId):
 
             new_resource = current_resource - amount
 
-            update_statement = f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-            db.execute(update_statement, (new_resource, cId))
+            # Update user_economy using UPSERT
+            db.execute(
+                """
+                INSERT INTO user_economy (user_id, resource_id, quantity)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id, resource_id)
+                DO UPDATE SET quantity = %s
+                """,
+                (cId, resource_id, new_resource, new_resource),
+            )
 
         # Gives the coalition the resource
         current_resource_statement = (
@@ -1184,15 +1203,38 @@ def withdraw(resource, amount, user_id, colId):
 
         # If the resource is not money, gives him that resource
         else:
-            current_resource_statement = f"SELECT {resource} FROM resources WHERE id=%s"
-            db.execute(current_resource_statement, (user_id,))
+            # Get resource_id from resource_dictionary
+            db.execute(
+                "SELECT resource_id FROM resource_dictionary WHERE name = %s",
+                (resource,),
+            )
+            resource_row = db.fetchone()
+            if not resource_row:
+                current_app.logger.error(f"Invalid resource in withdraw: {resource}")
+                return error(400, f"Invalid resource: {resource}")
+            resource_id = resource_row[0]
+
+            # Query user_economy for current quantity
+            db.execute(
+                "SELECT COALESCE(quantity, 0) FROM user_economy "
+                "WHERE user_id = %s AND resource_id = %s",
+                (user_id, resource_id),
+            )
             row = db.fetchone()
-            user_current = int(row[0]) if row and row[0] is not None else 0
+            user_current = int(row[0]) if row else 0
 
             new_resource = user_current + amount
 
-            update_statement = f"UPDATE resources SET {resource}=%s WHERE id=%s"
-            db.execute(update_statement, (new_resource, user_id))
+            # Update user_economy using UPSERT
+            db.execute(
+                """
+                INSERT INTO user_economy (user_id, resource_id, quantity)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id, resource_id)
+                DO UPDATE SET quantity = %s
+                """,
+                (user_id, resource_id, new_resource, new_resource),
+            )
             current_app.logger.info(
                 (
                     f"withdraw: user_id={user_id} {resource}_before={user_current} "
