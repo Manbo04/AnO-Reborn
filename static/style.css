@@ -3914,7 +3914,7 @@ footer {
 
 /* Equal-height card rows — framework-proof utility class.
    Forces side-by-side columns to stretch to equal height
-   and pushes tables below descriptive text to the bottom.
+   and pushes bottom content (tables, lists) to align horizontally.
    !important beats .templatedivcontent .templatedivflex2{flex-start} */
 .templatedivflex2.card-align-row {
     align-items: stretch !important;
@@ -3926,13 +3926,9 @@ footer {
     flex-direction: column;
 }
 
-/* Push the first table to the bottom when preceded by text (p, h3+p) */
-.card-align-row > .templatedivflex2left > p ~ .templatetable:first-of-type,
-.card-align-row > .templatedivflex2right > p ~ .templatetable:first-of-type {
-    margin-top: auto;
-}
-
-/* Push trailing lists (e.g. Quick Tips) to the bottom */
+/* Push tables/lists that are last children to the bottom for perfect alignment */
+.card-align-row > .templatedivflex2left > table:last-child,
+.card-align-row > .templatedivflex2right > table:last-child,
 .card-align-row > .templatedivflex2left > ul:last-child,
 .card-align-row > .templatedivflex2right > ul:last-child {
     margin-top: auto;
