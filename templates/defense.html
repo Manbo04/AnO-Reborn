@@ -15,7 +15,37 @@
             Default defense selection was removed. Your defense is now auto-selected from your strongest available unit types.
         </p>
 
-        <div class="templatedivflex2 menuflex unitcardparent hidden">
+        <!-- Active Defending Units Section -->
+        <div class="templatecontentheader" style="margin-top: 2rem; margin-bottom: 1rem;">
+            <h3 class="templatecontentheadercenter" style="font-size: 1.1rem; color: #00cc00; margin-bottom: 1rem;">
+                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 0.5rem;">shield</span>
+                Currently Defending With
+            </h3>
+        </div>
+
+        <div class="templatedivflex2 menuflex unitcardparent" style="margin-bottom: 2rem;">
+            {% set unit_info = {
+                'soldiers': {'display': 'Soldiers', 'image': 'soldier.jpg'},
+                'tanks': {'display': 'Tanks', 'image': 'tank.jpg'},
+                'artillery': {'display': 'Artillery', 'image': 'artillery.jpg'},
+                'bombers': {'display': 'Bombers', 'image': 'bomber.jpg'},
+                'fighters': {'display': 'Fighter Jets', 'image': 'fighterjet.jpg'},
+                'apaches': {'display': 'Attack Helicopters', 'image': 'apache.jpg'},
+                'destroyers': {'display': 'Destroyers', 'image': 'destroyer.jpg'},
+                'cruisers': {'display': 'Cruisers', 'image': 'cruiser.jpg'},
+                'submarines': {'display': 'Submarines', 'image': 'submarine.jpg'}
+            } %}
+
+            {% for unit_name, quantity in defending_units.items() %}
+                {% set info = unit_info.get(unit_name, {}) %}
+                <div class="templatedivflex2left unitcard" style="border: 2px solid #00cc00; background: rgba(0, 204, 0, 0.05);">
+                    <ul class="bold medium" style="color: #00cc00;">{{ info.get('display', unit_name | title) }}</ul>
+                    <ul style="font-size: 1.3rem; color: #00ff00; font-weight: bold;">{{ quantity }}</ul>
+                    <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/' + info.get('image', 'default.jpg')) }}?v=2" alt="{{ info.get('display', unit_name) }}" style="opacity: 0.9;" />
+                    <span class="material-icons-outlined" style="position: absolute; top: 0.5rem; right: 0.5rem; color: #00cc00; font-size: 1.5rem;">check_circle</span>
+                </div>
+            {% endfor %}
+        </div>
             <label for="1" class="templatedivflex2left unitcard">
 
                 <ul class="bold medium">Soldiers</ul>

@@ -912,6 +912,58 @@ class Military(Nation):
             return result
 
     @staticmethod
+    def get_defending_units(cId: int) -> dict:  # int -> dict
+        """Calculate the top 3 unit types by quantity for automatic defense."""
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
+
+        normal_unit_names = [
+            "soldiers",
+            "tanks",
+            "artillery",
+            "bombers",
+            "fighters",
+            "apaches",
+            "destroyers",
+            "cruisers",
+            "submarines",
+        ]
+
+        # Query for units sorted by quantity descending
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            db.execute(
+                """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+                   FROM unit_dictionary ud
+                   LEFT JOIN user_military um
+                       ON um.unit_id = ud.unit_id AND um.user_id = %s
+                   WHERE ud.is_active = TRUE
+                     AND LOWER(ud.name) = ANY(%s)
+                   ORDER BY COALESCE(um.quantity, 0) DESC""",
+                (cId, normal_unit_names),
+            )
+            defender_units_rows = db.fetchall()
+
+        # Pick up to 3 unit types that have non-zero quantities
+        defenselst = []
+        for row in defender_units_rows:
+            if len(defenselst) >= 3:
+                break
+            if row["quantity"] > 0:
+                defenselst.append(row["name"])
+
+        # Fallback: if fewer than 3 non-zero units, fill with remaining unit types
+        if len(defenselst) < 3:
+            for u in normal_unit_names:
+                if u not in defenselst:
+                    defenselst.append(u)
+                if len(defenselst) >= 3:
+                    break
+
+        # Get actual quantities for the defense units
+        military = Military.get_military(cId)
+        return {u: military.get(u, 0) for u in defenselst}
+
+    @staticmethod
     def get_limits(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
 

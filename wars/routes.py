@@ -894,7 +894,8 @@ def declare_war():
 def defense():
     cId = session["user_id"]
     units = Military.get_military(cId)
-    return render_template("defense.html", units=units)
+    defending_units = Military.get_defending_units(cId)
+    return render_template("defense.html", units=units, defending_units=defending_units)
 
 
 @wars_bp.route("/wars", methods=["GET", "POST"])
