@@ -233,11 +233,11 @@ def compute_display_limits(cId, units_row=None):
     artillery = max(0, army_bases * 8 - military["artillery"])
 
     # Air units share aerodome capacity
-    air_units = military["fighters"] + military["bombers"]
+    air_units = military["fighters"] + military["bombers"] + military["apaches"]
     air_limit = max(0, aerodomes * 5 - air_units)
     bombers = air_limit
     fighters = air_limit
-    apaches = max(0, army_bases * 5 - military["apaches"])
+    apaches = air_limit
 
     # Naval units
     naval_units = military["submarines"] + military["destroyers"]
