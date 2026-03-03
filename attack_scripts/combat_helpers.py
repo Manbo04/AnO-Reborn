@@ -7,6 +7,31 @@ These functions are intentionally small and unit-testable so the large
 from typing import Dict, Tuple
 
 from attack_scripts.nations_helpers import calculate_bonuses
+from database import get_db_cursor
+
+
+def compute_user_army_strength(user_id: int) -> float:
+    """Compute total army strength from normalized military tables.
+
+    Strength uses the average of `base_attack` and `base_defense` per unit,
+    multiplied by the owned quantity.
+    """
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            SELECT
+                COALESCE(
+                    SUM(um.quantity * ((ud.base_attack + ud.base_defense) / 2.0)),
+                    0
+                )
+            FROM user_military um
+            JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+            WHERE um.user_id=%s AND ud.is_active=TRUE
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+        return float(row[0] or 0)
 
 
 def compute_unit_amount_bonus(
