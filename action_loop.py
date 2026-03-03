@@ -46,12 +46,15 @@ def build_structure(user_id: int, building_id: int, quantity: int) -> ActionResu
     """Build structure(s) using normalized schema.
 
     Cost is deducted from `user_economy` using `BUILD_COST_RESOURCE`.
+    Transactions use consistent ascending-order user_id locking to prevent deadlocks.
     """
     if quantity <= 0:
         raise ActionLoopError("Quantity must be greater than 0.")
 
     with get_db_connection() as conn:
         db = conn.cursor()
+        # Acquire advisory lock for deadlock safety (always by ascending user_id)
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
         db.execute(
             """
@@ -121,9 +124,12 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
     """Unlock a technology using normalized schema.
 
     Cost is deducted from `user_economy` using `RESEARCH_COST_RESOURCE`.
+    Transactions use consistent ascending-order user_id locking to prevent deadlocks.
     """
     with get_db_connection() as conn:
         db = conn.cursor()
+        # Acquire advisory lock for deadlock safety (always by ascending user_id)
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
         db.execute(
             """
