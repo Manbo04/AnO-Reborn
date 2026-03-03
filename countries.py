@@ -482,9 +482,13 @@ def country(cId):
     with get_db_cursor() as db:
         # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
         db.execute(
-            """SELECT u.username, s.location, u.description, u.date, u.flag,
-                      c.id AS coalition_id, cm.role, c.name as colName,
-                      p.total_pop, p.avg_happiness, p.avg_productivity, p.province_count
+            """SELECT u.username, s.location, u.description,
+                      u.date, u.flag,
+                      c.id AS coalition_id, cm.role,
+                      c.name as colName,
+                      p.total_pop, p.avg_happiness,
+                      p.avg_productivity, p.province_count,
+                      u.last_active
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
@@ -518,6 +522,7 @@ def country(cId):
             happiness,
             productivity,
             provinceCount,
+            last_active,
         ) = row
 
         # Set defaults for None values
@@ -695,6 +700,7 @@ def country(cId):
         resource_rows=resource_rows,
         building_rows=building_rows,
         technology_rows=technology_rows,
+        last_active=last_active,
     )
 
 

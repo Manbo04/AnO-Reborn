@@ -177,6 +177,16 @@ def login():
                             "INSERT INTO policies (user_id) VALUES (%s)", (user[0],)
                         )
 
+                    # Update last_active timestamp on login
+                    try:
+                        db.execute(
+                            "UPDATE users SET last_active = "
+                            "CURRENT_TIMESTAMP WHERE id = %s",
+                            (user[0],),
+                        )
+                    except Exception:
+                        pass  # best-effort; don't block login
+
                     logger.debug("Returning redirect to / after login")
 
                     response = redirect("/")
@@ -296,6 +306,16 @@ def discord_login():
             )
         except Exception:
             db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+
+    # Update last_active timestamp on Discord login
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s",
+                (user_id,),
+            )
+    except Exception:
+        pass  # best-effort; don't block login
 
     session["user_id"] = user_id  # clears session variables from oauth
     session.permanent = True

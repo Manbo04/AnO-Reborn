@@ -265,7 +265,10 @@
                     <th><span class="material-icons-outlined">
                         account_balance
                         </span>Provinces</th>
-                    {% for member_id, username, role, influence, provinces in members|sort(attribute=3, reverse=True) %}
+                    <th><span class="material-icons-outlined">
+                        schedule
+                        </span>Last Active</th>
+                    {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=3, reverse=True) %}
                     <tr>
                         <td>{{ loop.index }})</td>
                         <td>
@@ -278,6 +281,7 @@
                         <td><span class="material-icons-outlined">
                             account_balance
                             </span>{{ provinces if provinces else 0 }}</td>
+                        <td>{{ last_active | timeago }}</td>
                     </tr>
                     {% endfor %}
                 </table>

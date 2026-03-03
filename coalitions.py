@@ -115,7 +115,8 @@ def coalition(coalition_id):
                        users.username,
                        coalitions_legacy.role,
                        0 AS influence,
-                       COALESCE(prov.province_count, 0) AS province_count
+                       COALESCE(prov.province_count, 0) AS province_count,
+                       users.last_active
                 FROM coalitions_legacy
                 INNER JOIN users ON coalitions_legacy.userid = users.id
                 LEFT JOIN (
