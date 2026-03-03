@@ -18,8 +18,8 @@ Implementation notes:
   war end).
 - Uses `get_db_connection()` and `fetchone_first` from `database` for parity.
 """
+
 from typing import Iterable, Tuple, Optional
-import time
 from database import get_db_connection, fetchone_first
 from helpers import record_war_event
 
@@ -89,8 +89,15 @@ def persist_fight_results(
         # most-recent matching row). Use the same selection filter as the
         # legacy `morale_change` implementation.
         db.execute(
-            "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
-            (winner.user_id, winner.user_id, loser.user_id, loser.user_id),
+            "SELECT id FROM wars WHERE "
+            "(attacker=(%s) OR attacker=(%s)) "
+            "AND (defender=(%s) OR defender=(%s))",
+            (
+                winner.user_id,
+                winner.user_id,
+                loser.user_id,
+                loser.user_id,
+            ),
         )
         try:
             war_id = db.fetchall()[-1][0]
@@ -125,9 +132,7 @@ def persist_fight_results(
                 from attack_scripts.Nations import Nation, Economy
 
                 Nation.set_peace(db, connection, war_id)
-
-                # Transfer 20% of every resource from loser to winner (perform updates directly
-                # to avoid depending on other higher-level helpers).
+                # Transfer 20% of every resource from loser to winner
                 for resource in Economy.resources:
                     db.execute(
                         f"SELECT {resource} FROM resources WHERE id=%s",
@@ -135,14 +140,10 @@ def persist_fight_results(
                     )
                     resource_amount = fetchone_first(db, 0) or 0
                     transfer_amount = int(resource_amount * 0.2)
-
-                    # Subtract from loser
                     db.execute(
                         f"UPDATE resources SET {resource}=(%s) WHERE id=%s",
                         (resource_amount - transfer_amount, loser.user_id),
                     )
-
-                    # Add to winner
                     db.execute(
                         f"SELECT {resource} FROM resources WHERE id=%s",
                         (winner.user_id,),

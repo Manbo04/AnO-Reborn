@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Debug province 500 error"""
+
 from database import get_db_connection
 from psycopg2.extras import RealDictCursor
 import variables

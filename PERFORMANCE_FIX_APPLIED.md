@@ -19,7 +19,7 @@ Applied major performance optimizations to `tasks.py` to fix the N+1 query probl
 **After**: Uses bulk operations with local caching
 - 6 bulk SELECT queries at start to preload ALL data into memory:
   - `upgrades_map`: All user upgrades
-  - `policies_map`: All user policies  
+  - `policies_map`: All user policies
   - `proinfra_map`: All province infrastructure
   - `stats_map`: All user gold values
   - `resources_map`: All user resources
@@ -36,7 +36,7 @@ Applied major performance optimizations to `tasks.py` to fix the N+1 query probl
 
 **Before**: Called `calc_ti()` per user which did 3 DB queries each
 - SELECT consumer_goods
-- SELECT policies  
+- SELECT policies
 - SELECT provinces
 
 **After**: Bulk loads everything upfront
