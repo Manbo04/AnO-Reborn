@@ -767,19 +767,35 @@ def get_resources():
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
         try:
             db.execute(
-                (
-                    "SELECT * FROM resources INNER JOIN stats "
-                    "ON resources.id=stats.id WHERE stats.id=%s"
-                ),
+                "SELECT gold FROM stats WHERE id=%s",
                 (target_user_id,),
             )
-            row = db.fetchone()
-            if row:
-                resources = dict(row)
-                # Resources change frequently, cache them for a short time only
-                query_cache.set(cache_key, resources, ttl_seconds=15)
-                return resources
-            return default_resources
+            gold_row = db.fetchone()
+            if gold_row:
+                default_resources["gold"] = gold_row.get("gold", 0) or 0
+
+            db.execute(
+                """
+                SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
+                FROM resource_dictionary rd
+                LEFT JOIN user_economy ue
+                  ON ue.resource_id = rd.resource_id
+                 AND ue.user_id = %s
+                ORDER BY rd.resource_id
+                """,
+                (target_user_id,),
+            )
+            rows = db.fetchall()
+
+            resources = default_resources.copy()
+            for row in rows:
+                name = row.get("name")
+                if name in resources:
+                    resources[name] = int(row.get("quantity") or 0)
+
+            # Resources change frequently, cache them for a short time only
+            query_cache.set(cache_key, resources, ttl_seconds=15)
+            return resources
         except Exception:
             return default_resources
 

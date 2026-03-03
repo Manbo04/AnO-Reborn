@@ -491,19 +491,54 @@ def country(cId):
     PERFORMANCE OPTIMIZED: Reduced from 10+ separate queries to 4 combined queries.
     Uses caching for expensive calculations (revenue, statistics).
     """
+
+    def default_revenue_data():
+        base_resources = [
+            "rations",
+            "oil",
+            "coal",
+            "uranium",
+            "bauxite",
+            "iron",
+            "lead",
+            "copper",
+            "lumber",
+            "components",
+            "steel",
+            "consumer_goods",
+            "aluminium",
+            "gasoline",
+            "ammunition",
+            "money",
+            "energy",
+        ]
+        gross = {r: 0 for r in base_resources}
+        net = {r: 0 for r in base_resources}
+        return {"gross": gross, "net": net, "gross_theoretical": gross.copy()}
+
+    def default_statistics_data():
+        return {
+            "electricity": 0,
+            "retail": 0,
+            "public_works": 0,
+            "military": 0,
+            "industry": 0,
+            "processing": 0,
+        }
+
     with get_db_cursor() as db:
         # OPTIMIZED: Combined user + stats + coalition in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description, u.date, u.flag,
-                      c.colId, c.role, cn.name as colName, cn.flag as colFlag,
+                      c.coalition_id, cm.role, c.name as colName,
                       (SELECT SUM(population) FROM provinces WHERE userId=%s),
                       (SELECT AVG(happiness) FROM provinces WHERE userId=%s),
                       (SELECT AVG(productivity) FROM provinces WHERE userId=%s),
                       (SELECT COUNT(id) FROM provinces WHERE userId=%s)
                FROM users u
                INNER JOIN stats s ON u.id=s.id
-               LEFT JOIN coalitions c ON u.id=c.userId
-               LEFT JOIN colNames cn ON c.colId=cn.id
+               LEFT JOIN coalition_members cm ON u.id=cm.user_id
+               LEFT JOIN coalitions c ON cm.coalition_id=c.coalition_id
                WHERE u.id=%s""",
             (cId, cId, cId, cId, cId),
         )
@@ -520,7 +555,6 @@ def country(cId):
             colId,
             colRole,
             colName,
-            colFlag,
             population,
             happiness,
             productivity,
@@ -530,6 +564,7 @@ def country(cId):
         # Set defaults for None values
         colId = colId or 0
         colName = colName or ""
+        colFlag = None
         population = population or 0
         happiness = happiness or 0
         productivity = productivity or 0
@@ -550,6 +585,48 @@ def country(cId):
         )
         provinces = db.fetchall()
 
+        # Normalized resource display
+        db.execute(
+            """
+            SELECT rd.display_name, COALESCE(ue.quantity, 0) AS quantity
+            FROM resource_dictionary rd
+            LEFT JOIN user_economy ue
+              ON ue.resource_id = rd.resource_id
+             AND ue.user_id = %s
+            ORDER BY rd.resource_id
+            """,
+            (cId,),
+        )
+        resource_rows = db.fetchall() or []
+
+        # Normalized buildings display (owned buildings only)
+        db.execute(
+            """
+            SELECT bd.display_name, ub.quantity
+            FROM user_buildings ub
+            JOIN building_dictionary bd ON bd.building_id = ub.building_id
+            WHERE ub.user_id = %s
+              AND ub.quantity > 0
+            ORDER BY bd.display_name
+            """,
+            (cId,),
+        )
+        building_rows = db.fetchall() or []
+
+        # Normalized technologies display (unlocked only)
+        db.execute(
+            """
+            SELECT td.display_name
+            FROM user_tech ut
+            JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+            WHERE ut.user_id = %s
+              AND ut.is_unlocked = TRUE
+            ORDER BY td.display_name
+            """,
+            (cId,),
+        )
+        technology_rows = db.fetchall() or []
+
         # Calculate CG need from already-fetched population
         cg_needed = (
             math.ceil(population / variables.CONSUMER_GOODS_PER) if population else 0
@@ -563,7 +640,16 @@ def country(cId):
         spy = {}
         uId = session.get("user_id")
         if uId:
-            db.execute("SELECT spies FROM military WHERE military.id=(%s)", (uId,))
+            db.execute(
+                """
+                SELECT COALESCE(SUM(um.quantity), 0)
+                FROM user_military um
+                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                WHERE um.user_id = %s
+                  AND ud.name = 'spies'
+                """,
+                (uId,),
+            )
             spy_row = db.fetchone()
             spy["count"] = spy_row[0] if spy_row else 0
         else:
@@ -582,7 +668,11 @@ def country(cId):
 
         # Revenue stuff - expensive, so cached
         if status:
-            revenue = get_revenue(cId)
+            try:
+                revenue = get_revenue(cId)
+            except Exception:
+                revenue = default_revenue_data()
+
             db.execute(
                 "SELECT name, type, resource, amount, date "
                 "FROM revenue WHERE user_id=%s",
@@ -590,12 +680,18 @@ def country(cId):
             )
             expenses = db.fetchall()
 
-            statistics = get_econ_statistics(cId)
-            statistics = format_econ_statistics(statistics)
+            try:
+                statistics = get_econ_statistics(cId)
+                statistics = format_econ_statistics(statistics)
+            except Exception:
+                statistics = default_statistics_data()
+
+            for key, value in default_statistics_data().items():
+                statistics.setdefault(key, value)
         else:
-            revenue = {}
+            revenue = default_revenue_data()
             expenses = []
-            statistics = {}
+            statistics = default_statistics_data()
 
         # Calculate rations need from already-fetched provinces data
         # Each province needs at least 1 ration, or population // RATIONS_PER
@@ -637,6 +733,9 @@ def country(cId):
         expenses=expenses,
         statistics=statistics,
         policies=policies,
+        resource_rows=resource_rows,
+        building_rows=building_rows,
+        technology_rows=technology_rows,
     )
 
 
