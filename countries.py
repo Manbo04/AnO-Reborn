@@ -634,7 +634,7 @@ def country(cId):
 
             db.execute(
                 "SELECT name, type, resource, amount, date "
-                "FROM revenue WHERE userid=%s",
+                "FROM revenue WHERE user_id=%s",
                 (cId,),
             )
             expenses = db.fetchall()
