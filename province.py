@@ -373,9 +373,10 @@ def createprovince():
                     ),
                     (cId, pName),
                 )
-                province_id = db.fetchone()[0]
+                db.fetchone()  # Consume result
 
-                db.execute("INSERT INTO proInfra (id) VALUES (%s)", (province_id,))
+                # No need to INSERT INTO proInfra - user_buildings is populated
+                # dynamically when buildings are purchased
 
                 # Commit the transaction
                 conn.commit()
@@ -405,16 +406,30 @@ def createprovince():
 
 def get_free_slots(pId, slot_type):  # pId = province id
     with get_db_cursor() as db:
+        # Get user_id from province
+        db.execute("SELECT userId FROM provinces WHERE id=%s", (pId,))
+        user_id_row = db.fetchone()
+        if not user_id_row:
+            return 0
+        user_id = user_id_row[0]
+
         if slot_type == "city":
+            # Query normalized user_buildings for city buildings
             db.execute(
                 """
-            SELECT
-            coal_burners + oil_burners + hydro_dams + nuclear_reactors + solar_fields +
-            gas_stations + general_stores + farmers_markets + malls + banks +
-            city_parks + hospitals + libraries + universities + monorails
-            FROM proInfra WHERE id=%s
-            """,
-                (pId,),
+                SELECT COALESCE(SUM(ub.quantity), 0)
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                  AND bd.name IN (
+                    'coal_burners', 'oil_burners', 'hydro_dams',
+                    'nuclear_reactors', 'solar_fields', 'gas_stations',
+                    'general_stores', 'farmers_markets', 'malls', 'banks',
+                    'city_parks', 'hospitals', 'libraries', 'universities',
+                    'monorails'
+                  )
+                """,
+                (user_id,),
             )
             used_slots = int(db.fetchone()[0])
 
@@ -424,16 +439,22 @@ def get_free_slots(pId, slot_type):  # pId = province id
             free_slots = all_slots - used_slots
 
         elif slot_type == "land":
+            # Query normalized user_buildings for land buildings
             db.execute(
                 """
-            SELECT
-            army_bases + harbours + aerodomes + admin_buildings + silos +
-            farms + pumpjacks + coal_mines + bauxite_mines +
-            copper_mines + uranium_mines + lead_mines + iron_mines +
-            lumber_mills + component_factories + steel_mills + ammunition_factories +
-            aluminium_refineries + oil_refineries FROM proInfra WHERE id=%s
-            """,
-                (pId,),
+                SELECT COALESCE(SUM(ub.quantity), 0)
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                  AND bd.name IN (
+                    'army_bases', 'harbours', 'aerodomes', 'admin_buildings',
+                    'silos', 'farms', 'pumpjacks', 'coal_mines', 'bauxite_mines',
+                    'copper_mines', 'uranium_mines', 'lead_mines', 'iron_mines',
+                    'lumber_mills', 'component_factories', 'steel_mills',
+                    'ammunition_factories', 'aluminium_refineries', 'oil_refineries'
+                  )
+                """,
+                (user_id,),
             )
             used_slots = int(db.fetchone()[0])
 
@@ -662,21 +683,45 @@ def province_sell_buy(way, units, province_id):
             for resource, amount in resources_data:
                 qty = amount * wantedUnits
                 if way == "buy":
+                    # Get resource_id for the resource name
+                    db.execute(
+                        "SELECT resource_id FROM resource_dictionary WHERE name = %s",
+                        (resource,),
+                    )
+                    resource_id_row = db.fetchone()
+                    if not resource_id_row:
+                        return {
+                            "fail": True,
+                            "resource": resource,
+                            "current_amount": 0,
+                            "difference": -qty,
+                        }
+                    resource_id = resource_id_row[0]
+
                     # Atomically subtract resource if user has enough
                     db.execute(
                         (
-                            f"UPDATE resources SET {resource}={resource}-%s "
-                            + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
+                            "UPDATE user_economy SET quantity = quantity - %s "
+                            "WHERE user_id = %s AND resource_id = %s AND "
+                            "quantity >= %s RETURNING quantity"
                         ),
-                        (qty, cId, qty),
+                        (qty, cId, resource_id, qty),
                     )
                     if db.fetchone() is None:
                         # Not enough resource
-                        # Fetch current amount for informative error
+                        # Fetch current amount for informative error from user_economy
                         db.execute(
-                            f"SELECT {resource} FROM resources WHERE id=%s", (cId,)
+                            """
+                            SELECT COALESCE(ue.quantity, 0)
+                            FROM user_economy ue
+                            JOIN resource_dictionary rd
+                                ON rd.resource_id = ue.resource_id
+                            WHERE ue.user_id = %s AND rd.name = %s
+                            """,
+                            (cId, resource),
                         )
-                        current_resource = int(db.fetchone()[0])
+                        row = db.fetchone()
+                        current_resource = int(row[0]) if row else 0
                         return {
                             "fail": True,
                             "resource": resource,
@@ -685,13 +730,24 @@ def province_sell_buy(way, units, province_id):
                         }
 
                 elif way == "sell":
+                    # Get resource_id for the resource name
+                    db.execute(
+                        "SELECT resource_id FROM resource_dictionary WHERE name = %s",
+                        (resource,),
+                    )
+                    resource_id_row = db.fetchone()
+                    if not resource_id_row:
+                        continue  # Skip if resource doesn't exist
+                    resource_id = resource_id_row[0]
+
                     # Increment resource on sell
                     db.execute(
                         (
-                            f"UPDATE resources SET {resource}={resource}+%s "
-                            f"WHERE id=%s RETURNING {resource}"
+                            "UPDATE user_economy SET quantity = quantity + %s "
+                            "WHERE user_id = %s AND resource_id = %s "
+                            "RETURNING quantity"
                         ),
-                        (qty, cId),
+                        (qty, cId, resource_id),
                     )
                     db.fetchone()
 
