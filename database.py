@@ -675,13 +675,14 @@ class UserQueries:
     def get_user_military(user_id: int) -> Dict[str, int]:
         """Get all military units for a user in a single query"""
         query = """
-            SELECT soldiers, artillery, tanks, bombers, fighters, apaches,
-                   spies, ICBMs, nukes, destroyers, cruisers, submarines,
-                   manpower, army_tradition, defcon, default_defense
-            FROM military WHERE id = %s
+            SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+            FROM unit_dictionary ud
+            LEFT JOIN user_military um
+                ON um.unit_id = ud.unit_id AND um.user_id = %s
+            WHERE ud.is_active = TRUE
         """
-        result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
-        return dict(result) if result else {}
+        results = QueryHelper.fetch_all(query, (user_id,))
+        return {row[0]: int(row[1]) for row in results} if results else {}
 
     @staticmethod
     def get_user_stats(user_id: int) -> Dict[str, Any]:
