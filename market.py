@@ -378,6 +378,11 @@ def market():
 
 @login_required
 def buy_market_offer(offer_id):
+    """Handle the buyer purchasing a market offer.
+
+    Requires the buyer to have enough funds to pay the seller at the listed price.
+    Multi-user transactions lock in ascending user_id order to prevent deadlocks.
+    """
     with get_db_connection() as connection:
         db = connection.cursor()
 
@@ -406,6 +411,11 @@ def buy_market_offer(offer_id):
 
         if amount_wanted < 1:
             return error(400, "Amount cannot be less than 1")
+
+        # Lock both users in ascending order to prevent deadlocks
+        users_to_lock = sorted([cId, seller_id])
+        for uid in users_to_lock:
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (uid,))
 
         if amount_wanted > total_amount:
             return error(400, "Requested amount exceeds available amount")
@@ -969,6 +979,11 @@ def accept_trade(trade_id):
 
             if not _is_active_resource(db, resource):
                 return error(400, "This resource is not currently tradable")
+
+            # Lock both users in ascending order to prevent deadlocks
+            users_to_lock = sorted([cId, offerer])
+            for uid in users_to_lock:
+                db.execute("SELECT pg_advisory_xact_lock(%s)", (uid,))
 
             # Use give_resource where appropriate (tests monkeypatch this to
             # simulate failures). We call it while holding the advisory lock so
