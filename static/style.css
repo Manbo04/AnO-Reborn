@@ -3912,19 +3912,29 @@ footer {
     white-space: nowrap;
 }
 
-/* Mechanics page: keep paired cards equal-height and align tables */
-.mechanics-row {
-    align-items: stretch;
+/* Equal-height card rows — framework-proof utility class.
+   Forces side-by-side columns to stretch to equal height
+   and pushes tables below descriptive text to the bottom.
+   !important beats .templatedivcontent .templatedivflex2{flex-start} */
+.templatedivflex2.card-align-row {
+    align-items: stretch !important;
 }
 
-.mechanics-row .templatedivflex2left,
-.mechanics-row .templatedivflex2right {
+.card-align-row > .templatedivflex2left,
+.card-align-row > .templatedivflex2right {
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
-.mechanics-row .templatetable {
+/* Push the first table to the bottom when preceded by text (p, h3+p) */
+.card-align-row > .templatedivflex2left > p ~ .templatetable:first-of-type,
+.card-align-row > .templatedivflex2right > p ~ .templatetable:first-of-type {
+    margin-top: auto;
+}
+
+/* Push trailing lists (e.g. Quick Tips) to the bottom */
+.card-align-row > .templatedivflex2left > ul:last-child,
+.card-align-row > .templatedivflex2right > ul:last-child {
     margin-top: auto;
 }
 
