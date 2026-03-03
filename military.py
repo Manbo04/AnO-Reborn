@@ -26,21 +26,70 @@ ALL_UNITS = [
 ]
 
 
-def _get_user_units(db, cId):
+def _get_user_units_with_stats(db, cId):
+    """Get user units with combat stats and maintenance costs."""
     db.execute(
         """
-        SELECT ud.name, COALESCE(um.quantity, 0)
+        SELECT
+            ud.name,
+            COALESCE(um.quantity, 0) AS quantity,
+            ud.base_attack,
+            ud.base_defense,
+            rd.name AS maintenance_resource,
+            ud.maintenance_cost_amount
         FROM unit_dictionary ud
         LEFT JOIN user_military um
             ON um.unit_id = ud.unit_id AND um.user_id = %s
+        LEFT JOIN resource_dictionary rd
+            ON rd.resource_id = ud.maintenance_cost_resource_id
         WHERE ud.is_active = TRUE
+        ORDER BY ud.name
         """,
         (cId,),
     )
-    units = {name: int(qty or 0) for name, qty in db.fetchall()}
+    units_list = []
+    units_dict = {}
+    for row in db.fetchall():
+        name, qty, attack, defense, maint_resource, maint_amount = row
+        qty = int(qty or 0)
+        attack = float(attack or 0)
+        defense = float(defense or 0)
+        maint_amount = int(maint_amount or 0)
+        maint_cost_per_tick = qty * maint_amount
+
+        unit_info = {
+            "name": name,
+            "quantity": qty,
+            "attack": attack,
+            "defense": defense,
+            "maintenance_resource": maint_resource,
+            "maintenance_per_unit": maint_amount,
+            "maintenance_per_tick": maint_cost_per_tick,
+        }
+        units_dict[name] = unit_info
+        if qty > 0:
+            units_list.append(unit_info)
+
+    # Ensure all units exist in dict with 0 quantity
     for unit in ALL_UNITS:
-        units.setdefault(unit, 0)
-    return units
+        if unit not in units_dict:
+            units_dict[unit] = {
+                "name": unit,
+                "quantity": 0,
+                "attack": 0,
+                "defense": 0,
+                "maintenance_resource": None,
+                "maintenance_per_unit": 0,
+                "maintenance_per_tick": 0,
+            }
+
+    return units_dict, units_list
+
+
+def _get_user_units(db, cId):
+    """Get user units (legacy interface for compatibility)."""
+    units_dict, _ = _get_user_units_with_stats(db, cId)
+    return {name: info["quantity"] for name, info in units_dict.items()}
 
 
 def _get_unit_costs(db, unit_name):
@@ -230,17 +279,18 @@ def military():
 
     if request.method == "GET":
         with get_db_cursor() as db:
-            units = _get_user_units(db, cId)
+            units_dict, units_active = _get_user_units_with_stats(db, cId)
             db.execute("SELECT COALESCE(manpower, 0) FROM military WHERE id=%s", (cId,))
             manpower_row = db.fetchone()
             manpower = int(manpower_row[0] or 0) if manpower_row else 0
 
         upgrades = get_upgrades(cId)  # Now cached in upgrades.py
-        limits = compute_display_limits(cId, units)
+        limits = compute_display_limits(cId, units_dict)
 
         return render_template(
             "military.html",
-            units=units,
+            units=units_dict,
+            units_active=units_active,
             limits=limits,
             upgrades=upgrades,
             mildict=MILDICT,
