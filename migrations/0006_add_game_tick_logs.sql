@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS game_tick_logs (
     total_production BIGINT NOT NULL DEFAULT 0,
     total_consumption BIGINT NOT NULL DEFAULT 0,
     total_deserted_units BIGINT NOT NULL DEFAULT 0,
+    production_phase_ms INTEGER,
+    consumption_phase_ms INTEGER,
+    validation_phase_ms INTEGER,
+    total_duration_ms INTEGER,
     error_message TEXT,
     CONSTRAINT game_tick_logs_valid_status CHECK (
         status IN ('running', 'completed', 'failed')
@@ -35,5 +39,14 @@ CREATE INDEX IF NOT EXISTS idx_game_tick_logs_started_at
 
 CREATE INDEX IF NOT EXISTS idx_game_tick_logs_status
     ON game_tick_logs(status);
+
+CREATE INDEX IF NOT EXISTS idx_user_economy_user_resource
+    ON user_economy(user_id, resource_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_military_user_unit
+    ON user_military(user_id, unit_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_buildings_user_building
+    ON user_buildings(user_id, building_id);
 
 COMMIT;

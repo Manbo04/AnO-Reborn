@@ -2,6 +2,7 @@ from celery import Celery
 import psycopg2
 import os
 import time
+import logging
 from dotenv import load_dotenv
 from attack_scripts import Economy
 import math
@@ -9,6 +10,8 @@ from celery.schedules import crontab
 import variables
 import redis
 import urllib.parse
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 import config  # Parse Railway environment variables  # noqa: E402
@@ -2336,9 +2339,13 @@ def _finalize_game_tick_log(
     total_production=0,
     total_consumption=0,
     total_deserted_units=0,
+    production_phase_ms=None,
+    consumption_phase_ms=None,
+    validation_phase_ms=None,
+    total_duration_ms=None,
     error_message=None,
 ):
-    """Finalize a game tick log row with outcomes."""
+    """Finalize a game tick log row with outcomes and phase timings."""
     db.execute(
         """
         UPDATE game_tick_logs
@@ -2350,6 +2357,10 @@ def _finalize_game_tick_log(
             total_production=%s,
             total_consumption=%s,
             total_deserted_units=%s,
+            production_phase_ms=%s,
+            consumption_phase_ms=%s,
+            validation_phase_ms=%s,
+            total_duration_ms=%s,
             error_message=%s
         WHERE tick_id=%s
         """,
@@ -2361,6 +2372,10 @@ def _finalize_game_tick_log(
             total_production,
             total_consumption,
             total_deserted_units,
+            production_phase_ms,
+            consumption_phase_ms,
+            validation_phase_ms,
+            total_duration_ms,
             error_message,
             tick_id,
         ),
@@ -2368,14 +2383,16 @@ def _finalize_game_tick_log(
 
 
 def global_tick():
-    """Run the normalized global game tick.
+    """Run the normalized global game tick with phase timing.
 
     Phases:
     1) Production from user_buildings + building_dictionary effect values
     2) Military maintenance consumption from user_military + unit_dictionary
-     3) Validation with non-negative balances,
+    3) Validation with non-negative balances,
          plus unit desertion and morale penalty
-    4) Log the tick execution in game_tick_logs
+    4) Log the tick execution in game_tick_logs with phase timings
+
+    If any phase exceeds 30 seconds, a warning is logged.
     """
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
@@ -2388,12 +2405,16 @@ def global_tick():
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         tick_id = None
+        tick_start = time.time()
         users_processed = set()
         production_entries = 0
         consumption_entries = 0
         total_production = 0
         total_consumption = 0
         total_deserted_units = 0
+        production_phase_ms = 0
+        consumption_phase_ms = 0
+        validation_phase_ms = 0
 
         try:
             # Ensure we do not double-run in short windows.
@@ -2428,6 +2449,7 @@ def global_tick():
             # -----------------------------------------------------------------
             # Production phase
             # -----------------------------------------------------------------
+            production_start = time.time()
             resource_names = set(BUILDING_PRODUCTION_RESOURCE_MAP.values())
 
             dbdict.execute(
@@ -2497,9 +2519,17 @@ def global_tick():
                     page_size=500,
                 )
 
+            production_phase_ms = int((time.time() - production_start) * 1000)
+            if production_phase_ms > 30000:
+                logger.warning(
+                    f"Production phase exceeded 30s: {production_phase_ms}ms, "
+                    f"prod_entries={production_entries}"
+                )
+
             # -----------------------------------------------------------------
             # Consumption phase
             # -----------------------------------------------------------------
+            consumption_start = time.time()
             dbdict.execute(
                 """
                 SELECT
@@ -2579,9 +2609,17 @@ def global_tick():
                         page_size=500,
                     )
 
+                consumption_phase_ms = int((time.time() - consumption_start) * 1000)
+                if consumption_phase_ms > 30000:
+                    logger.warning(
+                        f"Consumption phase exceeded 30s: {consumption_phase_ms}ms, "
+                        f"cons_entries={consumption_entries}"
+                    )
+
                 # Validation logic when maintenance cannot be fully paid:
                 # apply unit desertion proportionally and morale penalties
                 # in active wars.
+                validation_start = time.time()
                 if deficits:
                     deficit_users = sorted({k[0] for k in deficits.keys()})
                     deficit_resources = sorted({k[1] for k in deficits.keys()})
@@ -2688,6 +2726,17 @@ def global_tick():
                             page_size=200,
                         )
 
+            validation_phase_ms = int((time.time() - validation_start) * 1000)
+            if validation_phase_ms > 30000:
+                logger.warning(
+                    f"Validation phase exceeded 30s: {validation_phase_ms}ms, "
+                    f"deserted_units={total_deserted_units}"
+                )
+
+            total_duration_ms = int((time.time() - tick_start) * 1000)
+            if total_duration_ms > 30000:
+                logger.warning(f"Global tick exceeded 30s total: {total_duration_ms}ms")
+
             _finalize_game_tick_log(
                 db,
                 tick_id,
@@ -2698,6 +2747,10 @@ def global_tick():
                 total_production=total_production,
                 total_consumption=total_consumption,
                 total_deserted_units=total_deserted_units,
+                production_phase_ms=production_phase_ms,
+                consumption_phase_ms=consumption_phase_ms,
+                validation_phase_ms=validation_phase_ms,
+                total_duration_ms=total_duration_ms,
             )
             conn.commit()
 
@@ -2706,11 +2759,13 @@ def global_tick():
                 f"users={len(users_processed)} "
                 f"prod_entries={production_entries} cons_entries={consumption_entries} "
                 f"produced={total_production} consumed={total_consumption} "
-                f"deserted_units={total_deserted_units}"
+                f"deserted_units={total_deserted_units} "
+                f"total_ms={total_duration_ms}"
             )
 
         except Exception as e:
             err = str(e)
+            total_duration_ms = int((time.time() - tick_start) * 1000)
             try:
                 if tick_id is not None:
                     _finalize_game_tick_log(
@@ -2723,6 +2778,10 @@ def global_tick():
                         total_production=total_production,
                         total_consumption=total_consumption,
                         total_deserted_units=total_deserted_units,
+                        production_phase_ms=production_phase_ms,
+                        consumption_phase_ms=consumption_phase_ms,
+                        validation_phase_ms=validation_phase_ms,
+                        total_duration_ms=total_duration_ms,
                         error_message=err,
                     )
                 conn.commit()
