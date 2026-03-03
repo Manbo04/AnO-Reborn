@@ -44,4 +44,3 @@ class RedisCache(BaseCache):
 
     def close(self) -> None:
         """Redis uses connection pooling, no need to close the connection."""
-        pass
