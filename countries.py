@@ -1038,12 +1038,12 @@ def delete_own_account():
         if coalition_role != "leader":
             pass
         else:
-            db.execute("SELECT coalition_id FROM coalitions WHERE userid=%s", (cId,))
+            db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
             user_coalition = db.fetchone()[0]
 
             db.execute(
-                "SELECT COUNT(user_id) FROM coalitions "
-                "WHERE role='leader' AND coalition_id=%s",
+                "SELECT COUNT(userId) FROM coalitions "
+                "WHERE role='leader' AND colId=%s",
                 (user_coalition,),
             )
             leader_count = db.fetchone()[0]
@@ -1051,18 +1051,12 @@ def delete_own_account():
             if leader_count != 1:
                 pass
             else:
-                db.execute(
-                    "DELETE FROM coalitions WHERE coalition_id=%s", (user_coalition,)
-                )
+                db.execute("DELETE FROM coalitions WHERE colId=%s", (user_coalition,))
                 db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                db.execute(
-                    "DELETE FROM colBanks WHERE coalition_id=%s", (user_coalition,)
-                )
-                db.execute(
-                    "DELETE FROM requests WHERE coalition_id=%s", (user_coalition,)
-                )
+                db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
+                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
-        db.execute("DELETE FROM coalitions WHERE userid=%s", (cId,))
+        db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         try:
