@@ -281,3 +281,47 @@ git push origin master  # Railway auto-deploys
 ---
 
 # Trigger deploy Tue Feb  3 20:59:35 CST 2026
+---
+
+### Session: 2026-02-10 (continued)
+
+**Task**: Fix province page 500 errors and Celery background task crashes caused by queries to deleted legacy tables
+
+**What Was Done**:
+- Migrated all `proInfra` table queries to normalized `user_buildings + building_dictionary` schema
+- Migrated all `resources` table queries to normalized `user_economy + resource_dictionary` schema
+- Fixed 9 functions in `tasks.py` covering all core background economy tasks:
+  - `rations_distribution_capacity()` - building counts for rations distribution
+  - `energy_info()` - province energy production/consumption
+  - `food_stats()` - rations availability checks
+  - `calc_ti()` - consumer goods for tax income calculation
+  - `tax_income()` - consumer goods batch preload and deduction
+  - `population_growth()` - rations consumption and row existence
+  - `generate_province_revenue()` - most complex: rewrote building/resource preload from column-based to name-based dictionaries, batch resource upserts with resource_id mapping
+  - `war_reparation_tax()` - resource looting queries for war reparations
+  - `backfill_missing_resources()` - utility to ensure all users have all resource_id rows
+- Fixed 3 locations in `province.py`:
+  - `create_province()` - removed proInfra INSERT (no longer needed)
+  - `get_free_slots()` - city/land slot queries now use user_buildings
+  - `province_sell_buy()` resource_stuff() - buy/sell building resource deductions now use user_economy with resource_id lookups
+- Fixed scope bug in `task_global_tick()` - moved `validation_start` before conditional to prevent "referenced before assignment" error
+- Commit: `da07e06b` - "fix: migrate province routes and celery tasks to normalized schema" - pushed to master
+
+**What To Watch**:
+- Monitor Railway logs for any "relation 'proinfra' does not exist" or "column does not exist in resources" errors - should be zero now
+- Watch Celery worker logs for successful execution of hourly tasks (tax_income, population_growth, generate_province_revenue)
+- Check province management page loads without 500 errors
+- Verify building buy/sell operations work correctly (resource deductions/additions)
+- War reparations should work correctly when wars end
+
+**Technical Details**:
+- Query pattern changed from `SELECT {column} FROM resources` to `SELECT quantity FROM user_economy JOIN resource_dictionary WHERE name = %s`
+- Building access changed from `SELECT {building_col} FROM proInfra` to `SELECT quantity FROM user_buildings JOIN building_dictionary WHERE name = %s`
+- Batch operations now preload all buildings/resources for all users in chunk, map to dicts, then process in loop
+- Resource updates changed from dynamic column-based UPDATE to batch upserts: `INSERT INTO user_economy (user_id, resource_id, quantity) VALUES ... ON CONFLICT DO UPDATE`
+
+**Next Steps**:
+- Monitor production for 24-48 hours to ensure all background tasks execute successfully
+- If any legacy table references appear in logs, investigate and fix immediately
+- Test files in `tests/` directory may reference legacy tables - update if tests fail
+- Scripts in `scripts/` directory reference legacy tables but are not on critical path (update as needed)
