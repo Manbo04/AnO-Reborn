@@ -2739,10 +2739,6 @@ def global_tick():
                 total_production=total_production,
                 total_consumption=total_consumption,
                 total_deserted_units=total_deserted_units,
-                production_phase_ms=production_phase_ms,
-                consumption_phase_ms=consumption_phase_ms,
-                validation_phase_ms=validation_phase_ms,
-                total_duration_ms=total_duration_ms,
             )
             conn.commit()
 
@@ -2770,10 +2766,6 @@ def global_tick():
                         total_production=total_production,
                         total_consumption=total_consumption,
                         total_deserted_units=total_deserted_units,
-                        production_phase_ms=production_phase_ms,
-                        consumption_phase_ms=consumption_phase_ms,
-                        validation_phase_ms=validation_phase_ms,
-                        total_duration_ms=total_duration_ms,
                         error_message=err,
                     )
                 conn.commit()
