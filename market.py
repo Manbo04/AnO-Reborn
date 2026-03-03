@@ -1172,6 +1172,38 @@ def accept_trade(trade_id):
         except Exception:
             pass
 
+        # Fetch buyer and seller usernames for news notification
+        _offerer_username = None
+        _offeree_username = None
+        try:
+            db.execute("SELECT username FROM users WHERE id=%s", (offerer,))
+            row = db.fetchone()
+            if row:
+                _offerer_username = row[0]
+
+            db.execute("SELECT username FROM users WHERE id=%s", (offeree,))
+            row = db.fetchone()
+            if row:
+                _offeree_username = row[0]
+        except Exception:
+            pass
+
+        # Add news notification to the seller (offerer) about the trade completion
+        if _offerer_username and _offeree_username:
+            try:
+                total_price = int(amount) * int(price)
+                news_msg = (
+                    f"Your market offer of {amount} {resource} was purchased by "
+                    f"{_offeree_username} for ${total_price}"
+                )
+                db.execute(
+                    "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+                    (offerer, news_msg),
+                )
+            except Exception:
+                # News insertion should not interfere with trade completion
+                pass
+
         # Store IDs for cache invalidation after commit
         _offerer = offerer
         _offeree = offeree
