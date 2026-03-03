@@ -22,7 +22,7 @@ from database import cache_response  # noqa: E402
 # Function for getting the coalition role of a user
 def get_user_role(user_id):
     with get_db_cursor() as db:
-        db.execute("SELECT role FROM coalitions WHERE userId=%s", (user_id,))
+        db.execute("SELECT role FROM coalition_members WHERE user_id=%s", (user_id,))
         row = db.fetchone()
         if not row:
             return None
@@ -132,14 +132,14 @@ def coalition(coalition_id):
             members = []
 
         try:
-            db.execute("SELECT userId FROM coalitions WHERE userId=(%s)", (cId,))
+            db.execute("SELECT user_id FROM coalition_members WHERE user_id=%s", (cId,))
             userInCol = db.fetchone() is not None
         except (TypeError, AttributeError, IndexError):
             userInCol = False
 
         try:
             db.execute(
-                "SELECT userId FROM coalitions WHERE userId=(%s) AND colId=(%s)",
+                "SELECT user_id FROM coalition_members WHERE user_id=%s AND coalition_id=%s",
                 (cId, coalition_id),
             )
             userInCurCol = db.fetchone() is not None
@@ -149,7 +149,7 @@ def coalition(coalition_id):
         try:
             # Determine the user's role for THIS coalition (avoid returning a role from another coalition)
             db.execute(
-                "SELECT role FROM coalitions WHERE userId=%s AND colId=%s",
+                "SELECT role FROM coalition_members WHERE user_id=%s AND coalition_id=%s",
                 (cId, coalition_id),
             )
             row = db.fetchone()
@@ -205,7 +205,7 @@ def coalition(coalition_id):
 
             # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
             db.execute(
-                "SELECT role, COUNT(userId) FROM coalitions WHERE colId=%s GROUP BY role",
+                "SELECT role, COUNT(user_id) FROM coalition_members WHERE coalition_id=%s GROUP BY role",
                 (coalition_id,),
             )
             role_counts = db.fetchall()
@@ -494,7 +494,7 @@ def establish_coalition():
     with get_db_cursor() as db:
         # Check if user is already in a coalition (for both GET and POST)
         db.execute(
-            "SELECT colId FROM coalitions WHERE userId=(%s)",
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s",
             (session["user_id"],),
         )
         existing = db.fetchone()
@@ -631,22 +631,23 @@ def coalitions():
         # Main query with pagination - all filtering/sorting in SQL
         main_query = f"""
             SELECT
-                c.id,
-                c.type,
-                c.name,
-                c.flag,
-                COUNT(DISTINCT coal.userId) AS members,
-                c.date,
+                col.coalition_id,
+                cn.type,
+                col.name,
+                cn.flag,
+                COUNT(DISTINCT cm.user_id) AS members,
+                col.created_at AS date,
                 COALESCE(SUM(prov.total_pop), 0) AS total_influence
-            FROM colNames c
-            INNER JOIN coalitions coal ON c.id = coal.colId
+            FROM coalitions col
+            LEFT JOIN colNames cn ON cn.id = col.coalition_id
+            LEFT JOIN coalition_members cm ON col.coalition_id = cm.coalition_id
             LEFT JOIN (
-                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
+                SELECT userid, COALESCE(SUM(population), 0) AS total_pop
                 FROM provinces
-                GROUP BY userId
-            ) prov ON coal.userId = prov.userId
+                GROUP BY userid
+            ) prov ON cm.user_id = prov.userid
             {where_clause}
-            GROUP BY c.id, c.type, c.name, c.flag, c.date
+            GROUP BY col.coalition_id, col.name, cn.type, cn.flag, col.created_at
             ORDER BY {order_by}
             LIMIT %s OFFSET %s
         """
@@ -696,7 +697,9 @@ def join_col(coalition_id):
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute(
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+        )
         row = db.fetchone()
         if row:
             return error(400, "You're already in a coalition")
@@ -769,7 +772,9 @@ def my_coalition():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute(
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+        )
         row = db.fetchone()
         if not row:
             return redirect("/")  # Redirects to home page instead of an error
@@ -783,7 +788,9 @@ def give_position():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute(
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+        )
         row = db.fetchone()
         if not row:
             return error(400, "You are not a part of any coalition")
@@ -1064,7 +1071,7 @@ def deposit_into_bank(coalition_id):
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
+            "SELECT user_id FROM coalition_members WHERE user_id=%s and coalition_id=%s",
             (cId, coalition_id),
         )
         row = db.fetchone()
@@ -1307,7 +1314,7 @@ def request_from_bank(coalition_id):
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
+            "SELECT user_id FROM coalition_members WHERE user_id=%s and coalition_id=%s",
             (cId, coalition_id),
         )
         row = db.fetchone()
@@ -1415,7 +1422,9 @@ def offer_treaty():
             return error(400, f"No such coalition: {col2_name}")
         col2_id = row[0]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+        db.execute(
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+        )
         row = db.fetchone()
         if not row:
             return error(400, "You are not in a coalition")
@@ -1456,7 +1465,9 @@ def accept_treaty(offer_id):
     offer_id = int(offer_id)
 
     with get_db_cursor() as db:
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+        db.execute(
+            "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+        )
         row = db.fetchone()
         if not row:
             return error(400, "You do not have such an offer")
@@ -1564,7 +1575,9 @@ def register_coalitions_routes(app_instance):
                 user_id = session["user_id"]
 
                 # Check if already member
-                db.execute("SELECT userId FROM coalitions WHERE userId=%s", (user_id,))
+                db.execute(
+                    "SELECT user_id FROM coalition_members WHERE user_id=%s", (user_id,)
+                )
                 if db.fetchone():
                     return error(400, "You are already in a coalition")
 
@@ -1585,7 +1598,7 @@ def register_coalitions_routes(app_instance):
 
                 # Notify leaders by adding news
                 db.execute(
-                    "SELECT userId FROM coalitions WHERE colId=%s AND role IN ('leader','deputy_leader')",
+                    "SELECT user_id FROM coalition_members WHERE coalition_id=%s AND role IN ('leader','deputy_leader')",
                     (coalition_id,),
                 )
                 leader_rows = db.fetchall()
