@@ -148,7 +148,7 @@
                                 people_alt
                                 </span>Population:</td>
                             {% if population != None %}
-                            <td>{{ population | fmt }}</td>
+                            <td>{{ population }}</td>
                             {% else %}
                             <td>0</td>
                             {% endif %}
@@ -157,7 +157,7 @@
                             <td><span class="material-icons-outlined">
                                 people_alt
                                 </span>Influence:</td>
-                            <td>{{ influence | fmt }}</td>
+                            <td>{{ influence }}</td>
                         </tr>
                         <!--
                         <tr>
@@ -309,7 +309,7 @@
                 {% for resource_name, resource_qty in resource_rows %}
                 <tr>
                     <td>{{ resource_name }}</td>
-                    <td>{{ (resource_qty or 0) | fmt }}</td>
+                    <td>{{ (resource_qty or 0) }}</td>
                 </tr>
                 {% endfor %}
                 {% else %}
@@ -330,7 +330,7 @@
                 {% for building_name, building_qty in building_rows %}
                 <tr>
                     <td>{{ building_name }}</td>
-                    <td>{{ (building_qty or 0) | fmt }}</td>
+                    <td>{{ (building_qty or 0) }}</td>
                 </tr>
                 {% endfor %}
                 {% else %}
@@ -380,7 +380,7 @@
                                 <td><span class="material-icons-outlined ">
                                                     people_alt
                                                     </span>Population:</td>
-                                <td>{{ provincePopulation | fmt}}</td>
+                                <td>{{ provincePopulation}}</td>
                             </tr>
                             <tr>
                                 <td><span class="material-icons-outlined ">
@@ -424,8 +424,8 @@
 
             {# Macro to show theoretical (original) gross and projected actual value #}
             {% macro show_gross(resource) %}
-                {{ revenue['gross_theoretical'].get(resource, 0) | fmt }}
-                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) | fmt }}</small>
+                {{ revenue['gross_theoretical'].get(resource, 0) }}
+                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) }}</small>
             {% endmacro %}
 
             {% if status %}
@@ -446,11 +446,11 @@
                         -->
                         <tr>
                             <td>Monetary gross:</td>
-                            <td>{{ revenue["gross"]["money"] | fmt }}</td>
+                            <td>{{ revenue["gross"]["money"] }}</td>
                         </tr>
                         <tr>
                             <td>Rations:</td>
-                            <td>{{ revenue["gross"]["rations"] | fmt }}</td>
+                            <td>{{ revenue["gross"]["rations"] }}</td>
                         </tr>
                         {% if revenue["gross"]["oil"] > 0 %}
                         <tr>
@@ -479,7 +479,7 @@
                         {% if revenue["gross"]["lead"] > 0 %}
                         <tr>
                             <td>Lead:</td>
-                            <td>{{ revenue["gross"]["lead"] | fmt }}</td>
+                            <td>{{ revenue["gross"]["lead"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["bauxite"] > 0 %}
@@ -538,7 +538,7 @@
                         {% if revenue["gross"]["ammunition"] > 0 %}
                         <tr>
                             <td>Ammunition:</td>
-                            <td>{{ revenue["gross"]["ammunition"] | fmt}}</td>
+                            <td>{{ revenue["gross"]["ammunition"]}}</td>
                         </tr>
                         {% endif %}
                     </table>
@@ -560,58 +560,58 @@
                         -->
                         <tr>
                             <td>Monetary net:</td>
-                            <td>{{ revenue["net"]["money"] | fmt }}</td>
+                            <td>{{ revenue["net"]["money"] }}</td>
                         </tr>
                         <tr>
                             <td>Rations:</td>
-                            <td>{{ revenue["net"]["rations"] | fmt }}</td>
+                            <td>{{ revenue["net"]["rations"] }}</td>
                         </tr>
                         {% if revenue["gross"]["oil"] > 0 %}
                         <tr>
                             <td>Oil:</td>
-                            <td>{{ revenue["net"]["oil"] | fmt }}</td>
+                            <td>{{ revenue["net"]["oil"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["coal"] > 0 %}
                         <tr>
                             <td>Coal:</td>
-                            <td>{{ revenue["net"]["coal"] | fmt }}</td>
+                            <td>{{ revenue["net"]["coal"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["uranium"] > 0 %}
                         <tr>
                             <td>Uranium:</td>
-                            <td>{{ revenue["net"]["uranium"] | fmt }}</td>
+                            <td>{{ revenue["net"]["uranium"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["iron"] > 0 %}
                         <tr>
                             <td>Iron:</td>
-                            <td>{{ revenue["net"]["iron"] | fmt }}</td>
+                            <td>{{ revenue["net"]["iron"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lead"] > 0 %}
                         <tr>
                             <td>Lead:</td>
-                            <td>{{ revenue["net"]["lead"] | fmt }}</td>
+                            <td>{{ revenue["net"]["lead"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["bauxite"] > 0 %}
                         <tr>
                             <td>Bauxite:</td>
-                            <td>{{ revenue["net"]["bauxite"] | fmt }}</td>
+                            <td>{{ revenue["net"]["bauxite"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["copper"] > 0 %}
                         <tr>
                             <td>Copper:</td>
-                            <td>{{ revenue["net"]["copper"] | fmt }}</td>
+                            <td>{{ revenue["net"]["copper"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lumber"] > 0 %}
                         <tr>
                             <td>Lumber:</td>
-                            <td>{{ revenue["net"]["lumber"] | fmt }}</td>
+                            <td>{{ revenue["net"]["lumber"] }}</td>
                         </tr>
                         {% endif %}
                         <tr>
@@ -622,37 +622,37 @@
                         {% if revenue["gross"]["components"] > 0 %}
                         <tr>
                             <td>Components:</td>
-                            <td>{{ revenue["net"]["components"] | fmt }}</td>
+                            <td>{{ revenue["net"]["components"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["steel"] > 0 %}
                         <tr>
                             <td>Steel:</td>
-                            <td>{{ revenue["net"]["steel"] | fmt }}</td>
+                            <td>{{ revenue["net"]["steel"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["consumer_goods"] > 0 %}
                         <tr>
                             <td>Consumer goods:</td>
-                            <td>{{ revenue["net"]["consumer_goods"] | fmt }}</td>
+                            <td>{{ revenue["net"]["consumer_goods"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["aluminium"] > 0 %}
                         <tr>
                             <td>Aluminum:</td>
-                            <td>{{ revenue["net"]["aluminium"] | fmt }}</td>
+                            <td>{{ revenue["net"]["aluminium"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["gasoline"] > 0 %}
                         <tr>
                             <td>Gasoline:</td>
-                            <td>{{ revenue["net"]["gasoline"] | fmt }}</td>
+                            <td>{{ revenue["net"]["gasoline"] }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["ammunition"] > 0 %}
                         <tr>
                             <td>Ammunition:</td>
-                            <td>{{ revenue["net"]["ammunition"] | fmt }}</td>
+                            <td>{{ revenue["net"]["ammunition"] }}</td>
                         </tr>
                         {% endif %}
                     </table>
@@ -668,35 +668,35 @@
                 </tr>
                 <tr>
                     <td>Citizens</td>
-                    <td>{{ rations_need | fmt}} rations, {{ cg_needed | fmt }} consumer goods</td>
+                    <td>{{ rations_need}} rations, {{ cg_needed }} consumer goods</td>
                 </tr>
                 <tr>
                     <th>Infrastructure</th>
                 </tr>
                 <tr>
                     <td>Electricity:</td>
-                    <td>{{ statistics["electricity"] | fmt }}</td>
+                    <td>{{ statistics["electricity"] }}</td>
                 </tr>
                 <tr>
                     <td>Retail:</td>
-                    <td>{{ statistics["retail"] | fmt }}</td>
+                    <td>{{ statistics["retail"] }}</td>
                 </tr>
                 <tr>
                     <td>Public Works:</td>
-                    <td>{{ statistics["public_works"] | fmt }}</td>
+                    <td>{{ statistics["public_works"] }}</td>
                 </tr>
                 <tr>
                     <td>Military:</td>
-                    <td>{{ statistics["military"] | fmt }}</td>
+                    <td>{{ statistics["military"] }}</td>
                 </tr>
                 <tr>
                     <td>Industry:</td>
-                    <td>{{ statistics["industry"] | fmt }}</td>
+                    <td>{{ statistics["industry"] }}</td>
                 </tr>
 
                 <tr>
                     <td>Processing:</td>
-                    <td>{{ statistics["processing"] | fmt }}</td>
+                    <td>{{ statistics["processing"] }}</td>
                 </tr>
             </table>
 
