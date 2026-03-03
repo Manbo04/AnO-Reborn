@@ -280,17 +280,9 @@ def military():
     if request.method == "GET":
         with get_db_cursor() as db:
             units_dict, units_active = _get_user_units_with_stats(db, cId)
-            # Manpower was in the legacy `military` table which no longer exists.
-            # Default to 0 until a migration adds it elsewhere.
-            manpower = 0
-            try:
-                db.execute(
-                    "SELECT COALESCE(manpower, 0) FROM military WHERE id=%s", (cId,)
-                )
-                manpower_row = db.fetchone()
-                manpower = int(manpower_row[0] or 0) if manpower_row else 0
-            except Exception:
-                manpower = 0
+            db.execute("SELECT COALESCE(manpower, 0) FROM stats WHERE id=%s", (cId,))
+            manpower_row = db.fetchone()
+            manpower = int(manpower_row[0] or 0) if manpower_row else 0
 
         upgrades = get_upgrades(cId)  # Now cached in upgrades.py
         limits = compute_display_limits(cId, units_dict)
@@ -346,21 +338,8 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             current_row = db.fetchone()
             currentUnits = int(current_row[0] or 0) if current_row else 0
 
-            # Manpower was in the legacy `military` table. Try to read it;
-            # fall back to 0 if the table no longer exists.
-            manpower_available = 0
-            try:
-                db.execute(
-                    "INSERT INTO military (id, manpower) VALUES (%s, 0) "
-                    "ON CONFLICT (id) DO NOTHING",
-                    (cId,),
-                )
-                db.execute(
-                    "SELECT COALESCE(manpower, 0) FROM military WHERE id=%s", (cId,)
-                )
-                manpower_available = int(db.fetchone()[0] or 0)
-            except Exception:
-                manpower_available = 0
+            db.execute("SELECT COALESCE(manpower, 0) FROM stats WHERE id=%s", (cId,))
+            manpower_available = int(db.fetchone()[0] or 0)
 
             db.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id=%s", (cId,))
             gold = int(db.fetchone()[0] or 0)
@@ -387,14 +366,10 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         cId,
                     ),
                 )
-                # Manpower return on sell — silently skip if military table gone
-                try:
-                    db.execute(
-                        "UPDATE military SET manpower=manpower+%s WHERE id=%s",
-                        (wantedUnits * manpower_per_unit, cId),
-                    )
-                except Exception:
-                    pass
+                db.execute(
+                    "UPDATE stats SET manpower = manpower + %s WHERE id=%s",
+                    (wantedUnits * manpower_per_unit, cId),
+                )
 
                 # flash(f"You sold {wantedUnits} {units}")
             elif way == "buy":
@@ -448,14 +423,11 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                     (cId, unit_id, wantedUnits),
                 )
 
-                # Manpower deduct on buy — silently skip if military table gone
-                try:
-                    db.execute(
-                        "UPDATE military SET manpower=manpower-%s WHERE id=%s",
-                        (needed_manpower, cId),
-                    )
-                except Exception:
-                    pass
+                db.execute(
+                    "UPDATE stats SET manpower = GREATEST(0, manpower - %s) "
+                    "WHERE id=%s",
+                    (needed_manpower, cId),
+                )
 
             else:
                 return error(404, "Page not found")

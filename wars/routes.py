@@ -894,22 +894,7 @@ def declare_war():
 def defense():
     cId = session["user_id"]
     units = Military.get_military(cId)
-    if request.method == "GET":
-        return render_template("defense.html", units=units)
-    elif request.method == "POST":
-        defense_units = list(request.form.values())
-        for item in defense_units:
-            if item not in Military.allUnits:
-                return error(400, "Invalid unit types!")
-        if len(defense_units) == 3:
-            # Default defense is now computed dynamically from the defender's
-            # actual military composition in warResult. The user's selection
-            # is acknowledged but no longer stored (the legacy military table
-            # that held it no longer exists).
-            pass
-        else:
-            return error(400, "Invalid number of units selected!")
-        return redirect("/wars")
+    return render_template("defense.html", units=units)
 
 
 @wars_bp.route("/wars", methods=["GET", "POST"])

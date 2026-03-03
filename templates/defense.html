@@ -10,12 +10,12 @@
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheaderleft">Choose 3 Units</h2>
+        <h2 class="templatecontentheaderleft">Defense is Automatic</h2>
         <p class="templatecontentpleft landingpagecontent">
-            Pick 3 units to defend your country for when you go to war. Choose wisely to counter your enemies attacking units.
+            Default defense selection was removed. Your defense is now auto-selected from your strongest available unit types.
         </p>
 
-        <div class="templatedivflex2 menuflex unitcardparent">
+        <div class="templatedivflex2 menuflex unitcardparent hidden">
             <label for="1" class="templatedivflex2left unitcard">
 
                 <ul class="bold medium">Soldiers</ul>
@@ -126,34 +126,11 @@
             </label>
         </div>
 
-        <h2 id="chosenAmountChecked" class="templatecontentheadercenter">0 / 3 Units</h2>
+        <h2 class="templatecontentheadercenter">No manual defense setup required</h2>
 
-        <script>
-            $(document).ready(function() {
-                $('input.warcheckbox').on('change', function(e) {
-                    let checkNum = Array.from(document.querySelectorAll('input[type=checkbox]')).filter(({
-                        checked
-                    }) => checked).length;
-                    if (checkNum > 3) {
-                        this.checked = false;
-                        checkNum -= 1
-                    }
-                    let checkElement = document.querySelector('#chosenAmountChecked');
-                    checkElement.innerHTML = `${checkNum} / 3 Units`;
-                })
-            });
-        </script>
-
-        <!--sends user back to /wars-->
-        <form id="next_button" action="/defense" method="post">
-            <!-- TODO: disable next button if checkNum < 3 -->
-            <input type="hidden" name="u1">
-            <input type="hidden" name="u2">
-            <input type="hidden" name="u3">
-            <a href="/wars" class=" templatedivbutton templatecenteredbutton " onclick="submit_next(event) ">
-                <span class="material-icons-outlined ">arrow_forward</span>Next
-            </a>
-        </form>
+        <a href="/wars" class="templatedivbutton templatecenteredbutton">
+            <span class="material-icons-outlined">arrow_back</span>Back to Wars
+        </a>
     </div>
 </div>
 {% endblock %}
