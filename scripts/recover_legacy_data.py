@@ -1,6 +1,9 @@
 """
 Recover legacy data from old wide tables into the new normalized schema.
 
+Reads from a **backup** database (BACKUP_DATABASE_URL) and writes into the
+**live** database (DATABASE_PUBLIC_URL / DATABASE_URL).
+
 Copies non-zero quantities from:
   resources       -> user_economy   (via resource_dictionary)
   military        -> user_military  (via unit_dictionary)
@@ -10,9 +13,10 @@ Uses INSERT ... ON CONFLICT DO UPDATE so it is **idempotent** —
 safe to run multiple times without creating duplicates.
 
 Prerequisites:
-  * The legacy tables (resources, military, proinfra) must still exist.
-  * The dictionary tables must already be seeded.
-  * DATABASE_PUBLIC_URL (or DATABASE_URL) env-var must be set.
+  * BACKUP_DATABASE_URL must point to a DB that still has the legacy
+    wide tables (resources, military, proinfra).
+  * DATABASE_PUBLIC_URL (or DATABASE_URL) must point to the live DB
+    with the normalized schema and seeded dictionary tables.
 
 Usage:
     python scripts/recover_legacy_data.py            # dry-run (default)
@@ -25,7 +29,7 @@ import argparse
 import logging
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, execute_batch
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -115,7 +119,17 @@ BUILDING_COLUMNS = [
 # ---------------------------------------------------------------------------
 
 
-def get_connection():
+def get_backup_connection():
+    """Connect to the backup DB that still has legacy wide tables."""
+    url = os.getenv("BACKUP_DATABASE_URL")
+    if not url:
+        logger.error("BACKUP_DATABASE_URL is not set.")
+        sys.exit(1)
+    return psycopg2.connect(url)
+
+
+def get_live_connection():
+    """Connect to the live DB with the normalized schema."""
     url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
     if not url:
         logger.error("Neither DATABASE_PUBLIC_URL nor DATABASE_URL is set.")
@@ -150,19 +164,25 @@ def load_dictionary(cur, table: str, id_col: str, name_col: str):
 
 # ---------------------------------------------------------------------------
 # Migration functions
+#
+# Each function takes TWO cursors:
+#   backup_cur – reads from the legacy wide tables (backup DB)
+#   live_cur   – writes into the normalized tables (live DB)
+# Dictionary lookups use live_cur (dictionaries are on live DB).
 # ---------------------------------------------------------------------------
 
+UPSERT_BATCH_SIZE = 500
 
-def migrate_resources(cur, dry_run: bool):
+
+def migrate_resources(backup_cur, live_cur, dry_run: bool):
     """resources table → user_economy."""
-    if not table_exists(cur, "resources"):
-        logger.warning("Legacy table 'resources' does not exist — skipping.")
+    if not table_exists(backup_cur, "resources"):
+        logger.warning("Legacy table 'resources' does not exist on backup — skipping.")
         return
 
-    name_to_id = load_dictionary(cur, "resource_dictionary", "resource_id", "name")
-    actual_cols = get_table_columns(cur, "resources")
+    name_to_id = load_dictionary(live_cur, "resource_dictionary", "resource_id", "name")
+    actual_cols = get_table_columns(backup_cur, "resources")
 
-    # Build the list of (column, resource_id) pairs we can migrate
     pairs = []
     for col in RESOURCE_COLUMNS:
         if col not in actual_cols:
@@ -178,8 +198,7 @@ def migrate_resources(cur, dry_run: bool):
         logger.warning("No mappable resource columns found.")
         return
 
-    # Build a dynamic SELECT that unpivots all columns in one pass
-    # Result: rows of (user_id, resource_id, quantity)
+    # Read legacy data from backup into memory
     select_parts = []
     for col, rid in pairs:
         select_parts.append(
@@ -188,36 +207,43 @@ def migrate_resources(cur, dry_run: bool):
             f'WHERE COALESCE("{col}", 0) > 0'
         )
     union_sql = " UNION ALL ".join(select_parts)
+    backup_cur.execute(union_sql)
+    rows = backup_cur.fetchall()
 
-    upsert_sql = f"""
+    logger.info(
+        "Migrating resources: %d columns, %d total rows from backup...",
+        len(pairs),
+        len(rows),
+    )
+
+    if not rows:
+        logger.warning("No non-zero resource rows found in backup.")
+        return
+
+    if dry_run:
+        logger.info("[DRY-RUN] Would upsert %d resource rows.", len(rows))
+        return
+
+    upsert_sql = """
         INSERT INTO user_economy (user_id, resource_id, quantity, updated_at)
-        SELECT user_id, resource_id, quantity, now()
-        FROM ({union_sql}) AS legacy
+        VALUES (%(user_id)s, %(resource_id)s, %(quantity)s, now())
         ON CONFLICT (user_id, resource_id)
         DO UPDATE SET
             quantity = GREATEST(user_economy.quantity, EXCLUDED.quantity),
             updated_at = now()
     """
-
-    logger.info("Migrating resources: %d columns for all users...", len(pairs))
-    if dry_run:
-        logger.info("[DRY-RUN] Would execute resources upsert.")
-    else:
-        cur.execute(upsert_sql)
-        logger.info(
-            "Resources upsert complete — %d rows affected.",
-            cur.rowcount,
-        )
+    execute_batch(live_cur, upsert_sql, rows, page_size=UPSERT_BATCH_SIZE)
+    logger.info("Resources upsert complete — %d rows processed.", len(rows))
 
 
-def migrate_military(cur, dry_run: bool):
+def migrate_military(backup_cur, live_cur, dry_run: bool):
     """military table → user_military."""
-    if not table_exists(cur, "military"):
-        logger.warning("Legacy table 'military' does not exist — skipping.")
+    if not table_exists(backup_cur, "military"):
+        logger.warning("Legacy table 'military' does not exist on backup — skipping.")
         return
 
-    name_to_id = load_dictionary(cur, "unit_dictionary", "unit_id", "name")
-    actual_cols = get_table_columns(cur, "military")
+    name_to_id = load_dictionary(live_cur, "unit_dictionary", "unit_id", "name")
+    actual_cols = get_table_columns(backup_cur, "military")
 
     pairs = []
     for col, dict_name in MILITARY_COLUMNS.items():
@@ -242,36 +268,43 @@ def migrate_military(cur, dry_run: bool):
             f'WHERE COALESCE("{col}", 0) > 0'
         )
     union_sql = " UNION ALL ".join(select_parts)
+    backup_cur.execute(union_sql)
+    rows = backup_cur.fetchall()
 
-    upsert_sql = f"""
+    logger.info(
+        "Migrating military: %d columns, %d total rows from backup...",
+        len(pairs),
+        len(rows),
+    )
+
+    if not rows:
+        logger.warning("No non-zero military rows found in backup.")
+        return
+
+    if dry_run:
+        logger.info("[DRY-RUN] Would upsert %d military rows.", len(rows))
+        return
+
+    upsert_sql = """
         INSERT INTO user_military (user_id, unit_id, quantity, updated_at)
-        SELECT user_id, unit_id, quantity, now()
-        FROM ({union_sql}) AS legacy
+        VALUES (%(user_id)s, %(unit_id)s, %(quantity)s, now())
         ON CONFLICT (user_id, unit_id)
         DO UPDATE SET
             quantity = GREATEST(user_military.quantity, EXCLUDED.quantity),
             updated_at = now()
     """
-
-    logger.info("Migrating military: %d columns for all users...", len(pairs))
-    if dry_run:
-        logger.info("[DRY-RUN] Would execute military upsert.")
-    else:
-        cur.execute(upsert_sql)
-        logger.info(
-            "Military upsert complete — %d rows affected.",
-            cur.rowcount,
-        )
+    execute_batch(live_cur, upsert_sql, rows, page_size=UPSERT_BATCH_SIZE)
+    logger.info("Military upsert complete — %d rows processed.", len(rows))
 
 
-def migrate_buildings(cur, dry_run: bool):
+def migrate_buildings(backup_cur, live_cur, dry_run: bool):
     """proinfra table → user_buildings."""
-    if not table_exists(cur, "proinfra"):
-        logger.warning("Legacy table 'proinfra' does not exist — skipping.")
+    if not table_exists(backup_cur, "proinfra"):
+        logger.warning("Legacy table 'proinfra' does not exist on backup — skipping.")
         return
 
-    name_to_id = load_dictionary(cur, "building_dictionary", "building_id", "name")
-    actual_cols = get_table_columns(cur, "proinfra")
+    name_to_id = load_dictionary(live_cur, "building_dictionary", "building_id", "name")
+    actual_cols = get_table_columns(backup_cur, "proinfra")
 
     pairs = []
     for col in BUILDING_COLUMNS:
@@ -288,8 +321,7 @@ def migrate_buildings(cur, dry_run: bool):
         logger.warning("No mappable building columns found.")
         return
 
-    # proinfra is per-province (has a province / userId key).
-    # user_buildings is per-user, so we SUM across provinces.
+    # proinfra is per-province; user_buildings is per-user → SUM.
     select_parts = []
     for col, bid in pairs:
         select_parts.append(
@@ -300,11 +332,27 @@ def migrate_buildings(cur, dry_run: bool):
             f'HAVING SUM(COALESCE("{col}", 0)) > 0'
         )
     union_sql = " UNION ALL ".join(select_parts)
+    backup_cur.execute(union_sql)
+    rows = backup_cur.fetchall()
 
-    upsert_sql = f"""
-        INSERT INTO user_buildings (user_id, building_id, quantity, updated_at)
-        SELECT user_id, building_id, quantity, now()
-        FROM ({union_sql}) AS legacy
+    logger.info(
+        "Migrating buildings: %d columns, %d total rows from backup...",
+        len(pairs),
+        len(rows),
+    )
+
+    if not rows:
+        logger.warning("No non-zero building rows found in backup.")
+        return
+
+    if dry_run:
+        logger.info("[DRY-RUN] Would upsert %d building rows.", len(rows))
+        return
+
+    upsert_sql = """
+        INSERT INTO user_buildings
+            (user_id, building_id, quantity, updated_at)
+        VALUES (%(user_id)s, %(building_id)s, %(quantity)s, now())
         ON CONFLICT (user_id, building_id)
         DO UPDATE SET
             quantity = GREATEST(
@@ -312,16 +360,8 @@ def migrate_buildings(cur, dry_run: bool):
             ),
             updated_at = now()
     """
-
-    logger.info("Migrating buildings: %d columns for all users...", len(pairs))
-    if dry_run:
-        logger.info("[DRY-RUN] Would execute buildings upsert.")
-    else:
-        cur.execute(upsert_sql)
-        logger.info(
-            "Buildings upsert complete — %d rows affected.",
-            cur.rowcount,
-        )
+    execute_batch(live_cur, upsert_sql, rows, page_size=UPSERT_BATCH_SIZE)
+    logger.info("Buildings upsert complete — %d rows processed.", len(rows))
 
 
 # ---------------------------------------------------------------------------
@@ -346,25 +386,29 @@ def main():
     else:
         logger.info("=== LIVE MODE — changes will be committed ===")
 
-    conn = get_connection()
+    backup_conn = get_backup_connection()
+    live_conn = get_live_connection()
     try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            migrate_resources(cur, dry_run)
-            migrate_military(cur, dry_run)
-            migrate_buildings(cur, dry_run)
+        with backup_conn.cursor(
+            cursor_factory=RealDictCursor
+        ) as backup_cur, live_conn.cursor(cursor_factory=RealDictCursor) as live_cur:
+            migrate_resources(backup_cur, live_cur, dry_run)
+            migrate_military(backup_cur, live_cur, dry_run)
+            migrate_buildings(backup_cur, live_cur, dry_run)
 
         if dry_run:
             logger.info("Dry-run complete. Rolling back.")
-            conn.rollback()
+            live_conn.rollback()
         else:
-            conn.commit()
+            live_conn.commit()
             logger.info("All migrations committed successfully.")
     except Exception:
-        conn.rollback()
+        live_conn.rollback()
         logger.exception("Migration failed — rolled back.")
         sys.exit(1)
     finally:
-        conn.close()
+        backup_conn.close()
+        live_conn.close()
 
 
 if __name__ == "__main__":
