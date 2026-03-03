@@ -298,6 +298,70 @@
                 </div>
             </div>
 
+            <h2 class="templatecontentheaderleft">Resources</h2>
+
+            <table class="templatetable">
+                <tr>
+                    <th>Resource</th>
+                    <th>Quantity</th>
+                </tr>
+                {% if resource_rows and resource_rows|length > 0 %}
+                {% for resource_name, resource_qty in resource_rows %}
+                <tr>
+                    <td>{{ resource_name }}</td>
+                    <td>{{ (resource_qty or 0) | fmt }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td>None</td>
+                    <td>0</td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <h2 class="templatecontentheaderleft">Buildings</h2>
+            <table class="templatetable">
+                <tr>
+                    <th>Building</th>
+                    <th>Quantity</th>
+                </tr>
+                {% if building_rows and building_rows|length > 0 %}
+                {% for building_name, building_qty in building_rows %}
+                <tr>
+                    <td>{{ building_name }}</td>
+                    <td>{{ (building_qty or 0) | fmt }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td>None</td>
+                    <td>0</td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <h2 class="templatecontentheaderleft">Technologies</h2>
+            <table class="templatetable">
+                <tr>
+                    <th>Technology</th>
+                    <th>Status</th>
+                </tr>
+                {% if technology_rows and technology_rows|length > 0 %}
+                {% for tech_name in technology_rows %}
+                <tr>
+                    <td>{{ tech_name[0] }}</td>
+                    <td>Unlocked</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td>None</td>
+                    <td>0</td>
+                </tr>
+                {% endif %}
+            </table>
+
             <h2 class="templatecontentheaderleft">Provinces</h2>
 
             {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness
