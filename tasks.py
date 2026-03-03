@@ -22,6 +22,16 @@ TASK_RUN_THRESHOLDS = {
     "population_growth": int(os.getenv("POP_GROWTH_MIN_INTERVAL", "100")),
     "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "100")),
     "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
+    "global_tick": int(os.getenv("GLOBAL_TICK_MIN_INTERVAL", "540")),
+}
+
+# Mapping from normalized building names to produced resource names.
+# Used by the global tick economy engine.
+BUILDING_PRODUCTION_RESOURCE_MAP = {
+    "farms": "rations",
+    "pumpjacks": "oil",
+    "coal_mines": "coal",
+    "steel_mills": "steel",
 }
 
 
@@ -73,6 +83,10 @@ celery_beat_schedule = {
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
         "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),
+    },
+    "global_tick": {
+        "task": "tasks.task_global_tick",
+        "schedule": get_crontab_env("GLOBAL_TICK_CRON", crontab(minute="*/10")),
     },
 }
 
@@ -2283,7 +2297,457 @@ def execute_due_trade_agreements():
             conn.commit()
 
 
+def _create_game_tick_log(db):
+    """Create and return a tick log row for the current global tick run."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS game_tick_logs (
+            tick_id BIGSERIAL PRIMARY KEY,
+            tick_type VARCHAR(40) NOT NULL DEFAULT 'global_tick',
+            status VARCHAR(20) NOT NULL DEFAULT 'running',
+            started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            finished_at TIMESTAMP WITH TIME ZONE,
+            users_processed INTEGER NOT NULL DEFAULT 0,
+            production_entries INTEGER NOT NULL DEFAULT 0,
+            consumption_entries INTEGER NOT NULL DEFAULT 0,
+            total_production BIGINT NOT NULL DEFAULT 0,
+            total_consumption BIGINT NOT NULL DEFAULT 0,
+            total_deserted_units BIGINT NOT NULL DEFAULT 0,
+            error_message TEXT
+        )
+        """
+    )
+    db.execute(
+        "INSERT INTO game_tick_logs (tick_type, status) "
+        "VALUES ('global_tick', 'running') "
+        "RETURNING tick_id"
+    )
+    return db.fetchone()[0]
+
+
+def _finalize_game_tick_log(
+    db,
+    tick_id,
+    *,
+    status,
+    users_processed=0,
+    production_entries=0,
+    consumption_entries=0,
+    total_production=0,
+    total_consumption=0,
+    total_deserted_units=0,
+    error_message=None,
+):
+    """Finalize a game tick log row with outcomes."""
+    db.execute(
+        """
+        UPDATE game_tick_logs
+        SET status=%s,
+            finished_at=now(),
+            users_processed=%s,
+            production_entries=%s,
+            consumption_entries=%s,
+            total_production=%s,
+            total_consumption=%s,
+            total_deserted_units=%s,
+            error_message=%s
+        WHERE tick_id=%s
+        """,
+        (
+            status,
+            users_processed,
+            production_entries,
+            consumption_entries,
+            total_production,
+            total_consumption,
+            total_deserted_units,
+            error_message,
+            tick_id,
+        ),
+    )
+
+
+def global_tick():
+    """Run the normalized global game tick.
+
+    Phases:
+    1) Production from user_buildings + building_dictionary effect values
+    2) Military maintenance consumption from user_military + unit_dictionary
+     3) Validation with non-negative balances,
+         plus unit desertion and morale penalty
+    4) Log the tick execution in game_tick_logs
+    """
+    from database import get_db_connection
+    from psycopg2.extras import execute_batch, RealDictCursor
+
+    with get_db_connection() as conn:
+        if not try_pg_advisory_lock(conn, 9010, "global_tick"):
+            return
+
+        db = conn.cursor()
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
+
+        tick_id = None
+        users_processed = set()
+        production_entries = 0
+        consumption_entries = 0
+        total_production = 0
+        total_consumption = 0
+        total_deserted_units = 0
+
+        try:
+            # Ensure we do not double-run in short windows.
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS task_runs (
+                    task_name TEXT PRIMARY KEY,
+                    last_run TIMESTAMP WITH TIME ZONE
+                )
+                """
+            )
+            db.execute(
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+                "ON CONFLICT DO NOTHING",
+                ("global_tick",),
+            )
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
+                ("global_tick",),
+            )
+            row = db.fetchone()
+            if should_skip_task(row, "global_tick"):
+                return
+
+            db.execute(
+                "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                ("global_tick",),
+            )
+
+            tick_id = _create_game_tick_log(db)
+
+            # -----------------------------------------------------------------
+            # Production phase
+            # -----------------------------------------------------------------
+            resource_names = set(BUILDING_PRODUCTION_RESOURCE_MAP.values())
+
+            dbdict.execute(
+                "SELECT resource_id, name "
+                "FROM resource_dictionary "
+                "WHERE name = ANY(%s)",
+                (list(resource_names),),
+            )
+            resource_id_by_name = {
+                row["name"]: row["resource_id"] for row in dbdict.fetchall()
+            }
+
+            building_id_to_resource_id = {}
+            for bname, rname in BUILDING_PRODUCTION_RESOURCE_MAP.items():
+                rid = resource_id_by_name.get(rname)
+                if rid is not None:
+                    building_id_to_resource_id[bname] = rid
+
+            if building_id_to_resource_id:
+                bnames = list(building_id_to_resource_id.keys())
+                dbdict.execute(
+                    """
+                    SELECT
+                        ub.user_id,
+                        bd.name AS building_name,
+                        SUM((ub.quantity::numeric * bd.effect_value))::bigint
+                            AS produced_amount
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                    WHERE ub.quantity > 0
+                      AND bd.effect_type = 'resource_production'
+                      AND bd.name = ANY(%s)
+                    GROUP BY ub.user_id, bd.name
+                    """,
+                    (bnames,),
+                )
+                prod_rows = dbdict.fetchall()
+            else:
+                prod_rows = []
+
+            prod_updates = []
+            for row in prod_rows:
+                user_id = row["user_id"]
+                building_name = row["building_name"]
+                produced_amount = int(row["produced_amount"] or 0)
+                resource_id = building_id_to_resource_id.get(building_name)
+                if produced_amount <= 0 or resource_id is None:
+                    continue
+                prod_updates.append((user_id, resource_id, produced_amount))
+                users_processed.add(user_id)
+                production_entries += 1
+                total_production += produced_amount
+
+            if prod_updates:
+                execute_batch(
+                    db,
+                    """
+                    INSERT INTO user_economy
+                        (user_id, resource_id, quantity, updated_at)
+                    VALUES (%s, %s, %s, now())
+                    ON CONFLICT (user_id, resource_id)
+                    DO UPDATE SET
+                        quantity = user_economy.quantity + EXCLUDED.quantity,
+                        updated_at = now()
+                    """,
+                    prod_updates,
+                    page_size=500,
+                )
+
+            # -----------------------------------------------------------------
+            # Consumption phase
+            # -----------------------------------------------------------------
+            dbdict.execute(
+                """
+                SELECT
+                    um.user_id,
+                    ud.maintenance_cost_resource_id AS resource_id,
+                    SUM((um.quantity::numeric * ud.maintenance_cost_amount))::bigint
+                        AS required_amount
+                FROM user_military um
+                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                WHERE um.quantity > 0
+                  AND ud.maintenance_cost_resource_id IS NOT NULL
+                  AND ud.maintenance_cost_amount > 0
+                GROUP BY um.user_id, ud.maintenance_cost_resource_id
+                """
+            )
+            cost_rows = dbdict.fetchall()
+
+            if cost_rows:
+                impacted_users = sorted({row["user_id"] for row in cost_rows})
+                impacted_resources = sorted({row["resource_id"] for row in cost_rows})
+
+                dbdict.execute(
+                    """
+                    SELECT user_id, resource_id, quantity
+                    FROM user_economy
+                    WHERE user_id = ANY(%s)
+                      AND resource_id = ANY(%s)
+                    """,
+                    (impacted_users, impacted_resources),
+                )
+                balance_map = {
+                    (row["user_id"], row["resource_id"]): int(row["quantity"] or 0)
+                    for row in dbdict.fetchall()
+                }
+
+                deductions = []
+                deficits = {}
+                for row in cost_rows:
+                    user_id = row["user_id"]
+                    resource_id = row["resource_id"]
+                    required_amount = int(row["required_amount"] or 0)
+                    if required_amount <= 0:
+                        continue
+
+                    available = balance_map.get((user_id, resource_id), 0)
+                    deducted = (
+                        required_amount if available >= required_amount else available
+                    )
+                    deficit = required_amount - deducted
+
+                    if deducted > 0:
+                        deductions.append((deducted, user_id, resource_id))
+                        users_processed.add(user_id)
+                        consumption_entries += 1
+                        total_consumption += deducted
+                        balance_map[(user_id, resource_id)] = max(
+                            available - deducted, 0
+                        )
+
+                    if deficit > 0:
+                        deficits[(user_id, resource_id)] = {
+                            "required": required_amount,
+                            "available": available,
+                            "deficit": deficit,
+                        }
+
+                if deductions:
+                    execute_batch(
+                        db,
+                        """
+                        UPDATE user_economy
+                        SET quantity = GREATEST(quantity - %s, 0),
+                            updated_at = now()
+                        WHERE user_id = %s AND resource_id = %s
+                        """,
+                        deductions,
+                        page_size=500,
+                    )
+
+                # Validation logic when maintenance cannot be fully paid:
+                # apply unit desertion proportionally and morale penalties
+                # in active wars.
+                if deficits:
+                    deficit_users = sorted({k[0] for k in deficits.keys()})
+                    deficit_resources = sorted({k[1] for k in deficits.keys()})
+
+                    dbdict.execute(
+                        """
+                        SELECT
+                            um.user_id,
+                            um.unit_id,
+                            um.quantity,
+                            ud.maintenance_cost_resource_id AS resource_id
+                        FROM user_military um
+                        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                        WHERE um.quantity > 0
+                          AND um.user_id = ANY(%s)
+                          AND ud.maintenance_cost_resource_id = ANY(%s)
+                        """,
+                        (deficit_users, deficit_resources),
+                    )
+                    unit_rows = dbdict.fetchall()
+
+                    deserter_updates = []
+                    penalty_by_user = {}
+
+                    for row in unit_rows:
+                        user_id = row["user_id"]
+                        resource_id = row["resource_id"]
+                        key = (user_id, resource_id)
+                        if key not in deficits:
+                            continue
+
+                        required = deficits[key]["required"]
+                        available = deficits[key]["available"]
+                        ratio = (
+                            0
+                            if required <= 0
+                            else max(
+                                min(available / required, 1),
+                                0,
+                            )
+                        )
+
+                        current_qty = int(row["quantity"] or 0)
+                        new_qty = int(math.floor(current_qty * ratio))
+                        if new_qty < 0:
+                            new_qty = 0
+                        if new_qty > current_qty:
+                            new_qty = current_qty
+
+                        deserted = current_qty - new_qty
+                        if deserted <= 0:
+                            continue
+
+                        deserter_updates.append((new_qty, user_id, row["unit_id"]))
+                        total_deserted_units += deserted
+
+                        severity = int(round((1 - ratio) * 20))
+                        if severity < 1:
+                            severity = 1
+                        if severity > 20:
+                            severity = 20
+                        penalty_by_user[user_id] = max(
+                            penalty_by_user.get(user_id, 0), severity
+                        )
+
+                    if deserter_updates:
+                        execute_batch(
+                            db,
+                            """
+                            UPDATE user_military
+                            SET quantity=%s, updated_at=now()
+                            WHERE user_id=%s AND unit_id=%s
+                            """,
+                            deserter_updates,
+                            page_size=500,
+                        )
+
+                    if penalty_by_user:
+                        attacker_penalties = [
+                            (p, uid) for uid, p in penalty_by_user.items()
+                        ]
+                        defender_penalties = [
+                            (p, uid) for uid, p in penalty_by_user.items()
+                        ]
+
+                        execute_batch(
+                            db,
+                            """
+                            UPDATE wars
+                            SET attacker_morale = GREATEST(attacker_morale - %s, 0)
+                            WHERE status = 'active' AND attacker_id = %s
+                            """,
+                            attacker_penalties,
+                            page_size=200,
+                        )
+                        execute_batch(
+                            db,
+                            """
+                            UPDATE wars
+                            SET defender_morale = GREATEST(defender_morale - %s, 0)
+                            WHERE status = 'active' AND defender_id = %s
+                            """,
+                            defender_penalties,
+                            page_size=200,
+                        )
+
+            _finalize_game_tick_log(
+                db,
+                tick_id,
+                status="completed",
+                users_processed=len(users_processed),
+                production_entries=production_entries,
+                consumption_entries=consumption_entries,
+                total_production=total_production,
+                total_consumption=total_consumption,
+                total_deserted_units=total_deserted_units,
+            )
+            conn.commit()
+
+            print(
+                "global_tick: completed "
+                f"users={len(users_processed)} "
+                f"prod_entries={production_entries} cons_entries={consumption_entries} "
+                f"produced={total_production} consumed={total_consumption} "
+                f"deserted_units={total_deserted_units}"
+            )
+
+        except Exception as e:
+            err = str(e)
+            try:
+                if tick_id is not None:
+                    _finalize_game_tick_log(
+                        db,
+                        tick_id,
+                        status="failed",
+                        users_processed=len(users_processed),
+                        production_entries=production_entries,
+                        consumption_entries=consumption_entries,
+                        total_production=total_production,
+                        total_consumption=total_consumption,
+                        total_deserted_units=total_deserted_units,
+                        error_message=err,
+                    )
+                conn.commit()
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+            handle_exception(e)
+            raise
+        finally:
+            try:
+                release_pg_advisory_lock(conn, 9010)
+            except Exception:
+                pass
+
+
 @celery.task()
 def task_execute_trade_agreements():
     """Celery task to execute due trade agreements."""
     _run_with_deadlock_retries(execute_due_trade_agreements, "execute_trade_agreements")
+
+
+@celery.task()
+@leader_only(ttl_seconds=540)
+def task_global_tick():
+    """Celery task for normalized global production/consumption tick."""
+    _run_with_deadlock_retries(global_tick, "global_tick")
