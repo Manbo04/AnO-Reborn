@@ -2756,12 +2756,14 @@ def global_tick():
                         f"cons_entries={consumption_entries}"
                     )
 
+            # Initialize validation_start OUTSIDE the if cost_rows block
+            # so it's always defined when the validation phase timer is read
+            validation_start = time.time()
+
+            if cost_rows:
                 # Validation logic when maintenance cannot be fully paid:
                 # apply unit desertion proportionally and morale penalties
                 # in active wars.
-                # Initialize validation_start BEFORE the if block to avoid
-                # "referenced before assignment" error
-                validation_start = time.time()
                 if deficits:
                     deficit_users = sorted({k[0] for k in deficits.keys()})
                     deficit_resources = sorted({k[1] for k in deficits.keys()})
