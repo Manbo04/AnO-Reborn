@@ -1053,12 +1053,18 @@ def delete_own_account():
             if leader_count != 1:
                 pass
             else:
-                db.execute("DELETE FROM coalitions WHERE colId=%s", (user_coalition,))
+                db.execute(
+                    "DELETE FROM coalition_members WHERE coalition_id=%s",
+                    (user_coalition,),
+                )
+                db.execute(
+                    "DELETE FROM coalitions WHERE coalition_id=%s", (user_coalition,)
+                )
                 db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
                 db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
                 db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
-        db.execute("DELETE FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("DELETE FROM coalition_members WHERE user_id=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         try:
