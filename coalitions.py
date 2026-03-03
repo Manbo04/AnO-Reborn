@@ -22,7 +22,7 @@ from database import cache_response  # noqa: E402
 # Function for getting the coalition role of a user
 def get_user_role(user_id):
     with get_db_cursor() as db:
-        db.execute("SELECT role FROM coalitions WHERE userId=%s", (user_id,))
+        db.execute("SELECT role FROM coalitions WHERE user_id=%s", (user_id,))
         row = db.fetchone()
         if not row:
             return None
@@ -30,7 +30,7 @@ def get_user_role(user_id):
 
 
 # Route for viewing a coalition's page
-def coalition(colId):
+def coalition(coalition_id):
     with get_db_cursor() as db:
         cId = session["user_id"]
 
@@ -40,19 +40,19 @@ def coalition(colId):
             """
             SELECT
                 c.name, c.type, c.description, c.flag,
-                COUNT(DISTINCT coal.userId) AS members_count,
+                COUNT(DISTINCT coal.user_id) AS members_count,
                 COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
-            LEFT JOIN coalitions coal ON c.id = coal.colId
+            LEFT JOIN coalitions coal ON c.id = coal.coalition_id
             LEFT JOIN (
-                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
+                SELECT user_id, COALESCE(SUM(population), 0) AS total_pop
                 FROM provinces
-                GROUP BY userId
-            ) prov ON coal.userId = prov.userId
+                GROUP BY user_id
+            ) prov ON coal.user_id = prov.user_id
             WHERE c.id = %s
             GROUP BY c.id, c.name, c.type, c.description, c.flag
             """,
-            (colId,),
+            (coalition_id,),
         )
         result = db.fetchone()
         if not result:
@@ -68,10 +68,10 @@ def coalition(colId):
                 COALESCE(SUM(p.cityCount), 0) AS total_cities,
                 COALESCE(SUM(p.land), 0) AS total_land
             FROM coalitions coal
-            LEFT JOIN provinces p ON coal.userId = p.userId
-            WHERE coal.colId = %s
+            LEFT JOIN provinces p ON coal.user_id = p.user_id
+            WHERE coal.coalition_id = %s
             """,
-            (colId,),
+            (coalition_id,),
         )
         stats_result = db.fetchone()
         coalition_provinces = stats_result[0] if stats_result else 0
@@ -94,13 +94,13 @@ def coalition(colId):
         try:
             db.execute(
                 (
-                    "SELECT coalitions.userId, users.username "
+                    "SELECT coalitions.user_id, users.username "
                     "FROM coalitions "
-                    "INNER JOIN users ON coalitions.userId=users.id "
+                    "INNER JOIN users ON coalitions.user_id=users.id "
                     "WHERE coalitions.role='leader' "
-                    "AND coalitions.colId=%s"
+                    "AND coalitions.coalition_id=%s"
                 ),
-                (colId,),
+                (coalition_id,),
             )
             leaders = db.fetchall()
         except (TypeError, AttributeError, IndexError):
@@ -111,36 +111,36 @@ def coalition(colId):
             # Uses pre-aggregated subquery to avoid N+1 per-member province count lookups
             db.execute(
                 """
-                SELECT coalitions.userId,
+                SELECT coalitions.user_id,
                        users.username,
                        coalitions.role,
                        0 AS influence,
                        COALESCE(prov.province_count, 0) AS province_count
                 FROM coalitions
-                INNER JOIN users ON coalitions.userId = users.id
+                INNER JOIN users ON coalitions.user_id = users.id
                 LEFT JOIN (
-                    SELECT userId, COUNT(*) AS province_count
+                    SELECT user_id, COUNT(*) AS province_count
                     FROM provinces
-                    GROUP BY userId
-                ) prov ON coalitions.userId = prov.userId
-                WHERE coalitions.colId = %s
+                    GROUP BY user_id
+                ) prov ON coalitions.user_id = prov.user_id
+                WHERE coalitions.coalition_id = %s
                 """,
-                (colId,),
+                (coalition_id,),
             )
             members = db.fetchall()
         except (TypeError, AttributeError, IndexError):
             members = []
 
         try:
-            db.execute("SELECT userId FROM coalitions WHERE userId=(%s)", (cId,))
+            db.execute("SELECT user_id FROM coalitions WHERE user_id=(%s)", (cId,))
             userInCol = db.fetchone() is not None
         except (TypeError, AttributeError, IndexError):
             userInCol = False
 
         try:
             db.execute(
-                "SELECT userId FROM coalitions WHERE userId=(%s) AND colId=(%s)",
-                (cId, colId),
+                "SELECT user_id FROM coalitions WHERE user_id=(%s) AND coalition_id=(%s)",
+                (cId, coalition_id),
             )
             userInCurCol = db.fetchone() is not None
         except (TypeError, AttributeError, IndexError):
@@ -149,8 +149,8 @@ def coalition(colId):
         try:
             # Determine the user's role for THIS coalition (avoid returning a role from another coalition)
             db.execute(
-                "SELECT role FROM coalitions WHERE userId=%s AND colId=%s",
-                (cId, colId),
+                "SELECT role FROM coalitions WHERE user_id=%s AND coalition_id=%s",
+                (cId, coalition_id),
             )
             row = db.fetchone()
             user_role = row[0] if row else None
@@ -174,10 +174,10 @@ def coalition(colId):
             # Fetch pending applications for leaders
             try:
                 db.execute(
-                    "SELECT a.id, a.userId, u.username, a.message, a.status, a.created_at "
-                    "FROM col_applications a JOIN users u ON a.userId = u.id "
-                    "WHERE a.colId=%s ORDER BY a.created_at DESC",
-                    (colId,),
+                    "SELECT a.id, a.user_id, u.username, a.message, a.status, a.created_at "
+                    "FROM col_applications a JOIN users u ON a.user_id = u.id "
+                    "WHERE a.coalition_id=%s ORDER BY a.created_at DESC",
+                    (coalition_id,),
                 )
                 pending_applications = db.fetchall()
             except Exception:
@@ -187,14 +187,14 @@ def coalition(colId):
             # so leaders/deputies see applicant usernames in the Leader Panel.
             try:
                 db.execute(
-                    "SELECT r.reqId, u.username, r.message FROM requests r JOIN users u ON r.reqId = u.id WHERE r.colId=%s ORDER BY r.reqId ASC",
-                    (colId,),
+                    "SELECT r.reqId, u.username, r.message FROM requests r JOIN users u ON r.reqId = u.id WHERE r.coalition_id=%s ORDER BY r.reqId ASC",
+                    (coalition_id,),
                 )
                 join_reqs = db.fetchall()
                 # append to pending_applications in the same tuple-shape used by the template
                 for jr in join_reqs:
                     req_id, req_username, req_message = jr
-                    # avoid duplicates (userId already present)
+                    # avoid duplicates (user_id already present)
                     if not any(pa[1] == req_id for pa in pending_applications):
                         pending_applications.append(
                             (None, req_id, req_username, req_message, None, None)
@@ -205,8 +205,8 @@ def coalition(colId):
 
             # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
             db.execute(
-                "SELECT role, COUNT(userId) FROM coalitions WHERE colId=%s GROUP BY role",
-                (colId,),
+                "SELECT role, COUNT(user_id) FROM coalitions WHERE coalition_id=%s GROUP BY role",
+                (coalition_id,),
             )
             role_counts = db.fetchall()
             for role, count in role_counts:
@@ -226,7 +226,7 @@ def coalition(colId):
                 try:
                     db.execute(
                         "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Pending' ORDER BY id ASC",
-                        (colId,),
+                        (coalition_id,),
                     )
                     ingoing_ids = [row[0] for row in db.fetchall()]
                 except Exception:
@@ -276,7 +276,7 @@ def coalition(colId):
                 try:
                     db.execute(
                         "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Active' OR col1_id=(%s) ORDER BY id ASC",
-                        (colId, colId),
+                        (coalition_id, coalition_id),
                     )
                     raw_active_ids = db.fetchall()
                 except Exception:
@@ -314,7 +314,7 @@ def coalition(colId):
                         ) = row
                         active_treaties["ids"].append(offer_id)
                         # Show the OTHER coalition, not the current one
-                        if col1_id == colId:
+                        if col1_id == coalition_id:
                             coalition_id = col2_id
                             coalition_name = col2_name
                         else:
@@ -360,7 +360,8 @@ def coalition(colId):
             # OPTIMIZATION: Fetch all bank resources in ONE query instead of 15 queries
             resource_cols = ", ".join(bankRaw.keys())
             db.execute(
-                f"SELECT {resource_cols} FROM colBanks WHERE colId=(%s)", (colId,)
+                f"SELECT {resource_cols} FROM colBanks WHERE coalition_id=(%s)",
+                (coalition_id,),
             )
             row = db.fetchone()
             if row:
@@ -383,16 +384,16 @@ def coalition(colId):
                 """SELECT r.reqId, u.username, r.message
                    FROM requests r
                    INNER JOIN users u ON r.reqId = u.id
-                   WHERE r.colId=%s
+                   WHERE r.coalition_id=%s
                    ORDER BY r.reqId ASC""",
-                (colId,),
+                (coalition_id,),
             )
             request_data = db.fetchall()
 
             # Debug: show request rows when rendering Applicants view
             try:
                 print(
-                    f"coalition.requests_on_page: colId={colId} user={cId} "
+                    f"coalition.requests_on_page: coalition_id={coalition_id} user={cId} "
                     f"user_role={user_role} userInCurCol={userInCurCol} requests={request_data}",
                     flush=True,
                 )
@@ -416,8 +417,8 @@ def coalition(colId):
                 """SELECT br.reqId, br.amount, br.resource, br.id, u.username
                    FROM colBanksRequests br
                    INNER JOIN users u ON br.reqId = u.id
-                   WHERE br.colId=(%s)""",
-                (colId,),
+                   WHERE br.coalition_id=(%s)""",
+                (coalition_id,),
             )
             bankRequests = db.fetchall()
         else:
@@ -443,7 +444,7 @@ def coalition(colId):
             cur_username = None
 
         print(
-            f"coalition debug: colId={colId} colType={colType} user={cId}:{cur_username} "
+            f"coalition debug: coalition_id={coalition_id} colType={colType} user={cId}:{cur_username} "
             f"userInCurCol={userInCurCol} user_role={user_role} "
             f"pending_count={len(pending_applications) if isinstance(pending_applications, (list, tuple)) else 'unknown'} "
             f"request_count={len(requestIds) if isinstance(requestIds, (list, tuple)) else 'unknown'} "
@@ -454,7 +455,7 @@ def coalition(colId):
         return render_template(
             "coalition.html",
             name=name,
-            colId=colId,
+            coalition_id=coalition_id,
             user_role=user_role,
             description=description,
             colType=colType,
@@ -493,7 +494,7 @@ def establish_coalition():
     with get_db_cursor() as db:
         # Check if user is already in a coalition (for both GET and POST)
         db.execute(
-            "SELECT colId FROM coalitions WHERE userId=(%s)",
+            "SELECT coalition_id FROM coalitions WHERE user_id=(%s)",
             (session["user_id"],),
         )
         existing = db.fetchone()
@@ -535,21 +536,23 @@ def establish_coalition():
                 db.execute(insert_query, (name, cType, desc, date, recruiting))
 
                 db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
-                colId = db.fetchone()[
+                coalition_id = db.fetchone()[
                     0
                 ]  # Gets the coalition id of the just inserted coalition
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
-                    "INSERT INTO coalitions (colId, userId, role) VALUES (%s, %s, %s)",
-                    (colId, session["user_id"], "leader"),
+                    "INSERT INTO coalitions (coalition_id, user_id, role) VALUES (%s, %s, %s)",
+                    (coalition_id, session["user_id"], "leader"),
                 )
 
                 # Inserts the coalition into the table for coalition banks
-                db.execute("INSERT INTO colBanks (colId) VALUES (%s)", (colId,))
+                db.execute(
+                    "INSERT INTO colBanks (coalition_id) VALUES (%s)", (coalition_id,)
+                )
 
                 return redirect(
-                    f"/coalition/{colId}"
+                    f"/coalition/{coalition_id}"
                 )  # Redirects to the new coalition's page
     else:
         return render_template("establish_coalition.html")
@@ -613,7 +616,7 @@ def coalitions():
         count_query = f"""
             SELECT COUNT(DISTINCT c.id)
             FROM colNames c
-            INNER JOIN coalitions coal ON c.id = coal.colId
+            INNER JOIN coalitions coal ON c.id = coal.coalition_id
             {where_clause}
         """
         db.execute(count_query, tuple(params))
@@ -634,16 +637,16 @@ def coalitions():
                 c.type,
                 c.name,
                 c.flag,
-                COUNT(DISTINCT coal.userId) AS members,
+                COUNT(DISTINCT coal.user_id) AS members,
                 c.date,
                 COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
-            INNER JOIN coalitions coal ON c.id = coal.colId
+            INNER JOIN coalitions coal ON c.id = coal.coalition_id
             LEFT JOIN (
-                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
+                SELECT user_id, COALESCE(SUM(population), 0) AS total_pop
                 FROM provinces
-                GROUP BY userId
-            ) prov ON coal.userId = prov.userId
+                GROUP BY user_id
+            ) prov ON coal.user_id = prov.user_id
             {where_clause}
             GROUP BY c.id, c.type, c.name, c.flag, c.date
             ORDER BY {order_by}
@@ -691,16 +694,16 @@ def coalitions():
 
 
 # Route for joining a coalition
-def join_col(colId):
+def join_col(coalition_id):
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("SELECT coalition_id FROM coalitions WHERE user_id=%s", (cId,))
         row = db.fetchone()
         if row:
             return error(400, "You're already in a coalition")
 
-        db.execute("SELECT type FROM colNames WHERE id=%s", (colId,))
+        db.execute("SELECT type FROM colNames WHERE id=%s", (coalition_id,))
         row = db.fetchone()
         if not row:
             return error(404, "Coalition not found")
@@ -708,13 +711,14 @@ def join_col(colId):
 
         if colType == "Open":
             db.execute(
-                "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)", (colId, cId)
+                "INSERT INTO coalitions (coalition_id, user_id) VALUES (%s, %s)",
+                (coalition_id, cId),
             )
         else:
             # Check for existing join request (SELECT 1 is explicit and avoids SQL syntax errors)
             db.execute(
-                "SELECT 1 FROM requests WHERE colId=%s AND reqId=%s",
-                (colId, cId),
+                "SELECT 1 FROM requests WHERE coalition_id=%s AND reqId=%s",
+                (coalition_id, cId),
             )
             duplicate = db.fetchone()
             if duplicate is not None:
@@ -724,29 +728,29 @@ def join_col(colId):
 
             message = request.form.get("message", "")
             db.execute(
-                "INSERT INTO requests (colId, reqId, message) VALUES (%s, %s, %s)",
-                (colId, cId, message),
+                "INSERT INTO requests (coalition_id, reqId, message) VALUES (%s, %s, %s)",
+                (coalition_id, cId, message),
             )
             # Invalidate cached coalition page so leaders/deputies see the new
             # join request immediately (avoid serving a stale cached page).
             try:
                 from database import invalidate_view_cache
 
-                invalidate_view_cache("coalition", page=f"/coalition/{colId}")
+                invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
                 print(
-                    f"join_col: invalidated coalition cache for colId={colId}",
+                    f"join_col: invalidated coalition cache for coalition_id={coalition_id}",
                     flush=True,
                 )
             except Exception as e:
                 print(f"join_col: cache invalidation failed: {e}", flush=True)
 
         return redirect(
-            f"/coalition/{colId}"
+            f"/coalition/{coalition_id}"
         )  # Redirects to the joined coalitions page
 
 
 # Route for leaving a coalition
-def leave_col(colId):
+def leave_col(coalition_id):
     with get_db_cursor() as db:
         cId = session["user_id"]
         role = get_user_role(cId)
@@ -755,7 +759,8 @@ def leave_col(colId):
             return error(400, "Can't leave coalition, you're the leader")
 
         db.execute(
-            "DELETE FROM coalitions WHERE userId=(%s) AND colId=(%s)", (cId, colId)
+            "DELETE FROM coalitions WHERE user_id=(%s) AND coalition_id=(%s)",
+            (cId, coalition_id),
         )
 
     return redirect("/coalitions")
@@ -766,7 +771,7 @@ def my_coalition():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("SELECT coalition_id FROM coalitions WHERE user_id=%s", (cId,))
         row = db.fetchone()
         if not row:
             return redirect("/")  # Redirects to home page instead of an error
@@ -780,11 +785,11 @@ def give_position():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+        db.execute("SELECT coalition_id FROM coalitions WHERE user_id=%s", (cId,))
         row = db.fetchone()
         if not row:
             return error(400, "You are not a part of any coalition")
-        colId = row[0]
+        coalition_id = row[0]
 
         user_role = get_user_role(cId)
 
@@ -820,7 +825,7 @@ def give_position():
             )
             roleer, roleer_col, current_roleer_role = db.fetchone()
 
-            if roleer_col != colId:
+            if roleer_col != coalition_id:
                 return error(400, "User isn't in your coalition.")
 
             if roleer == cId:
@@ -837,11 +842,11 @@ def give_position():
             return error(400, "Can't edit role for a person higher rank than you.")
 
         db.execute(
-            "UPDATE coalitions SET role=%s WHERE userId=%s AND colId=%s",
-            (role, roleer, colId),
+            "UPDATE coalitions SET role=%s WHERE user_id=%s AND coalition_id=%s",
+            (role, roleer, coalition_id),
         )
         # Diagnostic: confirm role update in test logs
-        print(f"give_position: set role={role} for userId={roleer}", flush=True)
+        print(f"give_position: set role={role} for user_id={roleer}", flush=True)
 
         # Invalidate cached coalition page(s) so the promoted user (and
         # other viewers) see the updated role / applicants immediately.
@@ -849,10 +854,10 @@ def give_position():
             from database import invalidate_view_cache
 
             invalidate_view_cache(
-                "coalition", user_id=roleer, page=f"/coalition/{colId}"
+                "coalition", user_id=roleer, page=f"/coalition/{coalition_id}"
             )
             print(
-                f"give_position: invalidated coalition cache for userId={roleer} colId={colId}",
+                f"give_position: invalidated coalition cache for user_id={roleer} coalition_id={coalition_id}",
                 flush=True,
             )
         except Exception as e:
@@ -864,11 +869,11 @@ def give_position():
 # Route for accepting a coalition join request
 def adding(uId):
     with get_db_cursor() as db:
-        db.execute("SELECT colId FROM requests WHERE reqId=(%s)", (uId,))
+        db.execute("SELECT coalition_id FROM requests WHERE reqId=(%s)", (uId,))
         row = db.fetchone()
         if not row:
             return error(400, "User hasn't posted a request to join")
-        colId = row[0]
+        coalition_id = row[0]
 
         cId = session["user_id"]
         user_role = get_user_role(cId)
@@ -876,31 +881,38 @@ def adding(uId):
         if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
             return error(400, "You are not a leader of the coalition")
 
-        db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
         db.execute(
-            "INSERT INTO coalitions (colId, userId) VALUES (%s, %s)", (colId, uId)
+            "DELETE FROM requests WHERE reqId=(%s) AND coalition_id=(%s)",
+            (uId, coalition_id),
+        )
+        db.execute(
+            "INSERT INTO coalitions (coalition_id, user_id) VALUES (%s, %s)",
+            (coalition_id, uId),
         )
 
         # Invalidate coalition page cache so leaders/deputies see the new member
         try:
             from database import invalidate_view_cache
 
-            invalidate_view_cache("coalition", page=f"/coalition/{colId}")
-            print(f"adding: invalidated coalition cache for colId={colId}", flush=True)
+            invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
+            print(
+                f"adding: invalidated coalition cache for coalition_id={coalition_id}",
+                flush=True,
+            )
         except Exception as e:
             print(f"adding: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{colId}")
+        return redirect(f"/coalition/{coalition_id}")
 
 
 # Route for removing a join request
 def removing_requests(uId):
     with get_db_cursor() as db:
-        db.execute("SELECT colId FROM requests WHERE reqId=%s", (uId,))
+        db.execute("SELECT coalition_id FROM requests WHERE reqId=%s", (uId,))
         row = db.fetchone()
         if not row:
             return error(400, "User hasn't posted a request to join this coalition.")
-        colId = row[0]
+        coalition_id = row[0]
 
         cId = session["user_id"]
 
@@ -909,25 +921,28 @@ def removing_requests(uId):
         if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
             return error(400, "You are not the leader of the coalition")
 
-        db.execute("DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)", (uId, colId))
+        db.execute(
+            "DELETE FROM requests WHERE reqId=(%s) AND coalition_id=(%s)",
+            (uId, coalition_id),
+        )
 
         # Invalidate cached coalition page so applicants/leader panel updates
         try:
             from database import invalidate_view_cache
 
-            invalidate_view_cache("coalition", page=f"/coalition/{colId}")
+            invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
             print(
-                f"removing_requests: invalidated coalition cache for colId={colId}",
+                f"removing_requests: invalidated coalition cache for coalition_id={coalition_id}",
                 flush=True,
             )
         except Exception as e:
             print(f"removing_requests: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{colId}")
+        return redirect(f"/coalition/{coalition_id}")
 
 
 # Route for deleting a coalition
-def delete_coalition(colId):
+def delete_coalition(coalition_id):
     cId = session["user_id"]
     user_role = get_user_role(cId)
 
@@ -935,14 +950,14 @@ def delete_coalition(colId):
         return error(400, "You aren't the leader of this coalition")
 
     with get_db_cursor() as db:
-        db.execute("SELECT name FROM colNames WHERE id=(%s)", (colId,))
+        db.execute("SELECT name FROM colNames WHERE id=(%s)", (coalition_id,))
         row = db.fetchone()
         if not row:
             return error(404, "Coalition not found")
         coalition_name = row[0]
 
-        db.execute("DELETE FROM colNames WHERE id=(%s)", (colId,))
-        db.execute("DELETE FROM coalitions WHERE colId=(%s)", (colId,))
+        db.execute("DELETE FROM colNames WHERE id=(%s)", (coalition_id,))
+        db.execute("DELETE FROM coalitions WHERE coalition_id=(%s)", (coalition_id,))
 
     flash(f"{coalition_name} coalition was deleted.")
 
@@ -950,7 +965,7 @@ def delete_coalition(colId):
 
 
 # Route for updating name, description, flag of coalition
-def update_col_info(colId):
+def update_col_info(coalition_id):
     cId = session["user_id"]
 
     user_role = get_user_role(cId)
@@ -970,7 +985,7 @@ def update_col_info(colId):
         if allowed_file(flag.filename):
             # Check if the user already has a flag
             with get_db_cursor() as db:
-                db.execute("SELECT flag FROM colNames WHERE id=(%s)", (colId,))
+                db.execute("SELECT flag FROM colNames WHERE id=(%s)", (coalition_id,))
                 row = db.fetchone()
                 if row and row[0]:
                     current_flag = row[0]
@@ -988,12 +1003,12 @@ def update_col_info(colId):
 
             # Compress and resize flag for fast storage/retrieval
             flag_data, extension = compress_flag_image(flag, max_size=300, quality=85)
-            filename = f"col_flag_{colId}.{extension}"
+            filename = f"col_flag_{coalition_id}.{extension}"
 
             with get_db_cursor() as db:
                 db.execute(
                     "UPDATE colNames SET flag=(%s), flag_data=(%s) WHERE id=(%s)",
-                    (filename, flag_data, colId),
+                    (filename, flag_data, coalition_id),
                 )
 
             # Also save to filesystem for backward compatibility
@@ -1003,7 +1018,7 @@ def update_col_info(colId):
             # Invalidate coalition influence cache so flag changes show
             from database import query_cache
 
-            query_cache.invalidate(f"coalition_influence_{colId}")
+            query_cache.invalidate(f"coalition_influence_{coalition_id}")
         else:
             return error(400, "File format not supported")
 
@@ -1015,16 +1030,17 @@ def update_col_info(colId):
 
         if application_type != "":
             db.execute(
-                "UPDATE colNames SET type=%s WHERE id=%s", (application_type, colId)
+                "UPDATE colNames SET type=%s WHERE id=%s",
+                (application_type, coalition_id),
             )
             # Invalidate cached coalition page so viewers see the new application
             # type immediately instead of a cached version.
             try:
                 from database import invalidate_view_cache
 
-                invalidate_view_cache("coalition", page=f"/coalition/{colId}")
+                invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
                 print(
-                    f"update_col_info: invalidated coalition cache for colId={colId}",
+                    f"update_col_info: invalidated coalition cache for coalition_id={coalition_id}",
                     flush=True,
                 )
             except Exception as e:
@@ -1034,7 +1050,8 @@ def update_col_info(colId):
         description = request.form.get("description")
         if description not in [None, "None", ""]:
             db.execute(
-                "UPDATE colNames SET description=%s WHERE id=%s", (description, colId)
+                "UPDATE colNames SET description=%s WHERE id=%s",
+                (description, coalition_id),
             )
 
     return redirect("/my_coalition")
@@ -1044,13 +1061,13 @@ def update_col_info(colId):
 
 
 # Route for depositing resources into the bank
-def deposit_into_bank(colId):
+def deposit_into_bank(coalition_id):
     cId = session["user_id"]
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
-            (cId, colId),
+            "SELECT user_id FROM coalitions WHERE user_id=(%s) and coalition_id=(%s)",
+            (cId, coalition_id),
         )
         row = db.fetchone()
         if not row:
@@ -1129,16 +1146,18 @@ def deposit_into_bank(colId):
 
         # Gives the coalition the resource
         current_resource_statement = (
-            f"SELECT {resource} FROM colBanks" + " WHERE colId=%s"
+            f"SELECT {resource} FROM colBanks" + " WHERE coalition_id=%s"
         )
-        db.execute(current_resource_statement, (colId,))
+        db.execute(current_resource_statement, (coalition_id,))
         row = db.fetchone()
         current_resource = int(row[0]) if row and row[0] is not None else 0
 
         new_resource = current_resource + amount
 
-        update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
-        db.execute(update_statement, (new_resource, colId))
+        update_statement = (
+            f"UPDATE colBanks SET {resource}" + "=%s WHERE coalition_id=%s"
+        )
+        db.execute(update_statement, (new_resource, coalition_id))
 
     with get_db_cursor() as db:
         for resource in deposited_resources:
@@ -1146,16 +1165,18 @@ def deposit_into_bank(colId):
             amount = resource[1]
             deposit(name, amount, db)
 
-    return redirect(f"/coalition/{colId}")
+    return redirect(f"/coalition/{coalition_id}")
 
 
 # Function for withdrawing a resource from the bank
-def withdraw(resource, amount, user_id, colId):
+def withdraw(resource, amount, user_id, coalition_id):
     with get_db_cursor() as db:
         # Removes the resource from the coalition bank
 
-        current_resource_statement = f"SELECT {resource} FROM colBanks WHERE colId=%s"
-        db.execute(current_resource_statement, (colId,))
+        current_resource_statement = (
+            f"SELECT {resource} FROM colBanks WHERE coalition_id=%s"
+        )
+        db.execute(current_resource_statement, (coalition_id,))
         row = db.fetchone()
         current_resource = row[0] if row and row[0] is not None else 0
 
@@ -1173,12 +1194,12 @@ def withdraw(resource, amount, user_id, colId):
 
         new_resource = current_resource - amount
 
-        update_statement = f"UPDATE colBanks SET {resource}=%s WHERE colId=%s"
-        db.execute(update_statement, (new_resource, colId))
+        update_statement = f"UPDATE colBanks SET {resource}=%s WHERE coalition_id=%s"
+        db.execute(update_statement, (new_resource, coalition_id))
 
         current_app.logger.info(
             (
-                f"withdraw: colId={colId} resource={resource} amount={amount} "
+                f"withdraw: coalition_id={coalition_id} resource={resource} amount={amount} "
                 f"bank_before={current_resource} "
                 f"bank_after={new_resource}"
             )
@@ -1244,7 +1265,7 @@ def withdraw(resource, amount, user_id, colId):
 
 
 # Route from withdrawing from the bank
-def withdraw_from_bank(colId):
+def withdraw_from_bank(coalition_id):
     cId = session["user_id"]
 
     user_role = get_user_role(cId)
@@ -1277,23 +1298,23 @@ def withdraw_from_bank(colId):
         if amount < 1:
             return error(400, "Amount has to be greater than 1")
 
-        result = withdraw(name, amount, cId, colId)
+        result = withdraw(name, amount, cId, coalition_id)
         # `withdraw` may return an error Response (via `error()`); if so,
         # propagate it to the client instead of silently continuing.
         if result is not None:
             return result
 
-    return redirect(f"/coalition/{colId}")
+    return redirect(f"/coalition/{coalition_id}")
 
 
 # Route for requesting a resource from the coalition bank
-def request_from_bank(colId):
+def request_from_bank(coalition_id):
     cId = session["user_id"]
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT userId FROM coalitions WHERE userId=(%s) and colId=(%s)",
-            (cId, colId),
+            "SELECT user_id FROM coalitions WHERE user_id=(%s) and coalition_id=(%s)",
+            (cId, coalition_id),
         )
         row = db.fetchone()
         if not row:
@@ -1330,8 +1351,8 @@ def request_from_bank(colId):
 
         try:
             db.execute(
-                "INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)",
-                (cId, colId, amount, resource),
+                "INSERT INTO colBanksRequests (reqId, coalition_id, amount, resource) VALUES (%s, %s, %s, %s)",
+                (cId, coalition_id, amount, resource),
             )
         except Exception as e:
             current_app.logger.warning("colBanksRequests insert failed: %s", e)
@@ -1339,7 +1360,7 @@ def request_from_bank(colId):
                 500, "Error submitting bank request; please try again or contact admins"
             )
 
-    return redirect(f"/coalition/{colId}")
+    return redirect(f"/coalition/{coalition_id}")
 
 
 # Route for removing a request for a resource from the coalition bank
@@ -1363,21 +1384,21 @@ def accept_bank_request(bankId):
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT colId, resource, amount, reqId FROM colBanksRequests WHERE id=(%s)",
+            "SELECT coalition_id, resource, amount, reqId FROM colBanksRequests WHERE id=(%s)",
             (bankId,),
         )
         result = db.fetchone()
         if not result:
             return error(400, "Bank request not found")
 
-        colId, resource, amount, user_id = result
+        coalition_id, resource, amount, user_id = result
 
         user_role = get_user_role(cId)
 
         if user_role not in ["leader", "deputy_leader", "banker"]:
             return error(400, "You aren't the leader of this coalition")
 
-        result = withdraw(resource, amount, user_id, colId)
+        result = withdraw(resource, amount, user_id, coalition_id)
         if result is not None:
             return result
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
@@ -1400,7 +1421,7 @@ def offer_treaty():
             return error(400, f"No such coalition: {col2_name}")
         col2_id = row[0]
 
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+        db.execute("SELECT coalition_id FROM coalitions WHERE user_id=(%s)", (cId,))
         row = db.fetchone()
         if not row:
             return error(400, "You are not in a coalition")
@@ -1441,7 +1462,7 @@ def accept_treaty(offer_id):
     offer_id = int(offer_id)
 
     with get_db_cursor() as db:
-        db.execute("SELECT colId FROM coalitions WHERE userId=(%s)", (cId,))
+        db.execute("SELECT coalition_id FROM coalitions WHERE user_id=(%s)", (cId,))
         row = db.fetchone()
         if not row:
             return error(400, "You do not have such an offer")
@@ -1528,16 +1549,16 @@ def register_coalitions_routes(app_instance):
 
     # Register all coalition routes
     app_instance.add_url_rule(
-        "/coalition/<colId>", view_func=coalition_wrapped, methods=["GET"]
+        "/coalition/<coalition_id>", view_func=coalition_wrapped, methods=["GET"]
     )
 
     # Apply to coalition (GET form + POST submit)
-    def apply_to_coalition(colId):
+    def apply_to_coalition(coalition_id):
         from flask import request
 
         with get_db_cursor() as db:
             # Check coalition exists
-            db.execute("SELECT name FROM colNames WHERE id=%s", (colId,))
+            db.execute("SELECT name FROM colNames WHERE id=%s", (coalition_id,))
             row = db.fetchone()
             if not row:
                 return error(404, "Coalition not found")
@@ -1549,14 +1570,16 @@ def register_coalitions_routes(app_instance):
                 user_id = session["user_id"]
 
                 # Check if already member
-                db.execute("SELECT userId FROM coalitions WHERE userId=%s", (user_id,))
+                db.execute(
+                    "SELECT user_id FROM coalitions WHERE user_id=%s", (user_id,)
+                )
                 if db.fetchone():
                     return error(400, "You are already in a coalition")
 
                 # Prevent duplicate applications
                 db.execute(
-                    "SELECT id FROM col_applications WHERE colId=%s AND userId=%s AND status='pending'",
-                    (colId, user_id),
+                    "SELECT id FROM col_applications WHERE coalition_id=%s AND user_id=%s AND status='pending'",
+                    (coalition_id, user_id),
                 )
                 if db.fetchone():
                     return error(
@@ -1564,14 +1587,14 @@ def register_coalitions_routes(app_instance):
                     )
 
                 db.execute(
-                    "INSERT INTO col_applications (colId, userId, message) VALUES (%s, %s, %s)",
-                    (colId, user_id, message),
+                    "INSERT INTO col_applications (coalition_id, user_id, message) VALUES (%s, %s, %s)",
+                    (coalition_id, user_id, message),
                 )
 
                 # Notify leaders by adding news
                 db.execute(
-                    "SELECT userId FROM coalitions WHERE colId=%s AND role IN ('leader','deputy_leader')",
-                    (colId,),
+                    "SELECT user_id FROM coalitions WHERE coalition_id=%s AND role IN ('leader','deputy_leader')",
+                    (coalition_id,),
                 )
                 leader_rows = db.fetchall()
                 if leader_rows:
@@ -1600,7 +1623,7 @@ def register_coalitions_routes(app_instance):
 
     apply_to_coalition_wrapped = login_required(apply_to_coalition)
     app_instance.add_url_rule(
-        "/coalition/<colId>/apply",
+        "/coalition/<coalition_id>/apply",
         view_func=apply_to_coalition_wrapped,
         methods=["GET", "POST"],
     )
@@ -1613,10 +1636,10 @@ def register_coalitions_routes(app_instance):
         "/coalitions", view_func=coalitions_wrapped, methods=["GET"]
     )
     app_instance.add_url_rule(
-        "/join/<colId>", view_func=join_col_wrapped, methods=["POST"]
+        "/join/<coalition_id>", view_func=join_col_wrapped, methods=["POST"]
     )
     app_instance.add_url_rule(
-        "/leave/<colId>", view_func=leave_col_wrapped, methods=["POST"]
+        "/leave/<coalition_id>", view_func=leave_col_wrapped, methods=["POST"]
     )
     app_instance.add_url_rule(
         "/my_coalition", view_func=my_coalition_wrapped, methods=["GET"]
@@ -1629,25 +1652,27 @@ def register_coalitions_routes(app_instance):
         "/remove/<uId>", view_func=removing_requests_wrapped, methods=["POST"]
     )
     app_instance.add_url_rule(
-        "/delete_coalition/<colId>",
+        "/delete_coalition/<coalition_id>",
         view_func=delete_coalition_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(
-        "/update_col_info/<colId>", view_func=update_col_info_wrapped, methods=["POST"]
+        "/update_col_info/<coalition_id>",
+        view_func=update_col_info_wrapped,
+        methods=["POST"],
     )
     app_instance.add_url_rule(
-        "/deposit_into_bank/<colId>",
+        "/deposit_into_bank/<coalition_id>",
         view_func=deposit_into_bank_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(
-        "/withdraw_from_bank/<colId>",
+        "/withdraw_from_bank/<coalition_id>",
         view_func=withdraw_from_bank_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(
-        "/request_from_bank/<colId>",
+        "/request_from_bank/<coalition_id>",
         view_func=request_from_bank_wrapped,
         methods=["POST"],
     )
