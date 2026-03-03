@@ -211,10 +211,19 @@ def rations_distribution_capacity(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
+        # Query normalized user_buildings table
         db.execute(
-            f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
-            "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
+            """
+            SELECT COALESCE(SUM(ub.quantity), 0)
+            FROM user_buildings ub
+            JOIN building_dictionary bd
+                ON bd.building_id = ub.building_id
+            WHERE ub.user_id = %s
+              AND bd.name IN (
+                  'gas_stations', 'general_stores',
+                  'farmers_markets', 'malls'
+              )
+            """,
             (user_id,),
         )
         bcount = db.fetchone()[0] or 0
@@ -234,11 +243,20 @@ def energy_info(province_id):
 
         infra = variables.NEW_INFRA
 
-        # Fetch all data in a single query
-        all_fields = consumers + producers
-        query = f"SELECT {', '.join(all_fields)} FROM proInfra WHERE id=%s"
-        db.execute(query, (province_id,))
-        result = db.fetchone()
+        # Fetch building quantities from normalized user_buildings table
+        db.execute(
+            """
+            SELECT bd.name, ub.quantity
+            FROM user_buildings ub
+            JOIN building_dictionary bd ON bd.building_id = ub.building_id
+            JOIN provinces p ON p.userId = ub.user_id
+            WHERE p.id = %s AND bd.name IN (%s)
+            """,
+            (province_id, tuple(consumers + producers)),
+        )
+        rows = db.fetchall()
+        result_dict = {row[0]: row[1] for row in rows} if rows else {}
+        result = tuple(result_dict.get(name, 0) for name in consumers + producers)
 
         if not result:
             return 0, 0
@@ -263,20 +281,33 @@ def food_stats(user_id):
     with get_db_cursor() as db:
         needed_rations = rations_needed(user_id)
 
-        db.execute("SELECT rations FROM resources WHERE id=%s", (user_id,))
-        current_rations = db.fetchone()[0]
+        # Query normalized user_economy table
+        db.execute(
+            """
+            SELECT COALESCE(ue.quantity, 0)
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id = %s AND rd.name = 'rations'
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+        current_rations = row[0] if row else 0
 
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             with get_db_cursor() as db:
-                # sum all distribution-building columns across the user's
-                # provinces; the proInfra table uses province id = users
-                # province id.
-                cols = " + ".join(variables.RATIONS_DISTRIBUTION_BUILDINGS)
+                # Query normalized user_buildings table
                 db.execute(
-                    f"SELECT COALESCE(SUM({cols}),0) FROM proInfra "
-                    "WHERE id IN (SELECT id FROM provinces WHERE userId=%s)",
+                    """
+                    SELECT COALESCE(SUM(ub.quantity), 0)
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                    WHERE ub.user_id = %s
+                      AND bd.name IN ('gas_stations', 'general_stores',
+                                      'farmers_markets', 'malls')
+                    """,
                     (user_id,),
                 )
                 bcount = db.fetchone()[0] or 0
@@ -341,7 +372,16 @@ def calc_ti(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (user_id,))
+        # Query normalized user_economy table
+        db.execute(
+            """
+            SELECT COALESCE(ue.quantity, 0)
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id = %s AND rd.name = 'consumer_goods'
+            """,
+            (user_id,),
+        )
         cg_result = db.fetchone()
         consumer_goods = int(cg_result[0] if cg_result else 0)
 
@@ -510,10 +550,15 @@ def tax_income():
                     gold_val = row[1] if len(row) > 1 else 0
                     stats_map[uid] = gold_val
 
-            # Load all consumer_goods
+            # Load all consumer_goods from normalized user_economy
             cg_map = {}
             dbdict.execute(
-                "SELECT id, consumer_goods FROM resources WHERE id = ANY(%s)",
+                """
+                SELECT ue.user_id, COALESCE(ue.quantity, 0) AS consumer_goods
+                FROM user_economy ue
+                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+                WHERE ue.user_id = ANY(%s) AND rd.name = 'consumer_goods'
+                """,
                 (all_user_ids,),
             )
             for row in dbdict.fetchall():
@@ -632,19 +677,35 @@ def tax_income():
                 )
             if cg_updates:
                 try:
-                    cg_sql = (
-                        "UPDATE resources SET consumer_goods=GREATEST("
-                        "consumer_goods-%s, 0) WHERE id=%s"
+                    # Get consumer_goods resource_id
+                    db.execute(
+                        "SELECT resource_id FROM resource_dictionary "
+                        "WHERE name='consumer_goods'"
                     )
-                    execute_batch(db, cg_sql, cg_updates, page_size=100)
+                    cg_resource_id = db.fetchone()[0]
+
+                    # Batch update user_economy
+                    cg_sql = (
+                        "UPDATE user_economy SET quantity=GREATEST("
+                        "quantity-%s, 0) WHERE user_id=%s AND resource_id=%s"
+                    )
+                    cg_updates_with_resource = [
+                        (qty, uid, cg_resource_id) for qty, uid in cg_updates
+                    ]
+                    execute_batch(db, cg_sql, cg_updates_with_resource, page_size=100)
                 except AttributeError:
                     # DB cursor in tests may not support psycopg2 extras
                     # fall back to individual updates
-                    for params in cg_updates:
+                    db.execute(
+                        "SELECT resource_id FROM resource_dictionary "
+                        "WHERE name='consumer_goods'"
+                    )
+                    cg_resource_id = db.fetchone()[0]
+                    for qty, uid in cg_updates:
                         db.execute(
-                            "UPDATE resources SET consumer_goods=GREATEST("
-                            "consumer_goods-%s, 0) WHERE id=%s",
-                            params,
+                            "UPDATE user_economy SET quantity=GREATEST("
+                            "quantity-%s, 0) WHERE user_id=%s AND resource_id=%s",
+                            (qty, uid, cg_resource_id),
                         )
 
                 # Invalidate cache for affected users (best-effort)
@@ -872,18 +933,31 @@ def population_growth():  # Function for growing population
         user_ids = [row["userid"] for row in provinces]
         unique_user_ids = sorted(set(user_ids))
 
-        # Ensure resources rows exist for every user once, not per province
+        # Get rations resource_id
+        db.execute("SELECT resource_id FROM resource_dictionary WHERE name='rations'")
+        rations_resource_id = db.fetchone()[0]
+
+        # Ensure user_economy rows exist for rations
         execute_batch(
             db,
-            "INSERT INTO resources (id) VALUES (%s) ON CONFLICT (id) DO NOTHING",
-            [(uid,) for uid in unique_user_ids],
+            """
+            INSERT INTO user_economy (user_id, resource_id, quantity)
+            VALUES (%s, %s, 0)
+            ON CONFLICT (user_id, resource_id) DO NOTHING
+            """,
+            [(uid, rations_resource_id) for uid in unique_user_ids],
         )
 
         # Preload rations and policies into dicts for O(1) lookups
         dbdict.execute(
-            "SELECT id, rations FROM resources WHERE id = ANY(%s)", (unique_user_ids,)
+            """
+            SELECT ue.user_id, COALESCE(ue.quantity, 0) AS rations
+            FROM user_economy ue
+            WHERE ue.user_id = ANY(%s) AND ue.resource_id = %s
+            """,
+            (unique_user_ids, rations_resource_id),
         )
-        ration_map = {row["id"]: row["rations"] for row in dbdict.fetchall()}
+        ration_map = {row["user_id"]: row["rations"] for row in dbdict.fetchall()}
 
         dbdict.execute(
             "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
@@ -975,14 +1049,18 @@ def population_growth():  # Function for growing population
         # PHASE 4: Apply rations updates atomically (one per user, not per province!)
         # Use GREATEST to ensure rations never go below 0
         rations_updates = [
-            (deduct_amount, uid)
+            (deduct_amount, uid, rations_resource_id)
             for uid, deduct_amount in user_rations_to_deduct.items()
         ]
 
         if rations_updates:
             execute_batch(
                 db,
-                "UPDATE resources SET rations = GREATEST(0, rations - %s) WHERE id=%s",
+                """
+                UPDATE user_economy
+                SET quantity = GREATEST(0, quantity - %s)
+                WHERE user_id=%s AND resource_id=%s
+                """,
                 rations_updates,
             )
         if population_updates:
@@ -1111,11 +1189,9 @@ def generate_province_revenue():  # Runs each hour
             last_proc = last_row[0] if last_row and last_row[0] is not None else 0
             chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "500"))
             db.execute(
-                "SELECT proInfra.id, provinces.userId, provinces.land, "
-                "provinces.productivity "
-                "FROM proInfra INNER JOIN provinces "
-                "ON proInfra.id=provinces.id "
-                "WHERE proInfra.id > %s ORDER BY proInfra.id ASC LIMIT %s",
+                "SELECT p.id, p.userId, p.land, p.productivity "
+                "FROM provinces p "
+                "WHERE p.id > %s ORDER BY p.id ASC LIMIT %s",
                 (last_proc, chunk),
             )
             infra_ids = db.fetchall()
@@ -1161,14 +1237,25 @@ def generate_province_revenue():  # Runs each hour
             for row in dbdict.fetchall():
                 policies_map[row["user_id"]] = row["education"]
 
-        # Preload all proInfra data for all provinces at once
-        proinfra_map = {}
-        if all_province_ids:
+        # Preload all building data for all provinces at once (replaces proInfra)
+        buildings_map = {}  # user_id -> {building_name: quantity}
+        if all_user_ids:
             dbdict.execute(
-                "SELECT * FROM proInfra WHERE id = ANY(%s)", (all_province_ids,)
+                """
+                SELECT ub.user_id, bd.name, ub.quantity
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = ANY(%s)
+                """,
+                (all_user_ids,),
             )
             for row in dbdict.fetchall():
-                proinfra_map[row["id"]] = dict(row)
+                user_id = row["user_id"]
+                building_name = row["name"]
+                quantity = row["quantity"]
+                if user_id not in buildings_map:
+                    buildings_map[user_id] = {}
+                buildings_map[user_id][building_name] = quantity
 
         # Preload all stats (gold) for all users at once
         stats_map = {}
@@ -1179,38 +1266,59 @@ def generate_province_revenue():  # Runs each hour
             for row in dbdict.fetchall():
                 stats_map[row["id"]] = row["gold"]
 
-        # Preload all resources for all users at once
-        resources_map = {}
+        # Preload all resources for all users at once (use user_economy)
+        resources_map = {}  # user_id -> {resource_name: quantity}
         if all_user_ids:
             dbdict.execute(
-                "SELECT * FROM resources WHERE id = ANY(%s)", (all_user_ids,)
+                """
+                SELECT ue.user_id, rd.name AS resource_name,
+                       COALESCE(ue.quantity, 0) AS quantity
+                FROM user_economy ue
+                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+                WHERE ue.user_id = ANY(%s)
+                """,
+                (all_user_ids,),
             )
             for row in dbdict.fetchall():
-                resources_map[row["id"]] = dict(row)
+                user_id = row["user_id"]
+                if user_id not in resources_map:
+                    resources_map[user_id] = {}
+                resources_map[user_id][row["resource_name"]] = row["quantity"]
 
         # Track resource DELTAS (changes) for atomic updates
         # This avoids race conditions with other tasks modifying resources
         resource_deltas = {uid: {} for uid in all_user_ids}
 
-        # Ensure all users have resource rows (batch insert)
+        # Ensure all users have user_economy rows for all resources (batch insert)
         if all_user_ids:
+            # Get all resource_ids from resource_dictionary
+            dbdict.execute("SELECT resource_id FROM resource_dictionary")
+            resource_ids = [row["resource_id"] for row in dbdict.fetchall()]
+
+            # Build list of (user_id, resource_id, 0) tuples for all combinations
+            insert_params = [
+                (uid, rid, 0) for uid in all_user_ids for rid in resource_ids
+            ]
+
             try:
                 execute_batch(
                     db,
                     (
-                        "INSERT INTO resources (id) "
-                        "VALUES (%s) ON CONFLICT (id) DO NOTHING"
+                        "INSERT INTO user_economy (user_id, resource_id, "
+                        "quantity) VALUES (%s, %s, %s) ON CONFLICT "
+                        "(user_id, resource_id) DO NOTHING"
                     ),
-                    [(uid,) for uid in all_user_ids],
+                    insert_params,
                 )
             except AttributeError:
                 # db (fake cursor in tests) may not support mogrify/extras
                 # helpers; fall back
-                for uid in all_user_ids:
+                for uid, rid, qty in insert_params:
                     db.execute(
-                        "INSERT INTO resources (id) "
-                        "VALUES (%s) ON CONFLICT (id) DO NOTHING",
-                        (uid,),
+                        "INSERT INTO user_economy (user_id, resource_id, "
+                        "quantity) VALUES (%s, %s, %s) ON CONFLICT "
+                        "(user_id, resource_id) DO NOTHING",
+                        (uid, rid, qty),
                     )
         # Track accumulated changes for batch updates at end
         gold_deductions = {}  # user_id -> total_deducted
@@ -1277,13 +1385,14 @@ def generate_province_revenue():  # Runs each hour
             if policies is None:
                 policies = []
 
-            # Use preloaded proInfra instead of per-loop query
-            units = proinfra_map.get(province_id, {})
-            if not units:
-                dbdict.execute("SELECT * FROM proInfra WHERE id=%s", (province_id,))
-                result = dbdict.fetchone()
-                units = dict(result) if result else {}
-                proinfra_map[province_id] = units
+            # Use preloaded buildings instead of proInfra query
+            # Convert buildings_map (building_name -> quantity) to units dict
+            # (column_name -> quantity) for compatibility with existing code
+            user_buildings = buildings_map.get(user_id, {})
+            units = {}
+            for col in columns:
+                # Map column names directly to building names (they match)
+                units[col] = user_buildings.get(col, 0)
 
             for unit in columns:
                 unit_amount = units[unit]
@@ -1369,13 +1478,8 @@ def generate_province_revenue():  # Runs each hour
 
                     # Use preloaded resources instead of per-building queries
                     resources = resources_map.get(user_id, {})
-                    if not resources:
-                        dbdict.execute(
-                            "SELECT * FROM resources WHERE id=%s", (user_id,)
-                        )
-                        result = dbdict.fetchone()
-                        resources = dict(result) if result else {}
-                        resources_map[user_id] = resources
+                    # Resources is now a dict of resource_name -> quantity
+                    # (no fallback query needed, all loaded upfront)
 
                     for resource, amount in minus.items():
                         amount *= unit_amount
@@ -1727,43 +1831,63 @@ def generate_province_revenue():  # Runs each hour
         # This prevents race conditions with other tasks (e.g., population_growth)
         try:
             if resource_deltas:
-                resource_cols = list(user_resources)
-                if resource_cols:
-                    set_clause = ", ".join(
-                        [
-                            f"{col} = GREATEST(0, COALESCE({col}, 0) + %s)"
-                            for col in resource_cols
-                        ]
+                # Flatten resource_deltas into (user_id, resource_name, delta) tuples
+                resource_updates = []
+                for user_id, deltas in resource_deltas.items():
+                    if not deltas:
+                        continue
+                    for resource_name, delta in deltas.items():
+                        if delta != 0:
+                            resource_updates.append((user_id, resource_name, delta))
+
+                if resource_updates:
+                    # Get all resource_ids
+                    resource_names = list(set(r[1] for r in resource_updates))
+                    dbdict.execute(
+                        "SELECT name, resource_id FROM resource_dictionary "
+                        "WHERE name = ANY(%s)",
+                        (resource_names,),
                     )
-                    sql = f"UPDATE resources SET {set_clause} WHERE id = %s"
-                    batch_values = []
-                    for user_id, deltas in resource_deltas.items():
-                        if not deltas:
-                            continue
-                        row_values = []
-                        has_nonzero = False
-                        for col in resource_cols:
-                            delta = deltas.get(col, 0) or 0
-                            if delta != 0:
-                                has_nonzero = True
-                            row_values.append(delta)
-                        if not has_nonzero:
-                            continue
-                        row_values.append(user_id)
-                        batch_values.append(tuple(row_values))
+                    resource_id_map = {
+                        row["name"]: row["resource_id"] for row in dbdict.fetchall()
+                    }
+
+                    # Build final batch: (user_id, resource_id, quantity_delta)
+                    batch_values = [
+                        (uid, resource_id_map[rname], delta)
+                        for uid, rname, delta in resource_updates
+                        if rname in resource_id_map
+                    ]
 
                     if batch_values:
-                        execute_batch(db, sql, batch_values, page_size=200)
-                        log_verbose(f"Updated resources for {len(batch_values)} users")
+                        # Upsert into user_economy (insert if missing, else += delta)
+                        execute_batch(
+                            db,
+                            """
+                            INSERT INTO user_economy (user_id, resource_id, quantity)
+                            VALUES (%s, %s, GREATEST(0, %s))
+                            ON CONFLICT (user_id, resource_id)
+                            DO UPDATE SET quantity = GREATEST(
+                                0, user_economy.quantity + EXCLUDED.quantity
+                            )
+                            """,
+                            batch_values,
+                            page_size=200,
+                        )
+                        log_verbose(
+                            f"Upserted resources for {len(batch_values)} "
+                            "user+resource pairs"
+                        )
 
-                        # Invalidate resource cache for affected users so UI reflects
-                        # updated values immediately (best-effort; don't fail task)
+                        # Invalidate resource cache for affected users
+                        # so UI reflects updated values immediately (best-effort)
                         try:
                             from database import invalidate_user_cache
 
-                            for uv in [bv[-1] for bv in batch_values]:
+                            unique_users = set(bv[0] for bv in batch_values)
+                            for user_id in unique_users:
                                 try:
-                                    invalidate_user_cache(uv)
+                                    invalidate_user_cache(user_id)
                                 except Exception:
                                     pass
                         except Exception:
@@ -1850,13 +1974,16 @@ def generate_province_revenue():  # Runs each hour
 
 
 def war_reparation_tax():
-    from database import get_db_cursor
+    from database import get_db_connection
+    from psycopg2.extras import RealDictCursor
 
-    with get_db_cursor() as db:
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
         db.execute(
-            "SELECT war_id, peace_date, attacker_id, attacker_morale, defender_id, "
-            "defender_morale FROM wars WHERE (peace_date IS NOT NULL) "
-            "AND (peace_offer_id IS NULL)"
+            "SELECT war_id, peace_date, attacker_id, attacker_morale, "
+            "defender_id, defender_morale FROM wars WHERE (peace_date IS NOT "
+            "NULL) AND (peace_offer_id IS NULL)"
         )
         truces = db.fetchall()
 
@@ -1880,14 +2007,21 @@ def war_reparation_tax():
 
                 # OPTIMIZATION: Fetch all resources and war_type in ONE query
                 # each instead of 30 queries
-                resource_cols = ", ".join(Economy.resources)
-                db.execute(
-                    f"SELECT {resource_cols} FROM resources WHERE id=%s", (loser,)
+                dbdict.execute(
+                    """
+                    SELECT rd.name AS resource_name,
+                           COALESCE(ue.quantity, 0) AS quantity
+                    FROM resource_dictionary rd
+                    LEFT JOIN user_economy ue
+                        ON ue.resource_id = rd.resource_id
+                       AND ue.user_id = %s
+                    WHERE rd.name = ANY(%s)
+                    """,
+                    (loser, Economy.resources),
                 )
-                resource_row = db.fetchone()
-                resource_amounts = (
-                    dict(zip(Economy.resources, resource_row)) if resource_row else {}
-                )
+                resource_amounts = {
+                    row["resource_name"]: row["quantity"] for row in dbdict.fetchall()
+                }
 
                 db.execute("SELECT war_type FROM wars WHERE war_id=%s", (war_id,))
                 war_type = db.fetchone()
@@ -2112,37 +2246,47 @@ def task_manpower_increase():
 
 def backfill_missing_resources():
     from database import get_db_connection
-    from psycopg2.extras import execute_batch
+    from psycopg2.extras import execute_batch, RealDictCursor
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        # Find users missing a resources row
-        db.execute(
+        dbdict = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Find users missing user_economy rows (users who don't have all resource_ids)
+        dbdict.execute(
             """
-            SELECT u.id
+            SELECT DISTINCT u.id
             FROM users u
-            LEFT JOIN resources r ON r.id = u.id
-            WHERE r.id IS NULL
+            CROSS JOIN resource_dictionary rd
+            LEFT JOIN user_economy ue
+                ON ue.user_id = u.id
+               AND ue.resource_id = rd.resource_id
+            WHERE ue.user_id IS NULL
             """
         )
-        missing = [row[0] for row in db.fetchall()]
-        if not missing:
+        missing_users = {row["id"] for row in dbdict.fetchall()}
+        if not missing_users:
             return
 
-        cols = ["id"] + variables.RESOURCES
-        placeholders = ",".join(["%s"] * len(cols))
-        sql = (
-            f"INSERT INTO resources ({','.join(cols)}) VALUES ({placeholders}) "
-            f"ON CONFLICT (id) DO NOTHING"
-        )
-        params = []
-        zeros = [0] * len(variables.RESOURCES)
-        for user_id in missing:
-            params.append([user_id] + zeros)
+        # Get all resource_ids
+        dbdict.execute("SELECT resource_id FROM resource_dictionary")
+        resource_ids = [row["resource_id"] for row in dbdict.fetchall()]
+
+        # Build (user_id, resource_id, 0) tuples for all missing combinations
+        params = [
+            (user_id, resource_id, 0)
+            for user_id in missing_users
+            for resource_id in resource_ids
+        ]
 
         try:
-            execute_batch(db, sql, params)
-            print(f"Backfilled resources for {len(missing)} users")
+            execute_batch(
+                db,
+                "INSERT INTO user_economy (user_id, resource_id, quantity) "
+                "VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO NOTHING",
+                params,
+            )
+            print(f"Backfilled user_economy for {len(missing_users)} users")
         except Exception as e:
             handle_exception(e)
 
@@ -2615,6 +2759,8 @@ def global_tick():
                 # Validation logic when maintenance cannot be fully paid:
                 # apply unit desertion proportionally and morale penalties
                 # in active wars.
+                # Initialize validation_start BEFORE the if block to avoid
+                # "referenced before assignment" error
                 validation_start = time.time()
                 if deficits:
                     deficit_users = sorted({k[0] for k in deficits.keys()})
