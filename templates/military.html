@@ -47,7 +47,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["soldiers"] }} Soldiers</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["soldiers"]["quantity"] }} Soldiers</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["soldiers"]["attack"] }} ATK / {{ units["soldiers"]["defense"] }} DEF</p>
+                            {% if units["soldiers"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Soldiers are cheap and expendable. They require 1 munitions per 5000 soldiers to fight at 100% effectiveness, but will go into battle without, at 10% effectiveness. They counter artillery, apaches, and can obtain resource control.</p>
 
@@ -99,7 +106,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["artillery"] }} Artillery</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["artillery"]["quantity"] }} Artillery</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["artillery"]["attack"] }} ATK / {{ units["artillery"]["defense"] }} DEF</p>
+                            {% if units["artillery"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} {{ units["artillery"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Artillery are expensive, but make it up with their incredible effectiveness against tanks. They require 5 munitions and 1 gasoline per 100 artillery to fight, and can also obtain field control.</p>
 
@@ -137,7 +151,14 @@
 
                     </div>
                 </div>
-            </div>
+            </div>["quantity"] }} Tanks</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["tanks"]["attack"] }} ATK / {{ units["tanks"]["defense"] }} DEF</p>
+                            {% if units["tanks"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} {{ units["tanks"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div
             <div class="menudiv">
                 <h2 class="templatecontentheaderleft">Tanks</h2>
 
@@ -195,7 +216,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["fighters"] }} Fighter Jets</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["fighters"]["quantity"] }} Fighter Jets</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["fighters"]["attack"] }} ATK / {{ units["fighters"]["defense"] }} DEF</p>
+                            {% if units["fighters"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} {{ units["fighters"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Fighter jets are incredibly powerful in the air. They are strong against bombers, and can obtain air superiority.</p>
 
@@ -244,7 +272,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["bombers"] }} Bombers</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["bombers"]["quantity"] }} Bombers</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["bombers"]["attack"] }} ATK / {{ units["bombers"]["defense"] }} DEF</p>
+                            {% if units["bombers"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} {{ units["bombers"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Bombers are air units that can deal massive damage to units below, and cost 4 munitions and 10 gasoline per 100 bombers for each attack. They annihilate soldiers, destroyers, and submarines. They may also obtain field control.</p>
 
@@ -293,7 +328,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["apaches"] }} Attack Helicopters</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["apaches"]["quantity"] }} Attack Helicopters</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["apaches"]["attack"] }} ATK / {{ units["apaches"]["defense"] }} DEF</p>
+                            {% if units["apaches"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} {{ units["apaches"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Attack Helicopters are devistating helicopters that can take on both land and air. They counter tanks, bombers, and fighter jets. Furthermore, they are capable of obtaining city control.</p>
 
@@ -346,7 +388,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["submarines"] }} Submarines</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["submarines"]["quantity"] }} Submarines</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["submarines"]["attack"] }} ATK / {{ units["submarines"]["defense"] }} DEF</p>
+                            {% if units["submarines"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} {{ units["submarines"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Submarines are very useful for ocean combat, and use thier ability to hide to counter cruisers. They are able to obtain depth control.</p>
 
@@ -385,7 +434,15 @@
                     </div>
                 </div>
             </div>
-            <div class="menudiv">
+            <div class="menudiv">["quantity"] }} Cruisers</h2>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["cruisers"]["attack"] }} ATK / {{ units["cruisers"]["defense"] }} DEF</p>
+                            {% if units["cruisers"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
 
                 <h2 class="templatecontentheaderleft">Cruisers</h2>
 
@@ -439,7 +496,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["destroyers"] }} Destroyers</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["destroyers"]["quantity"] }} Destroyers</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["destroyers"]["attack"] }} ATK / {{ units["destroyers"]["defense"] }} DEF</p>
+                            {% if units["destroyers"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Destroyers are equiped with advanced radars, allowing them to detect and succesfully counter submarines. They are also able to obtain a naval blockade on the enemy.</p>
 
@@ -491,7 +555,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["spies"] }} Spies</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["spies"]["quantity"] }} Spies</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["spies"]["attack"] }} ATK / {{ units["spies"]["defense"] }} DEF</p>
+                            {% if units["spies"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} {{ units["spies"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Spies are agents for your country that allow you to acquire information on your adversaries.</p>
 
@@ -539,7 +610,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["icbms"] }} Ballistic Missiles</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["icbms"]["quantity"] }} Ballistic Missiles</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["icbms"]["attack"] }} ATK / {{ units["icbms"]["defense"] }} DEF</p>
+                            {% if units["icbms"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} {{ units["icbms"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Ballistic Missiles are devistating missiles. They can obliterate an enemies infrastructure effectively collapsing their economy.</p>
 
@@ -587,7 +665,14 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["nukes"] }} Nukes</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["nukes"]["quantity"] }} Nukes</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["nukes"]["attack"] }} ATK / {{ units["nukes"]["defense"] }} DEF</p>
+                            {% if units["nukes"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} {{ units["nukes"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Nukes are tools to annihilate everything your enemies love. These bombs should be saved for your most hated adversary.</p>
 
