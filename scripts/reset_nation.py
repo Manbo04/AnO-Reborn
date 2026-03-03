@@ -16,7 +16,6 @@ This script is intended to be safe and reversible (backups kept).
 import argparse
 import os
 import json
-import time
 import csv
 from datetime import datetime
 from dotenv import load_dotenv

@@ -30,53 +30,23 @@ def get_econ_statistics(cId):
         return cached
 
     with get_db_cursor(cursor_factory=RealDictCursor) as dbdict:
-        # TODO: less loc
-        try:
-            dbdict.execute(
-                """
-            SELECT
-            SUM(proInfra.coal_burners) AS coal_burners,
-            SUM(proInfra.oil_burners) AS oil_burners,
-            SUM(proInfra.hydro_dams) AS hydro_dams ,
-            SUM(proInfra.nuclear_reactors) AS nuclear_reactors,
-            SUM(proInfra.solar_fields) AS solar_fields,
-            SUM(proInfra.gas_stations) AS gas_stations,
-            SUM(proInfra.general_stores) AS general_stores,
-            SUM(proInfra.farmers_markets) AS farmers_markets,
-            SUM(proInfra.malls) AS malls,
-            SUM(proInfra.banks) AS banks,
-            SUM(proInfra.city_parks) AS city_parks,
-            SUM(proInfra.hospitals) AS hospitals,
-            SUM(proInfra.libraries) AS libraries,
-            SUM(proInfra.universities) AS universities,
-            SUM(proInfra.monorails) AS monorails,
-            SUM(proInfra.army_bases) AS army_bases,
-            SUM(proInfra.harbours) AS harbours,
-            SUM(proInfra.aerodomes) AS aerodomes,
-            SUM(proInfra.admin_buildings) AS admin_buildings,
-            SUM(proInfra.silos) AS silos,
-            SUM(proInfra.farms) AS farms,
-            SUM(proInfra.pumpjacks) AS pumpjacks,
-            SUM(proInfra.coal_mines) AS coal_mines,
-            SUM(proInfra.bauxite_mines) AS bauxite_mines,
-            SUM(proInfra.copper_mines) AS copper_mines,
-            SUM(proInfra.uranium_mines) AS uranium_mines,
-            SUM(proInfra.lead_mines) AS lead_mines,
-            SUM(proInfra.iron_mines) AS iron_mines,
-            SUM(proInfra.lumber_mills) AS lumber_mills,
-            SUM(proInfra.component_factories) AS component_factories,
-            SUM(proInfra.steel_mills) AS steel_mills,
-            SUM(proInfra.ammunition_factories) AS ammunition_factories,
-            SUM(proInfra.aluminium_refineries) AS aluminium_refineries,
-            SUM(proInfra.oil_refineries) AS oil_refineries
-            FROM proInfra LEFT JOIN provinces ON provinces.id=proInfra.id
-            WHERE provinces.userId=%s;
+        total = {name: 0 for name in variables.NEW_INFRA.keys()}
+        dbdict.execute(
+            """
+            SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS total_quantity
+            FROM user_buildings ub
+            JOIN building_dictionary bd ON bd.building_id = ub.building_id
+            JOIN provinces p ON p.id = ub.province_id
+            WHERE p.userId = %s
+            GROUP BY bd.name
             """,
-                (cId,),
-            )
-            total = dict(dbdict.fetchone())
-        except (TypeError, AttributeError, KeyError):
-            total = {}
+            (cId,),
+        )
+        for row in dbdict.fetchall() or []:
+            bname = row.get("name")
+            qty = row.get("total_quantity") or 0
+            if bname:
+                total[bname] = qty
 
     expenses = {}
     expenses = defaultdict(lambda: defaultdict(lambda: 0), expenses)
@@ -183,54 +153,24 @@ def get_revenue(cId):
             revenue["gross_theoretical"][resource] = 0
             revenue["net"][resource] = 0
 
-        # Define proinfra columns once (outside loop)
-        proinfra_columns = [
-            "id",
-            "coal_burners",
-            "oil_burners",
-            "solar_fields",
-            "hydro_dams",
-            "nuclear_reactors",
-            "gas_stations",
-            "general_stores",
-            "farmers_markets",
-            "malls",
-            "banks",
-            "city_parks",
-            "hospitals",
-            "libraries",
-            "universities",
-            "monorails",
-            "army_bases",
-            "aerodomes",
-            "harbours",
-            "admin_buildings",
-            "silos",
-            "farms",
-            "pumpjacks",
-            "coal_mines",
-            "bauxite_mines",
-            "copper_mines",
-            "uranium_mines",
-            "lead_mines",
-            "iron_mines",
-            "lumber_mills",
-            "component_factories",
-            "steel_mills",
-            "ammunition_factories",
-            "aluminium_refineries",
-            "oil_refineries",
-        ]
-
-        # OPTIMIZATION: Batch fetch all proInfra data in ONE query instead of N queries
+        # OPTIMIZATION: Batch fetch all normalized building data in ONE query
         proinfra_by_id = {}
         if provinces:
             placeholders = ",".join(["%s"] * len(provinces))
             db.execute(
-                f"SELECT * FROM proInfra WHERE id IN ({placeholders})", tuple(provinces)
+                f"""
+                SELECT ub.province_id, bd.name, ub.quantity
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.province_id IN ({placeholders})
+                """,
+                tuple(provinces),
             )
             for row in db.fetchall():
-                proinfra_by_id[row[0]] = dict(zip(proinfra_columns, row))
+                province_id, building_name, quantity = row
+                if province_id not in proinfra_by_id:
+                    proinfra_by_id[province_id] = {}
+                proinfra_by_id[province_id][building_name] = quantity or 0
 
         # Fetch current funds to simulate money-constrained operation for `net`
         db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
@@ -243,7 +183,7 @@ def get_revenue(cId):
         for province in provinces:
             buildings = proinfra_by_id.get(province)
             if buildings is None:
-                buildings = dict(zip(proinfra_columns, [0] * len(proinfra_columns)))
+                buildings = {}
 
             for building, build_count in buildings.items():
                 if building == "id":
@@ -304,16 +244,18 @@ def get_revenue(cId):
                     if will_operate:
                         revenue["net"][resource] -= total
 
-        db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
-        rations_row = db.fetchone()
-        current_rations = (
-            rations_row[0] if rations_row and rations_row[0] is not None else 0
+        db.execute(
+            """
+            SELECT rd.name, ue.quantity
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id=%s AND rd.name IN ('rations', 'consumer_goods')
+            """,
+            (cId,),
         )
-
-        # INLINED calc_ti() to avoid opening another DB connection
-        db.execute("SELECT consumer_goods FROM resources WHERE id=%s", (cId,))
-        cg_result = db.fetchone()
-        consumer_goods = int(cg_result[0] if cg_result else 0)
+        economy_values = {name: qty for name, qty in db.fetchall()}
+        current_rations = economy_values.get("rations", 0) or 0
+        consumer_goods = int(economy_values.get("consumer_goods", 0) or 0)
 
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
@@ -416,8 +358,16 @@ def next_turn_rations(cId, prod_rations):
     with get_db_connection() as conn:
         db = conn.cursor()
 
-        # Get current rations
-        db.execute("SELECT rations FROM resources WHERE id=%s", (cId,))
+        # Get current rations (normalized economy)
+        db.execute(
+            """
+            SELECT ue.quantity
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id=%s AND rd.name='rations'
+            """,
+            (cId,),
+        )
         rr = db.fetchone()
         current_rations = (rr[0] if rr and rr[0] is not None else 0) + prod_rations
 

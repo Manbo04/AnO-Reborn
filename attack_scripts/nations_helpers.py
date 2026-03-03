@@ -3,6 +3,7 @@
 Goal: start a progressive refactor by moving small, well-contained functions
 out of the big legacy file so they can be tested and maintained separately.
 """
+
 from __future__ import annotations
 
 from typing import Any

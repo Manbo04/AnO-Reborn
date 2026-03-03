@@ -43,7 +43,7 @@
 #### B. Batch Influence Queries (Eliminates N+1)
 - Changed from calling `get_influence()` in a loop per user
 - Now loads all influence values for a page in one batch operation
-- Leverages existing caching in `get_influence()` 
+- Leverages existing caching in `get_influence()`
 - Reduces per-page queries from 50+ to 3-5 (with caching)
 
 #### C. Database Indexes

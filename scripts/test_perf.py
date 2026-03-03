@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Test page load performance to identify bottlenecks."""
+
 import time
 import sys
 

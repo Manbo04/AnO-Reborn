@@ -3,6 +3,7 @@
 Provides a small, testable wrapper around the SQL aggregation used by
 `Military.get_limits` so we can test and reuse it during refactor.
 """
+
 from typing import Tuple
 
 from database import get_db_cursor

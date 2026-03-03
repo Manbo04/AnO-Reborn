@@ -15,7 +15,7 @@ for (let i = 0; i < numPurchased; i++) {
 **Solution**: Replaced with O(1) mathematical formula
 ```javascript
 // NEW - O(1) complexity - INSTANT
-let totalCost = numPurchased * basePrice + 
+let totalCost = numPurchased * basePrice +
                 incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
 // Same calculation, no loop, instant result!
 ```

@@ -47,19 +47,16 @@ def province(pId):
     with get_db_connection() as conn:
         db = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Combined query - reduces 7+ queries to 1
-        # Now also includes upgrades to avoid second connection
+        # Combined query for province + stats (legacy resources/proInfra tables removed)
         db.execute(
             """
             SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
                    p.pollution, p.happiness, p.productivity, p.consumer_spending,
                    CAST(p.citycount AS INTEGER) as citycount,
                    p.land, p.energy AS electricity,
-                   s.location, r.consumer_goods, r.rations, pi.*
+                   s.location
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
-            LEFT JOIN resources r ON p.userId = r.id
-            LEFT JOIN proInfra pi ON p.id = pi.id
             WHERE p.id = %s
             """,
             (pId,),
@@ -72,14 +69,46 @@ def province(pId):
         # Convert to dict for template
         result = dict(result)
 
-        # Get upgrades in the SAME connection (avoid opening new connection)
+        # Get upgrades in normalized schema
         user_id = result["user"]
         cache_key = f"upgrades_{user_id}"
         upgrades = query_cache.get(cache_key)
         if upgrades is None:
-            db.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-            upg_row = db.fetchone()
-            upgrades = dict(upg_row) if upg_row else {}
+            legacy_upgrade_to_tech = {
+                "betterengineering": "better_engineering",
+                "cheapermaterials": "cheaper_materials",
+                "onlineshopping": "online_shopping",
+                "governmentregulation": "government_regulation",
+                "nationalhealthinstitution": "national_health_institution",
+                "highspeedrail": "high_speed_rail",
+                "advancedmachinery": "advanced_machinery",
+                "strongerexplosives": "stronger_explosives",
+                "widespreadpropaganda": "widespread_propaganda",
+                "increasedfunding": "increased_funding",
+                "automationintegration": "automation_integration",
+                "largerforges": "larger_forges",
+                "lootingteams": "looting_teams",
+                "organizedsupplylines": "organized_supply_lines",
+                "largestorehouses": "large_storehouses",
+                "ballisticmissilesilo": "ballistic_missile_silo",
+                "icbmsilo": "icbm_silo",
+                "nucleartestingfacility": "nuclear_testing_facility",
+            }
+            tech_to_legacy = {v: k for k, v in legacy_upgrade_to_tech.items()}
+            upgrades = {k: False for k in legacy_upgrade_to_tech.keys()}
+            db.execute(
+                """
+                SELECT td.name
+                FROM user_tech ut
+                JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+                WHERE ut.user_id=%s AND ut.is_unlocked=TRUE
+                """,
+                (user_id,),
+            )
+            for (tech_name,) in db.fetchall():
+                legacy_key = tech_to_legacy.get(tech_name)
+                if legacy_key:
+                    upgrades[legacy_key] = True
             query_cache.set(cache_key, upgrades)
 
         # Build province dict from result
@@ -187,9 +216,19 @@ def province(pId):
         province["free_land"] = province["land"] - used_land_slots
         province["own"] = province["user"] == cId
 
-        # Check consumer goods and rations from already-fetched data
-        consumer_goods = result.get("consumer_goods", 0) or 0
-        rations = result.get("rations", 0) or 0
+        # Check consumer goods and rations from normalized economy data
+        db.execute(
+            """
+            SELECT rd.name, ue.quantity
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id=%s AND rd.name IN ('consumer_goods', 'rations')
+            """,
+            (user_id,),
+        )
+        economy_values = {name: qty for name, qty in db.fetchall()}
+        consumer_goods = economy_values.get("consumer_goods", 0) or 0
+        rations = economy_values.get("rations", 0) or 0
 
         max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
         enough_consumer_goods = consumer_goods >= max_cg

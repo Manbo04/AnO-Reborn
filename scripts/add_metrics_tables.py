@@ -2,6 +2,7 @@
 
 Run: python scripts/add_metrics_tables.py
 """
+
 from database import get_db_connection
 
 TABLES = [

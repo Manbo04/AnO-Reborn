@@ -2,6 +2,7 @@
 
 Usage: PYTHONPATH=. python3 scripts/verify_userid_change.py --from-id 4908 --to-id 69696969
 """
+
 import argparse
 import os
 from dotenv import load_dotenv

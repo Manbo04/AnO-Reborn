@@ -404,7 +404,25 @@ def get_influence(country_id):
                 COALESCE(prov.total_land, 0) as total_land,
                 COALESCE(r.total_resources, 0) as total_resources
             FROM users u
-            LEFT JOIN military m ON u.id = m.id
+            LEFT JOIN (
+                SELECT
+                    um.user_id,
+                    SUM(CASE WHEN ud.name = 'soldiers' THEN um.quantity ELSE 0 END) as soldiers,
+                    SUM(CASE WHEN ud.name = 'artillery' THEN um.quantity ELSE 0 END) as artillery,
+                    SUM(CASE WHEN ud.name = 'tanks' THEN um.quantity ELSE 0 END) as tanks,
+                    SUM(CASE WHEN ud.name = 'fighters' THEN um.quantity ELSE 0 END) as fighters,
+                    SUM(CASE WHEN ud.name = 'bombers' THEN um.quantity ELSE 0 END) as bombers,
+                    SUM(CASE WHEN ud.name = 'apaches' THEN um.quantity ELSE 0 END) as apaches,
+                    SUM(CASE WHEN ud.name = 'submarines' THEN um.quantity ELSE 0 END) as submarines,
+                    SUM(CASE WHEN ud.name = 'destroyers' THEN um.quantity ELSE 0 END) as destroyers,
+                    SUM(CASE WHEN ud.name = 'cruisers' THEN um.quantity ELSE 0 END) as cruisers,
+                    SUM(CASE WHEN ud.name = 'icbms' THEN um.quantity ELSE 0 END) as icbms,
+                    SUM(CASE WHEN ud.name = 'nukes' THEN um.quantity ELSE 0 END) as nukes,
+                    SUM(CASE WHEN ud.name = 'spies' THEN um.quantity ELSE 0 END) as spies
+                FROM user_military um
+                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                GROUP BY um.user_id
+            ) m ON u.id = m.user_id
             LEFT JOIN stats s ON u.id = s.id
             LEFT JOIN (
                 SELECT userId,
@@ -415,14 +433,10 @@ def get_influence(country_id):
                 GROUP BY userId
             ) prov ON u.id = prov.userId
             LEFT JOIN (
-                SELECT id,
-                       (
-                           oil + rations + coal + uranium + bauxite + iron
-                           + lead + copper + lumber + components + steel
-                           + consumer_goods + aluminium + gasoline + ammunition
-                       ) as total_resources
-                FROM resources
-            ) r ON u.id = r.id
+                SELECT user_id, SUM(quantity) as total_resources
+                FROM user_economy
+                GROUP BY user_id
+            ) r ON u.id = r.user_id
             WHERE u.id = %s
             """,
             (cId,),
@@ -452,6 +466,24 @@ def get_influence(country_id):
             total_land,
             total_resources,
         ) = result
+
+        soldiers = float(soldiers or 0)
+        artillery = float(artillery or 0)
+        tanks = float(tanks or 0)
+        fighters = float(fighters or 0)
+        bombers = float(bombers or 0)
+        apaches = float(apaches or 0)
+        submarines = float(submarines or 0)
+        destroyers = float(destroyers or 0)
+        cruisers = float(cruisers or 0)
+        icbms = float(icbms or 0)
+        nukes = float(nukes or 0)
+        spies = float(spies or 0)
+        gold = float(gold or 0)
+        city_count = float(city_count or 0)
+        province_count = float(province_count or 0)
+        total_land = float(total_land or 0)
+        total_resources = float(total_resources or 0)
 
         # Calculate influence scores
         soldiers_score = soldiers * 0.02
@@ -555,7 +587,25 @@ def get_bulk_influence(user_ids):
                 COALESCE(prov.total_land, 0) as total_land,
                 COALESCE(r.total_resources, 0) as total_resources
             FROM users u
-            LEFT JOIN military m ON u.id = m.id
+            LEFT JOIN (
+                SELECT
+                    um.user_id,
+                    SUM(CASE WHEN ud.name = 'soldiers' THEN um.quantity ELSE 0 END) as soldiers,
+                    SUM(CASE WHEN ud.name = 'artillery' THEN um.quantity ELSE 0 END) as artillery,
+                    SUM(CASE WHEN ud.name = 'tanks' THEN um.quantity ELSE 0 END) as tanks,
+                    SUM(CASE WHEN ud.name = 'fighters' THEN um.quantity ELSE 0 END) as fighters,
+                    SUM(CASE WHEN ud.name = 'bombers' THEN um.quantity ELSE 0 END) as bombers,
+                    SUM(CASE WHEN ud.name = 'apaches' THEN um.quantity ELSE 0 END) as apaches,
+                    SUM(CASE WHEN ud.name = 'submarines' THEN um.quantity ELSE 0 END) as submarines,
+                    SUM(CASE WHEN ud.name = 'destroyers' THEN um.quantity ELSE 0 END) as destroyers,
+                    SUM(CASE WHEN ud.name = 'cruisers' THEN um.quantity ELSE 0 END) as cruisers,
+                    SUM(CASE WHEN ud.name = 'icbms' THEN um.quantity ELSE 0 END) as icbms,
+                    SUM(CASE WHEN ud.name = 'nukes' THEN um.quantity ELSE 0 END) as nukes,
+                    SUM(CASE WHEN ud.name = 'spies' THEN um.quantity ELSE 0 END) as spies
+                FROM user_military um
+                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                GROUP BY um.user_id
+            ) m ON u.id = m.user_id
             LEFT JOIN stats s ON u.id = s.id
             LEFT JOIN (
                 SELECT userId,
@@ -566,14 +616,10 @@ def get_bulk_influence(user_ids):
                 GROUP BY userId
             ) prov ON u.id = prov.userId
             LEFT JOIN (
-                SELECT id,
-                       (
-                           oil + rations + coal + uranium + bauxite + iron
-                           + lead + copper + lumber + components + steel
-                           + consumer_goods + aluminium + gasoline + ammunition
-                       ) as total_resources
-                FROM resources
-            ) r ON u.id = r.id
+                SELECT user_id, SUM(quantity) as total_resources
+                FROM user_economy
+                GROUP BY user_id
+            ) r ON u.id = r.user_id
             WHERE u.id = ANY(%s)
             """,
             (uncached_ids,),
@@ -601,6 +647,24 @@ def get_bulk_influence(user_ids):
                 total_land,
                 total_resources,
             ) = row
+
+            soldiers = float(soldiers or 0)
+            artillery = float(artillery or 0)
+            tanks = float(tanks or 0)
+            fighters = float(fighters or 0)
+            bombers = float(bombers or 0)
+            apaches = float(apaches or 0)
+            submarines = float(submarines or 0)
+            destroyers = float(destroyers or 0)
+            cruisers = float(cruisers or 0)
+            icbms = float(icbms or 0)
+            nukes = float(nukes or 0)
+            spies = float(spies or 0)
+            gold = float(gold or 0)
+            city_count = float(city_count or 0)
+            province_count = float(province_count or 0)
+            total_land = float(total_land or 0)
+            total_resources = float(total_resources or 0)
 
             # Calculate influence
             influence = round(
@@ -640,7 +704,8 @@ def get_coalition_influence(coalition_id):
     with get_db_cursor() as db:
         try:
             db.execute(
-                "SELECT userId FROM coalitions WHERE colId=(%s)", (coalition_id,)
+                "SELECT user_id FROM coalition_members WHERE coalition_id=(%s)",
+                (coalition_id,),
             )
             members = db.fetchall()
         except Exception:

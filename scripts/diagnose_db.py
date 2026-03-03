@@ -3,6 +3,7 @@
 Prints: max_connections, counts by state, top 10 longest non-idle queries,
 and top pg_stat_statements if available.
 """
+
 import os
 import sys
 import traceback

@@ -123,10 +123,22 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
                 # Atomically decrement resource only when sufficient amount exists
                 db.execute(
                     (
-                        f"UPDATE resources SET {resource}={resource}-%s "
-                        + f"WHERE id=%s AND {resource} >= %s RETURNING {resource}"
+                        """
+                        WITH rid AS (
+                            SELECT resource_id
+                            FROM resource_dictionary
+                            WHERE name=%s
+                        )
+                        UPDATE user_economy ue
+                        SET quantity = ue.quantity - %s
+                        FROM rid
+                        WHERE ue.user_id=%s
+                          AND ue.resource_id = rid.resource_id
+                          AND ue.quantity >= %s
+                        RETURNING ue.quantity
+                        """
                     ),
-                    (amount, giver_id, amount),
+                    (resource, amount, giver_id, amount),
                 )
                 if db.fetchone() is None:
                     return (
@@ -134,13 +146,34 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
                     )
 
             if taker_id != "bank":
+                db.execute(
+                    """
+                    INSERT INTO user_economy (user_id, resource_id, quantity)
+                    SELECT %s, rd.resource_id, 0
+                    FROM resource_dictionary rd
+                    WHERE rd.name=%s
+                    ON CONFLICT (user_id, resource_id) DO NOTHING
+                    """,
+                    (taker_id, resource),
+                )
                 # Increment taker's resource
                 db.execute(
                     (
-                        f"UPDATE resources SET {resource}={resource}+%s "
-                        f"WHERE id=%s RETURNING {resource}"
+                        """
+                        WITH rid AS (
+                            SELECT resource_id
+                            FROM resource_dictionary
+                            WHERE name=%s
+                        )
+                        UPDATE user_economy ue
+                        SET quantity = ue.quantity + %s
+                        FROM rid
+                        WHERE ue.user_id=%s
+                          AND ue.resource_id = rid.resource_id
+                        RETURNING ue.quantity
+                        """
                     ),
-                    (amount, taker_id),
+                    (resource, amount, taker_id),
                 )
                 db.fetchone()
 
