@@ -3941,6 +3941,25 @@ footer {
     margin-top: auto !important;
 }
 
+/* Mobile fix: force country-profile stat blocks to stack vertically
+   on phones so they don't squeeze side-by-side.  The existing 1055px
+   breakpoint already sets flex-direction:column on .templatedivflex2,
+   but height:100% on children and min-width:0 can still let them
+   appear squished in narrower viewports.  This rule tightens things
+   for phone-sized screens. */
+@media all and (max-width: 768px) {
+    .templatedivflex2.card-align-row {
+        flex-direction: column !important;
+    }
+    .card-align-row > .templatedivflex2left,
+    .card-align-row > .templatedivflex2right {
+        width: 100% !important;
+        height: auto !important;
+        min-width: unset !important;
+        flex: none !important;
+    }
+}
+
 /* ============================================
    UTILITY CLASSES (reduce inline styles)
    ============================================ */
