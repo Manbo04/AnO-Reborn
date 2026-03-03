@@ -1,7 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
 from database import get_db_cursor, cache_response
-from attack_scripts import Military
 from dotenv import load_dotenv
 from helpers import get_date
 from upgrades import get_upgrades
@@ -11,6 +10,127 @@ load_dotenv()
 
 bp = Blueprint("military", __name__)
 
+ALL_UNITS = [
+    "soldiers",
+    "tanks",
+    "artillery",
+    "bombers",
+    "fighters",
+    "apaches",
+    "destroyers",
+    "cruisers",
+    "submarines",
+    "spies",
+    "icbms",
+    "nukes",
+]
+
+
+def _get_user_units(db, cId):
+    db.execute(
+        """
+        SELECT ud.name, COALESCE(um.quantity, 0)
+        FROM unit_dictionary ud
+        LEFT JOIN user_military um
+            ON um.unit_id = ud.unit_id AND um.user_id = %s
+        WHERE ud.is_active = TRUE
+        """,
+        (cId,),
+    )
+    units = {name: int(qty or 0) for name, qty in db.fetchall()}
+    for unit in ALL_UNITS:
+        units.setdefault(unit, 0)
+    return units
+
+
+def _get_unit_costs(db, unit_name):
+    db.execute(
+        """
+        SELECT
+            unit_id,
+            COALESCE(manpower_required, 0) AS manpower_required,
+            COALESCE(production_cost_rations, 0) AS production_cost_rations,
+            COALESCE(production_cost_components, 0) AS production_cost_components,
+            COALESCE(production_cost_steel, 0) AS production_cost_steel,
+            COALESCE(production_cost_fuel, 0) AS production_cost_fuel
+        FROM unit_dictionary
+        WHERE name=%s AND is_active=TRUE
+        """,
+        (unit_name,),
+    )
+    row = db.fetchone()
+    if not row:
+        return None
+
+    (
+        unit_id,
+        manpower_required,
+        cost_rations,
+        cost_components,
+        cost_steel,
+        cost_fuel,
+    ) = row
+    costs = {
+        "rations": int(cost_rations or 0),
+        "components": int(cost_components or 0),
+        "steel": int(cost_steel or 0),
+        "gasoline": int(cost_fuel or 0),
+    }
+    costs = {k: v for k, v in costs.items() if v > 0}
+
+    # Gold cost is currently sourced from MILDICT until dedicated DB column exists.
+    gold_cost = int(MILDICT.get(unit_name, {}).get("price", 0) or 0)
+    manpower_cost = int(
+        manpower_required or MILDICT.get(unit_name, {}).get("manpower", 0) or 0
+    )
+
+    return {
+        "unit_id": int(unit_id),
+        "gold_cost": gold_cost,
+        "resource_costs": costs,
+        "manpower_cost": manpower_cost,
+    }
+
+
+def _get_resource_balance(db, cId, resource):
+    db.execute(
+        """
+        SELECT COALESCE(ue.quantity, 0)
+        FROM resource_dictionary rd
+        LEFT JOIN user_economy ue
+            ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+        WHERE rd.name=%s AND rd.is_active=TRUE
+        """,
+        (cId, resource),
+    )
+    row = db.fetchone()
+    return int(row[0] or 0) if row else 0
+
+
+def _adjust_resource(db, cId, resource, delta):
+    db.execute(
+        """
+        INSERT INTO user_economy (user_id, resource_id, quantity)
+        SELECT %s, rd.resource_id, 0
+        FROM resource_dictionary rd
+        WHERE rd.name=%s AND rd.is_active=TRUE
+        ON CONFLICT (user_id, resource_id) DO NOTHING
+        """,
+        (cId, resource),
+    )
+    db.execute(
+        """
+        UPDATE user_economy ue
+        SET quantity = ue.quantity + %s
+        FROM resource_dictionary rd
+        WHERE ue.user_id=%s
+          AND ue.resource_id = rd.resource_id
+          AND rd.name=%s
+          AND rd.is_active=TRUE
+        """,
+        (delta, cId, resource),
+    )
+
 
 def compute_display_limits(cId, units_row=None):
     """Return limits as shown on the military page (apaches limited by
@@ -19,27 +139,87 @@ def compute_display_limits(cId, units_row=None):
     - `units_row` may be passed (dict) to avoid an extra DB fetch when the
       caller already has current military counts.
     """
-    limits = Military.get_limits(cId)
-    try:
-        with get_db_cursor() as db:
-            db.execute(
-                "SELECT COALESCE(SUM(pi.army_bases),0) FROM proinfra pi "
-                "INNER JOIN provinces p ON pi.id = p.id WHERE p.userid=%s",
-                (cId,),
-            )
-            army_bases = db.fetchone()[0] or 0
-        # determine current apache count
-        if units_row and "apaches" in units_row:
-            current_apaches = units_row.get("apaches") or 0
-        else:
-            with get_db_cursor() as db:
-                db.execute("SELECT apaches FROM military WHERE id=%s", (cId,))
-                current_apaches = db.fetchone()[0] or 0
-        limits["apaches"] = max(0, army_bases * 5 - current_apaches)
-    except Exception:
-        # If anything goes wrong, fall back to the unadjusted limits
-        pass
-    return limits
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            SELECT
+                COALESCE(
+                    SUM(CASE WHEN bd.name='army_bases' THEN ub.quantity ELSE 0 END),
+                    0
+                ) AS army_bases,
+                COALESCE(
+                    SUM(CASE WHEN bd.name='harbours' THEN ub.quantity ELSE 0 END),
+                    0
+                ) AS harbours,
+                COALESCE(
+                    SUM(CASE WHEN bd.name='aerodomes' THEN ub.quantity ELSE 0 END),
+                    0
+                ) AS aerodomes,
+                COALESCE(
+                    SUM(
+                        CASE WHEN bd.name='admin_buildings' THEN ub.quantity ELSE 0 END
+                    ),
+                    0
+                ) AS admin_buildings,
+                COALESCE(
+                    SUM(CASE WHEN bd.name='silos' THEN ub.quantity ELSE 0 END),
+                    0
+                ) AS silos
+            FROM user_buildings ub
+            JOIN building_dictionary bd ON bd.building_id = ub.building_id
+            JOIN provinces p ON p.id = ub.province_id
+            WHERE p.userId=%s
+            """,
+            (cId,),
+        )
+        army_bases, harbours, aerodomes, admin_buildings, silos = db.fetchone()
+
+    military = units_row or {}
+    for unit in ALL_UNITS:
+        military.setdefault(unit, 0)
+
+    # Land units
+    soldiers = max(0, army_bases * 100 - military["soldiers"])
+    tanks = max(0, army_bases * 8 - military["tanks"])
+    artillery = max(0, army_bases * 8 - military["artillery"])
+
+    # Air units share aerodome capacity
+    air_units = military["fighters"] + military["bombers"]
+    air_limit = max(0, aerodomes * 5 - air_units)
+    bombers = air_limit
+    fighters = air_limit
+    apaches = max(0, army_bases * 5 - military["apaches"])
+
+    # Naval units
+    naval_units = military["submarines"] + military["destroyers"]
+    naval_limit = max(0, harbours * 3 - naval_units)
+    submarines = naval_limit
+    destroyers = naval_limit
+    cruisers = max(0, harbours * 2 - military["cruisers"])
+
+    # Specials
+    spies = max(0, admin_buildings * 1 - military["spies"])
+    icbms = max(0, silos + 1 - military["icbms"])
+    nukes = max(0, silos - military["nukes"])
+
+    upgrades = get_upgrades(cId)
+    if upgrades.get("increasedfunding"):
+        spies = int(spies * 1.4)
+
+    return {
+        "soldiers": soldiers,
+        "tanks": tanks,
+        "artillery": artillery,
+        "bombers": bombers,
+        "fighters": fighters,
+        "apaches": apaches,
+        "destroyers": destroyers,
+        "cruisers": cruisers,
+        "submarines": submarines,
+        "spies": spies,
+        "icbms": icbms,
+        "nukes": nukes,
+    }
 
 
 @bp.route("/military", methods=["GET", "POST"])
@@ -49,28 +229,11 @@ def military():
     cId = session["user_id"]
 
     if request.method == "GET":
-        # OPTIMIZED: get_military and get_special are already single queries
-        # manpower is now fetched together with military units
-        from psycopg2.extras import RealDictCursor
-
-        with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            # Single query for all military data including manpower
-            db.execute(
-                (
-                    "SELECT tanks, soldiers, artillery, bombers, fighters, apaches, "
-                    "destroyers, cruisers, submarines, spies, ICBMs as icbms, nukes, "
-                    "manpower FROM military WHERE id=%s"
-                ),
-                (cId,),
-            )
-            mil_data = db.fetchone()
-            if mil_data:
-                mil_data = dict(mil_data)
-                manpower = mil_data.pop("manpower", 0)
-                units = mil_data
-            else:
-                units = {}
-                manpower = 0
+        with get_db_cursor() as db:
+            units = _get_user_units(db, cId)
+            db.execute("SELECT COALESCE(manpower, 0) FROM military WHERE id=%s", (cId,))
+            manpower_row = db.fetchone()
+            manpower = int(manpower_row[0] or 0) if manpower_row else 0
 
         upgrades = get_upgrades(cId)  # Now cached in upgrades.py
         limits = compute_display_limits(cId, units)
@@ -92,22 +255,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
         cId = session["user_id"]
 
         with get_db_cursor() as db:
-            allUnits = [
-                "soldiers",
-                "tanks",
-                "artillery",
-                "bombers",
-                "fighters",
-                "apaches",
-                "destroyers",
-                "cruisers",
-                "submarines",
-                "spies",
-                "icbms",
-                "nukes",
-            ]  # list of allowed units
-
-            if units not in allUnits and units != "apaches":
+            if units not in ALL_UNITS:
                 return error("No such unit exists.", 400)
 
             units_str = request.form.get(units)
@@ -122,29 +270,37 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             if wantedUnits < 1:
                 return error(400, "You cannot buy or sell less than 1 unit")
 
-            if units == "soldiers":
-                db.execute(
-                    "SELECT widespreadpropaganda FROM upgrades WHERE user_id=%s", (cId,)
-                )
-                wp = db.fetchone()[0]
-                if wp:
-                    MILDICT["soldiers"]["price"] *= 0.65
+            unit_costs = _get_unit_costs(db, units)
+            if not unit_costs:
+                return error(400, "Unit definition not found or inactive")
 
-            # TODO: clear this mess i called code once i get the time
-            # if you're reading this please excuse the messiness
+            price = unit_costs["gold_cost"]
+            resources = unit_costs["resource_costs"]
+            manpower_per_unit = unit_costs["manpower_cost"]
+            unit_id = unit_costs["unit_id"]
 
-            price = MILDICT[units]["price"]
+            # Existing unit amount
+            db.execute(
+                "SELECT COALESCE(quantity, 0) "
+                "FROM user_military WHERE user_id=%s AND unit_id=%s",
+                (cId, unit_id),
+            )
+            current_row = db.fetchone()
+            currentUnits = int(current_row[0] or 0) if current_row else 0
 
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold = db.fetchone()[0]
+            # Ensure legacy military row exists for manpower accounting
+            db.execute(
+                "INSERT INTO military (id, manpower) VALUES (%s, 0) "
+                "ON CONFLICT (id) DO NOTHING",
+                (cId,),
+            )
+            db.execute("SELECT COALESCE(manpower, 0) FROM military WHERE id=%s", (cId,))
+            manpower_available = int(db.fetchone()[0] or 0)
+
+            db.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id=%s", (cId,))
+            gold = int(db.fetchone()[0] or 0)
 
             totalPrice = wantedUnits * price
-
-            curUnStat = f"SELECT {units} FROM military " + "WHERE id=%s"
-            db.execute(curUnStat, (cId,))
-            currentUnits = db.fetchone()[0]
-
-            resources = MILDICT[units]["resources"]
 
             if way == "sell":
                 if wantedUnits > currentUnits:
@@ -152,25 +308,12 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
                 for resource, amount in resources.items():
                     addResources = wantedUnits * amount
-                    updateResource = (
-                        f"UPDATE resources SET {resource}={resource}"
-                        + "+%s WHERE id=%s"
-                    )
-                    db.execute(
-                        updateResource,
-                        (
-                            addResources,
-                            cId,
-                        ),
-                    )
+                    _adjust_resource(db, cId, resource, addResources)
 
-                unitUpd = f"UPDATE military SET {units}={units}" + "-%s WHERE id=%s"
                 db.execute(
-                    unitUpd,
-                    (
-                        wantedUnits,
-                        cId,
-                    ),
+                    "UPDATE user_military SET quantity = quantity - %s "
+                    "WHERE user_id=%s AND unit_id=%s",
+                    (wantedUnits, cId, unit_id),
                 )
                 db.execute(
                     "UPDATE stats SET gold=gold+%s WHERE id=%s",
@@ -181,14 +324,15 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 )
                 db.execute(
                     "UPDATE military SET manpower=manpower+%s WHERE id=%s",
-                    (wantedUnits * MILDICT[units]["manpower"], cId),
+                    (wantedUnits * manpower_per_unit, cId),
                 )
 
                 # flash(f"You sold {wantedUnits} {units}")
             elif way == "buy":
                 # Use the same display limits logic as the military page so the
                 # buy checks match what users see.
-                limits = compute_display_limits(cId)
+                units_map = _get_user_units(db, cId)
+                limits = compute_display_limits(cId, units_map)
 
                 if wantedUnits > limits[units]:
                     return error(
@@ -201,19 +345,15 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 ):  # checks if user wants to buy more units than he has gold
                     return error(400, f"Not enough money ({gold}/{totalPrice})")
 
-                # OPTIMIZATION: Batch fetch all required resources in ONE query
-                resource_names = list(resources.keys())
-                resource_cols = ", ".join(resource_names)
-                db.execute(f"SELECT {resource_cols} FROM resources WHERE id=%s", (cId,))
-                current_resources_row = db.fetchone()
-                current_resources = (
-                    dict(zip(resource_names, current_resources_row))
-                    if current_resources_row
-                    else {}
-                )
+                needed_manpower = wantedUnits * manpower_per_unit
+                if needed_manpower > manpower_available:
+                    return error(
+                        400,
+                        f"Not enough manpower ({manpower_available}/{needed_manpower})",
+                    )
 
                 for resource, amount in resources.items():
-                    currentResources = current_resources.get(resource, 0) or 0
+                    currentResources = _get_resource_balance(db, cId, resource)
                     requiredResources = amount * wantedUnits
 
                     if requiredResources > currentResources:
@@ -224,21 +364,24 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
                 for resource, amount in resources.items():
                     requiredResources = amount * wantedUnits
-                    updateResource = (
-                        f"UPDATE resources SET {resource}={resource}"
-                        + "-%s WHERE id=%s"
-                    )
-                    db.execute(updateResource, (requiredResources, cId))
+                    _adjust_resource(db, cId, resource, -requiredResources)
 
                 db.execute(
                     "UPDATE stats SET gold=gold-%s WHERE id=%s", (totalPrice, cId)
                 )
-                updMil = f"UPDATE military SET {units}={units}" + "+%s WHERE id=%s"
-                db.execute(updMil, (wantedUnits, cId))
+                db.execute(
+                    """
+                    INSERT INTO user_military (user_id, unit_id, quantity)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id, unit_id)
+                    DO UPDATE SET quantity = user_military.quantity + EXCLUDED.quantity
+                    """,
+                    (cId, unit_id, wantedUnits),
+                )
 
                 db.execute(
                     "UPDATE military SET manpower=manpower-%s WHERE id=%s",
-                    (wantedUnits * MILDICT[units]["manpower"], cId),
+                    (needed_manpower, cId),
                 )
 
             else:

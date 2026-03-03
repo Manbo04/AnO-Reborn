@@ -8,6 +8,35 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _is_active_resource(db, resource):
+    db.execute(
+        """
+        SELECT 1
+        FROM resource_dictionary
+        WHERE name=%s AND is_active=TRUE
+        """,
+        (resource,),
+    )
+    return db.fetchone() is not None
+
+
+def _get_user_resource_quantity(db, user_id, resource):
+    db.execute(
+        """
+        SELECT COALESCE(ue.quantity, 0)
+        FROM resource_dictionary rd
+        LEFT JOIN user_economy ue
+            ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+        WHERE rd.name=%s AND rd.is_active=TRUE
+        """,
+        (user_id, resource),
+    )
+    row = db.fetchone()
+    if row is None:
+        return None
+    return int(row[0] or 0)
+
+
 def _report_trade_error(msg, exc=None, extra=None):
     """Log trade-related errors and attempt to send to Sentry if available.
 
@@ -75,12 +104,6 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
         taker_id = int(taker_id)
     amount = int(amount)
 
-    resources_list = variables.RESOURCES
-
-    # Returns error if resource doesn't exist
-    if resource not in resources_list and resource != "money":
-        return "No such resource"
-
     # Track whether we own the connection (need to commit) or reusing caller's
     owns_connection = cursor is None
 
@@ -92,6 +115,9 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
         # Reuse caller's cursor for better performance
         db = cursor
         conn = None
+
+    if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
+        return "No such active resource"
 
     try:
         if resource in ["gold", "money"]:
@@ -375,6 +401,9 @@ def buy_market_offer(offer_id):
             return error(400, "Offer not found")
         resource, total_amount, price_for_one, seller_id = row
 
+        if not _is_active_resource(db, resource):
+            return error(400, "This resource is not currently tradable.")
+
         if amount_wanted < 1:
             return error(400, "Amount cannot be less than 1")
 
@@ -474,10 +503,13 @@ def sell_market_offer(offer_id):
             return error(400, "Offer not found")
         resource, total_amount, price_for_one, buyer_id = row
 
+        if not _is_active_resource(db, resource):
+            return error(400, "This resource is not currently tradable.")
+
         # Sees how much of the resource the seller has
-        resource_statement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-        db.execute(resource_statement, (seller_id,))
-        sellers_resource = db.fetchone()[0]
+        sellers_resource = _get_user_resource_quantity(db, seller_id, resource)
+        if sellers_resource is None:
+            return error(400, "No such resource")
 
         if amount_wanted < 1:
             return error(400, "Amount cannot be less than 1")
@@ -586,25 +618,20 @@ def post_offer(offer_type):
         except (ValueError, TypeError):
             return error(400, "Price must be a valid number")
 
-        # List of all the resources in the game
-        resources = variables.RESOURCES
-
         offer_types = ["buy", "sell"]
         if offer_type not in offer_types:
             return error(400, "Offer type must be 'buy' or 'sell'")
 
-        if (
-            resource not in resources
-        ):  # Checks if the resource the user selected actually exists
+        if not _is_active_resource(db, resource):
             return error(400, "No such resource")
 
         if amount < 1:  # Checks if the amount is negative
             return error(400, "Amount must be greater than 0")
 
         if offer_type == "sell":
-            rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-            db.execute(rStatement, (cId,))
-            realAmount = int(db.fetchone()[0])
+            realAmount = _get_user_resource_quantity(db, cId, resource)
+            if realAmount is None:
+                return error(400, "No such resource")
 
             if amount > realAmount:  # Checks if user wants to sell more than he has
                 return error(400, "Selling amount is higher than the amount you have.")
@@ -776,21 +803,16 @@ def trade_offer(offer_type, offeree_id):
             if offer_type not in offer_types:
                 return error(400, "Offer type must be 'buy' or 'sell'")
 
-            # List of all the resources in the game
-            resources = variables.RESOURCES
-
-            if (
-                resource not in resources
-            ):  # Checks if the resource the user selected actually exists
+            if not _is_active_resource(db, resource):
                 return error(400, "No such resource")
 
             if amount < 1:  # Checks if the amount is negative
                 return error(400, "Amount must be greater than 0")
 
             if offer_type == "sell":
-                rStatement = f"SELECT {resource} FROM resources " + "WHERE id=%s"
-                db.execute(rStatement, (cId,))
-                realAmount = int(db.fetchone()[0])
+                realAmount = _get_user_resource_quantity(db, cId, resource)
+                if realAmount is None:
+                    return error(400, "No such resource")
 
                 if amount > realAmount:  # Checks if user wants to sell more than he has
                     return error(
@@ -944,6 +966,9 @@ def accept_trade(trade_id):
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
+
+            if not _is_active_resource(db, resource):
+                return error(400, "This resource is not currently tradable")
 
             # Use give_resource where appropriate (tests monkeypatch this to
             # simulate failures). We call it while holding the advisory lock so
@@ -1183,13 +1208,7 @@ def transfer(transferee):
 
         ###################
 
-        # List of all the resources in the game
-        resources = variables.RESOURCES
-
-        if resource not in resources and resource not in [
-            "gold",
-            "money",
-        ]:  # Checks if the resource the user selected actually exists
+        if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
             return error(400, "No such resource")
 
         if amount < 1:
@@ -1211,42 +1230,15 @@ def transfer(transferee):
             )
 
         else:
-            user_resource_statement = (
-                f"SELECT {resource} FROM resources " + "WHERE id=%s"
-            )
-            db.execute(user_resource_statement, (cId,))
-            user_resource = int(db.fetchone()[0])
+            user_resource = _get_user_resource_quantity(db, cId, resource)
+            if user_resource is None:
+                return error(400, "No such resource")
 
             if amount > user_resource:
                 return error(400, "You don't have enough resources.")
-
-            # Calculates the amount of resource the user should have
-            new_user_resource_amount = user_resource - amount
-
-            # Removes the resource from the user
-            user_resource_update_statement = (
-                f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-            )
-            db.execute(user_resource_update_statement, (new_user_resource_amount, cId))
-
-            # Sees how much of the resource the transferee has
-            transferee_resource_statement = (
-                f"SELECT {resource} FROM resources " + "WHERE id=%s"
-            )
-            db.execute(transferee_resource_statement, (transferee,))
-            transferee_resource = int(db.fetchone()[0])
-
-            # Calculates the amount of resource the transferee should have
-            new_transferee_resource_amount = amount + transferee_resource
-
-            # Gives the resource to the transferee
-            transferee_update_statement = (
-                f"UPDATE resources SET {resource}" + "=%s WHERE id=%s"
-            )
-            db.execute(
-                transferee_update_statement,
-                (new_transferee_resource_amount, transferee),
-            )
+            res = give_resource(cId, transferee, resource, amount, cursor=db)
+            if res is not True:
+                return error(400, str(res))
 
         # Invalidate caches for both the sender and recipient so the UI sees
         # fresh resource totals immediately (non-fatal if this fails).
