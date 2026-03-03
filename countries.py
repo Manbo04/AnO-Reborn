@@ -480,20 +480,26 @@ def country(cId):
         }
 
     with get_db_cursor() as db:
-        # OPTIMIZED: Combined user + stats + coalition in ONE query
+        # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description, u.date, u.flag,
                       c.id AS coalition_id, cm.role, c.name as colName,
-                      (SELECT SUM(population) FROM provinces WHERE userid=%s),
-                      (SELECT AVG(happiness) FROM provinces WHERE userid=%s),
-                      (SELECT AVG(productivity) FROM provinces WHERE userid=%s),
-                      (SELECT COUNT(id) FROM provinces WHERE userid=%s)
+                      p.total_pop, p.avg_happiness, p.avg_productivity, p.province_count
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
                LEFT JOIN colnames c ON cm.colid=c.id
+               LEFT JOIN (
+                   SELECT userid,
+                          SUM(population) AS total_pop,
+                          AVG(happiness) AS avg_happiness,
+                          AVG(productivity) AS avg_productivity,
+                          COUNT(id) AS province_count
+                   FROM provinces
+                   GROUP BY userid
+               ) p ON u.id = p.userid
                WHERE u.id=%s""",
-            (cId, cId, cId, cId, cId),
+            (cId,),
         )
         row = db.fetchone()
         if not row:

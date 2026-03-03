@@ -1599,12 +1599,15 @@ def register_coalitions_routes(app_instance):
                     row = db.fetchone()
                     username = row[0] if row else str(user_id)
                     notif = f"{username} applied to join coalition {coalition_name}"
+                    # Batch INSERT all leader notifications in a single query
+                    placeholders = ",".join(["(%s, %s, NOW())"] * len(leader_rows))
+                    values = []
                     for leader_row in leader_rows:
-                        leader_id = leader_row[0]
-                        db.execute(
-                            "INSERT INTO news (destination_id, message, date) VALUES (%s, %s, NOW())",
-                            (leader_id, notif),
-                        )
+                        values.extend([leader_row[0], notif])
+                    db.execute(
+                        f"INSERT INTO news (destination_id, message, date) VALUES {placeholders}",
+                        values,
+                    )
 
                 return render_template(
                     "verification_pending.html",
