@@ -261,7 +261,7 @@ def get_revenue(cId):
         consumer_goods = int(economy_values.get("consumer_goods", 0) or 0)
 
         try:
-            db.execute("SELECT education FROM policies WHERE userid=%s", (cId,))
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
             policies_row = db.fetchone()
             policies = policies_row[0] if policies_row else []
         except Exception:
