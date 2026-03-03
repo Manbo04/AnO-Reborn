@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.14']
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+      PG_HOST: 127.0.0.1
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: postgres
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize DB schema
+        run: |
+          python init_db_railway.py
+
+      - name: Run normalized test suite
+        run: |
+          python -m pytest -q \
+            tests/test_normalized_economy.py \
+            tests/test_normalized_military.py
