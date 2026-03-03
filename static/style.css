@@ -3924,6 +3924,7 @@ footer {
 .card-align-row > .templatedivflex2right {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 /* Push tables/lists that are last children to the bottom for perfect alignment */
