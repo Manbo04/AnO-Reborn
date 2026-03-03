@@ -964,6 +964,21 @@ class Military(Nation):
         return {u: military.get(u, 0) for u in defenselst}
 
     @staticmethod
+    def get_defense(cId: int) -> list:  # int -> list
+        """Get the user's currently selected defense units as a list."""
+        from database import get_db_cursor
+
+        with get_db_cursor() as db:
+            db.execute(
+                "SELECT default_defense FROM nation WHERE nation_id=%s",
+                (cId,),
+            )
+            result = db.fetchone()
+            if result and result[0]:
+                return [u.strip() for u in result[0].split(",")]
+        return []
+
+    @staticmethod
     def get_limits(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
 
