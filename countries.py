@@ -483,15 +483,15 @@ def country(cId):
         # OPTIMIZED: Combined user + stats + coalition in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description, u.date, u.flag,
-                      c.coalition_id, cm.role, c.name as colName,
+                      c.id AS coalition_id, cm.role, c.name as colName,
                       (SELECT SUM(population) FROM provinces WHERE userid=%s),
                       (SELECT AVG(happiness) FROM provinces WHERE userid=%s),
                       (SELECT AVG(productivity) FROM provinces WHERE userid=%s),
                       (SELECT COUNT(id) FROM provinces WHERE userid=%s)
                FROM users u
                INNER JOIN stats s ON u.id=s.id
-               LEFT JOIN coalition_members cm ON u.id=cm.user_id
-               LEFT JOIN coalitions c ON cm.coalition_id=c.coalition_id
+               LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
+               LEFT JOIN colnames c ON cm.colid=c.id
                WHERE u.id=%s""",
             (cId, cId, cId, cId, cId),
         )
@@ -751,15 +751,15 @@ def countries():
                    users.date,
                    users.flag,
                    COALESCE(SUM(provinces.population), 0) AS province_population,
-                   COALESCE(cm.coalition_id, NULL) AS colid,
+                   COALESCE(cm.colid, NULL) AS colid,
                    COALESCE(c.name, NULL) AS name,
                    COUNT(provinces.id) as provinces_count
             FROM users
             LEFT JOIN provinces ON users.id = provinces.userid
-            LEFT JOIN coalition_members cm ON users.id = cm.user_id
-            LEFT JOIN coalitions c ON cm.coalition_id = c.coalition_id
+            LEFT JOIN coalitions_legacy cm ON users.id = cm.userid
+            LEFT JOIN colnames c ON cm.colid = c.id
             {where_clause}
-            GROUP BY users.id, cm.coalition_id, c.name
+            GROUP BY users.id, cm.colid, c.name
             HAVING COUNT(provinces.id) >= %s
         """
 
@@ -1038,14 +1038,12 @@ def delete_own_account():
         if coalition_role != "leader":
             pass
         else:
-            db.execute(
-                "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
-            )
+            db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
             user_coalition = db.fetchone()[0]
 
             db.execute(
-                "SELECT COUNT(user_id) FROM coalition_members "
-                "WHERE role='leader' AND coalition_id=%s",
+                "SELECT COUNT(userid) FROM coalitions_legacy "
+                "WHERE role='leader' AND colid=%s",
                 (user_coalition,),
             )
             leader_count = db.fetchone()[0]
@@ -1054,17 +1052,14 @@ def delete_own_account():
                 pass
             else:
                 db.execute(
-                    "DELETE FROM coalition_members WHERE coalition_id=%s",
+                    "DELETE FROM coalitions_legacy WHERE colid=%s",
                     (user_coalition,),
-                )
-                db.execute(
-                    "DELETE FROM coalitions WHERE coalition_id=%s", (user_coalition,)
                 )
                 db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
                 db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
                 db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
-        db.execute("DELETE FROM coalition_members WHERE user_id=%s", (cId,))
+        db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         try:
