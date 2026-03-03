@@ -1038,12 +1038,14 @@ def delete_own_account():
         if coalition_role != "leader":
             pass
         else:
-            db.execute("SELECT colId FROM coalitions WHERE userId=%s", (cId,))
+            db.execute(
+                "SELECT coalition_id FROM coalition_members WHERE user_id=%s", (cId,)
+            )
             user_coalition = db.fetchone()[0]
 
             db.execute(
-                "SELECT COUNT(userId) FROM coalitions "
-                "WHERE role='leader' AND colId=%s",
+                "SELECT COUNT(user_id) FROM coalition_members "
+                "WHERE role='leader' AND coalition_id=%s",
                 (user_coalition,),
             )
             leader_count = db.fetchone()[0]
