@@ -34,6 +34,29 @@
         </div>
         <!--ECONOMIC-->
         <div class="economic" id="economic">
+            <div class="infodiv" style="margin-bottom: 20px;">
+                <h3 class="templatecontentheadercenter">Research (Normalized)</h3>
+                <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
+                <form method="POST" action="/start_research">
+                    <label for="tech_id">Technology</label>
+                    <select class="templateselect" name="tech_id" id="tech_id" required>
+                        {% if tech_rows and tech_rows|length > 0 %}
+                        {% for tech in tech_rows %}
+                        <option value="{{ tech[0] }}">
+                            {{ tech[1] }} ({{ tech[2] | fmt }} {{ research_cost_resource }})
+                            {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="" disabled selected>No technologies available</option>
+                        {% endif %}
+                    </select>
+                    <button type="submit" class="templatedivbutton templatecenteredbutton">
+                        <span class="material-icons-outlined">science</span>Research
+                    </button>
+                </form>
+            </div>
+
             <form method="POST">
 
                 <div class="menudiv">

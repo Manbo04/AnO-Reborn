@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, session, redirect
+from flask import Blueprint, render_template, session, redirect, request
 from helpers import login_required, error
 from database import get_db_cursor, query_cache, invalidate_user_cache
+from action_loop import start_research, ActionLoopError, RESEARCH_COST_RESOURCE
 
 # Game.ping() # temporarily removed this line because it might make celery not work
 from dotenv import load_dotenv
@@ -36,7 +37,58 @@ def get_upgrades(cId):
 def upgrades():
     cId = session["user_id"]
     upgrades = get_upgrades(cId)  # already a dict keyed by column name
-    return render_template("upgrades.html", upgrades=upgrades)
+
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            SELECT tech_id, display_name, research_cost, prerequisite_tech_id
+            FROM tech_dictionary
+            WHERE is_active = TRUE
+            ORDER BY display_name ASC
+            """
+        )
+        tech_rows = db.fetchall() or []
+
+        db.execute(
+            """
+            SELECT tech_id
+            FROM user_tech
+            WHERE user_id=%s AND is_unlocked=TRUE
+            """,
+            (cId,),
+        )
+        unlocked_ids = {row[0] for row in db.fetchall()}
+
+    return render_template(
+        "upgrades.html",
+        upgrades=upgrades,
+        tech_rows=tech_rows,
+        unlocked_ids=unlocked_ids,
+        research_cost_resource=RESEARCH_COST_RESOURCE,
+    )
+
+
+@bp.route("/start_research", methods=["POST"])
+@login_required
+def start_research_action():
+    cId = session["user_id"]
+    try:
+        tech_id = int(request.form.get("tech_id", "0"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid technology selection.")
+
+    try:
+        start_research(cId, tech_id)
+    except ActionLoopError as e:
+        return error(400, str(e))
+
+    try:
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"upgrades_{cId}")
+    except Exception:
+        pass
+
+    return redirect("/upgrades")
 
 
 @bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
@@ -137,12 +189,17 @@ def upgrade_sell_buy(ttype, thing):
                     (amount, cId, amount),
                 )
                 if db.fetchone() is None:
+                    missing_resource = resource.upper()
                     return error(
                         400,
-                        f"You don't have enough {resource.upper()} to buy this upgrade.",
+                        f"You don't have enough {missing_resource} "
+                        "to buy this upgrade.",
                     )
 
-            db.execute(f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s", (cId,))
+            db.execute(
+                f"UPDATE upgrades SET {thing_key}=1 WHERE user_id=%s",
+                (cId,),
+            )
             try:
                 invalidate_user_cache(cId)
                 query_cache.invalidate(
