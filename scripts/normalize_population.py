@@ -13,13 +13,13 @@ Run with --dry-run first to see what changes would be made.
 """
 
 import argparse
-import sys
 import os
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import sys
 
 import variables
 from database import get_db_connection
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def calculate_max_population(cities, land, happiness=50, pollution=50):
@@ -92,15 +92,14 @@ def normalize_populations(dry_run=True):
                 print()
 
         print("-" * 80)
-        print(f"SUMMARY:")
+        print("SUMMARY:")
         print(f"  Provinces affected: {len(updates)}")
         print(f"  Total population to reduce: {total_reduced:,}")
         print("-" * 80)
 
         if dry_run:
-            print(
-                "\n⚠️  DRY RUN - No changes made. Run with --apply to make changes.\n"
-            )
+            msg = "\n⚠️  DRY RUN - No changes made. Run with --apply to"
+            print(msg + " make changes.\n")
         else:
             if updates:
                 from psycopg2.extras import execute_batch
