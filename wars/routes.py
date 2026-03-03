@@ -926,6 +926,7 @@ def wars():
         special_units = Military.get_special(cId)
         units = normal_units.copy()
         units.update(special_units)
+        current_defense = Military.get_defense(cId)
         with get_db_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
             yourCountry = db.fetchone()[0]
@@ -1017,7 +1018,6 @@ def wars():
                 warsCount = db.fetchone()[0]
             except Exception:
                 warsCount = 0
-            current_defense = Military.get_defense(cId)
         return render_template(
             "wars.html",
             units=units,
