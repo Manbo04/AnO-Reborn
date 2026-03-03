@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from attack_scripts import Military
-from math import floor
 from random import randint
 from typing import Union
 from dotenv import load_dotenv
@@ -475,73 +474,44 @@ class Units(Military):
             return "Units are not attached!"
 
     def save(self):
+        """Persist post-fight state.
+
+        Casualties are now handled by war_orchestrator.persist_fight_results(),
+        so this method only deducts supply costs from the war record.
+        """
+        if not self.supply_costs or not self.war_id:
+            return
+
         with get_db_connection() as connection:
             db = connection.cursor()
 
-        for save_type in self.save_for:
-            # Save casualties
-            if save_type == "casualties":
-                # The casualties method sets a suffered_casualties
-                for unit_type, amount in self.suffered_casualties.items():
-                    mil_statement = (
-                        f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
-                    )
-                    db.execute(mil_statement, (self.user_id,))
-                    available_unit_amount = db.fetchone()[0]
+            # Determine whether this user is attacker or defender in the war
+            db.execute("SELECT attacker_id FROM wars WHERE war_id = %s", (self.war_id,))
+            row = db.fetchone()
+            if not row:
+                return
 
-                    mil_update = (
-                        f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
-                    )
-                    db.execute(
-                        mil_update, (available_unit_amount - amount, self.user_id)
-                    )
+            if row[0] == self.user_id:
+                supply_col = "attacker_supplies"
+            else:
+                supply_col = "defender_supplies"
 
-            # Save supplies
-            elif save_type == "supplies":
-                # Save supplies into associated war record if any
-                try:
-                    db.execute(
-                        (
-                            "SELECT id FROM wars "
-                            "WHERE (attacker=(%s) OR defender=(%s)) "
-                            "AND peace_date IS NULL"
-                        ),
-                        (self.user_id, self.user_id),
-                    )
-                    war_id = db.fetchall()[-1][0]
-                except (IndexError, TypeError):
-                    # No active war found for this user; skip supplies save
-                    continue
-
-                if war_id is not None:
-                    db.execute("SELECT attacker FROM wars WHERE id=(%s)", (war_id,))
-                    is_attacker = db.fetchone()[0]
-                    if is_attacker == self.user_id:
-                        sign = "attacker_supplies"
-                    else:
-                        sign = "defender_supplies"
-
-                    sign_select = f"SELECT {sign} FROM wars " + " WHERE id=(%s)"
-                    db.execute(sign_select, (war_id,))
-                    current = db.fetchone()[0] or 0
-                    db.execute(
-                        f"UPDATE wars SET {sign} = (%s + {current}) WHERE id=(%s)",
-                        (self.available_supplies, war_id),
-                    )
-
-        connection.commit()
+            db.execute(
+                f"UPDATE wars SET {supply_col} = "
+                f"GREATEST(0, {supply_col} - %s) "
+                f"WHERE war_id = %s",
+                (self.supply_costs, self.war_id),
+            )
+            connection.commit()
 
     # Save casualties to the db and check for casualty validity
     # NOTE: to save the data to the db later on put it to the save method
     # unit_type -> name of the unit type, amount -> used to decreate by it
     def casualties(self, unit_type: str, amount: int) -> None:
-        with get_db_connection() as connection:
-            db = connection.cursor()
+        from math import floor
 
-        # Make sure this is and integer
-        # TODO: optimize this by creating integer at the user side
+        # Make sure this is an integer
         amount = int(floor(amount))
-        # print("LOSS AMOUNT", self.user_id, unit_type, amount)
         unit_amount = self.selected_units[unit_type]
 
         if amount > unit_amount:
@@ -549,14 +519,20 @@ class Units(Military):
 
         self.selected_units[unit_type] = unit_amount - amount
 
-        # Save records to the database
-        mil_statement = f"SELECT {unit_type} FROM military " + " WHERE id=(%s)"
-        db.execute(mil_statement, (self.user_id,))
-        available_unit_amount = db.fetchone()[0]
+        # Save records to the database using normalized tables
+        with get_db_connection() as connection:
+            db = connection.cursor()
 
-        mil_update = f"UPDATE military SET {unit_type}" + "=(%s) WHERE id=(%s)"
-        db.execute(mil_update, (available_unit_amount - amount, self.user_id))
-        connection.commit()
+            db.execute(
+                """UPDATE user_military um
+                   SET quantity = GREATEST(0, um.quantity - %s)
+                   FROM unit_dictionary ud
+                   WHERE um.unit_id = ud.unit_id
+                     AND um.user_id = %s
+                     AND LOWER(ud.name) = LOWER(%s)""",
+                (amount, self.user_id, unit_type),
+            )
+            connection.commit()
 
     # Fetch the available supplies and resources which are required
     # and compare them to the unit attack cost. Also persist morale.
@@ -566,31 +542,35 @@ class Units(Military):
             with get_db_connection() as connection:
                 db = connection.cursor()
 
-            db.execute("SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,))
-            row = db.fetchone()
-
-            # Resolve attacker id safely and compare to this object's user id.
-            attacker_id = row[0] if row else None
-
-            # If the current Units object belongs to the attacker side,
-            # read attacker_supplies,
-            # otherwise read defender_supplies. Fall back to 0 if values are missing.
-            if attacker_id is not None and attacker_id == self.user_id:
                 db.execute(
-                    "SELECT attacker_supplies FROM wars WHERE id=(%s)", (self.war_id,)
+                    "SELECT attacker_id FROM wars WHERE war_id=(%s)", (self.war_id,)
                 )
-                fetched = db.fetchone()
-                self.available_supplies = (
-                    fetched[0] if fetched and fetched[0] is not None else 0
-                )
-            else:
-                db.execute(
-                    "SELECT defender_supplies FROM wars WHERE id=(%s)", (self.war_id,)
-                )
-                fetched = db.fetchone()
-                self.available_supplies = (
-                    fetched[0] if fetched and fetched[0] is not None else 0
-                )
+                row = db.fetchone()
+
+                # Resolve attacker id safely and compare to this object's user id.
+                attacker_id = row[0] if row else None
+
+                # If the current Units object belongs to the attacker side,
+                # read attacker_supplies,
+                # otherwise read defender_supplies.
+                if attacker_id is not None and attacker_id == self.user_id:
+                    db.execute(
+                        "SELECT attacker_supplies FROM wars WHERE war_id=(%s)",
+                        (self.war_id,),
+                    )
+                    fetched = db.fetchone()
+                    self.available_supplies = (
+                        fetched[0] if fetched and fetched[0] is not None else 0
+                    )
+                else:
+                    db.execute(
+                        "SELECT defender_supplies FROM wars WHERE war_id=(%s)",
+                        (self.war_id,),
+                    )
+                    fetched = db.fetchone()
+                    self.available_supplies = (
+                        fetched[0] if fetched and fetched[0] is not None else 0
+                    )
 
         if self.available_supplies < 200:
             return "The minimum supply amount is 200"

@@ -173,64 +173,58 @@ class Economy:
     # IMPORTANT: the amount is not validated in this method.
     # Callers must provide a validated value.
     def transfer_resources(self, resource, amount, destinationID):
-        with get_db_connection() as connection:
-            db = connection.cursor()  # noqa: F841
-
-            if resource not in self.resources:
-                return "Invalid resource"
-
-            @staticmethod
-            def morale_change(column, win_type, winner, loser):
-                # Updated morale change: accept a computed morale delta passed through the caller
-                # The caller should compute a morale delta based on units involved. We still keep
-                # the win_type -> human-readable win_condition mapping, but morale is adjusted
-                # by the provided delta to allow per-unit impacts.
-                with get_db_connection() as connection:
-                    db = connection.cursor()
-
-                    db.execute(
-                        "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
-                        (winner.user_id, loser.user_id, winner.user_id, loser.user_id),
-                    )
-                    war_id = db.fetchall()[-1][0]
-
-    # IMPORTANT: the amount is not validated in this method.
-    # Callers must provide a validated value.
-    def transfer_resources(self, resource, amount, destinationID):
         from database import invalidate_user_cache
 
         with get_db_connection() as connection:
-            db = connection.cursor()  # noqa: F841
+            db = connection.cursor()
 
             if resource not in self.resources:
                 return "Invalid resource"
 
-            @staticmethod
-            def morale_change(column, win_type, winner, loser):
-                # Updated morale change: accept a computed morale delta passed through the caller
-                # The caller should compute a morale delta based on units involved. We still keep
-                # the win_type -> human-readable win_condition mapping, but morale is adjusted
-                # by the provided delta to allow per-unit impacts.
-                with get_db_connection() as connection:
-                    db = connection.cursor()
+            # Use normalized user_economy / resource_dictionary tables
+            db.execute(
+                """SELECT rd.resource_id, COALESCE(ue.quantity, 0) AS quantity
+                   FROM resource_dictionary rd
+                   LEFT JOIN user_economy ue
+                       ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+                   WHERE rd.name = %s AND rd.is_active = TRUE""",
+                (self.nationID, resource),
+            )
+            src_row = db.fetchone()
+            if not src_row:
+                return "Resource not found"
 
-                    db.execute(
-                        "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
-                        (winner.user_id, loser.user_id, winner.user_id, loser.user_id),
-                    )
-                    war_id = db.fetchall()[-1][0]
+            resource_id = src_row[0]
 
-            war_column_stat = f"SELECT {column} FROM wars " + "WHERE id=(%s)"
-            db.execute(war_column_stat, (war_id,))
-            morale = fetchone_first(db, 0)
+            # Deduct from source
+            db.execute(
+                """INSERT INTO user_economy (user_id, resource_id, quantity)
+                   VALUES (%s, %s, 0)
+                   ON CONFLICT (user_id, resource_id) DO NOTHING""",
+                (self.nationID, resource_id),
+            )
+            db.execute(
+                """UPDATE user_economy
+                   SET quantity = GREATEST(0, quantity - %s)
+                   WHERE user_id = %s AND resource_id = %s""",
+                (int(amount), self.nationID, resource_id),
+            )
 
-            # Determine win_condition label from win_type (keeps semantics for other logic)
-            if win_type >= 3:
-                win_condition = "annihilation"
-            elif win_type >= 2:
-                win_condition = "definite victory"
-            else:
-                win_condition = "close victory"
+            # Add to destination
+            db.execute(
+                """INSERT INTO user_economy (user_id, resource_id, quantity)
+                   VALUES (%s, %s, 0)
+                   ON CONFLICT (user_id, resource_id) DO NOTHING""",
+                (destinationID, resource_id),
+            )
+            db.execute(
+                """UPDATE user_economy
+                   SET quantity = quantity + %s
+                   WHERE user_id = %s AND resource_id = %s""",
+                (int(amount), destinationID, resource_id),
+            )
+
+            connection.commit()
 
         # Invalidate caches for the source and destination nations after transfer
         try:
@@ -238,42 +232,6 @@ class Economy:
             invalidate_user_cache(destinationID)
         except Exception:
             pass
-            # If the caller attached a morale_delta attribute on the loser object (preferred),
-            # use it. Otherwise fall back to a conservative fixed decrease based on win_type.
-            morale_delta = getattr(loser, "_computed_morale_delta", None)
-            if morale_delta is None:
-                # conservative fallback (small penalties)
-                if win_type >= 3:
-                    morale_delta = 15
-                elif win_type >= 2:
-                    morale_delta = 10
-                else:
-                    morale_delta = 5
-
-            # Apply morale delta and persist
-            morale = morale - int(morale_delta)
-
-            # Win the war if morale drops to zero or below
-            if morale <= 0:
-                Nation.set_peace(db, connection, war_id)
-                eco = Economy(winner.user_id)
-
-                for resource in Economy.resources:
-                    resource_sel_stat = f"SELECT {resource} FROM resources WHERE id=%s"
-                    db.execute(resource_sel_stat, (loser.user_id,))
-                    resource_amount = fetchone_first(db, 0)
-                    # transfer 20% of resource on hand
-                    eco.transfer_resources(
-                        resource, resource_amount * (1 / 5), winner.user_id
-                    )
-
-                db.execute(
-                    f"UPDATE wars SET {column}=(%s) WHERE id=(%s)", (morale, war_id)
-                )
-
-                connection.commit()
-
-                return win_condition
 
 
 class Nation:
@@ -381,7 +339,7 @@ class Nation:
         with get_db_connection() as connection:
             db = connection.cursor()
             db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+                "SELECT war_id FROM wars WHERE (attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
                 (
                     id,
                     id,
@@ -427,11 +385,12 @@ class Nation:
     def set_peace(db, connection, war_id=None, options=None):
         if war_id is not None:
             db.execute(
-                "UPDATE wars SET peace_date=(%s) WHERE id=(%s)", (time.time(), war_id)
+                "UPDATE wars SET peace_date=(%s) WHERE war_id=(%s)",
+                (time.time(), war_id),
             )
         else:
             option = options["option"]
-            query = "UPDATE wars SET peace_date=(%s)" + f"WHERE {option}" + "=(%s)"
+            query = "UPDATE wars SET peace_date=(%s)" + f" WHERE {option}" + "=(%s)"
             db.execute(query, (time.time(), options["value"]))
 
         connection.commit()
@@ -549,7 +508,8 @@ class Military(Nation):
 
         with get_db_cursor() as db:
             db.execute(
-                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s))",
+                "SELECT war_id FROM wars WHERE (attacker_id=(%s) OR attacker_id=(%s)) AND (defender_id=(%s) OR defender_id=(%s))"
+                " AND peace_date IS NULL",
                 (
                     attacker.user_id,
                     defender.user_id,
@@ -557,8 +517,11 @@ class Military(Nation):
                     defender.user_id,
                 ),
             )
-            war_id = db.fetchall()[-1][0]
-            db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
+            rows = db.fetchall()
+            if not rows:
+                return (None, 0)
+            war_id = rows[-1][0]
+            db.execute(f"SELECT {column} FROM wars WHERE war_id=(%s)", (war_id,))
             morale = fetchone_first(db, 0)
             return (war_id, morale)
 
@@ -581,7 +544,7 @@ class Military(Nation):
             # (winners[0], winners[0], losers[0], losers[0]))
 
             db.execute(
-                "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
+                "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker_id=%s OR defender_id=%s) AND (attacker_id=%s OR defender_id=%s)",
                 (winners[0], winners[0], losers[0], losers[0]),
             )
             winner_remaining_morale = fetchone_first(db, 0)
@@ -644,22 +607,24 @@ class Military(Nation):
                 )
                 province_id_fetch = db.fetchall()
 
-                # decrease special unit amount after attack
-                # TODO: check if too much special_unit amount is selected
-                # TODO: decreate only the selected amount when attacker (ex. db 100 soldiers, attack with 20, don't decreate from 100)
+                # decrease special unit amount after attack using normalized tables
                 db.execute(
-                    f"SELECT {special_unit} FROM military WHERE id=(%s)",
-                    (attacker.user_id,),
+                    "SELECT ud.unit_id FROM unit_dictionary ud WHERE LOWER(ud.name) = LOWER(%s) AND ud.is_active = TRUE",
+                    (special_unit,),
                 )
-                special_unit_fetch = fetchone_first(db, 0)
-
-                db.execute(
-                    f"UPDATE military SET {special_unit}=(%s) WHERE id=(%s)",
-                    (
-                        special_unit_fetch - attacker.selected_units[special_unit],
-                        attacker.user_id,
-                    ),
-                )
+                unit_row = db.fetchone()
+                if unit_row:
+                    su_unit_id = unit_row[0]
+                    db.execute(
+                        """UPDATE user_military
+                           SET quantity = GREATEST(0, quantity - %s)
+                           WHERE user_id = %s AND unit_id = %s""",
+                        (
+                            attacker.selected_units[special_unit],
+                            attacker.user_id,
+                            su_unit_id,
+                        ),
+                    )
 
                 connection.commit()
 
@@ -792,7 +757,7 @@ class Military(Nation):
             db = connection.cursor()
 
             db.execute(
-                "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+                "SELECT attacker_id FROM wars WHERE (attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
                 (winner.user_id, winner.user_id),
             )
             abs_attacker = fetchone_first(db, 0)
@@ -896,56 +861,55 @@ class Military(Nation):
     # particular_units must be a list of string unit names
     @staticmethod
     def get_particular_units_list(cId, particular_units):  # int, list -> list
-        with get_db_connection() as connection:
-            db = connection.cursor()
+        from database import get_db_cursor
+        from psycopg2.extras import RealDictCursor
 
-            # this data come in the format [(cId, soldiers, artillery, tanks, bombers, fighters, apaches, spies, icbms, nukes, destroyer, cruisers, submarines)]
-            db.execute("SELECT * FROM military WHERE id=%s", (cId,))
-            allAmounts = db.fetchall()
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            db.execute(
+                """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+                   FROM unit_dictionary ud
+                   LEFT JOIN user_military um
+                       ON um.unit_id = ud.unit_id AND um.user_id = %s
+                   WHERE ud.is_active = TRUE
+                     AND LOWER(ud.name) = ANY(%s)""",
+                (cId, [u.lower() for u in particular_units]),
+            )
+            result = {row["name"]: int(row["quantity"]) for row in db.fetchall()}
 
-            # get the unit amounts based on the selected_units
-            unit_to_amount_dict = {}
-
-            # TODO: maybe use the self.allUnits because it looks like repetative code
-            cidunits = [
-                "cId",
-                "soldiers",
-                "artillery",
-                "tanks",
-                "bombers",
-                "fighters",
-                "apaches",
-                "spies",
-                "icbms",
-                "nukes",
-                "destroyers",
-                "cruisers",
-                "submarines",
-            ]
-            for count, item in enumerate(cidunits):
-                unit_to_amount_dict[item] = allAmounts[0][count]
-
-            # make a dictionary with 3 keys, listed in the particular_units list
-            unit_lst = []
-            for unit in particular_units:
-                unit_lst.append(unit_to_amount_dict[unit])
-
-            return unit_lst  # this is a list of the format [100, 50, 50]
+        return [result.get(u, 0) for u in particular_units]
 
     @staticmethod
     def get_military(cId: int) -> dict:  # int -> dict
         from database import get_db_cursor
         from psycopg2.extras import RealDictCursor
 
+        normal_unit_names = (
+            "soldiers",
+            "tanks",
+            "artillery",
+            "bombers",
+            "fighters",
+            "apaches",
+            "destroyers",
+            "cruisers",
+            "submarines",
+        )
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
             db.execute(
-                """SELECT tanks, soldiers, artillery, bombers, fighters, apaches,
-                   destroyers, cruisers, submarines
-                   FROM military WHERE id=%s""",
-                (cId,),
+                """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+                   FROM unit_dictionary ud
+                   LEFT JOIN user_military um
+                       ON um.unit_id = ud.unit_id AND um.user_id = %s
+                   WHERE ud.is_active = TRUE
+                     AND LOWER(ud.name) = ANY(%s)""",
+                (cId, list(normal_unit_names)),
             )
-            result = db.fetchone()
-            return dict(result) if result else {}
+            rows = db.fetchall()
+            result = {row["name"]: int(row["quantity"]) for row in rows}
+            # Ensure all expected keys are present even if missing from DB
+            for u in normal_unit_names:
+                result.setdefault(u, 0)
+            return result
 
     @staticmethod
     def get_limits(cId: int) -> dict:  # int -> dict
@@ -965,8 +929,15 @@ class Military(Nation):
 
         # these numbers determine the upper limit of how many of each military unit can be built per day
         with get_db_cursor() as db:
-            db.execute("SELECT manpower FROM military WHERE id=(%s)", (cId,))
-            _manpower = fetchone_first(db, 0)
+            # Manpower was stored in the legacy `military` table which no longer
+            # exists.  Default to 0 until a migration adds it elsewhere.
+            _manpower = 0
+            try:
+                db.execute("SELECT manpower FROM stats WHERE id=%s", (cId,))
+                row = db.fetchone()
+                _manpower = int(row[0] or 0) if row and row[0] is not None else 0
+            except Exception:
+                _manpower = 0
 
             # fetch upgrade flag while cursor is open
             db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
@@ -1028,9 +999,21 @@ class Military(Nation):
         from psycopg2.extras import RealDictCursor
 
         with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            db.execute("SELECT spies, ICBMs, nukes FROM military WHERE id=%s", (cId,))
-            result = db.fetchone()
-            return dict(result) if result else {"spies": 0, "icbms": 0, "nukes": 0}
+            db.execute(
+                """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+                   FROM unit_dictionary ud
+                   LEFT JOIN user_military um
+                       ON um.unit_id = ud.unit_id AND um.user_id = %s
+                   WHERE ud.is_active = TRUE
+                     AND LOWER(ud.name) = ANY(%s)""",
+                (cId, ["spies", "icbms", "nukes"]),
+            )
+            rows = db.fetchall()
+            result = {row["name"]: int(row["quantity"]) for row in rows}
+            result.setdefault("spies", 0)
+            result.setdefault("icbms", 0)
+            result.setdefault("nukes", 0)
+            return result
 
     # Check and set default_defense in nation table
     def set_defense(self, defense_string):  # str -> None

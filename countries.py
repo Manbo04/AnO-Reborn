@@ -1002,7 +1002,9 @@ def delete_own_account():
         # Deletes all market things the user is associated with
         db.execute("DELETE FROM offers WHERE userid=(%s)", (cId,))
         deleted_counts["offers"] = db.rowcount
-        db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
+        db.execute(
+            "DELETE FROM wars WHERE defender_id=%s OR attacker_id=%s", (cId, cId)
+        )
         deleted_counts["wars"] = db.rowcount
 
         # Deletes all the users provinces and their infrastructure
