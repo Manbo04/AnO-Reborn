@@ -970,7 +970,7 @@ class Military(Nation):
 
         with get_db_cursor() as db:
             db.execute(
-                "SELECT default_defense FROM nation WHERE nation_id=%s",
+                "SELECT default_defense FROM military WHERE id=%s",
                 (cId,),
             )
             result = db.fetchone()
@@ -1085,9 +1085,9 @@ class Military(Nation):
                 return "Invalid number of units given to set_defense, report to admin"
 
             defense_units = ",".join(parts)
-            # Use standard %s placeholders for parameterized queries
+            # Update military table with the default_defense column
             db.execute(
-                "UPDATE nation SET default_defense=%s WHERE nation_id=%s",
+                "UPDATE military SET default_defense=%s WHERE id=%s",
                 (defense_units, self.id),
             )
             connection.commit()
