@@ -1071,7 +1071,7 @@ class Military(Nation):
             result.setdefault("nukes", 0)
             return result
 
-    # Check and set default_defense in nation table
+    # Check and set default_defense in stats table
     def set_defense(self, defense_string):  # str -> None
         """Set the nation's default defense composition.
 
