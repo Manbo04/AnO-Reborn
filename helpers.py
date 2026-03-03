@@ -348,7 +348,8 @@ def record_war_event(
             db.execute(
                 (
                     "INSERT INTO war_events (war_id, winner, loser, winner_losses, "
-                    "loser_losses, morale_column, morale_delta, new_morale, win_label, concluded) "
+                    "loser_losses, morale_column, morale_delta, new_morale, "
+                    "win_label, concluded) "
                     "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 ),
                 (
@@ -407,18 +408,30 @@ def get_influence(country_id):
             LEFT JOIN (
                 SELECT
                     um.user_id,
-                    SUM(CASE WHEN ud.name = 'soldiers' THEN um.quantity ELSE 0 END) as soldiers,
-                    SUM(CASE WHEN ud.name = 'artillery' THEN um.quantity ELSE 0 END) as artillery,
-                    SUM(CASE WHEN ud.name = 'tanks' THEN um.quantity ELSE 0 END) as tanks,
-                    SUM(CASE WHEN ud.name = 'fighters' THEN um.quantity ELSE 0 END) as fighters,
-                    SUM(CASE WHEN ud.name = 'bombers' THEN um.quantity ELSE 0 END) as bombers,
-                    SUM(CASE WHEN ud.name = 'apaches' THEN um.quantity ELSE 0 END) as apaches,
-                    SUM(CASE WHEN ud.name = 'submarines' THEN um.quantity ELSE 0 END) as submarines,
-                    SUM(CASE WHEN ud.name = 'destroyers' THEN um.quantity ELSE 0 END) as destroyers,
-                    SUM(CASE WHEN ud.name = 'cruisers' THEN um.quantity ELSE 0 END) as cruisers,
-                    SUM(CASE WHEN ud.name = 'icbms' THEN um.quantity ELSE 0 END) as icbms,
-                    SUM(CASE WHEN ud.name = 'nukes' THEN um.quantity ELSE 0 END) as nukes,
-                    SUM(CASE WHEN ud.name = 'spies' THEN um.quantity ELSE 0 END) as spies
+                    SUM(CASE WHEN ud.name = 'soldiers'
+                        THEN um.quantity ELSE 0 END) as soldiers,
+                    SUM(CASE WHEN ud.name = 'artillery'
+                        THEN um.quantity ELSE 0 END) as artillery,
+                    SUM(CASE WHEN ud.name = 'tanks'
+                        THEN um.quantity ELSE 0 END) as tanks,
+                    SUM(CASE WHEN ud.name = 'fighters'
+                        THEN um.quantity ELSE 0 END) as fighters,
+                    SUM(CASE WHEN ud.name = 'bombers'
+                        THEN um.quantity ELSE 0 END) as bombers,
+                    SUM(CASE WHEN ud.name = 'apaches'
+                        THEN um.quantity ELSE 0 END) as apaches,
+                    SUM(CASE WHEN ud.name = 'submarines'
+                        THEN um.quantity ELSE 0 END) as submarines,
+                    SUM(CASE WHEN ud.name = 'destroyers'
+                        THEN um.quantity ELSE 0 END) as destroyers,
+                    SUM(CASE WHEN ud.name = 'cruisers'
+                        THEN um.quantity ELSE 0 END) as cruisers,
+                    SUM(CASE WHEN ud.name = 'icbms'
+                        THEN um.quantity ELSE 0 END) as icbms,
+                    SUM(CASE WHEN ud.name = 'nukes'
+                        THEN um.quantity ELSE 0 END) as nukes,
+                    SUM(CASE WHEN ud.name = 'spies'
+                        THEN um.quantity ELSE 0 END) as spies
                 FROM user_military um
                 JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
                 GROUP BY um.user_id
@@ -590,18 +603,30 @@ def get_bulk_influence(user_ids):
             LEFT JOIN (
                 SELECT
                     um.user_id,
-                    SUM(CASE WHEN ud.name = 'soldiers' THEN um.quantity ELSE 0 END) as soldiers,
-                    SUM(CASE WHEN ud.name = 'artillery' THEN um.quantity ELSE 0 END) as artillery,
-                    SUM(CASE WHEN ud.name = 'tanks' THEN um.quantity ELSE 0 END) as tanks,
-                    SUM(CASE WHEN ud.name = 'fighters' THEN um.quantity ELSE 0 END) as fighters,
-                    SUM(CASE WHEN ud.name = 'bombers' THEN um.quantity ELSE 0 END) as bombers,
-                    SUM(CASE WHEN ud.name = 'apaches' THEN um.quantity ELSE 0 END) as apaches,
-                    SUM(CASE WHEN ud.name = 'submarines' THEN um.quantity ELSE 0 END) as submarines,
-                    SUM(CASE WHEN ud.name = 'destroyers' THEN um.quantity ELSE 0 END) as destroyers,
-                    SUM(CASE WHEN ud.name = 'cruisers' THEN um.quantity ELSE 0 END) as cruisers,
-                    SUM(CASE WHEN ud.name = 'icbms' THEN um.quantity ELSE 0 END) as icbms,
-                    SUM(CASE WHEN ud.name = 'nukes' THEN um.quantity ELSE 0 END) as nukes,
-                    SUM(CASE WHEN ud.name = 'spies' THEN um.quantity ELSE 0 END) as spies
+                    SUM(CASE WHEN ud.name = 'soldiers'
+                        THEN um.quantity ELSE 0 END) as soldiers,
+                    SUM(CASE WHEN ud.name = 'artillery'
+                        THEN um.quantity ELSE 0 END) as artillery,
+                    SUM(CASE WHEN ud.name = 'tanks'
+                        THEN um.quantity ELSE 0 END) as tanks,
+                    SUM(CASE WHEN ud.name = 'fighters'
+                        THEN um.quantity ELSE 0 END) as fighters,
+                    SUM(CASE WHEN ud.name = 'bombers'
+                        THEN um.quantity ELSE 0 END) as bombers,
+                    SUM(CASE WHEN ud.name = 'apaches'
+                        THEN um.quantity ELSE 0 END) as apaches,
+                    SUM(CASE WHEN ud.name = 'submarines'
+                        THEN um.quantity ELSE 0 END) as submarines,
+                    SUM(CASE WHEN ud.name = 'destroyers'
+                        THEN um.quantity ELSE 0 END) as destroyers,
+                    SUM(CASE WHEN ud.name = 'cruisers'
+                        THEN um.quantity ELSE 0 END) as cruisers,
+                    SUM(CASE WHEN ud.name = 'icbms'
+                        THEN um.quantity ELSE 0 END) as icbms,
+                    SUM(CASE WHEN ud.name = 'nukes'
+                        THEN um.quantity ELSE 0 END) as nukes,
+                    SUM(CASE WHEN ud.name = 'spies'
+                        THEN um.quantity ELSE 0 END) as spies
                 FROM user_military um
                 JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
                 GROUP BY um.user_id

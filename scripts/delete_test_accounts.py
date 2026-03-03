@@ -5,9 +5,10 @@ import os
 import psycopg2
 
 # Use public URL for external access
-os.environ[
-    "DATABASE_URL"
-] = "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@interchange.proxy.rlwy.net:41077/railway"
+os.environ["DATABASE_URL"] = (
+    "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@"
+    "interchange.proxy.rlwy.net:41077/railway"
+)
 
 conn = psycopg2.connect(os.environ["DATABASE_URL"])
 cur = conn.cursor()

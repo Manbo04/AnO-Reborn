@@ -686,9 +686,9 @@ def prores(unit):
         resources = ", ".join(
             [f"{i[1]} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
         )
-        full = f"{unit_name} cost { commas(price) }, { resources } each"
+        full = f"{unit_name} cost {commas(price)}, {resources} each"
     except KeyError:
-        full = f"{unit_name} cost { commas(price) } each"
+        full = f"{unit_name} cost {commas(price)} each"
     return full
 
 
@@ -709,9 +709,9 @@ def milres(unit):
         resources = ", ".join(
             [f"{i[1]} {i[0]}" for i in MILDICT[unit]["resources"].items()]
         )
-        full = f"{unit.capitalize()} cost { commas(price) }, { resources } each"
+        full = f"{unit.capitalize()} cost {commas(price)}, {resources} each"
     except KeyError:
-        full = f"{unit.capitalize()} cost { commas(price) } each"
+        full = f"{unit.capitalize()} cost {commas(price)} each"
     return full
 
 
