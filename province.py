@@ -6,6 +6,7 @@ from helpers import get_date
 from database import get_db_cursor, cache_response, invalidate_user_cache
 import os
 import math
+from action_loop import build_structure, ActionLoopError, BUILD_COST_RESOURCE
 
 bp = Blueprint("province", __name__)
 
@@ -220,6 +221,17 @@ def province(pId):
 
         # upgrades already fetched in same connection above
 
+        # Normalized buildings (for Action Loop quick-build form)
+        db.execute(
+            """
+            SELECT building_id, display_name, base_cost
+            FROM building_dictionary
+            WHERE is_active = TRUE
+            ORDER BY display_name ASC
+            """
+        )
+        normalized_buildings = db.fetchall() or []
+
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
 
@@ -235,10 +247,39 @@ def province(pId):
             upgrades=upgrades,
             prices=prices,
             new_infra=new_infra,
+            normalized_buildings=normalized_buildings,
+            build_cost_resource=BUILD_COST_RESOURCE,
             distribution_capacity=(
                 dist_cap if variables.FEATURE_RATIONS_DISTRIBUTION else None
             ),
         )
+
+
+@bp.route("/build_structure", methods=["POST"])
+@login_required
+def build_structure_action():
+    cId = session["user_id"]
+    province_id = request.form.get("province_id")
+
+    try:
+        building_id = int(request.form.get("building_id", "0"))
+        quantity = int(request.form.get("quantity", "1"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid building selection or quantity.")
+
+    try:
+        build_structure(cId, building_id, quantity)
+    except ActionLoopError as e:
+        return error(400, str(e))
+
+    try:
+        invalidate_user_cache(cId)
+    except Exception:
+        pass
+
+    if province_id:
+        return redirect(f"/province/{province_id}")
+    return redirect(f"/country/id={cId}")
 
 
 def get_province_price(user_id):
