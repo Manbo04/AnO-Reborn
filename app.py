@@ -149,6 +149,26 @@ def before_request():
         if forwarded_proto != "https" and not request.is_secure:
             url = request.url.replace("http://", "https://", 1)
             return redirect(url, code=301)
+
+    # Lightweight last_active heartbeat: update at most once per hour
+    user_id = session.get("user_id")
+    if user_id:
+        now = time()
+        last_ping = session.get("_last_active_ping", 0)
+        if now - last_ping > 3600:  # one hour
+            try:
+                from database import get_db_cursor
+
+                with get_db_cursor() as _db:
+                    _db.execute(
+                        "UPDATE users SET last_active = CURRENT_TIMESTAMP "
+                        "WHERE id = %s",
+                        (user_id,),
+                    )
+                session["_last_active_ping"] = now
+            except Exception:
+                pass  # best-effort; never block requests
+
     return None
     # Keep this hook small and non-verbose; avoid emitting per-request debug logs
     # unless explicitly enabled in configuration.
@@ -655,6 +675,46 @@ def days_old(date_string):
         return f"{date_string} ({days} Days Old)"
     except (ValueError, TypeError):
         return date_string
+
+
+@app.template_filter()
+def timeago(value):
+    """Human-readable 'time ago' string for a datetime/timestamp.
+
+    Accepts datetime objects (from psycopg2) or ISO-format strings.
+    Returns e.g. 'Just now', '3 hours ago', '2 days ago', 'Never'.
+    """
+    if value is None:
+        return "Never"
+    try:
+        from datetime import datetime, timezone
+
+        if isinstance(value, str):
+            # handle common Postgres ISO formats
+            value = datetime.fromisoformat(value)
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        diff = now - value
+        seconds = int(diff.total_seconds())
+        if seconds < 60:
+            return "Just now"
+        minutes = seconds // 60
+        if minutes < 60:
+            return f"{minutes}m ago"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours}h ago"
+        days = hours // 24
+        if days < 30:
+            return f"{days}d ago"
+        months = days // 30
+        if months < 12:
+            return f"{months}mo ago"
+        years = days // 365
+        return f"{years}y ago"
+    except Exception:
+        return "Unknown"
 
 
 # Jinja2 filter to render province building resource strings
