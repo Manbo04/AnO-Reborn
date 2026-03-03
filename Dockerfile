@@ -41,7 +41,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT}/ || exit 1
 
 # Default to web service
-# Use conservative defaults for workers and timeout to reduce DB pressure and
-# avoid worker timeouts. These can be tuned per-environment via build args or
-# environment variables if needed.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "30", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
+# Use gthread workers with enough concurrency to avoid request queuing.
+# 4 workers × 4 threads = 16 concurrent requests.  Timeout is generous to
+# allow slow first-render after cold-start.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "4", "--worker-class", "gthread", "--timeout", "120", "--keep-alive", "30", "--max-requests", "1000", "--max-requests-jitter", "100", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info", "wsgi:app"]
