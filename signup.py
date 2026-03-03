@@ -458,14 +458,6 @@ def discord_register():
                     "ON CONFLICT DO NOTHING",
                     (user_id, continent),
                 )
-                # Legacy military table may no longer exist; skip gracefully
-                try:
-                    db.execute(
-                        "INSERT INTO military (id) VALUES (%s) ON CONFLICT DO NOTHING",
-                        (user_id,),
-                    )
-                except Exception:
-                    pass
                 db.execute(
                     "INSERT INTO resources (id) VALUES (%s) ON CONFLICT DO NOTHING",
                     (user_id,),
@@ -740,24 +732,6 @@ def signup():
                         user_id,
                         request.remote_addr,
                     )
-
-                # Legacy military table may no longer exist; skip gracefully
-                try:
-                    db.execute(
-                        (
-                            "INSERT INTO military (id) VALUES (%s) "
-                            "ON CONFLICT DO NOTHING RETURNING id"
-                        ),
-                        (user_id,),
-                    )
-                    if not db.fetchone():
-                        logger.info(
-                            "signup: military row already exists for user_id=%s ip=%s",
-                            user_id,
-                            request.remote_addr,
-                        )
-                except Exception:
-                    pass
 
                 db.execute(
                     (

@@ -929,16 +929,6 @@ class Military(Nation):
 
         # these numbers determine the upper limit of how many of each military unit can be built per day
         with get_db_cursor() as db:
-            # Manpower was stored in the legacy `military` table which no longer
-            # exists.  Default to 0 until a migration adds it elsewhere.
-            _manpower = 0
-            try:
-                db.execute("SELECT manpower FROM stats WHERE id=%s", (cId,))
-                row = db.fetchone()
-                _manpower = int(row[0] or 0) if row and row[0] is not None else 0
-            except Exception:
-                _manpower = 0
-
             # fetch upgrade flag while cursor is open
             db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
             increased_funding = fetchone_first(db, 0)

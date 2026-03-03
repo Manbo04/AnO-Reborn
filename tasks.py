@@ -2069,18 +2069,17 @@ def task_manpower_increase():
         for row in dbdict.fetchall():
             pop_map[row["userid"]] = row["total_pop"]
 
-        # Bulk load current manpower — legacy `military` table may not exist
+        # Bulk load current manpower from stats
         manpower_map = {}
-        try:
-            dbdict.execute(
-                "SELECT id, manpower FROM military WHERE id = ANY(%s)", (user_ids,)
-            )
-            for row in dbdict.fetchall():
-                manpower_map[row["id"]] = row["manpower"]
-        except Exception:
-            # military table no longer exists; skip manpower updates
-            conn.rollback()
-            return
+        dbdict.execute(
+            (
+                "SELECT id, COALESCE(manpower, 0) AS manpower "
+                "FROM stats WHERE id = ANY(%s)"
+            ),
+            (user_ids,),
+        )
+        for row in dbdict.fetchall():
+            manpower_map[row["id"]] = row["manpower"]
 
         # Prepare batch updates
         manpower_updates = []
@@ -2102,16 +2101,12 @@ def task_manpower_increase():
 
         # Batch update all manpower at once
         if manpower_updates:
-            try:
-                execute_batch(
-                    db,
-                    "UPDATE military SET manpower=manpower+%s WHERE id=%s",
-                    manpower_updates,
-                    page_size=100,
-                )
-            except Exception:
-                conn.rollback()
-                return
+            execute_batch(
+                db,
+                "UPDATE stats SET manpower = manpower + %s WHERE id=%s",
+                manpower_updates,
+                page_size=100,
+            )
         conn.commit()
 
 
