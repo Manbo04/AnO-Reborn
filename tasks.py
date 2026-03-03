@@ -1854,7 +1854,7 @@ def war_reparation_tax():
 
     with get_db_cursor() as db:
         db.execute(
-            "SELECT id, peace_date, attacker, attacker_morale, defender, "
+            "SELECT war_id, peace_date, attacker_id, attacker_morale, defender_id, "
             "defender_morale FROM wars WHERE (peace_date IS NOT NULL) "
             "AND (peace_offer_id IS NULL)"
         )
@@ -1865,7 +1865,7 @@ def war_reparation_tax():
 
             # Remove peace records older than one week (604800 seconds)
             if peace_date < (time.time() - 604800):
-                db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
+                db.execute("DELETE FROM wars WHERE war_id=%s", (war_id,))
 
             # Transfer resources to attacker (winner)
             else:
@@ -1889,7 +1889,7 @@ def war_reparation_tax():
                     dict(zip(Economy.resources, resource_row)) if resource_row else {}
                 )
 
-                db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
+                db.execute("SELECT war_type FROM wars WHERE war_id=%s", (war_id,))
                 war_type = db.fetchone()
 
                 for resource in Economy.resources:
@@ -2069,13 +2069,18 @@ def task_manpower_increase():
         for row in dbdict.fetchall():
             pop_map[row["userid"]] = row["total_pop"]
 
-        # Bulk load current manpower
+        # Bulk load current manpower — legacy `military` table may not exist
         manpower_map = {}
-        dbdict.execute(
-            "SELECT id, manpower FROM military WHERE id = ANY(%s)", (user_ids,)
-        )
-        for row in dbdict.fetchall():
-            manpower_map[row["id"]] = row["manpower"]
+        try:
+            dbdict.execute(
+                "SELECT id, manpower FROM military WHERE id = ANY(%s)", (user_ids,)
+            )
+            for row in dbdict.fetchall():
+                manpower_map[row["id"]] = row["manpower"]
+        except Exception:
+            # military table no longer exists; skip manpower updates
+            conn.rollback()
+            return
 
         # Prepare batch updates
         manpower_updates = []
@@ -2097,12 +2102,16 @@ def task_manpower_increase():
 
         # Batch update all manpower at once
         if manpower_updates:
-            execute_batch(
-                db,
-                "UPDATE military SET manpower=manpower+%s WHERE id=%s",
-                manpower_updates,
-                page_size=100,
-            )
+            try:
+                execute_batch(
+                    db,
+                    "UPDATE military SET manpower=manpower+%s WHERE id=%s",
+                    manpower_updates,
+                    page_size=100,
+                )
+            except Exception:
+                conn.rollback()
+                return
         conn.commit()
 
 

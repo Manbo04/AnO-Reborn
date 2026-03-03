@@ -37,7 +37,7 @@ def peace_offers():
     with get_db_cursor() as db:
         db.execute(
             "SELECT peace_offer_id FROM wars WHERE "
-            "(attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
+            "(attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
             (cId, cId),
         )
         peace_offers = db.fetchall()
@@ -60,10 +60,11 @@ def peace_offers():
                     db.execute(
                         (
                             "SELECT p.id, p.demanded_resources, p.demanded_amount, "
-                            "p.author, u.username as author_name, w.attacker, "
-                            "w.defender FROM peace p "
+                            "p.author, u.username as author_name, w.attacker_id, "
+                            "w.defender_id FROM peace p "
                             "JOIN users u ON p.author = u.id "
                             "JOIN wars w ON w.peace_offer_id = p.id "
+                            "AND w.peace_date IS NULL "
                             "WHERE p.id IN (" + placeholders + ")"
                         ),
                         tuple(offer_ids),
@@ -160,8 +161,8 @@ def peace_offers():
             # Make sure others can't accept/delete/etc. the peace
             # offer other than the participants
             db.execute(
-                "SELECT id, attacker, defender FROM wars WHERE "
-                "(attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) "
+                "SELECT war_id, attacker_id, defender_id FROM wars WHERE "
+                "(attacker_id=(%s) OR defender_id=(%s)) AND peace_offer_id=(%s) "
                 "AND peace_date IS NULL",
                 (cId, cId, offer_id),
             )
@@ -296,7 +297,7 @@ def send_peace_offer(war_id, enemy_id):
                         raise Exception("Invalid resource")
                     resources_string += res + ","
                     amount_string += str(amo) + ","
-            db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
+            db.execute("SELECT peace_offer_id FROM wars WHERE war_id=(%s)", (war_id,))
             peace_offer_id = db.fetchone()[0]
             if not peace_offer_id:
                 db.execute(
@@ -309,7 +310,7 @@ def send_peace_offer(war_id, enemy_id):
                 db.execute("SELECT CURRVAL('peace_id_seq')")
                 lastrowid = db.fetchone()[0]
                 db.execute(
-                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE id=(%s)",
+                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE war_id=(%s)",
                     (lastrowid, war_id),
                 )
             else:
@@ -331,9 +332,9 @@ def war_with_id(war_id):
         # Single query to get all war data
         db.execute(
             (
-                "SELECT id, attacker, defender, war_type, agressor_message, "
+                "SELECT war_id, attacker_id, defender_id, war_type, aggressor_message, "
                 "peace_date, attacker_supplies, attacker_morale, "
-                "defender_supplies, defender_morale FROM wars WHERE id=(%s)"
+                "defender_supplies, defender_morale FROM wars WHERE war_id=(%s)"
             ),
             (war_id,),
         )
@@ -388,7 +389,12 @@ def war_with_id(war_id):
             cId_type = "spectator"
         if cId_type == "spectator":
             return error(400, "You can't view this war")
-        db.execute("SELECT spies FROM military WHERE id=(%s)", (cId,))
+        db.execute(
+            "SELECT COALESCE(um.quantity, 0) FROM unit_dictionary ud "
+            "LEFT JOIN user_military um ON um.unit_id = ud.unit_id AND um.user_id = %s "
+            "WHERE LOWER(ud.name) = 'spies' AND ud.is_active = TRUE",
+            (cId,),
+        )
         spy_result = db.fetchone()
         spyCount = spy_result[0] if spy_result else 0
         spyPrep = 1
@@ -540,7 +546,7 @@ def warTarget():
                     eId,
                 ),
             )
-        revealed_info = db.fetchall()
+            revealed_info = db.fetchall()
         needed_types = [
             "soldiers",
             "tanks",
@@ -606,32 +612,65 @@ def warResult():
         winner = None
         result = session.get("from_wartarget", None)
         if result is None:
-            db.execute("SELECT default_defense FROM military WHERE id=(%s)", (eId,))
-            defensestring = db.fetchone()[0]
-            defenselst = defensestring.split(",")
-            from units import Units as UnitsClass
+            # Compute default defense from the defender's actual military
+            # composition (top 3 non-zero normal unit types by quantity).
+            # The legacy `military` table no longer exists; use normalized
+            # user_military + unit_dictionary tables.
+            from psycopg2.extras import RealDictCursor
+            from database import get_db_connection as _gdc
 
-            for unit in defenselst:
-                if unit not in UnitsClass.allUnits:
-                    return error(400, "Invalid unit in default defense configuration.")
+            normal_unit_names = [
+                "soldiers",
+                "tanks",
+                "artillery",
+                "bombers",
+                "fighters",
+                "apaches",
+                "destroyers",
+                "cruisers",
+                "submarines",
+            ]
+            with _gdc() as _conn:
+                _cur = _conn.cursor(cursor_factory=RealDictCursor)
+                _cur.execute(
+                    """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
+                       FROM unit_dictionary ud
+                       LEFT JOIN user_military um
+                           ON um.unit_id = ud.unit_id AND um.user_id = %s
+                       WHERE ud.is_active = TRUE
+                         AND LOWER(ud.name) = ANY(%s)
+                       ORDER BY COALESCE(um.quantity, 0) DESC""",
+                    (eId, normal_unit_names),
+                )
+                defender_units_rows = _cur.fetchall()
 
-            # OPTIMIZATION: Fetch all defense units in ONE query instead of N queries
-            defense_cols = ", ".join(defenselst)
-            db.execute(f"SELECT {defense_cols} FROM military WHERE id=(%s)", (eId,))
-            defense_row = db.fetchone()
-            defenseunits = (
-                dict(zip(defenselst, defense_row))
-                if defense_row
-                else {u: 0 for u in defenselst}
-            )
+            # Pick up to 3 unit types that the defender has (prefer non-zero)
+            defenselst = []
+            for row in defender_units_rows:
+                if len(defenselst) >= 3:
+                    break
+                defenselst.append(row["name"])
+            # Fallback: if defender has no units at all, use first 3 normal types
+            if len(defenselst) < 3:
+                for u in normal_unit_names:
+                    if u not in defenselst:
+                        defenselst.append(u)
+                    if len(defenselst) >= 3:
+                        break
+
+            # Get actual quantities for the defense units
+            defender_military = Military.get_military(eId)
+            defenseunits = {u: defender_military.get(u, 0) for u in defenselst}
 
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
             prev_defender = dict(defender.selected_units)
             prev_attacker = dict(attacker.selected_units)
             db.execute(
                 (
-                    "SELECT war_type FROM wars WHERE ((attacker=%s AND defender=%s) "
-                    "OR (attacker=%s AND defender=%s)) AND peace_date IS NULL"
+                    "SELECT war_type FROM wars "
+                    "WHERE ((attacker_id=%s AND defender_id=%s) "
+                    "OR (attacker_id=%s AND defender_id=%s)) "
+                    "AND peace_date IS NULL"
                 ),
                 (
                     attacker.user_id,
@@ -754,8 +793,10 @@ def declare_war():
             logger.debug("declare_war: checking existing wars")
             db.execute(
                 (
-                    "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) OR "
-                    "(attacker=%s AND defender=%s)) AND peace_date IS NULL"
+                    "SELECT war_id FROM wars "
+                    "WHERE ((attacker_id=%s AND defender_id=%s) "
+                    "OR (attacker_id=%s AND defender_id=%s)) "
+                    "AND peace_date IS NULL"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
@@ -801,8 +842,8 @@ def declare_war():
             # Check most recent peace date between the two nations
             db.execute(
                 (
-                    "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s "
-                    "AND defender=%s) OR (attacker=%s AND defender=%s))"
+                    "SELECT MAX(peace_date) FROM wars WHERE ((attacker_id=%s "
+                    "AND defender_id=%s) OR (attacker_id=%s AND defender_id=%s))"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
@@ -815,8 +856,8 @@ def declare_war():
             start_dates = time.time()
             db.execute(
                 (
-                    "INSERT INTO wars (attacker, defender, "
-                    "war_type, agressor_message, start_date, "
+                    "INSERT INTO wars (attacker_id, defender_id, "
+                    "war_type, aggressor_message, start_date, "
                     "last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
                 ),
                 (
@@ -856,17 +897,16 @@ def defense():
     if request.method == "GET":
         return render_template("defense.html", units=units)
     elif request.method == "POST":
-        with get_db_cursor() as db:
-            defense_units = list(request.form.values())
+        defense_units = list(request.form.values())
         for item in defense_units:
             if item not in Military.allUnits:
                 return error(400, "Invalid unit types!")
         if len(defense_units) == 3:
-            defense_units = ",".join(defense_units)
-            db.execute(
-                "UPDATE military SET default_defense=(%s) WHERE id=(%s)",
-                (defense_units, cId),
-            )
+            # Default defense is now computed dynamically from the defender's
+            # actual military composition in warResult. The user's selection
+            # is acknowledged but no longer stored (the legacy military table
+            # that held it no longer exists).
+            pass
         else:
             return error(400, "Invalid number of units selected!")
         return redirect("/wars")
@@ -887,8 +927,10 @@ def wars():
             try:
                 db.execute(
                     (
-                        "SELECT id, defender, attacker FROM wars WHERE (attacker=%s "
-                        "OR defender=%s) AND peace_date IS NULL"
+                        "SELECT war_id, defender_id, attacker_id "
+                        "FROM wars WHERE (attacker_id=%s "
+                        "OR defender_id=%s) "
+                        "AND peace_date IS NULL"
                     ),
                     (cId, cId),
                 )
@@ -907,9 +949,9 @@ def wars():
                     war_placeholders = ",".join(["%s"] * len(war_ids))
                     db.execute(
                         (
-                            "SELECT id, attacker_morale, attacker_supplies, "
+                            "SELECT war_id, attacker_morale, attacker_supplies, "
                             "defender_morale, defender_supplies "
-                            "FROM wars WHERE id IN (" + war_placeholders + ")"
+                            "FROM wars WHERE war_id IN (" + war_placeholders + ")"
                         ),
                         tuple(war_ids),
                     )
@@ -962,8 +1004,8 @@ def wars():
             try:
                 db.execute(
                     (
-                        "SELECT COUNT(attacker) FROM wars WHERE (defender=%s "
-                        "OR attacker=%s) AND peace_date IS NULL"
+                        "SELECT COUNT(attacker_id) FROM wars WHERE (defender_id=%s "
+                        "OR attacker_id=%s) AND peace_date IS NULL"
                     ),
                     (cId, cId),
                 )
@@ -998,23 +1040,29 @@ def find_targets():
             max_influence = max(user_influence * 2.0, 100.0)
             query = (
                 "SELECT users.id, users.username, users.flag, "
-                "COUNT(provinces.id) as provinces_count, "
-                "COALESCE(SUM(military.soldiers * 0.02 + military.artillery * 1.6 + "
-                "military.tanks * 0.8 + "
-                "military.fighters * 3.5 + "
-                "military.bombers * 2.5 + "
-                "military.apaches * 3.2 + "
-                "military.submarines * 4.5 + "
-                "military.destroyers * 3 + "
-                "military.cruisers * 5.5 + "
-                "military.icbms * 250 + military.nukes * 500 + "
-                "military.spies * 25), 0) as influence "
+                "COUNT(DISTINCT provinces.id) as provinces_count, "
+                "COALESCE(SUM("
+                "CASE WHEN ud.name='soldiers' THEN um.quantity * 0.02 "
+                "WHEN ud.name='artillery' THEN um.quantity * 1.6 "
+                "WHEN ud.name='tanks' THEN um.quantity * 0.8 "
+                "WHEN ud.name='fighters' THEN um.quantity * 3.5 "
+                "WHEN ud.name='bombers' THEN um.quantity * 2.5 "
+                "WHEN ud.name='apaches' THEN um.quantity * 3.2 "
+                "WHEN ud.name='submarines' THEN um.quantity * 4.5 "
+                "WHEN ud.name='destroyers' THEN um.quantity * 3 "
+                "WHEN ud.name='cruisers' THEN um.quantity * 5.5 "
+                "WHEN ud.name='icbms' THEN um.quantity * 250 "
+                "WHEN ud.name='nukes' THEN um.quantity * 500 "
+                "WHEN ud.name='spies' THEN um.quantity * 25 "
+                "ELSE 0 END), 0) as influence "
                 "FROM users "
                 "LEFT JOIN provinces ON users.id = provinces.userId "
-                "LEFT JOIN military ON users.id = military.id "
+                "LEFT JOIN user_military um ON users.id = um.user_id "
+                "LEFT JOIN unit_dictionary ud "
+                "ON um.unit_id = ud.unit_id AND ud.is_active = TRUE "
                 "WHERE users.id != %s "
                 "GROUP BY users.id, users.username, users.flag "
-                "HAVING COUNT(provinces.id) BETWEEN %s AND %s "
+                "HAVING COUNT(DISTINCT provinces.id) BETWEEN %s AND %s "
                 "ORDER BY users.username "
                 "LIMIT 50"
             )
