@@ -112,6 +112,30 @@ This repository powers the Affairs & Order game. The following notes are **criti
 * Avoid using real player accounts; always use the designated tester.  If an existing test modifies global state, restore it at the end.
 * Some tests depend on specific data (e.g. coalition behaviour); read the failing test names for clues.
 
+### ⚠️ **CRITICAL: Single Test Account Discipline**
+
+**When running automated tests or verifying features, you MUST:**
+
+1. **Use a SINGLE designated test account** (currently: user ID 16, "Tester of the Game") for all testing
+2. **NEVER create multiple test users** like "provtest_*" or similar — this causes database bloat
+3. **Delete this test account and ALL its associated data immediately after the test concludes** using the verification/cleanup script
+4. **Record the original state BEFORE testing** if modifying the test account's resources/buildings/military, then explicitly **restore it AFTER** testing completes
+
+**Why this matters:** Untracked test accounts that accumulate in the database slow down queries, cause query planner issues, and create noise in monitoring/alerting. The AnO database has experienced slowness before due to test account bloat. Every test account is a debt that must be paid back immediately.
+
+**Cleanup pattern:**
+```python
+# At start of test: Record original state
+original_resources = get_user_resources(test_user_id)
+
+# ... run test ...
+
+# At end of test: Restore to original state
+restore_user_state(test_user_id, original_resources)
+```
+
+If a test cannot be cleaned up synchronously, use the `scripts/cleanup_test_nations.py` script to purge any orphaned test users before deploying.
+
 ---
 
 ## 📝 Additional Notes
