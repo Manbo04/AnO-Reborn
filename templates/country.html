@@ -8,7 +8,7 @@
 
     <div class="templatedivtopper countrytopper" style="background-image: url('{{ url_for('static', filename='images/country.jpg') }}?v=2');">
         <!-- <img src="{{ url_for('static', filename='images/country.jpg') }}?v=2" /> -->
-        <h1 class="templatedivtitle"><i class="fas fa-flag iconlarge" aria-hidden="true"></i>{{ username }}</h1>
+        <h1 class="templatedivtitle"><i class="fas fa-flag iconlarge" aria-hidden="true"></i>{{ username }} {% if join_number %}<span style="font-size: 0.7em; opacity: 0.8;">(Player #{{ join_number }})</span>{% endif %}</h1>
     </div>
 
     <div class="templatedivcontent">
