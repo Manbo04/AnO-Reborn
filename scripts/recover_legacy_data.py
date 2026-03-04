@@ -153,13 +153,43 @@ def get_table_columns(cur, table_name: str) -> set:
         "WHERE table_schema = 'public' AND table_name = %s",
         (table_name,),
     )
-    return {row[0] for row in cur.fetchall()}
+    return {row["column_name"] for row in cur.fetchall()}
 
 
 def load_dictionary(cur, table: str, id_col: str, name_col: str):
     """Return {name: id} mapping from a dictionary table."""
     cur.execute(f"SELECT {id_col}, {name_col} FROM {table}")
     return {row[name_col]: row[id_col] for row in cur.fetchall()}
+
+
+def get_valid_user_ids(cur) -> set:
+    """Return the set of all user IDs that exist in the live users table."""
+    cur.execute("SELECT id FROM users")
+    return {row["id"] for row in cur.fetchall()}
+
+
+def find_user_id_column(actual_cols: set) -> str | None:
+    """
+    Find the user ID column in the given set of column names (case-insensitive).
+    Expected names: userId, user_id, userid.
+    """
+    for expected_name in ["userId", "user_id", "userid"]:
+        for col in actual_cols:
+            if col.lower() == expected_name.lower():
+                return col
+    return None
+
+
+def find_actual_column_name(expected: str, actual_cols: set) -> str | None:
+    """
+    Find the actual column name in the table that matches expected (case-insensitive).
+    Returns the actual column name, or None if not found.
+    """
+    expected_lower = expected.lower()
+    for col in actual_cols:
+        if col.lower() == expected_lower:
+            return col
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -208,13 +238,22 @@ def migrate_resources(backup_cur, live_cur, dry_run: bool):
         )
     union_sql = " UNION ALL ".join(select_parts)
     backup_cur.execute(union_sql)
-    rows = backup_cur.fetchall()
+    all_rows = backup_cur.fetchall()
+
+    # Filter to only users that exist in the live database
+    valid_user_ids = get_valid_user_ids(live_cur)
+    rows = [r for r in all_rows if r["user_id"] in valid_user_ids]
 
     logger.info(
         "Migrating resources: %d columns, %d total rows from backup...",
         len(pairs),
         len(rows),
     )
+    if len(rows) < len(all_rows):
+        logger.info(
+            "Filtered out %d rows for non-existent users.",
+            len(all_rows) - len(rows),
+        )
 
     if not rows:
         logger.warning("No non-zero resource rows found in backup.")
@@ -247,14 +286,15 @@ def migrate_military(backup_cur, live_cur, dry_run: bool):
 
     pairs = []
     for col, dict_name in MILITARY_COLUMNS.items():
-        if col.lower() not in {c.lower() for c in actual_cols}:
+        actual_col = find_actual_column_name(col, actual_cols)
+        if not actual_col:
             logger.info("military.%s not present — skipping.", col)
             continue
         uid = name_to_id.get(dict_name)
         if uid is None:
             logger.info("No unit_dictionary entry for '%s' — skipping.", dict_name)
             continue
-        pairs.append((col, uid))
+        pairs.append((actual_col, uid))
 
     if not pairs:
         logger.warning("No mappable military columns found.")
@@ -269,13 +309,22 @@ def migrate_military(backup_cur, live_cur, dry_run: bool):
         )
     union_sql = " UNION ALL ".join(select_parts)
     backup_cur.execute(union_sql)
-    rows = backup_cur.fetchall()
+    all_rows = backup_cur.fetchall()
+
+    # Filter to only users that exist in the live database
+    valid_user_ids = get_valid_user_ids(live_cur)
+    rows = [r for r in all_rows if r["user_id"] in valid_user_ids]
 
     logger.info(
         "Migrating military: %d columns, %d total rows from backup...",
         len(pairs),
         len(rows),
     )
+    if len(rows) < len(all_rows):
+        logger.info(
+            "Filtered out %d rows for non-existent users.",
+            len(all_rows) - len(rows),
+        )
 
     if not rows:
         logger.warning("No non-zero military rows found in backup.")
@@ -322,24 +371,35 @@ def migrate_buildings(backup_cur, live_cur, dry_run: bool):
         return
 
     # proinfra is per-province; user_buildings is per-user → SUM.
+    # Join proinfra → provinces to get the user ID
     select_parts = []
     for col, bid in pairs:
         select_parts.append(
-            f'SELECT "userId" AS user_id, {bid} AS building_id, '
-            f'SUM(COALESCE("{col}", 0)) AS quantity '
+            f"SELECT provinces.userid AS user_id, {bid} AS building_id, "
+            f'SUM(COALESCE(proinfra."{col}", 0)) AS quantity '
             f"FROM proinfra "
-            f'GROUP BY "userId" '
-            f'HAVING SUM(COALESCE("{col}", 0)) > 0'
+            f"JOIN provinces ON proinfra.id = provinces.id "
+            f"GROUP BY provinces.userid "
+            f'HAVING SUM(COALESCE(proinfra."{col}", 0)) > 0'
         )
     union_sql = " UNION ALL ".join(select_parts)
     backup_cur.execute(union_sql)
-    rows = backup_cur.fetchall()
+    all_rows = backup_cur.fetchall()
+
+    # Filter to only users that exist in the live database
+    valid_user_ids = get_valid_user_ids(live_cur)
+    rows = [r for r in all_rows if r["user_id"] in valid_user_ids]
 
     logger.info(
         "Migrating buildings: %d columns, %d total rows from backup...",
         len(pairs),
         len(rows),
     )
+    if len(rows) < len(all_rows):
+        logger.info(
+            "Filtered out %d rows for non-existent users.",
+            len(all_rows) - len(rows),
+        )
 
     if not rows:
         logger.warning("No non-zero building rows found in backup.")
@@ -350,15 +410,13 @@ def migrate_buildings(backup_cur, live_cur, dry_run: bool):
         return
 
     upsert_sql = """
-        INSERT INTO user_buildings
-            (user_id, building_id, quantity, updated_at)
-        VALUES (%(user_id)s, %(building_id)s, %(quantity)s, now())
+        INSERT INTO user_buildings (user_id, building_id, quantity)
+        VALUES (%(user_id)s, %(building_id)s, %(quantity)s)
         ON CONFLICT (user_id, building_id)
         DO UPDATE SET
             quantity = GREATEST(
                 user_buildings.quantity, EXCLUDED.quantity
-            ),
-            updated_at = now()
+            )
     """
     execute_batch(live_cur, upsert_sql, rows, page_size=UPSERT_BATCH_SIZE)
     logger.info("Buildings upsert complete — %d rows processed.", len(rows))
