@@ -109,76 +109,208 @@
 
         <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
-        <div class="pagination-container">
-            <div class="pagination-row">
-                {% if current_page > 1 %}
-                    <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-nav-btn">←</a>
+        <style>
+            .modern-pagination {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 15px !important;
+                margin: 30px 0 !important;
+                flex-wrap: wrap !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .modern-pagination a,
+            .modern-pagination span.mp-pill {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 50px !important;
+                padding: 10px 20px !important;
+                border: 1px solid #ddd !important;
+                background: #fff !important;
+                color: #333 !important;
+                text-decoration: none !important;
+                transition: all 0.2s ease !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+                min-width: 42px !important;
+                height: 42px !important;
+                box-sizing: border-box !important;
+                line-height: 1 !important;
+            }
+            .modern-pagination a:hover {
+                border-color: #00a7e1 !important;
+                color: #00a7e1 !important;
+                background: #f0faff !important;
+            }
+            .modern-pagination .mp-active {
+                background-color: #00a7e1 !important;
+                color: white !important;
+                border-color: #00a7e1 !important;
+                font-weight: bold !important;
+            }
+            .modern-pagination .mp-disabled {
+                opacity: 0.3 !important;
+                cursor: not-allowed !important;
+                pointer-events: none !important;
+            }
+            .modern-pagination .mp-ellipsis {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 4px !important;
+                min-width: auto !important;
+                color: #999 !important;
+                font-weight: bold !important;
+                cursor: default !important;
+            }
+            .modern-pagination form {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .modern-pagination select,
+            .modern-pagination input[type="number"] {
+                border-radius: 20px !important;
+                padding: 8px 15px !important;
+                border: 1px solid #ccc !important;
+                height: 40px !important;
+                font-size: 13px !important;
+                background: #fff !important;
+                color: #333 !important;
+                box-sizing: border-box !important;
+                outline: none !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+            .modern-pagination select {
+                padding-right: 28px !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 10px center !important;
+            }
+            .modern-pagination input[type="number"] {
+                width: 70px !important;
+                text-align: center !important;
+            }
+            .modern-pagination input[type="number"]::-webkit-inner-spin-button,
+            .modern-pagination input[type="number"]::-webkit-outer-spin-button {
+                -webkit-appearance: none !important;
+                margin: 0 !important;
+            }
+            .modern-pagination select:hover,
+            .modern-pagination select:focus,
+            .modern-pagination input[type="number"]:hover,
+            .modern-pagination input[type="number"]:focus {
+                border-color: #00a7e1 !important;
+            }
+            .modern-pagination button[type="submit"] {
+                border-radius: 20px !important;
+                padding: 8px 20px !important;
+                border: 1px solid #00a7e1 !important;
+                background: #00a7e1 !important;
+                color: white !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                height: 40px !important;
+                transition: all 0.2s ease !important;
+                box-sizing: border-box !important;
+            }
+            .modern-pagination button[type="submit"]:hover {
+                background: #0096c7 !important;
+                border-color: #0096c7 !important;
+            }
+            .modern-pagination .mp-label {
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                color: #333 !important;
+                white-space: nowrap !important;
+            }
+            @media all and (max-width: 768px) {
+                .modern-pagination {
+                    gap: 8px !important;
+                    margin: 20px 0 !important;
+                }
+                .modern-pagination a,
+                .modern-pagination span.mp-pill {
+                    padding: 8px 14px !important;
+                    font-size: 12px !important;
+                    min-width: 34px !important;
+                    height: 34px !important;
+                }
+                .modern-pagination select,
+                .modern-pagination input[type="number"],
+                .modern-pagination button[type="submit"] {
+                    height: 34px !important;
+                    font-size: 12px !important;
+                }
+            }
+        </style>
+        <div class="modern-pagination">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">‹</a>
+            {% else %}
+                <span class="mp-pill mp-disabled">‹</span>
+            {% endif %}
+
+            {% set start_page = [current_page - 2, 1] | max %}
+            {% set end_page = [current_page + 2, total_pages] | min %}
+
+            {% if start_page > 1 %}
+                <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">1</a>
+                {% if start_page > 2 %}<span class="mp-pill mp-ellipsis">…</span>{% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == current_page %}
+                    <span class="mp-pill mp-active">{{ p }}</span>
                 {% else %}
-                    <span class="pagination-nav-btn pagination-nav-btn-disabled">←</span>
+                    <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ p }}</a>
                 {% endif %}
+            {% endfor %}
 
-                <!-- Page number buttons -->
-                {% set start_page = [current_page - 2, 1] | max %}
-                {% set end_page = [current_page + 2, total_pages] | min %}
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}<span class="mp-pill mp-ellipsis">…</span>{% endif %}
+                <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ total_pages }}</a>
+            {% endif %}
 
-                {% if start_page > 1 %}
-                    <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">1</a>
-                    {% if start_page > 2 %}
-                        <span class="pagination-ellipsis">...</span>
-                    {% endif %}
-                {% endif %}
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">›</a>
+            {% else %}
+                <span class="mp-pill mp-disabled">›</span>
+            {% endif %}
 
-                {% for p in range(start_page, end_page + 1) %}
-                    {% if p == current_page %}
-                        <span class="pagination-page-btn pagination-page-btn-active">{{ p }}</span>
-                    {% else %}
-                        <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">{{ p }}</a>
-                    {% endif %}
-                {% endfor %}
+            <form method="GET" id="perPageForm">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="sortway" value="{{ sortway }}">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                <input type="hidden" name="province_range" value="{{ province_range }}">
+                <input type="hidden" name="page" value="1">
+                <select name="per_page" onchange="document.getElementById('perPageForm').submit();">
+                    <option value="50" {% if per_page == 50 %}selected{% endif %}>50 / page</option>
+                    <option value="100" {% if per_page == 100 %}selected{% endif %}>100 / page</option>
+                    <option value="150" {% if per_page == 150 %}selected{% endif %}>150 / page</option>
+                </select>
+            </form>
 
-                {% if end_page < total_pages %}
-                    {% if end_page < total_pages - 1 %}
-                        <span class="pagination-ellipsis">...</span>
-                    {% endif %}
-                    <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">{{ total_pages }}</a>
-                {% endif %}
-
-                {% if current_page < total_pages %}
-                    <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-nav-btn">→</a>
-                {% else %}
-                    <span class="pagination-nav-btn pagination-nav-btn-disabled">→</span>
-                {% endif %}
-
-                <!-- Per-page dropdown -->
-                <form method="GET" class="pagination-form" id="perPageForm" style="display: flex; align-items: center; gap: 8px;">
-                    <input type="hidden" name="sort" value="{{ sort }}">
-                    <input type="hidden" name="sortway" value="{{ sortway }}">
-                    <input type="hidden" name="search" value="{{ search }}">
-                    <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
-                    <input type="hidden" name="upperinf" value="{{ upperinf }}">
-                    <input type="hidden" name="province_range" value="{{ province_range }}">
-                    <input type="hidden" name="page" value="1">
-                    <select name="per_page" class="pagination-dropdown" onchange="document.getElementById('perPageForm').submit();">
-                        <option value="50" {% if per_page == 50 %}selected{% endif %}>10 / page</option>
-                        <option value="100" {% if per_page == 100 %}selected{% endif %}>100 / page</option>
-                        <option value="150" {% if per_page == 150 %}selected{% endif %}>150 / page</option>
-                    </select>
-                </form>
-
-                <!-- Go to page input -->
-                <form method="GET" class="pagination-form" style="display: flex; align-items: center; gap: 6px;">
-                    <input type="hidden" name="sort" value="{{ sort }}">
-                    <input type="hidden" name="sortway" value="{{ sortway }}">
-                    <input type="hidden" name="search" value="{{ search }}">
-                    <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
-                    <input type="hidden" name="upperinf" value="{{ upperinf }}">
-                    <input type="hidden" name="province_range" value="{{ province_range }}">
-                    <input type="hidden" name="per_page" value="{{ per_page }}">
-                    <span class="pagination-label">Go to</span>
-                    <input type="number" name="page" class="pagination-input" min="1" max="{{ total_pages }}" placeholder="Page" required>
-                    <button type="submit" class="pagination-button">Go</button>
-                </form>
-            </div>
+            <form method="GET">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="sortway" value="{{ sortway }}">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                <input type="hidden" name="province_range" value="{{ province_range }}">
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <span class="mp-label">Go to</span>
+                <input type="number" name="page" min="1" max="{{ total_pages }}" placeholder="Page" required>
+                <button type="submit">Go</button>
+            </form>
         </div>
         {% endif %}
     </div>
