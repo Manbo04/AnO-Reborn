@@ -483,7 +483,7 @@ def country(cId):
         # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description,
-                      u.date, u.flag,
+                      u.date, u.flag, u.join_number,
                       c.id AS coalition_id, cm.role,
                       c.name as colName,
                       p.total_pop, p.avg_happiness,
@@ -515,6 +515,7 @@ def country(cId):
             description,
             dateCreated,
             flag,
+            join_number,
             coalition_id,
             colRole,
             colName,
@@ -672,6 +673,7 @@ def country(cId):
     return render_template(
         "country.html",
         username=username,
+        join_number=join_number,
         cId=cId,
         description=description,
         happiness=happiness,
@@ -765,13 +767,14 @@ def countries():
                    COALESCE(SUM(provinces.population), 0) AS province_population,
                    COALESCE(cm.colid, NULL) AS colid,
                    COALESCE(c.name, NULL) AS name,
-                   COUNT(provinces.id) as provinces_count
+                   COUNT(provinces.id) as provinces_count,
+                   users.join_number
             FROM users
             LEFT JOIN provinces ON users.id = provinces.userid
             LEFT JOIN coalitions_legacy cm ON users.id = cm.userid
             LEFT JOIN colNames c ON cm.colid = c.id
             {where_clause}
-            GROUP BY users.id, cm.colid, c.name
+            GROUP BY users.id, users.join_number, cm.colid, c.name
             HAVING COUNT(provinces.id) >= %s
         """
 
