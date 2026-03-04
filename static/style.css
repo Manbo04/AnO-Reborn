@@ -4027,7 +4027,9 @@ footer {
 .pagination-container {
     display: flex;
     justify-content: center;
-    margin: 30px auto;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
     padding: 20px;
     width: 100%;
     box-sizing: border-box;
@@ -4036,14 +4038,14 @@ footer {
 .pagination-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
-    padding: 16px 24px;
+    padding: 14px 20px;
     background: var(--foreground);
     border-radius: 50px;
-    border: 1.5px solid var(--border);
-    box-shadow: rgba(0, 0, 0, 0.08) 0 4px 12px 0;
+    border: 1px solid var(--border);
+    box-shadow: rgba(0, 0, 0, 0.06) 0 2px 8px 0;
 }
 
 /* Navigation buttons (prev/next arrows) */
@@ -4051,14 +4053,14 @@ footer {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    border: 1.5px solid var(--border);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border: 1px solid var(--border);
     background: var(--foreground);
     color: var(--colorOne);
     border-radius: 50%;
-    font-size: 16px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -4069,11 +4071,11 @@ footer {
     background: var(--foregroundFour);
     border-color: #00a7e1;
     color: #00a7e1;
-    box-shadow: rgba(0, 167, 225, 0.2) 0 0 8px 0;
+    transform: scale(1.05);
 }
 
 .pagination-nav-btn-disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     cursor: not-allowed;
     pointer-events: none;
 }
@@ -4083,10 +4085,10 @@ footer {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 36px;
-    height: 36px;
-    padding: 0 12px;
-    border: 1.5px solid var(--border);
+    min-width: 40px;
+    height: 40px;
+    padding: 10px 18px;
+    border: 1px solid var(--border);
     background: var(--foreground);
     color: var(--colorOne);
     border-radius: 50px;
@@ -4101,20 +4103,22 @@ footer {
     background: var(--foregroundFour);
     border-color: #00a7e1;
     color: #00a7e1;
+    transform: translateY(-1px);
 }
 
 /* Active page button */
 .pagination-page-btn-active {
-    background: #00a7e1;
+    background-color: #00a7e1;
     color: white;
     border-color: #00a7e1;
-    font-weight: 600;
+    font-weight: bold;
+    box-shadow: rgba(0, 167, 225, 0.25) 0 4px 12px 0;
 }
 
 .pagination-page-btn-active:hover {
-    background: #0088b5;
-    border-color: #0088b5;
-    box-shadow: rgba(0, 167, 225, 0.3) 0 4px 12px 0;
+    background-color: #0096c7;
+    border-color: #0096c7;
+    transform: translateY(-1px);
 }
 
 /* Ellipsis for page gaps */
@@ -4127,11 +4131,11 @@ footer {
 
 /* Dropdown for per-page selection */
 .pagination-dropdown {
-    padding: 8px 14px;
-    border: 1.5px solid var(--border);
+    padding: 8px 16px;
+    border: 1px solid var(--border);
     background: var(--foreground);
     color: var(--colorOne);
-    border-radius: 6px;
+    border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -4153,7 +4157,7 @@ footer {
 
 /* Label text for "Go to page" */
 .pagination-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--colorOne);
     white-space: nowrap;
@@ -4161,12 +4165,12 @@ footer {
 
 /* Input field for "Go to page" */
 .pagination-input {
-    width: 60px;
-    padding: 8px 12px;
-    border: 1.5px solid var(--border);
+    width: 70px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
     background: var(--foreground);
     color: var(--colorOne);
-    border-radius: 6px;
+    border-radius: 20px;
     font-size: 13px;
     text-align: center;
     transition: all 0.2s ease;
@@ -4186,11 +4190,11 @@ footer {
 
 /* Button for "Go" action */
 .pagination-button {
-    padding: 8px 18px;
-    border: 1.5px solid #00a7e1;
+    padding: 8px 20px;
+    border: 1px solid #00a7e1;
     background: #00a7e1;
     color: white;
-    border-radius: 6px;
+    border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
