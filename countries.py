@@ -820,11 +820,11 @@ def countries():
     reverse = sortway == "desc"
     if sort == "influence":
         processed_results = sorted(
-            processed_results, key=itemgetter(8), reverse=reverse
+            processed_results, key=itemgetter(9), reverse=reverse
         )
     elif sort == "age":
         processed_results = sorted(
-            processed_results, key=itemgetter(9), reverse=reverse
+            processed_results, key=itemgetter(10), reverse=reverse
         )
     elif sort == "population":
         processed_results = sorted(
