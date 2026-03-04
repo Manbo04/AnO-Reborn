@@ -4019,3 +4019,264 @@ footer {
     margin: 10px 0;
     color: #888;
 }
+
+/* ============================================
+   MODERN PAGINATION (Style #2 Design)
+   ============================================ */
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin: 30px auto;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pagination-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 16px 24px;
+    background: var(--foreground);
+    border-radius: 50px;
+    border: 1.5px solid var(--border);
+    box-shadow: rgba(0, 0, 0, 0.08) 0 4px 12px 0;
+}
+
+/* Navigation buttons (prev/next arrows) */
+.pagination-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border: 1.5px solid var(--border);
+    background: var(--foreground);
+    color: var(--colorOne);
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.pagination-nav-btn:hover:not(.pagination-nav-btn-disabled) {
+    background: var(--foregroundFour);
+    border-color: #00a7e1;
+    color: #00a7e1;
+    box-shadow: rgba(0, 167, 225, 0.2) 0 0 8px 0;
+}
+
+.pagination-nav-btn-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Page number buttons (pill shape) */
+.pagination-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    background: var(--foreground);
+    color: var(--colorOne);
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.pagination-page-btn:hover {
+    background: var(--foregroundFour);
+    border-color: #00a7e1;
+    color: #00a7e1;
+}
+
+/* Active page button */
+.pagination-page-btn-active {
+    background: #00a7e1;
+    color: white;
+    border-color: #00a7e1;
+    font-weight: 600;
+}
+
+.pagination-page-btn-active:hover {
+    background: #0088b5;
+    border-color: #0088b5;
+    box-shadow: rgba(0, 167, 225, 0.3) 0 4px 12px 0;
+}
+
+/* Ellipsis for page gaps */
+.pagination-ellipsis {
+    color: var(--colorOne);
+    opacity: 0.6;
+    font-weight: bold;
+    margin: 0 2px;
+}
+
+/* Dropdown for per-page selection */
+.pagination-dropdown {
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    background: var(--foreground);
+    color: var(--colorOne);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: fit-content;
+}
+
+.pagination-dropdown:hover,
+.pagination-dropdown:focus {
+    border-color: #00a7e1;
+    background: var(--foregroundFour);
+    outline: none;
+}
+
+.pagination-dropdown option {
+    background: var(--background);
+    color: var(--colorOne);
+}
+
+/* Label text for "Go to page" */
+.pagination-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--colorOne);
+    white-space: nowrap;
+}
+
+/* Input field for "Go to page" */
+.pagination-input {
+    width: 60px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    background: var(--foreground);
+    color: var(--colorOne);
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.pagination-input:hover,
+.pagination-input:focus {
+    border-color: #00a7e1;
+    background: var(--foregroundFour);
+    outline: none;
+}
+
+.pagination-input::placeholder {
+    color: var(--colorOne);
+    opacity: 0.5;
+}
+
+/* Button for "Go" action */
+.pagination-button {
+    padding: 8px 18px;
+    border: 1.5px solid #00a7e1;
+    background: #00a7e1;
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.pagination-button:hover,
+.pagination-button:focus {
+    background: #0088b5;
+    border-color: #0088b5;
+    box-shadow: rgba(0, 167, 225, 0.3) 0 4px 12px 0;
+    outline: none;
+}
+
+.pagination-button:active {
+    transform: scale(0.95);
+}
+
+/* Form wrapper styling */
+.pagination-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Mobile responsiveness for pagination */
+@media all and (max-width: 1200px) {
+    .pagination-row {
+        gap: 8px;
+        padding: 12px 16px;
+    }
+
+    .pagination-nav-btn,
+    .pagination-page-btn {
+        font-size: 12px;
+        min-width: 32px;
+        height: 32px;
+    }
+}
+
+@media all and (max-width: 768px) {
+    .pagination-container {
+        margin: 20px auto;
+        padding: 10px;
+    }
+
+    .pagination-row {
+        flex-direction: column;
+        gap: 10px;
+        border-radius: 12px;
+    }
+
+    .pagination-form {
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pagination-input {
+        width: 100%;
+    }
+
+    .pagination-button {
+        width: 100%;
+    }
+
+    .pagination-dropdown {
+        width: auto;
+    }
+}
+
+@media all and (max-width: 500px) {
+    .pagination-row {
+        padding: 8px 12px;
+    }
+
+    .pagination-page-btn {
+        padding: 0 8px;
+        font-size: 11px;
+    }
+
+    .pagination-nav-btn {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        font-size: 14px;
+    }
+}
