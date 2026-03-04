@@ -109,28 +109,76 @@
 
         <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
-        <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
-            {% if current_page > 1 %}
-                <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
-                <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
-            {% endif %}
-
-            <!-- Page number links -->
-            {% set start_page = [current_page - 2, 1] | max %}
-            {% set end_page = [current_page + 2, total_pages] | min %}
-
-            {% for p in range(start_page, end_page + 1) %}
-                {% if p == current_page %}
-                    <span class="templatedivbutton smallactionbutton" style="background: #444;">{{ p }}</span>
+        <div class="pagination-container">
+            <div class="pagination-row">
+                {% if current_page > 1 %}
+                    <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-nav-btn">←</a>
                 {% else %}
-                    <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
+                    <span class="pagination-nav-btn pagination-nav-btn-disabled">←</span>
                 {% endif %}
-            {% endfor %}
 
-            {% if current_page < total_pages %}
-                <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Next →</a>
-                <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Last</a>
-            {% endif %}
+                <!-- Page number buttons -->
+                {% set start_page = [current_page - 2, 1] | max %}
+                {% set end_page = [current_page + 2, total_pages] | min %}
+
+                {% if start_page > 1 %}
+                    <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">1</a>
+                    {% if start_page > 2 %}
+                        <span class="pagination-ellipsis">...</span>
+                    {% endif %}
+                {% endif %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                    {% if p == current_page %}
+                        <span class="pagination-page-btn pagination-page-btn-active">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                        <span class="pagination-ellipsis">...</span>
+                    {% endif %}
+                    <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-page-btn">{{ total_pages }}</a>
+                {% endif %}
+
+                {% if current_page < total_pages %}
+                    <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="pagination-nav-btn">→</a>
+                {% else %}
+                    <span class="pagination-nav-btn pagination-nav-btn-disabled">→</span>
+                {% endif %}
+
+                <!-- Per-page dropdown -->
+                <form method="GET" class="pagination-form" id="perPageForm" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="hidden" name="sort" value="{{ sort }}">
+                    <input type="hidden" name="sortway" value="{{ sortway }}">
+                    <input type="hidden" name="search" value="{{ search }}">
+                    <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                    <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                    <input type="hidden" name="province_range" value="{{ province_range }}">
+                    <input type="hidden" name="page" value="1">
+                    <select name="per_page" class="pagination-dropdown" onchange="document.getElementById('perPageForm').submit();">
+                        <option value="50" {% if per_page == 50 %}selected{% endif %}>10 / page</option>
+                        <option value="100" {% if per_page == 100 %}selected{% endif %}>100 / page</option>
+                        <option value="150" {% if per_page == 150 %}selected{% endif %}>150 / page</option>
+                    </select>
+                </form>
+
+                <!-- Go to page input -->
+                <form method="GET" class="pagination-form" style="display: flex; align-items: center; gap: 6px;">
+                    <input type="hidden" name="sort" value="{{ sort }}">
+                    <input type="hidden" name="sortway" value="{{ sortway }}">
+                    <input type="hidden" name="search" value="{{ search }}">
+                    <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                    <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                    <input type="hidden" name="province_range" value="{{ province_range }}">
+                    <input type="hidden" name="per_page" value="{{ per_page }}">
+                    <span class="pagination-label">Go to</span>
+                    <input type="number" name="page" class="pagination-input" min="1" max="{{ total_pages }}" placeholder="Page" required>
+                    <button type="submit" class="pagination-button">Go</button>
+                </form>
+            </div>
         </div>
         {% endif %}
     </div>
