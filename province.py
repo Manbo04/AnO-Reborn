@@ -54,7 +54,10 @@ def province(pId):
                    p.pollution, p.happiness, p.productivity, p.consumer_spending,
                    CAST(p.citycount AS INTEGER) as citycount,
                    p.land, p.energy AS electricity,
-                   s.location
+                   s.location,
+                   COALESCE(p.pop_children, 0) AS pop_children,
+                   COALESCE(p.pop_working, 0) AS pop_working,
+                   COALESCE(p.pop_elderly, 0) AS pop_elderly
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
             WHERE p.id = %s
