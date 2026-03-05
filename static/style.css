@@ -4352,37 +4352,39 @@ footer {
 }
 
 /* ===== GLASSMORPHISM DESIGN UPGRADE ===== */
-/* Enhanced templatedivflex2 with glass effect */
+/* Enhanced templatedivflex2 with refined glass effect */
 .templatedivflex2left,
 .templatedivflex2right {
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1),
-                0 4px 16px 0 rgba(31, 38, 135, 0.08),
-                inset 0 1px 2px 0 rgba(255, 255, 255, 0.3) !important;
-    margin: 24px auto !important;
-    padding: 24px !important;
-    border-radius: 12px !important;
-}
-
-/* Glassmorphic tables */
-.templatetable {
-    background: rgba(255, 255, 255, 0.75) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 6px 24px 0 rgba(31, 38, 135, 0.08),
-                inset 0 1px 1px 0 rgba(255, 255, 255, 0.5) !important;
-    margin: 16px auto !important;
+    box-shadow: 0 6px 24px 0 rgba(100, 120, 180, 0.06),
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.4) !important;
+    margin: 20px auto !important;
+    padding: 24px !important;
+    border-radius: 10px !important;
+}
+
+/* Glassmorphic tables - refined */
+.templatetable {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(6px);
+    border: none !important;
+    box-shadow: 0 3px 12px 0 rgba(100, 120, 180, 0.04) !important;
+    margin: 12px auto !important;
     border-radius: 8px !important;
 }
 
 .templatetable tr:nth-child(odd) {
-    background: rgba(240, 244, 248, 0.7) !important;
+    background: rgba(248, 250, 252, 0.8) !important;
 }
 
 .templatetable tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.6) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.templatetable th {
+    border-bottom: 1px solid rgba(200, 210, 230, 0.3) !important;
 }
 
 /* Canvas chart styling */
@@ -4396,11 +4398,24 @@ canvas {
     position: relative;
     width: 100%;
     min-height: 320px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
     padding: 20px;
-    margin: 20px auto;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    margin: 16px auto;
+    box-shadow: 0 6px 24px 0 rgba(100, 120, 180, 0.06);
+}
+
+/* Refined container headers - minimal borders */
+.templatecontentheaderleft {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+    color: rgba(40, 50, 80, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
