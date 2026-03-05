@@ -66,6 +66,86 @@ CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = 50000  # population served per buildi
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
 
+# PHASE 3: AGING, EDUCATION & WORKFORCE (Phase 3)
+# Daily population aging rates (per tick, as fraction)
+DEMO_AGING_RATES = {
+    "elderly_death_rate": 0.002,  # 0.2% of elderly die per tick
+    "working_to_elderly_rate": 0.001,  # 0.1% move to elderly per tick
+    "children_to_working_rate": 0.005,  # 0.5% graduate to working per tick
+}
+
+# Education distribution (when children graduate)
+# Determined by available school/university capacity in province
+EDUCATION_GRADUATION_PRIORITY = [
+    "university",  # If capacity available -> edu_college
+    "high_school",  # Else if capacity available -> edu_highschool
+    # Else -> edu_none (default)
+]
+
+# Building employment matrices
+# Format: building_name -> {worker_count: int, education_requirements: {edu_level: %}}
+BUILDING_EMPLOYMENT_MATRICES = {
+    "farms": {"worker_count": 50000, "education": {"edu_none": 1.0}},
+    "coal_burners": {
+        "worker_count": 80000,
+        "education": {"edu_highschool": 0.4, "edu_college": 0.6},
+    },
+    "oil_burners": {
+        "worker_count": 75000,
+        "education": {"edu_highschool": 0.4, "edu_college": 0.6},
+    },
+    "nuclear_reactors": {
+        "worker_count": 150000,
+        "education": {"edu_highschool": 0.4, "edu_college": 0.6},
+    },
+    "hydro_dams": {
+        "worker_count": 120000,
+        "education": {"edu_highschool": 0.4, "edu_college": 0.6},
+    },
+    "solar_fields": {
+        "worker_count": 60000,
+        "education": {"edu_highschool": 0.3, "edu_college": 0.7},
+    },
+    "industrial_district": {
+        "worker_count": 200000,
+        "education": {"edu_none": 0.8, "edu_highschool": 0.2},
+    },
+    "primary_school": {
+        "worker_count": 30000,
+        "education": {"edu_none": 1.0},
+    },
+    "high_school": {
+        "worker_count": 40000,
+        "education": {"edu_none": 0.5, "edu_highschool": 0.5},
+    },
+    "university": {
+        "worker_count": 50000,
+        "education": {
+            "edu_none": 0.2,
+            "edu_highschool": 0.3,
+            "edu_college": 0.5,
+        },
+    },
+    "component_factories": {
+        "worker_count": 100000,
+        "education": {"edu_highschool": 0.4, "edu_college": 0.6},
+    },
+    "steel_mills": {
+        "worker_count": 90000,
+        "education": {"edu_none": 0.6, "edu_highschool": 0.4},
+    },
+}
+
+# Feature flag for Phase 3 (workforce/employment system)
+FEATURE_PHASE3_WORKFORCE = True
+
+# Debuff thresholds
+UNEMPLOYMENT_THRESHOLD = 0.3  # 30%+ unemployment triggers debuff
+UNEMPLOYMENT_HAPPINESS_PENALTY = 10  # Happiness loss per tick
+PENSION_CRISIS_RATIO = 0.4  # Elderly > 40% of working = pension crisis
+PENSION_CRISIS_GOLD_PENALTY = 5000  # Gold cost per tick when in crisis
+PRODUCTION_EFFICIENCY_MIN = 0.2  # Minimum 20% production if severely understaffed
+
 UNITS = [
     "soldiers",
     "tanks",
