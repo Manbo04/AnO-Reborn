@@ -29,6 +29,7 @@ import policies
 import statistics
 import requests
 import trade_agreements
+import admin_tools
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
@@ -150,8 +151,61 @@ def before_request():
             url = request.url.replace("http://", "https://", 1)
             return redirect(url, code=301)
 
-    # Lightweight last_active heartbeat: update at most once per hour
     user_id = session.get("user_id")
+
+    # Enforce admin ban / kick controls (table may not exist on older DBs)
+    if user_id:
+        try:
+            with get_db_cursor() as _db:
+                _db.execute(
+                    """
+                    SELECT COALESCE(is_banned, FALSE),
+                           COALESCE(ban_reason, ''),
+                           COALESCE(kick_pending, FALSE)
+                    FROM admin_user_controls
+                    WHERE user_id = %s
+                    """,
+                    (user_id,),
+                )
+                control_row = _db.fetchone()
+
+            if control_row:
+                is_banned, ban_reason, kick_pending = control_row
+
+                if is_banned:
+                    session.clear()
+                    return (
+                        render_template(
+                            "error.html",
+                            code=403,
+                            message=(
+                                "Your account is banned. "
+                                f"Reason: {ban_reason or 'No reason provided.'}"
+                            ),
+                        ),
+                        403,
+                    )
+
+                if kick_pending:
+                    try:
+                        with get_db_cursor() as _db:
+                            _db.execute(
+                                (
+                                    "UPDATE admin_user_controls "
+                                    "SET kick_pending=FALSE, updated_at=NOW() "
+                                    "WHERE user_id=%s"
+                                ),
+                                (user_id,),
+                            )
+                    except Exception:
+                        pass
+
+                    session.clear()
+                    return redirect("/login")
+        except Exception:
+            pass
+
+    # Lightweight last_active heartbeat: update at most once per hour
     if user_id:
         now = time()
         last_ping = session.get("_last_active_ping", 0)
@@ -194,6 +248,7 @@ countries.register_countries_routes(app)
 policies.register_policies_routes(app)
 statistics.register_statistics_routes(app)
 trade_agreements.register_trade_agreement_routes(app)
+admin_tools.register_admin_tools_routes(app)
 
 # Configure OAuth2 SECRET_KEY from login module
 oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
