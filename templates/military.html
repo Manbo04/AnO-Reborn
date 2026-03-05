@@ -151,21 +151,21 @@
 
                     </div>
                 </div>
-            </div>["quantity"] }} Tanks</h3>
-
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["tanks"]["attack"] }} ATK / {{ units["tanks"]["defense"] }} DEF</p>
-                            {% if units["tanks"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} {{ units["tanks"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div
+            </div>
             <div class="menudiv">
                 <h2 class="templatecontentheaderleft">Tanks</h2>
 
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">You have {{ units["tanks"] }} Tanks</h3>
+                        <h3 class="templatecontentheadercenter">You have {{ units["tanks"]["quantity"] }} Tanks</h3>
+
+                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
+                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["tanks"]["attack"] }} ATK / {{ units["tanks"]["defense"] }} DEF</p>
+                            {% if units["tanks"]["maintenance_per_tick"] > 0 %}
+                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} {{ units["tanks"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
 
                         <p class="templatecontentpleft">Tanks are mediocre in both cost and power, and cost 1 munitions and 2 gasoline per 100 tanks in battle. This makes them perfect for taking on soldiers, and for obtaining field and city control.</p>
 
@@ -434,7 +434,14 @@
                     </div>
                 </div>
             </div>
-            <div class="menudiv">["quantity"] }} Cruisers</h2>
+            <div class="menudiv">
+
+                <h2 class="templatecontentheaderleft">Cruisers</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["cruisers"]["quantity"] }} Cruisers</h3>
 
                         <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
                             <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["cruisers"]["attack"] }} ATK / {{ units["cruisers"]["defense"] }} DEF</p>
@@ -442,14 +449,6 @@
                             <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
-
-
-                <h2 class="templatecontentheaderleft">Cruisers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h2 class="templatecontentheadercenter">You have {{ units["cruisers"] }} Cruisers</h2>
                         <p class="templatecontentpleft">Cruisers are the powerhouse of the ocean, and are very expensive. Cruisers counter destroyers, figher jets, apaches, and can obtain a naval blockade on the enemy.</p>
 
                         <ul>{{ "cruisers" | milres }}
