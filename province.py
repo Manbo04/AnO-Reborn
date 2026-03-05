@@ -143,7 +143,7 @@ def province(pId):
             """,
             (user_id,),
         )
-        units = {row[0]: row[1] for row in db.fetchall()}
+        units = {row["name"]: row["quantity"] for row in db.fetchall()}
         # Ensure all expected building names exist in units (default 0)
         all_building_names = [
             "coal_burners",
@@ -184,7 +184,6 @@ def province(pId):
             "industrial_district",
             "primary_school",
             "high_school",
-            "university",
         ]
         for bname in all_building_names:
             units.setdefault(bname, 0)
@@ -247,7 +246,7 @@ def province(pId):
             """,
             (user_id,),
         )
-        economy_values = {name: qty for name, qty in db.fetchall()}
+        economy_values = {row["name"]: row["quantity"] for row in db.fetchall()}
         consumer_goods = economy_values.get("consumer_goods", 0) or 0
         rations = economy_values.get("rations", 0) or 0
 
