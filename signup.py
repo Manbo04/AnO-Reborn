@@ -20,6 +20,38 @@ import requests  # noqa: E402
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 load_dotenv()
 
+
+def _init_economy_tables(db, user_id):
+    """Initialize Economy 2.0 normalized tables for a new player.
+
+    Creates rows in user_economy (one per resource), user_buildings (one per
+    building) and user_military (one per unit) with quantity 0.  Uses
+    ON CONFLICT DO NOTHING so the call is idempotent.
+    """
+    # user_economy — one row per resource in resource_dictionary
+    db.execute(
+        "INSERT INTO user_economy (user_id, resource_id, quantity) "
+        "SELECT %s, resource_id, 0 FROM resource_dictionary "
+        "ON CONFLICT DO NOTHING",
+        (user_id,),
+    )
+    # user_buildings — one row per active building in building_dictionary
+    db.execute(
+        "INSERT INTO user_buildings (user_id, building_id, quantity) "
+        "SELECT %s, building_id, 0 FROM building_dictionary WHERE is_active = TRUE "
+        "ON CONFLICT DO NOTHING",
+        (user_id,),
+    )
+    # user_military — one row per active unit in unit_dictionary
+    db.execute(
+        "INSERT INTO user_military (user_id, unit_id, quantity) "
+        "SELECT %s, unit_id, 0 FROM unit_dictionary WHERE is_active = TRUE "
+        "ON CONFLICT DO NOTHING",
+        (user_id,),
+    )
+    logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)
+
+
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 try:
@@ -471,6 +503,9 @@ def discord_register():
                     (user_id,),
                 )
 
+                # Initialize Economy 2.0 normalized tables
+                _init_economy_tables(db, user_id)
+
             # Mark attempt as successful
             with get_db_cursor() as db:
                 db.execute(
@@ -714,66 +749,68 @@ def signup():
                 if not email_sent:
                     logger.warning(f"Failed to send verification email to {email}")
 
-                # Create all the user's game tables
-                # (needed for game to work after verification)
-                # Create all the user's game tables (idempotent)
-                # Use ON CONFLICT DO NOTHING to tolerate duplicate inserts
-                # (e.g. retries or concurrent/duplicate requests)
-                db.execute(
-                    (
-                        "INSERT INTO stats (id, location) VALUES (%s, %s) "
-                        "ON CONFLICT DO NOTHING RETURNING id"
-                    ),
-                    (user_id, continent),
+            # Create all the user's game tables (idempotent)
+            # Use ON CONFLICT DO NOTHING to tolerate duplicate inserts
+            # (e.g. retries or concurrent/duplicate requests)
+            # These must be created for ALL signup paths (verification and legacy)
+            db.execute(
+                (
+                    "INSERT INTO stats (id, location) VALUES (%s, %s) "
+                    "ON CONFLICT DO NOTHING RETURNING id"
+                ),
+                (user_id, continent),
+            )
+            if not db.fetchone():
+                logger.info(
+                    "signup: stats row already exists for user_id=%s ip=%s",
+                    user_id,
+                    request.remote_addr,
                 )
-                if not db.fetchone():
-                    logger.info(
-                        "signup: stats row already exists for user_id=%s ip=%s",
-                        user_id,
-                        request.remote_addr,
-                    )
 
-                db.execute(
-                    (
-                        "INSERT INTO resources (id) VALUES (%s) "
-                        "ON CONFLICT DO NOTHING RETURNING id"
-                    ),
-                    (user_id,),
+            db.execute(
+                (
+                    "INSERT INTO resources (id) VALUES (%s) "
+                    "ON CONFLICT DO NOTHING RETURNING id"
+                ),
+                (user_id,),
+            )
+            if not db.fetchone():
+                logger.info(
+                    "signup: resources row already exists for user_id=%s ip=%s",
+                    user_id,
+                    request.remote_addr,
                 )
-                if not db.fetchone():
-                    logger.info(
-                        "signup: resources row already exists for user_id=%s ip=%s",
-                        user_id,
-                        request.remote_addr,
-                    )
 
-                db.execute(
-                    (
-                        "INSERT INTO upgrades (user_id) VALUES (%s) "
-                        "ON CONFLICT DO NOTHING RETURNING user_id"
-                    ),
-                    (user_id,),
+            db.execute(
+                (
+                    "INSERT INTO upgrades (user_id) VALUES (%s) "
+                    "ON CONFLICT DO NOTHING RETURNING user_id"
+                ),
+                (user_id,),
+            )
+            if not db.fetchone():
+                logger.info(
+                    "signup: upgrades row already exists for user_id=%s ip=%s",
+                    user_id,
+                    request.remote_addr,
                 )
-                if not db.fetchone():
-                    logger.info(
-                        "signup: upgrades row already exists for user_id=%s ip=%s",
-                        user_id,
-                        request.remote_addr,
-                    )
 
-                db.execute(
-                    (
-                        "INSERT INTO policies (user_id) VALUES (%s) "
-                        "ON CONFLICT DO NOTHING RETURNING user_id"
-                    ),
-                    (user_id,),
+            db.execute(
+                (
+                    "INSERT INTO policies (user_id) VALUES (%s) "
+                    "ON CONFLICT DO NOTHING RETURNING user_id"
+                ),
+                (user_id,),
+            )
+            if not db.fetchone():
+                logger.info(
+                    "signup: policies row already exists for user_id=%s ip=%s",
+                    user_id,
+                    request.remote_addr,
                 )
-                if not db.fetchone():
-                    logger.info(
-                        "signup: policies row already exists for user_id=%s ip=%s",
-                        user_id,
-                        request.remote_addr,
-                    )
+
+            # Initialize Economy 2.0 normalized tables
+            _init_economy_tables(db, user_id)
 
             # If verification is enabled, redirect to pending page.
             # Otherwise, log them in
