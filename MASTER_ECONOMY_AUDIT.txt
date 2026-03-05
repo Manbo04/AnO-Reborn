@@ -1,0 +1,320 @@
+
+================================================================================
+MASTER GAME ECONOMY & ARCHITECTURE AUDIT
+Affairs & Order: Complete Economic Blueprint
+================================================================================
+Generated: 4 March 2026
+
+
+================================================================================
+1. GLOBAL ECONOMY & LAND ACQUISITION
+================================================================================
+
+  BASE TAX GENERATION:
+    Per Citizen/Worker: $0.025 base
+    With Consumer Goods: 1.5x multiplier
+    Per Land Slot Bonus: +2.0% per land slot (capped at 100%)
+    Without Energy: 0.85x (15% reduction)
+    Without Food: 0.7x (30% reduction)
+
+  POPULATION GROWTH:
+    Base Max Population: 1,000,000
+    Per City Slot: +750,000 max population
+    Per Land Slot: +120,000 max population
+    Happiness Impact: 4.0% growth modifier per happiness point
+    Pollution Impact: 2.0% reduction per pollution point
+
+  LAND & PROVINCE ACQUISITION COSTS:
+    New Province: $8,000,000 * (1 + 0.16 * province_count)
+      Example: 1st province = $8M, 2nd = $9.28M, 3rd = $10.56M
+    City Slot: $750,000 base + $50,000 per existing city
+      (Linear scaling: nth city costs base + 50k*n)
+    Land Slot: $520,000 base + $25,000 per existing land
+      (Linear scaling: nth land costs base + 25k*n)
+
+  RESOURCE CONSUMPTION (Legacy):
+    Rations: 1 per 50,000 population
+    Consumer Goods: 1 per 80,000 population
+    (Note: Overridden by demographic system if enabled)
+
+
+================================================================================
+2. DEMOGRAPHICS & CONSUMPTION (Phase 2/3)
+================================================================================
+
+  AGING RATES (Per Tick):
+    Elderly Death: 0.2% per tick
+    Working → Elderly: 0.1% per tick
+    Children → Working: 0.5% per tick
+
+  RATIONS CONSUMPTION (Per Capita Per Tick):
+    Working Population: 1.0 rations/person
+    Children: 1.3 rations/person (+30%)
+    Elderly: 0.8 rations/person (-20%)
+
+  CONSUMER GOODS CONSUMPTION (Per Capita Per Tick):
+    Working Population: 1.0 CG/person
+    Children: 1.2 CG/person (+20%)
+    Elderly: 2.0 CG/person (2x)
+
+
+================================================================================
+3. COMPLETE BUILDING CATALOG
+================================================================================
+
+  POWER GENERATION:
+  ----------------------------------------------------------------------------
+
+    COAL BURNERS:
+      Build Cost: $200,000 + 45 aluminium
+      Gold Upkeep: $7,800 per tick
+      Consumes: 11 coal per tick
+      Produces: +4 energy per tick
+      Effects: +6 pollution
+      Employment: 80,000 workers [college: 60%, highschool: 40%]
+
+    OIL BURNERS:
+      Build Cost: $350,000 + 50 aluminium
+      Gold Upkeep: $11,700 per tick
+      Consumes: 16 oil per tick
+      Produces: +5 energy per tick
+      Effects: +4 pollution
+      Employment: 75,000 workers [college: 60%, highschool: 40%]
+
+    HYDRO DAMS:
+      Build Cost: $2,200,000 + 120 steel, 60 aluminium
+      Gold Upkeep: $24,000 per tick
+      Produces: +6 energy per tick
+      Employment: 120,000 workers [college: 60%, highschool: 40%]
+
+    NUCLEAR REACTORS:
+      Build Cost: $8,500,000 + 250 steel
+      Gold Upkeep: $111,000 per tick
+      Consumes: 32 uranium per tick
+      Produces: +15 energy per tick
+      Employment: 150,000 workers [college: 60%, highschool: 40%]
+
+    SOLAR FIELDS:
+      Build Cost: $600,000 + 55 steel
+      Gold Upkeep: $13,000 per tick
+      Produces: +3 energy per tick
+      Employment: 60,000 workers [college: 70%, highschool: 30%]
+
+  RETAIL / CONSUMER GOODS:
+  ----------------------------------------------------------------------------
+
+    GAS STATIONS:
+      Build Cost: $550,000 + 50 steel, 35 aluminium
+      Gold Upkeep: $20,000 per tick
+      Produces: +12 consumer_goods per tick
+      Distribution Cap: 50,000 population coverage/building
+      Effects: +4 pollution
+
+    GENERAL STORES:
+      Build Cost: $1,200,000 + 60 steel, 70 aluminium
+      Gold Upkeep: $37,500 per tick
+      Produces: +10 consumer_goods per tick
+      Distribution Cap: 50,000 population coverage/building
+      Effects: +2 pollution
+
+    FARMERS MARKETS:
+      Build Cost: $350,000 + 75 steel, 80 aluminium
+      Gold Upkeep: $80,000 per tick
+      Produces: +16 consumer_goods per tick
+      Distribution Cap: 50,000 population coverage/building
+      Effects: +5 pollution
+
+    MALLS:
+      Build Cost: $15,500,000 + 360 steel, 240 aluminium
+      Gold Upkeep: $450,000 per tick
+      Produces: +30 consumer_goods per tick
+      Distribution Cap: 50,000 population coverage/building
+      Effects: +9 pollution
+
+    BANKS:
+      Build Cost: $9,000,000 + 225 steel, 110 aluminium
+      Gold Upkeep: $220,000 per tick
+      Produces: +20 consumer_goods per tick
+
+  PUBLIC WORKS / SERVICES:
+  ----------------------------------------------------------------------------
+
+    CITY PARKS:
+      Build Cost: $350,000 + 15 steel
+      Gold Upkeep: $25,000 per tick
+      Effects: +5 happiness
+      Reduces: -6 pollution
+
+    LIBRARIES:
+      Build Cost: $800,000 + 55 steel, 40 aluminium
+      Gold Upkeep: $60,000 per tick
+      Effects: +5 happiness, +3 productivity
+
+    HOSPITALS:
+      Build Cost: $2,300,000 + 140 steel, 85 aluminium
+      Gold Upkeep: $85,000 per tick
+      Effects: +8 happiness
+
+    UNIVERSITIES:
+      Build Cost: $6,800,000 + 210 steel, 105 aluminium
+      Gold Upkeep: $175,000 per tick
+      Effects: +10 productivity, +4 happiness
+
+    MONORAILS:
+      Build Cost: $17,500,000 + 390 steel, 195 aluminium
+      Gold Upkeep: $270,000 per tick
+      Effects: +16 productivity
+      Reduces: -20 pollution
+
+  MILITARY INFRASTRUCTURE:
+  ----------------------------------------------------------------------------
+
+    ARMY BASES:
+      Build Cost: $650,000 + 80 lumber
+      Gold Upkeep: $25,000 per tick
+
+    HARBOURS:
+      Build Cost: $1,200,000 + 210 steel
+      Gold Upkeep: $35,000 per tick
+
+    AERODOMES:
+      Build Cost: $1,400,000 + 40 aluminium, 165 steel
+      Gold Upkeep: $55,000 per tick
+
+    ADMIN BUILDINGS:
+      Build Cost: $3,600,000 + 90 steel, 75 aluminium
+      Gold Upkeep: $90,000 per tick
+
+    SILOS:
+      Build Cost: $21,000,000 + 540 steel, 240 aluminium
+      Gold Upkeep: $340,000 per tick
+
+  RESOURCE EXTRACTION:
+  ----------------------------------------------------------------------------
+
+    FARMS:
+      Build Cost: $140,000 + 10 lumber
+      Gold Upkeep: $3,000 per tick
+      Produces: +12 rations per tick
+      Effects: +1 pollution
+      Employment: 50,000 workers [none: 100%]
+
+    PUMPJACKS:
+      Build Cost: $250,000 + 15 steel
+      Gold Upkeep: $9,500 per tick
+      Produces: +24 oil per tick
+      Effects: +2 pollution
+
+    COAL MINES:
+      Build Cost: $290,000 + 30 lumber
+      Gold Upkeep: $4,200 per tick
+      Produces: +31 coal per tick
+      Effects: +2 pollution
+
+    BAUXITE MINES:
+      Build Cost: $260,000 + 20 lumber
+      Gold Upkeep: $8,000 per tick
+      Produces: +20 bauxite per tick
+      Effects: +2 pollution
+
+    COPPER MINES:
+      Build Cost: $235,000 + 25 lumber
+      Gold Upkeep: $5,000 per tick
+      Produces: +25 copper per tick
+      Effects: +2 pollution
+
+    URANIUM MINES:
+      Build Cost: $380,000 + 35 steel
+      Gold Upkeep: $45,000 per tick
+      Produces: +12 uranium per tick
+      Effects: +1 pollution
+
+    LEAD MINES:
+      Build Cost: $220,000 + 25 lumber
+      Gold Upkeep: $7,200 per tick
+      Produces: +19 lead per tick
+      Effects: +2 pollution
+
+    IRON MINES:
+      Build Cost: $310,000 + 20 lumber
+      Gold Upkeep: $11,000 per tick
+      Produces: +23 iron per tick
+      Effects: +2 pollution
+
+    LUMBER MILLS:
+      Build Cost: $180,000
+      Gold Upkeep: $7,500 per tick
+      Produces: +35 lumber per tick
+      Effects: +1 pollution
+
+  RESOURCE PROCESSING:
+  ----------------------------------------------------------------------------
+
+    COMPONENT FACTORIES:
+      Build Cost: $1,200,000 + 20 steel, 20 aluminium
+      Gold Upkeep: $50,000 per tick
+      Consumes: 20 copper, 10 steel, 15 aluminium per tick
+      Produces: +5 components per tick
+      Effects: +5 pollution
+      Employment: 100,000 workers [college: 60%, highschool: 40%]
+
+    STEEL MILLS:
+      Build Cost: $900,000 + 60 aluminium
+      Gold Upkeep: $60,000 per tick
+      Consumes: 35 coal, 35 iron per tick
+      Produces: +12 steel per tick
+      Effects: +4 pollution
+      Employment: 90,000 workers [highschool: 40%, none: 60%]
+
+    AMMUNITION FACTORIES:
+      Build Cost: $750,000
+      Gold Upkeep: $15,000 per tick
+      Consumes: 10 copper, 20 lead per tick
+      Produces: +12 ammunition per tick
+      Effects: +3 pollution
+
+    ALUMINIUM REFINERIES:
+      Build Cost: $820,000
+      Gold Upkeep: $42,000 per tick
+      Consumes: 15 bauxite per tick
+      Produces: +16 aluminium per tick
+      Effects: +3 pollution
+
+    OIL REFINERIES:
+      Build Cost: $680,000
+      Gold Upkeep: $35,000 per tick
+      Consumes: 20 oil per tick
+      Produces: +11 gasoline per tick
+      Effects: +6 pollution
+
+
+================================================================================
+4. DEBUFFS & CRISIS PENALTIES
+================================================================================
+
+  UNEMPLOYMENT DEBUFF:
+    Trigger: 30% unemployment or higher
+    Penalty: -10 happiness per province per tick
+
+  PENSION CRISIS DEBUFF:
+    Trigger: Elderly > 40% of working pop
+    Penalty: -$5,000 gold per user per tick
+
+  PRODUCTION EFFICIENCY (Chernobyl Rule):
+    Formula: jobs_available ÷ jobs_needed
+    Floor: 20% (minimum if understaffed)
+    Effect: ALL building production scaled by efficiency
+    Example: 50% efficiency = farms produce 6 rations instead of 12
+
+
+================================================================================
+5. SYSTEM STATUS & FEATURE FLAGS
+================================================================================
+
+  Demographic Consumption: ENABLED
+  Rations Distribution: ENABLED
+  Phase 3 Workforce: ENABLED
+
+================================================================================
+END OF MASTER AUDIT
+================================================================================
