@@ -278,12 +278,13 @@
                 <p class="resourcetag" title="${{ resources['gold'] | fmt }}">${{ resources["gold"] | fmt }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
-            <br />
+            <p class="resource-section-label">Consumables</p>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["rations"] | weight_fmt }}</p>
                 <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
             </div>
+            <p class="resource-section-label">Raw Resources</p>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["oil"] | weight_fmt }}</p>
@@ -332,7 +333,7 @@
                 <div class="resourceinfo">Lumber is a common bulding material.</div>
 
             </div>
-            <br />
+            <p class="resource-section-label">Manufactured</p>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename='images/rescomponents.png' ) }}?v=2" class="resource" />
                 <p class="resourcetag">{{ resources["components"] | weight_fmt }}</p>
