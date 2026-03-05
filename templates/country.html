@@ -160,7 +160,7 @@
                                 people_alt
                                 </span>Population:</td>
                             {% if population != None %}
-                            <td><span class="pulse-indicator"></span>{{ population }}</td>
+                            <td><span class="pulse-indicator"></span>{{ population | fmt }}</td>
                             {% else %}
                             <td><span class="pulse-indicator"></span>0</td>
                             {% endif %}
@@ -317,15 +317,15 @@
                         </tr>
                         <tr style="border-left: 4px solid rgba(54, 162, 235, 0.8);">
                             <td><span class="material-icons-outlined" style="color: rgba(54, 162, 235, 1);">child_care</span>Children:</td>
-                            <td style="color: rgba(54, 162, 235, 0.9); font-weight: 600;">{{ total_children | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                            <td style="color: rgba(54, 162, 235, 0.9); font-weight: 600;">{{ total_children | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
                         <tr style="border-left: 4px solid rgba(75, 192, 92, 0.8);">
                             <td><span class="material-icons-outlined" style="color: rgba(75, 192, 92, 1);">work</span>Working Age:</td>
-                            <td style="color: rgba(75, 192, 92, 0.9); font-weight: 600;">{{ total_working | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                            <td style="color: rgba(75, 192, 92, 0.9); font-weight: 600;">{{ total_working | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
                         <tr style="border-left: 4px solid rgba(220, 88, 88, 0.8);">
                             <td><span class="material-icons-outlined" style="color: rgba(220, 88, 88, 1);">elderly</span>Elderly:</td>
-                            <td style="color: rgba(220, 88, 88, 0.9); font-weight: 600;">{{ total_elderly | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                            <td style="color: rgba(220, 88, 88, 0.9); font-weight: 600;">{{ total_elderly | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
                     </table>
                 </div>
@@ -552,7 +552,7 @@
                                 <td><span class="material-icons-outlined ">
                                                     people_alt
                                                     </span>Population:</td>
-                                <td>{{ provincePopulation}}</td>
+                                <td>{{ provincePopulation| fmt }}</td>
                             </tr>
                             <tr>
                                 <td><span class="material-icons-outlined ">
@@ -596,8 +596,8 @@
 
             {# Macro to show theoretical (original) gross and projected actual value #}
             {% macro show_gross(resource) %}
-                {{ revenue['gross_theoretical'].get(resource, 0) }}
-                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) }}</small>
+                {{ revenue['gross_theoretical'].get(resource, 0) | fmt }}
+                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) | fmt }}</small>
             {% endmacro %}
 
             {% if status %}
@@ -618,11 +618,11 @@
                         -->
                         <tr>
                             <td>Monetary gross:</td>
-                            <td>{{ revenue["gross"]["money"] }}</td>
+                            <td>{{ revenue["gross"]["money"] | fmt }}</td>
                         </tr>
                         <tr>
                             <td>Rations:</td>
-                            <td>{{ revenue["gross"]["rations"] }}</td>
+                            <td>{{ revenue["gross"]["rations"] | fmt }}</td>
                         </tr>
                         {% if revenue["gross"]["oil"] > 0 %}
                         <tr>
@@ -651,7 +651,7 @@
                         {% if revenue["gross"]["lead"] > 0 %}
                         <tr>
                             <td>Lead:</td>
-                            <td>{{ revenue["gross"]["lead"] }}</td>
+                            <td>{{ revenue["gross"]["lead"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["bauxite"] > 0 %}
@@ -710,7 +710,7 @@
                         {% if revenue["gross"]["ammunition"] > 0 %}
                         <tr>
                             <td>Ammunition:</td>
-                            <td>{{ revenue["gross"]["ammunition"]}}</td>
+                            <td>{{ revenue["gross"]["ammunition"]| fmt }}</td>
                         </tr>
                         {% endif %}
                     </table>
@@ -732,58 +732,58 @@
                         -->
                         <tr>
                             <td>Monetary net:</td>
-                            <td>{{ revenue["net"]["money"] }}</td>
+                            <td>{{ revenue["net"]["money"] | fmt }}</td>
                         </tr>
                         <tr>
                             <td>Rations:</td>
-                            <td>{{ revenue["net"]["rations"] }}</td>
+                            <td>{{ revenue["net"]["rations"] | fmt }}</td>
                         </tr>
                         {% if revenue["gross"]["oil"] > 0 %}
                         <tr>
                             <td>Oil:</td>
-                            <td>{{ revenue["net"]["oil"] }}</td>
+                            <td>{{ revenue["net"]["oil"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["coal"] > 0 %}
                         <tr>
                             <td>Coal:</td>
-                            <td>{{ revenue["net"]["coal"] }}</td>
+                            <td>{{ revenue["net"]["coal"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["uranium"] > 0 %}
                         <tr>
                             <td>Uranium:</td>
-                            <td>{{ revenue["net"]["uranium"] }}</td>
+                            <td>{{ revenue["net"]["uranium"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["iron"] > 0 %}
                         <tr>
                             <td>Iron:</td>
-                            <td>{{ revenue["net"]["iron"] }}</td>
+                            <td>{{ revenue["net"]["iron"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lead"] > 0 %}
                         <tr>
                             <td>Lead:</td>
-                            <td>{{ revenue["net"]["lead"] }}</td>
+                            <td>{{ revenue["net"]["lead"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["bauxite"] > 0 %}
                         <tr>
                             <td>Bauxite:</td>
-                            <td>{{ revenue["net"]["bauxite"] }}</td>
+                            <td>{{ revenue["net"]["bauxite"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["copper"] > 0 %}
                         <tr>
                             <td>Copper:</td>
-                            <td>{{ revenue["net"]["copper"] }}</td>
+                            <td>{{ revenue["net"]["copper"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["lumber"] > 0 %}
                         <tr>
                             <td>Lumber:</td>
-                            <td>{{ revenue["net"]["lumber"] }}</td>
+                            <td>{{ revenue["net"]["lumber"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         <tr>
@@ -794,37 +794,37 @@
                         {% if revenue["gross"]["components"] > 0 %}
                         <tr>
                             <td>Components:</td>
-                            <td>{{ revenue["net"]["components"] }}</td>
+                            <td>{{ revenue["net"]["components"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["steel"] > 0 %}
                         <tr>
                             <td>Steel:</td>
-                            <td>{{ revenue["net"]["steel"] }}</td>
+                            <td>{{ revenue["net"]["steel"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["consumer_goods"] > 0 %}
                         <tr>
                             <td>Consumer goods:</td>
-                            <td>{{ revenue["net"]["consumer_goods"] }}</td>
+                            <td>{{ revenue["net"]["consumer_goods"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["aluminium"] > 0 %}
                         <tr>
                             <td>Aluminum:</td>
-                            <td>{{ revenue["net"]["aluminium"] }}</td>
+                            <td>{{ revenue["net"]["aluminium"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["gasoline"] > 0 %}
                         <tr>
                             <td>Gasoline:</td>
-                            <td>{{ revenue["net"]["gasoline"] }}</td>
+                            <td>{{ revenue["net"]["gasoline"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["ammunition"] > 0 %}
                         <tr>
                             <td>Ammunition:</td>
-                            <td>{{ revenue["net"]["ammunition"] }}</td>
+                            <td>{{ revenue["net"]["ammunition"] | fmt }}</td>
                         </tr>
                         {% endif %}
                     </table>
