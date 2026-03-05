@@ -69,16 +69,19 @@
         <!-- Hidden preserved-link for tests and clients: keeps current query params present in HTML -->
         <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" style="display:none;">preserve</a>
 
+        {% set influence_sortway = 'asc' if sort == 'influence' and sortway == 'desc' else 'desc' %}
+        {% set age_sortway = 'asc' if sort == 'age' and sortway == 'desc' else 'desc' %}
+        {% set provinces_sortway = 'asc' if sort == 'provinces' and sortway == 'desc' else 'desc' %}
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>#</th>
                     <th>Name</th>
                     <th>Early Adopter</th>
-                    <th>Influence</th>
-                    <th>Date Created</th>
+                    <th><a href="{{ url_for('countries', page=1, sort='influence', sortway=influence_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" style="color: inherit; text-decoration: none;">Influence{% if sort == 'influence' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
+                    <th><a href="{{ url_for('countries', page=1, sort='age', sortway=age_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" style="color: inherit; text-decoration: none;">Date Created{% if sort == 'age' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
                     <th>Coalition</th>
-                    <th>Provinces</th>
+                    <th><a href="{{ url_for('countries', page=1, sort='provinces', sortway=provinces_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" style="color: inherit; text-decoration: none;">Provinces{% if sort == 'provinces' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
 
                     {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
                     <tr {% if id == current_user_id %}class="highlight-row"{% endif %}>
@@ -230,17 +233,33 @@
                 color: #333 !important;
                 white-space: nowrap !important;
             }
+            .modern-pagination .mp-mobile-only {
+                display: none !important;
+            }
             @media all and (max-width: 768px) {
                 .modern-pagination {
                     gap: 8px !important;
                     margin: 20px 0 !important;
+                    flex-wrap: nowrap !important;
+                    overflow-x: auto !important;
+                    justify-content: center !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    padding-bottom: 4px !important;
                 }
                 .modern-pagination a,
                 .modern-pagination span.mp-pill {
-                    padding: 8px 14px !important;
+                    padding: 6px 12px !important;
                     font-size: 12px !important;
                     min-width: 34px !important;
                     height: 34px !important;
+                }
+                .modern-pagination .mp-desktop-only {
+                    display: none !important;
+                }
+                .modern-pagination .mp-mobile-only {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
                 }
                 .modern-pagination select,
                 .modern-pagination input[type="number"],
@@ -261,21 +280,21 @@
             {% set end_page = [current_page + 2, total_pages] | min %}
 
             {% if start_page > 1 %}
-                <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">1</a>
-                {% if start_page > 2 %}<span class="mp-pill mp-ellipsis">…</span>{% endif %}
+                <a class="mp-desktop-only" href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">1</a>
+                {% if start_page > 2 %}<span class="mp-pill mp-ellipsis mp-desktop-only">…</span>{% endif %}
             {% endif %}
 
             {% for p in range(start_page, end_page + 1) %}
                 {% if p == current_page %}
                     <span class="mp-pill mp-active">{{ p }}</span>
                 {% else %}
-                    <a href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ p }}</a>
+                    <a class="mp-desktop-only" href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ p }}</a>
                 {% endif %}
             {% endfor %}
 
             {% if end_page < total_pages %}
-                {% if end_page < total_pages - 1 %}<span class="mp-pill mp-ellipsis">…</span>{% endif %}
-                <a href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ total_pages }}</a>
+                {% if end_page < total_pages - 1 %}<span class="mp-pill mp-ellipsis mp-desktop-only">…</span>{% endif %}
+                <a class="mp-desktop-only" href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ total_pages }}</a>
             {% endif %}
 
             {% if current_page < total_pages %}
@@ -284,7 +303,7 @@
                 <span class="mp-pill mp-disabled">›</span>
             {% endif %}
 
-            <form method="GET" id="perPageForm">
+            <form method="GET" id="perPageForm" class="mp-desktop-only">
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <input type="hidden" name="sortway" value="{{ sortway }}">
                 <input type="hidden" name="search" value="{{ search }}">
@@ -299,7 +318,7 @@
                 </select>
             </form>
 
-            <form method="GET">
+            <form method="GET" class="mp-desktop-only">
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <input type="hidden" name="sortway" value="{{ sortway }}">
                 <input type="hidden" name="search" value="{{ search }}">
@@ -311,6 +330,8 @@
                 <input type="number" name="page" min="1" max="{{ total_pages }}" placeholder="Page" required>
                 <button type="submit">Go</button>
             </form>
+
+            <span class="mp-pill mp-mobile-only">Page {{ current_page }}/{{ total_pages }}</span>
         </div>
         {% endif %}
     </div>

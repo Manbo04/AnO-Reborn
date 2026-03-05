@@ -949,6 +949,72 @@ label {
     position: static;
 }
 
+@media all and (max-width: 768px) {
+    .resourcediv {
+        top: 62px !important;
+        right: 8px !important;
+        z-index: 1100 !important;
+    }
+
+    .resourcedivshow {
+        right: 0 !important;
+        width: 56px !important;
+        border-radius: 100px !important;
+        padding-left: 0 !important;
+        background-color: #363945 !important;
+    }
+
+    .resourcedivshow .resourcedivchild {
+        width: 56px !important;
+    }
+
+    .resourcedivcontent {
+        top: 62px !important;
+        width: 180px !important;
+        max-width: 78vw !important;
+        right: 0 !important;
+        margin-right: -180px !important;
+        z-index: 1099 !important;
+        overflow-x: hidden !important;
+    }
+
+    .resourcedivcontentshow {
+        margin-right: 0 !important;
+    }
+
+    .resourcetagparent {
+        min-height: 36px !important;
+        margin: 6px 6px !important;
+        padding: 0 8px !important;
+    }
+
+    .resourcetag {
+        font-size: 12px !important;
+        line-height: 36px !important;
+    }
+
+    .resourceinfo {
+        display: none !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        line-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+    }
+
+    .resourcetagparent:focus .resourceinfo {
+        display: none !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        line-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: absolute !important;
+    }
+}
+
 .purchasediv {
     position: fixed;
     right: 26px;
