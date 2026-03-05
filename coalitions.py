@@ -39,7 +39,7 @@ def coalition(coalition_id):
         db.execute(
             """
             SELECT
-                c.name, c.type, c.description, c.flag,
+                c.name, c.type, c.description, c.flag, c.name_changes_used,
                 COUNT(DISTINCT coal.userid) AS members_count,
                 COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
@@ -50,14 +50,22 @@ def coalition(coalition_id):
                 GROUP BY userId
             ) prov ON coal.userid = prov.userId
             WHERE c.id = %s
-            GROUP BY c.id, c.name, c.type, c.description, c.flag
+            GROUP BY c.id, c.name, c.type, c.description, c.flag, c.name_changes_used
             """,
             (coalition_id,),
         )
         result = db.fetchone()
         if not result:
             return error(404, "This coalition doesn't exist")
-        name, colType, description, flag, members_count, total_influence = result
+        (
+            name,
+            colType,
+            description,
+            flag,
+            name_changes_used,
+            members_count,
+            total_influence,
+        ) = result
         average_influence = total_influence // members_count if members_count > 0 else 0
 
         # Calculate coalition statistics (provinces, cities, land, GDP)
@@ -478,6 +486,7 @@ def coalition(coalition_id):
             requestIds=requestIds,
             members=members,
             pending_applications=pending_applications,
+            name_changes_used=name_changes_used,
             # Coalition statistics
             coalitionProvinces=coalition_provinces,
             coalitionAverageProvinces=coalition_avg_provinces,
@@ -1090,6 +1099,66 @@ def update_col_info(coalition_id):
                 "UPDATE colNames SET description=%s WHERE id=%s",
                 (description, coalition_id),
             )
+
+        # Coalition Name Change
+        new_name = request.form.get("name")
+        if new_name and new_name.strip():
+            new_name = new_name.strip()
+
+            # Get current name and rename count
+            db.execute(
+                "SELECT name, name_changes_used FROM colNames WHERE id=%s",
+                (coalition_id,),
+            )
+            col_row = db.fetchone()
+            if col_row:
+                current_name = col_row[0]
+                renames_used = col_row[1] if col_row[1] else 0
+
+                # Only allow rename if the name is different
+                if new_name != current_name:
+                    # Check if name is already taken
+                    db.execute(
+                        "SELECT id FROM colNames WHERE name=%s AND id != %s",
+                        (new_name, coalition_id),
+                    )
+                    if db.fetchone():
+                        return error(
+                            400, f"Coalition name '{new_name}' is already taken"
+                        )
+
+                    # Check if this is beyond the free rename (first rename is free, subsequent ones cost gold)
+                    if renames_used > 0:
+                        # Charge gold for rename (500,000 gold)
+                        RENAME_COST = 500000
+                        db.execute(
+                            "SELECT money FROM user_economy JOIN resource_dictionary ON user_economy.resource_id = resource_dictionary.id WHERE user_economy.user_id = %s AND resource_dictionary.name = 'money'",
+                            (cId,),
+                        )
+                        money_row = db.fetchone()
+                        user_gold = money_row[0] if money_row else 0
+
+                        if user_gold < RENAME_COST:
+                            return error(
+                                400,
+                                f"Renaming a coalition (after the first free rename) costs {RENAME_COST:,} gold. You have {user_gold:,} gold available.",
+                            )
+
+                        # Deduct gold from leader
+                        db.execute(
+                            """
+                            UPDATE user_economy
+                            SET quantity = quantity - %s
+                            WHERE user_id = %s AND resource_id = (SELECT id FROM resource_dictionary WHERE name = 'money')
+                            """,
+                            (RENAME_COST, cId),
+                        )
+
+                    # Update the name and increment change counter
+                    db.execute(
+                        "UPDATE colNames SET name=%s, name_changes_used=%s WHERE id=%s",
+                        (new_name, renames_used + 1, coalition_id),
+                    )
 
     return redirect("/my_coalition")
 

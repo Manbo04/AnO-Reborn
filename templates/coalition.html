@@ -994,6 +994,18 @@
 
 
 
+                    <label for="name">Coalition Name</label>
+                    <div class="center">
+                        <input type="text" class="loginsignupinput" name="name" placeholder="Coalition Name" maxlength="50" />
+                        <p style="font-size: 0.9em; color: {% if name_changes_used > 0 %}#ff6b6b{% else %}#51cf66{% endif %}; margin-top: 5px;" id="rename_note">
+                            {% if name_changes_used > 0 %}
+                                ⚠️ Renaming costs 500,000 gold
+                            {% else %}
+                                ✓ Next rename is FREE
+                            {% endif %}
+                        </p>
+                    </div>
+
                     <label for="description">Description</label>
 
                     <div class="center">
