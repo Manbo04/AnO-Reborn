@@ -122,7 +122,7 @@
                         <tr>
                             <td><span class="material-icons-outlined">
                                 tag
-                                </span>{% if session.user_id == cId %}Country ID:{% elif join_number and join_number <= 100 %}Founder Rank:{% else %}Citizen Rank:{% endif %}</td>
+                                </span>{% if session.user_id == cId %}Country ID:{% else %}Founder Rank:{% endif %}</td>
                             <td>{% if session.user_id == cId %}{{ cId }}{% elif join_number %}<span style="font-weight: 600; color: var(--colorOne);">#{{ join_number }}</span>{% else %}—{% endif %}</td>
                         </tr>
                         <tr>
