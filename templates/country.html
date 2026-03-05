@@ -147,7 +147,7 @@
                             <td><span class="material-icons-outlined">
                                 schedule
                                 </span>Last active:</td>
-                            <td>{{ last_active | timeago }}</td>
+                            <td><span class="pulse-indicator"></span>{{ last_active | timeago }}</td>
                         </tr>
                         <tr>
                             <td><span class="material-icons-outlined">
@@ -160,9 +160,9 @@
                                 people_alt
                                 </span>Population:</td>
                             {% if population != None %}
-                            <td>{{ population }}</td>
+                            <td><span class="pulse-indicator"></span>{{ population }}</td>
                             {% else %}
-                            <td>0</td>
+                            <td><span class="pulse-indicator"></span>0</td>
                             {% endif %}
                         </tr>
                         <tr>
