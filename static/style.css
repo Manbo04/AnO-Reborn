@@ -560,7 +560,7 @@ label {
         width: 100%;
         margin-left: -100%;
         backdrop-filter: none !important;
-        background: #1a1c23 !important;
+        background: #121417 !important;
         height: 100vh;
         overflow-y: auto;
     }
@@ -573,31 +573,34 @@ label {
     /* Disable blur/glass effects on all transparent elements */
     .templatedivflex2left,
     .templatedivflex2right {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
         backdrop-filter: none !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
 
     .templatetable {
-        background: #252729 !important;
+        background: #151618 !important;
         backdrop-filter: none !important;
         border: none !important;
+        color: #ffffff !important;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
     }
 
     .templatetable tr:nth-child(odd) {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
+        color: #ffffff !important;
     }
 
     .templatetable tr:nth-child(even) {
-        background: #252729 !important;
+        background: #151618 !important;
+        color: #ffffff !important;
     }
 
     .templatetable th {
-        background: #1a1c23 !important;
+        background: #121417 !important;
         color: #ffffff !important;
-        border-bottom: 1px solid #3d4049 !important;
+        border-bottom: 1px solid #2d3139 !important;
     }
 
     .templatetable td {
@@ -605,9 +608,9 @@ label {
     }
 
     .chart-wrapper {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
         backdrop-filter: none !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
 
@@ -615,9 +618,9 @@ label {
     .templatesidenav,
     .side-nav,
     .sidebar {
-        background: #1a1c23 !important;
+        background: #121417 !important;
         backdrop-filter: none !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
 
@@ -631,19 +634,19 @@ label {
     input[type="time"],
     textarea,
     select {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
         color: #ffffff !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
         box-shadow: none !important;
     }
 
     .templateselect option,
     select option {
-        background: #1a1c23 !important;
+        background: #121417 !important;
         color: #ffffff !important;
     }
 
-    /* Button Contrast Fix */
+    /* Button Contrast Fix - Force readable on dark background */
     .templatedivbutton {
         background: #3d7dd9 !important;
         color: #ffffff !important;
@@ -676,13 +679,13 @@ label {
 
     /* Navbar dark theme for mobile */
     body {
-        background: #1a1c23 !important;
+        background: #121417 !important;
         color: #ffffff !important;
     }
 
     /* BUILDING PAGE FIXES - Province buildings and descriptions */
     .menudiv {
-        background: #1a1c23 !important;
+        background: #121417 !important;
         color: #ffffff !important;
     }
 
@@ -708,7 +711,7 @@ label {
 
     /* Building count displays */
     .menudiv .templatetable {
-        background: #252729 !important;
+        background: #151618 !important;
     }
 
     .menudiv .templatetable td {
@@ -721,14 +724,14 @@ label {
         display: block !important;
         max-width: 100% !important;
         height: auto !important;
-        background: #3d4049 !important;
+        background: #2d3139 !important;
     }
 
     /* Ensure building form fields are visible */
     .purchasemilitarydiv input {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
         color: #ffffff !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
     }
 
     .purchasemilitarydiv input::placeholder {
@@ -742,22 +745,22 @@ label {
 
     /* Ensure population notification boxes display correctly */
     .notificationparent {
-        background: #1a1c23 !important;
+        background: #121417 !important;
     }
 
     .notificationchild {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
         color: #ffffff !important;
-        border: 1px solid #3d4049 !important;
+        border: 1px solid #2d3139 !important;
     }
 
     /* Land/Industry/Processing tabs */
     .land {
-        background: #1a1c23 !important;
+        background: #121417 !important;
     }
 
     .land .templatetable {
-        background: #252729 !important;
+        background: #151618 !important;
     }
 
     .land .templatetable td {
@@ -767,15 +770,56 @@ label {
 
     /* Flex containers for building layouts */
     .warflexparentcolors {
-        background: #1a1c23 !important;
+        background: #121417 !important;
     }
 
     .warflexparentcolors .templatedivflex2left {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
     }
 
     .warflexparentcolors .templatedivflex2right {
-        background: #2a2d35 !important;
+        background: #1a1d22 !important;
+    }
+
+    /* Card headers and content wrappers */
+    .infodiv {
+        background: #1a1d22 !important;
+        color: #ffffff !important;
+    }
+
+    .templatediv {
+        background: #121417 !important;
+        color: #ffffff !important;
+    }
+
+    /* Navigation links - ensure visibility */
+    .menubara {
+        color: #ffffff !important;
+    }
+
+    .menubara:hover {
+        color: #ffffff !important;
+        background: #2d3139 !important;
+    }
+
+    /* Dropdown menus */
+    .dropdown-content a {
+        color: #ffffff !important;
+        background: #1a1d22 !important;
+    }
+
+    .dropdown-content a:hover {
+        background: #2d3139 !important;
+        color: #ffffff !important;
+    }
+
+    /* Remove any white backgrounds that might linger */
+    .card,
+    .card-body,
+    .panel,
+    .panel-body {
+        background: #1a1d22 !important;
+        color: #ffffff !important;
     }
 }
 
