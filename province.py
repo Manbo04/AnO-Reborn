@@ -131,9 +131,21 @@ def province(pId):
             or "Grassland",  # Default to Grassland if NULL
         }
 
-        # Build units dict from proInfra columns
-        proinfra_columns = [
-            "id",
+        # Build units dict from user_buildings (Economy 2.0 normalized schema)
+        # Maps building name → quantity owned by this user
+        db.execute(
+            """
+            SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+            FROM building_dictionary bd
+            LEFT JOIN user_buildings ub
+                ON ub.building_id = bd.building_id AND ub.user_id = %s
+            WHERE bd.is_active = TRUE
+            """,
+            (user_id,),
+        )
+        units = {row[0]: row[1] for row in db.fetchall()}
+        # Ensure all expected building names exist in units (default 0)
+        all_building_names = [
             "coal_burners",
             "oil_burners",
             "solar_fields",
@@ -168,9 +180,14 @@ def province(pId):
             "ammunition_factories",
             "aluminium_refineries",
             "oil_refineries",
+            "distribution_centers",
+            "industrial_district",
+            "primary_school",
+            "high_school",
+            "university",
         ]
-        # Handle None values from LEFT JOIN when proInfra is missing
-        units = {col: (result.get(col) or 0) for col in proinfra_columns}
+        for bname in all_building_names:
+            units.setdefault(bname, 0)
 
         # Calculate free slots in-memory (no extra queries)
         city_buildings = [
@@ -184,6 +201,7 @@ def province(pId):
             "farmers_markets",
             "malls",
             "banks",
+            "distribution_centers",
             "city_parks",
             "hospitals",
             "libraries",
@@ -428,8 +446,8 @@ def get_free_slots(pId, slot_type):  # pId = province id
                     'coal_burners', 'oil_burners', 'hydro_dams',
                     'nuclear_reactors', 'solar_fields', 'gas_stations',
                     'general_stores', 'farmers_markets', 'malls', 'banks',
-                    'city_parks', 'hospitals', 'libraries', 'universities',
-                    'monorails'
+                    'distribution_centers', 'city_parks', 'hospitals',
+                    'libraries', 'universities', 'monorails'
                   )
                 """,
                 (user_id,),
@@ -513,6 +531,7 @@ def province_sell_buy(way, units, province_id):
             "farmers_markets",
             "malls",
             "banks",
+            "distribution_centers",
             "city_parks",
             "hospitals",
             "libraries",
@@ -550,6 +569,7 @@ def province_sell_buy(way, units, province_id):
             "farmers_markets",
             "malls",
             "banks",
+            "distribution_centers",
             "city_parks",
             "hospitals",
             "libraries",
@@ -634,10 +654,6 @@ def province_sell_buy(way, units, province_id):
         if units not in allUnits:
             return error("No such unit exists.", 400)
 
-        table = "proInfra"
-        if units in ["land", "cityCount"]:
-            table = "provinces"
-
         price = unit_prices[f"{units}_price"]
 
         try:
@@ -663,13 +679,26 @@ def province_sell_buy(way, units, province_id):
         except KeyError:
             resources_data = {}
 
-        # Use parameterized query; avoid f-strings for column names
+        # Parameterized query: buildings use user_buildings,
+        # land/city use provinces
         if units in ["land", "cityCount"]:
-            curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
+            curUnStat = f"SELECT {units} FROM provinces WHERE id=%s"
+            db.execute(curUnStat, (province_id,))
+            currentUnits = db.fetchone()[0]
         else:
-            curUnStat = f"SELECT {units} FROM {table} WHERE id=%s"
-        db.execute(curUnStat, (province_id,))
-        currentUnits = db.fetchone()[0]
+            # Economy 2.0: building counts stored in user_buildings
+            db.execute(
+                """
+                SELECT COALESCE(ub.quantity, 0)
+                FROM building_dictionary bd
+                LEFT JOIN user_buildings ub
+                    ON ub.building_id = bd.building_id AND ub.user_id = %s
+                WHERE bd.name = %s
+                """,
+                (cId, units),
+            )
+            row = db.fetchone()
+            currentUnits = row[0] if row else 0
 
         if units in city_units:
             slot_type = "city"
@@ -758,8 +787,21 @@ def province_sell_buy(way, units, province_id):
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
                 return error("You don't have enough units.", 400)
 
-            unitUpd = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
-            db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
+            if units in ["land", "cityCount"]:
+                unitUpd = f"UPDATE provinces SET {units}=%s WHERE id=%s"
+                db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
+            else:
+                # Economy 2.0: decrement user_buildings
+                db.execute(
+                    """
+                    UPDATE user_buildings SET quantity = quantity - %s
+                    WHERE user_id = %s
+                      AND building_id = (
+                          SELECT building_id FROM building_dictionary WHERE name = %s
+                      )
+                    """,
+                    (wantedUnits, cId, units),
+                )
 
             # Capture gold before and perform atomic increment
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
@@ -850,8 +892,21 @@ def province_sell_buy(way, units, province_id):
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
             gold_after = db.fetchone()[0]
 
-            updStat = f"UPDATE {table} SET {units}" + "=%s WHERE id=%s"
-            db.execute(updStat, ((currentUnits + wantedUnits), province_id))
+            if units in ["land", "cityCount"]:
+                updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"
+                db.execute(updStat, ((currentUnits + wantedUnits), province_id))
+            else:
+                # Economy 2.0: increment user_buildings
+                db.execute(
+                    """
+                    UPDATE user_buildings SET quantity = quantity + %s
+                    WHERE user_id = %s
+                      AND building_id = (
+                          SELECT building_id FROM building_dictionary WHERE name = %s
+                      )
+                    """,
+                    (wantedUnits, cId, units),
+                )
 
             # Audit the buy event
             create_audit_sql = (

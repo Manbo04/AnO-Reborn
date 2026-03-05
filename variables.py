@@ -33,12 +33,13 @@ RATIONS_PER = 50000  # 1 Ration per x population (lower = more rations needed)
 # NOTE: enabled by default following 2026‑02‑24 deployment.
 FEATURE_RATIONS_DISTRIBUTION = True  # toggle the new mechanic on/off
 RATIONS_DISTRIBUTION_BUILDINGS = [
+    "distribution_centers",
     "gas_stations",
     "general_stores",
     "farmers_markets",
     "malls",
 ]
-RATIONS_DISTRIBUTION_PER_BUILDING = 50000  # population served per building
+RATIONS_DISTRIBUTION_PER_BUILDING = 400000  # population served per building
 
 # DEMOGRAPHIC-BASED CONSUMPTION (Phase 2)
 # Each demographic bracket has different consumption rates for rations and CG
@@ -57,11 +58,12 @@ DEMO_CONSUMER_GOODS_CONSUMPTION = {
 # Distribution capacity for different building types
 # These cap how much rations/CG can actually be consumed even if available
 CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
+    "distribution_centers",
     "malls",
     "general_stores",
     "gas_stations",
 ]
-CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = 50000  # population served per building
+CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = 400000  # population served per building
 
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
@@ -214,6 +216,7 @@ ENERGY_UNITS = [
 ]
 
 ENERGY_CONSUMERS = [
+    "distribution_centers",
     "gas_stations",
     "general_stores",
     "farmers_markets",
@@ -249,7 +252,14 @@ INFRA_TYPE_BUILDINGS = {
         "nuclear_reactors",
         "solar_fields",
     ],
-    "retail": ["gas_stations", "general_stores", "farmers_markets", "malls", "banks"],
+    "retail": [
+        "gas_stations",
+        "general_stores",
+        "farmers_markets",
+        "malls",
+        "banks",
+        "distribution_centers",
+    ],
     "public_works": [
         "hospitals",
         "libraries",
@@ -306,6 +316,7 @@ BUILDINGS = [
     "ammunition_factories",
     "aluminium_refineries",
     "oil_refineries",
+    "distribution_centers",
     "city_parks",
     "monorails",  # Had to put them here so pollution would be minused at the end
 ]
@@ -332,6 +343,8 @@ INFRA = {  # (OLD INFRA)
     "solar_fields_money": 11000,
     ####################
     # Retail (Done)
+    "distribution_centers_plus": {"consumer_goods": 400000},
+    "distribution_centers_money": 15000,
     "gas_stations_plus": {"consumer_goods": 50000},
     "gas_stations_effect": [{"pollution": 4}],
     "gas_stations_money": 20000,
@@ -513,6 +526,9 @@ PROVINCE_UNIT_PRICES = {
     "banks_resource": {"steel": 340000, "aluminium": 165000},
     "industrial_district_price": 280000000,
     "industrial_district_resource": {"steel": 800000, "components": 200000},
+    # Distribution Centers (Tier 1 — key early-game building for rations/CG flow)
+    "distribution_centers_price": 5000000,
+    "distribution_centers_resource": {"lumber": 50000, "iron": 20000},
     # Public Works (Tier 2-3)
     "city_parks_price": 4500000,
     "city_parks_resource": {"steel": 22000},
@@ -541,10 +557,11 @@ PROVINCE_UNIT_PRICES = {
     "silos_price": 350000000,
     "silos_resource": {"steel": 1080000, "aluminium": 480000},
     # Resource Extraction (Tier 1)
+    # ALL must be buildable with raw Tier-0/1 resources only
     "farms_price": 1500000,
     "farms_resource": {"lumber": 15000},
     "pumpjacks_price": 3000000,
-    "pumpjacks_resource": {"steel": 22000},
+    "pumpjacks_resource": {"iron": 22000},
     "coal_mines_price": 3500000,
     "coal_mines_resource": {"lumber": 45000},
     "bauxite_mines_price": 3200000,
@@ -552,20 +569,23 @@ PROVINCE_UNIT_PRICES = {
     "copper_mines_price": 2800000,
     "copper_mines_resource": {"lumber": 38000},
     "uranium_mines_price": 5500000,
-    "uranium_mines_resource": {"steel": 52000},
+    "uranium_mines_resource": {"iron": 35000, "lumber": 25000},
     "lead_mines_price": 2600000,
     "lead_mines_resource": {"lumber": 38000},
     "iron_mines_price": 3800000,
     "iron_mines_resource": {"lumber": 30000},
     "lumber_mills_price": 2200000,
-    # Processing (Tier 2)
+    # Processing (Tier 2) — steel_mills/aluminium_refineries use only Tier 1 raws
     "component_factories_price": 16000000,
     "component_factories_resource": {"steel": 30000, "aluminium": 30000},
     "steel_mills_price": 12000000,
-    "steel_mills_resource": {"aluminium": 90000},
+    "steel_mills_resource": {"iron": 60000, "coal": 40000, "lumber": 30000},
     "ammunition_factories_price": 10000000,
+    "ammunition_factories_resource": {"iron": 25000, "copper": 15000},
     "aluminium_refineries_price": 11000000,
+    "aluminium_refineries_resource": {"iron": 40000, "lumber": 20000},
     "oil_refineries_price": 9000000,
+    "oil_refineries_resource": {"iron": 30000, "lumber": 15000},
 }
 
 """
@@ -597,6 +617,10 @@ NEW_INFRA = {  # (NEW INFRA)
     },
     "solar_fields": {"plus": {"energy": 3}, "money": 13000},
     # RETAIL
+    "distribution_centers": {
+        "plus": {"consumer_goods": 8},
+        "money": 15000,
+    },
     "gas_stations": {
         "plus": {"consumer_goods": 12},
         "eff": {"pollution": 4},

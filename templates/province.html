@@ -633,6 +633,11 @@
                             <td>{{ units["monorails"] }} Monorails</td>
                             {% endif %}
                         </tr>
+                        <tr>
+                            <td></td>
+                            <td>{{ units["distribution_centers"] }} Distribution Centers</td>
+                            <td></td>
+                        </tr>
                     </table>
                 </div>
                 <!--Electricity-->
@@ -1131,6 +1136,48 @@
                                 {% if upgrades["onlineshopping"] %}
                                 <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/fulfillmentcenters.jpg') }}?v=2" /> {% else %}
                                 <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/mall.jpg') }}?v=2" /> {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Distribution Centers</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["distribution_centers"] }} Distribution Centers</h3>
+
+                                <p class="templatecontentpleft">Large-scale logistics hubs that distribute rations and consumer goods to your population. Each serves up to 400,000 citizens.</p>
+
+                                <ul>Distribution Centers cost {{ infra["distribution_centers_money"] }} per hour</ul>
+                                <ul>{{ "distribution_centers" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="distribution_centers" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/distribution_centers/{{ province['id'] }}"><span
+                                                class="material-icons-outlined">
+                                                add_circle_outline
+                                            </span>Buy</button>
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/distribution_centers/{{ province['id'] }}"><span class="material-icons-outlined">
+                                                remove_circle_outline
+                                            </span>Sell</button>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2left">
+                                <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/mall.jpg') }}?v=2" />
                             </div>
                         </div>
                     </div>
