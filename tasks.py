@@ -265,7 +265,7 @@ def rations_distribution_capacity(user_id):
                 ON bd.building_id = ub.building_id
             WHERE ub.user_id = %s
               AND bd.name IN (
-                  'gas_stations', 'general_stores',
+                  'distribution_centers', 'gas_stations', 'general_stores',
                   'farmers_markets', 'malls'
               )
             """,

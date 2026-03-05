@@ -35,6 +35,26 @@ def _init_economy_tables(db, user_id):
         "ON CONFLICT DO NOTHING",
         (user_id,),
     )
+
+    # Starter care package: +15,000 steel, +10,000 components, +10,000 aluminium
+    # These help new players bootstrap their first processing buildings.
+    starter_resources = [
+        ("steel", 15000),
+        ("components", 10000),
+        ("aluminium", 10000),
+    ]
+    for res_name, qty in starter_resources:
+        db.execute(
+            """
+            UPDATE user_economy SET quantity = quantity + %s
+            WHERE user_id = %s
+              AND resource_id = (
+                  SELECT resource_id FROM resource_dictionary WHERE name = %s
+              )
+            """,
+            (qty, user_id, res_name),
+        )
+
     # user_buildings — one row per active building in building_dictionary
     db.execute(
         "INSERT INTO user_buildings (user_id, building_id, quantity) "
