@@ -491,15 +491,15 @@ PROVINCE_UNIT_PRICES = {
     "cityCount_price": 0,
     # Power Generation (Tier 2-3)
     "coal_burners_price": 2500000,
-    "coal_burners_resource": {"aluminium": 60000},
+    "coal_burners_resource": {"lumber": 40000},
     "oil_burners_price": 4500000,
-    "oil_burners_resource": {"aluminium": 75000},
+    "oil_burners_resource": {"lumber": 60000, "iron": 20000},
     "hydro_dams_price": 35000000,
     "hydro_dams_resource": {"steel": 180000, "aluminium": 90000},
     "nuclear_reactors_price": 150000000,
     "nuclear_reactors_resource": {"steel": 500000},
     "solar_fields_price": 8000000,
-    "solar_fields_resource": {"steel": 85000},
+    "solar_fields_resource": {"copper": 40000, "bauxite": 30000},
     # Retail / Consumer Goods (Tier 2-3)
     "gas_stations_price": 7000000,
     "gas_stations_resource": {"steel": 75000, "aluminium": 50000},
