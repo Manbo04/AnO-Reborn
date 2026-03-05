@@ -145,6 +145,34 @@ PENSION_CRISIS_RATIO = 0.4  # Elderly > 40% of working = pension crisis
 PENSION_CRISIS_GOLD_PENALTY = 5000  # Gold cost per tick when in crisis
 PRODUCTION_EFFICIENCY_MIN = 0.2  # Minimum 20% production if severely understaffed
 
+# POLICY DEFINITIONS
+# Policy IDs (stored as integers in user's policy arrays)
+POLICY_UNIVERSAL_HEALTHCARE = 1
+POLICY_MANDATORY_SCHOOLING = 2
+POLICY_INDUSTRIAL_SUBSIDIES = 3
+POLICY_RATIONING_PROGRAM = 4
+
+# Policy effect multipliers
+POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER = 1.2  # +20% elderly CG consumption
+POLICY_HEALTHCARE_ELDERLY_DEATH_REDUCTION = 0.7  # -30% elderly death rate
+POLICY_HEALTHCARE_HAPPINESS_BONUS = 5  # +5 happiness per province
+
+POLICY_SCHOOLING_GRADUATION_MULTIPLIER = 1.5  # +50% graduation rates
+POLICY_SCHOOLING_HAPPINESS_BONUS = 3  # +3 happiness (educated populace)
+
+POLICY_SUBSIDIES_UPKEEP_REDUCTION = 0.7  # -30% upkeep for industrial buildings
+POLICY_SUBSIDIES_POLLUTION_MULTIPLIER = 1.3  # +30% pollution from industry
+POLICY_SUBSIDIES_AFFECTED_BUILDINGS = [
+    "industrial_district",
+    "component_factories",
+    "steel_mills",
+    "coal_burners",
+    "oil_burners",
+]
+
+POLICY_RATIONING_CONSUMPTION_REDUCTION = 0.85  # -15% rations consumption
+POLICY_RATIONING_HAPPINESS_PENALTY = 10  # -10 happiness per province
+
 UNITS = [
     "soldiers",
     "tanks",
