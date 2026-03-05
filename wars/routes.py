@@ -16,6 +16,7 @@ from attack_scripts.Nations import (
 )
 from attack_scripts import Nation
 import time
+from datetime import datetime
 
 from units import Units
 import math
@@ -853,7 +854,7 @@ def declare_war():
                     return error(
                         403, "You can't declare war because truce has not expired!"
                     )
-            start_dates = time.time()
+            start_dates = datetime.fromtimestamp(time.time())
             db.execute(
                 (
                     "INSERT INTO wars (attacker_id, defender_id, "
