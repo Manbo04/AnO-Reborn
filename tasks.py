@@ -1910,7 +1910,45 @@ def generate_province_revenue():  # Runs each hour
                         "population": 0,
                     }
 
+        # PHASE 3: Pre-calculate workforce debuffs for all users once
+        # (before processing provinces)
+        workforce_debuffs = {}
+        if variables.FEATURE_PHASE3_WORKFORCE:
+            for uid in all_user_ids:
+                try:
+                    debuff_report = apply_workforce_hiring_and_debuffs(uid)
+                    workforce_debuffs[uid] = debuff_report
+                except Exception as e:
+                    log_verbose(
+                        f"apply_workforce_hiring_and_debuffs failed "
+                        f"for user {uid}: {e}"
+                    )
+                    workforce_debuffs[uid] = {
+                        "efficiency_multiplier": 1.0,
+                        "happiness_penalty": 0,
+                        "gold_penalty": 0,
+                    }
+        else:
+            # Feature disabled: no efficiency reduction, no debuffs
+            for uid in all_user_ids:
+                workforce_debuffs[uid] = {
+                    "efficiency_multiplier": 1.0,
+                    "happiness_penalty": 0,
+                    "gold_penalty": 0,
+                }
+
+        # Track happiness penalties per province (to apply after batch writes)
+        happiness_penalties = {}  # province_id -> penalty_amount
+
         for province_id, user_id, land, productivity in infra_ids:
+            # PHASE 3: Apply population aging to this province
+            try:
+                apply_population_aging(province_id)
+            except Exception as e:
+                log_verbose(
+                    f"apply_population_aging failed for " f"province {province_id}: {e}"
+                )
+
             # Initialize tracking for this user
             if user_id not in gold_deductions:
                 gold_deductions[user_id] = 0
@@ -2133,6 +2171,15 @@ def generate_province_revenue():  # Runs each hour
                             land * variables.LAND_FARM_PRODUCTION_ADDITION
                         )
 
+                    # PHASE 3: Apply workforce efficiency multiplier
+                    # (reduces production if understaffed)
+                    debuff_info = workforce_debuffs.get(
+                        user_id, {"efficiency_multiplier": 1.0}
+                    )
+                    plus_amount_multiplier *= debuff_info.get(
+                        "efficiency_multiplier", 1.0
+                    )
+
                     # Function for _plus
                     for resource, amount in plus.items():
                         amount += plus_amount
@@ -2271,9 +2318,32 @@ def generate_province_revenue():  # Runs each hour
                     handle_exception(e)
                     continue
 
+            # PHASE 3: Track happiness penalty from unemployment debuff
+            # (to apply after batch writes)
+            debuff_info = workforce_debuffs.get(user_id, {"happiness_penalty": 0})
+            unemployment_penalty = debuff_info.get("happiness_penalty", 0)
+            if unemployment_penalty > 0 and province_id in provinces_data:
+                # Reduce happiness by unemployment penalty
+                current_hap = provinces_data[province_id].get("happiness", 50)
+                new_hap = max(0, current_hap - unemployment_penalty)
+                provinces_data[province_id]["happiness"] = new_hap
+                # Track for logging
+                happiness_penalties[province_id] = unemployment_penalty
+
             processed += 1
 
         # ============ BATCH WRITE ALL ACCUMULATED CHANGES ============
+        # PHASE 3: Apply pension crisis gold penalties
+        pension_penalties = {}  # user_id -> penalty_amount
+        if variables.FEATURE_PHASE3_WORKFORCE:
+            for user_id, debuff_info in workforce_debuffs.items():
+                gold_penalty = debuff_info.get("gold_penalty", 0)
+                if gold_penalty > 0:
+                    gold_deductions[user_id] = (
+                        gold_deductions.get(user_id, 0) + gold_penalty
+                    )
+                    pension_penalties[user_id] = gold_penalty
+
         # Write all gold deductions in batch
         try:
             if gold_deductions:
@@ -2290,6 +2360,11 @@ def generate_province_revenue():  # Runs each hour
                         page_size=100,
                     )
                     log_verbose(f"Batch updated gold for {len(gold_updates)} users")
+                    if pension_penalties:
+                        log_verbose(
+                            f"Applied pension crisis penalties "
+                            f"to {len(pension_penalties)} users"
+                        )
         except Exception as e:
             conn.rollback()
             handle_exception(e)
