@@ -1025,7 +1025,7 @@ def delete_own_account():
         deleted_counts["user_economy"] = db.rowcount
 
         # Deletes all market things the user is associated with
-        db.execute("DELETE FROM offers WHERE userid=(%s)", (cId,))
+        db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
         deleted_counts["offers"] = db.rowcount
         db.execute(
             "DELETE FROM wars WHERE defender_id=%s OR attacker_id=%s", (cId, cId)
@@ -1090,6 +1090,14 @@ def delete_own_account():
 
         db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
+
+        # Clean up Economy 2.0 normalized tables
+        db.execute("DELETE FROM user_tech WHERE user_id=%s", (cId,))
+        deleted_counts["user_tech"] = db.rowcount
+        db.execute("DELETE FROM policies WHERE user_id=%s", (cId,))
+        deleted_counts["policies"] = db.rowcount
+        db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
+        deleted_counts["news"] = db.rowcount
 
         try:
             import logging
