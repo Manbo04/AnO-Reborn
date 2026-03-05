@@ -116,14 +116,13 @@ BUILDING_EMPLOYMENT_MATRICES = {
     },
     "high_school": {
         "worker_count": 40000,
-        "education": {"edu_none": 0.5, "edu_highschool": 0.5},
+        "education": {"edu_none": 1.0},
     },
     "university": {
         "worker_count": 50000,
         "education": {
-            "edu_none": 0.2,
-            "edu_highschool": 0.3,
-            "edu_college": 0.5,
+            "edu_highschool": 0.8,
+            "edu_college": 0.2,
         },
     },
     "component_factories": {
@@ -305,20 +304,23 @@ INFRA = {  # (OLD INFRA)
     "solar_fields_money": 11000,
     ####################
     # Retail (Done)
-    "gas_stations_plus": {"consumer_goods": 12},
+    "gas_stations_plus": {"consumer_goods": 50000},
     "gas_stations_effect": [{"pollution": 4}],
     "gas_stations_money": 20000,
-    "general_stores_plus": {"consumer_goods": 10},
+    "general_stores_plus": {"consumer_goods": 40000},
     "general_stores_effect": [{"pollution": 2}],
     "general_stores_money": 37500,
-    "farmers_markets_plus": {"consumer_goods": 16},
+    "farmers_markets_plus": {"consumer_goods": 60000},
     "farmers_markets_effect": [{"pollution": 5}],
     "farmers_markets_money": 80000,
-    "banks_plus": {"consumer_goods": 20},
+    "banks_plus": {"consumer_goods": 80000},
     "banks_money": 220000,
-    "malls_plus": {"consumer_goods": 30},
+    "malls_plus": {"consumer_goods": 100000},
     "malls_effect": [{"pollution": 9}],
     "malls_money": 450000,  # Costs $750k
+    "industrial_district_plus": {"consumer_goods": 300000},
+    "industrial_district_effect": [{"pollution": 15}],
+    "industrial_district_money": 85000,
     ##############
     # Public Works (Done)
     "city_parks_effect": [{"happiness": 5}],
@@ -343,7 +345,7 @@ INFRA = {  # (OLD INFRA)
     ################
     # Industry (Done)
     "farms_money": 3000,  # Costs $3k
-    "farms_plus": {"rations": 12},
+    "farms_plus": {"rations": 150000},
     "farms_effect": [{"pollution": 1}],
     "pumpjacks_money": 9500,
     "pumpjacks_plus": {"oil": 25},
