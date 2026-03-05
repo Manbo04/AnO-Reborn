@@ -1848,14 +1848,13 @@ def generate_province_revenue():  # Runs each hour
         all_province_ids = [row[0] for row in infra_ids]
 
         # Preload all upgrades for all users at once (instead of per-loop queries)
+        # Uses the Economy 2.0 user_tech / tech_dictionary tables
+        from upgrades import get_upgrades as _get_upgrades
+
         upgrades_map = {}
         if all_user_ids:
-            dbdict.execute(
-                "SELECT user_id, * FROM upgrades WHERE user_id = ANY(%s)",
-                (all_user_ids,),
-            )
-            for row in dbdict.fetchall():
-                upgrades_map[row["user_id"]] = dict(row)
+            for uid in all_user_ids:
+                upgrades_map[uid] = _get_upgrades(uid)
 
         # Preload all policies for all users at once
         policies_map = {}
@@ -2043,9 +2042,7 @@ def generate_province_revenue():  # Runs each hour
             # Use preloaded upgrades instead of per-loop query
             upgrades = upgrades_map.get(user_id, {})
             if not upgrades:
-                dbdict.execute("SELECT * FROM upgrades WHERE user_id=%s", (user_id,))
-                result = dbdict.fetchone()
-                upgrades = dict(result) if result else {}
+                upgrades = _get_upgrades(user_id)
                 upgrades_map[user_id] = upgrades
 
             # Use preloaded policies instead of per-loop query
