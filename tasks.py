@@ -188,6 +188,20 @@ def rations_needed(cId):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
+        # Check if Rationing Program policy is enabled
+        db.execute(
+            "SELECT education FROM policies WHERE user_id = %s",
+            (cId,),
+        )
+        policy_row = db.fetchone()
+        policies = policy_row[0] if policy_row else []
+
+        rationing_multiplier = (
+            variables.POLICY_RATIONING_CONSUMPTION_REDUCTION
+            if variables.POLICY_RATIONING_PROGRAM in policies
+            else 1.0
+        )
+
         # Get population per province - each province has minimum 1 ration
         db.execute(
             (
@@ -208,15 +222,20 @@ def rations_needed(cId):
                 # Demographic-based: pop_children, pop_working, pop_elderly
                 pop, pc, pw, pe = province_row
                 province_consumption = int(
-                    pw * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
-                    + pc * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
-                    + pe * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+                    (
+                        pw * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+                        + pc * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+                        + pe * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+                    )
+                    * rationing_multiplier
                 )
             else:
                 # Fallback to old method: total population / RATIONS_PER
                 pop = province_row[0] if province_row else 0
                 province_pop = pop if pop else 0
-                province_consumption = province_pop // variables.RATIONS_PER
+                province_consumption = int(
+                    (province_pop // variables.RATIONS_PER) * rationing_multiplier
+                )
 
             if province_consumption < 1:
                 province_consumption = 1
@@ -408,16 +427,37 @@ def calculate_demographic_rations_need(province_id):
 
         pop_children, pop_working, pop_elderly, user_id = row
 
+        # Check if Rationing Program policy is enabled
+        db.execute(
+            "SELECT education FROM policies WHERE user_id = %s",
+            (user_id,),
+        )
+        policy_row = db.fetchone()
+        policies = policy_row[0] if policy_row else []
+
+        # Apply rationing multiplier to consumption
+        rationing_multiplier = (
+            variables.POLICY_RATIONING_CONSUMPTION_REDUCTION
+            if variables.POLICY_RATIONING_PROGRAM in policies
+            else 1.0
+        )
+
         # Calculate baseline rations need using demographic rates
         rations_needed = 0
         rations_needed += (
-            pop_working * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+            pop_working
+            * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+            * rationing_multiplier
         )
         rations_needed += (
-            pop_children * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+            pop_children
+            * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+            * rationing_multiplier
         )
         rations_needed += (
-            pop_elderly * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+            pop_elderly
+            * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+            * rationing_multiplier
         )
 
         # Get distribution capacity (user-level)
@@ -457,6 +497,21 @@ def calculate_demographic_consumer_goods_need(province_id):
 
         pop_children, pop_working, pop_elderly, user_id = row
 
+        # Check if Universal Healthcare policy is enabled
+        db.execute(
+            "SELECT education FROM policies WHERE user_id = %s",
+            (user_id,),
+        )
+        policy_row = db.fetchone()
+        policies = policy_row[0] if policy_row else []
+
+        # Apply healthcare multiplier to elderly CG consumption
+        elderly_cg_multiplier = (
+            variables.POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER
+            if variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+            else 1.0
+        )
+
         # Calculate baseline CG need using demographic rates
         cg_needed = 0
         cg_needed += (
@@ -466,7 +521,9 @@ def calculate_demographic_consumer_goods_need(province_id):
             pop_children * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
         )
         cg_needed += (
-            pop_elderly * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+            pop_elderly
+            * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+            * elderly_cg_multiplier
         )
 
         # Get distribution capacity (user-level)
@@ -576,18 +633,19 @@ def calc_ti(user_id):
                 land_multiplier = 1  # Cap 100%
 
             base_multiplier = variables.DEFAULT_TAX_INCOME
-            if 1 in policies:  # 1 Policy (1)
-                base_multiplier *= 1.01  # Citizens pay 1% more tax)
-            if 6 in policies:  # 6 Policy (2)
-                base_multiplier *= 0.98
-            if 4 in policies:  # 4 Policy (2)
-                base_multiplier *= 0.98
 
             multiplier = base_multiplier + (base_multiplier * land_multiplier)
             income += multiplier * population
 
             # Calculate CG need (demographic-based if available)
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION and has_demographic_data:
+                # Apply healthcare multiplier to elderly CG consumption
+                elderly_cg_multiplier = (
+                    variables.POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER
+                    if variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+                    else 1.0
+                )
+
                 cg_needed = 0
                 cg_needed += (
                     pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
@@ -596,7 +654,9 @@ def calc_ti(user_id):
                     pc * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
                 )
                 cg_needed += (
-                    pe * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                    pe
+                    * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                    * elderly_cg_multiplier
                 )
                 total_cg_need += cg_needed
             else:
@@ -1013,7 +1073,7 @@ def calc_pg(pId, rations):
         land = row[2] if row[2] is not None else 0
         happiness = int(row[3]) if row[3] is not None else 0
         pollution = row[4] if row[4] is not None else 0
-        policies = row[6] if row[6] is not None else []
+        # row[6] (policies) no longer used after policy overhaul
 
         maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
         maxPop += (
@@ -1062,9 +1122,6 @@ def calc_pg(pId, rations):
         new_rations = int(new_rations)
 
         newPop = int(round((maxPop / 100) * growth_rate))
-
-        if 5 in policies:
-            newPop = int(round(newPop * 1.2))  # 20% boost from education policy
 
         fullPop = int(curPop + newPop)
 
@@ -1162,11 +1219,7 @@ def population_growth():  # Function for growing population
         )
         ration_map = {row["user_id"]: row["rations"] for row in dbdict.fetchall()}
 
-        dbdict.execute(
-            "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
-            (unique_user_ids,),
-        )
-        policy_map = {row["user_id"]: row["education"] for row in dbdict.fetchall()}
+        # policy_map no longer needed after policy overhaul (old policy 5 removed)
 
         # PHASE 1: Calculate total rations needed per user (sum across all provinces)
         user_total_rations_needed = {}
@@ -1228,10 +1281,6 @@ def population_growth():  # Function for growing population
             growth_rate = base_growth_rate * diminishing_factor
 
             newPop = int(round((maxPop / 100) * growth_rate))
-
-            policies = policy_map.get(user_id) or []
-            if 5 in policies:
-                newPop = int(round(newPop * 1.2))
 
             fullPop = int(curPop + newPop)
             if fullPop < 0:
@@ -1373,10 +1422,23 @@ def apply_population_aging(province_id):
 
             pop_children, pop_working, pop_elderly, user_id = row
 
-            # Step 1: Apply elderly death rate
-            elderly_deaths = int(
-                round(pop_elderly * variables.DEMO_AGING_RATES["elderly_death"])
+            # Check policies for Universal Healthcare
+            db.execute(
+                "SELECT education FROM policies WHERE user_id = %s",
+                (user_id,),
             )
+            policy_row = db.fetchone()
+            policies = policy_row[0] if policy_row else []
+
+            # Apply healthcare reduction to elderly death rate
+            elderly_death_rate = variables.DEMO_AGING_RATES["elderly_death"]
+            if variables.POLICY_UNIVERSAL_HEALTHCARE in policies:
+                elderly_death_rate *= (
+                    variables.POLICY_HEALTHCARE_ELDERLY_DEATH_REDUCTION
+                )
+
+            # Step 1: Apply elderly death rate
+            elderly_deaths = int(round(pop_elderly * elderly_death_rate))
             pop_elderly = max(0, pop_elderly - elderly_deaths)
 
             # Step 2: Shift working -> elderly
@@ -1404,14 +1466,15 @@ def apply_population_aging(province_id):
                 int(school_capacity_result[0] * 100) if school_capacity_result else 0
             )  # 100 students per building
 
+            # Apply Mandatory Schooling policy to graduation rate
+            graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
+            if variables.POLICY_MANDATORY_SCHOOLING in policies:
+                graduation_rate *= variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
+
             # Calculate how many children can graduate
             can_graduate = min(
                 pop_children,
-                int(
-                    round(
-                        pop_children * variables.DEMO_AGING_RATES["children_to_working"]
-                    )
-                ),
+                int(round(pop_children * graduation_rate)),
             )
             graduates = (
                 min(can_graduate, school_capacity // 100) if school_capacity > 0 else 0
@@ -2020,19 +2083,19 @@ def generate_province_revenue():  # Runs each hour
                         )
                         plus_amount_multiplier *= productivity_multiplier
 
-                    if 1 in policies and unit == "universities":
-                        operating_costs *= 1.14
-                    if 3 in policies and unit == "universities":
-                        operating_costs *= 1.18
-                    if 6 in policies and unit == "universities":
-                        operating_costs *= 0.93
-
                     # CHEAPER MATERIALS
                     if unit_category == "industry" and upgrades.get("cheapermaterials"):
                         operating_costs *= 0.8
                     # ONLINE SHOPPING
                     if unit == "malls" and upgrades.get("onlineshopping"):
                         operating_costs *= 0.7
+
+                    # INDUSTRIAL SUBSIDIES POLICY
+                    if (
+                        variables.POLICY_INDUSTRIAL_SUBSIDIES in policies
+                        and unit in variables.POLICY_SUBSIDIES_AFFECTED_BUILDINGS
+                    ):
+                        operating_costs *= variables.POLICY_SUBSIDIES_UPKEEP_REDUCTION
 
                     # Use preloaded gold and track deductions
                     # (instead of per-building SELECT+UPDATE)
@@ -2273,9 +2336,17 @@ def generate_province_revenue():  # Runs each hour
                             and sign == "+"
                         ):
                             eff_amount *= 0.75
-                        ###
-                        if unit == "universities" and 3 in policies:
-                            eff_amount *= 1.1
+
+                        # INDUSTRIAL SUBSIDIES POLICY
+                        if (
+                            variables.POLICY_INDUSTRIAL_SUBSIDIES in policies
+                            and unit in variables.POLICY_SUBSIDIES_AFFECTED_BUILDINGS
+                            and eff_name == "pollution"
+                            and sign == "+"
+                        ):
+                            eff_amount *= (
+                                variables.POLICY_SUBSIDIES_POLLUTION_MULTIPLIER
+                            )
 
                         # Round effect amounts to nearest integer instead of always
                         # rounding up. Using `round` prevents an upward bias when
@@ -2311,28 +2382,6 @@ def generate_province_revenue():  # Runs each hour
                         amount *= unit_amount
                         do_effect(effect, amount, "-")
 
-                    if 5 in policies:
-                        # Update local cache instead of per-building UPDATE
-                        prov_data = provinces_data.get(province_id, {})
-                        current_prod = prov_data.get("productivity", 50)
-                        new_prod = max(0, min(100, round(current_prod * 0.91)))
-                        if province_id in provinces_data:
-                            provinces_data[province_id]["productivity"] = new_prod
-                    if 4 in policies:
-                        # Update local cache instead of per-building UPDATE
-                        prov_data = provinces_data.get(province_id, {})
-                        current_prod = prov_data.get("productivity", 50)
-                        new_prod = max(0, min(100, round(current_prod * 1.05)))
-                        if province_id in provinces_data:
-                            provinces_data[province_id]["productivity"] = new_prod
-                    if 2 in policies:
-                        # Update local cache instead of per-building UPDATE
-                        prov_data = provinces_data.get(province_id, {})
-                        current_hap = prov_data.get("happiness", 50)
-                        new_hap = round(current_hap * 0.89)
-                        if province_id in provinces_data:
-                            provinces_data[province_id]["happiness"] = new_hap
-
                 except Exception as e:
                     conn.rollback()
                     handle_exception(e)
@@ -2351,6 +2400,53 @@ def generate_province_revenue():  # Runs each hour
                 happiness_penalties[province_id] = unemployment_penalty
 
             processed += 1
+
+        # ============ APPLY POLICY HAPPINESS BONUSES ============
+        # Build user->provinces mapping from infra_ids
+        user_provinces = {}
+        for province_id, user_id, _, _ in infra_ids:
+            if user_id not in user_provinces:
+                user_provinces[user_id] = []
+            user_provinces[user_id].append(province_id)
+
+        # Apply happiness bonuses from policies before batch write
+        for user_id, prov_ids in user_provinces.items():
+            if user_id not in policies_map:
+                continue
+            policies = policies_map[user_id]
+
+            # Universal Healthcare: +5 happiness per province
+            if variables.POLICY_UNIVERSAL_HEALTHCARE in policies:
+                for province_id in prov_ids:
+                    if province_id in provinces_data:
+                        current_hap = provinces_data[province_id].get("happiness", 50)
+                        new_hap = min(
+                            100,
+                            current_hap + variables.POLICY_HEALTHCARE_HAPPINESS_BONUS,
+                        )
+                        provinces_data[province_id]["happiness"] = new_hap
+
+            # Mandatory Schooling: +3 happiness per province
+            if variables.POLICY_MANDATORY_SCHOOLING in policies:
+                for province_id in prov_ids:
+                    if province_id in provinces_data:
+                        current_hap = provinces_data[province_id].get("happiness", 50)
+                        new_hap = min(
+                            100,
+                            current_hap + variables.POLICY_SCHOOLING_HAPPINESS_BONUS,
+                        )
+                        provinces_data[province_id]["happiness"] = new_hap
+
+            # Rationing Program: -10 happiness per province
+            if variables.POLICY_RATIONING_PROGRAM in policies:
+                for province_id in prov_ids:
+                    if province_id in provinces_data:
+                        current_hap = provinces_data[province_id].get("happiness", 50)
+                        new_hap = max(
+                            0,
+                            current_hap - variables.POLICY_RATIONING_HAPPINESS_PENALTY,
+                        )
+                        provinces_data[province_id]["happiness"] = new_hap
 
         # ============ BATCH WRITE ALL ACCUMULATED CHANGES ============
         # PHASE 3: Apply pension crisis gold penalties

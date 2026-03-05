@@ -36,9 +36,9 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">paid</span> Tax Income</h3>
-                    <p class="templatecontentpleft">Your primary gold source. Each citizen pays <strong>$0.025 per hour</strong> in base taxes.</p>
+                    <p class="templatecontentpleft">Your primary gold source. Each citizen pays <strong>$0.50 per hour</strong> in base taxes.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Base Rate</strong></td><td>$0.025 per citizen/hour</td></tr>
+                        <tr><td><strong>Base Rate</strong></td><td>$0.50 per citizen/hour</td></tr>
                         <tr><td><strong>Consumer Goods Bonus</strong></td><td>+50% when fully supplied</td></tr>
                         <tr><td><strong>No Rations Penalty</strong></td><td>-30% tax income</td></tr>
                         <tr><td><strong>No Energy Penalty</strong></td><td>-15% tax income</td></tr>
@@ -60,11 +60,12 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">shopping_cart</span> Consumer Goods</h3>
-                    <p class="templatecontentpleft">Manufactured goods that boost your economy when supplied to citizens.</p>
+                    <p class="templatecontentpleft">Manufactured goods that boost your economy. Elderly consume 2x more due to healthcare needs.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Requirement</strong></td><td>1 per 80,000 population</td></tr>
+                        <tr><td><strong>Requirement</strong></td><td>1x working-age, 2x elderly, 1.2x children (per person)</td></tr>
                         <tr><td><strong>When Supplied</strong></td><td>+50% tax income</td></tr>
                         <tr><td><strong>Produced By</strong></td><td>Factories (uses components)</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires malls/stores (1 per 50k pop)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -144,14 +145,15 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rations (Food)</h3>
-                    <p class="templatecontentpleft">Essential for population survival and growth.</p>
+                    <p class="templatecontentpleft">Essential for population survival and growth. Measured in kilograms (kg).</p>
                     <p class="templatecontentpleft" style="margin-bottom: 8px;">
                         <a href="/mechanics/rations" class="templatedivbutton"><span class="material-icons-outlined">info</span> Full Rations Guide</a>
                     </p>
                     <table class="templatetable">
-                        <tr><td><strong>Consumption</strong></td><td>1 per 50,000 population/hour</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Farms (+3 per land slot bonus)</td></tr>
+                        <tr><td><strong>Consumption</strong></td><td>1 kg/person (1.3x children, 0.8x elderly)</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Farms (150k kg/hour, +3 per land slot bonus)</td></tr>
                         <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires gas stations/stores (1 per 50k pop)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -231,6 +233,101 @@
                         <tr><td><strong>Bombers</strong></td><td>Strategic strikes</td></tr>
                         <tr><td><strong>Destroyers</strong></td><td>Naval combat</td></tr>
                         <tr><td><strong>Submarines</strong></td><td>Stealth naval</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADVANCED SYSTEMS & POLICIES -->
+        <div id="advanced">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">settings</span> Advanced Game Systems</th>
+                </tr>
+            </table>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">factory</span> Chernobyl Rule</h3>
+                    <p class="templatecontentpleft">Production efficiency is limited by available workforce education.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Formula</strong></td><td>Efficiency = jobs_available ÷ jobs_needed</td></tr>
+                        <tr><td><strong>Minimum</strong></td><td>20% efficiency floor (even if severely understaffed)</td></tr>
+                        <tr><td><strong>Affected By</strong></td><td>Schools train workforce for industrial buildings</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> Distribution Bottleneck</h3>
+                    <p class="templatecontentpleft">Consumer goods and rations require distribution buildings to reach citizens.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Requirement</strong></td><td>1 distribution building per 50,000 population</td></tr>
+                        <tr><td><strong>CG Buildings</strong></td><td>Malls, General Stores, Gas Stations</td></tr>
+                        <tr><td><strong>Rations Buildings</strong></td><td>Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
+                        <tr><td><strong>Without</strong></td><td>Resources cannot be consumed (even if available)</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">scale</span> Weight System</h3>
+                    <p class="templatecontentpleft">Physical resources (rations, oil, steel, etc.) are measured in weight units.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>kg (kilograms)</strong></td><td>Less than 1,000 kg</td></tr>
+                        <tr><td><strong>t (tons)</strong></td><td>1,000 kg to 1 million kg</td></tr>
+                        <tr><td><strong>kt (kilotons)</strong></td><td>1 million kg to 1 billion kg</td></tr>
+                        <tr><td><strong>Mt (megatons)</strong></td><td>1 billion kg and above</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Demographics System</h3>
+                    <p class="templatecontentpleft">Population is divided into age groups with different needs and behaviors.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Children</strong></td><td>Graduate to working-age (0.5%/hour with schools)</td></tr>
+                        <tr><td><strong>Working-Age</strong></td><td>Provide workforce, move to elderly (0.1%/hour)</td></tr>
+                        <tr><td><strong>Elderly</strong></td><td>2x CG consumption, death rate 0.2%/hour</td></tr>
+                        <tr><td><strong>Debuffs</strong></td><td>30%+ unemployment = -10 happiness, 40%+ elderly = -$5k gold/hour</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">policy</span> National Policies</th>
+                </tr>
+            </table>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_hospital</span> Universal Healthcare</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Benefits</strong></td><td>+5 happiness per province, -30% elderly death rate</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>+20% elderly consumer goods consumption</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">school</span> Mandatory Schooling</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Benefits</strong></td><td>+3 happiness per province, +50% graduation rates</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>None (pure benefit)</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Industrial Subsidies</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Benefits</strong></td><td>-30% upkeep for industrial buildings</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>+30% pollution from those buildings</td></tr>
+                        <tr><td><strong>Affected</strong></td><td>Industrial Districts, Factories, Steel Mills, Power Plants</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rationing Program</h3>
+                    <table class="templatetable">
+                        <tr><td><strong>Benefits</strong></td><td>-15% rations consumption for all demographics</td></tr>
+                        <tr><td><strong>Cost</strong></td><td>-10 happiness per province</td></tr>
                     </table>
                 </div>
             </div>
