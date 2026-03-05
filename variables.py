@@ -40,6 +40,32 @@ RATIONS_DISTRIBUTION_BUILDINGS = [
 ]
 RATIONS_DISTRIBUTION_PER_BUILDING = 50000  # population served per building
 
+# DEMOGRAPHIC-BASED CONSUMPTION (Phase 2)
+# Each demographic bracket has different consumption rates for rations and CG
+# Base units: consumption per person per tick
+DEMO_RATIONS_CONSUMPTION = {
+    "pop_working": 1.0,  # 1 ration per working-age person per tick
+    "pop_children": 1.3,  # 30% higher rations due to nutritional needs
+    "pop_elderly": 0.8,  # Slightly lower than working
+}
+DEMO_CONSUMER_GOODS_CONSUMPTION = {
+    "pop_working": 1.0,  # 1 CG per working-age person per tick
+    "pop_children": 1.2,  # High CG consumption (toys, education materials)
+    "pop_elderly": 2.0,  # 2x CG consumption (healthcare, comfort goods)
+}
+
+# Distribution capacity for different building types
+# These cap how much rations/CG can actually be consumed even if available
+CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
+    "malls",
+    "general_stores",
+    "gas_stations",
+]
+CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = 50000  # population served per building
+
+# Feature flag for demographic-based consumption system
+FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
+
 UNITS = [
     "soldiers",
     "tanks",
