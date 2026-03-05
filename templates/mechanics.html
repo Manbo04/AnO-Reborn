@@ -46,13 +46,14 @@
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Productivity</h3>
-                    <p class="templatecontentpleft">Productivity affects resource production from all infrastructure.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">scale</span> Weight-Based Resources</h3>
+                    <p class="templatecontentpleft">Physical resources (oil, food, metals, components) are measured in weight.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Base Effect</strong></td><td>+0.9% output per % productivity</td></tr>
-                        <tr><td><strong>At 50%</strong></td><td>Normal production</td></tr>
-                        <tr><td><strong>At 100%</strong></td><td>+45% bonus production</td></tr>
-                        <tr><td><strong>Increased By</strong></td><td>Schools, Factories, Research Labs</td></tr>
+                        <tr><td><strong>kg</strong></td><td>Kilograms (thousands)</td></tr>
+                        <tr><td><strong>t</strong></td><td>Tonnes (millions)</td></tr>
+                        <tr><td><strong>kt</strong></td><td>Kilotonnes (billions)</td></tr>
+                        <tr><td><strong>Mt</strong></td><td>Megatonnes (trillions)</td></tr>
+                        <tr><td><strong>Processing Chains</strong></td><td>Raw→Refined (Oil→Gasoline, Iron Ore→Steel)</td></tr>
                     </table>
                 </div>
             </div>
@@ -64,17 +65,17 @@
                     <table class="templatetable">
                         <tr><td><strong>Requirement</strong></td><td>1x working-age, 2x elderly, 1.2x children (per person)</td></tr>
                         <tr><td><strong>When Supplied</strong></td><td>+50% tax income</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Factories (uses components)</td></tr>
-                        <tr><td><strong>Distribution</strong></td><td>Requires malls/stores (1 per 50k pop)</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Factories (consume 20,000 kg copper, 15,000 kg steel, 40,000 kg components/hour)</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings (1 per 50k population)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">bolt</span> Energy</h3>
-                    <p class="templatecontentpleft">Power is essential for infrastructure to operate efficiently.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">settings</span> Components</h3>
+                    <p class="templatecontentpleft">Industrial components used in manufacturing consumer goods and military equipment.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Without Power</strong></td><td>-15% tax income</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Power Plants, Nuclear Plants, Wind/Solar</td></tr>
-                        <tr><td><strong>Consumed By</strong></td><td>Most infrastructure (1 per building)</td></tr>
+                        <tr><td><strong>Production</strong></td><td>Component Factories (20,000 kg copper + 10,000 kg steel + 15,000 kg aluminium/hour → 40,000 kg components)</td></tr>
+                        <tr><td><strong>Uses</strong></td><td>Consumer goods manufacturing, military unit production</td></tr>
+                        <tr><td><strong>Input Resources</strong></td><td>Copper, Steel, and Aluminium (from mining and refineries)</td></tr>
                     </table>
                 </div>
             </div>
@@ -157,11 +158,13 @@
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_gas_station</span> Oil</h3>
-                    <p class="templatecontentpleft">Fuel for military operations and advanced manufacturing.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_gas_station</span> Oil & Gasoline</h3>
+                    <p class="templatecontentpleft">Raw oil must be refined into gasoline for military vehicle fuel.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Produced By</strong></td><td>Pumpjacks, Refineries</td></tr>
-                        <tr><td><strong>Used For</strong></td><td>Tanks, Aircraft, Ships</td></tr>
+                        <tr><td><strong>Raw Oil Produced By</strong></td><td>Oil Pumpjacks (raw extraction)</td></tr>
+                        <tr><td><strong>Gasoline Production</strong></td><td>Oil Refineries (20,000 kg oil/hour → 75,000 kg gasoline/hour)</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>Tanks, Fighters, Bombers, Destroyers, Submarines</td></tr>
+                        <tr><td><strong>Critical For</strong></td><td>Military vehicle maintenance and combat operations</td></tr>
                     </table>
                 </div>
             </div>
@@ -169,10 +172,11 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Components</h3>
-                    <p class="templatecontentpleft">Advanced parts for manufacturing consumer goods and military equipment.</p>
+                    <p class="templatecontentpleft">Advanced industrial components combining raw materials from multiple sources.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Produced By</strong></td><td>Component Factories</td></tr>
-                        <tr><td><strong>Used For</strong></td><td>Consumer Goods, Military Units</td></tr>
+                        <tr><td><strong>Production</strong></td><td>Component Factories (40,000 kg components/hour output)</td></tr>
+                        <tr><td><strong>Input Materials</strong></td><td>Copper (20,000 kg) + Steel (10,000 kg) + Aluminium (15,000 kg) per hour</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>Consumer goods manufacturing, military unit production</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -220,19 +224,43 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Units</h3>
+                    <p class="templatecontentpleft">Ground units require fuel (gasoline) or food (rations) to maintain operational status.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Soldiers</strong></td><td>Basic infantry, cheap to produce</td></tr>
-                        <tr><td><strong>Tanks</strong></td><td>Heavy armor, requires oil</td></tr>
-                        <tr><td><strong>Artillery</strong></td><td>Long-range bombardment</td></tr>
+                        <tr><td><strong>Soldiers</strong></td><td>Infantry using rations. Cheapest unit, no fuel needed.</td></tr>
+                        <tr><td><strong>Tanks</strong></td><td>Heavy armor requiring 10 kg gasoline/hour. Superior defense.</td></tr>
+                        <tr><td><strong>Artillery</strong></td><td>Long-range bombardment requiring 8 kg gasoline/hour.</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval</h3>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval Units</h3>
+                    <p class="templatecontentpleft">Aircraft and naval units require fuel maintenance to stay operational.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Fighters</strong></td><td>Air superiority</td></tr>
-                        <tr><td><strong>Bombers</strong></td><td>Strategic strikes</td></tr>
-                        <tr><td><strong>Destroyers</strong></td><td>Naval combat</td></tr>
-                        <tr><td><strong>Submarines</strong></td><td>Stealth naval</td></tr>
+                        <tr><td><strong>Fighters</strong></td><td>Air superiority, requires 12 kg gasoline/hour</td></tr>
+                        <tr><td><strong>Bombers</strong></td><td>Strategic strikes, requires 15 kg gasoline/hour</td></tr>
+                        <tr><td><strong>Destroyers</strong></td><td>Naval combat, requires 14 kg gasoline/hour</td></tr>
+                        <tr><td><strong>Submarines</strong></td><td>Stealth naval, requires 10 kg gasoline/hour</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> Supply Line System</h3>
+                    <p class="templatecontentpleft">Units require a reliable supply of fuel or rations to maintain combat effectiveness.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>With Full Supplies</strong></td><td>Units operate at 100% combat effectiveness</td></tr>
+                        <tr><td><strong>Partial Supplies</strong></td><td>Units maintain proportional combat power</td></tr>
+                        <tr><td><strong>No Supplies</strong></td><td>Units remain in inventory but deal <strong>0 damage</strong> (non-combatant)</td></tr>
+                        <tr><td><strong>Unit Retention</strong></td><td>Units are <strong>never deleted</strong>; supply improves effectiveness</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">opacity</span> Fuel Production</h3>
+                    <p class="templatecontentpleft">Gasoline is produced from raw oil in refineries.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Oil Refineries</strong></td><td>Convert 20,000 kg oil/hour → 75,000 kg gasoline/hour</td></tr>
+                        <tr><td><strong>Gasoline Uses</strong></td><td>Vehicle fuel for tanks, aircraft, naval units</td></tr>
+                        <tr><td><strong>Rations Uses</strong></td><td>Food consumption for soldiers (through population needs)</td></tr>
                     </table>
                 </div>
             </div>
