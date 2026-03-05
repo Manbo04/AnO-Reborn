@@ -138,6 +138,11 @@ BUILDING_EMPLOYMENT_MATRICES = {
 # Feature flag for Phase 3 (workforce/employment system)
 FEATURE_PHASE3_WORKFORCE = True
 
+# HOTFIX: disable military desertion mechanic until Economy 2.0 gasoline math
+# is confirmed stable. Set to True only after verifying oil refinery production
+# is correctly flowing and player stockpiles have recovered.
+FEATURE_MILITARY_DESERTION = False
+
 # Debuff thresholds
 UNEMPLOYMENT_THRESHOLD = 0.3  # 30%+ unemployment triggers debuff
 UNEMPLOYMENT_HAPPINESS_PENALTY = 10  # Happiness loss per tick
