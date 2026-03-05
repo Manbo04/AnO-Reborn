@@ -212,15 +212,19 @@ def change():
     with get_db_cursor() as db:
         cId = session["user_id"]
 
-        password = request.form.get("current_password").encode("utf-8")
+        password_raw = request.form.get("current_password")
+        if not password_raw:
+            return error(400, "No password provided")
+        password = password_raw.encode("utf-8")
+
         email = request.form.get("email")
         name = request.form.get("name")
 
-        if not password:
-            return error(400, "No password provided")
-
         db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
-        hash_value = db.fetchone()[0].encode("utf-8")
+        row = db.fetchone()
+        if not row or not row[0]:
+            return error(500, "Account data is missing. Please contact support.")
+        hash_value = row[0].encode("utf-8")
 
         if bcrypt.checkpw(password, hash_value):
             if email:

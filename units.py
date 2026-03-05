@@ -412,6 +412,11 @@ class Units(Military):
             store_sort_values.append(dic[it])
             dic.pop(it)
 
+        # Filter out private/cache attributes (e.g. _unusable_units_cache)
+        # that are stored in __dict__ but are NOT __init__ parameters.
+        # Without this, cls(**dic) raises TypeError on unknown kwargs.
+        dic = {k: v for k, v in dic.items() if not k.startswith("_")}
+
         try:
             reb = cls(**dic)
         except (TypeError, ValueError):

@@ -225,7 +225,7 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
     finally:
         if owns_connection and conn is not None:
             try:
-                get_db_connection().__exit__(None, None, None)
+                conn.close()
             except Exception:
                 pass
 
