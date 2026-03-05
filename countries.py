@@ -488,7 +488,8 @@ def country(cId):
                       c.name as colName,
                       p.total_pop, p.avg_happiness,
                       p.avg_productivity, p.province_count,
-                      u.last_active
+                      u.last_active,
+                      p.total_children, p.total_working, p.total_elderly
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
