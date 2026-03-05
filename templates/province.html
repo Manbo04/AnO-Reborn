@@ -303,17 +303,18 @@
                         borderWidth: 2.5,
                         pointBackgroundColor: 'rgba(94, 89, 255, 1)',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
+                        pointBorderWidth: 1.5,
+                        pointRadius: 4,
                         pointHoverBackgroundColor: '#fff',
                         pointHoverBorderColor: 'rgba(94, 89, 255, 1)',
-                        pointHoverRadius: 8,
+                        pointHoverRadius: 6,
                         tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    aspectRatio: 1,
                     animation: {
                         duration: 1500,
                         easing: 'easeInOutQuart'
@@ -345,10 +346,10 @@
                             display: true,
                             text: 'Demographic Structure: ' + '{{ province["name"] }}',
                             font: {
-                                size: 14,
+                                size: 12,
                                 weight: 'bold'
                             },
-                            padding: 15
+                            padding: 8
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
