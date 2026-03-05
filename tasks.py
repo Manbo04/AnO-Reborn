@@ -189,13 +189,35 @@ def rations_needed(cId):
 
     with get_db_cursor() as db:
         # Get population per province - each province has minimum 1 ration
-        db.execute("SELECT population FROM provinces WHERE userId=%s", (cId,))
+        db.execute(
+            (
+                "SELECT population, pop_children, pop_working, "
+                "pop_elderly FROM provinces WHERE userId=%s"
+            ),
+            (cId,),
+        )
         provinces = db.fetchall()
 
         total_needed = 0
-        for (pop,) in provinces:
-            province_pop = pop if pop else 0
-            province_consumption = province_pop // variables.RATIONS_PER
+        for province_row in provinces:
+            if (
+                variables.FEATURE_DEMOGRAPHIC_CONSUMPTION
+                and len(province_row) >= 4
+                and province_row[1] is not None
+            ):
+                # Demographic-based: pop_children, pop_working, pop_elderly
+                pop, pc, pw, pe = province_row
+                province_consumption = int(
+                    pw * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+                    + pc * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+                    + pe * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+                )
+            else:
+                # Fallback to old method: total population / RATIONS_PER
+                pop = province_row[0] if province_row else 0
+                province_pop = pop if pop else 0
+                province_consumption = province_pop // variables.RATIONS_PER
+
             if province_consumption < 1:
                 province_consumption = 1
             total_needed += province_consumption
@@ -332,6 +354,131 @@ def food_stats(user_id):
     return score
 
 
+def consumer_goods_distribution_capacity(user_id):
+    """Return the population that can be served by CG distribution buildings."""
+    if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+        return None
+
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        # Query normalized user_buildings table for CG distribution buildings
+        db.execute(
+            """
+            SELECT COALESCE(SUM(ub.quantity), 0)
+            FROM user_buildings ub
+            JOIN building_dictionary bd
+                ON bd.building_id = ub.building_id
+            WHERE ub.user_id = %s
+              AND bd.name IN (
+                  'malls', 'general_stores', 'gas_stations'
+              )
+            """,
+            (user_id,),
+        )
+        bcount = db.fetchone()[0] or 0
+    return bcount * variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
+
+
+def calculate_demographic_rations_need(province_id):
+    """
+    Calculate rations needed for a province based on demographic brackets.
+
+    Returns: (rations_needed, shortage_risk)
+    where shortage_risk is True if distribution is limited
+    """
+    if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+        return None
+
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        # Fetch demographic data
+        db.execute(
+            """
+            SELECT pop_children, pop_working, pop_elderly, userId
+            FROM provinces
+            WHERE id = %s
+            """,
+            (province_id,),
+        )
+        row = db.fetchone()
+        if not row:
+            return 0, 0, False
+
+        pop_children, pop_working, pop_elderly, user_id = row
+
+        # Calculate baseline rations need using demographic rates
+        rations_needed = 0
+        rations_needed += (
+            pop_working * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+        )
+        rations_needed += (
+            pop_children * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+        )
+        rations_needed += (
+            pop_elderly * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+        )
+
+        # Get distribution capacity (user-level)
+        dist_capacity = rations_distribution_capacity(user_id)
+        shortage_risk = dist_capacity is not None and dist_capacity < (
+            pop_children + pop_working + pop_elderly
+        )
+
+        return int(rations_needed), dist_capacity, shortage_risk
+
+
+def calculate_demographic_consumer_goods_need(province_id):
+    """
+    Calculate CG needed for a province based on demographic brackets.
+
+    Returns: (cg_needed, distribution_capacity, bottlenecked)
+    where bottlenecked is True if CG distribution is limited
+    """
+    if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+        return None
+
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        # Fetch demographic data
+        db.execute(
+            """
+            SELECT pop_children, pop_working, pop_elderly, userId
+            FROM provinces
+            WHERE id = %s
+            """,
+            (province_id,),
+        )
+        row = db.fetchone()
+        if not row:
+            return 0, None, False
+
+        pop_children, pop_working, pop_elderly, user_id = row
+
+        # Calculate baseline CG need using demographic rates
+        cg_needed = 0
+        cg_needed += (
+            pop_working * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+        )
+        cg_needed += (
+            pop_children * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
+        )
+        cg_needed += (
+            pop_elderly * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+        )
+
+        # Get distribution capacity (user-level)
+        dist_capacity = consumer_goods_distribution_capacity(user_id)
+
+        # Determine if bottleneck exists
+        total_population = pop_children + pop_working + pop_elderly
+        bottlenecked = dist_capacity is not None and dist_capacity < total_population
+
+        return int(cg_needed), dist_capacity, bottlenecked
+
+
 # Returns an energy score for a user, from -1 to -1.6
 # -1 = Enough or more than enough energy
 # -1.6 = No energy at all
@@ -395,7 +542,12 @@ def calc_ti(user_id):
         # Provinces (may not exist yet)
         try:
             db.execute(
-                "SELECT population, land FROM provinces WHERE userId=%s", (user_id,)
+                (
+                    "SELECT population, land, pop_children, "
+                    "pop_working, pop_elderly FROM provinces "
+                    "WHERE userId=%s"
+                ),
+                (user_id,),
             )
             provinces = db.fetchall()
         except Exception:
@@ -405,7 +557,20 @@ def calc_ti(user_id):
             return False, False
 
         income = 0
-        for population, land in provinces:  # Base and land calculation
+        total_cg_need = 0
+        has_demographic_data = (
+            True
+            if (provinces and len(provinces[0]) >= 5 and provinces[0][2] is not None)
+            else False
+        )
+
+        for province_row in provinces:
+            if has_demographic_data:
+                population, land, pc, pw, pe = province_row
+            else:
+                population = province_row[0]
+                land = province_row[1]
+
             land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
             if land_multiplier > 1:
                 land_multiplier = 1  # Cap 100%
@@ -421,21 +586,59 @@ def calc_ti(user_id):
             multiplier = base_multiplier + (base_multiplier * land_multiplier)
             income += multiplier * population
 
-        # Consumer goods
-        total_population = sum(p for p, _ in provinces)
-        removed_consumer_goods = 0
-        max_cg = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
-
-        if consumer_goods != 0 and max_cg != 0:
-            if max_cg <= consumer_goods:
-                # Enough consumer goods to fully cover consumption
-                removed_consumer_goods = max_cg
-                income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+            # Calculate CG need (demographic-based if available)
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION and has_demographic_data:
+                cg_needed = 0
+                cg_needed += (
+                    pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+                )
+                cg_needed += (
+                    pc * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
+                )
+                cg_needed += (
+                    pe * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                )
+                total_cg_need += cg_needed
             else:
-                # Not enough goods to fully cover consumption; apply partial multiplier
-                multiplier = consumer_goods / max_cg
-                income *= 1 + (0.5 * multiplier)
-                removed_consumer_goods = consumer_goods
+                # Fall back to old method: total_population / CONSUMER_GOODS_PER
+                total_cg_need += math.ceil(population / variables.CONSUMER_GOODS_PER)
+
+        # Step 1: Calculate distribution capacity bottleneck
+        removed_consumer_goods = 0
+        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+            dist_capacity = consumer_goods_distribution_capacity(user_id)
+            # Step 2: Apply bottleneck logic
+            if dist_capacity is not None:
+                # Can only consume up to distribution capacity
+                available_to_consume = min(consumer_goods, dist_capacity)
+            else:
+                available_to_consume = consumer_goods
+
+            # Step 3: Apply tax multiplier if enough CG is available
+            if total_cg_need != 0:
+                if available_to_consume >= total_cg_need:
+                    # Full supply available
+                    removed_consumer_goods = int(total_cg_need)
+                    income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                else:
+                    # Partial supply: apply reduced multiplier
+                    multiplier = available_to_consume / total_cg_need
+                    income *= 1 + (0.5 * multiplier)
+                    removed_consumer_goods = available_to_consume
+            # Note: shortage triggered even if stockpile > distribution cap
+        else:
+            # Old logic (fallback)
+            max_cg = math.ceil(total_cg_need)  # total_cg_need already in unit
+            if consumer_goods != 0 and max_cg != 0:
+                if max_cg <= consumer_goods:
+                    # Enough CG to fully cover consumption
+                    removed_consumer_goods = max_cg
+                    income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                else:
+                    # Not enough goods; apply partial multiplier
+                    multiplier = consumer_goods / max_cg
+                    income *= 1 + (0.5 * multiplier)
+                    removed_consumer_goods = consumer_goods
 
         # Return (income, removed_consumer_goods) where
         # removed_consumer_goods is a positive count
