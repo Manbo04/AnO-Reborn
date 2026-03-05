@@ -679,6 +679,104 @@ label {
         background: #1a1c23 !important;
         color: #ffffff !important;
     }
+
+    /* BUILDING PAGE FIXES - Province buildings and descriptions */
+    .menudiv {
+        background: #1a1c23 !important;
+        color: #ffffff !important;
+    }
+
+    .menudiv h2 {
+        color: #ffffff !important;
+    }
+
+    .menudiv h3 {
+        color: #ffffff !important;
+    }
+
+    .menudiv p {
+        color: #ffffff !important;
+    }
+
+    .templatecontentheaderleft {
+        color: #ffffff !important;
+    }
+
+    .templatecontentheadercenter {
+        color: #ffffff !important;
+    }
+
+    /* Building count displays */
+    .menudiv .templatetable {
+        background: #252729 !important;
+    }
+
+    .menudiv .templatetable td {
+        color: #ffffff !important;
+        background: inherit !important;
+    }
+
+    /* Unit image containers - ensure visibility */
+    .unitimage {
+        display: block !important;
+        max-width: 100% !important;
+        height: auto !important;
+        background: #3d4049 !important;
+    }
+
+    /* Ensure building form fields are visible */
+    .purchasemilitarydiv input {
+        background: #2a2d35 !important;
+        color: #ffffff !important;
+        border: 1px solid #3d4049 !important;
+    }
+
+    .purchasemilitarydiv input::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    /* Production/Effect tables in building descriptions */
+    .menudiv ul {
+        color: #ffffff !important;
+    }
+
+    /* Ensure population notification boxes display correctly */
+    .notificationparent {
+        background: #1a1c23 !important;
+    }
+
+    .notificationchild {
+        background: #2a2d35 !important;
+        color: #ffffff !important;
+        border: 1px solid #3d4049 !important;
+    }
+
+    /* Land/Industry/Processing tabs */
+    .land {
+        background: #1a1c23 !important;
+    }
+
+    .land .templatetable {
+        background: #252729 !important;
+    }
+
+    .land .templatetable td {
+        color: #ffffff !important;
+        background: inherit !important;
+    }
+
+    /* Flex containers for building layouts */
+    .warflexparentcolors {
+        background: #1a1c23 !important;
+    }
+
+    .warflexparentcolors .templatedivflex2left {
+        background: #2a2d35 !important;
+    }
+
+    .warflexparentcolors .templatedivflex2right {
+        background: #2a2d35 !important;
+    }
 }
 
 .menubardivshow {
