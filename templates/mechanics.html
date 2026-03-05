@@ -65,8 +65,8 @@
                     <table class="templatetable">
                         <tr><td><strong>Requirement</strong></td><td>1x working-age, 2x elderly, 1.2x children (per person)</td></tr>
                         <tr><td><strong>When Supplied</strong></td><td>+50% tax income</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Factories (consume 20,000 kg copper, 15,000 kg steel, 40,000 kg components/hour)</td></tr>
-                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings (1 per 50k population)</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Retail buildings (gas stations, stores, malls)</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings (1 per 400k population)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -146,23 +146,23 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rations (Food)</h3>
-                    <p class="templatecontentpleft">Essential for population survival and growth. Measured in kilograms (kg).</p>
+                    <p class="templatecontentpleft">Essential for population survival and growth.</p>
                     <p class="templatecontentpleft" style="margin-bottom: 8px;">
                         <a href="/mechanics/rations" class="templatedivbutton"><span class="material-icons-outlined">info</span> Full Rations Guide</a>
                     </p>
                     <table class="templatetable">
-                        <tr><td><strong>Consumption</strong></td><td>1 kg/person (1.3x children, 0.8x elderly)</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Farms (150k kg/hour, +3 per land slot bonus)</td></tr>
+                        <tr><td><strong>Consumption</strong></td><td>1 ration per 50,000 population per hour</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Farms (12 rations/hour, +3 per land slot bonus)</td></tr>
                         <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
-                        <tr><td><strong>Distribution</strong></td><td>Requires gas stations/stores (1 per 50k pop)</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings (1 per 400k pop)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">local_gas_station</span> Oil & Gasoline</h3>
                     <p class="templatecontentpleft">Raw oil must be refined into gasoline for military vehicle fuel.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Raw Oil Produced By</strong></td><td>Oil Pumpjacks (raw extraction)</td></tr>
-                        <tr><td><strong>Gasoline Production</strong></td><td>Oil Refineries (20,000 kg oil/hour → 75,000 kg gasoline/hour)</td></tr>
+                        <tr><td><strong>Raw Oil Produced By</strong></td><td>Oil Pumpjacks (24 oil/hour)</td></tr>
+                        <tr><td><strong>Gasoline Production</strong></td><td>Oil Refineries (20 oil/hour → 11 gasoline/hour)</td></tr>
                         <tr><td><strong>Used For</strong></td><td>Tanks, Fighters, Bombers, Destroyers, Submarines</td></tr>
                         <tr><td><strong>Critical For</strong></td><td>Military vehicle maintenance and combat operations</td></tr>
                     </table>
@@ -174,8 +174,8 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Components</h3>
                     <p class="templatecontentpleft">Advanced industrial components combining raw materials from multiple sources.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Production</strong></td><td>Component Factories (40,000 kg components/hour output)</td></tr>
-                        <tr><td><strong>Input Materials</strong></td><td>Copper (20,000 kg) + Steel (10,000 kg) + Aluminium (15,000 kg) per hour</td></tr>
+                        <tr><td><strong>Production</strong></td><td>Component Factories (5 components/hour output)</td></tr>
+                        <tr><td><strong>Input Materials</strong></td><td>Copper (20) + Steel (10) + Aluminium (15) per hour</td></tr>
                         <tr><td><strong>Used For</strong></td><td>Consumer goods manufacturing, military unit production</td></tr>
                     </table>
                 </div>
@@ -304,9 +304,9 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> Distribution Bottleneck</h3>
                     <p class="templatecontentpleft"><strong style="color: #ff6b6b;">CRITICAL:</strong> Consumer goods and rations require distribution buildings to reach citizens. <strong>Without distribution infrastructure, your resources are USELESS.</strong></p>
                     <table class="templatetable">
-                        <tr><td><strong>Requirement</strong></td><td>1 distribution building per 50,000 population</td></tr>
-                        <tr><td><strong>Consumer Goods Distribution</strong></td><td>Malls, General Stores, Gas Stations</td></tr>
-                        <tr><td><strong>Rations Distribution</strong></td><td>Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
+                        <tr><td><strong>Requirement</strong></td><td>1 distribution building per 400,000 population</td></tr>
+                        <tr><td><strong>Consumer Goods Distribution</strong></td><td>Distribution Centers, Malls, General Stores, Gas Stations</td></tr>
+                        <tr><td><strong>Rations Distribution</strong></td><td>Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
                         <tr><td><strong>Without Distribution</strong></td><td>Rations & CG are <strong>hoarded, not consumed</strong> → -30% taxes, no growth, -5 happiness</td></tr>
                         <tr><td><strong>Impact on Economy</strong></td><td>Missing distribution causes productivity collapse and economic shutdown</td></tr>
                     </table>
