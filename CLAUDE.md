@@ -351,3 +351,42 @@ git push origin master  # Railway auto-deploys
 - If any legacy table references appear in logs, investigate and fix immediately
 - Test files in `tests/` directory may reference legacy tables - update if tests fail
 - Scripts in `scripts/` directory reference legacy tables but are not on critical path (update as needed)
+
+---
+
+### Session: 2026-03-04 (continued)
+
+**Task**: Fix 4 critical production bugs — attack 500, account 500s, market connection leak, electricity soft-lock
+
+**What Was Done**:
+
+1. **Attack route 500 (units.py)**:
+   - Root cause: `Units.rebuild_from_dict()` stored `_unusable_units_cache` in `__dict__` → Flask session. On rebuild, `cls(**dic)` received unknown kwarg → TypeError.
+   - Fix: Filter out private attributes (`k.startswith('_')`) before passing to `__init__`.
+
+2. **Account route 500s (countries.py, change.py)**:
+   - `delete_own_account()`: `DELETE FROM offers WHERE userid=...` but column is `user_id` → crash.
+   - `delete_own_account()`: Missing cleanup of `user_tech`, `policies`, `news` → orphaned data.
+   - `change()`: `request.form.get("current_password")` can be `None`, `.encode()` on None → AttributeError.
+   - Fix: Corrected column name, added missing DELETEs, null-safe password handling.
+
+3. **Market connection leak (market.py)**:
+   - `give_resource()` finally block created a NEW `get_db_connection()` context manager and called `__exit__` on it instead of closing the original `conn`.
+   - Fix: Replaced with `conn.close()`.
+
+4. **Electricity soft-lock (variables.py)**:
+   - Coal burners required aluminium, oil burners required aluminium, solar fields required steel — but these processing outputs require power plants (circular dependency).
+   - Fix: Coal burners → lumber (40k), Oil burners → lumber (60k) + iron (20k), Solar fields → copper (40k) + bauxite (30k). All Tier 1 resources mined without power.
+
+**Commit**: `e24a86d3` — pushed to master
+
+**What To Watch**:
+- Verify attack flow works end-to-end: warchoose → waramount → warResult
+- Verify delete account, change name, change email all work
+- Monitor for connection pool exhaustion (was leaking before fix)
+- Verify new players can build coal/oil burners and solar fields with only Tier 1 resources
+
+**Next Steps**:
+- Monitor Sentry for any remaining 500 errors on war/account/market routes
+- Legacy table references still exist in test files and scripts — update when those are exercised
+- Consider adding integration tests for the attack flow and account deletion
