@@ -498,7 +498,10 @@ def country(cId):
                           SUM(population) AS total_pop,
                           AVG(happiness) AS avg_happiness,
                           AVG(productivity) AS avg_productivity,
-                          COUNT(id) AS province_count
+                          COUNT(id) AS province_count,
+                          SUM(COALESCE(pop_children, 0)) AS total_children,
+                          SUM(COALESCE(pop_working, 0)) AS total_working,
+                          SUM(COALESCE(pop_elderly, 0)) AS total_elderly
                    FROM provinces
                    GROUP BY userid
                ) p ON u.id = p.userid
@@ -524,6 +527,9 @@ def country(cId):
             productivity,
             provinceCount,
             last_active,
+            total_children,
+            total_working,
+            total_elderly,
         ) = row
 
         # Set defaults for None values
@@ -534,16 +540,22 @@ def country(cId):
         happiness = happiness or 0
         productivity = productivity or 0
         provinceCount = provinceCount or 0
+        total_children = total_children or 0
+        total_working = total_working or 0
+        total_elderly = total_elderly or 0
 
         # Get policies and influence (these are already cached)
         policies = get_user_policies(cId)
         influence = get_influence(cId)
 
-        # Get provinces list
+        # Get provinces list with demographics
         db.execute(
             "SELECT provinceName, id, population, "
             "CAST(cityCount AS INTEGER) as cityCount, "
-            "land, happiness, productivity "
+            "land, happiness, productivity, "
+            "COALESCE(pop_children, 0) as pop_children, "
+            "COALESCE(pop_working, 0) as pop_working, "
+            "COALESCE(pop_elderly, 0) as pop_elderly "
             "FROM provinces WHERE userid=(%s) "
             "ORDER BY id ASC",
             (cId,),
@@ -703,6 +715,9 @@ def country(cId):
         building_rows=building_rows,
         technology_rows=technology_rows,
         last_active=last_active,
+        total_children=total_children,
+        total_working=total_working,
+        total_elderly=total_elderly,
     )
 
 

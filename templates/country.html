@@ -308,7 +308,83 @@
                     </table>
 
                 </div>
+                <div class="templatedivflex2right">
+                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics Overview</h3>
+                    <canvas id="demographicsRadarChart" style="max-width: 400px; max-height: 400px; margin: 20px auto;"></canvas>
+                    <table class="templatetable" style="margin-top: 10px;">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">child_care</span>Children:</td>
+                            <td>{{ total_children | commas }} ({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">work</span>Working Age:</td>
+                            <td>{{ total_working | commas }} ({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
+                            <td>{{ total_elderly | commas }} ({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        </tr>
+                    </table>
+                </div>
             </div>
+
+            <script>
+            (function() {
+                const ctx = document.getElementById('demographicsRadarChart');
+                if (!ctx) return;
+
+                const totalPop = {{ population if population > 0 else 1 }};
+                const childrenPct = ({{ total_children }} / totalPop) * 100;
+                const workingPct = ({{ total_working }} / totalPop) * 100;
+                const elderlyPct = ({{ total_elderly }} / totalPop) * 100;
+
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Children', 'Working Age', 'Elderly'],
+                        datasets: [{
+                            label: 'Demographics (%)',
+                            data: [childrenPct, workingPct, elderlyPct],
+                            backgroundColor: 'rgba(0, 167, 225, 0.2)',
+                            borderColor: 'rgba(0, 167, 225, 1)',
+                            pointBackgroundColor: 'rgba(0, 167, 225, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(0, 167, 225, 1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    stepSize: 20
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'National Demographics',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                });
+            })();
+            </script>
 
             <h2 class="templatecontentheaderleft">Resources</h2>
 
