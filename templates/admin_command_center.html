@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Command Center{% endblock %}
+
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">admin_panel_settings</span>Admin Command Center</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="infodiv">
+            <p>Visible and usable only by nation ID 1.</p>
+        </div>
+
+        <h2 class="templatecontentheaderleft">Add Resources</h2>
+        <form action="/admin/command-center/add-resource" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>Target Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Resource</label>
+                    <input class="loginsignupinput" name="resource" placeholder="money, rations, oil..." required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Amount</label>
+                    <input class="loginsignupinput" name="amount" type="number" min="1" required>
+                </div>
+            </div>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">add_circle</span>Add Resource</button>
+        </form>
+
+        <h2 class="templatecontentheaderleft">Add Provinces</h2>
+        <form action="/admin/command-center/add-provinces" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>Target Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Province Count</label>
+                    <input class="loginsignupinput" name="amount" type="number" min="1" max="50" required>
+                </div>
+            </div>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">add_home</span>Add Provinces</button>
+        </form>
+
+        <h2 class="templatecontentheaderleft">Moderation</h2>
+        <form action="/admin/command-center/ban-user" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>Ban Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Reason</label>
+                    <input class="loginsignupinput" name="reason" placeholder="Ban reason" required>
+                </div>
+            </div>
+            <button class="templatedivbutton templatecenteredbutton redactionbutton" type="submit"><span class="material-icons-outlined">gavel</span>Ban User</button>
+        </form>
+
+        <form action="/admin/command-center/unban-user" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>Unban Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+            </div>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">restart_alt</span>Unban User</button>
+        </form>
+
+        <form action="/admin/command-center/kick-user" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>Kick Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Reason</label>
+                    <input class="loginsignupinput" name="reason" placeholder="Kick reason" required>
+                </div>
+            </div>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">logout</span>Kick User</button>
+        </form>
+
+        <h2 class="templatecontentheaderleft">Active Controls</h2>
+        <div class="templateoutertablediv inverttable">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Nation ID</th>
+                    <th>Name</th>
+                    <th>Banned</th>
+                    <th>Kick Pending</th>
+                    <th>Reason</th>
+                </tr>
+                {% for user in controlled_users %}
+                <tr>
+                    <td>{{ user[0] }}</td>
+                    <td>{{ user[1] }}</td>
+                    <td>{{ user[2] }}</td>
+                    <td>{{ user[3] }}</td>
+                    <td>{{ user[4] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <h2 class="templatecontentheaderleft">Recent Admin Actions</h2>
+        <div class="templateoutertablediv inverttable">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Details</th>
+                    <th>Time</th>
+                </tr>
+                {% for row in recent_actions %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
