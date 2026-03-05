@@ -3265,10 +3265,11 @@ def global_tick():
 
     Phases:
     1) Production from user_buildings + building_dictionary effect values
-    2) Military maintenance consumption from user_military + unit_dictionary
-    3) Validation with non-negative balances,
-         plus unit desertion and morale penalty
-    4) Log the tick execution in game_tick_logs with phase timings
+    2) Military maintenance consumption from user_military + unit_dictionary.
+       Resources bottom out at 0 — units are never deleted.
+       Units whose maintenance resource is depleted become unusable in combat
+       (attack/defense power → 0) until the player resupplies.
+    3) Log the tick execution in game_tick_logs with phase timings
 
     If any phase exceeds 30 seconds, a warning is logged.
     """
@@ -3289,10 +3290,8 @@ def global_tick():
         consumption_entries = 0
         total_production = 0
         total_consumption = 0
-        total_deserted_units = 0
         production_phase_ms = 0
         consumption_phase_ms = 0
-        validation_phase_ms = 0
 
         try:
             # Ensure we do not double-run in short windows.
@@ -3494,135 +3493,10 @@ def global_tick():
                         f"cons_entries={consumption_entries}"
                     )
 
-            # Initialize validation_start OUTSIDE the if cost_rows block
-            # so it's always defined when the validation phase timer is read
-            validation_start = time.time()
-
-            if cost_rows:
-                # Validation logic when maintenance cannot be fully paid:
-                # apply unit desertion proportionally and morale penalties
-                # in active wars.
-                # HOTFIX: guarded by FEATURE_MILITARY_DESERTION flag (currently
-                # disabled) until Economy 2.0 resource production math is verified
-                # stable and player gasoline stockpiles have recovered.
-                if deficits and variables.FEATURE_MILITARY_DESERTION:
-                    deficit_users = sorted({k[0] for k in deficits.keys()})
-                    deficit_resources = sorted({k[1] for k in deficits.keys()})
-
-                    dbdict.execute(
-                        """
-                        SELECT
-                            um.user_id,
-                            um.unit_id,
-                            um.quantity,
-                            ud.maintenance_cost_resource_id AS resource_id
-                        FROM user_military um
-                        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                        WHERE um.quantity > 0
-                          AND um.user_id = ANY(%s)
-                          AND ud.maintenance_cost_resource_id = ANY(%s)
-                        """,
-                        (deficit_users, deficit_resources),
-                    )
-                    unit_rows = dbdict.fetchall()
-
-                    deserter_updates = []
-                    penalty_by_user = {}
-
-                    for row in unit_rows:
-                        user_id = row["user_id"]
-                        resource_id = row["resource_id"]
-                        key = (user_id, resource_id)
-                        if key not in deficits:
-                            continue
-
-                        required = deficits[key]["required"]
-                        available = deficits[key]["available"]
-                        ratio = (
-                            0
-                            if required <= 0
-                            else max(
-                                min(available / required, 1),
-                                0,
-                            )
-                        )
-
-                        current_qty = int(row["quantity"] or 0)
-                        new_qty = int(math.floor(current_qty * ratio))
-                        if new_qty < 0:
-                            new_qty = 0
-                        if new_qty > current_qty:
-                            new_qty = current_qty
-
-                        # Safety floor: desertion is capped at 20% of current
-                        # units per tick to prevent a single bad tick from
-                        # instantly zeroing an entire army.
-                        min_qty = int(math.ceil(current_qty * 0.80))
-                        new_qty = max(new_qty, min_qty)
-
-                        deserted = current_qty - new_qty
-                        if deserted <= 0:
-                            continue
-
-                        deserter_updates.append((new_qty, user_id, row["unit_id"]))
-                        total_deserted_units += deserted
-
-                        severity = int(round((1 - ratio) * 20))
-                        if severity < 1:
-                            severity = 1
-                        if severity > 20:
-                            severity = 20
-                        penalty_by_user[user_id] = max(
-                            penalty_by_user.get(user_id, 0), severity
-                        )
-
-                    if deserter_updates:
-                        execute_batch(
-                            db,
-                            """
-                            UPDATE user_military
-                            SET quantity=%s, updated_at=now()
-                            WHERE user_id=%s AND unit_id=%s
-                            """,
-                            deserter_updates,
-                            page_size=500,
-                        )
-
-                    if penalty_by_user:
-                        attacker_penalties = [
-                            (p, uid) for uid, p in penalty_by_user.items()
-                        ]
-                        defender_penalties = [
-                            (p, uid) for uid, p in penalty_by_user.items()
-                        ]
-
-                        execute_batch(
-                            db,
-                            """
-                            UPDATE wars
-                            SET attacker_morale = GREATEST(attacker_morale - %s, 0)
-                            WHERE status = 'active' AND attacker_id = %s
-                            """,
-                            attacker_penalties,
-                            page_size=200,
-                        )
-                        execute_batch(
-                            db,
-                            """
-                            UPDATE wars
-                            SET defender_morale = GREATEST(defender_morale - %s, 0)
-                            WHERE status = 'active' AND defender_id = %s
-                            """,
-                            defender_penalties,
-                            page_size=200,
-                        )
-
-            validation_phase_ms = int((time.time() - validation_start) * 1000)
-            if validation_phase_ms > 30000:
-                logger.warning(
-                    f"Validation phase exceeded 30s: {validation_phase_ms}ms, "
-                    f"deserted_units={total_deserted_units}"
-                )
+            # Disbandment/desertion removed: units are never deleted due to
+            # resource deficits. Instead, units whose maintenance resource is
+            # at 0 are treated as 'unusable' in combat (attack/defense → 0)
+            # via Units.unusable_units in units.py. Resources bottom out at 0.
 
             total_duration_ms = int((time.time() - tick_start) * 1000)
             if total_duration_ms > 30000:
@@ -3637,7 +3511,7 @@ def global_tick():
                 consumption_entries=consumption_entries,
                 total_production=total_production,
                 total_consumption=total_consumption,
-                total_deserted_units=total_deserted_units,
+                total_deserted_units=0,
             )
             conn.commit()
 
@@ -3646,7 +3520,6 @@ def global_tick():
                 f"users={len(users_processed)} "
                 f"prod_entries={production_entries} cons_entries={consumption_entries} "
                 f"produced={total_production} consumed={total_consumption} "
-                f"deserted_units={total_deserted_units} "
                 f"total_ms={total_duration_ms}"
             )
 
@@ -3664,7 +3537,7 @@ def global_tick():
                         consumption_entries=consumption_entries,
                         total_production=total_production,
                         total_consumption=total_consumption,
-                        total_deserted_units=total_deserted_units,
+                        total_deserted_units=0,
                         error_message=err,
                     )
                 conn.commit()
