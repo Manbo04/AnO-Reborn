@@ -61,12 +61,24 @@ def compute_engagement_metrics(
 
     The helper calls `attack(..)` on the provided attacker/defender objects and
     delegates per-unit bonus math to `calculate_bonuses`.
+
+    Unusable units (maintenance resource depleted) are excluded from the raw
+    presence bonus AND return (0, 0) from attack(), so they contribute exactly
+    zero combat power on both offense and defense.
     """
+    # Fetch unusable unit sets once per fight (lazy-cached on the Units objects)
+    attacker_unusable = attacker.unusable_units
+    defender_unusable = defender.unusable_units
+
+    # Unit-amount bonuses exclude unusable units so their sheer numbers don't
+    # grant a tactical presence advantage while they are immobilised.
     attacker_unit_amount_bonuses = compute_unit_amount_bonus(
-        attacker.selected_units_list, attacker.selected_units
+        [u for u in attacker.selected_units_list if u not in attacker_unusable],
+        attacker.selected_units,
     )
     defender_unit_amount_bonuses = compute_unit_amount_bonus(
-        defender.selected_units_list, defender.selected_units
+        [u for u in defender.selected_units_list if u not in defender_unusable],
+        defender.selected_units,
     )
 
     attacker_bonus = 0.0

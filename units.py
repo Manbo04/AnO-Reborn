@@ -10,6 +10,34 @@ from database import get_db_connection
 load_dotenv()
 
 
+def get_unusable_units(user_id: int) -> set:
+    """Return the set of unit names that are currently unusable for a player.
+
+    A unit is unusable when its maintenance resource stock in user_economy is
+    exactly 0 (or absent).  Units are NEVER deleted — they simply contribute
+    zero attack and zero defense power until the player resupplies.
+
+    The mapping of unit → maintenance resource is read live from
+    unit_dictionary so it stays in sync with any future balance changes.
+    """
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute(
+            """
+            SELECT ud.name, COALESCE(ue.quantity, 0) AS stock
+            FROM unit_dictionary ud
+            JOIN resource_dictionary rd
+                ON rd.resource_id = ud.maintenance_cost_resource_id
+            LEFT JOIN user_economy ue
+                ON ue.user_id = %s
+                AND ue.resource_id = ud.maintenance_cost_resource_id
+            WHERE ud.maintenance_cost_resource_id IS NOT NULL
+            """,
+            (user_id,),
+        )
+        return {name for name, stock in db.fetchall() if stock == 0}
+
+
 # Blueprint for units
 class BlueprintUnit(ABC):
     """Base blueprint for all Unit types.
@@ -347,10 +375,25 @@ class Units(Military):
         self.supply_costs = 0
         self.available_supplies = None
         self.war_id = war_id
+        # Cache for unusable-unit lookup (populated lazily on first combat use)
+        self._unusable_units_cache = None
 
         # selected_units_list is needed at: Nations.py/Military->fight();
         # a list of selected_units keys
         self.selected_units_list = selected_units_list
+
+    @property
+    def unusable_units(self) -> set:
+        """Set of unit names with a depleted maintenance resource.
+
+        Lazy-loaded once per Units instance so a single fight never issues
+        more than one DB round-trip for this check.
+        Units in this set deal 0 attack damage and 0 defense bonus until the
+        player's resource stock is replenished — they are NEVER deleted.
+        """
+        if self._unusable_units_cache is None:
+            self._unusable_units_cache = get_unusable_units(self.user_id)
+        return self._unusable_units_cache
 
     # this is needed because we can't store object in server side cache :(
     @classmethod
@@ -452,6 +495,13 @@ class Units(Military):
 
                     if unit_amount is None:
                         return "Unit is not valid!"
+
+                    # Unusable penalty: if this unit's maintenance resource is
+                    # depleted the unit contributes zero attack AND zero defense
+                    # power. The unit remains in the player's inventory and
+                    # becomes effective again once resupplied.
+                    if attacker_unit in self.unusable_units:
+                        return (0, 0)
 
                     # interface.supply_cost * self.selected_units[attacker_unit]
                     # calculates the supply cost based on unit amount
