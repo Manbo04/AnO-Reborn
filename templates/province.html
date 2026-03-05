@@ -241,6 +241,111 @@
                 </table>
 
             </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Province Demographics</h3>
+                <canvas id="provinceDemographicsChart" style="max-width: 450px; max-height: 300px; margin: 10px auto;"></canvas>
+                <table class="templatetable" style="margin-top: 10px;">
+                    <tr>
+                        <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
+                    </tr>
+                    <tr>
+                        <td><span class="material-icons-outlined">child_care</span>Children:</td>
+                        <td>{{ province['pop_children'] | commas }}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="material-icons-outlined">work</span>Working Age:</td>
+                        <td>{{ province['pop_working'] | commas }}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
+                        <td>{{ province['pop_elderly'] | commas }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <script>
+        (function() {
+            const ctx = document.getElementById('provinceDemographicsChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Demographics'],
+                    datasets: [
+                        {
+                            label: 'Children',
+                            data: [{{ province['pop_children'] }}],
+                            backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Working Age',
+                            data: [{{ province['pop_working'] }}],
+                            backgroundColor: 'rgba(0, 167, 225, 0.8)',
+                            borderColor: 'rgba(0, 167, 225, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Elderly',
+                            data: [{{ province['pop_elderly'] }}],
+                            backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: '{{ province["name"] }} Population',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    label += context.parsed.y.toLocaleString();
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+        </script>
+
+        <div class="templatedivflex2 menuflex">
             {% if province["own"] %}
             <div class="templatedivflex2left">
                 <div class="infodiv">
