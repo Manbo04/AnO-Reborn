@@ -1240,11 +1240,22 @@ def population_growth():  # Function for growing population
             return fullPop
 
         # PHASE 3: Calculate population updates for each province
+        # New population from natural growth goes into pop_children demographic
         population_updates = []
+        demographic_updates = []  # (pop_children_increase, province_id)
         for province_row in provinces:
             try:
-                population = calc_population_growth(province_row)
-                population_updates.append((population, province_row["id"]))
+                old_population = province_row["population"] or 0
+                new_population = calc_population_growth(province_row)
+                population_growth_amount = new_population - old_population
+
+                population_updates.append((new_population, province_row["id"]))
+
+                # Add natural growth to children demographic
+                if population_growth_amount > 0:
+                    demographic_updates.append(
+                        (population_growth_amount, province_row["id"])
+                    )
             except Exception as e:
                 handle_exception(e)
                 continue
@@ -1269,6 +1280,15 @@ def population_growth():  # Function for growing population
         if population_updates:
             execute_batch(
                 db, "UPDATE provinces SET population=%s WHERE id=%s", population_updates
+            )
+
+        # Update pop_children with natural growth
+        if demographic_updates:
+            execute_batch(
+                db,
+                "UPDATE provinces SET pop_children = "
+                "COALESCE(pop_children, 0) + %s WHERE id=%s",
+                demographic_updates,
             )
 
         # Commit and release lock
