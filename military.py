@@ -216,8 +216,7 @@ def compute_display_limits(cId, units_row=None):
                 ) AS silos
             FROM user_buildings ub
             JOIN building_dictionary bd ON bd.building_id = ub.building_id
-            JOIN provinces p ON p.id = ub.province_id
-            WHERE p.userId=%s
+            WHERE ub.user_id=%s
             """,
             (cId,),
         )
