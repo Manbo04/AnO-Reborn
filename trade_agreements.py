@@ -48,11 +48,13 @@ def execute_trade_agreement(agreement_id, cursor=None):
     owns_connection = cursor is None
 
     if owns_connection:
-        conn = get_db_connection().__enter__()
+        _conn_cm = get_db_connection()
+        conn = _conn_cm.__enter__()
         db = conn.cursor()
     else:
         db = cursor
         conn = None
+        _conn_cm = None
 
     try:
         # Get agreement details
@@ -208,12 +210,9 @@ def execute_trade_agreement(agreement_id, cursor=None):
         logger.error(f"Error executing trade agreement {agreement_id}: {e}")
         return False, str(e)
     finally:
-        if owns_connection and conn:
+        if owns_connection and _conn_cm:
             try:
-                # Some DB connection objects implement __exit__ on their context
-                # manager; FakeConn used in tests may not have it so guard the call.
-                if hasattr(conn, "__exit__"):
-                    conn.__exit__(None, None, None)
+                _conn_cm.__exit__(None, None, None)
             except Exception:
                 # Best-effort: do not let connection cleanup errors affect flow
                 pass
