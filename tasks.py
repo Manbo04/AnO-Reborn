@@ -1307,6 +1307,346 @@ Tested features:
 """
 
 
+# PHASE 3: Workforce & Aging System Functions
+# ============================================
+
+
+def apply_population_aging(province_id):
+    """
+    Apply daily aging and education graduation to a province.
+
+    Process:
+    1. Elderly death: pop_elderly *= (1 - DEMO_AGING_RATES['elderly_death'])
+    2. Working -> Elderly: pop_elderly +=
+       pop_working * DEMO_AGING_RATES['working_to_elderly']
+    3. Children -> Working: shift based on education graduation
+
+    Education graduation:
+    - Assumes each school/university has capacity
+      (defined in BUILDING_EMPLOYMENT_MATRICES)
+    - Graduates are placed into edu_highschool or edu_college
+      based on graduation_priority
+    - Non-graduate educated children stay as edu_none
+
+    Returns: True if successful, False if province
+    not found or error
+    """
+    if not variables.FEATURE_PHASE3_WORKFORCE:
+        return False
+
+    from database import get_db_cursor
+
+    try:
+        with get_db_cursor() as db:
+            # Fetch current demographic state
+            db.execute(
+                """
+                SELECT pop_children, pop_working, pop_elderly, userId
+                FROM provinces
+                WHERE id = %s
+                """,
+                (province_id,),
+            )
+            row = db.fetchone()
+            if not row:
+                return False
+
+            pop_children, pop_working, pop_elderly, user_id = row
+
+            # Step 1: Apply elderly death rate
+            elderly_deaths = int(
+                round(pop_elderly * variables.DEMO_AGING_RATES["elderly_death"])
+            )
+            pop_elderly = max(0, pop_elderly - elderly_deaths)
+
+            # Step 2: Shift working -> elderly
+            working_to_elderly = int(
+                round(pop_working * variables.DEMO_AGING_RATES["working_to_elderly"])
+            )
+            pop_elderly += working_to_elderly
+            pop_working = max(0, pop_working - working_to_elderly)
+
+            # Step 3: Shift children -> working (with education graduation logic)
+            # Calculate total graduation capacity from schools/universities
+            db.execute(
+                """
+                SELECT COALESCE(SUM(ub.quantity), 0)
+                FROM user_buildings ub
+                JOIN building_dictionary bd
+                    ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                    AND bd.name IN ('high_school', 'university')
+                """,
+                (user_id,),
+            )
+            school_capacity_result = db.fetchone()
+            school_capacity = (
+                int(school_capacity_result[0] * 100) if school_capacity_result else 0
+            )  # 100 students per building
+
+            # Calculate how many children can graduate
+            can_graduate = min(
+                pop_children,
+                int(
+                    round(
+                        pop_children * variables.DEMO_AGING_RATES["children_to_working"]
+                    )
+                ),
+            )
+            graduates = (
+                min(can_graduate, school_capacity // 100) if school_capacity > 0 else 0
+            )
+
+            # Remaining children who age but don't graduate
+            non_graduates = can_graduate - graduates
+
+            # Update education columns based on graduation
+            if graduates > 0:
+                grad_priority = variables.EDUCATION_GRADUATION_PRIORITY
+                # Distribute graduates based on priority
+                # (first option gets all unless capacity runs out)
+                for edu_level in grad_priority:
+                    if edu_level == "university":
+                        db.execute(
+                            "UPDATE provinces SET edu_college = "
+                            "edu_college + %s WHERE id = %s",
+                            (graduates, province_id),
+                        )
+                    elif edu_level == "high_school":
+                        db.execute(
+                            "UPDATE provinces SET edu_highschool = "
+                            "edu_highschool + %s WHERE id = %s",
+                            (graduates, province_id),
+                        )
+                    break  # Only place in primary priority for now
+
+            if non_graduates > 0:
+                db.execute(
+                    "UPDATE provinces SET edu_none = edu_none + %s " "WHERE id = %s",
+                    (non_graduates, province_id),
+                )
+
+            # Children who do age (educated or not)
+            pop_working += can_graduate
+            pop_children = max(0, pop_children - can_graduate)
+
+            # Write back updated demographics
+            db.execute(
+                """
+                UPDATE provinces
+                SET pop_children = %s,
+                    pop_working = %s,
+                    pop_elderly = %s
+                WHERE id = %s
+                """,
+                (pop_children, pop_working, pop_elderly, province_id),
+            )
+
+            return True
+    except Exception as e:
+        log_verbose(f"apply_population_aging error on province {province_id}: {e}")
+        return False
+
+
+def calculate_workforce_available(user_id):
+    """
+    Calculate the total workforce available for employment by education bracket.
+
+    Returns:
+        {
+            'edu_none': count,
+            'edu_highschool': count,
+            'edu_college': count,
+            'total': count
+        }
+    """
+    if not variables.FEATURE_PHASE3_WORKFORCE:
+        return {"edu_none": 0, "edu_highschool": 0, "edu_college": 0, "total": 0}
+
+    from database import get_db_cursor
+
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT COALESCE(SUM(edu_none), 0) as edu_none,
+                       COALESCE(SUM(edu_highschool), 0) as edu_highschool,
+                       COALESCE(SUM(edu_college), 0) as edu_college
+                FROM provinces
+                WHERE userId = %s
+                """,
+                (user_id,),
+            )
+            row = db.fetchone()
+            if not row:
+                return {
+                    "edu_none": 0,
+                    "edu_highschool": 0,
+                    "edu_college": 0,
+                    "total": 0,
+                }
+
+            edu_none, edu_highschool, edu_college = row[0], row[1], row[2]
+            total = edu_none + edu_highschool + edu_college
+
+            return {
+                "edu_none": int(edu_none),
+                "edu_highschool": int(edu_highschool),
+                "edu_college": int(edu_college),
+                "total": int(total),
+            }
+    except Exception as e:
+        log_verbose(f"calculate_workforce_available error for user {user_id}: {e}")
+        return {"edu_none": 0, "edu_highschool": 0, "edu_college": 0, "total": 0}
+
+
+def apply_workforce_hiring_and_debuffs(user_id):
+    """
+    Calculate workforce hiring, efficiency multiplier, and apply debuffs.
+
+    Process:
+    1. Tally job openings from all user's buildings using BUILDING_EMPLOYMENT_MATRICES
+    2. Match available workers to jobs (prioritizing education requirements)
+    3. Calculate unemployment rate: (pop_working - slots_filled) / pop_working
+    4. Apply UNEMPLOYMENT_HAPPINESS_PENALTY if unemployment > UNEMPLOYMENT_THRESHOLD
+    5. Calculate pension ratio: pop_elderly / pop_working
+    6. Apply PENSION_CRISIS_GOLD_PENALTY if ratio > PENSION_CRISIS_RATIO
+    7. Return efficiency multiplier for building production
+
+    Returns:
+        {
+            'jobs_needed': int,
+            'jobs_available': int,
+            'unemployment_rate': float (0.0-1.0),
+            'pension_ratio': float (0.0+),
+            'efficiency_multiplier': float (0.2-1.0 clamped),
+            'happiness_penalty': int,
+            'gold_penalty': int
+        }
+    """
+    if not variables.FEATURE_PHASE3_WORKFORCE:
+        return {
+            "jobs_needed": 0,
+            "jobs_available": 0,
+            "unemployment_rate": 0.0,
+            "pension_ratio": 0.0,
+            "efficiency_multiplier": 1.0,
+            "happiness_penalty": 0,
+            "gold_penalty": 0,
+        }
+
+    from database import get_db_cursor
+
+    try:
+        with get_db_cursor() as db:
+            # Get workforce available
+            workforce = calculate_workforce_available(user_id)
+            total_working = workforce["total"]
+
+            # Get population demographics
+            db.execute(
+                """
+                SELECT COALESCE(SUM(pop_working), 0) as total_working,
+                       COALESCE(SUM(pop_elderly), 0) as total_elderly
+                FROM provinces
+                WHERE userId = %s
+                """,
+                (user_id,),
+            )
+            demo_row = db.fetchone()
+            if not demo_row:
+                return {
+                    "jobs_needed": 0,
+                    "jobs_available": 0,
+                    "unemployment_rate": 0.0,
+                    "pension_ratio": 0.0,
+                    "efficiency_multiplier": 1.0,
+                    "happiness_penalty": 0,
+                    "gold_penalty": 0,
+                }
+
+            total_pop_working = int(demo_row[0])
+            total_pop_elderly = int(demo_row[1])
+
+            # Calculate total job openings from buildings
+            building_matrices = variables.BUILDING_EMPLOYMENT_MATRICES
+
+            # Get all buildings for user
+            db.execute(
+                """
+                SELECT bd.name, COALESCE(ub.quantity, 0) as count
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                """,
+                (user_id,),
+            )
+            building_counts = {row[0]: int(row[1]) for row in db.fetchall()}
+
+            # Calculate total jobs needed
+            jobs_needed = 0
+            for building_name, matrix_data in building_matrices.items():
+                workers_per = matrix_data.get("worker_count", 0)
+                building_count = building_counts.get(building_name, 0)
+                jobs_needed += workers_per * building_count
+
+            # For now: jobs available = workers available (simplified hiring)
+            # Future: could implement education requirement matching
+            jobs_available = total_working
+
+            # Calculate unemployment rate
+            unemployment_rate = 0.0
+            if total_pop_working > 0:
+                unemployment_rate = max(0.0, 1.0 - (jobs_available / total_pop_working))
+
+            # Calculate pension ratio
+            pension_ratio = 0.0
+            if total_pop_working > 0:
+                pension_ratio = total_pop_elderly / total_pop_working
+
+            # Calculate efficiency multiplier (Chernobyl rule)
+            # If jobs_available < jobs_needed: production efficiency reduced
+            if jobs_needed > 0:
+                employment_ratio = jobs_available / jobs_needed
+                # Min efficiency 20% (PRODUCTION_EFFICIENCY_MIN)
+                efficiency_multiplier = max(
+                    variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio
+                )
+            else:
+                efficiency_multiplier = 1.0
+
+            # Apply debuffs
+            happiness_penalty = 0
+            gold_penalty = 0
+
+            if unemployment_rate > variables.UNEMPLOYMENT_THRESHOLD:
+                happiness_penalty = variables.UNEMPLOYMENT_HAPPINESS_PENALTY
+
+            if pension_ratio > variables.PENSION_CRISIS_RATIO:
+                gold_penalty = variables.PENSION_CRISIS_GOLD_PENALTY
+
+            return {
+                "jobs_needed": int(jobs_needed),
+                "jobs_available": int(jobs_available),
+                "unemployment_rate": float(unemployment_rate),
+                "pension_ratio": float(pension_ratio),
+                "efficiency_multiplier": float(efficiency_multiplier),
+                "happiness_penalty": int(happiness_penalty),
+                "gold_penalty": int(gold_penalty),
+            }
+    except Exception as e:
+        log_verbose(f"apply_workforce_hiring_and_debuffs error for user {user_id}: {e}")
+        return {
+            "jobs_needed": 0,
+            "jobs_available": 0,
+            "unemployment_rate": 0.0,
+            "pension_ratio": 0.0,
+            "efficiency_multiplier": 1.0,
+            "happiness_penalty": 0,
+            "gold_penalty": 0,
+        }
+
+
 def generate_province_revenue():  # Runs each hour
     from database import get_db_connection
     from psycopg2.extras import RealDictCursor, execute_batch
