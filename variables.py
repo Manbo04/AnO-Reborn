@@ -1,7 +1,7 @@
 # File for variables that are repeated multiple times in other files
 # (for example, the resources list)
 
-DEFAULT_TAX_INCOME = 0.025
+DEFAULT_TAX_INCOME = 0.50
 CONSUMER_GOODS_TAX_MULTIPLIER = 1.5
 NO_ENERGY_TAX_MULTIPLIER = (
     0.85  # How much the tax income will decrease if there's no energy -15%
@@ -343,59 +343,59 @@ INFRA = {  # (OLD INFRA)
     "admin_buildings_money": 90000,
     "silos_money": 340000,
     ################
-    # Industry (Done)
-    "farms_money": 3000,  # Costs $3k
+    # Industry (Done) - Now in kg (weight-based)
+    "farms_money": 5000,
     "farms_plus": {"rations": 150000},
     "farms_effect": [{"pollution": 1}],
-    "pumpjacks_money": 9500,
-    "pumpjacks_plus": {"oil": 25},
+    "pumpjacks_money": 5000,
+    "pumpjacks_plus": {"oil": 100000},
     "pumpjacks_effect": [{"pollution": 2}],
-    "coal_mines_money": 4200,  # Costs $10k
-    "coal_mines_plus": {"coal": 31},
+    "coal_mines_money": 5000,
+    "coal_mines_plus": {"coal": 90000},
     "coal_mines_effect": [{"pollution": 2}],
-    "bauxite_mines_money": 8000,  # Costs $8k
-    "bauxite_mines_plus": {"bauxite": 20},
+    "bauxite_mines_money": 5000,
+    "bauxite_mines_plus": {"bauxite": 80000},
     "bauxite_mines_effect": [{"pollution": 2}],
-    "copper_mines_money": 5000,  # Costs $8k
-    "copper_mines_plus": {"copper": 25},
+    "copper_mines_money": 5000,
+    "copper_mines_plus": {"copper": 70000},
     "copper_mines_effect": [{"pollution": 2}],
-    "uranium_mines_money": 45000,  # Costs $18k
-    "uranium_mines_plus": {"uranium": 12},
+    "uranium_mines_money": 45000,
+    "uranium_mines_plus": {"uranium": 60000},
     "uranium_mines_effect": [{"pollution": 1}],
-    "lead_mines_money": 7200,
-    "lead_mines_plus": {"lead": 19},
+    "lead_mines_money": 5000,
+    "lead_mines_plus": {"lead": 65000},
     "lead_mines_effect": [{"pollution": 2}],
-    "iron_mines_money": 11000,
-    "iron_mines_plus": {"iron": 23},
+    "iron_mines_money": 5000,
+    "iron_mines_plus": {"iron": 80000},
     "iron_mines_effect": [{"pollution": 2}],
-    "lumber_mills_money": 7500,
-    "lumber_mills_plus": {"lumber": 35},
+    "lumber_mills_money": 5000,
+    "lumber_mills_plus": {"lumber": 100000},
     "lumber_mills_effect": [{"pollution": 1}],
     ################
-    # Processing (Done)
-    "component_factories_money": 50000,  # Costs $220k
+    # Processing (Done) - Now in kg (weight-based)
+    "component_factories_money": 50000,
     "component_factories_convert_minus": [
-        {"copper": 20},
-        {"steel": 10},
-        {"aluminium": 15},
+        {"copper": 20000},
+        {"steel": 10000},
+        {"aluminium": 15000},
     ],
-    "component_factories_plus": {"components": 5},
+    "component_factories_plus": {"components": 40000},
     "component_factories_effect": [{"pollution": 5}],
     "steel_mills_money": 60000,
-    "steel_mills_convert_minus": [{"coal": 35}, {"iron": 35}],
-    "steel_mills_plus": {"steel": 12},
+    "steel_mills_convert_minus": [{"coal": 35000}, {"iron": 35000}],
+    "steel_mills_plus": {"steel": 50000},
     "steel_mills_effect": [{"pollution": 4}],
     "ammunition_factories_money": 15000,
-    "ammunition_factories_convert_minus": [{"copper": 10}, {"lead": 20}],
-    "ammunition_factories_plus": {"ammunition": 12},
+    "ammunition_factories_convert_minus": [{"copper": 10000}, {"lead": 20000}],
+    "ammunition_factories_plus": {"ammunition": 55000},
     "ammunition_factories_effect": [{"pollution": 3}],
     "aluminium_refineries_money": 42000,
-    "aluminium_refineries_convert_minus": [{"bauxite": 15}],
-    "aluminium_refineries_plus": {"aluminium": 16},
+    "aluminium_refineries_convert_minus": [{"bauxite": 15000}],
+    "aluminium_refineries_plus": {"aluminium": 60000},
     "aluminium_refineries_effect": [{"pollution": 3}],
     "oil_refineries_money": 35000,
-    "oil_refineries_convert_minus": [{"oil": 20}],
-    "oil_refineries_plus": {"gasoline": 11},
+    "oil_refineries_convert_minus": [{"oil": 20000}],
+    "oil_refineries_plus": {"gasoline": 75000},
     "oil_refineries_effect": [{"pollution": 6}],
 }
 
