@@ -309,8 +309,8 @@
 
                 </div>
                 <div class="templatedivflex2right">
-                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics Overview</h3>
-                    <canvas id="demographicsRadarChart" style="max-width: 400px; max-height: 400px; margin: 20px auto;"></canvas>
+                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics by Province</h3>
+                    <canvas id="demographicsRadarChart" style="max-width: 100%; max-height: 450px; margin: 20px auto;"></canvas>
                     <table class="templatetable" style="margin-top: 10px;">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
@@ -336,48 +336,111 @@
                 const ctx = document.getElementById('demographicsRadarChart');
                 if (!ctx) return;
 
-                const totalPop = {{ population if population > 0 else 1 }};
-                const childrenPct = ({{ total_children }} / totalPop) * 100;
-                const workingPct = ({{ total_working }} / totalPop) * 100;
-                const elderlyPct = ({{ total_elderly }} / totalPop) * 100;
+                // Weight formatter: kg -> t -> kt -> Mt
+                function formatWeight(value) {
+                    if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
+                    if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
+                    if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
+                    return value + ' kg';
+                }
+
+                // Province data from backend
+                const provinces = [
+                    {% for province in provinces %}
+                    {
+                        name: '{{ province[0] }}',
+                        children: {{ province[7] if province[7] else 0 }},
+                        working: {{ province[8] if province[8] else 0 }},
+                        elderly: {{ province[9] if province[9] else 0 }}
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ];
+
+                const provinceNames = provinces.map(p => p.name);
+                const childrenData = provinces.map(p => p.children);
+                const workingData = provinces.map(p => p.working);
+                const elderlyData = provinces.map(p => p.elderly);
 
                 new Chart(ctx, {
-                    type: 'radar',
+                    type: 'bar',
                     data: {
-                        labels: ['Children', 'Working Age', 'Elderly'],
-                        datasets: [{
-                            label: 'Demographics (%)',
-                            data: [childrenPct, workingPct, elderlyPct],
-                            backgroundColor: 'rgba(0, 167, 225, 0.2)',
-                            borderColor: 'rgba(0, 167, 225, 1)',
-                            pointBackgroundColor: 'rgba(0, 167, 225, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(0, 167, 225, 1)'
-                        }]
+                        labels: provinceNames,
+                        datasets: [
+                            {
+                                label: 'Children',
+                                data: childrenData,
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Working Age',
+                                data: workingData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Elderly',
+                                data: elderlyData,
+                                backgroundColor: 'rgba(201, 203, 207, 0.8)',
+                                borderColor: 'rgba(201, 203, 207, 1)',
+                                borderWidth: 1
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
                         scales: {
-                            r: {
-                                beginAtZero: true,
-                                max: 100,
+                            x: {
+                                stacked: true,
                                 ticks: {
-                                    stepSize: 20
+                                    autoSkip: false,
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                        if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                        return value;
+                                    }
                                 }
                             }
                         },
                         plugins: {
                             legend: {
-                                display: false
+                                display: true,
+                                position: 'top'
                             },
                             title: {
                                 display: true,
-                                text: 'National Demographics',
+                                text: 'National Demographics by Province',
                                 font: {
                                     size: 16,
                                     weight: 'bold'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        label += formatWeight(context.parsed.y);
+                                        return label;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        let total = 0;
+                                        tooltipItems.forEach(item => {
+                                            total += item.parsed.y;
+                                        });
+                                        return 'Total: ' + formatWeight(total);
+                                    }
                                 }
                             }
                         }

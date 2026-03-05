@@ -243,7 +243,7 @@
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Province Demographics</h3>
-                <canvas id="provinceDemographicsChart" style="max-width: 450px; max-height: 300px; margin: 10px auto;"></canvas>
+                <canvas id="provinceDemographicsChart" style="max-width: 400px; max-height: 400px; margin: 10px auto;"></canvas>
                 <table class="templatetable" style="margin-top: 10px;">
                     <tr>
                         <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
@@ -269,61 +269,58 @@
             const ctx = document.getElementById('provinceDemographicsChart');
             if (!ctx) return;
 
+            // Weight formatter: kg -> t -> kt -> Mt
+            function formatWeight(value) {
+                if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
+                if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
+                if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
+                return value + ' kg';
+            }
+
+            const totalPop = {{ province['population'] if province['population'] else 1 }};
+            const childrenPct = ({{ province['pop_children'] }} / totalPop) * 100;
+            const workingPct = ({{ province['pop_working'] }} / totalPop) * 100;
+            const elderlyPct = ({{ province['pop_elderly'] }} / totalPop) * 100;
+
             new Chart(ctx, {
-                type: 'bar',
+                type: 'radar',
                 data: {
-                    labels: ['Demographics'],
-                    datasets: [
-                        {
-                            label: 'Children',
-                            data: [{{ province['pop_children'] }}],
-                            backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Working Age',
-                            data: [{{ province['pop_working'] }}],
-                            backgroundColor: 'rgba(0, 167, 225, 0.8)',
-                            borderColor: 'rgba(0, 167, 225, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Elderly',
-                            data: [{{ province['pop_elderly'] }}],
-                            backgroundColor: 'rgba(255, 159, 64, 0.8)',
-                            borderColor: 'rgba(255, 159, 64, 1)',
-                            borderWidth: 1
-                        }
-                    ]
+                    labels: ['Children', 'Working Age', 'Elderly'],
+                    datasets: [{
+                        label: '{{ province["name"] }} Demographics (%)',
+                        data: [childrenPct, workingPct, elderlyPct],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
                     scales: {
-                        x: {
-                            stacked: true
-                        },
-                        y: {
-                            stacked: true,
+                        r: {
                             beginAtZero: true,
+                            max: 100,
                             ticks: {
+                                stepSize: 20,
                                 callback: function(value) {
-                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
-                                    return value;
+                                    return value + '%';
                                 }
                             }
                         }
                     },
                     plugins: {
                         legend: {
-                            display: true,
-                            position: 'top'
+                            display: false
                         },
                         title: {
                             display: true,
-                            text: '{{ province["name"] }} Population',
+                            text: 'Province Demographics Balance',
                             font: {
                                 size: 14,
                                 weight: 'bold'
@@ -332,10 +329,14 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    label += context.parsed.y.toLocaleString();
-                                    return label;
+                                    const label = context.label || '';
+                                    const pct = context.parsed.r.toFixed(1);
+                                    const counts = {
+                                        'Children': {{ province['pop_children'] }},
+                                        'Working Age': {{ province['pop_working'] }},
+                                        'Elderly': {{ province['pop_elderly'] }}
+                                    };
+                                    return label + ': ' + pct + '% (' + formatWeight(counts[label]) + ')';
                                 }
                             }
                         }
