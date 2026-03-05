@@ -28,33 +28,30 @@ def _cached_get_particular_resources(self, resources):
                 rd["money"] = _m if _m is not None else 0
                 query_cache.set(s_key, {"gold": rd["money"]})
 
-    # Non-money resources: fetch full row and cache
+    # Non-money resources: fetch from user_economy + resource_dictionary
     if non_money:
         r_key = f"resources_{self.nationID}"
         resources_cached = query_cache.get(r_key)
         if resources_cached is None:
             with get_db_connection() as connection:
                 db = connection.cursor()
-                cols = ", ".join(self.resources)
                 db.execute(
-                    f"SELECT {cols} FROM resources WHERE id=%s", (self.nationID,)
+                    """SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
+                       FROM resource_dictionary rd
+                       LEFT JOIN user_economy ue
+                           ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+                       WHERE rd.is_active = TRUE""",
+                    (self.nationID,),
                 )
-                row = db.fetchone()
+                rows = db.fetchall()
 
                 full_row = {}
-                if row is None:
-                    for r in self.resources:
-                        full_row[r] = 0
-                elif isinstance(row, (list, tuple)):
-                    for i, r in enumerate(self.resources):
-                        full_row[r] = (
-                            row[i] if i < len(row) and row[i] is not None else 0
-                        )
-                elif isinstance(row, dict):
-                    for r in self.resources:
-                        full_row[r] = row.get(r, 0) or 0
-                else:
-                    full_row[self.resources[0]] = row if row is not None else 0
+                if rows:
+                    for row in rows:
+                        full_row[row[0]] = int(row[1]) if row[1] is not None else 0
+                # Ensure all expected resource names are present
+                for r in self.resources:
+                    full_row.setdefault(r, 0)
 
                 query_cache.set(r_key, full_row)
                 resources_cached = full_row
@@ -360,25 +357,37 @@ class Nation:
 
             return id_list
 
-    # Get everything from proInfra table which is in the "public works" category
+    # Get public works buildings for a province's owner using user_buildings
     @classmethod
-    def get_public_works(self, province_id):
+    def get_public_works(cls, province_id):
         from database import get_db_cursor
-        from psycopg2.extras import RealDictCursor
 
-        with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            public_works_string = ",".join(self.public_works)
+        # Public works building names (from variables.py categories)
+        public_works_names = ["hospitals", "libraries", "universities"]
 
-            infra_sel_stat = (
-                f"SELECT {public_works_string} FROM proInfra " + "WHERE id=%s"
+        with get_db_cursor() as db:
+            # First get the user_id who owns this province
+            db.execute("SELECT userid FROM provinces WHERE id=%s", (province_id,))
+            row = db.fetchone()
+            if not row:
+                return {pw: 0 for pw in public_works_names}
+            user_id = row[0]
+
+            # Query user_buildings for public works buildings
+            db.execute(
+                """SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+                   FROM building_dictionary bd
+                   LEFT JOIN user_buildings ub
+                       ON ub.building_id = bd.building_id AND ub.user_id = %s
+                   WHERE bd.name = ANY(%s) AND bd.is_active = TRUE""",
+                (user_id, public_works_names),
             )
-            db.execute(infra_sel_stat, (province_id,))
-            result = db.fetchone()
+            rows = db.fetchall()
 
-            if not result:
-                return {pw: 0 for pw in self.public_works}
-
-            return dict(result)
+            result = {pw: 0 for pw in public_works_names}
+            for row in rows:
+                result[row[0]] = int(row[1]) if row[1] is not None else 0
+            return result
 
     # set the peace_date in wars table for a particular war
     @staticmethod
@@ -395,29 +404,22 @@ class Nation:
 
         connection.commit()
 
-    # Get the list of owned upgrades like supply amount increaser from 200 to 210, etc.
+    # Get the list of owned upgrades using Economy 2.0 tech system
     @classmethod
     def get_upgrades(cls, upgrade_type, user_id):
-        from database import get_db_cursor
-        from psycopg2.extras import RealDictCursor
+        from upgrades import get_upgrades as _get_upgrades
 
-        with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            upgrades = {}
+        all_upgrades = _get_upgrades(user_id)
 
-            if upgrade_type == "supplies":
-                upgrade_fields = list(cls.supply_related_upgrades.keys())
-                if upgrade_fields:
-                    fields = ", ".join(upgrade_fields)
-                    upgrade_query = (
-                        "SELECT " + fields + " FROM upgrades WHERE user_id=%s"
-                    )
-                    db.execute(upgrade_query, (user_id,))
-                    result = db.fetchone()
-                    if result:
-                        upgrades = dict(result)
+        if upgrade_type == "supplies":
+            # Supply-related upgrades: filter relevant keys
+            supply_keys = [
+                "organizedsupplylines",
+                "largestorehouses",
+            ]
+            return {k: all_upgrades.get(k, False) for k in supply_keys}
 
-            # returns the bonus given by the upgrade
-            return upgrades
+        return all_upgrades
 
         # The minimal set_peace static method is already implemented as a method
         # of the Nation class above; no additional placeholder class is required.
@@ -451,6 +453,13 @@ class Military(Nation):
         with get_db_connection() as connection:
             db = connection.cursor()
 
+            # Look up province owner for user_buildings updates
+            db.execute("SELECT userid FROM provinces WHERE id=%s", (province_id,))
+            owner_row = db.fetchone()
+            if not owner_row:
+                return {}
+            owner_id = owner_row[0]
+
             for building in particular_infra.keys():
                 amount = particular_infra[building]
                 if amount > 0:
@@ -477,11 +486,16 @@ class Military(Nation):
                 if (damage - health) >= 0:
                     particular_infra[target] -= 1
 
-                    infra_update_stat = (
-                        f"UPDATE proInfra SET {target}" + "=%s WHERE id=(%s)"
-                    )
+                    # Update user_buildings via normalized schema
                     db.execute(
-                        infra_update_stat, (particular_infra[target], province_id)
+                        """UPDATE user_buildings
+                           SET quantity = GREATEST(0, quantity - 1)
+                           WHERE user_id = %s
+                             AND building_id = (
+                                 SELECT building_id FROM building_dictionary
+                                 WHERE name = %s AND is_active = TRUE
+                             )""",
+                        (owner_id, target),
                     )
 
                     available_buildings.pop(random_building)
@@ -496,6 +510,8 @@ class Military(Nation):
                     _max_damage = abs(damage - health)
 
                 damage -= health
+
+            connection.commit()
 
             # will return: how many buildings are damaged or destroyed
             # format: {building_name: ["effect name", affected_amount]}
@@ -995,10 +1011,11 @@ class Military(Nation):
         ) = aggregate_proinfra_for_user(cId)
 
         # these numbers determine the upper limit of how many of each military unit can be built per day
-        with get_db_cursor() as db:
-            # fetch upgrade flag while cursor is open
-            db.execute("SELECT increasedfunding FROM upgrades WHERE user_id=%s", (cId,))
-            increased_funding = fetchone_first(db, 0)
+        # fetch upgrade flag from Economy 2.0 tech system
+        from upgrades import get_upgrades as _get_upgrades
+
+        user_upgrades = _get_upgrades(cId)
+        increased_funding = user_upgrades.get("increasedfunding", False)
 
         military = Military.get_military(cId)
 
@@ -1146,24 +1163,22 @@ def _impl_get_particular_resources(nationID, resources):
         if resources_cached is None:
             with get_db_connection() as connection:
                 db = connection.cursor()
-                cols = ", ".join(Economy.resources)
-                db.execute(f"SELECT {cols} FROM resources WHERE id=%s", (nationID,))
-                row = db.fetchone()
+                db.execute(
+                    """SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
+                       FROM resource_dictionary rd
+                       LEFT JOIN user_economy ue
+                           ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+                       WHERE rd.is_active = TRUE""",
+                    (nationID,),
+                )
+                rows = db.fetchall()
 
                 full_row = {}
-                if row is None:
-                    for r in Economy.resources:
-                        full_row[r] = 0
-                elif isinstance(row, (list, tuple)):
-                    for i, r in enumerate(Economy.resources):
-                        full_row[r] = (
-                            row[i] if i < len(row) and row[i] is not None else 0
-                        )
-                elif isinstance(row, dict):
-                    for r in Economy.resources:
-                        full_row[r] = row.get(r, 0) or 0
-                else:
-                    full_row[Economy.resources[0]] = row if row is not None else 0
+                if rows:
+                    for row in rows:
+                        full_row[row[0]] = int(row[1]) if row[1] is not None else 0
+                for r in Economy.resources:
+                    full_row.setdefault(r, 0)
 
                 try:
                     query_cache.set(r_key, full_row)

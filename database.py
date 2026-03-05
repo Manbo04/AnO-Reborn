@@ -648,28 +648,16 @@ class UserQueries:
 
     @staticmethod
     def get_user_resources(user_id: int) -> Dict[str, int]:
-        """Get all resources for a user in a single query"""
+        """Get all resources for a user using the normalized Economy 2.0 schema"""
         query = """
-            SELECT
-                rations,
-                oil,
-                coal,
-                uranium,
-                bauxite,
-                iron,
-                lead,
-                copper,
-                lumber,
-                components,
-                steel,
-                consumer_goods,
-                aluminium,
-                gasoline,
-                ammunition
-            FROM resources WHERE id = %s
+            SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
+            FROM resource_dictionary rd
+            LEFT JOIN user_economy ue
+                ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+            WHERE rd.is_active = TRUE
         """
-        result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
-        return dict(result) if result else {}
+        rows = QueryHelper.fetch_all(query, (user_id,), dict_cursor=True)
+        return {row["name"]: int(row["quantity"]) for row in rows} if rows else {}
 
     @staticmethod
     def get_user_military(user_id: int) -> Dict[str, int]:
@@ -687,27 +675,15 @@ class UserQueries:
                 ON um.unit_id = ud.unit_id AND um.user_id = %s
             WHERE ud.is_active = TRUE
         """
-        rows = QueryHelper.fetch_all(
-            unit_query, (user_id,), dict_cursor=True
-        )
-        result: Dict[str, int] = {
-            row["name"]: int(row["quantity"]) for row in rows
-        }
+        rows = QueryHelper.fetch_all(unit_query, (user_id,), dict_cursor=True)
+        result: Dict[str, int] = {row["name"]: int(row["quantity"]) for row in rows}
 
         # Supplement with stats-level fields
-        stats_query = (
-            "SELECT manpower, default_defense FROM stats WHERE id = %s"
-        )
-        stats_row = QueryHelper.fetch_one(
-            stats_query, (user_id,), dict_cursor=True
-        )
+        stats_query = "SELECT manpower, default_defense FROM stats WHERE id = %s"
+        stats_row = QueryHelper.fetch_one(stats_query, (user_id,), dict_cursor=True)
         if stats_row:
-            result["manpower"] = int(
-                stats_row.get("manpower", 0) or 0
-            )
-            result["default_defense"] = stats_row.get(
-                "default_defense", ""
-            )
+            result["manpower"] = int(stats_row.get("manpower", 0) or 0)
+            result["default_defense"] = stats_row.get("default_defense", "")
         else:
             result["manpower"] = 0
             result["default_defense"] = ""
@@ -881,29 +857,46 @@ class BatchOperations:
     """Helper class for batch database operations"""
 
     @staticmethod
-    def batch_update_resources(user_resources: List[Tuple[int, str, int]]) -> None:
-        """
-        Batch update resources for multiple users
+    def batch_update_resources(
+        user_resources: List[Tuple[int, str, int]],
+    ) -> None:
+        """Batch update resources using normalized Economy 2.0 schema.
 
         Args:
-            user_resources: List of tuples (user_id, resource_name, amount)
+            user_resources: List of (user_id, resource_name, amount)
         """
-        # Group updates by resource type for efficiency
-        from collections import defaultdict
+        if not user_resources:
+            return
 
-        grouped = defaultdict(list)
+        # Resolve resource names to resource_ids once
+        distinct_names = list({name for _, name, _ in user_resources})
+        name_query = (
+            "SELECT resource_id, name FROM resource_dictionary WHERE name = ANY(%s)"
+        )
+        rows = QueryHelper.fetch_all(name_query, (distinct_names,), dict_cursor=True)
+        name_to_id = {row["name"]: row["resource_id"] for row in rows}
 
-        for user_id, resource, amount in user_resources:
-            grouped[resource].append((amount, user_id))
-
+        # Build upsert values: (user_id, resource_id, amount)
+        upsert_values = []
         affected_user_ids = set()
-        for resource, updates in grouped.items():
-            query = f"UPDATE resources SET {resource} = {resource} + %s WHERE id = %s"
-            QueryHelper.execute_many(query, updates)
+        for user_id, resource_name, amount in user_resources:
+            resource_id = name_to_id.get(resource_name)
+            if resource_id is None:
+                continue
+            upsert_values.append((user_id, resource_id, amount))
+            affected_user_ids.add(user_id)
 
-            # Track affected user ids for cache invalidation
-            for _, user_id in updates:
-                affected_user_ids.add(user_id)
+        if upsert_values:
+            upsert_query = """
+                INSERT INTO user_economy (user_id, resource_id, quantity)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id, resource_id)
+                DO UPDATE SET
+                    quantity = GREATEST(
+                        user_economy.quantity + EXCLUDED.quantity, 0
+                    )
+            """
+            QueryHelper.execute_many(upsert_query, upsert_values)
 
         # Invalidate caches for all affected users so future reads are fresh
         try:
