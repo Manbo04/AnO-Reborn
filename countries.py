@@ -1019,9 +1019,9 @@ def delete_own_account():
         deleted_counts["users"] = db.rowcount
         db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
         deleted_counts["stats"] = db.rowcount
-        db.execute("DELETE FROM user_military WHERE userid=(%s)", (cId,))
+        db.execute("DELETE FROM user_military WHERE user_id=(%s)", (cId,))
         deleted_counts["user_military"] = db.rowcount
-        db.execute("DELETE FROM user_economy WHERE userid=(%s)", (cId,))
+        db.execute("DELETE FROM user_economy WHERE user_id=(%s)", (cId,))
         deleted_counts["user_economy"] = db.rowcount
 
         # Deletes all market things the user is associated with
@@ -1043,14 +1043,10 @@ def delete_own_account():
                 f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids)
             )
             deleted_counts["provinces"] = db.rowcount
-            db.execute(
-                f"DELETE FROM user_buildings WHERE province_id IN ({placeholders})",
-                tuple(ids),
-            )
-            deleted_counts["user_buildings"] = db.rowcount
 
-        db.execute("DELETE FROM user_upgrades WHERE userid=%s", (cId,))
-        deleted_counts["user_upgrades"] = db.rowcount
+        # Delete user buildings (keyed by user_id, not province_id)
+        db.execute("DELETE FROM user_buildings WHERE user_id=(%s)", (cId,))
+        deleted_counts["user_buildings"] = db.rowcount
         db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
         deleted_counts["trades"] = db.rowcount
         db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))

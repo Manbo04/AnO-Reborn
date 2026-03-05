@@ -922,7 +922,8 @@ def adding(uId):
             (uId, coalition_id),
         )
         db.execute(
-            "INSERT INTO coalitions_legacy (colid, userid, role) VALUES (%s, %s, %s)",
+            "INSERT INTO coalitions_legacy (colid, userid, role) VALUES (%s, %s, %s) "
+            "ON CONFLICT (userid) DO NOTHING",
             (coalition_id, uId, "member"),
         )
 
