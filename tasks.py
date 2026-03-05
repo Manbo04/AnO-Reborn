@@ -159,19 +159,27 @@ def _safe_update_productivity(db, province_id, multiplier):
 
 
 def try_pg_advisory_lock(conn, lock_id: int, label: str) -> bool:
-    """Attempt a PostgreSQL advisory lock to prevent overlapping task runs."""
+    """Attempt a transaction-level advisory lock.
+
+    Uses pg_try_advisory_xact_lock so the lock is automatically released
+    when the transaction ends (COMMIT or ROLLBACK), eliminating the risk
+    of stale session-level locks blocking all future runs if a task
+    crashes without explicit cleanup.
+    """
     try:
         cur = conn.cursor()
-        cur.execute("SELECT pg_try_advisory_lock(%s)", (lock_id,))
+        cur.execute("SELECT pg_try_advisory_xact_lock(%s)", (lock_id,))
         row = cur.fetchone()
         if not row:
-            # In some test fakes, fetchone() may return None; allow tasks to proceed
-            # while logging a warning so tests that use simple fakes don't exit early.
-            print(f"{label}: advisory lock query returned no rows - proceeding anyway")
+            # In some test fakes, fetchone() may return None; allow tasks
+            # to proceed while logging a warning.
+            print(
+                f"{label}: advisory lock query returned no rows " "- proceeding anyway"
+            )
             return True
         acquired = row[0]
         if not acquired:
-            print(f"{label}: another run is already in progress, skipping")
+            print(f"{label}: another run is already in progress, " "skipping")
         return acquired
     except Exception as e:
         print(f"{label}: failed to acquire advisory lock: {e}")
@@ -179,11 +187,14 @@ def try_pg_advisory_lock(conn, lock_id: int, label: str) -> bool:
 
 
 def release_pg_advisory_lock(conn, lock_id: int):
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT pg_advisory_unlock(%s)", (lock_id,))
-    except Exception:
-        pass
+    """No-op kept for backward compatibility.
+
+    Transaction-level advisory locks (pg_try_advisory_xact_lock) are
+    released automatically on COMMIT / ROLLBACK, so explicit unlocks
+    are no longer needed.  Callers that still invoke this function
+    will simply succeed harmlessly.
+    """
+    pass
 
 
 # Returns how many rations a player needs
@@ -350,8 +361,8 @@ def food_stats(user_id):
                     FROM user_buildings ub
                     JOIN building_dictionary bd ON bd.building_id = ub.building_id
                     WHERE ub.user_id = %s
-                      AND bd.name IN ('gas_stations', 'general_stores',
-                                      'farmers_markets', 'malls')
+                      AND bd.name IN ('distribution_centers', 'gas_stations',
+                                      'general_stores', 'farmers_markets', 'malls')
                     """,
                     (user_id,),
                 )
@@ -394,7 +405,8 @@ def consumer_goods_distribution_capacity(user_id):
                 ON bd.building_id = ub.building_id
             WHERE ub.user_id = %s
               AND bd.name IN (
-                  'malls', 'general_stores', 'gas_stations'
+                  'distribution_centers', 'malls',
+                  'general_stores', 'gas_stations'
               )
             """,
             (user_id,),
@@ -763,6 +775,12 @@ def tax_income():
                 ("UPDATE task_runs SET last_run = now() WHERE task_name = %s"),
                 ("tax_income",),
             )
+            # Commit last_run immediately so the timestamp persists even if
+            # later processing crashes (prevents "stuck" last_run).
+            try:
+                conn.commit()
+            except Exception:
+                pass
             start = time.perf_counter()
             dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -1177,6 +1195,12 @@ def population_growth():  # Function for growing population
             "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
             ("population_growth",),
         )
+        # Commit last_run immediately so the timestamp persists even if
+        # later processing crashes (prevents "stuck" last_run).
+        try:
+            conn.commit()
+        except Exception:
+            pass
 
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -1223,6 +1247,32 @@ def population_growth():  # Function for growing population
         )
         ration_map = {row["user_id"]: row["rations"] for row in dbdict.fetchall()}
 
+        # Preload distribution capacity per user (batch query).
+        # Distribution buildings control how many rations can actually
+        # reach the population.  Without distribution centers the
+        # warehouse stockpile is useless — citizens starve.
+        dist_cap_map = {}  # user_id -> max rations that can be distributed
+        if variables.FEATURE_RATIONS_DISTRIBUTION:
+            dbdict.execute(
+                """
+                SELECT ub.user_id, COALESCE(SUM(ub.quantity), 0) AS bcount
+                FROM user_buildings ub
+                JOIN building_dictionary bd
+                    ON bd.building_id = ub.building_id
+                WHERE ub.user_id = ANY(%s)
+                  AND bd.name IN (
+                      'distribution_centers', 'gas_stations',
+                      'general_stores', 'farmers_markets', 'malls'
+                  )
+                GROUP BY ub.user_id
+                """,
+                (unique_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                dist_cap_map[row["user_id"]] = (
+                    row["bcount"] * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+                )
+
         # policy_map no longer needed after policy overhaul (old policy 5 removed)
 
         # PHASE 1: Calculate total rations needed per user (sum across all provinces)
@@ -1237,9 +1287,25 @@ def population_growth():  # Function for growing population
                 user_total_rations_needed.get(user_id, 0) + rations_needed
             )
 
-        # PHASE 2: We'll deduct rations atomically in DB (not calculated here)
-        # Just keep track of how much each user needs to deduct
-        user_rations_to_deduct = user_total_rations_needed  # Same dict, clearer name
+        # PHASE 2: Apply distribution-center bottleneck.
+        # Only rations that can be physically distributed count.
+        # If a user has 0 distribution buildings their effective rations = 0,
+        # meaning full starvation penalty (no growth) even if the warehouse
+        # is full of rations.
+        user_rations_to_deduct = {}
+        user_effective_rations = {}  # what the population actually receives
+        for uid, needed in user_total_rations_needed.items():
+            warehouse = ration_map.get(uid, 0) or 0
+            if variables.FEATURE_RATIONS_DISTRIBUTION:
+                dist_cap = dist_cap_map.get(uid, 0)
+                # Can only distribute up to capacity, and only what we have
+                distributable = min(warehouse, dist_cap)
+            else:
+                distributable = warehouse
+            # Deduct only what is actually consumed (min of needed vs available)
+            actually_consumed = min(needed, distributable)
+            user_rations_to_deduct[uid] = actually_consumed
+            user_effective_rations[uid] = distributable
 
         def calc_population_growth(province_row):
             """Calculate population growth for a single province."""
@@ -1265,10 +1331,11 @@ def population_growth():  # Function for growing population
             if maxPop < variables.DEFAULT_MAX_POPULATION:
                 maxPop = variables.DEFAULT_MAX_POPULATION
 
-            # For growth rate, use the user's overall ration coverage
+            # For growth rate, use the user's effective ration coverage
+            # (after distribution-center bottleneck)
             total_needed = user_total_rations_needed.get(user_id, 1)
-            current_rations = ration_map.get(user_id, 0) or 0
-            rations_ratio = current_rations / total_needed if total_needed > 0 else 0
+            effective_rations = user_effective_rations.get(user_id, 0) or 0
+            rations_ratio = effective_rations / total_needed if total_needed > 0 else 0
             if rations_ratio > 1:
                 rations_ratio = 1
 
@@ -1777,6 +1844,13 @@ def generate_province_revenue():  # Runs each hour
             "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
             ("generate_province_revenue",),
         )
+        # Commit the last_run update immediately so it persists even if
+        # later processing crashes.  This prevents the task from appearing
+        # "stuck" at a stale last_run date after transient failures.
+        try:
+            conn.commit()
+        except Exception:
+            pass
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         columns = variables.BUILDINGS
