@@ -4365,42 +4365,6 @@ footer {
     }
 }
 
-/* ===== GLASSMORPHISM DESIGN UPGRADE ===== */
-/* Enhanced templatedivflex2 with refined glass effect */
-.templatedivflex2left,
-.templatedivflex2right {
-    background: rgba(255, 255, 255, 0.9) !important;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 6px 24px 0 rgba(100, 120, 180, 0.06),
-                inset 0 1px 1px 0 rgba(255, 255, 255, 0.4) !important;
-    margin: 20px auto !important;
-    padding: 24px !important;
-    border-radius: 10px !important;
-}
-
-/* Glassmorphic tables - refined */
-.templatetable {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(6px);
-    border: none !important;
-    box-shadow: 0 3px 12px 0 rgba(100, 120, 180, 0.04) !important;
-    margin: 12px auto !important;
-    border-radius: 8px !important;
-}
-
-.templatetable tr:nth-child(odd) {
-    background: rgba(248, 250, 252, 0.8) !important;
-}
-
-.templatetable tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.5) !important;
-}
-
-.templatetable th {
-    border-bottom: 1px solid rgba(200, 210, 230, 0.3) !important;
-}
-
 /* Canvas chart styling */
 canvas {
     max-width: 100% !important;
@@ -4412,112 +4376,10 @@ canvas {
     position: relative;
     width: 100%;
     min-height: 320px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: var(--foreground);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 20px;
     margin: 16px auto;
-    box-shadow: 0 6px 24px 0 rgba(100, 120, 180, 0.06);
-}
-
-/* Refined container headers - minimal borders */
-.templatecontentheaderleft {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 16px 0 !important;
-    padding-bottom: 0 !important;
-    border: none !important;
-    color: rgba(40, 50, 80, 0.9);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* ===== IMPERIAL COMMAND POLISH ===== */
-
-/* Live Pulse Animation */
-@keyframes pulse-glow {
-    0%, 100% {
-        box-shadow: 0 0 6px rgba(34, 197, 94, 0.6), inset 0 0 4px rgba(34, 197, 94, 0.4);
-        opacity: 1;
-    }
-    50% {
-        box-shadow: 0 0 12px rgba(34, 197, 94, 0.9), inset 0 0 6px rgba(34, 197, 94, 0.5);
-        opacity: 0.85;
-    }
-}
-
-.pulse-indicator {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #22c55e;
-    margin-right: 8px;
-    animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* Card Hover Depth & Enhancement */
-.templatetable {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.templatetable:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 12px 36px 0 rgba(59, 130, 246, 0.15) !important;
-}
-
-.templatedivflex2left:hover,
-.templatedivflex2right:hover {
-    transform: translateY(-4px) scale(1.005);
-    box-shadow: 0 12px 36px 0 rgba(59, 130, 246, 0.12) !important;
-}
-
-/* Chart Grid Background - Technical Blueprint Aesthetic */
-.chart-wrapper {
-    position: relative;
-    background-image:
-        linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
-    background-attachment: local;
-}
-
-/* Sidebar Glasmorphism Harmonization */
-.templatesidenav,
-.side-nav,
-.sidebar,
-.menubardiv {
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 6px 24px 0 rgba(100, 120, 180, 0.06) !important;
-}
-
-.templatesidenav a,
-.side-nav a,
-.sidebar a,
-.menubardiv a {
-    transition: all 0.2s ease;
-}
-
-.templatesidenav a:hover,
-.side-nav a:hover,
-.sidebar a:hover,
-.menubardiv a:hover {
-    background: rgba(59, 130, 246, 0.08) !important;
-    color: rgba(59, 130, 246, 0.95) !important;
-}
-
-/* Building & Technology List Styling */
-.templatedivflex2left > div,
-.templatedivflex2right > div {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.templatedivflex2left > div:hover,
-.templatedivflex2right > div:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 24px 0 rgba(59, 130, 246, 0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
