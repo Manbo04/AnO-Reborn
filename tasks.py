@@ -35,6 +35,10 @@ BUILDING_PRODUCTION_RESOURCE_MAP = {
     "pumpjacks": "oil",
     "coal_mines": "coal",
     "steel_mills": "steel",
+    # HOTFIX: oil_refineries were omitted during Economy 2.0 weight migration,
+    # causing gasoline to never be produced while tanks/artillery consumed it
+    # every tick, triggering full-unit desertion when stocks hit zero.
+    "oil_refineries": "gasoline",
 }
 
 
@@ -3498,7 +3502,10 @@ def global_tick():
                 # Validation logic when maintenance cannot be fully paid:
                 # apply unit desertion proportionally and morale penalties
                 # in active wars.
-                if deficits:
+                # HOTFIX: guarded by FEATURE_MILITARY_DESERTION flag (currently
+                # disabled) until Economy 2.0 resource production math is verified
+                # stable and player gasoline stockpiles have recovered.
+                if deficits and variables.FEATURE_MILITARY_DESERTION:
                     deficit_users = sorted({k[0] for k in deficits.keys()})
                     deficit_resources = sorted({k[1] for k in deficits.keys()})
 
@@ -3546,6 +3553,12 @@ def global_tick():
                             new_qty = 0
                         if new_qty > current_qty:
                             new_qty = current_qty
+
+                        # Safety floor: desertion is capped at 20% of current
+                        # units per tick to prevent a single bad tick from
+                        # instantly zeroing an entire army.
+                        min_qty = int(math.ceil(current_qty * 0.80))
+                        new_qty = max(new_qty, min_qty)
 
                         deserted = current_qty - new_qty
                         if deserted <= 0:
