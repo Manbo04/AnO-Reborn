@@ -332,16 +332,28 @@
             </div>
 
             <script>
-            (function() {
+            // Wait for DOM to be fully loaded before initializing charts
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initCountryCharts);
+            } else {
+                initCountryCharts();
+            }
+
+            function initCountryCharts() {
                 const ctx = document.getElementById('demographicsRadarChart');
                 if (!ctx) return;
+
+                const canvas = ctx.closest('.chart-wrapper');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                }
 
                 // Weight formatter: kg -> t -> kt -> Mt
                 function formatWeight(value) {
                     if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
                     if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
                     if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
-                    return value + ' kg';
+                    return value.toFixed(0) + ' kg';
                 }
 
                 // Province data from backend
@@ -361,44 +373,67 @@
                 const workingData = provinces.map(p => p.working);
                 const elderlyData = provinces.map(p => p.elderly);
 
+                // Gradient for children bars (blue)
+                const childrenGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                childrenGradient.addColorStop(0, 'rgba(54, 162, 235, 0.9)');
+                childrenGradient.addColorStop(1, 'rgba(54, 162, 235, 0.5)');
+
+                // Gradient for working bars (green/teal)
+                const workingGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                workingGradient.addColorStop(0, 'rgba(75, 192, 92, 0.9)');
+                workingGradient.addColorStop(1, 'rgba(75, 192, 92, 0.5)');
+
+                // Gradient for elderly bars (grey)
+                const elderlyGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                elderlyGradient.addColorStop(0, 'rgba(159, 168, 174, 0.9)');
+                elderlyGradient.addColorStop(1, 'rgba(159, 168, 174, 0.5)');
+
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: provinceNames,
+                        labels: provinceNames.length > 0 ? provinceNames : ['No Provinces'],
                         datasets: [
                             {
                                 label: 'Children',
                                 data: childrenData,
-                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                backgroundColor: childrenGradient,
                                 borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
                             },
                             {
                                 label: 'Working Age',
                                 data: workingData,
-                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1
+                                backgroundColor: workingGradient,
+                                borderColor: 'rgba(75, 192, 92, 1)',
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
                             },
                             {
                                 label: 'Elderly',
                                 data: elderlyData,
-                                backgroundColor: 'rgba(201, 203, 207, 0.8)',
-                                borderColor: 'rgba(201, 203, 207, 1)',
-                                borderWidth: 1
+                                backgroundColor: elderlyGradient,
+                                borderColor: 'rgba(159, 168, 174, 1)',
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
                             }
                         ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeInOutQuart'
+                        },
                         scales: {
                             x: {
                                 stacked: true,
                                 ticks: {
                                     autoSkip: false,
                                     maxRotation: 45,
-                                    minRotation: 45
+                                    minRotation: 45,
+                                    font: { size: 11 }
                                 }
                             },
                             y: {
@@ -408,7 +443,7 @@
                                     callback: function(value) {
                                         if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
                                         if (value >= 1000) return (value/1000).toFixed(0) + 'k';
-                                        return value;
+                                        return value.toFixed(0);
                                     }
                                 }
                             }
@@ -416,7 +451,12 @@
                         plugins: {
                             legend: {
                                 display: true,
-                                position: 'top'
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15,
+                                    font: { size: 12, weight: '600' }
+                                }
                             },
                             title: {
                                 display: true,
@@ -424,9 +464,17 @@
                                 font: {
                                     size: 16,
                                     weight: 'bold'
-                                }
+                                },
+                                padding: 20
                             },
                             tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                cornerRadius: 8,
+                                titleFont: { size: 13, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                borderWidth: 1,
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.dataset.label || '';
@@ -446,51 +494,40 @@
                         }
                     }
                 });
-            })();
+            }
             </script>
 
-            <h2 class="templatecontentheaderleft">Resources</h2>
+                <h2 class="templatecontentheaderleft">Resources</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px auto; width: 95%;">
+                    {% if resource_rows and resource_rows|length > 0 %}
+                    {% for resource_name, resource_qty in resource_rows %}
+                    <div class="templatedivflex2left" style="margin: 0; padding: 16px; text-align: center;">
+                        <strong style="display: block; margin-bottom: 8px;">{{ resource_name }}</strong>
+                        <span style="font-size: 18px; font-weight: bold; color: var(--colorOne);">{{ (resource_qty or 0) | commas }}</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="templatedivflex2left" style="margin: 0; grid-column: 1 / -1; text-align: center;">
+                        <em>No resources</em>
+                    </div>
+                    {% endif %}
+                </div>
 
-            <table class="templatetable">
-                <tr>
-                    <th>Resource</th>
-                    <th>Quantity</th>
-                </tr>
-                {% if resource_rows and resource_rows|length > 0 %}
-                {% for resource_name, resource_qty in resource_rows %}
-                <tr>
-                    <td>{{ resource_name }}</td>
-                    <td>{{ (resource_qty or 0) }}</td>
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                    <td>None</td>
-                    <td>0</td>
-                </tr>
-                {% endif %}
-            </table>
-
-            <h2 class="templatecontentheaderleft">Buildings</h2>
-            <table class="templatetable">
-                <tr>
-                    <th>Building</th>
-                    <th>Quantity</th>
-                </tr>
-                {% if building_rows and building_rows|length > 0 %}
-                {% for building_name, building_qty in building_rows %}
-                <tr>
-                    <td>{{ building_name }}</td>
-                    <td>{{ (building_qty or 0) }}</td>
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                    <td>None</td>
-                    <td>0</td>
-                </tr>
-                {% endif %}
-            </table>
+                <h2 class="templatecontentheaderleft">Buildings</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px auto; width: 95%;">
+                    {% if building_rows and building_rows|length > 0 %}
+                    {% for building_name, building_qty in building_rows %}
+                    <div class="templatedivflex2left" style="margin: 0; padding: 16px; text-align: center;">
+                        <strong style="display: block; margin-bottom: 8px;">{{ building_name }}</strong>
+                        <span style="font-size: 18px; font-weight: bold; color: var(--colorOne);">{{ (building_qty or 0) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="templatedivflex2left" style="margin: 0; grid-column: 1 / -1; text-align: center;">
+                        <em>No buildings</em>
+                    </div>
+                    {% endif %}
+                </div>
 
             <h2 class="templatecontentheaderleft">Technologies</h2>
             <table class="templatetable">
