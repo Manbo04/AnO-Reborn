@@ -560,13 +560,124 @@ label {
         width: 100%;
         margin-left: -100%;
         backdrop-filter: none !important;
-        background: rgba(54, 57, 69, 0.98) !important;
+        background: #1a1c23 !important;
         height: 100vh;
         overflow-y: auto;
     }
 
     .menubardivshow {
         box-shadow: 0px 0px 100px 0px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* MOBILE GLASSMORPHISM LOCKDOWN */
+    /* Disable blur/glass effects on all transparent elements */
+    .templatedivflex2left,
+    .templatedivflex2right {
+        background: #2a2d35 !important;
+        backdrop-filter: none !important;
+        border: 1px solid #3d4049 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .templatetable {
+        background: #252729 !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .templatetable tr:nth-child(odd) {
+        background: #2a2d35 !important;
+    }
+
+    .templatetable tr:nth-child(even) {
+        background: #252729 !important;
+    }
+
+    .templatetable th {
+        background: #1a1c23 !important;
+        color: #ffffff !important;
+        border-bottom: 1px solid #3d4049 !important;
+    }
+
+    .templatetable td {
+        color: #ffffff !important;
+    }
+
+    .chart-wrapper {
+        background: #2a2d35 !important;
+        backdrop-filter: none !important;
+        border: 1px solid #3d4049 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Sidebar glasmorphism removal */
+    .templatesidenav,
+    .side-nav,
+    .sidebar {
+        background: #1a1c23 !important;
+        backdrop-filter: none !important;
+        border: 1px solid #3d4049 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Input & Form Field Contrast Fix */
+    .templateselect,
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+        background: #2a2d35 !important;
+        color: #ffffff !important;
+        border: 1px solid #3d4049 !important;
+        box-shadow: none !important;
+    }
+
+    .templateselect option,
+    select option {
+        background: #1a1c23 !important;
+        color: #ffffff !important;
+    }
+
+    /* Button Contrast Fix */
+    .templatedivbutton {
+        background: #3d7dd9 !important;
+        color: #ffffff !important;
+    }
+
+    .templatedivbutton:hover {
+        background: #2a5ab5 !important;
+        color: #ffffff !important;
+    }
+
+    button {
+        background: #3d7dd9 !important;
+        color: #ffffff !important;
+    }
+
+    button:hover {
+        background: #2a5ab5 !important;
+        color: #ffffff !important;
+    }
+
+    /* Ensure all text is visible on mobile dark backgrounds */
+    .templatedivflex2left,
+    .templatedivflex2right {
+        color: #ffffff !important;
+    }
+
+    .templatetable {
+        color: #ffffff !important;
+    }
+
+    /* Navbar dark theme for mobile */
+    body {
+        background: #1a1c23 !important;
+        color: #ffffff !important;
     }
 }
 
