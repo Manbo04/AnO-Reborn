@@ -315,17 +315,17 @@
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
                         </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">child_care</span>Children:</td>
-                            <td>{{ total_children | commas }} ({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        <tr style="border-left: 4px solid rgba(54, 162, 235, 0.8);">
+                            <td><span class="material-icons-outlined" style="color: rgba(54, 162, 235, 1);">child_care</span>Children:</td>
+                            <td style="color: rgba(54, 162, 235, 0.9); font-weight: 600;">{{ total_children | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">work</span>Working Age:</td>
-                            <td>{{ total_working | commas }} ({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        <tr style="border-left: 4px solid rgba(75, 192, 92, 0.8);">
+                            <td><span class="material-icons-outlined" style="color: rgba(75, 192, 92, 1);">work</span>Working Age:</td>
+                            <td style="color: rgba(75, 192, 92, 0.9); font-weight: 600;">{{ total_working | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
-                            <td>{{ total_elderly | commas }} ({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</td>
+                        <tr style="border-left: 4px solid rgba(220, 88, 88, 0.8);">
+                            <td><span class="material-icons-outlined" style="color: rgba(220, 88, 88, 1);">elderly</span>Elderly:</td>
+                            <td style="color: rgba(220, 88, 88, 0.9); font-weight: 600;">{{ total_elderly | commas }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
                     </table>
                 </div>
@@ -496,22 +496,6 @@
                 });
             }
             </script>
-
-                <h2 class="templatecontentheaderleft">Resources</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px auto; width: 95%;">
-                    {% if resource_rows and resource_rows|length > 0 %}
-                    {% for resource_name, resource_qty in resource_rows %}
-                    <div class="templatedivflex2left" style="margin: 0; padding: 16px; text-align: center;">
-                        <strong style="display: block; margin-bottom: 8px;">{{ resource_name }}</strong>
-                        <span style="font-size: 18px; font-weight: bold; color: var(--colorOne);">{{ (resource_qty or 0) | commas }}</span>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="templatedivflex2left" style="margin: 0; grid-column: 1 / -1; text-align: center;">
-                        <em>No resources</em>
-                    </div>
-                    {% endif %}
-                </div>
 
                 <h2 class="templatecontentheaderleft">Buildings</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px auto; width: 95%;">
