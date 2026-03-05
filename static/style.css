@@ -899,13 +899,15 @@ label {
 }
 
 .resource-section-label {
-    font-size: 9pt;
-    font-weight: 700;
+    font-size: 8pt;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: rgba(255, 255, 255, 0.4);
-    margin: 12px 10px 2px;
-    padding: 0;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 14px 8px 4px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
 }
 
 .resourcetagparent {
