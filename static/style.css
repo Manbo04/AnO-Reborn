@@ -898,6 +898,16 @@ label {
     width: 0px;
 }
 
+.resource-section-label {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 12px 10px 2px;
+    padding: 0;
+}
+
 .resourcetagparent {
     text-align: left;
     padding: 0px 10px;
