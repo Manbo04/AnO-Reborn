@@ -662,6 +662,49 @@ def fmt(value):
         return value
 
 
+# Jinja2 filter for weight-based resource display (kg/t/kt/Mt)
+
+
+@app.template_filter()
+def weight_fmt(value):
+    """Format numbers as weight units (kg → t → kt → Mt):
+    - Under 1,000: show as kg (500 kg, 999 kg)
+    - 1K-999K: show as t (1 t, 500 t, 999 t) [Metric Tons]
+    - 1M-999M: show as kt (1 kt, 500 kt, 999 kt) [Kilotons]
+    - 1B+: show as Mt (1 Mt, 50 Mt) [Megatons]
+    """
+    try:
+        num = float(value)
+        if num < 0:
+            return "-" + weight_fmt(abs(num))
+
+        if num < 1000:
+            # Under 1K: show as kg
+            if num == int(num):
+                return "{:,} kg".format(int(num))
+            return "{:,.1f} kg".format(num)
+        elif num < 1000000:
+            # 1K - 999K: Metric Tons
+            t = num / 1000
+            if t == int(t):
+                return "{:,} t".format(int(t))
+            return "{:,.1f} t".format(t)
+        elif num < 1000000000:
+            # 1M - 999M: Kilotons
+            kt = num / 1000000
+            if kt == int(kt):
+                return "{:,} kt".format(int(kt))
+            return "{:,.1f} kt".format(kt)
+        else:
+            # 1B+: Megatons
+            mt = num / 1000000000
+            if mt == int(mt):
+                return "{:,} Mt".format(int(mt))
+            return "{:,.1f} Mt".format(mt)
+    except (TypeError, ValueError):
+        return value
+
+
 # Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
 
 
