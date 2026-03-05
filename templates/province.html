@@ -242,8 +242,10 @@
 
             </div>
             <div class="templatedivflex2left">
-                <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Province Demographics</h3>
-                <canvas id="provinceDemographicsChart" style="max-width: 400px; max-height: 400px; margin: 10px auto;"></canvas>
+                <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographic Shape</h3>
+                <div class="chart-wrapper">
+                    <canvas id="provinceDemographicsChart"></canvas>
+                </div>
                 <table class="templatetable" style="margin-top: 10px;">
                     <tr>
                         <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
@@ -265,7 +267,14 @@
         </div>
 
         <script>
-        (function() {
+        // Wait for DOM to be fully loaded before initializing charts
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initProvinceCharts);
+        } else {
+            initProvinceCharts();
+        }
+
+        function initProvinceCharts() {
             const ctx = document.getElementById('provinceDemographicsChart');
             if (!ctx) return;
 
@@ -274,7 +283,7 @@
                 if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
                 if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
                 if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
-                return value + ' kg';
+                return value.toFixed(0) + ' kg';
             }
 
             const totalPop = {{ province['population'] if province['population'] else 1 }};
@@ -287,30 +296,44 @@
                 data: {
                     labels: ['Children', 'Working Age', 'Elderly'],
                     datasets: [{
-                        label: '{{ province["name"] }} Demographics (%)',
+                        label: '{{ province["name"] }} (% of Population)',
                         data: [childrenPct, workingPct, elderlyPct],
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(94, 89, 255, 0.15)',
+                        borderColor: 'rgba(94, 89, 255, 1)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: 'rgba(94, 89, 255, 1)',
                         pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
-                        pointRadius: 5,
-                        pointHoverRadius: 7
+                        pointHoverBorderColor: 'rgba(94, 89, 255, 1)',
+                        pointHoverRadius: 8,
+                        tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    },
                     scales: {
                         r: {
                             beginAtZero: true,
                             max: 100,
                             ticks: {
-                                stepSize: 20,
+                                stepSize: 25,
                                 callback: function(value) {
                                     return value + '%';
-                                }
+                                },
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.1)'
+                            },
+                            angleLines: {
+                                color: 'rgba(200, 200, 200, 0.15)'
                             }
                         }
                     },
@@ -320,13 +343,21 @@
                         },
                         title: {
                             display: true,
-                            text: 'Province Demographics Balance',
+                            text: 'Demographic Structure: ' + '{{ province["name"] }}',
                             font: {
                                 size: 14,
                                 weight: 'bold'
-                            }
+                            },
+                            padding: 15
                         },
                         tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
                                     const label = context.label || '';
@@ -336,14 +367,15 @@
                                         'Working Age': {{ province['pop_working'] }},
                                         'Elderly': {{ province['pop_elderly'] }}
                                     };
-                                    return label + ': ' + pct + '% (' + formatWeight(counts[label]) + ')';
+                                    const count = counts[label] || 0;
+                                    return label + ': ' + pct + '% (' + formatWeight(count) + ')';
                                 }
                             }
                         }
                     }
                 }
             });
-        })();
+        }
         </script>
 
         <div class="templatedivflex2 menuflex">

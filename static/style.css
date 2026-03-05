@@ -4350,3 +4350,57 @@ footer {
         font-size: 14px;
     }
 }
+
+/* ===== GLASSMORPHISM DESIGN UPGRADE ===== */
+/* Enhanced templatedivflex2 with glass effect */
+.templatedivflex2left,
+.templatedivflex2right {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1),
+                0 4px 16px 0 rgba(31, 38, 135, 0.08),
+                inset 0 1px 2px 0 rgba(255, 255, 255, 0.3) !important;
+    margin: 24px auto !important;
+    padding: 24px !important;
+    border-radius: 12px !important;
+}
+
+/* Glassmorphic tables */
+.templatetable {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 6px 24px 0 rgba(31, 38, 135, 0.08),
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.5) !important;
+    margin: 16px auto !important;
+    border-radius: 8px !important;
+}
+
+.templatetable tr:nth-child(odd) {
+    background: rgba(240, 244, 248, 0.7) !important;
+}
+
+.templatetable tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Canvas chart styling */
+canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+}
+
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 320px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
