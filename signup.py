@@ -485,18 +485,12 @@ def discord_register():
                 session.modified = True
 
                 # Create all user tables (idempotent)
+                # NOTE: resources and upgrades tables were removed in Economy 2.0
+                # migration; their data now lives in user_economy / user_buildings.
                 db.execute(
                     "INSERT INTO stats (id, location) VALUES (%s, %s) "
                     "ON CONFLICT DO NOTHING",
                     (user_id, continent),
-                )
-                db.execute(
-                    "INSERT INTO resources (id) VALUES (%s) ON CONFLICT DO NOTHING",
-                    (user_id,),
-                )
-                db.execute(
-                    "INSERT INTO upgrades (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
-                    (user_id,),
                 )
                 db.execute(
                     "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
@@ -753,6 +747,8 @@ def signup():
             # Use ON CONFLICT DO NOTHING to tolerate duplicate inserts
             # (e.g. retries or concurrent/duplicate requests)
             # These must be created for ALL signup paths (verification and legacy)
+            # NOTE: resources and upgrades tables were removed in Economy 2.0
+            # migration; their data now lives in user_economy / user_buildings.
             db.execute(
                 (
                     "INSERT INTO stats (id, location) VALUES (%s, %s) "
@@ -763,34 +759,6 @@ def signup():
             if not db.fetchone():
                 logger.info(
                     "signup: stats row already exists for user_id=%s ip=%s",
-                    user_id,
-                    request.remote_addr,
-                )
-
-            db.execute(
-                (
-                    "INSERT INTO resources (id) VALUES (%s) "
-                    "ON CONFLICT DO NOTHING RETURNING id"
-                ),
-                (user_id,),
-            )
-            if not db.fetchone():
-                logger.info(
-                    "signup: resources row already exists for user_id=%s ip=%s",
-                    user_id,
-                    request.remote_addr,
-                )
-
-            db.execute(
-                (
-                    "INSERT INTO upgrades (user_id) VALUES (%s) "
-                    "ON CONFLICT DO NOTHING RETURNING user_id"
-                ),
-                (user_id,),
-            )
-            if not db.fetchone():
-                logger.info(
-                    "signup: upgrades row already exists for user_id=%s ip=%s",
                     user_id,
                     request.remote_addr,
                 )
