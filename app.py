@@ -430,11 +430,12 @@ def ready():
 def trigger_tasks():
     """Admin endpoint to clear stale Redis locks and trigger Celery tasks.
 
-    Security: Requires ADMIN_DIAG_SECRET env var and matching X-DIAG-SECRET header.
+    Security: Requires ADMIN_DIAG_SECRET (or SECRET_KEY) env var
+    and matching X-DIAG-SECRET header.
     This is used when the Celery beat process died during a deploy and tasks
     aren't being scheduled.
     """
-    secret = os.getenv("ADMIN_DIAG_SECRET")
+    secret = os.getenv("ADMIN_DIAG_SECRET") or os.getenv("SECRET_KEY")
     header = request.headers.get("X-DIAG-SECRET")
     if not secret or header != secret:
         return "Forbidden", 403
