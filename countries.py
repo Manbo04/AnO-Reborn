@@ -152,28 +152,24 @@ def get_revenue(cId):
             revenue["gross_theoretical"][resource] = 0
             revenue["net"][resource] = 0
 
-        # OPTIMIZATION: Batch fetch all normalized building data in ONE query
+        # OPTIMIZATION: Batch fetch all building data PER PROVINCE
         proinfra_by_id = {}
         if provinces:
-            # user_buildings is per-user, not per-province,
-            # so we fetch all user buildings
+            province_ids = list(provinces.keys()) if isinstance(provinces, dict) else list(provinces)
             db.execute(
                 """
-                SELECT bd.name, ub.quantity
+                SELECT ub.province_id, bd.name, ub.quantity
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.user_id = %s
+                WHERE ub.user_id = %s AND ub.province_id = ANY(%s)
                 """,
-                (cId,),
+                (cId, province_ids),
             )
-            # Since buildings are per-user now, distribute across all provinces equally
             for row in db.fetchall():
-                building_name, quantity = row
-                # Distribute buildings across provinces for compatibility
-                for province_id in provinces:
-                    if province_id not in proinfra_by_id:
-                        proinfra_by_id[province_id] = {}
-                    proinfra_by_id[province_id][building_name] = quantity or 0
+                prov_id, building_name, quantity = row
+                if prov_id not in proinfra_by_id:
+                    proinfra_by_id[prov_id] = {}
+                proinfra_by_id[prov_id][building_name] = quantity or 0
 
         # Fetch current funds to simulate money-constrained operation for `net`
         db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
@@ -577,14 +573,16 @@ def country(cId):
         )
         resource_rows = db.fetchall() or []
 
-        # Normalized buildings display (owned buildings only)
+        # Normalized buildings display (national totals across all provinces)
         db.execute(
             """
-            SELECT bd.display_name, ub.quantity
+            SELECT bd.display_name, SUM(ub.quantity) AS quantity
             FROM user_buildings ub
             JOIN building_dictionary bd ON bd.building_id = ub.building_id
             WHERE ub.user_id = %s
               AND ub.quantity > 0
+            GROUP BY bd.display_name
+            HAVING SUM(ub.quantity) > 0
             ORDER BY bd.display_name
             """,
             (cId,),

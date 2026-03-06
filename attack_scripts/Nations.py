@@ -373,14 +373,16 @@ class Nation:
                 return {pw: 0 for pw in public_works_names}
             user_id = row[0]
 
-            # Query user_buildings for public works buildings
+            # Query user_buildings for public works buildings in THIS province
             db.execute(
                 """SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
                    FROM building_dictionary bd
                    LEFT JOIN user_buildings ub
-                       ON ub.building_id = bd.building_id AND ub.user_id = %s
+                       ON ub.building_id = bd.building_id
+                       AND ub.user_id = %s
+                       AND ub.province_id = %s
                    WHERE bd.name = ANY(%s) AND bd.is_active = TRUE""",
-                (user_id, public_works_names),
+                (user_id, province_id, public_works_names),
             )
             rows = db.fetchall()
 
@@ -486,16 +488,17 @@ class Military(Nation):
                 if (damage - health) >= 0:
                     particular_infra[target] -= 1
 
-                    # Update user_buildings via normalized schema
+                    # Update user_buildings via normalized schema (per province)
                     db.execute(
                         """UPDATE user_buildings
                            SET quantity = GREATEST(0, quantity - 1)
                            WHERE user_id = %s
+                             AND province_id = %s
                              AND building_id = (
                                  SELECT building_id FROM building_dictionary
                                  WHERE name = %s AND is_active = TRUE
                              )""",
-                        (owner_id, target),
+                        (owner_id, province_id, target),
                     )
 
                     available_buildings.pop(random_building)

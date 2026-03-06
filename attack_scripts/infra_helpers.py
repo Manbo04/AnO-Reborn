@@ -27,12 +27,14 @@ def aggregate_proinfra_for_user(cId: int) -> Tuple[int, int, int, int, int]:
     ]
 
     with get_db_cursor() as db:
+        # SUM across all provinces for user-wide military capacity
         db.execute(
-            """SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+            """SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS quantity
                FROM building_dictionary bd
                LEFT JOIN user_buildings ub
                    ON ub.building_id = bd.building_id AND ub.user_id = %s
-               WHERE bd.name = ANY(%s) AND bd.is_active = TRUE""",
+               WHERE bd.name = ANY(%s) AND bd.is_active = TRUE
+               GROUP BY bd.name""",
             (cId, building_names),
         )
         rows = db.fetchall()
