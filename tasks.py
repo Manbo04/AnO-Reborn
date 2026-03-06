@@ -852,9 +852,12 @@ def tax_income():
             )
             for row in dbdict.fetchall():
                 if isinstance(row, dict):
-                    cg_map[row.get("id") or row.get("Id") or row.get("ID")] = (
-                        row.get("consumer_goods") or 0
-                    )
+                    cg_map[
+                        row.get("user_id")
+                        or row.get("id")
+                        or row.get("Id")
+                        or row.get("ID")
+                    ] = (row.get("consumer_goods") or 0)
                 else:
                     uid = row[0]
                     cg_val = row[1] if len(row) > 1 else 0
@@ -2156,8 +2159,14 @@ def generate_province_revenue():  # Runs each hour
 
                 unit_category = find_unit_category(unit)
                 try:
-                    effminus = infra[unit].get("effminus", {})
-                    minus = infra[unit].get("minus", {})
+                    # IMPORTANT: copy dicts so we don't mutate the module-level
+                    # variables.NEW_INFRA constants.  Upgrades/policies modify
+                    # these dicts in-place (e.g. eff["happiness"] *= 1.3) and
+                    # without copies the values compound across iterations and
+                    # across task runs, eventually producing astronomically wrong
+                    # production/effect values.
+                    effminus = dict(infra[unit].get("effminus", {}))
+                    minus = dict(infra[unit].get("minus", {}))
                     operating_costs = infra[unit]["money"] * unit_amount
                     plus_amount = 0
                     plus_amount_multiplier = 1
@@ -2304,13 +2313,13 @@ def generate_province_revenue():  # Runs each hour
                         )
                         continue
 
-                    plus = infra[unit].get("plus", {})
+                    plus = dict(infra[unit].get("plus", {}))
 
                     # BETTER ENGINEERING
                     if unit == "nuclear_reactors" and upgrades.get("betterengineering"):
                         plus["energy"] += 6
 
-                    eff = infra[unit].get("eff", {})
+                    eff = dict(infra[unit].get("eff", {}))
 
                     if unit == "universities" and 3 in policies:
                         eff["productivity"] *= 1.10
@@ -2473,7 +2482,16 @@ def generate_province_revenue():  # Runs each hour
                         do_effect(effect, amount, "-")
 
                 except Exception as e:
-                    conn.rollback()
+                    # The building processing loop only modifies in-memory
+                    # dicts (resource_deltas, provinces_data, gold_deductions).
+                    # A conn.rollback() here was harmful: it rolled back
+                    # earlier DB writes (like user_economy row ensures) and
+                    # could leave the connection in a bad state for subsequent
+                    # batch writes.  Just log the error and continue.
+                    print(
+                        f"ERROR processing building {unit} province "
+                        f"{province_id} user {user_id}: {e}"
+                    )
                     handle_exception(e)
                     continue
 

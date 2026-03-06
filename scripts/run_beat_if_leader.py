@@ -2,9 +2,9 @@
 """Acquire a short-lived Redis lock and run celery beat only if lock obtained.
 
 This prevents running multiple beat instances when the Railway environment
-scales the "beat" service to multiple replicas. The script will attempt to set
-an ephemeral lock (SET key value NX EX seconds) and will run `celery beat` if
-it becomes leader. If it fails to acquire the lock, it exits safely.
+scales the "beat" service to multiple replicas. The script will retry acquiring
+the lock for up to BEAT_LEADER_LOCK_TTL * 2 seconds (with backoff), which
+handles the common deploy race where the old process's lock hasn't expired yet.
 
 Usage on Railway (set as start command for beat service):
   python scripts/run_beat_if_leader.py
@@ -51,16 +51,29 @@ if parsed.scheme.startswith("redis"):
 
 r = redis.Redis(**redis_kwargs)
 
-# Try to become leader
-try:
-    got = r.set(LOCK_KEY, "1", nx=True, ex=LOCK_TTL)
-except Exception as e:
-    print("Redis error when trying to acquire lock; exiting:", e)
-    sys.exit(0)
+# Try to become leader — retry with backoff to survive deploy races where
+# the old process's lock hasn't expired yet.
+MAX_ACQUIRE_WAIT = LOCK_TTL * 2  # wait up to 2x TTL
+RETRY_INTERVAL = 5  # seconds between attempts
+got = False
+elapsed = 0
+while elapsed < MAX_ACQUIRE_WAIT:
+    try:
+        got = r.set(LOCK_KEY, "1", nx=True, ex=LOCK_TTL)
+    except Exception as e:
+        print(f"Redis error when trying to acquire lock (retrying): {e}")
+    if got:
+        break
+    print(
+        f"Did not acquire beat leader lock; retrying in {RETRY_INTERVAL}s "
+        f"({elapsed}/{MAX_ACQUIRE_WAIT}s elapsed)"
+    )
+    time.sleep(RETRY_INTERVAL)
+    elapsed += RETRY_INTERVAL
 
 if not got:
-    print("Did not acquire beat leader lock; exiting")
-    sys.exit(0)
+    print(f"Failed to acquire beat leader lock after {MAX_ACQUIRE_WAIT}s; exiting")
+    sys.exit(1)
 
 print("Acquired beat leader lock; running celery beat")
 # Refresh the lock periodically in a background loop while beat runs
