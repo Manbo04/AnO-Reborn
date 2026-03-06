@@ -391,7 +391,7 @@
                             {% if normalized_buildings and normalized_buildings|length > 0 %}
                             {% for b in normalized_buildings %}
                             <option value="{{ b['building_id'] }}">
-                                {{ b['display_name'] }} ({{ b['base_cost'] }} {{ build_cost_resource }})
+                                {{ b['display_name'] }} ({{ b['base_cost'] | fmt }} {{ build_cost_resource }})
                             </option>
                             {% endfor %}
                             {% else %}
