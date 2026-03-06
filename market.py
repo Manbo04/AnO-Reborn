@@ -232,148 +232,149 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
 
 @login_required
 def market():
-    if request.method == "GET":
-        # Use connection pool instead of direct connection
-        from database import get_db_cursor
+    if request.method != "GET":
+        return redirect("/market")
+    # Use connection pool instead of direct connection
+    from database import get_db_cursor
 
-        with get_db_cursor() as db:
-            cId = session["user_id"]
+    with get_db_cursor() as db:
+        cId = session["user_id"]
 
-            # GET Query Parameters
-            try:
-                filter_resource = request.values.get("filtered_resource")
-            except TypeError:
-                filter_resource = None
+        # GET Query Parameters
+        try:
+            filter_resource = request.values.get("filtered_resource")
+        except TypeError:
+            filter_resource = None
 
-            try:
-                price_type = request.values.get("price_type")
-            except TypeError:
-                price_type = None
+        try:
+            price_type = request.values.get("price_type")
+        except TypeError:
+            price_type = None
 
-            try:
-                offer_type = request.values.get("offer_type")
-            except TypeError:
-                offer_type = None
+        try:
+            offer_type = request.values.get("offer_type")
+        except TypeError:
+            offer_type = None
 
-            # Pagination parameters
-            page = request.values.get("page", default=1, type=int)
-            per_page = request.values.get("per_page", default=50, type=int)
-            if per_page not in [50, 100, 150]:
-                per_page = 50
+        # Pagination parameters
+        page = request.values.get("page", default=1, type=int)
+        per_page = request.values.get("per_page", default=50, type=int)
+        if per_page not in [50, 100, 150]:
+            per_page = 50
 
-            # Processing of query parameters into database statements
-            if price_type is not None:
-                list_of_price_types = ["ASC", "DESC"]
+        # Processing of query parameters into database statements
+        if price_type is not None:
+            list_of_price_types = ["ASC", "DESC"]
 
-                if price_type not in list_of_price_types:
-                    return error(400, "No such price type")
+            if price_type not in list_of_price_types:
+                return error(400, "No such price type")
 
-            if filter_resource is not None:
-                resources_list = variables.RESOURCES
+        if filter_resource is not None:
+            resources_list = variables.RESOURCES
 
-                if filter_resource not in resources_list:
-                    return error(400, "No such resource")
+            if filter_resource not in resources_list:
+                return error(400, "No such resource")
 
-            # Build WHERE clause and params
-            where_conditions = []
-            params = []
+        # Build WHERE clause and params
+        where_conditions = []
+        params = []
 
-            if filter_resource is not None:
-                where_conditions.append("o.resource = %s")
-                params.append(filter_resource)
+        if filter_resource is not None:
+            where_conditions.append("o.resource = %s")
+            params.append(filter_resource)
 
-            if offer_type is not None:
-                where_conditions.append("o.type = %s")
-                params.append(offer_type)
+        if offer_type is not None:
+            where_conditions.append("o.type = %s")
+            params.append(offer_type)
 
-            where_clause = ""
-            if where_conditions:
-                where_clause = "WHERE " + " AND ".join(where_conditions)
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
 
-            # Order direction
-            order_dir = "ASC"
-            if price_type == "DESC":
-                order_dir = "DESC"
+        # Order direction
+        order_dir = "ASC"
+        if price_type == "DESC":
+            order_dir = "DESC"
 
-            # Count total matching offers
-            count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
-            db.execute(count_query, tuple(params))
-            total_count = db.fetchone()[0] or 0
+        # Count total matching offers
+        count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
+        db.execute(count_query, tuple(params))
+        total_count = db.fetchone()[0] or 0
 
-            # Calculate pagination
-            total_pages = max(1, (total_count + per_page - 1) // per_page)
-            if page < 1:
-                page = 1
-            if page > total_pages:
-                page = total_pages
-            offset = (page - 1) * per_page
+        # Calculate pagination
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        if page < 1:
+            page = 1
+        if page > total_pages:
+            page = total_pages
+        offset = (page - 1) * per_page
 
-            # Main query with pagination
-            query = f"""
-                SELECT o.user_id, o.type, o.resource, o.amount, o.price,
-                       o.offer_id, u.username
-                FROM offers o
-                INNER JOIN users u ON o.user_id = u.id
-                {where_clause}
-                ORDER BY o.price {order_dir}
-                LIMIT %s OFFSET %s
-            """
-            db.execute(query, tuple(params) + (per_page, offset))
-            offers_data = db.fetchall()
+        # Main query with pagination
+        query = f"""
+            SELECT o.user_id, o.type, o.resource, o.amount, o.price,
+                   o.offer_id, u.username
+            FROM offers o
+            INNER JOIN users u ON o.user_id = u.id
+            {where_clause}
+            ORDER BY o.price {order_dir}
+            LIMIT %s OFFSET %s
+        """
+        db.execute(query, tuple(params) + (per_page, offset))
+        offers_data = db.fetchall()
 
-            # Process results
-            ids = []
-            types = []
-            names = []
-            resources = []
-            amounts = []
-            prices = []
-            total_prices = []
-            offer_ids = []
+        # Process results
+        ids = []
+        types = []
+        names = []
+        resources = []
+        amounts = []
+        prices = []
+        total_prices = []
+        offer_ids = []
 
-            for (
-                user_id,
-                offer_type_val,
-                resource,
-                amount,
-                price,
-                offer_id,
-                username,
-            ) in offers_data:
-                ids.append(user_id)
-                types.append(offer_type_val)
-                resources.append(resource)
-                amounts.append(amount)
-                prices.append(price)
-                total_prices.append(price * amount)
-                offer_ids.append(offer_id)
-                names.append(username)
+        for (
+            user_id,
+            offer_type_val,
+            resource,
+            amount,
+            price,
+            offer_id,
+            username,
+        ) in offers_data:
+            ids.append(user_id)
+            types.append(offer_type_val)
+            resources.append(resource)
+            amounts.append(amount)
+            prices.append(price)
+            total_prices.append(price * amount)
+            offer_ids.append(offer_id)
+            names.append(username)
 
-            offers = list(
-                zip(
-                    ids,
-                    types,
-                    names,
-                    resources,
-                    amounts,
-                    prices,
-                    offer_ids,
-                    total_prices,
-                )
+        offers = list(
+            zip(
+                ids,
+                types,
+                names,
+                resources,
+                amounts,
+                prices,
+                offer_ids,
+                total_prices,
             )
+        )
 
-            return render_template(
-                "market.html",
-                offers=offers,
-                price_type=price_type,
-                cId=cId,
-                current_page=page,
-                total_pages=total_pages,
-                total_count=total_count,
-                per_page=per_page,
-                filtered_resource=filter_resource,
-                offer_type=offer_type,
-            )
+        return render_template(
+            "market.html",
+            offers=offers,
+            price_type=price_type,
+            cId=cId,
+            current_page=page,
+            total_pages=total_pages,
+            total_count=total_count,
+            per_page=per_page,
+            filtered_resource=filter_resource,
+            offer_type=offer_type,
+        )
 
 
 @login_required
@@ -1323,7 +1324,7 @@ def register_market_routes(app_instance):
         "/market",
         "market",
         cache_response(ttl_seconds=30)(market),
-        methods=["GET", "POST"],
+        methods=["GET"],
     )
     app_instance.add_url_rule(
         "/buy_offer/<offer_id>", "buy_offer", buy_market_offer, methods=["POST"]
