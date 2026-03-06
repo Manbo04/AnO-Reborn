@@ -426,6 +426,66 @@ def ready():
         return "not ready", 503
 
 
+@app.route("/_admin/trigger_tasks")
+def trigger_tasks():
+    """Admin endpoint to clear stale Redis locks and trigger Celery tasks.
+
+    Security: Requires ADMIN_DIAG_SECRET env var and matching X-DIAG-SECRET header.
+    This is used when the Celery beat process died during a deploy and tasks
+    aren't being scheduled.
+    """
+    secret = os.getenv("ADMIN_DIAG_SECRET")
+    header = request.headers.get("X-DIAG-SECRET")
+    if not secret or header != secret:
+        return "Forbidden", 403
+
+    results = {}
+
+    # 1. Clear stale Redis locks
+    try:
+        import redis as redis_lib
+        import urllib.parse as _urlparse
+
+        redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+        if redis_url:
+            parsed = _urlparse.urlparse(redis_url)
+            r = redis_lib.Redis(
+                host=parsed.hostname,
+                port=parsed.port or 6379,
+                password=parsed.password,
+            )
+            # Clear beat leader lock
+            deleted_beat = r.delete("beat:leader")
+            results["beat_leader_lock_cleared"] = bool(deleted_beat)
+
+            # Clear any stale task locks
+            task_locks = list(r.keys("task_lock:*"))
+            for key in task_locks:
+                r.delete(key)
+            results["task_locks_cleared"] = len(task_locks)
+        else:
+            results["redis"] = "no REDIS_URL found"
+    except Exception as e:
+        results["redis_error"] = str(e)
+
+    # 2. Try to send tasks to the Celery queue
+    try:
+        from tasks import celery as celery_app
+
+        celery_app.send_task("tasks.task_global_tick")
+        celery_app.send_task("tasks.task_generate_province_revenue")
+        celery_app.send_task("tasks.task_tax_income")
+        results["tasks_sent"] = [
+            "global_tick",
+            "generate_province_revenue",
+            "tax_income",
+        ]
+    except Exception as e:
+        results["task_send_error"] = str(e)
+
+    return results
+
+
 @app.route("/_admin/db_diagnostics")
 def db_diagnostics():
     """Temporary admin-only endpoint to gather short DB diagnostics.
