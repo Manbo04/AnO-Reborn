@@ -323,14 +323,15 @@ def coalition(coalition_id):
                         ) = row
                         active_treaties["ids"].append(offer_id)
                         # Show the OTHER coalition, not the current one
+                        # Use a local variable to avoid overwriting the outer coalition_id
                         if col1_id == coalition_id:
-                            coalition_id = col2_id
-                            coalition_name = col2_name
+                            other_col_id = col2_id
+                            other_col_name = col2_name
                         else:
-                            coalition_id = col1_id
-                            coalition_name = col1_name
-                        active_treaties["col_ids"].append(coalition_id)
-                        active_treaties["col_names"].append(coalition_name)
+                            other_col_id = col1_id
+                            other_col_name = col1_name
+                        active_treaties["col_ids"].append(other_col_id)
+                        active_treaties["col_names"].append(other_col_name)
                         active_treaties["treaty_names"].append(treaty_name)
                         active_treaties["treaty_descriptions"].append(
                             treaty_description
@@ -464,6 +465,7 @@ def coalition(coalition_id):
         return render_template(
             "coalition.html",
             name=name,
+            colId=coalition_id,
             coalition_id=coalition_id,
             user_role=user_role,
             description=description,
