@@ -85,7 +85,7 @@ celery_beat_schedule = {
     },
     "refresh_bot_offers": {
         "task": "tasks.task_refresh_bot_offers",
-        "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="30", hour="0")),
+        "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="*/5")),
     },
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
@@ -741,14 +741,12 @@ def tax_income():
             db = conn.cursor()
             # Ensure we only run once in a short window
             # (protects against multiple beat schedulers)
-            db.execute(
-                """
+            db.execute("""
                 CREATE TABLE IF NOT EXISTS task_runs (
                     task_name TEXT PRIMARY KEY,
                     last_run TIMESTAMP WITH TIME ZONE
                 )
-            """
-            )
+            """)
             # Ensure a row exists and lock it to prevent concurrent runs from
             # racing on the last_run check. This uses a fast INSERT ... ON CONFLICT
             # followed by SELECT ... FOR UPDATE so concurrent workers serialize on
@@ -1166,14 +1164,12 @@ def population_growth():  # Function for growing population
         db = conn.cursor()
 
         # Ensure single run within a short window to prevent duplicate hourly updates
-        db.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS task_runs (
                 task_name TEXT PRIMARY KEY,
                 last_run TIMESTAMP WITH TIME ZONE
             )
-        """
-        )
+        """)
         db.execute(
             "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
             "ON CONFLICT DO NOTHING",
@@ -1205,14 +1201,12 @@ def population_growth():  # Function for growing population
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         # Preload all provinces with the fields needed for growth calculations
-        dbdict.execute(
-            """
+        dbdict.execute("""
             SELECT id, userId, population, cityCount, land,
                    happiness, pollution, productivity
             FROM provinces
             ORDER BY userId ASC
-            """
-        )
+            """)
         provinces = dbdict.fetchall()
 
         if not provinces:
@@ -1815,14 +1809,12 @@ def generate_province_revenue():  # Runs each hour
             return
         db = conn.cursor()
         # Ensure single run within a short window to prevent duplicate hourly updates
-        db.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS task_runs (
                 task_name TEXT PRIMARY KEY,
                 last_run TIMESTAMP WITH TIME ZONE
             )
-        """
-        )
+        """)
         db.execute(
             "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
             "ON CONFLICT DO NOTHING",
@@ -3062,8 +3054,7 @@ def backfill_missing_resources():
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         # Find users missing user_economy rows (users who don't have all resource_ids)
-        dbdict.execute(
-            """
+        dbdict.execute("""
             SELECT DISTINCT u.id
             FROM users u
             CROSS JOIN resource_dictionary rd
@@ -3071,8 +3062,7 @@ def backfill_missing_resources():
                 ON ue.user_id = u.id
                AND ue.resource_id = rd.resource_id
             WHERE ue.user_id IS NULL
-            """
-        )
+            """)
         missing_users = {row["id"] for row in dbdict.fetchall()}
         if not missing_users:
             return
@@ -3104,8 +3094,18 @@ def backfill_missing_resources():
 BOT_USER_ID = 9999  # Market Bot account
 BOT_OFFERS = [
     # (type, resource, amount, price)
-    ("sell", "consumer_goods", 100000, 50),  # 100k consumer goods @ 50 gold
-    ("sell", "rations", 100000, 100),  # 100k rations @ 100 gold
+    # Prices calibrated to player market rates (CG ~1000-2200, rations ~200-500)
+    ("sell", "consumer_goods", 50000, 1500),  # 50k consumer goods @ 1,500 gold
+    ("sell", "rations", 100000, 300),  # 100k rations @ 300 gold
+    ("sell", "steel", 20000, 4000),  # 20k steel @ 4,000 gold
+    ("sell", "aluminium", 10000, 3000),  # 10k aluminium @ 3,000 gold
+    ("sell", "components", 5000, 8000),  # 5k components @ 8,000 gold
+    ("buy", "coal", 50000, 80),  # buy 50k coal @ 80 gold
+    ("buy", "iron", 50000, 120),  # buy 50k iron @ 120 gold
+    ("buy", "lumber", 50000, 60),  # buy 50k lumber @ 60 gold
+    ("buy", "oil", 50000, 150),  # buy 50k oil @ 150 gold
+    ("buy", "copper", 50000, 100),  # buy 50k copper @ 100 gold
+    ("buy", "bauxite", 50000, 90),  # buy 50k bauxite @ 90 gold
 ]
 
 
@@ -3136,7 +3136,7 @@ def refresh_bot_offers():
 @celery.task
 @leader_only(ttl_seconds=300)
 def task_refresh_bot_offers():
-    """Celery task to refresh bot market offers daily."""
+    """Celery task to refresh bot market offers every 5 minutes."""
     _run_with_deadlock_retries(refresh_bot_offers, "refresh_bot_offers")
 
 
@@ -3189,28 +3189,24 @@ def execute_due_trade_agreements():
                     return
 
             # Find all active agreements where next_execution is due
-            db.execute(
-                """
+            db.execute("""
                 SELECT id FROM trade_agreements
                 WHERE status = 'active'
                   AND next_execution IS NOT NULL
                   AND next_execution <= now()
                 ORDER BY next_execution
                 LIMIT 100
-            """
-            )
+            """)
 
             due_agreements = db.fetchall()
 
             if not due_agreements:
                 # Update last run even if nothing to do
-                db.execute(
-                    """
+                db.execute("""
                     INSERT INTO task_runs (task_name, last_run)
                     VALUES ('execute_trade_agreements', now())
                     ON CONFLICT (task_name) DO UPDATE SET last_run = now()
-                """
-                )
+                """)
                 conn.commit()
                 return
 
@@ -3234,13 +3230,11 @@ def execute_due_trade_agreements():
                     traceback.print_exc()
 
             # Update last run time
-            db.execute(
-                """
+            db.execute("""
                 INSERT INTO task_runs (task_name, last_run)
                 VALUES ('execute_trade_agreements', now())
                 ON CONFLICT (task_name) DO UPDATE SET last_run = now()
-            """
-            )
+            """)
             conn.commit()
 
             elapsed_time = time.perf_counter() - start_time
@@ -3259,8 +3253,7 @@ def execute_due_trade_agreements():
 
 def _create_game_tick_log(db):
     """Create and return a tick log row for the current global tick run."""
-    db.execute(
-        """
+    db.execute("""
         CREATE TABLE IF NOT EXISTS game_tick_logs (
             tick_id BIGSERIAL PRIMARY KEY,
             tick_type VARCHAR(40) NOT NULL DEFAULT 'global_tick',
@@ -3275,8 +3268,7 @@ def _create_game_tick_log(db):
             total_deserted_units BIGINT NOT NULL DEFAULT 0,
             error_message TEXT
         )
-        """
-    )
+        """)
     db.execute(
         "INSERT INTO game_tick_logs (tick_type, status) "
         "VALUES ('global_tick', 'running') "
@@ -3366,14 +3358,12 @@ def global_tick():
 
         try:
             # Ensure we do not double-run in short windows.
-            db.execute(
-                """
+            db.execute("""
                 CREATE TABLE IF NOT EXISTS task_runs (
                     task_name TEXT PRIMARY KEY,
                     last_run TIMESTAMP WITH TIME ZONE
                 )
-                """
-            )
+                """)
             db.execute(
                 "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
                 "ON CONFLICT DO NOTHING",
@@ -3478,8 +3468,7 @@ def global_tick():
             # Consumption phase
             # -----------------------------------------------------------------
             consumption_start = time.time()
-            dbdict.execute(
-                """
+            dbdict.execute("""
                 SELECT
                     um.user_id,
                     ud.maintenance_cost_resource_id AS resource_id,
@@ -3491,8 +3480,7 @@ def global_tick():
                   AND ud.maintenance_cost_resource_id IS NOT NULL
                   AND ud.maintenance_cost_amount > 0
                 GROUP BY um.user_id, ud.maintenance_cost_resource_id
-                """
-            )
+                """)
             cost_rows = dbdict.fetchall()
 
             if cost_rows:
