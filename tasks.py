@@ -806,13 +806,22 @@ def tax_income():
             all_user_ids = [u[0] for u in users]
 
             if not all_user_ids:
-                # completed; reset cursor for next scheduled run
+                # Completed full cycle; reset cursor and immediately
+                # re-fetch from the beginning so this run still processes
+                # users (avoids wasting every other hourly invocation).
                 db.execute(
                     "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
                     ("tax_income",),
                 )
                 conn.commit()
-                return
+                db.execute(
+                    "SELECT id FROM users WHERE id > 0 ORDER BY id ASC LIMIT %s",
+                    (chunk_size,),
+                )
+                users = db.fetchall()
+                all_user_ids = [u[0] for u in users]
+                if not all_user_ids:
+                    return  # genuinely no users
 
             # Bulk load all data upfront to eliminate N+1 queries
             # Load all stats (gold)
@@ -1891,7 +1900,9 @@ def generate_province_revenue():  # Runs each hour
                 (last_proc, chunk),
             )
             infra_ids = db.fetchall()
-            # If this chunk has no rows, reset cursor so we start over next run
+            # If this chunk has no rows, reset cursor and immediately
+            # re-fetch from the beginning so this run still processes
+            # provinces (avoids wasting every other hourly invocation).
             if not infra_ids:
                 try:
                     db.execute(
@@ -1902,9 +1913,17 @@ def generate_province_revenue():  # Runs each hour
                         conn.commit()
                     except Exception:
                         pass
+                    db.execute(
+                        "SELECT p.id, p.userId, p.land, p.productivity "
+                        "FROM provinces p "
+                        "WHERE p.id > 0 ORDER BY p.id ASC LIMIT %s",
+                        (chunk,),
+                    )
+                    infra_ids = db.fetchall()
                 except Exception:
                     pass
-                return
+                if not infra_ids:
+                    return  # genuinely no provinces
         except Exception:
             infra_ids = []
 
