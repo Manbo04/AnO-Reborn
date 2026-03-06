@@ -55,13 +55,10 @@ def _init_economy_tables(db, user_id):
             (qty, user_id, res_name),
         )
 
-    # user_buildings — one row per active building in building_dictionary
-    db.execute(
-        "INSERT INTO user_buildings (user_id, building_id, quantity) "
-        "SELECT %s, building_id, 0 FROM building_dictionary WHERE is_active = TRUE "
-        "ON CONFLICT DO NOTHING",
-        (user_id,),
-    )
+    # user_buildings — rows are created per-province when buildings are
+    # purchased (INSERT ON CONFLICT in action_loop.build_structure).
+    # No need to pre-populate zero-quantity rows at signup.
+
     # user_military — one row per active unit in unit_dictionary
     db.execute(
         "INSERT INTO user_military (user_id, unit_id, quantity) "

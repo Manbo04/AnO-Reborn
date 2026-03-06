@@ -299,14 +299,13 @@ def energy_info(province_id):
 
         infra = variables.NEW_INFRA
 
-        # Fetch building quantities from normalized user_buildings table
+        # Fetch building quantities from user_buildings for THIS province
         db.execute(
             """
             SELECT bd.name, ub.quantity
             FROM user_buildings ub
             JOIN building_dictionary bd ON bd.building_id = ub.building_id
-            JOIN provinces p ON p.userId = ub.user_id
-            WHERE p.id = %s AND bd.name IN (%s)
+            WHERE ub.province_id = %s AND bd.name IN %s
             """,
             (province_id, tuple(consumers + producers)),
         )
@@ -1515,16 +1514,17 @@ def apply_population_aging(province_id):
 
             # Step 3: Shift children -> working (with education graduation logic)
             # Calculate total graduation capacity from schools/universities
+            # in THIS province
             db.execute(
                 """
                 SELECT COALESCE(SUM(ub.quantity), 0)
                 FROM user_buildings ub
                 JOIN building_dictionary bd
                     ON bd.building_id = ub.building_id
-                WHERE ub.user_id = %s
+                WHERE ub.province_id = %s
                     AND bd.name IN ('high_school', 'university')
                 """,
-                (user_id,),
+                (province_id,),
             )
             school_capacity_result = db.fetchone()
             school_capacity = (
@@ -1932,25 +1932,26 @@ def generate_province_revenue():  # Runs each hour
             for row in dbdict.fetchall():
                 policies_map[row["user_id"]] = row["education"]
 
-        # Preload all building data for all provinces at once (replaces proInfra)
-        buildings_map = {}  # user_id -> {building_name: quantity}
-        if all_user_ids:
+        # Preload all building data PER PROVINCE (not per user)
+        # Each province has its own buildings since proInfra was per-province.
+        buildings_map = {}  # province_id -> {building_name: quantity}
+        if all_province_ids:
             dbdict.execute(
                 """
-                SELECT ub.user_id, bd.name, ub.quantity
+                SELECT ub.province_id, bd.name, ub.quantity
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.user_id = ANY(%s)
+                WHERE ub.province_id = ANY(%s)
                 """,
-                (all_user_ids,),
+                (all_province_ids,),
             )
             for row in dbdict.fetchall():
-                user_id = row["user_id"]
+                prov_id = row["province_id"]
                 building_name = row["name"]
                 quantity = row["quantity"]
-                if user_id not in buildings_map:
-                    buildings_map[user_id] = {}
-                buildings_map[user_id][building_name] = quantity
+                if prov_id not in buildings_map:
+                    buildings_map[prov_id] = {}
+                buildings_map[prov_id][building_name] = quantity
 
         # Preload all stats (gold) for all users at once
         stats_map = {}
@@ -2116,14 +2117,13 @@ def generate_province_revenue():  # Runs each hour
             if policies is None:
                 policies = []
 
-            # Use preloaded buildings instead of proInfra query
-            # Convert buildings_map (building_name -> quantity) to units dict
-            # (column_name -> quantity) for compatibility with existing code
-            user_buildings = buildings_map.get(user_id, {})
+            # Use preloaded buildings for THIS PROVINCE (not user-level)
+            # Each province has its own set of buildings
+            province_buildings = buildings_map.get(province_id, {})
             units = {}
             for col in columns:
                 # Map column names directly to building names (they match)
-                units[col] = user_buildings.get(col, 0)
+                units[col] = province_buildings.get(col, 0)
 
             for unit in columns:
                 unit_amount = units[unit]
