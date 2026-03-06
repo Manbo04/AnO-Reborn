@@ -698,6 +698,7 @@ def country(cId):
         dateCreated=dateCreated,
         influence=influence,
         provinces=provinces,
+        colId=coalition_id,
         coalition_id=coalition_id,
         flag=flag,
         spy=spy,
