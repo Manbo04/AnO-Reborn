@@ -42,14 +42,17 @@ def _is_tech_unlocked(db, user_id: int, tech_id: int) -> bool:
     return bool(row and row[0])
 
 
-def build_structure(user_id: int, building_id: int, quantity: int) -> ActionResult:
+def build_structure(user_id: int, building_id: int, quantity: int, province_id: int = None) -> ActionResult:
     """Build structure(s) using normalized schema.
 
     Cost is deducted from `user_economy` using `BUILD_COST_RESOURCE`.
+    Buildings are associated with a specific province via province_id.
     Transactions use consistent ascending-order user_id locking to prevent deadlocks.
     """
     if quantity <= 0:
         raise ActionLoopError("Quantity must be greater than 0.")
+    if province_id is None:
+        raise ActionLoopError("Province must be specified when building.")
 
     with get_db_connection() as conn:
         db = conn.cursor()
@@ -102,14 +105,14 @@ def build_structure(user_id: int, building_id: int, quantity: int) -> ActionResu
 
         db.execute(
             """
-            INSERT INTO user_buildings (user_id, building_id, quantity, last_upgraded)
-            VALUES (%s, %s, %s, now())
-            ON CONFLICT (user_id, building_id)
+            INSERT INTO user_buildings (user_id, building_id, province_id, quantity, last_upgraded)
+            VALUES (%s, %s, %s, %s, now())
+            ON CONFLICT (user_id, building_id, province_id)
             DO UPDATE SET
                 quantity = user_buildings.quantity + EXCLUDED.quantity,
                 last_upgraded = now()
             """,
-            (user_id, building_id, quantity),
+            (user_id, building_id, province_id, quantity),
         )
 
         conn.commit()

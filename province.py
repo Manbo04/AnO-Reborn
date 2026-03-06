@@ -135,16 +135,19 @@ def province(pId):
         }
 
         # Build units dict from user_buildings (Economy 2.0 normalized schema)
-        # Maps building name → quantity owned by this user
+        # Maps building name → quantity owned in THIS province
+        province_id_val = result["id"]
         db.execute(
             """
             SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
             FROM building_dictionary bd
             LEFT JOIN user_buildings ub
-                ON ub.building_id = bd.building_id AND ub.user_id = %s
+                ON ub.building_id = bd.building_id
+                AND ub.user_id = %s
+                AND ub.province_id = %s
             WHERE bd.is_active = TRUE
             """,
-            (user_id,),
+            (user_id, province_id_val),
         )
         units = {row["name"]: row["quantity"] for row in db.fetchall()}
         # Ensure all expected building names exist in units (default 0)
@@ -330,7 +333,7 @@ def build_structure_action():
         return error(400, "Invalid building selection or quantity.")
 
     try:
-        build_structure(cId, building_id, quantity)
+        build_structure(cId, building_id, quantity, province_id=int(province_id) if province_id else None)
     except ActionLoopError as e:
         return error(400, str(e))
 
@@ -429,21 +432,14 @@ def createprovince():
 
 def get_free_slots(pId, slot_type):  # pId = province id
     with get_db_cursor() as db:
-        # Get user_id from province
-        db.execute("SELECT userId FROM provinces WHERE id=%s", (pId,))
-        user_id_row = db.fetchone()
-        if not user_id_row:
-            return 0
-        user_id = user_id_row[0]
-
         if slot_type == "city":
-            # Query normalized user_buildings for city buildings
+            # Query normalized user_buildings for city buildings in THIS province
             db.execute(
                 """
                 SELECT COALESCE(SUM(ub.quantity), 0)
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.user_id = %s
+                WHERE ub.province_id = %s
                   AND bd.name IN (
                     'coal_burners', 'oil_burners', 'hydro_dams',
                     'nuclear_reactors', 'solar_fields', 'gas_stations',
@@ -452,7 +448,7 @@ def get_free_slots(pId, slot_type):  # pId = province id
                     'libraries', 'universities', 'monorails'
                   )
                 """,
-                (user_id,),
+                (pId,),
             )
             used_slots = int(db.fetchone()[0])
 
@@ -462,13 +458,13 @@ def get_free_slots(pId, slot_type):  # pId = province id
             free_slots = all_slots - used_slots
 
         elif slot_type == "land":
-            # Query normalized user_buildings for land buildings
+            # Query normalized user_buildings for land buildings in THIS province
             db.execute(
                 """
                 SELECT COALESCE(SUM(ub.quantity), 0)
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.user_id = %s
+                WHERE ub.province_id = %s
                   AND bd.name IN (
                     'army_bases', 'harbours', 'aerodomes', 'admin_buildings',
                     'silos', 'farms', 'pumpjacks', 'coal_mines', 'bauxite_mines',
@@ -477,7 +473,7 @@ def get_free_slots(pId, slot_type):  # pId = province id
                     'ammunition_factories', 'aluminium_refineries', 'oil_refineries'
                   )
                 """,
-                (user_id,),
+                (pId,),
             )
             used_slots = int(db.fetchone()[0])
 
@@ -688,16 +684,18 @@ def province_sell_buy(way, units, province_id):
             db.execute(curUnStat, (province_id,))
             currentUnits = db.fetchone()[0]
         else:
-            # Economy 2.0: building counts stored in user_buildings
+            # Economy 2.0: building counts stored in user_buildings per province
             db.execute(
                 """
                 SELECT COALESCE(ub.quantity, 0)
                 FROM building_dictionary bd
                 LEFT JOIN user_buildings ub
-                    ON ub.building_id = bd.building_id AND ub.user_id = %s
+                    ON ub.building_id = bd.building_id
+                    AND ub.user_id = %s
+                    AND ub.province_id = %s
                 WHERE bd.name = %s
                 """,
-                (cId, units),
+                (cId, province_id, units),
             )
             row = db.fetchone()
             currentUnits = row[0] if row else 0
@@ -793,16 +791,17 @@ def province_sell_buy(way, units, province_id):
                 unitUpd = f"UPDATE provinces SET {units}=%s WHERE id=%s"
                 db.execute(unitUpd, ((currentUnits - wantedUnits), province_id))
             else:
-                # Economy 2.0: decrement user_buildings
+                # Economy 2.0: decrement user_buildings for this province
                 db.execute(
                     """
                     UPDATE user_buildings SET quantity = quantity - %s
                     WHERE user_id = %s
+                      AND province_id = %s
                       AND building_id = (
                           SELECT building_id FROM building_dictionary WHERE name = %s
                       )
                     """,
-                    (wantedUnits, cId, units),
+                    (wantedUnits, cId, province_id, units),
                 )
 
             # Capture gold before and perform atomic increment
@@ -898,16 +897,24 @@ def province_sell_buy(way, units, province_id):
                 updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"
                 db.execute(updStat, ((currentUnits + wantedUnits), province_id))
             else:
-                # Economy 2.0: increment user_buildings
+                # Economy 2.0: increment user_buildings for this province
                 db.execute(
                     """
-                    UPDATE user_buildings SET quantity = quantity + %s
-                    WHERE user_id = %s
-                      AND building_id = (
-                          SELECT building_id FROM building_dictionary WHERE name = %s
-                      )
+                    INSERT INTO user_buildings
+                        (user_id, building_id, province_id, quantity, last_upgraded)
+                    VALUES (
+                        %s,
+                        (SELECT building_id FROM building_dictionary WHERE name = %s),
+                        %s,
+                        %s,
+                        now()
+                    )
+                    ON CONFLICT (user_id, building_id, province_id)
+                    DO UPDATE SET
+                        quantity = user_buildings.quantity + EXCLUDED.quantity,
+                        last_upgraded = now()
                     """,
-                    (wantedUnits, cId, units),
+                    (cId, units, province_id, wantedUnits),
                 )
 
             # Audit the buy event
