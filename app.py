@@ -435,7 +435,11 @@ def trigger_tasks():
     This is used when the Celery beat process died during a deploy and tasks
     aren't being scheduled.
     """
-    secret = os.getenv("ADMIN_DIAG_SECRET") or os.getenv("SECRET_KEY")
+    secret = (
+        os.getenv("ADMIN_DIAG_SECRET")
+        or os.getenv("SECRET_KEY")
+        or os.getenv("DISCORD_CLIENT_SECRET")
+    )
     header = request.headers.get("X-DIAG-SECRET")
     if not secret or header != secret:
         return "Forbidden", 403
