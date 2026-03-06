@@ -324,12 +324,12 @@ BUILDINGS = [
 UPGRADES = {"oil_burners"}
 
 # Dictionary for which units give what resources, etc ()
-INFRA = {  # Synced to match NEW_INFRA (engine values) — all units, not kg
-    # Electricity
-    "coal_burners_plus": {"energy": 4},
-    "coal_burners_convert_minus": [{"coal": 11}],
-    "coal_burners_money": 7800,
-    "coal_burners_effect": [{"pollution": 6}],
+INFRA = {  # Display values (kg/weight-based) — shown on province page
+    # Electricity (done)
+    "coal_burners_plus": {"energy": 4},  # Energy increase
+    "coal_burners_convert_minus": [{"coal": 11}],  # Resource upkeep cost
+    "coal_burners_money": 7800,  # Monetary upkeep cost
+    "coal_burners_effect": [{"pollution": 6}],  # Pollution amount added
     "oil_burners_plus": {"energy": 5},
     "oil_burners_convert_minus": [{"oil": 16}],
     "oil_burners_money": 11700,
@@ -340,28 +340,30 @@ INFRA = {  # Synced to match NEW_INFRA (engine values) — all units, not kg
     "nuclear_reactors_convert_minus": [{"uranium": 32}],
     "nuclear_reactors_money": 111000,
     "solar_fields_plus": {"energy": 3},
-    "solar_fields_money": 13000,
-    # Retail
-    "distribution_centers_plus": {"consumer_goods": 8},
+    "solar_fields_money": 11000,
+    ####################
+    # Retail (Done)
+    "distribution_centers_plus": {"consumer_goods": 400000},
     "distribution_centers_money": 15000,
-    "gas_stations_plus": {"consumer_goods": 12},
+    "gas_stations_plus": {"consumer_goods": 50000},
     "gas_stations_effect": [{"pollution": 4}],
     "gas_stations_money": 20000,
-    "general_stores_plus": {"consumer_goods": 10},
+    "general_stores_plus": {"consumer_goods": 40000},
     "general_stores_effect": [{"pollution": 2}],
     "general_stores_money": 37500,
-    "farmers_markets_plus": {"consumer_goods": 16},
+    "farmers_markets_plus": {"consumer_goods": 60000},
     "farmers_markets_effect": [{"pollution": 5}],
     "farmers_markets_money": 80000,
-    "banks_plus": {"consumer_goods": 20},
+    "banks_plus": {"consumer_goods": 80000},
     "banks_money": 220000,
-    "malls_plus": {"consumer_goods": 30},
+    "malls_plus": {"consumer_goods": 100000},
     "malls_effect": [{"pollution": 9}],
-    "malls_money": 450000,
-    "industrial_district_plus": {"consumer_goods": 50},
+    "malls_money": 450000,  # Costs $750k
+    "industrial_district_plus": {"consumer_goods": 300000},
     "industrial_district_effect": [{"pollution": 15}],
     "industrial_district_money": 85000,
-    # Public Works
+    ##############
+    # Public Works (Done)
     "city_parks_effect": [{"happiness": 5}],
     "city_parks_effect_minus": {"pollution": 6},
     "city_parks_money": 25000,
@@ -374,64 +376,67 @@ INFRA = {  # Synced to match NEW_INFRA (engine values) — all units, not kg
     "monorails_effect": [{"productivity": 16}],
     "monorails_effect_minus": {"pollution": 20},
     "monorails_money": 270000,
-    # Military
-    "army_bases_money": 25000,
+    ###################
+    # Military (Done)
+    "army_bases_money": 25000,  # Costs $25k
     "harbours_money": 35000,
     "aerodomes_money": 55000,
     "admin_buildings_money": 90000,
     "silos_money": 340000,
-    # Resource Extraction
-    "farms_money": 3000,
-    "farms_plus": {"rations": 12},
+    ################
+    # Industry (Done) - Now in kg (weight-based)
+    "farms_money": 5000,
+    "farms_plus": {"rations": 150000},
     "farms_effect": [{"pollution": 1}],
-    "pumpjacks_money": 9500,
-    "pumpjacks_plus": {"oil": 24},
+    "pumpjacks_money": 5000,
+    "pumpjacks_plus": {"oil": 100000},
     "pumpjacks_effect": [{"pollution": 2}],
-    "coal_mines_money": 4200,
-    "coal_mines_plus": {"coal": 31},
+    "coal_mines_money": 5000,
+    "coal_mines_plus": {"coal": 90000},
     "coal_mines_effect": [{"pollution": 2}],
-    "bauxite_mines_money": 8000,
-    "bauxite_mines_plus": {"bauxite": 20},
+    "bauxite_mines_money": 5000,
+    "bauxite_mines_plus": {"bauxite": 80000},
     "bauxite_mines_effect": [{"pollution": 2}],
     "copper_mines_money": 5000,
-    "copper_mines_plus": {"copper": 25},
+    "copper_mines_plus": {"copper": 70000},
     "copper_mines_effect": [{"pollution": 2}],
     "uranium_mines_money": 45000,
-    "uranium_mines_plus": {"uranium": 12},
+    "uranium_mines_plus": {"uranium": 60000},
     "uranium_mines_effect": [{"pollution": 1}],
-    "lead_mines_money": 7200,
-    "lead_mines_plus": {"lead": 19},
+    "lead_mines_money": 5000,
+    "lead_mines_plus": {"lead": 65000},
     "lead_mines_effect": [{"pollution": 2}],
-    "iron_mines_money": 11000,
-    "iron_mines_plus": {"iron": 23},
+    "iron_mines_money": 5000,
+    "iron_mines_plus": {"iron": 80000},
     "iron_mines_effect": [{"pollution": 2}],
-    "lumber_mills_money": 7500,
-    "lumber_mills_plus": {"lumber": 35},
+    "lumber_mills_money": 5000,
+    "lumber_mills_plus": {"lumber": 100000},
     "lumber_mills_effect": [{"pollution": 1}],
-    # Processing
+    ################
+    # Processing (Done) - Now in kg (weight-based)
     "component_factories_money": 50000,
     "component_factories_convert_minus": [
-        {"copper": 20},
-        {"steel": 10},
-        {"aluminium": 15},
+        {"copper": 20000},
+        {"steel": 10000},
+        {"aluminium": 15000},
     ],
-    "component_factories_plus": {"components": 5},
+    "component_factories_plus": {"components": 40000},
     "component_factories_effect": [{"pollution": 5}],
     "steel_mills_money": 60000,
-    "steel_mills_convert_minus": [{"coal": 35}, {"iron": 35}],
-    "steel_mills_plus": {"steel": 12},
+    "steel_mills_convert_minus": [{"coal": 35000}, {"iron": 35000}],
+    "steel_mills_plus": {"steel": 50000},
     "steel_mills_effect": [{"pollution": 4}],
     "ammunition_factories_money": 15000,
-    "ammunition_factories_convert_minus": [{"copper": 10}, {"lead": 20}],
-    "ammunition_factories_plus": {"ammunition": 12},
+    "ammunition_factories_convert_minus": [{"copper": 10000}, {"lead": 20000}],
+    "ammunition_factories_plus": {"ammunition": 55000},
     "ammunition_factories_effect": [{"pollution": 3}],
     "aluminium_refineries_money": 42000,
-    "aluminium_refineries_convert_minus": [{"bauxite": 15}],
-    "aluminium_refineries_plus": {"aluminium": 16},
+    "aluminium_refineries_convert_minus": [{"bauxite": 15000}],
+    "aluminium_refineries_plus": {"aluminium": 60000},
     "aluminium_refineries_effect": [{"pollution": 3}],
     "oil_refineries_money": 35000,
-    "oil_refineries_convert_minus": [{"oil": 20}],
-    "oil_refineries_plus": {"gasoline": 11},
+    "oil_refineries_convert_minus": [{"oil": 20000}],
+    "oil_refineries_plus": {"gasoline": 75000},
     "oil_refineries_effect": [{"pollution": 6}],
 }
 
