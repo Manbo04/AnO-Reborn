@@ -1,0 +1,11 @@
+fix(economy): 5 critical production/consumption bugs
+
+1. RESOURCE UPSERT CLAMP: GREATEST(0, negative_delta) silently swallowed all negative resource deltas. Fixed by passing raw delta to UPDATE clause.
+
+2. DUPLICATE PRODUCTION: global_tick and generate_province_revenue both produced for 5 buildings. Removed BUILDING_PRODUCTION_RESOURCE_MAP; hourly task is now sole production system.
+
+3. DEMOGRAPHIC CONSUMPTION SCALING: Per-capita rates were 1.0/person instead of 1.0/50000. Scaled down to match building production units.
+
+4. DISPLAY vs ENGINE MISMATCH: Synced INFRA display values to match NEW_INFRA engine values.
+
+5. BUILDING_DICTIONARY SYNC: Updated 10 mismatched effect_values in DB. Added industrial_district to NEW_INFRA.

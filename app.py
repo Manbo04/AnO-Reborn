@@ -657,7 +657,8 @@ import military  # noqa: E402
 
 app.register_blueprint(military.bp)
 app.register_blueprint(province.bp)
-app.register_blueprint(upgrades.bp)
+if upgrades.bp:
+    app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
 
