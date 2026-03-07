@@ -8,7 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-bp = Blueprint("upgrades", __name__)
+try:
+    bp = Blueprint("upgrades", __name__)
+except Exception:
+    # In Celery worker context, Blueprint may fail
+    bp = None
 
 LEGACY_UPGRADE_TO_TECH = {
     "betterengineering": "better_engineering",
