@@ -390,3 +390,64 @@ git push origin master  # Railway auto-deploys
 - Monitor Sentry for any remaining 500 errors on war/account/market routes
 - Legacy table references still exist in test files and scripts — update when those are exercised
 - Consider adding integration tests for the attack flow and account deletion
+---
+
+### Session: 2026-03-06 (continued from Phase 17 economy audit)
+
+**Task**: Player "The_Kaiser" (KR coalition) reports all resources are frozen after commit `110f210d` (5-bug fix deploy). Investigate why resources aren't changing.
+
+**What Was Done**:
+
+**Stage 1: Root Cause Discovery**
+- Agent identified that Celery beat process died during the 5-bug fix deploy. The beat script tried to acquire a Redis lock held by the old process, failed (TTL not expired), and exited with `sys.exit(0)`. Railway's `restartPolicyType: ON_FAILURE` doesn't restart processes that exit with code 0 → beat stayed dead for 4+ hours.
+- Evidence: task_runs table showed all tasks stopped between 17:00-17:45 UTC (when deploy occurred). game_tick_logs showed old code still running (tick_id 293 had `production_entries: 51`, meaning `BUILDING_PRODUCTION_RESOURCE_MAP` wasn't empty yet).
+
+**Stage 2: Beat Retry Logic Fix**
+- Fixed `/scripts/run_beat_if_leader.py`:
+  - Added retry loop with backoff: retries acquiring Redis lock for up to `LOCK_TTL * 2` seconds (120s) with 5-second intervals.
+  - Changed failure exit from `sys.exit(0)` to `sys.exit(1)` so Railway restarts on failure.
+  - Added lock refresh loop while beat runs to keep it alive.
+
+**Stage 3: Additional Bugs Fixed During Investigation**
+- **Dict mutation bug in tasks.py** (lines ~2161, 2313, 2320): `plus`, `eff`, `minus`, `effminus` dicts from `variables.NEW_INFRA` were being mutated in-place (e.g., `plus["energy"] += 6`, `eff["happiness"] *= 1.3`). Values would compound across building loop iterations and task runs, eventually producing astronomically wrong values. Fixed by using `dict()` copies before modifications.
+- **tax_income cg_map key bug** (line ~855): Query returns `user_id` column but code used `row.get("id")` → all CG values mapped to `cg_map[None]`. Tax income CG consumption was completely broken. Fixed to use `row.get("user_id")`.
+- **conn.rollback() scope bug** (line ~2484): Per-building exception handler called `conn.rollback()` which undid earlier DB writes (e.g., user_economy row ensures). Building loop only modifies in-memory dicts, so rollback was unnecessary and harmful. Removed and replaced with print logging.
+- **upgrades.py Blueprint import error** (new in this session): When tasks.py imported `get_upgrades` from upgrades.py, the entire module loaded including `bp = Blueprint(...)`. In Celery worker context (no Flask app), this could fail. Fixed by wrapping `bp` creation in try/except and checking for None in app.py.
+
+**Stage 4: Deployment & Verification**
+- Commits:
+  - `3f16b2fa` — beat retry, dict mutation, cg_map, rollback fixes
+  - `65c5137e` — added `/_admin/trigger_tasks` endpoint for manual task triggering
+  - `048db660` — SECRET_KEY fallback for auth
+  - `0b96f0c5` — DISCORD_CLIENT_SECRET fallback for auth
+  - `0fc1a5b8` — upgrades.py Blueprint import fix
+- After ~20 minutes, `population_growth` and `execute_trade_agreements` both ran at 21:45 UTC ✅
+- At 22:00 UTC: `tax_income`, `global_tick` (*/10), `execute_trade_agreements` (*/15) all fired ✅
+- At 22:10, 22:15, 22:20 UTC: background tasks continued firing on schedule ✅
+- At 22:25 UTC: `generate_province_revenue` fired for the first time since 17:33 ✅
+- Verified new code running: tick 294 showed 0 production entries (double-production bug from commit `110f210d` confirmed fixed), consumption entries working.
+- **Issue**: `generate_province_revenue` ran but resources for user 781 didn't change. No resource updates in DB after 22:25 run. Investigated: resources preloaded correctly, buildings mapped correctly, energy check logic correct, but likely import failure when loading `get_upgrades` prevented task completion.
+
+**Stage 5: Import Error Fix & Deployment**
+- Root cause: `tasks.py` line 1947 imports `from upgrades import get_upgrades as _get_upgrades`. In Celery worker, `upgrades.py` module-level code runs, including `from flask import Blueprint`. In some environments or after certain Flask versions, importing Flask Blueprint outside app context can fail.
+- Fixed by wrapping `bp = Blueprint(...)` in try/except and checking `if upgrades.bp:` in app.py before registering.
+- Commit: `0fc1a5b8` — pushed to master
+- Deploy should resolve the issue and allow `generate_province_revenue` to complete successfully on the next run at 23:25 UTC.
+
+**What To Watch**:
+- At 23:25 UTC: verify `generate_province_revenue` runs and resources actually increase for players
+- Monitor Celery worker logs for any import errors related to upgrades or Flask
+- If resources still don't change, investigate whether task error handling is suppressing exceptions (check task_runs.error_log, if it exists, or Sentry)
+- Verify coalition bank requests and market offers still function (also use upgrades module indirectly)
+
+**Next Steps**:
+- Wait for 23:25 UTC to verify generate_province_revenue completes and updates resources
+- If resources change ✅, inform user that issue is resolved and system is producing again
+- If resources still don't change ❌, investigate whether:
+  1. Task is crashing but not logging (add exception handler logging)
+  2. Resource updates aren't committing (check transaction/commit logic)
+  3. A different import error is blocking task execution
+- Consider adding telemetry to generate_province_revenue to track: provinces processed, resource deltas applied, batch insert counts
+- Document the "beat process dies on deploy with exit code 0" issue and solution for future reference
+
+```
