@@ -1,6 +1,7 @@
 import ast
 import sys
 import os
+import time as time_module
 from flask import (
     Flask,
     request,
@@ -1006,34 +1007,35 @@ def get_resources():
 
     with get_db_cursor(cursor_factory=RealDictCursor) as db:
         try:
-            db.execute(
-                "SELECT gold FROM stats WHERE id=%s",
-                (target_user_id,),
-            )
-            gold_row = db.fetchone()
-            if gold_row:
-                default_resources["gold"] = gold_row.get("gold", 0) or 0
-
+            # Single query: gold from stats + all resources via LEFT JOIN
             db.execute(
                 """
-                SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
-                FROM resource_dictionary rd
+                SELECT s.gold,
+                       rd.name AS res_name,
+                       COALESCE(ue.quantity, 0) AS quantity
+                FROM stats s
+                CROSS JOIN resource_dictionary rd
                 LEFT JOIN user_economy ue
                   ON ue.resource_id = rd.resource_id
-                 AND ue.user_id = %s
+                 AND ue.user_id = s.id
+                WHERE s.id = %s
                 ORDER BY rd.resource_id
                 """,
                 (target_user_id,),
             )
             rows = db.fetchall()
 
+            if not rows:
+                query_cache.set(cache_key, default_resources, ttl_seconds=15)
+                return default_resources
+
             resources = default_resources.copy()
+            resources["gold"] = int(rows[0].get("gold") or 0)
             for row in rows:
-                name = row.get("name")
+                name = row.get("res_name")
                 if name in resources:
                     resources[name] = int(row.get("quantity") or 0)
 
-            # Resources change frequently, cache them for a short time only
             query_cache.set(cache_key, resources, ttl_seconds=15)
             return resources
         except Exception:
@@ -1086,13 +1088,17 @@ def serve_flag(flag_type, flag_id):
     # Check module-level cache first (survives across requests in the same worker)
     cache_key = f"{flag_type}_{flag_id}"
     if not hasattr(serve_flag, "_cache"):
-        serve_flag._cache = {}
+        serve_flag._cache = {}  # key -> (body, mimetype, timestamp)
     cached = serve_flag._cache.get(cache_key)
     if cached is not None:
-        body, mimetype = cached
-        response = Response(body, mimetype=mimetype)
-        response.headers["Cache-Control"] = "public, max-age=3600"
-        return response
+        body, mimetype, cached_at = cached
+        # TTL: 5 minutes; flag changes become visible without worker restart
+        if time_module.time() - cached_at < 300:
+            response = Response(body, mimetype=mimetype)
+            response.headers["Cache-Control"] = "public, max-age=3600"
+            return response
+        else:
+            del serve_flag._cache[cache_key]
 
     with get_db_cursor() as cur:
         if flag_type == "country":
@@ -1119,7 +1125,11 @@ def serve_flag(flag_type, flag_id):
 
                 # Store in cache (cap at 500 entries to bound memory)
                 if len(serve_flag._cache) < 500:
-                    serve_flag._cache[cache_key] = (flag_data, mimetype)
+                    serve_flag._cache[cache_key] = (
+                        flag_data,
+                        mimetype,
+                        time_module.time(),
+                    )
 
                 response = Response(flag_data, mimetype=mimetype)
                 response.headers[
@@ -1151,7 +1161,11 @@ def serve_flag(flag_type, flag_id):
             with open(default_path, "rb") as f:
                 default_bytes = f.read()
             if len(serve_flag._cache) < 500:
-                serve_flag._cache[cache_key] = (default_bytes, "image/jpeg")
+                serve_flag._cache[cache_key] = (
+                    default_bytes,
+                    "image/jpeg",
+                    time_module.time(),
+                )
         except Exception:
             pass
 

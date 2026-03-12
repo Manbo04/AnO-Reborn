@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from helpers import get_date
 from upgrades import get_upgrades
 from variables import MILDICT
+from psycopg2.extras import execute_batch
 
 load_dotenv()
 
@@ -156,6 +157,23 @@ def _get_resource_balance(db, cId, resource):
     return int(row[0] or 0) if row else 0
 
 
+def _get_resource_balances(db, cId, resource_names):
+    """Batch fetch all resource balances in a single query."""
+    if not resource_names:
+        return {}
+    db.execute(
+        """
+        SELECT rd.name, COALESCE(ue.quantity, 0)
+        FROM resource_dictionary rd
+        LEFT JOIN user_economy ue
+            ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+        WHERE rd.name = ANY(%s) AND rd.is_active=TRUE
+        """,
+        (cId, list(resource_names)),
+    )
+    return {row[0]: int(row[1] or 0) for row in db.fetchall()}
+
+
 def _adjust_resource(db, cId, resource, delta):
     db.execute(
         """
@@ -178,6 +196,39 @@ def _adjust_resource(db, cId, resource, delta):
           AND rd.is_active=TRUE
         """,
         (delta, cId, resource),
+    )
+
+
+def _adjust_resources_batch(db, cId, resource_deltas):
+    """Batch adjust multiple resources in 2 queries instead of 2*N."""
+    if not resource_deltas:
+        return
+    names = list(resource_deltas.keys())
+    # Ensure rows exist
+    execute_batch(
+        db,
+        """
+        INSERT INTO user_economy (user_id, resource_id, quantity)
+        SELECT %s, rd.resource_id, 0
+        FROM resource_dictionary rd
+        WHERE rd.name=%s AND rd.is_active=TRUE
+        ON CONFLICT (user_id, resource_id) DO NOTHING
+        """,
+        [(cId, name) for name in names],
+    )
+    # Apply deltas
+    execute_batch(
+        db,
+        """
+        UPDATE user_economy ue
+        SET quantity = ue.quantity + %s
+        FROM resource_dictionary rd
+        WHERE ue.user_id=%s
+          AND ue.resource_id = rd.resource_id
+          AND rd.name=%s
+          AND rd.is_active=TRUE
+        """,
+        [(delta, cId, name) for name, delta in resource_deltas.items()],
     )
 
 
@@ -354,9 +405,9 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                 if wantedUnits > currentUnits:
                     return error(400, f"Not enough {units} (have {currentUnits})")
 
-                for resource, amount in resources.items():
-                    addResources = wantedUnits * amount
-                    _adjust_resource(db, cId, resource, addResources)
+                # Batch add resources back on sell
+                sell_deltas = {res: wantedUnits * amt for res, amt in resources.items()}
+                _adjust_resources_batch(db, cId, sell_deltas)
 
                 db.execute(
                     "UPDATE user_military SET quantity = quantity - %s "
@@ -400,8 +451,10 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                         f"Not enough manpower ({manpower_available}/{needed_manpower})",
                     )
 
+                # Batch check all resource balances in one query
+                balances = _get_resource_balances(db, cId, resources.keys())
                 for resource, amount in resources.items():
-                    currentResources = _get_resource_balance(db, cId, resource)
+                    currentResources = balances.get(resource, 0)
                     requiredResources = amount * wantedUnits
 
                     if requiredResources > currentResources:
@@ -410,9 +463,11 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
                             f"{resource}: need {requiredResources-currentResources}",
                         )
 
-                for resource, amount in resources.items():
-                    requiredResources = amount * wantedUnits
-                    _adjust_resource(db, cId, resource, -requiredResources)
+                # Batch deduct all resources in one call
+                buy_deltas = {
+                    res: -(amt * wantedUnits) for res, amt in resources.items()
+                }
+                _adjust_resources_batch(db, cId, buy_deltas)
 
                 db.execute(
                     "UPDATE stats SET gold=gold-%s WHERE id=%s", (totalPrice, cId)

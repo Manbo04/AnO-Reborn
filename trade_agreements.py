@@ -1,6 +1,6 @@
 # Trade Agreements - Private recurring automatic trades between players
 from helpers import login_required
-from database import get_db_connection, invalidate_user_cache
+from database import get_db_connection, invalidate_user_cache, cache_response
 from flask import request, render_template, session, redirect, flash
 import variables
 import logging
@@ -219,6 +219,7 @@ def execute_trade_agreement(agreement_id, cursor=None):
 
 
 @login_required
+@cache_response(ttl_seconds=30)
 def trade_agreements():
     """View all trade agreements for current user."""
     user_id = session["user_id"]
