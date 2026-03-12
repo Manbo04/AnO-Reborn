@@ -3,14 +3,71 @@
 {% block title %}Admin Command Center{% endblock %}
 
 {% block body %}
+<style>
+    .admin-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-success { background: #1b5e20; color: #a5d6a7; }
+    .badge-danger { background: #b71c1c; color: #ef9a9a; }
+    .badge-warning { background: #e65100; color: #ffcc80; }
+    .badge-info { background: #0d47a1; color: #90caf9; }
+    .badge-muted { background: #37474f; color: #b0bec5; }
+    .audit-details-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 0.9em;
+    }
+    .audit-details-list li {
+        padding: 1px 0;
+    }
+    .audit-details-list .detail-key {
+        font-weight: 600;
+        color: #90caf9;
+        margin-right: 4px;
+    }
+    .audit-details-list .detail-val {
+        color: #cfd8dc;
+    }
+    .actor-target-cell {
+        white-space: nowrap;
+    }
+    .actor-target-cell .name {
+        font-weight: 600;
+    }
+    .actor-target-cell .id-tag {
+        font-size: 0.8em;
+        color: #78909c;
+    }
+    .admin-nav-link {
+        display: inline-block;
+        margin: 8px 4px;
+        padding: 6px 16px;
+        background: #1a237e;
+        color: #e8eaf6;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .admin-nav-link:hover { background: #283593; }
+    .admin-nav-link.active { background: #3949ab; }
+</style>
+
 <div class="templatediv">
     <div class="templatedivtopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">admin_panel_settings</span>Admin Command Center</h1>
     </div>
 
     <div class="templatedivcontent">
-        <div class="infodiv">
-            <p>Visible and usable only by nation ID 1.</p>
+        <div class="infodiv" style="text-align:center;">
+            <a href="/admin/command-center" class="admin-nav-link active"><span class="material-icons-outlined" style="vertical-align:middle;font-size:18px;">dashboard</span> Dashboard</a>
+            <a href="/admin/command-center/economy" class="admin-nav-link"><span class="material-icons-outlined" style="vertical-align:middle;font-size:18px;">monitoring</span> Economy Monitor</a>
         </div>
 
         <h2 class="templatecontentheaderleft">Add Resources</h2>
@@ -86,6 +143,7 @@
             <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">logout</span>Kick User</button>
         </form>
 
+        {% if controlled_users %}
         <h2 class="templatecontentheaderleft">Active Controls</h2>
         <div class="templateoutertablediv inverttable">
             <table class="templatetable templatetable2">
@@ -100,31 +158,59 @@
                 <tr>
                     <td>{{ user[0] }}</td>
                     <td>{{ user[1] }}</td>
-                    <td>{{ user[2] }}</td>
-                    <td>{{ user[3] }}</td>
-                    <td>{{ user[4] }}</td>
+                    <td>{{ "Yes" if user[2] else "No" }}</td>
+                    <td>{{ "Yes" if user[3] else "No" }}</td>
+                    <td>{{ user[4] or "—" }}</td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
+        {% endif %}
 
         <h2 class="templatecontentheaderleft">Recent Admin Actions</h2>
         <div class="templateoutertablediv inverttable">
             <table class="templatetable templatetable2">
                 <tr>
-                    <th>Actor</th>
-                    <th>Action</th>
-                    <th>Target</th>
-                    <th>Details</th>
-                    <th>Time</th>
+                    <th style="width:14%">Actor</th>
+                    <th style="width:14%">Action</th>
+                    <th style="width:14%">Target</th>
+                    <th style="width:38%">Details</th>
+                    <th style="width:20%">Time</th>
                 </tr>
                 {% for row in recent_actions %}
                 <tr>
-                    <td>{{ row[0] }}</td>
-                    <td>{{ row[1] }}</td>
-                    <td>{{ row[2] }}</td>
-                    <td>{{ row[3] }}</td>
-                    <td>{{ row[4] }}</td>
+                    <td class="actor-target-cell">
+                        <span class="name">{{ row.actor_name }}</span><br>
+                        <span class="id-tag">#{{ row.actor_id }}</span>
+                    </td>
+                    <td>
+                        <span class="admin-badge badge-{{ action_badge_class(row.action_raw) }}">{{ row.action }}</span>
+                    </td>
+                    <td class="actor-target-cell">
+                        {% if row.target_id %}
+                            <a href="/country/id={{ row.target_id }}" style="color:#90caf9;text-decoration:none;">
+                                <span class="name">{{ row.target_name }}</span>
+                            </a><br>
+                            <span class="id-tag">#{{ row.target_id }}</span>
+                        {% else %}
+                            <span style="color:#78909c;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.details %}
+                        <ul class="audit-details-list">
+                            {% for key, val in row.details %}
+                            <li>
+                                <span class="detail-key">{{ key }}:</span>
+                                <span class="detail-val">{{ val }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <span style="color:#78909c;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.time.strftime('%Y-%m-%d %H:%M') if row.time else '—' }}</td>
                 </tr>
                 {% endfor %}
             </table>
