@@ -110,8 +110,7 @@ def format_econ_statistics(statistics):
 
 
 def get_revenue(cId):
-    from database import get_db_connection, query_cache
-    from psycopg2.extras import RealDictCursor  # noqa: F401
+    from database import query_cache
 
     # Check cache first - expensive calculation
     cache_key = f"revenue_{cId}"
@@ -119,17 +118,8 @@ def get_revenue(cId):
     if cached is not None:
         return cached
 
-    # Use a dedicated connection for the lifetime of this function to
-    # prevent nested `get_db_cursor()` calls from accidentally reusing
-    # the same pooled connection (and closing a cursor prematurely).
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
-        # Removed cg_need() call - it opens a separate connection
-        # We calculate it inline below with data we already have
-
+    with get_db_cursor(read_only=True) as db:
         # Prefetch province ids, land, productivity, and population
-        # in a single query to avoid repeated province lookups later
         db.execute(
             "SELECT id, land, productivity, population FROM provinces WHERE userid=%s",
             (cId,),
@@ -142,7 +132,6 @@ def get_revenue(cId):
         revenue = {"gross": {}, "gross_theoretical": {}, "net": {}}
 
         infra = variables.NEW_INFRA
-        # Copy to avoid mutating global state; repeated extends were exploding the list
         resources = list(variables.RESOURCES)
         resources.extend(["money", "energy"])
         for resource in resources:
@@ -150,14 +139,10 @@ def get_revenue(cId):
             revenue["gross_theoretical"][resource] = 0
             revenue["net"][resource] = 0
 
-        # OPTIMIZATION: Batch fetch all building data PER PROVINCE
+        # Batch fetch all building data PER PROVINCE
         proinfra_by_id = {}
         if provinces:
-            province_ids = (
-                list(provinces.keys())
-                if isinstance(provinces, dict)
-                else list(provinces)
-            )
+            province_ids = list(provinces)
             db.execute(
                 """
                 SELECT ub.province_id, bd.name, ub.quantity
@@ -173,10 +158,32 @@ def get_revenue(cId):
                     proinfra_by_id[prov_id] = {}
                 proinfra_by_id[prov_id][building_name] = quantity or 0
 
-        # Fetch current funds to simulate money-constrained operation for `net`
-        db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-        gold_row = db.fetchone()
-        current_money = gold_row[0] if gold_row and gold_row[0] is not None else 0
+        # Fetch gold, rations, and CG in a single combined query
+        db.execute(
+            """
+            SELECT
+                COALESCE(s.gold, 0) AS gold,
+                COALESCE(r.quantity, 0) AS rations,
+                COALESCE(cg.quantity, 0) AS consumer_goods
+            FROM stats s
+            LEFT JOIN (
+                SELECT ue.quantity FROM user_economy ue
+                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+                WHERE ue.user_id = %s AND rd.name = 'rations'
+            ) r ON TRUE
+            LEFT JOIN (
+                SELECT ue.quantity FROM user_economy ue
+                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+                WHERE ue.user_id = %s AND rd.name = 'consumer_goods'
+            ) cg ON TRUE
+            WHERE s.id = %s
+            """,
+            (cId, cId, cId),
+        )
+        econ_row = db.fetchone()
+        current_money = econ_row[0] if econ_row else 0
+        current_rations = econ_row[1] if econ_row else 0
+        consumer_goods = int(econ_row[2]) if econ_row else 0
 
         # Simulated funds used while computing `net`; do not mutate DB
         simulated_funds = current_money
@@ -245,19 +252,7 @@ def get_revenue(cId):
                     if will_operate:
                         revenue["net"][resource] -= total
 
-        db.execute(
-            """
-            SELECT rd.name, ue.quantity
-            FROM user_economy ue
-            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-            WHERE ue.user_id=%s AND rd.name IN ('rations', 'consumer_goods')
-            """,
-            (cId,),
-        )
-        economy_values = {name: qty for name, qty in db.fetchall()}
-        current_rations = economy_values.get("rations", 0) or 0
-        consumer_goods = int(economy_values.get("consumer_goods", 0) or 0)
-
+        # Fetch policies for tax calculation
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
             policies_row = db.fetchone()
