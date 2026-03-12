@@ -593,13 +593,6 @@ def get_db_cursor(cursor_factory=None, read_only=False):
         # Use the connection pool for better performance
         conn = db_pool.get_connection()
 
-        if read_only:
-            try:
-                # Mark transaction read-only to avoid accidental writes on GET paths.
-                conn.set_session(readonly=True)
-            except Exception:
-                pass
-
         cursor = conn.cursor(cursor_factory=cursor_factory)
         try:
             yield cursor
@@ -628,11 +621,6 @@ def get_db_cursor(cursor_factory=None, read_only=False):
             except Exception:
                 # Best-effort cleanup; don't let cleanup issues mask original errors
                 pass
-            if read_only and conn is not None:
-                try:
-                    conn.set_session(readonly=False)
-                except Exception:
-                    pass
     finally:
         # Always return connection to pool
         if conn is not None:

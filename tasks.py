@@ -79,6 +79,12 @@ celery_beat_schedule = {
         "task": "tasks.task_backfill_missing_resources",
         "schedule": get_crontab_env("BACKFILL_CRON", crontab(minute="15", hour="1")),
     },
+    "cleanup_orphan_user_rows": {
+        "task": "tasks.task_cleanup_orphan_user_rows",
+        "schedule": get_crontab_env(
+            "ORPHAN_CLEANUP_CRON", crontab(minute="10", hour="1")
+        ),
+    },
     "refresh_bot_offers": {
         "task": "tasks.task_refresh_bot_offers",
         "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="*/5")),
@@ -90,6 +96,12 @@ celery_beat_schedule = {
     "global_tick": {
         "task": "tasks.task_global_tick",
         "schedule": get_crontab_env("GLOBAL_TICK_CRON", crontab(minute="*/10")),
+    },
+    "cleanup_old_spyinfo": {
+        "task": "tasks.task_cleanup_old_spyinfo",
+        "schedule": get_crontab_env(
+            "SPYINFO_CLEANUP_CRON", crontab(minute="30", hour="2")
+        ),
     },
 }
 
@@ -383,20 +395,19 @@ def food_stats(user_id):
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
-            with get_db_cursor() as db:
-                # Query normalized user_buildings table
-                db.execute(
-                    """
-                    SELECT COALESCE(SUM(ub.quantity), 0)
-                    FROM user_buildings ub
-                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                    WHERE ub.user_id = %s
-                      AND bd.name IN ('distribution_centers', 'gas_stations',
-                                      'general_stores', 'farmers_markets', 'malls')
-                    """,
-                    (user_id,),
-                )
-                bcount = db.fetchone()[0] or 0
+            # Query normalized user_buildings table (same cursor, no nested connection)
+            db.execute(
+                """
+                SELECT COALESCE(SUM(ub.quantity), 0)
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                  AND bd.name IN ('distribution_centers', 'gas_stations',
+                                  'general_stores', 'farmers_markets', 'malls')
+                """,
+                (user_id,),
+            )
+            bcount = db.fetchone()[0] or 0
             distribution_cap = bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
 
     if needed_rations == 0:
@@ -916,10 +927,14 @@ def tax_income():
                     education = row[1] if len(row) > 1 and row[1] else []
                     policies_map[uid] = education
 
-            # Load all provinces (population, land) grouped by user
-            provinces_map = {}  # user_id -> [(population, land), ...]
+            # Load all provinces grouped by user.
+            # Include demographic fields so we can compute CG demand
+            # without calling calc_ti() per user.
+            provinces_map = {}  # user_id -> [(population, land, pc, pw, pe), ...]
             dbdict.execute(
-                "SELECT userId, population, land FROM provinces WHERE userId = ANY(%s)",
+                "SELECT userId, population, land, pop_children, "
+                "pop_working, pop_elderly "
+                "FROM provinces WHERE userId = ANY(%s)",
                 (all_user_ids,),
             )
             for row in dbdict.fetchall():
@@ -928,19 +943,57 @@ def tax_income():
                     if uid not in provinces_map:
                         provinces_map[uid] = []
                     provinces_map[uid].append(
-                        (row.get("population") or 0, row.get("land") or 0)
+                        (
+                            row.get("population") or 0,
+                            row.get("land") or 0,
+                            row.get("pop_children"),
+                            row.get("pop_working"),
+                            row.get("pop_elderly"),
+                        )
                     )
                 else:
                     uid = row[0]
-                    if len(row) > 2:
+                    if len(row) > 5:
                         if uid not in provinces_map:
                             provinces_map[uid] = []
-                        provinces_map[uid].append((row[1], row[2]))
+                        provinces_map[uid].append(
+                            (row[1], row[2], row[3], row[4], row[5])
+                        )
                     else:
                         # Not enough columns returned; treat as no provinces
                         # for this uid
                         if uid not in provinces_map:
                             provinces_map[uid] = []
+
+            # Preload consumer-goods distribution capacity (user-level)
+            # to avoid per-user DB queries via consumer_goods_distribution_capacity().
+            cg_dist_cap_map = {}
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+                dbdict.execute(
+                    """
+                    SELECT ub.user_id, COALESCE(SUM(ub.quantity), 0) AS bcount
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd
+                        ON bd.building_id = ub.building_id
+                    WHERE ub.user_id = ANY(%s)
+                      AND bd.name IN (
+                          'distribution_centers', 'malls',
+                          'general_stores', 'gas_stations'
+                      )
+                    GROUP BY ub.user_id
+                    """,
+                    (all_user_ids,),
+                )
+                for row in dbdict.fetchall():
+                    if isinstance(row, dict):
+                        uid = row.get("user_id")
+                        bcount = row.get("bcount") or 0
+                    else:
+                        uid = row[0]
+                        bcount = row[1] if len(row) > 1 else 0
+                    cg_dist_cap_map[uid] = (
+                        bcount * variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
+                    )
 
             # Prepare batch updates
             money_updates = []
@@ -951,37 +1004,83 @@ def tax_income():
                 if current_money is None:
                     continue
 
-                # Prefer to use the encapsulated calc_ti function for consistency.
-                # Try multiple lookup strategies so tests that monkeypatch
-                # 'tasks.calc_ti' before/after reload still work.
-                income = None
-                removed_consumer_goods = 0
-                import importlib
-
-                calc_funcs = [globals().get("calc_ti")]
-                try:
-                    tasks_mod = importlib.import_module("tasks")
-                    calc_funcs.append(getattr(tasks_mod, "calc_ti", None))
-                except Exception:
-                    pass
-
-                for func in calc_funcs:
-                    if not callable(func):
-                        continue
-                    try:
-                        income, removed_consumer_goods = func(user_id)
-                        break
-                    except Exception:
-                        continue
-
-                if income is None:
-                    # No usable calc_ti implementation found for this user
+                provinces = provinces_map.get(user_id) or []
+                if not provinces:
                     continue
 
-                try:
-                    money = int(income)
-                except Exception:
-                    money = 0
+                consumer_goods = int(cg_map.get(user_id, 0) or 0)
+                policies = policies_map.get(user_id, []) or []
+
+                income = 0.0
+                total_cg_need = 0.0
+                has_demographic_data = all(
+                    len(p) >= 5
+                    and p[2] is not None
+                    and p[3] is not None
+                    and p[4] is not None
+                    for p in provinces
+                )
+
+                for population, land, pc, pw, pe in provinces:
+                    land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
+                    if land_multiplier > 1:
+                        land_multiplier = 1
+
+                    base_multiplier = variables.DEFAULT_TAX_INCOME
+                    multiplier = base_multiplier + (base_multiplier * land_multiplier)
+                    income += multiplier * population
+
+                    if (
+                        variables.FEATURE_DEMOGRAPHIC_CONSUMPTION
+                        and has_demographic_data
+                    ):
+                        elderly_cg_multiplier = (
+                            variables.POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER
+                            if variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+                            else 1.0
+                        )
+                        cg_needed = 0
+                        cg_needed += (
+                            pw or 0
+                        ) * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+                        cg_needed += (
+                            pc or 0
+                        ) * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
+                        cg_needed += (
+                            (pe or 0)
+                            * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                            * elderly_cg_multiplier
+                        )
+                        total_cg_need += cg_needed
+                    else:
+                        total_cg_need += math.ceil(
+                            population / variables.CONSUMER_GOODS_PER
+                        )
+
+                removed_consumer_goods = 0
+                if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+                    dist_capacity = cg_dist_cap_map.get(user_id, 0)
+                    available_to_consume = min(consumer_goods, dist_capacity)
+                    if total_cg_need != 0:
+                        if available_to_consume >= total_cg_need:
+                            removed_consumer_goods = int(total_cg_need)
+                            income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                        else:
+                            cg_multiplier = available_to_consume / total_cg_need
+                            income *= 1 + (0.5 * cg_multiplier)
+                            removed_consumer_goods = int(available_to_consume)
+                else:
+                    max_cg = math.ceil(total_cg_need)
+                    if consumer_goods != 0 and max_cg != 0:
+                        if max_cg <= consumer_goods:
+                            removed_consumer_goods = max_cg
+                            income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                        else:
+                            cg_multiplier = consumer_goods / max_cg
+                            income *= 1 + (0.5 * cg_multiplier)
+                            removed_consumer_goods = int(consumer_goods)
+
+                money = int(math.floor(income))
 
                 if not money:
                     continue
@@ -1250,9 +1349,10 @@ def population_growth():  # Function for growing population
         # Preload all provinces with the fields needed for growth calculations
         dbdict.execute(
             """
-            SELECT id, userId, population, cityCount, land,
-                   happiness, pollution, productivity
-            FROM provinces
+             SELECT p.id, p.userId, p.population, p.cityCount, p.land,
+                 p.happiness, p.pollution, p.productivity
+             FROM provinces p
+             JOIN users u ON u.id = p.userId
             ORDER BY userId ASC
             """
         )
@@ -3234,7 +3334,7 @@ def leader_only(ttl_seconds=60, key_prefix="task_lock"):
                     return fn(*args, **kwargs)
                 parsed = urllib.parse.urlparse(url)
                 r = redis.Redis(
-                    host=parsed.hostname,
+                    host=parsed.hostname or "localhost",
                     port=parsed.port or 6379,
                     password=parsed.password,
                 )
@@ -3366,6 +3466,10 @@ def backfill_missing_resources():
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
 
+    # Clean up stale user-linked rows first so backfill never tries to
+    # operate around orphaned records from deleted users.
+    cleanup_orphan_user_rows()
+
     with get_db_connection() as conn:
         db = conn.cursor()
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
@@ -3407,6 +3511,95 @@ def backfill_missing_resources():
             print(f"Backfilled user_economy for {len(missing_users)} users")
         except Exception as e:
             handle_exception(e)
+
+
+def cleanup_orphan_user_rows():
+    """Delete rows that reference users that no longer exist.
+
+    This keeps user-scoped tables consistent and prevents FK violations in
+    subsequent batch upserts (e.g., user_economy backfills).
+    """
+    from database import get_db_connection
+
+    with get_db_connection() as conn:
+        if not try_pg_advisory_lock(conn, 9006, "cleanup_orphan_user_rows"):
+            return
+
+        db = conn.cursor()
+        deleted = {}
+        try:
+            cleanup_statements = [
+                (
+                    "user_economy",
+                    """
+                    DELETE FROM user_economy ue
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM users u WHERE u.id = ue.user_id
+                    )
+                    """,
+                ),
+                (
+                    "user_buildings",
+                    """
+                    DELETE FROM user_buildings ub
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM users u WHERE u.id = ub.user_id
+                    )
+                    """,
+                ),
+                (
+                    "user_military",
+                    """
+                    DELETE FROM user_military um
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM users u WHERE u.id = um.user_id
+                    )
+                    """,
+                ),
+                (
+                    "stats",
+                    """
+                    DELETE FROM stats s
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM users u WHERE u.id = s.id
+                    )
+                    """,
+                ),
+                (
+                    "provinces",
+                    """
+                    DELETE FROM provinces p
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM users u WHERE u.id = p.userid
+                    )
+                    """,
+                ),
+            ]
+
+            for label, sql in cleanup_statements:
+                db.execute(sql)
+                deleted[label] = db.rowcount
+
+            conn.commit()
+
+            total_deleted = sum(deleted.values())
+            if total_deleted > 0:
+                print(
+                    "cleanup_orphan_user_rows: removed "
+                    f"{total_deleted} orphan rows "
+                    f"(details: {deleted})"
+                )
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            handle_exception(e)
+        finally:
+            try:
+                release_pg_advisory_lock(conn, 9006)
+            except Exception:
+                pass
 
 
 # Bot market offers configuration
@@ -3463,6 +3656,27 @@ def task_refresh_bot_offers():
 @leader_only(ttl_seconds=300)
 def task_backfill_missing_resources():
     _run_with_deadlock_retries(backfill_missing_resources, "backfill_missing_resources")
+
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_cleanup_orphan_user_rows():
+    _run_with_deadlock_retries(cleanup_orphan_user_rows, "cleanup_orphan_user_rows")
+
+
+@celery.task(name="tasks.task_cleanup_old_spyinfo")
+def task_cleanup_old_spyinfo():
+    """Remove spyinfo rows older than 7 days. Runs daily via beat."""
+    import time as _time
+    from database import get_db_cursor
+
+    cutoff = int(_time.time()) - 86400 * 7
+    try:
+        with get_db_cursor() as db:
+            db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
+        print(f"[cleanup_old_spyinfo] Deleted spyinfo rows older than cutoff={cutoff}")
+    except Exception as exc:
+        print(f"[cleanup_old_spyinfo] Error: {exc}")
 
 
 # =============================================================================
