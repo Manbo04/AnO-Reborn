@@ -155,11 +155,18 @@ def make_session(token=None, state=None, scope=None):
     )
 
 
+_signup_table_ensured = False
+
+
 def ensure_signup_attempts_table():
     """Idempotent helper: ensure the signup_attempts table exists with expected columns.
 
     This is safe to call on every request; failures are logged but do not raise.
+    DDL is only executed once per process lifetime.
     """
+    global _signup_table_ensured
+    if _signup_table_ensured:
+        return
     try:
         from database import get_db_cursor
 
@@ -244,6 +251,7 @@ def ensure_signup_attempts_table():
                 import logging
 
                 logging.getLogger(__name__).debug("ensure: other columns error %s", e)
+        _signup_table_ensured = True
     except Exception as e:
         try:
             import logging
@@ -838,62 +846,64 @@ def verification_pending():
 
 def verify_email():
     """Verify user's email address using the token from the email link."""
-    from database import get_connection
+    from database import get_db_connection
     from email_utils import verify_email_token
 
     token = request.args.get("token")
     if not token:
-        return error("Invalid verification link. No token provided.")
+        return error(400, "Invalid verification link. No token provided.")
 
     # Verify the token
     email = verify_email_token(token)
     if not email:
-        return error("Invalid or expired verification link. Please request a new one.")
-
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        # Check if user exists and is not already verified
-        cur.execute(
-            """
-            SELECT id, is_verified FROM users WHERE email = %s
-        """,
-            (email,),
+        return error(
+            400, "Invalid or expired verification link. Please request a new one."
         )
-        result = cur.fetchone()
 
-        if not result:
-            return error("User not found.")
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        try:
+            # Check if user exists and is not already verified
+            cur.execute(
+                """
+                SELECT id, is_verified FROM users WHERE email = %s
+            """,
+                (email,),
+            )
+            result = cur.fetchone()
 
-        user_id, is_verified = result
+            if not result:
+                return error(404, "User not found.")
 
-        if is_verified:
-            return redirect("/login?message=already_verified")
+            user_id, is_verified = result
 
-        # Mark user as verified
-        cur.execute(
-            """
-            UPDATE users
-            SET is_verified = TRUE, verification_token = NULL
-            WHERE id = %s
-        """,
-            (user_id,),
-        )
-        conn.commit()
+            if is_verified:
+                return redirect("/login?message=already_verified")
 
-        return redirect("/login?message=verified")
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Email verification error: {e}")
-        return error("An error occurred during verification. Please try again.")
-    finally:
-        cur.close()
-        conn.close()
+            # Mark user as verified
+            cur.execute(
+                """
+                UPDATE users
+                SET is_verified = TRUE, verification_token = NULL
+                WHERE id = %s
+            """,
+                (user_id,),
+            )
+
+            return redirect("/login?message=verified")
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Email verification error: {e}")
+            return error(
+                500, "An error occurred during verification. Please try again."
+            )
+        finally:
+            cur.close()
 
 
 def resend_verification():
     """Resend verification email."""
-    from database import get_connection
+    from database import get_db_connection
     from email_utils import generate_verification_token, send_verification_email
 
     if request.method != "POST":
@@ -901,62 +911,60 @@ def resend_verification():
 
     email = request.form.get("email", "").strip().lower()
     if not email:
-        return error("Please provide your email address.")
+        return error(400, "Please provide your email address.")
 
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        # Check if user exists and is not verified
-        cur.execute(
-            """
-            SELECT id, username, is_verified FROM users WHERE email = %s
-        """,
-            (email,),
-        )
-        result = cur.fetchone()
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        try:
+            # Check if user exists and is not verified
+            cur.execute(
+                """
+                SELECT id, username, is_verified FROM users WHERE email = %s
+            """,
+                (email,),
+            )
+            result = cur.fetchone()
 
-        if not result:
-            # Don't reveal if email exists
+            if not result:
+                # Don't reveal if email exists
+                return render_template(
+                    "verification_pending.html",
+                    email=email,
+                    message=(
+                        "If an account exists with this email, "
+                        "a verification link has been sent."
+                    ),
+                )
+
+            user_id, username, is_verified = result
+
+            if is_verified:
+                return redirect("/login?message=already_verified")
+
+            # Generate new token and send email
+            new_token = generate_verification_token(email)
+            cur.execute(
+                """
+                UPDATE users
+                SET verification_token = %s, token_created_at = NOW()
+                WHERE id = %s
+            """,
+                (new_token, user_id),
+            )
+
+            send_verification_email(email, username, new_token)
+
             return render_template(
                 "verification_pending.html",
                 email=email,
-                message=(
-                    "If an account exists with this email, "
-                    "a verification link has been sent."
-                ),
+                message="Verification email sent! Please check your inbox.",
             )
-
-        user_id, username, is_verified = result
-
-        if is_verified:
-            return redirect("/login?message=already_verified")
-
-        # Generate new token and send email
-        new_token = generate_verification_token(email)
-        cur.execute(
-            """
-            UPDATE users
-            SET verification_token = %s, token_created_at = NOW()
-            WHERE id = %s
-        """,
-            (new_token, user_id),
-        )
-        conn.commit()
-
-        send_verification_email(email, username, new_token)
-
-        return render_template(
-            "verification_pending.html",
-            email=email,
-            message="Verification email sent! Please check your inbox.",
-        )
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Resend verification error: {e}")
-        return error("An error occurred. Please try again.")
-    finally:
-        cur.close()
-        conn.close()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Resend verification error: {e}")
+            return error(500, "An error occurred. Please try again.")
+        finally:
+            cur.close()
 
 
 def register_signup_routes(app_instance):

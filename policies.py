@@ -2,6 +2,7 @@
 from flask import request, redirect, session
 from dotenv import load_dotenv
 from database import get_db_cursor
+from helpers import login_required
 
 load_dotenv()
 
@@ -51,6 +52,7 @@ def get_policies_from_request(type, prange, form):
     return policies
 
 
+@login_required
 def policies():
     cId = session["user_id"]
 
