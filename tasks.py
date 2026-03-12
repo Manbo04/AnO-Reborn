@@ -103,6 +103,12 @@ celery_beat_schedule = {
             "SPYINFO_CLEANUP_CRON", crontab(minute="30", hour="2")
         ),
     },
+    "economy_snapshot": {
+        "task": "tasks.task_economy_snapshot",
+        "schedule": get_crontab_env(
+            "ECONOMY_SNAPSHOT_CRON", crontab(minute="0", hour="*/1")
+        ),
+    },
 }
 
 celery.conf.update(
@@ -4220,3 +4226,20 @@ def task_global_tick():
             )
     except Exception as e:
         print(f"global_tick tax watchdog failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Economy snapshot task
+# ---------------------------------------------------------------------------
+
+
+@celery.task(name="tasks.task_economy_snapshot")
+def task_economy_snapshot():
+    """Periodic snapshot of total resources in the game economy."""
+    try:
+        from admin_tools import take_economy_snapshot
+
+        take_economy_snapshot()
+        print("economy_snapshot: completed successfully")
+    except Exception as e:
+        print(f"economy_snapshot: failed — {e}")
