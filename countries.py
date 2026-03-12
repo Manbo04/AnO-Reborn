@@ -7,8 +7,6 @@ import variables
 from dotenv import load_dotenv
 from collections import defaultdict
 from policies import get_user_policies
-from operator import itemgetter
-from datetime import datetime
 from wars.service import target_data
 import math
 from database import get_db_cursor, cache_response
@@ -155,7 +153,11 @@ def get_revenue(cId):
         # OPTIMIZATION: Batch fetch all building data PER PROVINCE
         proinfra_by_id = {}
         if provinces:
-            province_ids = list(provinces.keys()) if isinstance(provinces, dict) else list(provinces)
+            province_ids = (
+                list(provinces.keys())
+                if isinstance(provinces, dict)
+                else list(provinces)
+            )
             db.execute(
                 """
                 SELECT ub.province_id, bd.name, ub.quantity
@@ -475,7 +477,7 @@ def country(cId):
             "processing": 0,
         }
 
-    with get_db_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description,
@@ -722,8 +724,6 @@ def country(cId):
 
 
 def countries():
-    from helpers import get_bulk_influence
-
     cId = session["user_id"]
 
     # Parse and coerce query params
@@ -752,117 +752,173 @@ def countries():
     if not sortway:
         sortway = "desc"
 
-    # Build dynamic WHERE clause for search (by ID or username)
-    search_conditions = []
-    search_params = []
+    search_filter = ""
+    params = []
 
     if search:
-        # Check if search is a numeric ID
         if search.isdigit():
-            search_conditions.append("users.id = %s")
-            search_params.append(int(search))
+            search_filter = "AND u.id = %s"
+            params.append(int(search))
         else:
-            # Search by username (case-insensitive)
-            search_conditions.append("LOWER(users.username) LIKE LOWER(%s)")
-            search_params.append(f"%{search}%")
+            search_filter = "AND LOWER(u.username) LIKE LOWER(%s)"
+            params.append(f"%{search}%")
 
-    # Build the WHERE clause
-    where_clause = ""
-    if search_conditions:
-        where_clause = "WHERE " + " OR ".join(search_conditions)
+    # Sort mapping is constrained to safe SQL snippets only.
+    sort_map = {
+        "influence": "influence",
+        "age": "date",
+        "population": "province_population",
+        "provinces": "provinces_count",
+    }
+    sort_column = sort_map.get(sort, "influence")
+    sort_direction = "DESC" if sortway == "desc" else "ASC"
 
-    with get_db_cursor() as db:
-        # First, get ALL matching user IDs with their influence for proper filtering
-        # We need influence for filtering by lowerinf/upperinf, so we compute it here
-        base_query = f"""
-            SELECT users.id,
-                   users.username,
-                   users.date,
-                   users.flag,
-                   COALESCE(SUM(provinces.population), 0) AS province_population,
-                   COALESCE(cm.colid, NULL) AS colid,
-                   COALESCE(c.name, NULL) AS name,
-                   COUNT(provinces.id) as provinces_count,
-                   users.join_number
-            FROM users
-            LEFT JOIN provinces ON users.id = provinces.userid
-            LEFT JOIN coalitions_legacy cm ON users.id = cm.userid
-            LEFT JOIN colNames c ON cm.colid = c.id
-            {where_clause}
-            GROUP BY users.id, users.join_number, cm.colid, c.name
-            HAVING COUNT(provinces.id) >= %s
+    with get_db_cursor(read_only=True) as db:
+        filter_sql = f"""
+            WITH country_rows AS (
+                SELECT
+                    u.id,
+                    u.username,
+                    u.date,
+                    u.flag,
+                    COALESCE(p.province_population, 0) AS province_population,
+                    cm.colid,
+                    c.name,
+                    COALESCE(p.provinces_count, 0) AS provinces_count,
+                    u.join_number,
+                    ROUND(
+                        COALESCE(p.provinces_count, 0) * 300
+                        + COALESCE(m.soldiers, 0) * 0.02
+                        + COALESCE(m.artillery, 0) * 1.6
+                        + COALESCE(m.tanks, 0) * 0.8
+                        + COALESCE(m.fighters, 0) * 3.5
+                        + COALESCE(m.bombers, 0) * 2.5
+                        + COALESCE(m.apaches, 0) * 3.2
+                        + COALESCE(m.submarines, 0) * 4.5
+                        + COALESCE(m.destroyers, 0) * 3
+                        + COALESCE(m.cruisers, 0) * 5.5
+                        + COALESCE(m.icbms, 0) * 250
+                        + COALESCE(m.nukes, 0) * 500
+                        + COALESCE(m.spies, 0) * 25
+                        + COALESCE(p.city_count, 0) * 10
+                        + COALESCE(p.total_land, 0) * 10
+                        + COALESCE(r.total_resources, 0) * 0.001
+                        + COALESCE(s.gold, 0) * 0.00001
+                    )::bigint AS influence,
+                    COALESCE(EXTRACT(EPOCH FROM u.date)::bigint, 0) AS unix
+                FROM users u
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN (
+                    SELECT
+                        userId AS user_id,
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(population), 0) AS province_population,
+                        COALESCE(SUM(cityCount), 0) AS city_count,
+                        COALESCE(SUM(land), 0) AS total_land
+                    FROM provinces
+                    GROUP BY userId
+                ) p ON p.user_id = u.id
+                LEFT JOIN (
+                    SELECT
+                        um.user_id,
+                        SUM(
+                            CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END
+                        ) AS soldiers,
+                        SUM(
+                            CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END
+                        ) AS artillery,
+                        SUM(
+                            CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END
+                        ) AS tanks,
+                        SUM(
+                            CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END
+                        ) AS fighters,
+                        SUM(
+                            CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END
+                        ) AS bombers,
+                        SUM(
+                            CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END
+                        ) AS apaches,
+                        SUM(
+                            CASE
+                                WHEN ud.name='submarines' THEN um.quantity
+                                ELSE 0
+                            END
+                        ) AS submarines,
+                        SUM(
+                            CASE
+                                WHEN ud.name='destroyers' THEN um.quantity
+                                ELSE 0
+                            END
+                        ) AS destroyers,
+                        SUM(
+                            CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END
+                        ) AS cruisers,
+                        SUM(
+                            CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END
+                        ) AS icbms,
+                        SUM(
+                            CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END
+                        ) AS nukes,
+                        SUM(
+                            CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END
+                        ) AS spies
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                    GROUP BY um.user_id
+                ) m ON m.user_id = u.id
+                LEFT JOIN (
+                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
+                    FROM user_economy
+                    GROUP BY user_id
+                ) r ON r.user_id = u.id
+                LEFT JOIN (
+                    SELECT userid, MIN(colid) AS colid
+                    FROM coalitions_legacy
+                    GROUP BY userid
+                ) cm ON cm.userid = u.id
+                LEFT JOIN colNames c ON c.id = cm.colid
+                WHERE 1=1
+                {search_filter}
+            )
+            SELECT *
+            FROM country_rows
+            WHERE provinces_count >= %s
+              AND (%s IS NULL OR influence >= %s)
+              AND (%s IS NULL OR influence <= %s)
         """
 
-        # Execute to get all matching users (we'll filter and paginate in Python
-        # since we need influence values which require a separate lookup)
-        db.execute(base_query, tuple(search_params) + (province_range,))
-        all_results = db.fetchall()
-
-    # Get all user IDs for bulk influence lookup
-    user_ids = [user[0] for user in all_results]
-    influences = get_bulk_influence(user_ids) if user_ids else {}
-
-    # Process results with influences and apply filters
-    processed_results = []
-    for user in all_results:
-        user_id = user[0]
-        user = list(user)
-        influence = influences.get(user_id, 0)
-
-        user_date = user[2]
-        # Handle both date objects and ISO strings
-        try:
-            date = datetime.fromisoformat(str(user_date))
-        except Exception:
-            date = user_date
-        try:
-            unix = int((date - datetime(1970, 1, 1)).total_seconds())
-        except Exception:
-            unix = 0
-
-        user.append(influence)  # index 8
-        user.append(unix)  # index 9
-
-        # Apply influence range filters
-        if lowerinf is not None and influence < lowerinf:
-            continue
-        if upperinf is not None and influence > upperinf:
-            continue
-
-        processed_results.append(user)
-
-    # Sort results
-    reverse = sortway == "desc"
-    if sort == "influence":
-        processed_results = sorted(
-            processed_results, key=itemgetter(9), reverse=reverse
-        )
-    elif sort == "age":
-        processed_results = sorted(
-            processed_results, key=itemgetter(10), reverse=reverse
-        )
-    elif sort == "population":
-        processed_results = sorted(
-            processed_results, key=itemgetter(4), reverse=reverse
-        )
-    elif sort == "provinces":
-        processed_results = sorted(
-            processed_results, key=itemgetter(7), reverse=reverse
+        filter_params = list(params)
+        filter_params.extend(
+            [
+                province_range,
+                lowerinf,
+                lowerinf,
+                upperinf,
+                upperinf,
+            ]
         )
 
-    # Calculate pagination
-    total_count = len(processed_results)
-    total_pages = max(1, (total_count + per_page - 1) // per_page)
+        db.execute(
+            f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
+        )
+        total_count = db.fetchone()[0] or 0
 
-    # Ensure page is within valid range
-    if page < 1:
-        page = 1
-    if page > total_pages:
-        page = total_pages
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        if page < 1:
+            page = 1
+        if page > total_pages:
+            page = total_pages
+        offset = (page - 1) * per_page
 
-    # Apply pagination
-    offset = (page - 1) * per_page
-    paginated_results = processed_results[offset : offset + per_page]
+        page_query = (
+            f"{filter_sql} ORDER BY {sort_column} {sort_direction}, "
+            "id ASC LIMIT %s OFFSET %s"
+        )
+        page_params = list(filter_params)
+        page_params.extend([per_page, offset])
+        db.execute(page_query, tuple(page_params))
+        paginated_results = db.fetchall()
 
     return render_template(
         "countries.html",

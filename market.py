@@ -237,7 +237,7 @@ def market():
     # Use connection pool instead of direct connection
     from database import get_db_cursor
 
-    with get_db_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         cId = session["user_id"]
 
         # GET Query Parameters
@@ -715,7 +715,7 @@ def post_offer(offer_type):
 def my_offers():
     cId = session["user_id"]
     offers = {}
-    with get_db_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         db.execute(
             (
                 "SELECT trades.offer_id, trades.price, trades.resource, "
