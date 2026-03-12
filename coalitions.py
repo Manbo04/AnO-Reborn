@@ -1896,18 +1896,12 @@ def register_coalitions_routes(app_instance):
         "/coalition/<coalition_id>", view_func=coalition_wrapped, methods=["GET"]
     )
 
-    apply_to_coalition_wrapped = login_required(apply_to_coalition)
     send_coalition_invite_wrapped = login_required(send_coalition_invite)
     view_coalition_invites_wrapped = login_required(view_coalition_invites)
     accept_coalition_invite_wrapped = login_required(accept_coalition_invite)
     reject_coalition_invite_wrapped = login_required(reject_coalition_invite)
     revoke_coalition_invite_wrapped = login_required(revoke_coalition_invite)
     view_outgoing_invites_wrapped = login_required(view_outgoing_invites)
-    app_instance.add_url_rule(
-        "/coalition/<coalition_id>/apply",
-        view_func=apply_to_coalition_wrapped,
-        methods=["GET", "POST"],
-    )
     app_instance.add_url_rule(
         "/nation/<nation_id>/invite",
         view_func=send_coalition_invite_wrapped,
