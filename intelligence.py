@@ -138,9 +138,15 @@ def spyAmount():
 
     # make the spy entry here
     if request.method == "POST":
-        prep = int(request.form.get("prep", 1) or 1)
-        spies = int(request.form.get("amount", 1) or 1)
-        eId = request.form.get("enemy")
+        try:
+            prep = int(request.form.get("prep", 1) or 1)
+            spies = int(request.form.get("amount", 1) or 1)
+            eId = int(request.form.get("enemy", 0))
+        except (ValueError, TypeError):
+            return error(400, "Invalid input values.")
+
+        if eId < 1:
+            return error(400, "Invalid target.")
 
         with get_db_cursor() as db:
             db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
@@ -311,17 +317,22 @@ def spyResult():
                     )
 
                 revealed_map = {name: amount for name, amount in db.fetchall()}
-                update_objects = [
-                    f"{obj}={int(revealed_map.get(obj, 0))}"
-                    for obj in uncovered_objects
-                ]
-                update_objects_string = ", ".join(update_objects)
 
-                if update_objects_string:
+                # Whitelist column names against known constants to prevent injection
+                safe_columns = set(variables.RESOURCES + variables.UNITS)
+                set_clauses = []
+                set_values = []
+                for obj in uncovered_objects:
+                    if obj in safe_columns:
+                        set_clauses.append(f'"{obj}" = %s')
+                        set_values.append(int(revealed_map.get(obj, 0)))
+
+                if set_clauses:
                     spyinfo_update = (
-                        f"UPDATE spyinfo SET {update_objects_string}" + " WHERE id=%s"
+                        f"UPDATE spyinfo SET {', '.join(set_clauses)}" + " WHERE id=%s"
                     )
-                    db.execute(spyinfo_update, (operation_id,))
+                    set_values.append(operation_id)
+                    db.execute(spyinfo_update, tuple(set_values))
 
             _decrease_unit_quantity(db, cId, "spies", executed_spies)
 

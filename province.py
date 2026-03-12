@@ -448,17 +448,18 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
                 """
                 SELECT COALESCE(SUM(ub.quantity), 0), p.cityCount
                 FROM provinces p
-                LEFT JOIN user_buildings ub
-                    ON ub.province_id = p.id
-                LEFT JOIN building_dictionary bd
-                    ON bd.building_id = ub.building_id
-                    AND bd.name IN (
-                        'coal_burners', 'oil_burners', 'hydro_dams',
-                        'nuclear_reactors', 'solar_fields', 'gas_stations',
-                        'general_stores', 'farmers_markets', 'malls', 'banks',
-                        'distribution_centers', 'city_parks', 'hospitals',
-                        'libraries', 'universities', 'monorails'
-                    )
+                LEFT JOIN (
+                    user_buildings ub
+                    JOIN building_dictionary bd
+                        ON bd.building_id = ub.building_id
+                        AND bd.name IN (
+                            'coal_burners', 'oil_burners', 'hydro_dams',
+                            'nuclear_reactors', 'solar_fields', 'gas_stations',
+                            'general_stores', 'farmers_markets', 'malls', 'banks',
+                            'distribution_centers', 'city_parks', 'hospitals',
+                            'libraries', 'universities', 'monorails'
+                        )
+                ) ON ub.province_id = p.id
                 WHERE p.id = %s
                 GROUP BY p.id
                 """,
@@ -469,17 +470,23 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
                 """
                 SELECT COALESCE(SUM(ub.quantity), 0), p.land
                 FROM provinces p
-                LEFT JOIN user_buildings ub
-                    ON ub.province_id = p.id
-                LEFT JOIN building_dictionary bd
-                    ON bd.building_id = ub.building_id
-                    AND bd.name IN (
-                        'army_bases', 'harbours', 'aerodomes', 'admin_buildings',
-                        'silos', 'farms', 'pumpjacks', 'coal_mines', 'bauxite_mines',
-                        'copper_mines', 'uranium_mines', 'lead_mines', 'iron_mines',
-                        'lumber_mills', 'component_factories', 'steel_mills',
-                        'ammunition_factories', 'aluminium_refineries', 'oil_refineries'
-                    )
+                LEFT JOIN (
+                    user_buildings ub
+                    JOIN building_dictionary bd
+                        ON bd.building_id = ub.building_id
+                        AND bd.name IN (
+                            'army_bases', 'harbours', 'aerodomes',
+                            'admin_buildings', 'silos', 'farms',
+                            'pumpjacks', 'coal_mines',
+                            'bauxite_mines', 'copper_mines',
+                            'uranium_mines', 'lead_mines',
+                            'iron_mines', 'lumber_mills',
+                            'component_factories', 'steel_mills',
+                            'ammunition_factories',
+                            'aluminium_refineries',
+                            'oil_refineries'
+                        )
+                ) ON ub.province_id = p.id
                 WHERE p.id = %s
                 GROUP BY p.id
                 """,

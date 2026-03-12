@@ -287,7 +287,7 @@ def coalition(coalition_id):
             try:
                 try:
                     db.execute(
-                        "SELECT id FROM treaties WHERE col2_id=(%s) AND status='Active' OR col1_id=(%s) ORDER BY id ASC",
+                        "SELECT id FROM treaties WHERE (col2_id=(%s) OR col1_id=(%s)) AND status='Active' ORDER BY id ASC",
                         (coalition_id, coalition_id),
                     )
                     raw_active_ids = db.fetchall()
@@ -1200,7 +1200,14 @@ def deposit_into_bank(coalition_id):
                 res_tuple = (res, int(resource))
                 deposited_resources.append(res_tuple)
 
+    # Whitelist of valid colBanks column names
+    _VALID_BANK_COLUMNS = frozenset(["money"] + variables.RESOURCES)
+
     def deposit(resource, amount, db):
+        # Validate resource name against whitelist before using in SQL
+        if resource not in _VALID_BANK_COLUMNS:
+            return error(400, f"Invalid resource: {resource}")
+
         # Removes the resource from the giver
 
         # If the resource is money, removes the money from the seller
@@ -1280,6 +1287,11 @@ def deposit_into_bank(coalition_id):
 
 # Function for withdrawing a resource from the bank
 def withdraw(resource, amount, user_id, coalition_id):
+    # Whitelist of valid colBanks column names
+    _VALID_BANK_COLUMNS = frozenset(["money"] + variables.RESOURCES)
+    if resource not in _VALID_BANK_COLUMNS:
+        return error(400, f"Invalid resource: {resource}")
+
     with get_db_cursor() as db:
         # Removes the resource from the coalition bank
 

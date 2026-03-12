@@ -15,6 +15,29 @@ from database import get_db_cursor
 
 load_dotenv()
 
+# Module-level cache for users table schema detection (computed once)
+_schema_cache = {}
+
+
+def _detect_users_schema(db):
+    """Detect which columns exist in users table. Cached after first call."""
+    if _schema_cache:
+        return _schema_cache.get("has_verification", False), _schema_cache.get(
+            "has_password", False
+        )
+    try:
+        db.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'users' AND column_name IN ('is_verified', 'password')"
+        )
+        found = {row[0] for row in db.fetchall()}
+        _schema_cache["has_verification"] = "is_verified" in found
+        _schema_cache["has_password"] = "password" in found
+    except Exception:
+        _schema_cache["has_verification"] = False
+        _schema_cache["has_password"] = False
+    return _schema_cache["has_verification"], _schema_cache["has_password"]
+
 
 def login():
     if request.method == "POST":
@@ -48,32 +71,7 @@ def login():
             password = password.encode("utf-8")
 
             with get_db_cursor() as db:
-                # Check if verification columns exist
-                try:
-                    db.execute(
-                        (
-                            "SELECT column_name FROM information_schema.columns "
-                            "WHERE table_name = 'users' AND column_name = 'is_verified'"
-                        )
-                    )
-                    has_verification = db.fetchone() is not None
-                except Exception:
-                    has_verification = False
-
-                # selects data about user, from users
-                # Some DB schemas use `hash` instead of `password` for the stored hash.
-                # Detect which column exists and select the appropriate one.
-                has_password = False
-                try:
-                    db.execute(
-                        (
-                            "SELECT column_name FROM information_schema.columns "
-                            "WHERE table_name = 'users' AND column_name = 'password'"
-                        )
-                    )
-                    has_password = db.fetchone() is not None
-                except Exception:
-                    has_password = False
+                has_verification, has_password = _detect_users_schema(db)
 
                 if has_verification:
                     if has_password:
