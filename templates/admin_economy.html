@@ -1,0 +1,347 @@
+{% extends "layout.html" %}
+
+{% block title %}Economy Monitor{% endblock %}
+
+{% block body %}
+<style>
+    .admin-nav-link {
+        display: inline-block;
+        margin: 8px 4px;
+        padding: 6px 16px;
+        background: #1a237e;
+        color: #e8eaf6;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .admin-nav-link:hover { background: #283593; }
+    .admin-nav-link.active { background: #3949ab; }
+
+    .economy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+    }
+    .resource-card {
+        background: #1e2a38;
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid #2c3e50;
+    }
+    .resource-card h3 {
+        margin: 0 0 4px 0;
+        font-size: 1em;
+        color: #90caf9;
+        text-transform: capitalize;
+    }
+    .resource-card .total {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: #e8eaf6;
+        margin: 4px 0;
+    }
+    .resource-card .player-count {
+        font-size: 0.85em;
+        color: #78909c;
+    }
+    .resource-card .change-positive { color: #a5d6a7; }
+    .resource-card .change-negative { color: #ef9a9a; }
+
+    .chart-container {
+        background: #1e2a38;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 16px 0;
+        border: 1px solid #2c3e50;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        max-height: 400px;
+    }
+    .chart-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+    .chart-controls select, .chart-controls button {
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: 1px solid #2c3e50;
+        background: #263238;
+        color: #cfd8dc;
+        font-size: 0.9em;
+    }
+    .chart-controls button {
+        background: #1a237e;
+        color: #e8eaf6;
+        cursor: pointer;
+        border: none;
+        font-weight: 600;
+    }
+    .chart-controls button:hover { background: #283593; }
+    .chart-controls button.active { background: #3949ab; }
+    .snapshot-info {
+        text-align: center;
+        padding: 12px;
+        color: #78909c;
+        font-size: 0.9em;
+    }
+</style>
+
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">monitoring</span>Economy Monitor</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="infodiv" style="text-align:center;">
+            <a href="/admin/command-center" class="admin-nav-link"><span class="material-icons-outlined" style="vertical-align:middle;font-size:18px;">dashboard</span> Dashboard</a>
+            <a href="/admin/command-center/economy" class="admin-nav-link active"><span class="material-icons-outlined" style="vertical-align:middle;font-size:18px;">monitoring</span> Economy Monitor</a>
+        </div>
+
+        <!-- Snapshot control -->
+        <div style="text-align:right; margin:12px 0;">
+            <form action="/admin/command-center/economy/snapshot" method="POST" style="display:inline;">
+                <button class="templatedivbutton" type="submit" style="font-size:0.9em;padding:6px 16px;">
+                    <span class="material-icons-outlined" style="vertical-align:middle;font-size:16px;">camera_alt</span> Take Snapshot Now
+                </button>
+            </form>
+        </div>
+
+        {% if snapshot_count == 0 %}
+        <div class="snapshot-info">
+            <p><span class="material-icons-outlined" style="vertical-align:middle;">info</span>
+            No snapshots yet. Snapshots are taken automatically every hour, or you can take one manually above.</p>
+        </div>
+        {% endif %}
+
+        <!-- Current Totals Grid -->
+        {% if current_totals %}
+        <h2 class="templatecontentheaderleft">Current Resource Totals</h2>
+        <div class="economy-grid">
+            {% for row in current_totals %}
+            <div class="resource-card">
+                <h3>{{ row[0]|replace('_', ' ') }}</h3>
+                <div class="total">{{ "{:,}".format(row[1]) }}</div>
+                <div class="player-count">Held by {{ row[2] }} player{{ "s" if row[2] != 1 }}</div>
+                <div style="font-size:0.8em;color:#546e7a;">Last updated: {{ row[3].strftime('%m/%d %H:%M') if row[3] else '—' }} UTC</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Main Chart -->
+        <h2 class="templatecontentheaderleft">Resource Trends</h2>
+        <div class="chart-container">
+            <div class="chart-controls">
+                <label style="color:#90caf9;font-weight:600;">Resource:</label>
+                <select id="resourceSelect">
+                    {% for res in resource_list %}
+                    <option value="{{ res }}">{{ res|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+
+                <label style="color:#90caf9;font-weight:600;margin-left:12px;">Period:</label>
+                <button class="day-btn active" data-days="1">24h</button>
+                <button class="day-btn" data-days="3">3d</button>
+                <button class="day-btn" data-days="7">7d</button>
+                <button class="day-btn" data-days="14">14d</button>
+                <button class="day-btn" data-days="30">30d</button>
+                <button class="day-btn" data-days="90">90d</button>
+            </div>
+            <canvas id="resourceChart" height="350"></canvas>
+        </div>
+
+        <!-- Comparison Chart -->
+        <h2 class="templatecontentheaderleft">Multi-Resource Comparison</h2>
+        <div class="chart-container">
+            <div class="chart-controls">
+                <label style="color:#90caf9;font-weight:600;">Select resources to compare:</label>
+                <select id="compareSelect" multiple style="min-height:80px;min-width:200px;">
+                    {% for res in resource_list %}
+                    <option value="{{ res }}" {% if res in ['gold', 'rations', 'oil'] %}selected{% endif %}>{{ res|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+                <button id="compareBtn" style="align-self:flex-start;">Compare</button>
+            </div>
+            <canvas id="compareChart" height="350"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const COLORS = [
+        '#42a5f5', '#66bb6a', '#ffa726', '#ef5350', '#ab47bc',
+        '#26c6da', '#ffee58', '#8d6e63', '#78909c', '#ec407a',
+        '#7e57c2', '#26a69a', '#d4e157', '#ff7043', '#5c6bc0',
+        '#29b6f6'
+    ];
+
+    let mainChart = null;
+    let compareChart = null;
+    let currentDays = 1;
+
+    // ---- Single Resource Chart ----
+    async function loadResourceChart(resource, days) {
+        const resp = await fetch(`/admin/command-center/economy/api?resource=${resource}&days=${days}`);
+        const data = await resp.json();
+
+        if (mainChart) mainChart.destroy();
+
+        const ctx = document.getElementById('resourceChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: resource.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ' — Total Quantity',
+                    data: data.totals,
+                    borderColor: '#42a5f5',
+                    backgroundColor: 'rgba(66, 165, 245, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: data.totals.length > 100 ? 0 : 3,
+                }, {
+                    label: 'Players Holding',
+                    data: data.player_counts,
+                    borderColor: '#66bb6a',
+                    backgroundColor: 'rgba(102, 187, 106, 0.05)',
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'y1',
+                    pointRadius: data.player_counts.length > 100 ? 0 : 2,
+                    borderDash: [5, 5],
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + Number(ctx.parsed.y).toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#78909c', maxTicksLimit: 20 }, grid: { color: '#263238' } },
+                    y: {
+                        type: 'linear', position: 'left',
+                        ticks: {
+                            color: '#42a5f5',
+                            callback: function(v) { return Number(v).toLocaleString(); }
+                        },
+                        grid: { color: '#263238' },
+                        title: { display: true, text: 'Total Quantity', color: '#42a5f5' }
+                    },
+                    y1: {
+                        type: 'linear', position: 'right',
+                        ticks: { color: '#66bb6a' },
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Players', color: '#66bb6a' }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---- Multi-Resource Comparison ----
+    async function loadCompareChart(resources, days) {
+        const promises = resources.map(r =>
+            fetch(`/admin/command-center/economy/api?resource=${r}&days=${days}`)
+                .then(resp => resp.json())
+        );
+        const results = await Promise.all(promises);
+
+        if (compareChart) compareChart.destroy();
+
+        // Normalize: use percentage of first data point for each resource
+        const datasets = results.map((data, i) => {
+            const baseline = data.totals[0] || 1;
+            return {
+                label: data.resource.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                data: data.totals.map(v => ((v / baseline) * 100).toFixed(2)),
+                borderColor: COLORS[i % COLORS.length],
+                fill: false,
+                tension: 0.3,
+                pointRadius: data.totals.length > 100 ? 0 : 2,
+            };
+        });
+
+        // Use longest label set
+        let labels = [];
+        results.forEach(r => { if (r.labels.length > labels.length) labels = r.labels; });
+
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        compareChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + ctx.parsed.y + '% of baseline';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#78909c', maxTicksLimit: 20 }, grid: { color: '#263238' } },
+                    y: {
+                        ticks: {
+                            color: '#90caf9',
+                            callback: function(v) { return v + '%'; }
+                        },
+                        grid: { color: '#263238' },
+                        title: { display: true, text: '% of Start Value', color: '#90caf9' }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---- Event Handlers ----
+    const resourceSelect = document.getElementById('resourceSelect');
+    const dayBtns = document.querySelectorAll('.day-btn');
+
+    resourceSelect.addEventListener('change', function() {
+        loadResourceChart(this.value, currentDays);
+    });
+
+    dayBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            dayBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentDays = parseInt(this.dataset.days);
+            loadResourceChart(resourceSelect.value, currentDays);
+        });
+    });
+
+    document.getElementById('compareBtn').addEventListener('click', function() {
+        const sel = document.getElementById('compareSelect');
+        const selected = Array.from(sel.selectedOptions).map(o => o.value);
+        if (selected.length > 0) {
+            loadCompareChart(selected, currentDays);
+        }
+    });
+
+    // Initial load
+    loadResourceChart('gold', 1);
+
+    // Load comparison with defaults
+    const defaultCompare = Array.from(document.getElementById('compareSelect').selectedOptions).map(o => o.value);
+    if (defaultCompare.length > 0) {
+        loadCompareChart(defaultCompare, 1);
+    }
+})();
+</script>
+{% endblock %}
