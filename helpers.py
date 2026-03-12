@@ -397,7 +397,8 @@ def get_influence(country_id):
     cId = country_id
 
     with get_db_cursor() as db:
-        # OPTIMIZED: Single query instead of 6 separate queries
+        # OPTIMIZED: Single query with filtered subqueries
+        # Each subquery filters to the target user to avoid full-table scans
         db.execute(
             """
             SELECT
@@ -448,6 +449,7 @@ def get_influence(country_id):
                         THEN um.quantity ELSE 0 END) as spies
                 FROM user_military um
                 JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                WHERE um.user_id = %s
                 GROUP BY um.user_id
             ) m ON u.id = m.user_id
             LEFT JOIN stats s ON u.id = s.id
@@ -457,16 +459,18 @@ def get_influence(country_id):
                        COUNT(id) as province_count,
                        SUM(land) as total_land
                 FROM provinces
+                WHERE userId = %s
                 GROUP BY userId
             ) prov ON u.id = prov.userId
             LEFT JOIN (
                 SELECT user_id, SUM(quantity) as total_resources
                 FROM user_economy
+                WHERE user_id = %s
                 GROUP BY user_id
             ) r ON u.id = r.user_id
             WHERE u.id = %s
             """,
-            (cId,),
+            (cId, cId, cId, cId),
         )
         result = db.fetchone()
 
