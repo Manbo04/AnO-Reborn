@@ -441,59 +441,59 @@ def createprovince():
         return render_template("createprovince.html", price=price)
 
 
-def get_free_slots(pId, slot_type):  # pId = province id
-    with get_db_cursor() as db:
+def get_free_slots(pId, slot_type, db=None):  # pId = province id
+    def _query(cursor):
         if slot_type == "city":
-            # Query normalized user_buildings for city buildings in THIS province
-            db.execute(
+            cursor.execute(
                 """
-                SELECT COALESCE(SUM(ub.quantity), 0)
-                FROM user_buildings ub
-                JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.province_id = %s
-                  AND bd.name IN (
-                    'coal_burners', 'oil_burners', 'hydro_dams',
-                    'nuclear_reactors', 'solar_fields', 'gas_stations',
-                    'general_stores', 'farmers_markets', 'malls', 'banks',
-                    'distribution_centers', 'city_parks', 'hospitals',
-                    'libraries', 'universities', 'monorails'
-                  )
+                SELECT COALESCE(SUM(ub.quantity), 0), p.cityCount
+                FROM provinces p
+                LEFT JOIN user_buildings ub
+                    ON ub.province_id = p.id
+                LEFT JOIN building_dictionary bd
+                    ON bd.building_id = ub.building_id
+                    AND bd.name IN (
+                        'coal_burners', 'oil_burners', 'hydro_dams',
+                        'nuclear_reactors', 'solar_fields', 'gas_stations',
+                        'general_stores', 'farmers_markets', 'malls', 'banks',
+                        'distribution_centers', 'city_parks', 'hospitals',
+                        'libraries', 'universities', 'monorails'
+                    )
+                WHERE p.id = %s
+                GROUP BY p.id
                 """,
                 (pId,),
             )
-            used_slots = int(db.fetchone()[0])
-
-            db.execute("SELECT cityCount FROM provinces WHERE id=%s", (pId,))
-            all_slots = int(db.fetchone()[0])
-
-            free_slots = all_slots - used_slots
-
         elif slot_type == "land":
-            # Query normalized user_buildings for land buildings in THIS province
-            db.execute(
+            cursor.execute(
                 """
-                SELECT COALESCE(SUM(ub.quantity), 0)
-                FROM user_buildings ub
-                JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.province_id = %s
-                  AND bd.name IN (
-                    'army_bases', 'harbours', 'aerodomes', 'admin_buildings',
-                    'silos', 'farms', 'pumpjacks', 'coal_mines', 'bauxite_mines',
-                    'copper_mines', 'uranium_mines', 'lead_mines', 'iron_mines',
-                    'lumber_mills', 'component_factories', 'steel_mills',
-                    'ammunition_factories', 'aluminium_refineries', 'oil_refineries'
-                  )
+                SELECT COALESCE(SUM(ub.quantity), 0), p.land
+                FROM provinces p
+                LEFT JOIN user_buildings ub
+                    ON ub.province_id = p.id
+                LEFT JOIN building_dictionary bd
+                    ON bd.building_id = ub.building_id
+                    AND bd.name IN (
+                        'army_bases', 'harbours', 'aerodomes', 'admin_buildings',
+                        'silos', 'farms', 'pumpjacks', 'coal_mines', 'bauxite_mines',
+                        'copper_mines', 'uranium_mines', 'lead_mines', 'iron_mines',
+                        'lumber_mills', 'component_factories', 'steel_mills',
+                        'ammunition_factories', 'aluminium_refineries', 'oil_refineries'
+                    )
+                WHERE p.id = %s
+                GROUP BY p.id
                 """,
                 (pId,),
             )
-            used_slots = int(db.fetchone()[0])
+        row = cursor.fetchone()
+        if not row:
+            return 0
+        return int(row[1] or 0) - int(row[0] or 0)
 
-            db.execute("SELECT land FROM provinces WHERE id=%s", (pId,))
-            all_slots = int(db.fetchone()[0])
-
-            free_slots = all_slots - used_slots
-
-        return free_slots
+    if db is not None:
+        return _query(db)
+    with get_db_cursor() as _db:
+        return _query(_db)
 
 
 @bp.route("/<way>/<units>/<province_id>", methods=["POST"])
@@ -631,10 +631,13 @@ def province_sell_buy(way, units, province_id):
             )
             return round(total_cost)
 
-        if units == "cityCount":
-            db.execute("SELECT cityCount FROM provinces WHERE id=(%s)", (province_id,))
-            current_cityCount = db.fetchone()[0]
+        # Fetch cityCount and land in one query (reused later for currentUnits)
+        db.execute("SELECT cityCount, land FROM provinces WHERE id=%s", (province_id,))
+        _prov_row = db.fetchone()
+        current_cityCount = _prov_row[0] if _prov_row else 0
+        current_land = _prov_row[1] if _prov_row else 0
 
+        if units == "cityCount":
             cityCount_price = sum_cost_linear(
                 750000, 50000, current_cityCount, wantedUnits
             )
@@ -642,9 +645,6 @@ def province_sell_buy(way, units, province_id):
             cityCount_price = 0
 
         if units == "land":
-            db.execute("SELECT land FROM provinces WHERE id=(%s)", (province_id,))
-            current_land = db.fetchone()[0]
-
             land_price = sum_cost_linear(520000, 25000, current_land, wantedUnits)
         else:
             land_price = 0
@@ -689,11 +689,9 @@ def province_sell_buy(way, units, province_id):
             resources_data = {}
 
         # Parameterized query: buildings use user_buildings,
-        # land/city use provinces
+        # land/city use provinces (reuse already-fetched province data)
         if units in ["land", "cityCount"]:
-            curUnStat = f"SELECT {units} FROM provinces WHERE id=%s"
-            db.execute(curUnStat, (province_id,))
-            currentUnits = db.fetchone()[0]
+            currentUnits = current_cityCount if units == "cityCount" else current_land
         else:
             # Economy 2.0: building counts stored in user_buildings per province
             db.execute(
@@ -720,26 +718,24 @@ def province_sell_buy(way, units, province_id):
             slot_type = None
 
         if slot_type is not None:
-            free_slots = get_free_slots(province_id, slot_type)
+            free_slots = get_free_slots(province_id, slot_type, db=db)
+
+        # Preload all resource_ids once to avoid N+1 lookups in resource_stuff
+        db.execute("SELECT name, resource_id FROM resource_dictionary")
+        _res_id_map = {row[0]: row[1] for row in db.fetchall()}
 
         def resource_stuff(resources_data, way):
             for resource, amount in resources_data:
                 qty = amount * wantedUnits
+                resource_id = _res_id_map.get(resource)
                 if way == "buy":
-                    # Get resource_id for the resource name
-                    db.execute(
-                        "SELECT resource_id FROM resource_dictionary WHERE name = %s",
-                        (resource,),
-                    )
-                    resource_id_row = db.fetchone()
-                    if not resource_id_row:
+                    if not resource_id:
                         return {
                             "fail": True,
                             "resource": resource,
                             "current_amount": 0,
                             "difference": -qty,
                         }
-                    resource_id = resource_id_row[0]
 
                     # Atomically subtract resource if user has enough
                     db.execute(
@@ -752,16 +748,10 @@ def province_sell_buy(way, units, province_id):
                     )
                     if db.fetchone() is None:
                         # Not enough resource
-                        # Fetch current amount for informative error from user_economy
                         db.execute(
-                            """
-                            SELECT COALESCE(ue.quantity, 0)
-                            FROM user_economy ue
-                            JOIN resource_dictionary rd
-                                ON rd.resource_id = ue.resource_id
-                            WHERE ue.user_id = %s AND rd.name = %s
-                            """,
-                            (cId, resource),
+                            "SELECT COALESCE(quantity, 0) FROM user_economy "
+                            "WHERE user_id = %s AND resource_id = %s",
+                            (cId, resource_id),
                         )
                         row = db.fetchone()
                         current_resource = int(row[0]) if row else 0
@@ -773,15 +763,8 @@ def province_sell_buy(way, units, province_id):
                         }
 
                 elif way == "sell":
-                    # Get resource_id for the resource name
-                    db.execute(
-                        "SELECT resource_id FROM resource_dictionary WHERE name = %s",
-                        (resource,),
-                    )
-                    resource_id_row = db.fetchone()
-                    if not resource_id_row:
-                        continue  # Skip if resource doesn't exist
-                    resource_id = resource_id_row[0]
+                    if not resource_id:
+                        continue
 
                     # Increment resource on sell
                     db.execute(
@@ -827,21 +810,10 @@ def province_sell_buy(way, units, province_id):
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
             gold_after = db.fetchone()[0]
 
-            # Audit the sell event for later analysis
-            create_audit_sql = (
-                "CREATE TABLE IF NOT EXISTS purchase_audit ("
-                "id SERIAL PRIMARY KEY, user_id INT, province_id INT, unit TEXT, "
-                "units INT, gold_before BIGINT, gold_after BIGINT, note TEXT, "
-                "created_at TIMESTAMP WITH TIME ZONE DEFAULT now())"
-            )
-            db.execute(create_audit_sql)
-
-            insert_audit_sql = (
-                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
-                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-            )
+            # Audit the sell event
             db.execute(
-                insert_audit_sql,
+                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (
                     cId,
                     province_id,
@@ -929,20 +901,9 @@ def province_sell_buy(way, units, province_id):
                 )
 
             # Audit the buy event
-            create_audit_sql = (
-                "CREATE TABLE IF NOT EXISTS purchase_audit ("
-                "id SERIAL PRIMARY KEY, user_id INT, province_id INT, unit TEXT, "
-                "units INT, gold_before BIGINT, gold_after BIGINT, note TEXT, "
-                "created_at TIMESTAMP WITH TIME ZONE DEFAULT now())"
-            )
-            db.execute(create_audit_sql)
-
-            insert_audit_sql = (
-                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
-                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-            )
             db.execute(
-                insert_audit_sql,
+                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (
                     cId,
                     province_id,

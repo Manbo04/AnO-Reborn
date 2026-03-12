@@ -1346,7 +1346,9 @@ def population_growth():  # Function for growing population
 
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Preload all provinces with the fields needed for growth calculations
+        CHUNK_SIZE = 200
+
+        # Preload province IDs only (lightweight) to chunk the work
         dbdict.execute(
             """
              SELECT p.id, p.userId, p.population, p.cityCount, p.land,
@@ -1356,19 +1358,22 @@ def population_growth():  # Function for growing population
             ORDER BY userId ASC
             """
         )
-        provinces = dbdict.fetchall()
+        all_provinces = dbdict.fetchall()
 
-        if not provinces:
+        if not all_provinces:
+            try:
+                release_pg_advisory_lock(conn, 9003)
+            except Exception:
+                pass
             return
 
-        user_ids = [row["userid"] for row in provinces]
-        unique_user_ids = sorted(set(user_ids))
+        all_user_ids = sorted(set(row["userid"] for row in all_provinces))
 
-        # Get rations resource_id
+        # Get rations resource_id (constant, one query)
         db.execute("SELECT resource_id FROM resource_dictionary WHERE name='rations'")
         rations_resource_id = db.fetchone()[0]
 
-        # Ensure user_economy rows exist for rations
+        # Ensure user_economy rows exist for rations (batch, all users)
         execute_batch(
             db,
             """
@@ -1376,25 +1381,22 @@ def population_growth():  # Function for growing population
             VALUES (%s, %s, 0)
             ON CONFLICT (user_id, resource_id) DO NOTHING
             """,
-            [(uid, rations_resource_id) for uid in unique_user_ids],
+            [(uid, rations_resource_id) for uid in all_user_ids],
         )
 
-        # Preload rations and policies into dicts for O(1) lookups
+        # Preload rations for all users (one query)
         dbdict.execute(
             """
             SELECT ue.user_id, COALESCE(ue.quantity, 0) AS rations
             FROM user_economy ue
             WHERE ue.user_id = ANY(%s) AND ue.resource_id = %s
             """,
-            (unique_user_ids, rations_resource_id),
+            (all_user_ids, rations_resource_id),
         )
         ration_map = {row["user_id"]: row["rations"] for row in dbdict.fetchall()}
 
-        # Preload distribution capacity per user (batch query).
-        # Distribution buildings control how many rations can actually
-        # reach the population.  Without distribution centers the
-        # warehouse stockpile is useless — citizens starve.
-        dist_cap_map = {}  # user_id -> max rations that can be distributed
+        # Preload distribution capacity per user
+        dist_cap_map = {}
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             dbdict.execute(
                 """
@@ -1409,18 +1411,18 @@ def population_growth():  # Function for growing population
                   )
                 GROUP BY ub.user_id
                 """,
-                (unique_user_ids,),
+                (all_user_ids,),
             )
             for row in dbdict.fetchall():
                 dist_cap_map[row["user_id"]] = (
                     row["bcount"] * variables.RATIONS_DISTRIBUTION_PER_BUILDING
                 )
 
-        # policy_map no longer needed after policy overhaul (old policy 5 removed)
+        conn.commit()  # Release read locks from preload queries
 
         # PHASE 1: Calculate total rations needed per user (sum across all provinces)
         user_total_rations_needed = {}
-        for province_row in provinces:
+        for province_row in all_provinces:
             user_id = province_row["userid"]
             curPop = province_row["population"] or 0
             rations_needed = curPop // variables.RATIONS_PER
@@ -1431,21 +1433,15 @@ def population_growth():  # Function for growing population
             )
 
         # PHASE 2: Apply distribution-center bottleneck.
-        # Only rations that can be physically distributed count.
-        # If a user has 0 distribution buildings their effective rations = 0,
-        # meaning full starvation penalty (no growth) even if the warehouse
-        # is full of rations.
         user_rations_to_deduct = {}
-        user_effective_rations = {}  # what the population actually receives
+        user_effective_rations = {}
         for uid, needed in user_total_rations_needed.items():
             warehouse = ration_map.get(uid, 0) or 0
             if variables.FEATURE_RATIONS_DISTRIBUTION:
                 dist_cap = dist_cap_map.get(uid, 0)
-                # Can only distribute up to capacity, and only what we have
                 distributable = min(warehouse, dist_cap)
             else:
                 distributable = warehouse
-            # Deduct only what is actually consumed (min of needed vs available)
             actually_consumed = min(needed, distributable)
             user_rations_to_deduct[uid] = actually_consumed
             user_effective_rations[uid] = distributable
@@ -1474,22 +1470,14 @@ def population_growth():  # Function for growing population
             if maxPop < variables.DEFAULT_MAX_POPULATION:
                 maxPop = variables.DEFAULT_MAX_POPULATION
 
-            # For growth rate, use the user's effective ration coverage
-            # (after distribution-center bottleneck)
             total_needed = user_total_rations_needed.get(user_id, 1)
             effective_rations = user_effective_rations.get(user_id, 0) or 0
             rations_ratio = effective_rations / total_needed if total_needed > 0 else 0
             if rations_ratio > 1:
                 rations_ratio = 1
 
-            # Slower, controlled population growth (prevents snowballing)
-            # Base rate reduced from 0.5% to 0.15% for more realistic growth
             base_growth_rate = rations_ratio * 0.15
 
-            # Diminishing returns: growth slows as population approaches max
-            # At 0% of max: full growth rate
-            # At 50% of max: 75% of growth rate
-            # At 90% of max: only 10% of growth rate
             pop_ratio = curPop / maxPop if maxPop > 0 else 1
             diminishing_factor = max(0.05, 1 - (pop_ratio**2))
             growth_rate = base_growth_rate * diminishing_factor
@@ -1502,68 +1490,83 @@ def population_growth():  # Function for growing population
 
             return fullPop
 
-        # PHASE 3: Calculate population updates for each province
-        # New population from natural growth goes into pop_children demographic
-        population_updates = []
-        demographic_updates = []  # (pop_children_increase, province_id)
-        for province_row in provinces:
+        # PHASE 3 + 4: Process and write in chunks to avoid holding
+        # the DB connection for the entire province set.
+        total_pop_updates = 0
+        total_rations_deducted = 0
+        rations_deducted_users = set()
+
+        for chunk_start in range(0, len(all_provinces), CHUNK_SIZE):
+            chunk = all_provinces[chunk_start : chunk_start + CHUNK_SIZE]
+
+            population_updates = []
+            demographic_updates = []
+            for province_row in chunk:
+                try:
+                    old_population = province_row["population"] or 0
+                    new_population = calc_population_growth(province_row)
+                    population_growth_amount = new_population - old_population
+
+                    population_updates.append((new_population, province_row["id"]))
+
+                    if population_growth_amount > 0:
+                        demographic_updates.append(
+                            (population_growth_amount, province_row["id"])
+                        )
+                except Exception as e:
+                    handle_exception(e)
+                    continue
+
+            # Collect rations deductions for users in this chunk
+            chunk_user_ids = set(row["userid"] for row in chunk)
+            # Only deduct rations once per user (on the chunk that first sees them)
+            new_ration_users = chunk_user_ids - rations_deducted_users
+            rations_updates = [
+                (user_rations_to_deduct[uid], uid, rations_resource_id)
+                for uid in new_ration_users
+                if uid in user_rations_to_deduct
+            ]
+            rations_deducted_users.update(new_ration_users)
+
+            # Write this chunk's updates
+            if rations_updates:
+                execute_batch(
+                    db,
+                    """
+                    UPDATE user_economy
+                    SET quantity = GREATEST(0, quantity - %s)
+                    WHERE user_id=%s AND resource_id=%s
+                    """,
+                    rations_updates,
+                )
+                total_rations_deducted += len(rations_updates)
+
+            if population_updates:
+                execute_batch(
+                    db,
+                    "UPDATE provinces SET population=%s WHERE id=%s",
+                    population_updates,
+                )
+                total_pop_updates += len(population_updates)
+
+            if demographic_updates:
+                execute_batch(
+                    db,
+                    "UPDATE provinces SET pop_children = "
+                    "COALESCE(pop_children, 0) + %s WHERE id=%s",
+                    demographic_updates,
+                )
+
+            # Commit after each chunk to release locks
             try:
-                old_population = province_row["population"] or 0
-                new_population = calc_population_growth(province_row)
-                population_growth_amount = new_population - old_population
-
-                population_updates.append((new_population, province_row["id"]))
-
-                # Add natural growth to children demographic
-                if population_growth_amount > 0:
-                    demographic_updates.append(
-                        (population_growth_amount, province_row["id"])
-                    )
-            except Exception as e:
-                handle_exception(e)
-                continue
-
-        # PHASE 4: Apply rations updates atomically (one per user, not per province!)
-        # Use GREATEST to ensure rations never go below 0
-        rations_updates = [
-            (deduct_amount, uid, rations_resource_id)
-            for uid, deduct_amount in user_rations_to_deduct.items()
-        ]
-
-        if rations_updates:
-            execute_batch(
-                db,
-                """
-                UPDATE user_economy
-                SET quantity = GREATEST(0, quantity - %s)
-                WHERE user_id=%s AND resource_id=%s
-                """,
-                rations_updates,
-            )
-        if population_updates:
-            execute_batch(
-                db, "UPDATE provinces SET population=%s WHERE id=%s", population_updates
-            )
-
-        # Update pop_children with natural growth
-        if demographic_updates:
-            execute_batch(
-                db,
-                "UPDATE provinces SET pop_children = "
-                "COALESCE(pop_children, 0) + %s WHERE id=%s",
-                demographic_updates,
-            )
-
-        # Commit and release lock
-        try:
-            conn.commit()
-        except Exception:
-            pass
+                conn.commit()
+            except Exception:
+                pass
 
         print(
-            f"population_growth: updated {len(population_updates)} provinces "
-            f"across {len(unique_user_ids)} users, "
-            f"consumed rations from {len(rations_updates)} users"
+            f"population_growth: updated {total_pop_updates} provinces "
+            f"across {len(all_user_ids)} users, "
+            f"consumed rations from {total_rations_deducted} users"
         )
 
         try:
