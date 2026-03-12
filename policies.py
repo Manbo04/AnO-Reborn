@@ -21,6 +21,13 @@ def get_policy_in_format(policies, name, prange):
 
 # Getting user policies in HTML format from only user id
 def get_user_policies(user_id):
+    from database import query_cache
+
+    cache_key = f"policies_{user_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     with get_db_cursor() as db:
         policies = {}
         temp_policies = {}
@@ -39,6 +46,8 @@ def get_user_policies(user_id):
 
         policies.update(soldiers_policies)
         policies.update(education_policies)
+
+        query_cache.set(cache_key, policies, ttl_seconds=60)
         return policies
 
 
@@ -64,6 +73,11 @@ def policies():
         db.execute(
             "UPDATE policies SET education=%s WHERE user_id=%s", (education, cId)
         )
+
+    # Invalidate cached policies for this user
+    from database import query_cache
+
+    query_cache.invalidate(f"policies_{cId}")
 
     return redirect("/my_country")
 
