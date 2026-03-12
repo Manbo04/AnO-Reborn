@@ -343,11 +343,7 @@ def get_revenue(cId):
 
 def next_turn_rations(cId, prod_rations):
     """Calculate next turn rations after consumption."""
-    from database import get_db_connection
-
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_db_cursor() as db:
         # Get current rations (normalized economy)
         db.execute(
             """
@@ -405,10 +401,7 @@ def delete_news(id):
 
 
 def cg_need(user_id):
-    from database import get_db_connection
-
-    with get_db_connection() as conn:
-        db = conn.cursor()
+    with get_db_cursor() as db:
         db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (user_id,))
         population = db.fetchone()[0]
         if population is None:

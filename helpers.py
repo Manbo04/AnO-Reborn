@@ -164,6 +164,11 @@ except Exception:
     TRADE_COUNTER = None
 
 
+_task_metrics_table_ready = False
+_trade_events_table_ready = False
+_war_events_table_ready = False
+
+
 def record_task_metric(task_name: str, duration_seconds: float):
     """Record a task duration. Best-effort: writes to DB and emits Prometheus.
 
@@ -171,6 +176,7 @@ def record_task_metric(task_name: str, duration_seconds: float):
         task_name: Logical name of the task (e.g., 'tax_income')
         duration_seconds: Wall-clock duration in seconds
     """
+    global _task_metrics_table_ready
     try:
         # Emit to Prometheus if available
         if _PROM_AVAILABLE and TASK_DURATION_HISTOGRAM is not None:
@@ -186,16 +192,18 @@ def record_task_metric(task_name: str, duration_seconds: float):
 
             with get_db_connection() as conn:
                 db = conn.cursor()
-                db.execute(
+                if not _task_metrics_table_ready:
+                    db.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS task_metrics (
+                            id SERIAL PRIMARY KEY,
+                            task_name TEXT,
+                            duration_seconds DOUBLE PRECISION,
+                            measured_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                        )
                     """
-                    CREATE TABLE IF NOT EXISTS task_metrics (
-                        id SERIAL PRIMARY KEY,
-                        task_name TEXT,
-                        duration_seconds DOUBLE PRECISION,
-                        measured_at TIMESTAMP WITH TIME ZONE DEFAULT now()
                     )
-                """
-                )
+                    _task_metrics_table_ready = True
                 db.execute(
                     (
                         "INSERT INTO task_metrics (task_name, duration_seconds) "
@@ -224,6 +232,7 @@ def record_trade_event(
         price: price per unit
         trade_type: 'sell' or 'buy' (optional)
     """
+    global _trade_events_table_ready
     try:
         total = (
             int(amount) * int(price)
@@ -242,22 +251,24 @@ def record_trade_event(
 
             with get_db_connection() as conn:
                 db = conn.cursor()
-                db.execute(
+                if not _trade_events_table_ready:
+                    db.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS trade_events (
+                            id SERIAL PRIMARY KEY,
+                            offer_id TEXT,
+                            offerer INTEGER,
+                            offeree INTEGER,
+                            resource TEXT,
+                            amount INTEGER,
+                            price INTEGER,
+                            total INTEGER,
+                            trade_type TEXT,
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                        )
                     """
-                    CREATE TABLE IF NOT EXISTS trade_events (
-                        id SERIAL PRIMARY KEY,
-                        offer_id TEXT,
-                        offerer INTEGER,
-                        offeree INTEGER,
-                        resource TEXT,
-                        amount INTEGER,
-                        price INTEGER,
-                        total INTEGER,
-                        trade_type TEXT,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
                     )
-                """
-                )
+                    _trade_events_table_ready = True
                 db.execute(
                     (
                         "INSERT INTO trade_events (offer_id, offerer, offeree, "
@@ -313,29 +324,32 @@ def record_war_event(
         win_label: human-readable label returned by persist_fight_results
         concluded: whether this fight ended the war (peace declared)
     """
+    global _war_events_table_ready
     try:
         from database import get_db_connection
 
         with get_db_connection() as conn:
             db = conn.cursor()
-            db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS war_events (
-                    id SERIAL PRIMARY KEY,
-                    war_id INTEGER,
-                    winner INTEGER,
-                    loser INTEGER,
-                    winner_losses TEXT,
-                    loser_losses TEXT,
-                    morale_column TEXT,
-                    morale_delta INTEGER,
-                    new_morale INTEGER,
-                    win_label TEXT,
-                    concluded BOOLEAN,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+            if not _war_events_table_ready:
+                db.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS war_events (
+                        id SERIAL PRIMARY KEY,
+                        war_id INTEGER,
+                        winner INTEGER,
+                        loser INTEGER,
+                        winner_losses TEXT,
+                        loser_losses TEXT,
+                        morale_column TEXT,
+                        morale_delta INTEGER,
+                        new_morale INTEGER,
+                        win_label TEXT,
+                        concluded BOOLEAN,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                    )
+                    """
                 )
-                """
-            )
+                _war_events_table_ready = True
             try:
                 import json
 
