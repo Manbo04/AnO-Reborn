@@ -35,7 +35,7 @@ def provinces():
 
 @bp.route("/province/<pId>", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=15)  # Short cache for province page (updates frequently)
+@cache_response(ttl_seconds=30)  # Cache province page
 def province(pId):
     from psycopg2.extras import RealDictCursor
     from database import get_db_connection, query_cache
@@ -287,15 +287,21 @@ def province(pId):
         # upgrades already fetched in same connection above
 
         # Normalized buildings (for Action Loop quick-build form)
-        db.execute(
-            """
-            SELECT building_id, display_name, base_cost
-            FROM building_dictionary
-            WHERE is_active = TRUE
-            ORDER BY display_name ASC
-            """
-        )
-        normalized_buildings = db.fetchall() or []
+        # This is static dictionary data — cache it to avoid querying every request
+        normalized_buildings = query_cache.get("building_dictionary_active")
+        if normalized_buildings is None:
+            db.execute(
+                """
+                SELECT building_id, display_name, base_cost
+                FROM building_dictionary
+                WHERE is_active = TRUE
+                ORDER BY display_name ASC
+                """
+            )
+            normalized_buildings = db.fetchall() or []
+            query_cache.set(
+                "building_dictionary_active", normalized_buildings, ttl_seconds=600
+            )
 
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
