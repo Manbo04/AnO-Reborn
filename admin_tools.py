@@ -4,12 +4,16 @@ from database import get_db_cursor, invalidate_user_cache
 from helpers import error, login_required
 
 
-SUPER_ADMIN_USER_ID = 1
+SUPER_ADMIN_USER_IDS = {1, 1215}
 
 
 def _admin_only_guard():
-    if session.get("user_id") != SUPER_ADMIN_USER_ID:
-        return error(403, "This command center is restricted to nation ID 1.")
+    if session.get("user_id") not in SUPER_ADMIN_USER_IDS:
+        allowed = ", ".join(str(uid) for uid in sorted(SUPER_ADMIN_USER_IDS))
+        return error(
+            403,
+            f"This command center is restricted to nation IDs: {allowed}.",
+        )
     return None
 
 
@@ -260,8 +264,8 @@ def admin_ban_user():
 
     if target_user_id <= 0:
         return error(400, "Target user ID must be positive")
-    if target_user_id == SUPER_ADMIN_USER_ID:
-        return error(400, "Cannot ban nation ID 1")
+    if target_user_id in SUPER_ADMIN_USER_IDS:
+        return error(400, "Cannot ban a privileged admin nation")
 
     reason = (request.form.get("reason") or "No reason provided").strip()
 
@@ -362,8 +366,8 @@ def admin_kick_user():
 
     if target_user_id <= 0:
         return error(400, "Target user ID must be positive")
-    if target_user_id == SUPER_ADMIN_USER_ID:
-        return error(400, "Cannot kick nation ID 1")
+    if target_user_id in SUPER_ADMIN_USER_IDS:
+        return error(400, "Cannot kick a privileged admin nation")
 
     reason = (request.form.get("reason") or "No reason provided").strip()
 

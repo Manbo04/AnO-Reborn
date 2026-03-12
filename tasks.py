@@ -114,6 +114,41 @@ def should_skip_task(row, task_name):
     return False
 
 
+def is_task_stale(task_name: str, stale_seconds: int) -> bool:
+    """Return True if a task has not run within stale_seconds.
+
+    This is used as a safety net for scheduler drift/failures so critical
+    economy tasks can be self-healed by other periodic tasks.
+    """
+    from database import get_db_connection
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS task_runs (
+                    task_name TEXT PRIMARY KEY,
+                    last_run TIMESTAMP WITH TIME ZONE
+                )
+                """
+            )
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s",
+                (task_name,),
+            )
+            row = db.fetchone()
+            if not row or not row[0]:
+                return True
+            age_seconds = (now - row[0]).total_seconds()
+            return age_seconds > stale_seconds
+    except Exception:
+        # Fail-open so watchdog callers can attempt a recovery run.
+        return True
+
+
 # Handles exception for an error
 def handle_exception(e):
     filename = __file__
@@ -1939,14 +1974,48 @@ def generate_province_revenue():  # Runs each hour
         all_user_ids = list(set(row[1] for row in infra_ids))
         all_province_ids = [row[0] for row in infra_ids]
 
-        # Preload all upgrades for all users at once (instead of per-loop queries)
-        # Uses the Economy 2.0 user_tech / tech_dictionary tables
-        from upgrades import get_upgrades as _get_upgrades
+        # Preload all upgrades for all users at once (instead of per-user calls)
+        legacy_upgrade_to_tech = {
+            "betterengineering": "better_engineering",
+            "cheapermaterials": "cheaper_materials",
+            "onlineshopping": "online_shopping",
+            "governmentregulation": "government_regulation",
+            "nationalhealthinstitution": "national_health_institution",
+            "highspeedrail": "high_speed_rail",
+            "advancedmachinery": "advanced_machinery",
+            "strongerexplosives": "stronger_explosives",
+            "widespreadpropaganda": "widespread_propaganda",
+            "increasedfunding": "increased_funding",
+            "automationintegration": "automation_integration",
+            "largerforges": "larger_forges",
+            "lootingteams": "looting_teams",
+            "organizedsupplylines": "organized_supply_lines",
+            "largestorehouses": "large_storehouses",
+            "ballisticmissilesilo": "ballistic_missile_silo",
+            "icbmsilo": "icbm_silo",
+            "nucleartestingfacility": "nuclear_testing_facility",
+        }
+        tech_to_legacy = {v: k for k, v in legacy_upgrade_to_tech.items()}
 
-        upgrades_map = {}
+        upgrades_map = {
+            uid: {k: False for k in legacy_upgrade_to_tech.keys()}
+            for uid in all_user_ids
+        }
         if all_user_ids:
-            for uid in all_user_ids:
-                upgrades_map[uid] = _get_upgrades(uid)
+            dbdict.execute(
+                """
+                SELECT ut.user_id, td.name
+                FROM user_tech ut
+                JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+                WHERE ut.user_id = ANY(%s) AND ut.is_unlocked = TRUE
+                """,
+                (all_user_ids,),
+            )
+            for row in dbdict.fetchall():
+                user_id = row["user_id"]
+                legacy_key = tech_to_legacy.get(row["name"])
+                if legacy_key and user_id in upgrades_map:
+                    upgrades_map[user_id][legacy_key] = True
 
         # Preload all policies for all users at once
         policies_map = {}
@@ -2011,41 +2080,13 @@ def generate_province_revenue():  # Runs each hour
         # This avoids race conditions with other tasks modifying resources
         resource_deltas = {uid: {} for uid in all_user_ids}
 
-        # Ensure all users have user_economy rows for all resources (batch insert)
-        if all_user_ids:
-            # Get all resource_ids from resource_dictionary
-            dbdict.execute("SELECT resource_id FROM resource_dictionary")
-            resource_ids = [row["resource_id"] for row in dbdict.fetchall()]
-
-            # Build list of (user_id, resource_id, 0) tuples for all combinations
-            insert_params = [
-                (uid, rid, 0) for uid in all_user_ids for rid in resource_ids
-            ]
-
-            try:
-                execute_batch(
-                    db,
-                    (
-                        "INSERT INTO user_economy (user_id, resource_id, "
-                        "quantity) VALUES (%s, %s, %s) ON CONFLICT "
-                        "(user_id, resource_id) DO NOTHING"
-                    ),
-                    insert_params,
-                )
-            except AttributeError:
-                # db (fake cursor in tests) may not support mogrify/extras
-                # helpers; fall back
-                for uid, rid, qty in insert_params:
-                    db.execute(
-                        "INSERT INTO user_economy (user_id, resource_id, "
-                        "quantity) VALUES (%s, %s, %s) ON CONFLICT "
-                        "(user_id, resource_id) DO NOTHING",
-                        (uid, rid, qty),
-                    )
+        # No blanket user_economy prefill here.
+        # Resource writes below already use UPSERT and create missing rows lazily,
+        # avoiding N(users*resources) conflict checks on every hourly run.
         # Track accumulated changes for batch updates at end
         gold_deductions = {}  # user_id -> total_deducted
 
-        # Preload province data for effects tracking
+        # Preload province data for effects + demographics tracking
         # (happiness, productivity, pollution, consumer_spending, energy)
         provinces_data = {}  # province_id -> {happiness, productivity, pollution,
         # consumer_spending, energy, ...}
@@ -2053,7 +2094,10 @@ def generate_province_revenue():  # Runs each hour
             dbdict.execute(
                 """
                 SELECT id, happiness, productivity, pollution, consumer_spending,
-                       energy, population
+                       energy, population,
+                       COALESCE(pop_children, 0) AS pop_children,
+                       COALESCE(pop_working, 0) AS pop_working,
+                       COALESCE(pop_elderly, 0) AS pop_elderly
                 FROM provinces WHERE id = ANY(%s)
             """,
                 (all_province_ids,),
@@ -2073,6 +2117,9 @@ def generate_province_revenue():  # Runs each hour
                             "consumer_spending": row[4] if len(row) > 4 else 50,
                             "energy": 0,
                             "population": row[6] if len(row) > 6 else 0,
+                            "pop_children": row[7] if len(row) > 7 else 0,
+                            "pop_working": row[8] if len(row) > 8 else 0,
+                            "pop_elderly": row[9] if len(row) > 9 else 0,
                         }
                     # Reset energy to 0 (will be built up by nuclear_reactors)
                     prov_dict["energy"] = 0
@@ -2087,15 +2134,119 @@ def generate_province_revenue():  # Runs each hour
                         "consumer_spending": 50,
                         "energy": 0,
                         "population": 0,
+                        "pop_children": 0,
+                        "pop_working": 0,
+                        "pop_elderly": 0,
                     }
 
         # PHASE 3: Pre-calculate workforce debuffs for all users once
-        # (before processing provinces)
+        # (before processing provinces) using bulk-loaded data only.
         workforce_debuffs = {}
         if variables.FEATURE_PHASE3_WORKFORCE:
+            # Preload demographics totals by user in one query
+            dbdict.execute(
+                """
+                SELECT userId,
+                       COALESCE(SUM(pop_working), 0) AS total_pop_working,
+                       COALESCE(SUM(pop_elderly), 0) AS total_pop_elderly,
+                       COALESCE(SUM(edu_none), 0) AS edu_none,
+                       COALESCE(SUM(edu_highschool), 0) AS edu_highschool,
+                       COALESCE(SUM(edu_college), 0) AS edu_college
+                FROM provinces
+                WHERE userId = ANY(%s)
+                GROUP BY userId
+                """,
+                (all_user_ids,),
+            )
+            workforce_demo = {
+                row["userid"]: {
+                    "total_pop_working": int(row["total_pop_working"] or 0),
+                    "total_pop_elderly": int(row["total_pop_elderly"] or 0),
+                    "edu_none": int(row["edu_none"] or 0),
+                    "edu_highschool": int(row["edu_highschool"] or 0),
+                    "edu_college": int(row["edu_college"] or 0),
+                }
+                for row in dbdict.fetchall()
+            }
+
+            # Preload user building counts (all provinces) in one query
+            dbdict.execute(
+                """
+                SELECT ub.user_id, bd.name, COALESCE(SUM(ub.quantity), 0) AS count
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = ANY(%s)
+                GROUP BY ub.user_id, bd.name
+                """,
+                (all_user_ids,),
+            )
+            user_building_counts = {}
+            for row in dbdict.fetchall():
+                uid = row["user_id"]
+                if uid not in user_building_counts:
+                    user_building_counts[uid] = {}
+                user_building_counts[uid][row["name"]] = int(row["count"] or 0)
+
+            building_matrices = variables.BUILDING_EMPLOYMENT_MATRICES
             for uid in all_user_ids:
                 try:
-                    debuff_report = apply_workforce_hiring_and_debuffs(uid)
+                    demo = workforce_demo.get(
+                        uid,
+                        {
+                            "total_pop_working": 0,
+                            "total_pop_elderly": 0,
+                            "edu_none": 0,
+                            "edu_highschool": 0,
+                            "edu_college": 0,
+                        },
+                    )
+
+                    jobs_available = (
+                        demo["edu_none"] + demo["edu_highschool"] + demo["edu_college"]
+                    )
+                    total_pop_working = demo["total_pop_working"]
+                    total_pop_elderly = demo["total_pop_elderly"]
+
+                    building_counts = user_building_counts.get(uid, {})
+                    jobs_needed = 0
+                    for building_name, matrix_data in building_matrices.items():
+                        workers_per = matrix_data.get("worker_count", 0)
+                        jobs_needed += workers_per * building_counts.get(
+                            building_name, 0
+                        )
+
+                    unemployment_rate = 0.0
+                    pension_ratio = 0.0
+                    if total_pop_working > 0:
+                        unemployment_rate = max(
+                            0.0, 1.0 - (jobs_available / total_pop_working)
+                        )
+                        pension_ratio = total_pop_elderly / total_pop_working
+
+                    if jobs_needed > 0:
+                        employment_ratio = jobs_available / jobs_needed
+                        efficiency_multiplier = max(
+                            variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio
+                        )
+                    else:
+                        efficiency_multiplier = 1.0
+
+                    happiness_penalty = 0
+                    gold_penalty = 0
+                    if unemployment_rate > variables.UNEMPLOYMENT_THRESHOLD:
+                        happiness_penalty = variables.UNEMPLOYMENT_HAPPINESS_PENALTY
+                    if pension_ratio > variables.PENSION_CRISIS_RATIO:
+                        gold_penalty = variables.PENSION_CRISIS_GOLD_PENALTY
+
+                    debuff_report = {
+                        "jobs_needed": int(jobs_needed),
+                        "jobs_available": int(jobs_available),
+                        "unemployment_rate": float(unemployment_rate),
+                        "pension_ratio": float(pension_ratio),
+                        "efficiency_multiplier": float(efficiency_multiplier),
+                        "happiness_penalty": int(happiness_penalty),
+                        "gold_penalty": int(gold_penalty),
+                    }
                     workforce_debuffs[uid] = debuff_report
                 except Exception as e:
                     log_verbose(
@@ -2119,14 +2270,94 @@ def generate_province_revenue():  # Runs each hour
         # Track happiness penalties per province (to apply after batch writes)
         happiness_penalties = {}  # province_id -> penalty_amount
 
+        # Track education updates from aging to batch-write once
+        education_deltas = {}  # province_id -> {edu_none, edu_highschool, edu_college}
+
         for province_id, user_id, land, productivity in infra_ids:
-            # PHASE 3: Apply population aging to this province
-            try:
-                apply_population_aging(province_id)
-            except Exception as e:
-                log_verbose(
-                    f"apply_population_aging failed for " f"province {province_id}: {e}"
-                )
+            # PHASE 3: Apply population aging using preloaded in-memory data.
+            # This avoids per-province query/update churn during hourly revenue tick.
+            if variables.FEATURE_PHASE3_WORKFORCE and province_id in provinces_data:
+                try:
+                    prov = provinces_data[province_id]
+                    pop_children = int(prov.get("pop_children", 0) or 0)
+                    pop_working = int(prov.get("pop_working", 0) or 0)
+                    pop_elderly = int(prov.get("pop_elderly", 0) or 0)
+
+                    policies = policies_map.get(user_id, []) or []
+                    province_buildings = buildings_map.get(province_id, {})
+
+                    elderly_death_rate = variables.DEMO_AGING_RATES["elderly_death"]
+                    if variables.POLICY_UNIVERSAL_HEALTHCARE in policies:
+                        elderly_death_rate *= (
+                            variables.POLICY_HEALTHCARE_ELDERLY_DEATH_REDUCTION
+                        )
+
+                    elderly_deaths = int(round(pop_elderly * elderly_death_rate))
+                    pop_elderly = max(0, pop_elderly - elderly_deaths)
+
+                    working_to_elderly = int(
+                        round(
+                            pop_working
+                            * variables.DEMO_AGING_RATES["working_to_elderly"]
+                        )
+                    )
+                    pop_elderly += working_to_elderly
+                    pop_working = max(0, pop_working - working_to_elderly)
+
+                    graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
+                    if variables.POLICY_MANDATORY_SCHOOLING in policies:
+                        graduation_rate *= (
+                            variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
+                        )
+
+                    can_graduate = min(
+                        pop_children, int(round(pop_children * graduation_rate))
+                    )
+                    school_buildings = int(
+                        province_buildings.get("high_school", 0) or 0
+                    ) + int(province_buildings.get("university", 0) or 0)
+                    school_capacity = school_buildings * 100
+                    graduates = (
+                        min(can_graduate, school_capacity // 100)
+                        if school_capacity > 0
+                        else 0
+                    )
+                    non_graduates = can_graduate - graduates
+
+                    if province_id not in education_deltas:
+                        education_deltas[province_id] = {
+                            "edu_none": 0,
+                            "edu_highschool": 0,
+                            "edu_college": 0,
+                        }
+
+                    if graduates > 0:
+                        grad_priority = variables.EDUCATION_GRADUATION_PRIORITY
+                        for edu_level in grad_priority:
+                            if edu_level == "university":
+                                education_deltas[province_id][
+                                    "edu_college"
+                                ] += graduates
+                            elif edu_level == "high_school":
+                                education_deltas[province_id][
+                                    "edu_highschool"
+                                ] += graduates
+                            break
+
+                    if non_graduates > 0:
+                        education_deltas[province_id]["edu_none"] += non_graduates
+
+                    pop_working += can_graduate
+                    pop_children = max(0, pop_children - can_graduate)
+
+                    prov["pop_children"] = pop_children
+                    prov["pop_working"] = pop_working
+                    prov["pop_elderly"] = pop_elderly
+                except Exception as e:
+                    log_verbose(
+                        "In-memory population aging failed for province"
+                        f" {province_id}: {e}"
+                    )
 
             # Initialize tracking for this user
             if user_id not in gold_deductions:
@@ -2134,9 +2365,6 @@ def generate_province_revenue():  # Runs each hour
 
             # Use preloaded upgrades instead of per-loop query
             upgrades = upgrades_map.get(user_id, {})
-            if not upgrades:
-                upgrades = _get_upgrades(user_id)
-                upgrades_map[user_id] = upgrades
 
             # Use preloaded policies instead of per-loop query
             policies = policies_map.get(user_id, [])
@@ -2631,6 +2859,9 @@ def generate_province_revenue():  # Runs each hour
                             min(100, max(0, data.get("pollution", 0))),
                             min(100, max(0, data.get("consumer_spending", 50))),
                             data.get("energy", 0),
+                            max(0, int(data.get("pop_children", 0) or 0)),
+                            max(0, int(data.get("pop_working", 0) or 0)),
+                            max(0, int(data.get("pop_elderly", 0) or 0)),
                             pid,
                         )
                     )
@@ -2644,7 +2875,10 @@ def generate_province_revenue():  # Runs each hour
                                 productivity = %s,
                                 pollution = %s,
                                 consumer_spending = %s,
-                                energy = %s
+                                energy = %s,
+                                pop_children = %s,
+                                pop_working = %s,
+                                pop_elderly = %s
                             WHERE id = %s
                         """,
                             province_updates,
@@ -2659,12 +2893,49 @@ def generate_province_revenue():  # Runs each hour
                                     productivity = %s,
                                     pollution = %s,
                                     consumer_spending = %s,
-                                    energy = %s
+                                    energy = %s,
+                                    pop_children = %s,
+                                    pop_working = %s,
+                                    pop_elderly = %s
                                 WHERE id = %s
                             """,
                                 params,
                             )
                     log_verbose(f"Batch updated {len(province_updates)} provinces")
+        except Exception as e:
+            conn.rollback()
+            handle_exception(e)
+
+        # Batch apply education deltas from aging
+        try:
+            if education_deltas:
+                edu_updates = [
+                    (
+                        delta.get("edu_none", 0),
+                        delta.get("edu_highschool", 0),
+                        delta.get("edu_college", 0),
+                        pid,
+                    )
+                    for pid, delta in education_deltas.items()
+                    if (
+                        delta.get("edu_none", 0)
+                        or delta.get("edu_highschool", 0)
+                        or delta.get("edu_college", 0)
+                    )
+                ]
+                if edu_updates:
+                    execute_batch(
+                        db,
+                        """
+                        UPDATE provinces
+                        SET edu_none = COALESCE(edu_none, 0) + %s,
+                            edu_highschool = COALESCE(edu_highschool, 0) + %s,
+                            edu_college = COALESCE(edu_college, 0) + %s
+                        WHERE id = %s
+                        """,
+                        edu_updates,
+                        page_size=100,
+                    )
         except Exception as e:
             conn.rollback()
             handle_exception(e)
@@ -3683,3 +3954,50 @@ def task_execute_trade_agreements():
 def task_global_tick():
     """Celery task for normalized global production/consumption tick."""
     _run_with_deadlock_retries(global_tick, "global_tick")
+
+    # Safety net: if hourly province revenue stalls, kick it from global tick.
+    # This avoids long "resources frozen" windows when beat scheduling misses.
+    try:
+        stale_seconds = int(os.getenv("PROV_REV_STALE_SECONDS", "5400"))
+        if is_task_stale("generate_province_revenue", stale_seconds):
+            print(
+                "global_tick watchdog: generate_province_revenue appears stale; "
+                "triggering recovery run"
+            )
+            _run_with_deadlock_retries(
+                generate_province_revenue,
+                "generate_province_revenue_watchdog",
+            )
+    except Exception as e:
+        print(f"global_tick watchdog failed: {e}")
+
+    # Safety net: if population growth stalls, recover it from global tick too.
+    # Keeps food/population mechanics from appearing "frozen" between scheduler gaps.
+    try:
+        stale_seconds = int(os.getenv("POP_GROWTH_STALE_SECONDS", "5400"))
+        if is_task_stale("population_growth", stale_seconds):
+            print(
+                "global_tick watchdog: population_growth appears stale; "
+                "triggering recovery run"
+            )
+            _run_with_deadlock_retries(
+                population_growth,
+                "population_growth_watchdog",
+            )
+    except Exception as e:
+        print(f"global_tick population watchdog failed: {e}")
+
+    # Safety net: recover tax income loop if it stalls.
+    try:
+        stale_seconds = int(os.getenv("TAX_INCOME_STALE_SECONDS", "5400"))
+        if is_task_stale("tax_income", stale_seconds):
+            print(
+                "global_tick watchdog: tax_income appears stale; "
+                "triggering recovery run"
+            )
+            _run_with_deadlock_retries(
+                tax_income,
+                "tax_income_watchdog",
+            )
+    except Exception as e:
+        print(f"global_tick tax watchdog failed: {e}")
