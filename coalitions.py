@@ -35,7 +35,7 @@ def coalition(coalition_id):
         cId = session["user_id"]
 
         # OPTIMIZATION: Single query for basic coalition info + member count + total influence
-        # Uses a pre-aggregated subquery to avoid N+1 per-member population lookups
+        # Only aggregates provinces for members of THIS coalition (not all users)
         db.execute(
             """
             SELECT
@@ -45,14 +45,15 @@ def coalition(coalition_id):
             FROM colNames c
             LEFT JOIN coalitions_legacy coal ON c.id = coal.colid
             LEFT JOIN (
-                SELECT userId, COALESCE(SUM(population), 0) AS total_pop
-                FROM provinces
-                GROUP BY userId
+                SELECT p.userId, COALESCE(SUM(p.population), 0) AS total_pop
+                FROM provinces p
+                WHERE p.userId IN (SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s)
+                GROUP BY p.userId
             ) prov ON coal.userid = prov.userId
             WHERE c.id = %s
             GROUP BY c.id, c.name, c.type, c.description, c.flag, c.name_changes_used
             """,
-            (coalition_id,),
+            (coalition_id, coalition_id),
         )
         result = db.fetchone()
         if not result:
@@ -117,6 +118,7 @@ def coalition(coalition_id):
         try:
             # stats table has no influence column; keep list lightweight and avoid bad column reference
             # Uses pre-aggregated subquery to avoid N+1 per-member province count lookups
+            # Only aggregates provinces for THIS coalition's members
             db.execute(
                 """
                 SELECT coalitions_legacy.userid,
@@ -128,13 +130,14 @@ def coalition(coalition_id):
                 FROM coalitions_legacy
                 INNER JOIN users ON coalitions_legacy.userid = users.id
                 LEFT JOIN (
-                    SELECT userId, COUNT(*) AS province_count
-                    FROM provinces
-                    GROUP BY userId
+                    SELECT p.userId, COUNT(*) AS province_count
+                    FROM provinces p
+                    WHERE p.userId IN (SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s)
+                    GROUP BY p.userId
                 ) prov ON coalitions_legacy.userid = prov.userId
                 WHERE coalitions_legacy.colid = %s
                 """,
-                (coalition_id,),
+                (coalition_id, coalition_id),
             )
             members = db.fetchall()
         except (TypeError, AttributeError, IndexError):
@@ -660,6 +663,7 @@ def coalitions():
             LEFT JOIN (
                 SELECT userid, COALESCE(SUM(population), 0) AS total_pop
                 FROM provinces
+                WHERE userid IN (SELECT userid FROM coalitions_legacy)
                 GROUP BY userid
             ) prov ON cm.userid = prov.userid
             {where_clause}
@@ -1626,6 +1630,242 @@ def decline_treaty(offer_id):
     return redirect("/my_coalition")
 
 
+def send_coalition_invite(nation_id):
+    """Send an invitation to a player to join the user's coalition"""
+    from flask import request
+
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Check if user is in a coalition and is a leader/deputy
+        db.execute(
+            "SELECT colid, role FROM coalitions_legacy WHERE userid=%s",
+            (user_id,),
+        )
+        my_coalition = db.fetchone()
+        if not my_coalition:
+            return error(400, "You are not in a coalition")
+
+        coalition_id, user_role = my_coalition
+        if user_role not in ["leader", "deputy_leader"]:
+            return error(400, "Only leaders and deputies can send invitations")
+
+        # Check that the target nation exists and is not already in the coalition
+        db.execute(
+            "SELECT id FROM users WHERE id=%s",
+            (nation_id,),
+        )
+        if not db.fetchone():
+            return error(404, "Nation not found")
+
+        # Check if target is already in a coalition
+        db.execute(
+            "SELECT colid FROM coalitions_legacy WHERE userid=%s",
+            (nation_id,),
+        )
+        if db.fetchone():
+            return error(400, "This nation is already in a coalition")
+
+        # Check for duplicate pending invites
+        db.execute(
+            "SELECT id FROM coalition_invites WHERE coalition_id=%s AND invited_user_id=%s AND status='pending'",
+            (coalition_id, nation_id),
+        )
+        if db.fetchone():
+            return error(
+                400, "You have already sent a pending invitation to this nation"
+            )
+
+        # Send the invite
+        db.execute(
+            "INSERT INTO coalition_invites (coalition_id, invited_user_id, invited_by_user_id) VALUES (%s, %s, %s)",
+            (coalition_id, nation_id, user_id),
+        )
+
+    return redirect(f"/nation/{nation_id}")
+
+
+def view_coalition_invites():
+    """View incoming invitations for the current player"""
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Get pending invites for this user
+        db.execute(
+            """
+            SELECT ci.id, ci.coalition_id, cn.name, u.username, ci.created_at
+            FROM coalition_invites ci
+            JOIN colNames cn ON cn.id = ci.coalition_id
+            JOIN users u ON u.id = ci.invited_by_user_id
+            WHERE ci.invited_user_id=%s AND ci.status='pending'
+            ORDER BY ci.created_at DESC
+            """,
+            (user_id,),
+        )
+        incoming_invites = db.fetchall()
+
+    return render_template("coalition_invites.html", incoming_invites=incoming_invites)
+
+
+def accept_coalition_invite(invite_id):
+    """Accept a coalition invitation"""
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Get the invite
+        db.execute(
+            "SELECT coalition_id, invited_user_id FROM coalition_invites WHERE id=%s AND status='pending'",
+            (invite_id,),
+        )
+        invite = db.fetchone()
+        if not invite:
+            return error(404, "Invitation not found or already processed")
+
+        coalition_id, invited_user_id = invite
+        if invited_user_id != user_id:
+            return error(403, "This invitation is not for you")
+
+        # Check if user is already in a coalition
+        db.execute(
+            "SELECT colid FROM coalitions_legacy WHERE userid=%s",
+            (user_id,),
+        )
+        if db.fetchone():
+            return error(400, "You are already in a coalition")
+
+        # Add user to coalition
+        db.execute(
+            "INSERT INTO coalitions_legacy (colid, userid, role) VALUES (%s, %s, %s)",
+            (coalition_id, user_id, "member"),
+        )
+
+        # Mark invite as accepted
+        db.execute(
+            "UPDATE coalition_invites SET status='accepted' WHERE id=%s",
+            (invite_id,),
+        )
+
+        # Notify leaders
+        db.execute(
+            "SELECT userid FROM coalitions_legacy WHERE colid=%s AND role IN ('leader', 'deputy_leader')",
+            (coalition_id,),
+        )
+        leader_rows = db.fetchall()
+        if leader_rows:
+            db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
+            username_row = db.fetchone()
+            username = username_row[0] if username_row else str(user_id)
+            db.execute("SELECT name FROM colNames WHERE id=%s", (coalition_id,))
+            coal_row = db.fetchone()
+            coal_name = coal_row[0] if coal_row else f"Coalition {coalition_id}"
+            notif = f"{username} accepted invitation to join {coal_name}"
+
+            placeholders = ",".join(["(%s, %s, NOW())"] * len(leader_rows))
+            values = []
+            for leader_row in leader_rows:
+                values.extend([leader_row[0], notif])
+            db.execute(
+                f"INSERT INTO news (destination_id, message, date) VALUES {placeholders}",
+                values,
+            )
+
+    return redirect("/coalitions")
+
+
+def reject_coalition_invite(invite_id):
+    """Reject a coalition invitation"""
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Get the invite
+        db.execute(
+            "SELECT coalition_id, invited_user_id FROM coalition_invites WHERE id=%s AND status='pending'",
+            (invite_id,),
+        )
+        invite = db.fetchone()
+        if not invite:
+            return error(404, "Invitation not found or already processed")
+
+        coalition_id, invited_user_id = invite
+        if invited_user_id != user_id:
+            return error(403, "This invitation is not for you")
+
+        # Mark invite as rejected
+        db.execute(
+            "UPDATE coalition_invites SET status='rejected' WHERE id=%s",
+            (invite_id,),
+        )
+
+    return redirect("/coalitions")
+
+
+def revoke_coalition_invite(invite_id):
+    """Revoke a sent invitation (leaders/deputies only)"""
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Check if user is leader/deputy
+        db.execute(
+            "SELECT colid, role FROM coalitions_legacy WHERE userid=%s",
+            (user_id,),
+        )
+        my_coalition = db.fetchone()
+        if not my_coalition or my_coalition[1] not in ["leader", "deputy_leader"]:
+            return error(403, "Only leaders can revoke invitations")
+
+        coalition_id = my_coalition[0]
+
+        # Get the invite
+        db.execute(
+            "SELECT id FROM coalition_invites WHERE id=%s AND coalition_id=%s AND status='pending'",
+            (invite_id, coalition_id),
+        )
+        if not db.fetchone():
+            return error(404, "Invitation not found")
+
+        # Mark invite as revoked
+        db.execute(
+            "UPDATE coalition_invites SET status='revoked' WHERE id=%s",
+            (invite_id,),
+        )
+
+    return redirect("/my_coalition")
+
+
+def view_outgoing_invites():
+    """View outgoing invitations sent by leaders/deputies"""
+    user_id = session["user_id"]
+
+    with get_db_cursor() as db:
+        # Check if user is leader/deputy
+        db.execute(
+            "SELECT colid, role FROM coalitions_legacy WHERE userid=%s",
+            (user_id,),
+        )
+        my_coalition = db.fetchone()
+        if not my_coalition or my_coalition[1] not in ["leader", "deputy_leader"]:
+            return error(403, "Only leaders can view outgoing invitations")
+
+        coalition_id = my_coalition[0]
+
+        # Get pending outgoing invites
+        db.execute(
+            """
+            SELECT ci.id, ci.invited_user_id, u.username, ci.created_at, ci.status
+            FROM coalition_invites ci
+            JOIN users u ON u.id = ci.invited_user_id
+            WHERE ci.coalition_id=%s
+            ORDER BY ci.created_at DESC
+            """,
+            (coalition_id,),
+        )
+        outgoing_invites = db.fetchall()
+
+    return render_template(
+        "coalition_outgoing_invites.html", outgoing_invites=outgoing_invites
+    )
+
+
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
 
@@ -1656,83 +1896,47 @@ def register_coalitions_routes(app_instance):
         "/coalition/<coalition_id>", view_func=coalition_wrapped, methods=["GET"]
     )
 
-    # Apply to coalition (GET form + POST submit)
-    def apply_to_coalition(coalition_id):
-        from flask import request
-
-        with get_db_cursor() as db:
-            # Check coalition exists
-            db.execute("SELECT name FROM colNames WHERE id=%s", (coalition_id,))
-            row = db.fetchone()
-            if not row:
-                return error(404, "Coalition not found")
-            coalition_name = row[0]
-
-            # If POST, insert application
-            if request.method == "POST":
-                message = request.form.get("message")
-                user_id = session["user_id"]
-
-                # Check if already member
-                db.execute(
-                    "SELECT userid FROM coalitions_legacy WHERE userid=%s", (user_id,)
-                )
-                if db.fetchone():
-                    return error(400, "You are already in a coalition")
-
-                # Prevent duplicate applications
-                db.execute(
-                    "SELECT id FROM col_applications WHERE colId=%s AND userId=%s AND status='pending'",
-                    (coalition_id, user_id),
-                )
-                if db.fetchone():
-                    return error(
-                        400, "You already have a pending application to this coalition"
-                    )
-
-                db.execute(
-                    "INSERT INTO col_applications (colId, userId, message) VALUES (%s, %s, %s)",
-                    (coalition_id, user_id, message),
-                )
-
-                # Notify leaders by adding news
-                db.execute(
-                    "SELECT userid FROM coalitions_legacy WHERE colid=%s AND role IN ('leader','deputy_leader')",
-                    (coalition_id,),
-                )
-                leader_rows = db.fetchall()
-                if leader_rows:
-                    # Fetch applicant username
-                    db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
-                    row = db.fetchone()
-                    username = row[0] if row else str(user_id)
-                    notif = f"{username} applied to join coalition {coalition_name}"
-                    # Batch INSERT all leader notifications in a single query
-                    placeholders = ",".join(["(%s, %s, NOW())"] * len(leader_rows))
-                    values = []
-                    for leader_row in leader_rows:
-                        values.extend([leader_row[0], notif])
-                    db.execute(
-                        f"INSERT INTO news (destination_id, message, date) VALUES {placeholders}",
-                        values,
-                    )
-
-                return render_template(
-                    "verification_pending.html",
-                    email=None,
-                    message="Application submitted!",
-                )
-
-            # GET - render form
-            return render_template(
-                "apply_to_coalition.html", coalition_name=coalition_name
-            )
-
     apply_to_coalition_wrapped = login_required(apply_to_coalition)
+    send_coalition_invite_wrapped = login_required(send_coalition_invite)
+    view_coalition_invites_wrapped = login_required(view_coalition_invites)
+    accept_coalition_invite_wrapped = login_required(accept_coalition_invite)
+    reject_coalition_invite_wrapped = login_required(reject_coalition_invite)
+    revoke_coalition_invite_wrapped = login_required(revoke_coalition_invite)
+    view_outgoing_invites_wrapped = login_required(view_outgoing_invites)
     app_instance.add_url_rule(
         "/coalition/<coalition_id>/apply",
         view_func=apply_to_coalition_wrapped,
         methods=["GET", "POST"],
+    )
+    app_instance.add_url_rule(
+        "/nation/<nation_id>/invite",
+        view_func=send_coalition_invite_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition_invites",
+        view_func=view_coalition_invites_wrapped,
+        methods=["GET"],
+    )
+    app_instance.add_url_rule(
+        "/coalition_invite/<invite_id>/accept",
+        view_func=accept_coalition_invite_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition_invite/<invite_id>/reject",
+        view_func=reject_coalition_invite_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition_invite/<invite_id>/revoke",
+        view_func=revoke_coalition_invite_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/outgoing_invites",
+        view_func=view_outgoing_invites_wrapped,
+        methods=["GET"],
     )
     app_instance.add_url_rule(
         "/establish_coalition",

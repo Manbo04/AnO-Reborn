@@ -128,10 +128,10 @@ def get_revenue(cId):
         # Removed cg_need() call - it opens a separate connection
         # We calculate it inline below with data we already have
 
-        # Prefetch province ids, land and productivity
-        # to avoid per-province lookups later
+        # Prefetch province ids, land, productivity, and population
+        # in a single query to avoid repeated province lookups later
         db.execute(
-            "SELECT id, land, productivity FROM provinces WHERE userid=%s",
+            "SELECT id, land, productivity, population FROM provinces WHERE userid=%s",
             (cId,),
         )
         province_rows = db.fetchall()
@@ -265,8 +265,9 @@ def get_revenue(cId):
         except Exception:
             policies = []
 
-        db.execute("SELECT population, land FROM provinces WHERE userid=%s", (cId,))
-        ti_provinces = db.fetchall()
+        # Reuse already-fetched province data for tax income calculation
+        # province_rows is (id, land, productivity, population)
+        ti_provinces = [(row[3], row[1]) for row in province_rows]  # (pop, land)
 
         ti_money = 0
         if ti_provinces:
@@ -299,14 +300,8 @@ def get_revenue(cId):
         revenue["gross"]["money"] += ti_money
         revenue["net"]["money"] += ti_money
 
-        # For net consumer goods, use the theoretical citizen need (cg_need)
-        # rather than ti_cg (which is based on current stockpile).
-        # This shows users: net = gross production - citizen consumption need
-        # which is what they expect to see for understanding production balance.
-        # Get population to calculate theoretical cg need
-        db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (cId,))
-        pop_row = db.fetchone()
-        total_population = pop_row[0] if pop_row and pop_row[0] else 0
+        # Reuse already-fetched data for CG need calculation
+        total_population = sum(row[3] or 0 for row in province_rows)
         citizen_cg_need = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
 
         # Net consumer goods = gross production - citizen need
@@ -316,18 +311,12 @@ def get_revenue(cId):
         )
 
         prod_rations = revenue["gross"]["rations"]
-        # Calculate next turn rations inline to avoid opening new connection
-        # Get current rations (already have it from earlier query)
+        # Calculate next turn rations inline using already-fetched data
         current_rations_for_calc = current_rations + prod_rations
-        # Calculate consumption
-        db.execute(
-            "SELECT population FROM provinces WHERE userid=%s",
-            (cId,),
-        )
-        prov_pops = db.fetchall()
+        # Calculate consumption from already-fetched province_rows
         total_rations_needed = 0
-        for (pop,) in prov_pops:
-            province_pop = pop if pop else 0
+        for row in province_rows:
+            province_pop = row[3] if row[3] else 0  # index 3 is population
             province_consumption = province_pop // variables.RATIONS_PER
             if province_consumption < 1:
                 province_consumption = 1
@@ -502,10 +491,11 @@ def country(cId):
                           SUM(COALESCE(pop_working, 0)) AS total_working,
                           SUM(COALESCE(pop_elderly, 0)) AS total_elderly
                    FROM provinces
+                   WHERE userid = %s
                    GROUP BY userid
                ) p ON u.id = p.userid
                WHERE u.id=%s""",
-            (cId,),
+            (cId, cId),
         )
         row = db.fetchone()
         if not row:
@@ -1043,19 +1033,29 @@ def update_info():
             return error(400, "No such continent")
 
         if new_location not in ["", "none"]:
-            db.execute("SELECT id FROM provinces WHERE userid=%s", (cId,))
-            provinces = db.fetchall()
-
-            # OPTIMIZATION: Batch update all provinces in ONE query instead of N queries
-            if provinces:
-                province_ids = [p[0] for p in provinces]
-                placeholders = ",".join(["%s"] * len(province_ids))
-                sql = (
-                    "UPDATE proInfra SET pumpjacks=0, coal_mines=0, bauxite_mines=0, "
-                    "copper_mines=0, uranium_mines=0, lead_mines=0, iron_mines=0, "
-                    "lumber_mills=0 WHERE id IN ({placeholders})"
-                )
-                db.execute(sql.format(placeholders=placeholders), tuple(province_ids))
+            # Reset raw-extraction buildings when changing biome/location.
+            # Legacy schema used proInfra rows keyed by province id; normalized
+            # schema stores these in user_buildings keyed by user_id.
+            db.execute(
+                """
+                UPDATE user_buildings ub
+                SET quantity = 0
+                FROM building_dictionary bd
+                WHERE ub.building_id = bd.building_id
+                  AND ub.user_id = %s
+                  AND bd.name IN (
+                      'pumpjacks',
+                      'coal_mines',
+                      'bauxite_mines',
+                      'copper_mines',
+                      'uranium_mines',
+                      'lead_mines',
+                      'iron_mines',
+                      'lumber_mills'
+                  )
+                """,
+                (cId,),
+            )
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
 
     return redirect(f"/country/id={cId}")  # Redirects the user to his country

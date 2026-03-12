@@ -153,57 +153,70 @@ def before_request():
 
     user_id = session.get("user_id")
 
-    # Enforce admin ban / kick controls (table may not exist on older DBs)
+    # Enforce admin ban / kick controls with session-level caching.
+    # Only query the DB every 60 seconds per user to avoid a round-trip
+    # on literally every request.
     if user_id:
-        try:
-            with get_db_cursor() as _db:
-                _db.execute(
-                    """
-                    SELECT COALESCE(is_banned, FALSE),
-                           COALESCE(ban_reason, ''),
-                           COALESCE(kick_pending, FALSE)
-                    FROM admin_user_controls
-                    WHERE user_id = %s
-                    """,
-                    (user_id,),
-                )
-                control_row = _db.fetchone()
-
-            if control_row:
-                is_banned, ban_reason, kick_pending = control_row
-
-                if is_banned:
-                    session.clear()
-                    return (
-                        render_template(
-                            "error.html",
-                            code=403,
-                            message=(
-                                "Your account is banned. "
-                                f"Reason: {ban_reason or 'No reason provided.'}"
-                            ),
-                        ),
-                        403,
+        _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
+        _ctrl_stale = (time() - _ctrl_cache_ts) > 60  # refresh every 60s
+        if _ctrl_stale:
+            try:
+                with get_db_cursor() as _db:
+                    _db.execute(
+                        """
+                        SELECT COALESCE(is_banned, FALSE),
+                               COALESCE(ban_reason, ''),
+                               COALESCE(kick_pending, FALSE)
+                        FROM admin_user_controls
+                        WHERE user_id = %s
+                        """,
+                        (user_id,),
                     )
+                    control_row = _db.fetchone()
 
-                if kick_pending:
-                    try:
-                        with get_db_cursor() as _db:
-                            _db.execute(
-                                (
-                                    "UPDATE admin_user_controls "
-                                    "SET kick_pending=FALSE, updated_at=NOW() "
-                                    "WHERE user_id=%s"
-                                ),
-                                (user_id,),
-                            )
-                    except Exception:
-                        pass
+                if control_row:
+                    session["_admin_ctrl"] = list(control_row)
+                else:
+                    session["_admin_ctrl"] = None
+                session["_admin_ctrl_ts"] = time()
+            except Exception:
+                session["_admin_ctrl"] = None
+                session["_admin_ctrl_ts"] = time()
 
-                    session.clear()
-                    return redirect("/login")
-        except Exception:
-            pass
+        control_row = session.get("_admin_ctrl")
+        if control_row:
+            is_banned, ban_reason, kick_pending = control_row
+
+            if is_banned:
+                session.clear()
+                return (
+                    render_template(
+                        "error.html",
+                        code=403,
+                        message=(
+                            "Your account is banned. "
+                            f"Reason: {ban_reason or 'No reason provided.'}"
+                        ),
+                    ),
+                    403,
+                )
+
+            if kick_pending:
+                try:
+                    with get_db_cursor() as _db:
+                        _db.execute(
+                            (
+                                "UPDATE admin_user_controls "
+                                "SET kick_pending=FALSE, updated_at=NOW() "
+                                "WHERE user_id=%s"
+                            ),
+                            (user_id,),
+                        )
+                except Exception:
+                    pass
+
+                session.clear()
+                return redirect("/login")
 
     # Lightweight last_active heartbeat: update at most once per hour
     if user_id:
@@ -908,11 +921,14 @@ def prores(unit):
         price = price * change_price
     try:
         resources = ", ".join(
-            [f"{i[1]} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
+            [
+                f"{weight_fmt(i[1])} {i[0]}"
+                for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()
+            ]
         )
-        full = f"{unit_name} cost {commas(price)}, {resources} each"
+        full = f"{unit_name} cost {fmt(price)}, {resources} each"
     except KeyError:
-        full = f"{unit_name} cost {commas(price)} each"
+        full = f"{unit_name} cost {fmt(price)} each"
     return full
 
 
@@ -931,11 +947,11 @@ def milres(unit):
         price = price * change_price
     try:
         resources = ", ".join(
-            [f"{i[1]} {i[0]}" for i in MILDICT[unit]["resources"].items()]
+            [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
         )
-        full = f"{unit.capitalize()} cost {commas(price)}, {resources} each"
+        full = f"{unit.capitalize()} cost {fmt(price)}, {resources} each"
     except KeyError:
-        full = f"{unit.capitalize()} cost {commas(price)} each"
+        full = f"{unit.capitalize()} cost {fmt(price)} each"
     return full
 
 

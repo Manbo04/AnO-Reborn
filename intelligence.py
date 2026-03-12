@@ -68,15 +68,6 @@ def intelligence():
     if request.method == "GET":
         cId = session["user_id"]
 
-        # Cleanup old spyinfo rows (only run occasionally, not on every request)
-        # This is now done lazily - cleanup happens if we haven't cleaned in 1 hour
-        import random as rand_mod
-
-        if rand_mod.random() < 0.01:  # 1% chance to cleanup on each request
-            with get_db_cursor(cursor_factory=RealDictCursor) as db:
-                cutoff = int(time.time()) - 86400 * 7
-                db.execute("DELETE FROM spyinfo WHERE date < %s", (cutoff,))
-
         data = []
         try:
             with get_db_cursor(cursor_factory=RealDictCursor) as db:

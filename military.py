@@ -181,16 +181,15 @@ def _adjust_resource(db, cId, resource, delta):
     )
 
 
-def compute_display_limits(cId, units_row=None):
+def compute_display_limits(cId, units_row=None, db=None):
     """Return limits as shown on the military page (apaches limited by
     army_bases, fighters/bombers limited by aerodomes).
 
     - `units_row` may be passed (dict) to avoid an extra DB fetch when the
       caller already has current military counts.
+    - `db` may be passed to reuse an existing cursor connection.
     """
-    with get_db_cursor() as db:
-        db.execute(
-            """
+    _query = """
             SELECT
                 COALESCE(
                     SUM(CASE WHEN bd.name='army_bases' THEN ub.quantity ELSE 0 END),
@@ -217,10 +216,15 @@ def compute_display_limits(cId, units_row=None):
             FROM user_buildings ub
             JOIN building_dictionary bd ON bd.building_id = ub.building_id
             WHERE ub.user_id=%s
-            """,
-            (cId,),
-        )
+            """
+
+    if db is not None:
+        db.execute(_query, (cId,))
         army_bases, harbours, aerodomes, admin_buildings, silos = db.fetchone()
+    else:
+        with get_db_cursor() as _db:
+            _db.execute(_query, (cId,))
+            army_bases, harbours, aerodomes, admin_buildings, silos = _db.fetchone()
 
     military = units_row or {}
     for unit in ALL_UNITS:
@@ -272,7 +276,7 @@ def compute_display_limits(cId, units_row=None):
 
 @bp.route("/military", methods=["GET", "POST"])
 @login_required
-@cache_response(ttl_seconds=10)  # Short cache for military page
+@cache_response(ttl_seconds=30)  # Cache military page
 def military():
     cId = session["user_id"]
 
@@ -283,8 +287,9 @@ def military():
             manpower_row = db.fetchone()
             manpower = int(manpower_row[0] or 0) if manpower_row else 0
 
+            limits = compute_display_limits(cId, units_dict, db=db)
+
         upgrades = get_upgrades(cId)  # Now cached in upgrades.py
-        limits = compute_display_limits(cId, units_dict)
 
         return render_template(
             "military.html",
