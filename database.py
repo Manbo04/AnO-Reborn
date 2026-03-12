@@ -15,6 +15,7 @@ from time import time
 import threading
 import queue
 from urllib.parse import urlparse
+from collections import OrderedDict
 
 load_dotenv()
 import config  # Parse Railway DATABASE_URL  # noqa: E402
@@ -125,7 +126,23 @@ def cache_response(ttl_seconds=60):
     """
 
     def decorator(f):
-        cache = {}
+        cache = OrderedDict()
+        max_entries = int(os.getenv("RESPONSE_CACHE_MAX_ENTRIES", "2000"))
+
+        def _evict_expired_entries(now_ts):
+            expired = [k for k, (_, ts) in cache.items() if now_ts - ts >= ttl_seconds]
+            for k in expired:
+                try:
+                    del cache[k]
+                except KeyError:
+                    pass
+
+        def _enforce_size_limit():
+            while len(cache) > max_entries:
+                try:
+                    cache.popitem(last=False)
+                except Exception:
+                    break
 
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -142,13 +159,24 @@ def cache_response(ttl_seconds=60):
             if cache_key in cache:
                 response, timestamp = cache[cache_key]
                 if time() - timestamp < ttl_seconds:
+                    cache.move_to_end(cache_key)
                     return response
+                try:
+                    del cache[cache_key]
+                except KeyError:
+                    pass
 
             # Call actual function
             response = f(*args, **kwargs)
 
             # Cache the response
             cache[cache_key] = (response, time())
+            cache.move_to_end(cache_key)
+            # Best-effort cleanup to keep memory bounded.
+            now_ts = time()
+            if len(cache) > max_entries:
+                _evict_expired_entries(now_ts)
+            _enforce_size_limit()
             return response
 
         # Expose the internal cache and invalidation helpers on the decorated
@@ -544,7 +572,7 @@ def get_db_connection(cursor_factory=None):
 
 
 @contextmanager
-def get_db_cursor(cursor_factory=None):
+def get_db_cursor(cursor_factory=None, read_only=False):
     """
     Context manager for database cursor using connection pool.
 
@@ -565,10 +593,22 @@ def get_db_cursor(cursor_factory=None):
         # Use the connection pool for better performance
         conn = db_pool.get_connection()
 
+        if read_only:
+            try:
+                # Mark transaction read-only to avoid accidental writes on GET paths.
+                conn.set_session(readonly=True)
+            except Exception:
+                pass
+
         cursor = conn.cursor(cursor_factory=cursor_factory)
         try:
             yield cursor
-            conn.commit()
+            if read_only:
+                # Roll back read-only transactions to avoid unnecessary
+                # COMMIT round-trips.
+                conn.rollback()
+            else:
+                conn.commit()
         except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
             # Connection-level error - mark for closure
             close_on_return = True
@@ -588,6 +628,11 @@ def get_db_cursor(cursor_factory=None):
             except Exception:
                 # Best-effort cleanup; don't let cleanup issues mask original errors
                 pass
+            if read_only and conn is not None:
+                try:
+                    conn.set_session(readonly=False)
+                except Exception:
+                    pass
     finally:
         # Always return connection to pool
         if conn is not None:

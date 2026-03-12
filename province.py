@@ -17,7 +17,7 @@ load_dotenv()
 @login_required
 @cache_response(ttl_seconds=30)
 def provinces():
-    with get_db_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         cId = session["user_id"]
 
         db.execute(
@@ -333,7 +333,12 @@ def build_structure_action():
         return error(400, "Invalid building selection or quantity.")
 
     try:
-        build_structure(cId, building_id, quantity, province_id=int(province_id) if province_id else None)
+        build_structure(
+            cId,
+            building_id,
+            quantity,
+            province_id=int(province_id) if province_id else None,
+        )
     except ActionLoopError as e:
         return error(400, str(e))
 

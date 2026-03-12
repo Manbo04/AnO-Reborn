@@ -10,7 +10,7 @@ from database import get_db_cursor, cache_response
 def statistics():
     """Display market statistics and nation stats"""
 
-    with get_db_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         # Get market statistics for different resources
         resources = [
             "rations",

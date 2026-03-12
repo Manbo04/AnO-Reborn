@@ -830,7 +830,8 @@ def tax_income():
             last_row = db.fetchone()
             last_id = last_row[0] if last_row and last_row[0] is not None else 0
 
-            chunk_size = int(os.getenv("TAX_INCOME_CHUNK_SIZE", "500"))
+            # Keep default chunks conservative to reduce lock time per run.
+            chunk_size = int(os.getenv("TAX_INCOME_CHUNK_SIZE", "250"))
             db.execute(
                 "SELECT id FROM users WHERE id > %s ORDER BY id ASC LIMIT %s",
                 (last_id, chunk_size),
@@ -1934,7 +1935,8 @@ def generate_province_revenue():  # Runs each hour
             )
             last_row = db.fetchone()
             last_proc = last_row[0] if last_row and last_row[0] is not None else 0
-            chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "500"))
+            # Smaller chunks lower transaction time and reduce player-facing lock waits.
+            chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "200"))
             db.execute(
                 "SELECT p.id, p.userId, p.land, p.productivity "
                 "FROM provinces p "
