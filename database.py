@@ -43,6 +43,7 @@ class QueryCache:
 
     Each cache entry is stored as (value, expiry_timestamp). Per-key TTLs may
     override the instance default for specific items.
+    Thread-safe: uses a lock for all mutations.
     """
 
     MAX_CACHE_SIZE = 10000  # Prevent unbounded memory growth
@@ -50,6 +51,7 @@ class QueryCache:
     def __init__(self, ttl_seconds=300):  # default TTL (seconds)
         self.cache = {}  # key -> (value, expiry_timestamp)
         self.ttl = ttl_seconds
+        self._lock = threading.Lock()
 
     def get(self, key):
         """Get cached value if not expired. Returns None if missing/expired."""
@@ -61,10 +63,11 @@ class QueryCache:
         if expiry == 0 or time() < expiry:
             return value
         # expired - remove and return None
-        try:
-            del self.cache[key]
-        except KeyError:
-            pass
+        with self._lock:
+            try:
+                del self.cache[key]
+            except KeyError:
+                pass
         return None
 
     def set(self, key, value, ttl_seconds: Optional[int] = None):
@@ -73,27 +76,28 @@ class QueryCache:
         If ttl_seconds is None, the instance default TTL is used. If ttl_seconds
         is 0, the value will not expire (use with caution).
         """
-        # Evict expired entries periodically to prevent unbounded growth
-        if len(self.cache) > self.MAX_CACHE_SIZE:
-            self._evict_expired()
-        # If still over limit, clear oldest half
-        if len(self.cache) > self.MAX_CACHE_SIZE:
-            self._evict_oldest(len(self.cache) // 2)
+        with self._lock:
+            # Evict expired entries periodically to prevent unbounded growth
+            if len(self.cache) > self.MAX_CACHE_SIZE:
+                self._evict_expired()
+            # If still over limit, clear oldest half
+            if len(self.cache) > self.MAX_CACHE_SIZE:
+                self._evict_oldest(len(self.cache) // 2)
 
-        if ttl_seconds is None:
-            ttl_seconds = self.ttl
-        expiry = 0 if ttl_seconds == 0 else (time() + ttl_seconds)
-        self.cache[key] = (value, expiry)
+            if ttl_seconds is None:
+                ttl_seconds = self.ttl
+            expiry = 0 if ttl_seconds == 0 else (time() + ttl_seconds)
+            self.cache[key] = (value, expiry)
 
     def _evict_expired(self):
-        """Remove all expired entries"""
+        """Remove all expired entries (caller must hold _lock)"""
         current_time = time()
         self.cache = {
             k: v for k, v in self.cache.items() if v[1] == 0 or current_time < v[1]
         }
 
     def _evict_oldest(self, count):
-        """Remove the oldest n entries"""
+        """Remove the oldest n entries (caller must hold _lock)"""
         if count <= 0 or not self.cache:
             return
         sorted_keys = sorted(self.cache.keys(), key=lambda k: self.cache[k][1])
@@ -105,12 +109,12 @@ class QueryCache:
 
     def invalidate(self, pattern=None):
         """Clear cache or clear entries matching pattern"""
-        if pattern is None:
-            self.cache.clear()
-        else:
-            # remove entries whose key contains the pattern
-            keys_to_keep = {k: v for k, v in self.cache.items() if pattern not in k}
-            self.cache = keys_to_keep
+        with self._lock:
+            if pattern is None:
+                self.cache.clear()
+            else:
+                # remove entries whose key contains the pattern
+                self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
 
 
 def cache_response(ttl_seconds=60):
@@ -127,7 +131,7 @@ def cache_response(ttl_seconds=60):
 
     def decorator(f):
         cache = OrderedDict()
-        max_entries = int(os.getenv("RESPONSE_CACHE_MAX_ENTRIES", "2000"))
+        max_entries = int(os.getenv("RESPONSE_CACHE_MAX_ENTRIES", "500"))
 
         def _evict_expired_entries(now_ts):
             expired = [k for k, (_, ts) in cache.items() if now_ts - ts >= ttl_seconds]
