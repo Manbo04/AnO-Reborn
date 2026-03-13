@@ -316,10 +316,10 @@ def rations_distribution_capacity(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        # Query normalized user_buildings table
+        # Query normalized user_buildings table — tiered capacity per building type
         db.execute(
             """
-            SELECT COALESCE(SUM(ub.quantity), 0)
+            SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
             FROM user_buildings ub
             JOIN building_dictionary bd
                 ON bd.building_id = ub.building_id
@@ -328,11 +328,19 @@ def rations_distribution_capacity(user_id):
                   'distribution_centers', 'gas_stations', 'general_stores',
                   'farmers_markets', 'malls'
               )
+            GROUP BY bd.name
             """,
             (user_id,),
         )
-        bcount = db.fetchone()[0] or 0
-    return bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+        total = 0
+        for row in db.fetchall():
+            bname = row[0]
+            qty = row[1] or 0
+            cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
+                bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
+            )
+            total += qty * cap
+    return total
 
 
 # Returns energy production and consumption from a certain province
@@ -401,20 +409,27 @@ def food_stats(user_id):
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
-            # Query normalized user_buildings table (same cursor, no nested connection)
+            # Query normalized user_buildings table — tiered capacity
             db.execute(
                 """
-                SELECT COALESCE(SUM(ub.quantity), 0)
+                SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
                 WHERE ub.user_id = %s
                   AND bd.name IN ('distribution_centers', 'gas_stations',
                                   'general_stores', 'farmers_markets', 'malls')
+                GROUP BY bd.name
                 """,
                 (user_id,),
             )
-            bcount = db.fetchone()[0] or 0
-            distribution_cap = bcount * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+            distribution_cap = 0
+            for brow in db.fetchall():
+                bname = brow[0]
+                qty = brow[1] or 0
+                cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
+                    bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
+                )
+                distribution_cap += qty * cap
 
     if needed_rations == 0:
         needed_rations = 1
@@ -443,10 +458,10 @@ def consumer_goods_distribution_capacity(user_id):
     from database import get_db_cursor
 
     with get_db_cursor() as db:
-        # Query normalized user_buildings table for CG distribution buildings
+        # Query normalized user_buildings table — tiered CG capacity
         db.execute(
             """
-            SELECT COALESCE(SUM(ub.quantity), 0)
+            SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
             FROM user_buildings ub
             JOIN building_dictionary bd
                 ON bd.building_id = ub.building_id
@@ -455,11 +470,19 @@ def consumer_goods_distribution_capacity(user_id):
                   'distribution_centers', 'malls',
                   'general_stores', 'gas_stations'
               )
+            GROUP BY bd.name
             """,
             (user_id,),
         )
-        bcount = db.fetchone()[0] or 0
-    return bcount * variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
+        total = 0
+        for row in db.fetchall():
+            bname = row[0]
+            qty = row[1] or 0
+            cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
+                bname, variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT
+            )
+            total += qty * cap
+    return total
 
 
 def calculate_demographic_rations_need(province_id):
@@ -977,7 +1000,7 @@ def tax_income():
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
                 dbdict.execute(
                     """
-                    SELECT ub.user_id, COALESCE(SUM(ub.quantity), 0) AS bcount
+                    SELECT ub.user_id, bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
                     FROM user_buildings ub
                     JOIN building_dictionary bd
                         ON bd.building_id = ub.building_id
@@ -986,20 +1009,24 @@ def tax_income():
                           'distribution_centers', 'malls',
                           'general_stores', 'gas_stations'
                       )
-                    GROUP BY ub.user_id
+                    GROUP BY ub.user_id, bd.name
                     """,
                     (all_user_ids,),
                 )
                 for row in dbdict.fetchall():
                     if isinstance(row, dict):
                         uid = row.get("user_id")
-                        bcount = row.get("bcount") or 0
+                        bname = row.get("name")
+                        qty = row.get("qty") or 0
                     else:
                         uid = row[0]
-                        bcount = row[1] if len(row) > 1 else 0
-                    cg_dist_cap_map[uid] = (
-                        bcount * variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
+                        bname = row[1]
+                        qty = row[2] if len(row) > 2 else 0
+                    cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
+                        bname,
+                        variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT,
                     )
+                    cg_dist_cap_map[uid] = cg_dist_cap_map.get(uid, 0) + qty * cap
 
             # Prepare batch updates
             money_updates = []
@@ -1406,7 +1433,7 @@ def population_growth():  # Function for growing population
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             dbdict.execute(
                 """
-                SELECT ub.user_id, COALESCE(SUM(ub.quantity), 0) AS bcount
+                SELECT ub.user_id, bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
                 FROM user_buildings ub
                 JOIN building_dictionary bd
                     ON bd.building_id = ub.building_id
@@ -1415,14 +1442,18 @@ def population_growth():  # Function for growing population
                       'distribution_centers', 'gas_stations',
                       'general_stores', 'farmers_markets', 'malls'
                   )
-                GROUP BY ub.user_id
+                GROUP BY ub.user_id, bd.name
                 """,
                 (all_user_ids,),
             )
             for row in dbdict.fetchall():
-                dist_cap_map[row["user_id"]] = (
-                    row["bcount"] * variables.RATIONS_DISTRIBUTION_PER_BUILDING
+                uid = row["user_id"]
+                bname = row["name"]
+                qty = row["qty"] or 0
+                cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
+                    bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
                 )
+                dist_cap_map[uid] = dist_cap_map.get(uid, 0) + qty * cap
 
         conn.commit()  # Release read locks from preload queries
 
