@@ -259,6 +259,21 @@
                         </tr>
                         -->
                     </table>
+                    <!-- Invite to Coalition button for logged-in users viewing other players -->
+                    {% if session.get('user_id') and session['user_id']|string != cId|string %}
+                    <table class="templatetable">
+                        <tr>
+                            <td style="padding-top: 10px;">
+                                <form method="POST" action="/nation/{{ cId }}/invite" style="display: inline;">
+                                    <button type="submit" class="templatedivbutton" style="width: 100%;">
+                                        <span class="material-icons-outlined">mail</span>
+                                        Invite to Coalition
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                    {% endif %}
                     <table class="templatetable">
                         <tr>
                             <th><span class="material-icons-outlined">
@@ -651,7 +666,7 @@
                         {% if revenue["gross"]["lead"] > 0 %}
                         <tr>
                             <td>Lead:</td>
-                            <td>{{ revenue["gross"]["lead"] | fmt }}</td>
+                            <td>{{ show_gross('lead') }}</td>
                         </tr>
                         {% endif %}
                         {% if revenue["gross"]["bauxite"] > 0 %}
@@ -710,7 +725,7 @@
                         {% if revenue["gross"]["ammunition"] > 0 %}
                         <tr>
                             <td>Ammunition:</td>
-                            <td>{{ revenue["gross"]["ammunition"]| fmt }}</td>
+                            <td>{{ show_gross('ammunition') }}</td>
                         </tr>
                         {% endif %}
                     </table>

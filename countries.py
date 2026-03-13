@@ -55,17 +55,14 @@ def get_econ_statistics(cId):
 
     def check_for_resource_upkeep(unit, amount):
         try:
-            convert_minus = list(variables.INFRA[f"{unit}_convert_minus"][0].items())[0]
-            minus = convert_minus[0]
-            minus_amount = convert_minus[1] * amount
+            convert_minus_list = variables.INFRA[f"{unit}_convert_minus"]
         except KeyError:
-            minus, minus_amount = [None, None]
-            convert_minus = []
             return False
 
-        if minus is not None:
-            unit_type = get_unit_type(unit)
-            expenses[unit_type][minus] += minus_amount
+        unit_type = get_unit_type(unit)
+        for entry in convert_minus_list:
+            for resource, cost_per_unit in entry.items():
+                expenses[unit_type][resource] += cost_per_unit * amount
         return True
 
     def check_for_monetary_upkeep(unit, amount):
