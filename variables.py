@@ -39,7 +39,16 @@ RATIONS_DISTRIBUTION_BUILDINGS = [
     "farmers_markets",
     "malls",
 ]
-RATIONS_DISTRIBUTION_PER_BUILDING = 400000  # population served per building
+# Tiered capacity: expensive buildings serve more population
+RATIONS_DISTRIBUTION_PER_BUILDING = {
+    "distribution_centers": 1500000,  # 1.5M — cheapest, purpose-built
+    "gas_stations": 1000000,  # 1.0M — moderate, secondary purpose
+    "general_stores": 2500000,  # 2.5M — expensive, high capacity
+    "farmers_markets": 2000000,  # 2.0M — mid-tier, food-focused
+    "malls": 5000000,  # 5.0M — most expensive, highest impact
+}
+# Convenience default for any building not in the dict
+RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
 
 # DEMOGRAPHIC-BASED CONSUMPTION (Phase 2)
 # Rates are per-capita per tick, scaled to match building production units.
@@ -65,7 +74,14 @@ CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
     "general_stores",
     "gas_stations",
 ]
-CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = 400000  # population served per building
+# Tiered capacity: mirrors rations distribution tiers
+CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = {
+    "distribution_centers": 1500000,  # 1.5M
+    "gas_stations": 1000000,  # 1.0M
+    "general_stores": 2500000,  # 2.5M
+    "malls": 5000000,  # 5.0M
+}
+CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
 
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off

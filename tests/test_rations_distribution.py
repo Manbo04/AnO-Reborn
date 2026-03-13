@@ -78,7 +78,7 @@ def test_rations_distribution_affects_food_score():
     conn.commit()
 
     cap1 = rations_distribution_capacity(uid)
-    assert cap1 == variables.RATIONS_DISTRIBUTION_PER_BUILDING
+    assert cap1 == variables.RATIONS_DISTRIBUTION_PER_BUILDING["gas_stations"]
 
     score_dist = food_stats(uid)
     assert score_dist > score_nodist
@@ -122,7 +122,7 @@ def test_province_view_shows_distribution_capacity(client):
 
     resp = client.get(f"/province/{pid}")
     html = resp.data.decode()
-    assert str(variables.RATIONS_DISTRIBUTION_PER_BUILDING) in html
+    assert str(variables.RATIONS_DISTRIBUTION_PER_BUILDING["gas_stations"]) in html
 
     # cleanup
     db.execute("DELETE FROM proInfra WHERE id=%s", (pid,))

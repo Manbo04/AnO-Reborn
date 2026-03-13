@@ -216,9 +216,11 @@ def generate_master_audit():
             # Distribution capacity
             dist_cap = 0
             if bname in variables.CONSUMER_GOODS_DISTRIBUTION_BUILDINGS:
-                dist_cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
+                dist_cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
+                    bname, 0
+                )
             if bname in variables.RATIONS_DISTRIBUTION_BUILDINGS:
-                dist_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING
+                dist_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(bname, 0)
 
             # Print building name
             print(f"\n    {bname.upper().replace('_', ' ')}:")
