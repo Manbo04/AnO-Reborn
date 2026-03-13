@@ -1385,7 +1385,10 @@ def population_growth():  # Function for growing population
         dbdict.execute(
             """
              SELECT p.id, p.userId, p.population, p.cityCount, p.land,
-                 p.happiness, p.pollution, p.productivity
+                 p.happiness, p.pollution, p.productivity,
+                 COALESCE(p.pop_children, 0) AS pop_children,
+                 COALESCE(p.pop_working, 0) AS pop_working,
+                 COALESCE(p.pop_elderly, 0) AS pop_elderly
              FROM provinces p
              JOIN users u ON u.id = p.userId
             ORDER BY userId ASC
@@ -1537,7 +1540,7 @@ def population_growth():  # Function for growing population
             chunk = all_provinces[chunk_start : chunk_start + CHUNK_SIZE]
 
             population_updates = []
-            demographic_updates = []
+            demographic_sync_updates = []
             for province_row in chunk:
                 try:
                     old_population = province_row["population"] or 0
@@ -1546,10 +1549,40 @@ def population_growth():  # Function for growing population
 
                     population_updates.append((new_population, province_row["id"]))
 
-                    if population_growth_amount > 0:
-                        demographic_updates.append(
-                            (population_growth_amount, province_row["id"])
+                    # Sync demographics to match new population total.
+                    # This handles: growth (add to children), decline
+                    # (proportional reduction), and accumulated drift.
+                    pop_c = province_row["pop_children"]
+                    pop_w = province_row["pop_working"]
+                    pop_e = province_row["pop_elderly"]
+                    demo_sum = pop_c + pop_w + pop_e
+
+                    if new_population <= 0:
+                        new_c, new_w, new_e = 0, 0, 0
+                    elif demo_sum == 0:
+                        # No demographics yet — seed as all children
+                        new_c = new_population
+                        new_w, new_e = 0, 0
+                    elif population_growth_amount > 0 and demo_sum <= new_population:
+                        # Growth: add delta to children (existing behavior)
+                        new_c = pop_c + (new_population - demo_sum)
+                        new_w, new_e = pop_w, pop_e
+                    else:
+                        # Decline or drift: scale proportionally
+                        ratio = new_population / demo_sum
+                        new_c = int(round(pop_c * ratio))
+                        new_e = int(round(pop_e * ratio))
+                        # Give remainder to working to avoid rounding mismatches
+                        new_w = new_population - new_c - new_e
+
+                    demographic_sync_updates.append(
+                        (
+                            max(0, new_c),
+                            max(0, new_w),
+                            max(0, new_e),
+                            province_row["id"],
                         )
+                    )
                 except Exception as e:
                     handle_exception(e)
                     continue
@@ -1586,12 +1619,15 @@ def population_growth():  # Function for growing population
                 )
                 total_pop_updates += len(population_updates)
 
-            if demographic_updates:
+            if demographic_sync_updates:
                 execute_batch(
                     db,
-                    "UPDATE provinces SET pop_children = "
-                    "COALESCE(pop_children, 0) + %s WHERE id=%s",
-                    demographic_updates,
+                    """UPDATE provinces
+                       SET pop_children = %s,
+                           pop_working = %s,
+                           pop_elderly = %s
+                       WHERE id = %s""",
+                    demographic_sync_updates,
                 )
 
             # Commit after each chunk to release locks
