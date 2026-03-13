@@ -1540,18 +1540,18 @@ def population_growth():  # Function for growing population
             chunk = all_provinces[chunk_start : chunk_start + CHUNK_SIZE]
 
             population_updates = []
-            demographic_sync_updates = []
             for province_row in chunk:
                 try:
                     old_population = province_row["population"] or 0
                     new_population = calc_population_growth(province_row)
                     population_growth_amount = new_population - old_population
 
-                    population_updates.append((new_population, province_row["id"]))
-
                     # Sync demographics to match new population total.
                     # This handles: growth (add to children), decline
                     # (proportional reduction), and accumulated drift.
+                    # The DB trigger also enforces this, but computing
+                    # correctly here avoids relying on proportional
+                    # redistribution in the trigger.
                     pop_c = province_row["pop_children"]
                     pop_w = province_row["pop_working"]
                     pop_e = province_row["pop_elderly"]
@@ -1575,8 +1575,10 @@ def population_growth():  # Function for growing population
                         # Give remainder to working to avoid rounding mismatches
                         new_w = new_population - new_c - new_e
 
-                    demographic_sync_updates.append(
+                    # Single atomic UPDATE for population + demographics
+                    population_updates.append(
                         (
+                            new_population,
                             max(0, new_c),
                             max(0, new_w),
                             max(0, new_e),
@@ -1614,21 +1616,15 @@ def population_growth():  # Function for growing population
             if population_updates:
                 execute_batch(
                     db,
-                    "UPDATE provinces SET population=%s WHERE id=%s",
-                    population_updates,
-                )
-                total_pop_updates += len(population_updates)
-
-            if demographic_sync_updates:
-                execute_batch(
-                    db,
                     """UPDATE provinces
-                       SET pop_children = %s,
+                       SET population = %s,
+                           pop_children = %s,
                            pop_working = %s,
                            pop_elderly = %s
                        WHERE id = %s""",
-                    demographic_sync_updates,
+                    population_updates,
                 )
+                total_pop_updates += len(population_updates)
 
             # Commit after each chunk to release locks
             try:
@@ -3030,6 +3026,10 @@ def generate_province_revenue():  # Runs each hour
                     except Exception:
                         pass
 
+                    pop_c = max(0, int(data.get("pop_children", 0) or 0))
+                    pop_w = max(0, int(data.get("pop_working", 0) or 0))
+                    pop_e = max(0, int(data.get("pop_elderly", 0) or 0))
+
                     province_updates.append(
                         (
                             min(100, max(0, data.get("happiness", 50))),
@@ -3037,9 +3037,10 @@ def generate_province_revenue():  # Runs each hour
                             min(100, max(0, data.get("pollution", 0))),
                             min(100, max(0, data.get("consumer_spending", 50))),
                             data.get("energy", 0),
-                            max(0, int(data.get("pop_children", 0) or 0)),
-                            max(0, int(data.get("pop_working", 0) or 0)),
-                            max(0, int(data.get("pop_elderly", 0) or 0)),
+                            pop_c + pop_w + pop_e,
+                            pop_c,
+                            pop_w,
+                            pop_e,
                             pid,
                         )
                     )
@@ -3054,6 +3055,7 @@ def generate_province_revenue():  # Runs each hour
                                 pollution = %s,
                                 consumer_spending = %s,
                                 energy = %s,
+                                population = %s,
                                 pop_children = %s,
                                 pop_working = %s,
                                 pop_elderly = %s
@@ -3072,6 +3074,7 @@ def generate_province_revenue():  # Runs each hour
                                     pollution = %s,
                                     consumer_spending = %s,
                                     energy = %s,
+                                    population = %s,
                                     pop_children = %s,
                                     pop_working = %s,
                                     pop_elderly = %s
