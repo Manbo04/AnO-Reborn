@@ -1,24 +1,24 @@
 -- Migration: 0014 - Economy 2.0 unit upkeep and build cost rebalance
 -- Date: 2026-03-05
--- Purpose:
---   1. Reset maintenance_cost_amount to weight-scaled values so a single
---      Oil Refinery (75,000 kg gasoline/tick) supports a realistic army.
---   2. Fix apaches maintenance resource from oil → gasoline (was inconsistent).
---   3. Scale production costs to the new kg weight system.
+-- Updated: 2026-03-13 — Corrected maintenance values to match actual
+--   production rates from generate_province_revenue (NEW_INFRA).
+--   Original values assumed ~75,000 production per building per tick,
+--   but actual production is ~11-60 per building per hour with
+--   global_tick consuming 6x/hr.  All maintenance reduced accordingly.
 --
--- NEW UPKEEP (kg/tick):
---   soldiers   50 rations
---   tanks      250 gasoline   (1 refinery = 300 tanks)
---   artillery  150 gasoline   (1 refinery = 500 artillery)
---   fighters   500 gasoline   (1 refinery = 150 fighters)
---   bombers    500 gasoline
---   apaches    500 gasoline
---   destroyers 500 gasoline
---   cruisers   750 gasoline
---   submarines 400 gasoline
---   icbms      1000 gasoline
---   nukes      NULL (no maintenance)
---   spies      50 components
+-- NEW UPKEEP (per global_tick, runs every 10 min):
+--   soldiers   1  ration      (1 farm ≈ 10 soldiers at 16 land)
+--   tanks      2  gasoline    (1 oil_refinery ≈ 1 tank)
+--   artillery  1  gasoline    (1 oil_refinery ≈ 2 artillery)
+--   fighters   3  gasoline    (need several refineries per wing)
+--   bombers    3  gasoline
+--   apaches    3  gasoline
+--   destroyers 3  gasoline
+--   cruisers   5  gasoline
+--   submarines 2  gasoline
+--   icbms      5  gasoline
+--   nukes      0  (no maintenance)
+--   spies      1  components
 --
 -- NEW BUILD COSTS (kg, weight-based):
 --   soldiers:  500 rations
@@ -32,15 +32,15 @@ BEGIN;
 
 -- ── Upkeep amounts ────────────────────────────────────────────────────────────
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 50
+SET maintenance_cost_amount = 1
 WHERE name = 'soldiers';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 250
+SET maintenance_cost_amount = 2
 WHERE name = 'tanks';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 150,
+SET maintenance_cost_amount = 1,
     -- artillery was seeded with rations in some environments; force gasoline
     maintenance_cost_resource_id = (
         SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline'
@@ -48,7 +48,7 @@ SET maintenance_cost_amount = 150,
 WHERE name = 'artillery';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 500,
+SET maintenance_cost_amount = 3,
     -- fix apaches: was 'oil', should be 'gasoline'
     maintenance_cost_resource_id = (
         SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline'
@@ -56,27 +56,27 @@ SET maintenance_cost_amount = 500,
 WHERE name = 'apaches';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 500
+SET maintenance_cost_amount = 3
 WHERE name IN ('fighters', 'bombers');
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 500
+SET maintenance_cost_amount = 3
 WHERE name = 'destroyers';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 750
+SET maintenance_cost_amount = 5
 WHERE name = 'cruisers';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 400
+SET maintenance_cost_amount = 2
 WHERE name = 'submarines';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 1000
+SET maintenance_cost_amount = 5
 WHERE name = 'icbms';
 
 UPDATE unit_dictionary
-SET maintenance_cost_amount = 50
+SET maintenance_cost_amount = 1
 WHERE name = 'spies';
 
 -- Nukes have no ongoing maintenance
