@@ -1177,7 +1177,7 @@ def delete_own_account():
 
 
 def register_countries_routes(app_instance):
-    """Register all routes from countries module after app initialization."
+    """Register all routes from countries module after app initialization.
 
     This deferred registration avoids circular imports:
     wsgi.py -> app.py -> countries -> app (causes circular dependency at import time)
