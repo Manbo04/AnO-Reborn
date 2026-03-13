@@ -89,9 +89,9 @@ FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
 # PHASE 3: AGING, EDUCATION & WORKFORCE (Phase 3)
 # Daily population aging rates (per tick, as fraction)
 DEMO_AGING_RATES = {
-    "elderly_death_rate": 0.002,  # 0.2% of elderly die per tick
-    "working_to_elderly_rate": 0.001,  # 0.1% move to elderly per tick
-    "children_to_working_rate": 0.005,  # 0.5% graduate to working per tick
+    "elderly_death": 0.002,  # 0.2% of elderly die per tick
+    "working_to_elderly": 0.001,  # 0.1% move to elderly per tick
+    "children_to_working": 0.005,  # 0.5% graduate to working per tick
 }
 
 # Education distribution (when children graduate)
@@ -682,6 +682,14 @@ NEW_INFRA = {  # (NEW INFRA)
     "universities": {
         "eff": {"productivity": 10, "happiness": 4},
         "money": 175000,
+    },
+    "primary_school": {
+        "eff": {"productivity": 2, "happiness": 2},
+        "money": 30000,
+    },
+    "high_school": {
+        "eff": {"productivity": 5, "happiness": 3},
+        "money": 75000,
     },
     "monorails": {
         "eff": {"productivity": 16},
