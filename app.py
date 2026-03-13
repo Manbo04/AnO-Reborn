@@ -1044,7 +1044,12 @@ def get_resources():
 
 @app.context_processor
 def inject_user():
-    return dict(get_resources=get_resources)
+    from admin_tools import SUPER_ADMIN_USER_IDS
+
+    return dict(
+        get_resources=get_resources,
+        admin_user_ids=SUPER_ADMIN_USER_IDS,
+    )
 
 
 @app.route("/", methods=["GET"])
