@@ -276,7 +276,8 @@ def admin_add_provinces():
 
         for idx in range(1, amount + 1):
             db.execute(
-                "INSERT INTO provinces (userId, provinceName) VALUES (%s, %s)",
+                "INSERT INTO provinces (userId, provinceName, pop_children) "
+                "VALUES (%s, %s, 1000000)",
                 (target_user_id, f"Admin Province {current_max + idx}"),
             )
 

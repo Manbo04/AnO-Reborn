@@ -417,8 +417,9 @@ def createprovince():
 
                 db.execute(
                     (
-                        "INSERT INTO provinces (userId, provinceName) "
-                        "VALUES (%s, %s) RETURNING id"
+                        "INSERT INTO provinces "
+                        "(userId, provinceName, pop_children) "
+                        "VALUES (%s, %s, 1000000) RETURNING id"
                     ),
                     (cId, pName),
                 )
