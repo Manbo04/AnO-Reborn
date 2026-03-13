@@ -45,7 +45,7 @@
                 {% endif %}
                 {% if distribution_capacity is not none %}
                 <ul class="right vanilla notificationchild">
-                    Distribution buildings can serve {{ distribution_capacity }} population
+                    Ration distribution serves {{ distribution_capacity | commas }} population
                 </ul>
                 {% endif %}
             </div>
@@ -63,6 +63,11 @@
                     <span class="material-icons-outlined">
                     clear
                     </span>Your citizens do not have consumer goods
+                </ul>
+                {% endif %}
+                {% if cg_distribution_capacity is not none %}
+                <ul class="right vanilla notificationchild">
+                    CG distribution serves {{ cg_distribution_capacity | commas }} population
                 </ul>
                 {% endif %}
             </div>
@@ -164,7 +169,7 @@
                                 people_alt
                             </span>Population:</strong>
                         </td>
-                        <td>{{ province['population'] }}</td>
+                        <td>{{ province['population'] | commas }}</td>
                     </tr>
                     {% if province['happiness'] < 50 %}
                     <tr>

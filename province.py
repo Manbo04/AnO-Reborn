@@ -257,7 +257,16 @@ def province(pId):
         rations = economy_values.get("rations", 0) or 0
 
         max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
-        enough_consumer_goods = consumer_goods >= max_cg
+        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+            from tasks import consumer_goods_distribution_capacity
+
+            cg_dist_cap = consumer_goods_distribution_capacity(cId) or 0
+            # CG check must consider both stockpile AND distribution capacity
+            cg_available = min(consumer_goods, cg_dist_cap)
+            enough_consumer_goods = cg_available >= max_cg
+        else:
+            cg_dist_cap = 0
+            enough_consumer_goods = consumer_goods >= max_cg
 
         rations_minus = province["population"] // variables.RATIONS_PER
         if variables.FEATURE_RATIONS_DISTRIBUTION:
@@ -322,6 +331,9 @@ def province(pId):
             build_cost_resource=BUILD_COST_RESOURCE,
             distribution_capacity=(
                 dist_cap if variables.FEATURE_RATIONS_DISTRIBUTION else None
+            ),
+            cg_distribution_capacity=(
+                cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
         )
 
