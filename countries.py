@@ -198,6 +198,8 @@ def get_revenue(cId):
                     continue
                 if build_count is None or build_count == 0:
                     continue
+                if building not in infra:
+                    continue
 
                 operating_costs = infra[building]["money"] * build_count
 
