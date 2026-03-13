@@ -129,7 +129,7 @@
                         <a class="" href="/mechanics"><span class="material-icons-outlined">
                             build
                         </span>Mechanics</a>
-                        {% if session.get('user_id') == 1 %}
+                        {% if session.get('user_id') in admin_user_ids %}
                         <a class="" href="/admin/command-center"><span class="material-icons-outlined">
                             admin_panel_settings
                         </span>Admin</a>
@@ -255,7 +255,7 @@
         <a class="menubara" href="/mechanics"><span class="material-icons-outlined">
                 build
             </span>Mechanics</a>
-        {% if session.get('user_id') == 1 %}
+        {% if session.get('user_id') in admin_user_ids %}
         <a class="menubara" href="/admin/command-center"><span class="material-icons-outlined">
                 admin_panel_settings
             </span>Admin</a>
