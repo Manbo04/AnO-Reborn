@@ -62,10 +62,9 @@ def generate_report():
     print("    General Stores:      10 consumer goods per building")
     print("    Banks:               20 consumer goods per building")
 
-    print("\n  DISTRIBUTION CAPACITY LIMITS:")
-    dist_cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING
-    cap_str = f"{dist_cap:,}"
-    print(f"    All Distribution Buildings: {cap_str} population per")
+    print("\n  DISTRIBUTION CAPACITY LIMITS (tiered by building type):")
+    for bname, cap in variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.items():
+        print(f"    {bname.replace('_', ' ').title()}: {cap:,} population")
 
     # SECTION 4: Employment Matrices
     print("\n\n4. EMPLOYMENT MATRICES (Jobs & Education Requirements)")
