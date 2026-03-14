@@ -112,7 +112,7 @@ def admin_command_center():
                    aa.details,
                    aa.created_at
             FROM admin_actions aa
-            LEFT JOIN users actor_u ON actor_u.id = aa.actor
+            LEFT JOIN users actor_u ON actor_u.id = aa.actor::integer
             LEFT JOIN users target_u ON target_u.id = aa.user_id
             ORDER BY aa.created_at DESC
             LIMIT 50
@@ -481,6 +481,10 @@ def _parse_details(raw):
     """Turn 'resource=money amount=500' or dict-like strings into readable parts."""
     if not raw:
         return []
+
+    # psycopg2 auto-deserializes JSONB columns into dicts/lists
+    if isinstance(raw, (dict, list)):
+        return _flatten_dict(raw)
 
     # Handle dict-repr strings like "{'province': {'id': 820, ...}}"
     if raw.startswith("{") or raw.startswith("("):
