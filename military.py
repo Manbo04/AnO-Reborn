@@ -277,9 +277,12 @@ def compute_display_limits(cId, units_row=None, db=None):
             _db.execute(_query, (cId,))
             army_bases, harbours, aerodomes, admin_buildings, silos = _db.fetchone()
 
-    military = units_row or {}
+    raw = units_row or {}
+    # Extract quantity from unit dicts (values may be dicts with 'quantity' key)
+    military = {}
     for unit in ALL_UNITS:
-        military.setdefault(unit, 0)
+        val = raw.get(unit, 0)
+        military[unit] = val["quantity"] if isinstance(val, dict) else int(val or 0)
 
     # Land units
     soldiers = max(0, army_bases * 100 - military["soldiers"])
