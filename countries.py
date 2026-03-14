@@ -782,7 +782,7 @@ def countries():
                         + COALESCE(r.total_resources, 0) * 0.001
                         + COALESCE(s.gold, 0) * 0.00001
                     )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM u.date)::bigint, 0) AS unix
+                    COALESCE(EXTRACT(EPOCH FROM u.date::timestamp)::bigint, 0) AS unix
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
