@@ -91,7 +91,7 @@ FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
 DEMO_AGING_RATES = {
     "elderly_death": 0.002,  # 0.2% of elderly die per tick
     "working_to_elderly": 0.001,  # 0.1% move to elderly per tick
-    "children_to_working": 0.005,  # 0.5% graduate to working per tick
+    "children_to_working": 0.02,  # 2% graduate to working per tick (was 0.5%)
 }
 
 # Education distribution (when children graduate)
@@ -475,59 +475,59 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
 
 MILDICT = {
     # LAND
-    "soldiers": {"price": 200, "resources": {"rations": 2}, "manpower": 1},
-    "tanks": {"price": 8000, "resources": {"steel": 5, "components": 5}, "manpower": 4},
+    "soldiers": {"price": 250, "resources": {"rations": 2}, "manpower": 1},
+    "tanks": {"price": 7000, "resources": {"steel": 3, "components": 3}, "manpower": 4},
     "artillery": {
-        "price": 16000,
-        "resources": {"steel": 12, "components": 3},
+        "price": 14000,
+        "resources": {"steel": 7, "components": 2},
         "manpower": 2,
     },
     # AIR
     "bombers": {
-        "price": 25000,
-        "resources": {"aluminium": 20, "steel": 5, "components": 6},
+        "price": 22000,
+        "resources": {"aluminium": 12, "steel": 3, "components": 4},
         "manpower": 1,
     },
     "fighters": {
-        "price": 35000,
-        "resources": {"aluminium": 12, "components": 3},
+        "price": 30000,
+        "resources": {"aluminium": 7, "components": 2},
         "manpower": 1,
     },
     "apaches": {
-        "price": 32000,
-        "resources": {"aluminium": 8, "steel": 2, "components": 4},
+        "price": 28000,
+        "resources": {"aluminium": 5, "steel": 2, "components": 3},
         "manpower": 1,
     },
     # WATER
     "destroyers": {
-        "price": 30000,
-        "resources": {"steel": 30, "components": 7},
+        "price": 26000,
+        "resources": {"steel": 18, "components": 4},
         "manpower": 6,
     },
     "cruisers": {
-        "price": 55000,
-        "resources": {"steel": 60, "components": 12},
+        "price": 48000,
+        "resources": {"steel": 35, "components": 7},
         "manpower": 5,
     },
     "submarines": {
-        "price": 45000,
-        "resources": {"steel": 20, "components": 8},
+        "price": 40000,
+        "resources": {"steel": 12, "components": 5},
         "manpower": 6,
     },
     # SPECIAL
     "spies": {
-        "price": 25000,  # Cost 25k
-        "resources": {"rations": 50},  # Costs 50 rations
+        "price": 25000,
+        "resources": {"rations": 50},
         "manpower": 0,
     },
     "icbms": {
-        "price": 16000000,  # Cost 16 million
-        "resources": {"steel": 550},
+        "price": 16000000,
+        "resources": {"steel": 350},
         "manpower": 0,
     },
     "nukes": {
         "price": 80000000,
-        "resources": {"uranium": 1200, "steel": 900},
+        "resources": {"uranium": 800, "steel": 550},
         "manpower": 0,
     },
 }
@@ -569,15 +569,15 @@ PROVINCE_UNIT_PRICES = {
     "hospitals_resource": {"steel": 210000, "aluminium": 130000},
     "libraries_price": 10000000,
     "libraries_resource": {"steel": 85000, "aluminium": 60000},
-    "universities_price": 95000000,
-    "universities_resource": {"steel": 320000, "aluminium": 160000},
+    "universities_price": 40000000,
+    "universities_resource": {"steel": 150000, "aluminium": 80000},
     "monorails_price": 250000000,
     "monorails_resource": {"steel": 600000, "aluminium": 300000},
     # Education Buildings (Tier 2)
-    "primary_school_price": 8000000,
-    "primary_school_resource": {"steel": 50000, "aluminium": 30000},
-    "high_school_price": 25000000,
-    "high_school_resource": {"steel": 120000, "aluminium": 80000},
+    "primary_school_price": 4000000,
+    "primary_school_resource": {"steel": 25000, "aluminium": 15000},
+    "high_school_price": 12000000,
+    "high_school_resource": {"steel": 60000, "aluminium": 40000},
     # Military Infrastructure (Tier 2-4)
     "army_bases_price": 8000000,
     "army_bases_resource": {"lumber": 120000},

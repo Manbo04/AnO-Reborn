@@ -254,6 +254,15 @@
 
             <h2 class="templatecontentheaderleft" id="members">Members</h2>
 
+            {% if user_role in ["leader", "deputy_leader"] %}
+            <div class="infodiv" style="margin-bottom: 15px;">
+                <a href="/outgoing_invites" class="templatedivbutton templatecenteredbutton">
+                    <span class="material-icons-outlined">mail_outline</span>
+                    Manage Invitations
+                </a>
+            </div>
+            {% endif %}
+
             <div class="templateoutertablediv inverttable">
                 <table class="templatetable templatetable2">
                     <th>#</th>
@@ -637,6 +646,34 @@
                             {% endfor %}
                         </table>
                     </div>
+                </form>
+            </div>
+            {% endif %} {% if user_role in ["leader", "deputy_leader", "tax_collector"] %}
+            <h2 class="templatecontentheaderleft">Alliance Tax</h2>
+
+            <div class="infodiv">
+                <p style="margin-bottom:10px;">Set a tax rate on members' gold income. Taxed gold is automatically deposited into the coalition bank each income tick.</p>
+                <form action="/set_tax_rate/{{ colId }}" method="POST">
+                    <div class="templatedivflex2 divflex2center menuflex">
+                        <div class="templatedivflex2left">
+                            <label>Current Tax Rate: <strong>{{ tax_rate }}%</strong></label>
+                        </div>
+                        <div class="templatedivflex2left">
+                            <select class="templateselect" name="tax_rate" required>
+                                <option value="0" {% if tax_rate == 0 %}selected{% endif %}>0% (No Tax)</option>
+                                <option value="2" {% if tax_rate == 2 %}selected{% endif %}>2%</option>
+                                <option value="5" {% if tax_rate == 5 %}selected{% endif %}>5%</option>
+                                <option value="8" {% if tax_rate == 8 %}selected{% endif %}>8%</option>
+                                <option value="10" {% if tax_rate == 10 %}selected{% endif %}>10%</option>
+                                <option value="12" {% if tax_rate == 12 %}selected{% endif %}>12%</option>
+                                <option value="15" {% if tax_rate == 15 %}selected{% endif %}>15%</option>
+                                <option value="20" {% if tax_rate == 20 %}selected{% endif %}>20%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="templatedivbutton templatecenteredbutton" type="submit">
+                        <span class="material-icons-outlined">savings</span>Set Tax Rate
+                    </button>
                 </form>
             </div>
             {% endif %} {% if user_role in ["leader", "deputy_leader", "foreign_ambassador"] %}

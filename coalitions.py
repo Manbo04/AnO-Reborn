@@ -40,6 +40,7 @@ def coalition(coalition_id):
             """
             SELECT
                 c.name, c.type, c.description, c.flag, c.name_changes_used,
+                COALESCE(c.tax_rate, 0),
                 COUNT(DISTINCT coal.userid) AS members_count,
                 COALESCE(SUM(prov.total_pop), 0) AS total_influence
             FROM colNames c
@@ -51,7 +52,7 @@ def coalition(coalition_id):
                 GROUP BY p.userId
             ) prov ON coal.userid = prov.userId
             WHERE c.id = %s
-            GROUP BY c.id, c.name, c.type, c.description, c.flag, c.name_changes_used
+            GROUP BY c.id, c.name, c.type, c.description, c.flag, c.name_changes_used, c.tax_rate
             """,
             (coalition_id, coalition_id),
         )
@@ -64,6 +65,7 @@ def coalition(coalition_id):
             description,
             flag,
             name_changes_used,
+            tax_rate,
             members_count,
             total_influence,
         ) = result
@@ -501,6 +503,7 @@ def coalition(coalition_id):
             coalitionAverageLand=coalition_avg_land,
             coalitiongpd=coalition_gdp,
             coalitiongpdPerCapita=coalition_gdp_per_capita,
+            tax_rate=tax_rate,
         )
 
 
@@ -1526,6 +1529,37 @@ def accept_bank_request(bankId):
     return redirect("/my_coalition")
 
 
+def set_tax_rate(coalition_id):
+    """Set the alliance tax rate (0-20%) on members' gold income."""
+    cId = session["user_id"]
+
+    user_role = get_user_role(cId)
+    if user_role not in ["leader", "deputy_leader", "tax_collector"]:
+        return error(400, "You don't have permission to set tax rates")
+
+    with get_db_cursor() as db:
+        # Verify user is in this coalition
+        db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
+        row = db.fetchone()
+        if not row or str(row[0]) != str(coalition_id):
+            return error(400, "You are not in this coalition")
+
+        try:
+            tax_rate = int(request.form.get("tax_rate", 0))
+        except (ValueError, TypeError):
+            return error(400, "Invalid tax rate")
+
+        if tax_rate < 0 or tax_rate > 20:
+            return error(400, "Tax rate must be between 0% and 20%")
+
+        db.execute(
+            "UPDATE colNames SET tax_rate = %s WHERE id = %s",
+            (tax_rate, coalition_id),
+        )
+
+    return redirect(f"/coalition/{coalition_id}")
+
+
 # Route for offering another coalition a treaty
 def offer_treaty():
     cId = session["user_id"]
@@ -1898,6 +1932,7 @@ def register_coalitions_routes(app_instance):
     request_from_bank_wrapped = login_required(request_from_bank)
     remove_bank_request_wrapped = login_required(remove_bank_request)
     accept_bank_request_wrapped = login_required(accept_bank_request)
+    set_tax_rate_wrapped = login_required(set_tax_rate)
     offer_treaty_wrapped = login_required(offer_treaty)
     accept_treaty_wrapped = login_required(accept_treaty)
     break_treaty_wrapped = login_required(break_treaty)
@@ -2001,6 +2036,11 @@ def register_coalitions_routes(app_instance):
     app_instance.add_url_rule(
         "/accept_bank_request/<bankId>",
         view_func=accept_bank_request_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/set_tax_rate/<coalition_id>",
+        view_func=set_tax_rate_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(

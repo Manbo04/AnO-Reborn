@@ -285,23 +285,23 @@ def compute_display_limits(cId, units_row=None, db=None):
         military[unit] = val["quantity"] if isinstance(val, dict) else int(val or 0)
 
     # Land units
-    soldiers = max(0, army_bases * 100 - military["soldiers"])
-    tanks = max(0, army_bases * 8 - military["tanks"])
-    artillery = max(0, army_bases * 8 - military["artillery"])
+    soldiers = max(0, army_bases * 150 - military["soldiers"])
+    tanks = max(0, army_bases * 12 - military["tanks"])
+    artillery = max(0, army_bases * 12 - military["artillery"])
 
     # Air units share aerodome capacity
     air_units = military["fighters"] + military["bombers"] + military["apaches"]
-    air_limit = max(0, aerodomes * 5 - air_units)
+    air_limit = max(0, aerodomes * 8 - air_units)
     bombers = air_limit
     fighters = air_limit
     apaches = air_limit
 
     # Naval units
     naval_units = military["submarines"] + military["destroyers"]
-    naval_limit = max(0, harbours * 3 - naval_units)
+    naval_limit = max(0, harbours * 5 - naval_units)
     submarines = naval_limit
     destroyers = naval_limit
-    cruisers = max(0, harbours * 2 - military["cruisers"])
+    cruisers = max(0, harbours * 3 - military["cruisers"])
 
     # Specials
     spies = max(0, admin_buildings * 1 - military["spies"])

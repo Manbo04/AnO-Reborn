@@ -1028,9 +1028,33 @@ def tax_income():
                     )
                     cg_dist_cap_map[uid] = cg_dist_cap_map.get(uid, 0) + qty * cap
 
+            # Preload coalition membership + tax rates for alliance tax
+            coalition_tax_map = {}  # user_id -> (colId, tax_rate)
+            try:
+                dbdict.execute(
+                    """
+                    SELECT cl.userid, cl.colid, COALESCE(cn.tax_rate, 0) AS tax_rate
+                    FROM coalitions_legacy cl
+                    JOIN colNames cn ON cn.id = cl.colid
+                    WHERE cl.userid = ANY(%s) AND COALESCE(cn.tax_rate, 0) > 0
+                    """,
+                    (all_user_ids,),
+                )
+                for row in dbdict.fetchall():
+                    if isinstance(row, dict):
+                        uid = row.get("userid") or row.get("user_id")
+                        coalition_tax_map[uid] = (row.get("colid"), row.get("tax_rate"))
+                    else:
+                        coalition_tax_map[row[0]] = (row[1], row[2])
+            except Exception as e:
+                # If colNames doesn't have tax_rate yet (migration pending),
+                # just skip coalition taxes this run
+                print(f"Coalition tax preload skipped: {e}")
+
             # Prepare batch updates
             money_updates = []
             cg_updates = []
+            coalition_bank_deposits = {}  # colId -> total_gold_to_deposit
 
             for user_id in all_user_ids:
                 current_money = stats_map.get(user_id)
@@ -1118,10 +1142,23 @@ def tax_income():
                 if not money:
                     continue
 
+                # Alliance tax: deduct % from income and deposit to coalition bank
+                tax_deducted = 0
+                if user_id in coalition_tax_map:
+                    col_id, tax_rate = coalition_tax_map[user_id]
+                    tax_deducted = int(money * tax_rate / 100)
+                    if tax_deducted > 0:
+                        money -= tax_deducted
+                        coalition_bank_deposits[col_id] = (
+                            coalition_bank_deposits.get(col_id, 0) + tax_deducted
+                        )
+
                 msg = (
                     f"Updated money for user id: {user_id}."
                     f" {current_money} -> {current_money + money} (+{money})"
                 )
+                if tax_deducted:
+                    msg += f" [tax: {tax_deducted}]"
                 print(msg)
 
                 money_updates.append((money, user_id))
@@ -1135,6 +1172,25 @@ def tax_income():
                     money_updates,
                     page_size=100,
                 )
+            # Deposit alliance taxes into coalition banks
+            if coalition_bank_deposits:
+                tax_updates = [
+                    (gold, col_id) for col_id, gold in coalition_bank_deposits.items()
+                ]
+                try:
+                    execute_batch(
+                        db,
+                        "UPDATE colBanks SET money = money + %s WHERE colId = %s",
+                        tax_updates,
+                        page_size=50,
+                    )
+                    total_tax = sum(coalition_bank_deposits.values())
+                    print(
+                        f"Alliance tax deposited: {total_tax} gold across "
+                        f"{len(coalition_bank_deposits)} coalitions"
+                    )
+                except Exception as e:
+                    print(f"Alliance tax deposit failed: {e}")
             if cg_updates:
                 try:
                     # Get consumer_goods resource_id
@@ -1739,19 +1795,23 @@ def apply_population_aging(province_id):
             # in THIS province
             db.execute(
                 """
-                SELECT COALESCE(SUM(ub.quantity), 0)
+                SELECT bd.name, COALESCE(SUM(ub.quantity), 0)
                 FROM user_buildings ub
                 JOIN building_dictionary bd
                     ON bd.building_id = ub.building_id
                 WHERE ub.province_id = %s
                     AND bd.name IN ('high_school', 'university')
+                GROUP BY bd.name
                 """,
                 (province_id,),
             )
-            school_capacity_result = db.fetchone()
-            school_capacity = (
-                int(school_capacity_result[0] * 100) if school_capacity_result else 0
-            )  # 100 students per building
+            school_rows = {r[0]: int(r[1]) for r in db.fetchall()}
+            hs_buildings = school_rows.get("high_school", 0)
+            uni_buildings = school_rows.get("university", 0)
+            # Each school building can graduate 500 students per tick
+            hs_capacity = hs_buildings * 500
+            uni_capacity = uni_buildings * 500
+            school_capacity = hs_capacity + uni_capacity
 
             # Apply Mandatory Schooling policy to graduation rate
             graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
@@ -1763,32 +1823,28 @@ def apply_population_aging(province_id):
                 pop_children,
                 int(round(pop_children * graduation_rate)),
             )
-            graduates = (
-                min(can_graduate, school_capacity // 100) if school_capacity > 0 else 0
-            )
+            graduates = min(can_graduate, school_capacity) if school_capacity > 0 else 0
 
             # Remaining children who age but don't graduate
             non_graduates = can_graduate - graduates
 
-            # Update education columns based on graduation
+            # Distribute graduates: universities first, then high schools
             if graduates > 0:
-                grad_priority = variables.EDUCATION_GRADUATION_PRIORITY
-                # Distribute graduates based on priority
-                # (first option gets all unless capacity runs out)
-                for edu_level in grad_priority:
-                    if edu_level == "university":
-                        db.execute(
-                            "UPDATE provinces SET edu_college = "
-                            "edu_college + %s WHERE id = %s",
-                            (graduates, province_id),
-                        )
-                    elif edu_level == "high_school":
-                        db.execute(
-                            "UPDATE provinces SET edu_highschool = "
-                            "edu_highschool + %s WHERE id = %s",
-                            (graduates, province_id),
-                        )
-                    break  # Only place in primary priority for now
+                uni_grads = min(graduates, uni_capacity)
+                hs_grads = min(graduates - uni_grads, hs_capacity)
+
+                if uni_grads > 0:
+                    db.execute(
+                        "UPDATE provinces SET edu_college = "
+                        "edu_college + %s WHERE id = %s",
+                        (uni_grads, province_id),
+                    )
+                if hs_grads > 0:
+                    db.execute(
+                        "UPDATE provinces SET edu_highschool = "
+                        "edu_highschool + %s WHERE id = %s",
+                        (hs_grads, province_id),
+                    )
 
             if non_graduates > 0:
                 db.execute(
@@ -2487,14 +2543,14 @@ def generate_province_revenue():  # Runs each hour
                     can_graduate = min(
                         pop_children, int(round(pop_children * graduation_rate))
                     )
-                    school_buildings = int(
-                        province_buildings.get("high_school", 0) or 0
-                    ) + int(province_buildings.get("university", 0) or 0)
-                    school_capacity = school_buildings * 100
+                    hs_buildings = int(province_buildings.get("high_school", 0) or 0)
+                    uni_buildings = int(province_buildings.get("university", 0) or 0)
+                    # Each school building can graduate 500 students per tick
+                    hs_capacity = hs_buildings * 500
+                    uni_capacity = uni_buildings * 500
+                    school_capacity = hs_capacity + uni_capacity
                     graduates = (
-                        min(can_graduate, school_capacity // 100)
-                        if school_capacity > 0
-                        else 0
+                        min(can_graduate, school_capacity) if school_capacity > 0 else 0
                     )
                     non_graduates = can_graduate - graduates
 
@@ -2505,18 +2561,14 @@ def generate_province_revenue():  # Runs each hour
                             "edu_college": 0,
                         }
 
+                    # Distribute graduates: universities first, then high schools
                     if graduates > 0:
-                        grad_priority = variables.EDUCATION_GRADUATION_PRIORITY
-                        for edu_level in grad_priority:
-                            if edu_level == "university":
-                                education_deltas[province_id][
-                                    "edu_college"
-                                ] += graduates
-                            elif edu_level == "high_school":
-                                education_deltas[province_id][
-                                    "edu_highschool"
-                                ] += graduates
-                            break
+                        uni_grads = min(graduates, uni_capacity)
+                        hs_grads = min(graduates - uni_grads, hs_capacity)
+                        if uni_grads > 0:
+                            education_deltas[province_id]["edu_college"] += uni_grads
+                        if hs_grads > 0:
+                            education_deltas[province_id]["edu_highschool"] += hs_grads
 
                     if non_graduates > 0:
                         education_deltas[province_id]["edu_none"] += non_graduates
@@ -3685,18 +3737,26 @@ def cleanup_orphan_user_rows():
 BOT_USER_ID = 9999  # Market Bot account
 BOT_OFFERS = [
     # (type, resource, amount, price)
-    # Prices calibrated to player market rates (CG ~1000-2200, rations ~200-500)
-    ("sell", "consumer_goods", 50000, 1500),  # 50k consumer goods @ 1,500 gold
-    ("sell", "rations", 100000, 300),  # 100k rations @ 300 gold
-    ("sell", "steel", 20000, 4000),  # 20k steel @ 4,000 gold
-    ("sell", "aluminium", 10000, 3000),  # 10k aluminium @ 3,000 gold
-    ("sell", "components", 5000, 8000),  # 5k components @ 8,000 gold
-    ("buy", "coal", 50000, 80),  # buy 50k coal @ 80 gold
-    ("buy", "iron", 50000, 120),  # buy 50k iron @ 120 gold
-    ("buy", "lumber", 50000, 60),  # buy 50k lumber @ 60 gold
-    ("buy", "oil", 50000, 150),  # buy 50k oil @ 150 gold
-    ("buy", "copper", 50000, 100),  # buy 50k copper @ 100 gold
-    ("buy", "bauxite", 50000, 90),  # buy 50k bauxite @ 90 gold
+    # === SELL offers — processed goods for players to buy ===
+    ("sell", "consumer_goods", 500000, 1500),  # 500k CG @ 1,500 gold
+    ("sell", "rations", 1000000, 300),  # 1M rations @ 300 gold
+    ("sell", "steel", 200000, 4000),  # 200k steel @ 4,000 gold
+    ("sell", "aluminium", 100000, 3000),  # 100k aluminium @ 3,000 gold
+    ("sell", "components", 50000, 8000),  # 50k components @ 8,000 gold
+    # === SELL offers — raw resources for early-game players ===
+    ("sell", "coal", 300000, 100),  # 300k coal @ 100 gold
+    ("sell", "iron", 300000, 150),  # 300k iron @ 150 gold
+    ("sell", "lumber", 300000, 80),  # 300k lumber @ 80 gold
+    ("sell", "oil", 200000, 200),  # 200k oil @ 200 gold
+    ("sell", "copper", 200000, 130),  # 200k copper @ 130 gold
+    ("sell", "bauxite", 200000, 120),  # 200k bauxite @ 120 gold
+    # === BUY offers — bot buys surplus from players ===
+    ("buy", "coal", 500000, 80),  # buy 500k coal @ 80 gold
+    ("buy", "iron", 500000, 120),  # buy 500k iron @ 120 gold
+    ("buy", "lumber", 500000, 60),  # buy 500k lumber @ 60 gold
+    ("buy", "oil", 500000, 150),  # buy 500k oil @ 150 gold
+    ("buy", "copper", 500000, 100),  # buy 500k copper @ 100 gold
+    ("buy", "bauxite", 500000, 90),  # buy 500k bauxite @ 90 gold
 ]
 
 
