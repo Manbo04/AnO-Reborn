@@ -153,12 +153,15 @@ def admin_command_center():
             }
         )
 
+    from variables import RESOURCES
+
     return render_template(
         "admin_command_center.html",
         controlled_users=controlled_users,
         recent_actions=parsed_actions,
         new_accounts_by_day=new_accounts_by_day,
         new_accounts_total=new_accounts_total,
+        RESOURCES=RESOURCES,
     )
 
 
