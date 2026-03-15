@@ -3737,26 +3737,28 @@ def cleanup_orphan_user_rows():
 BOT_USER_ID = 9999  # Market Bot account
 BOT_OFFERS = [
     # (type, resource, amount, price)
-    # === SELL offers — processed goods for players to buy ===
-    ("sell", "consumer_goods", 500000, 1500),  # 500k CG @ 1,500 gold
-    ("sell", "rations", 1000000, 300),  # 1M rations @ 300 gold
-    ("sell", "steel", 200000, 4000),  # 200k steel @ 4,000 gold
-    ("sell", "aluminium", 100000, 3000),  # 100k aluminium @ 3,000 gold
-    ("sell", "components", 50000, 8000),  # 50k components @ 8,000 gold
+    # Prices set at ~2.5x production cost — bot is a convenience backstop,
+    # not a cheap alternative to building your own economy.
+    # === SELL offers — processed goods ===
+    ("sell", "consumer_goods", 200000, 5000),  # 200k CG @ 5,000 gold
+    ("sell", "rations", 500000, 600),  # 500k rations @ 600 gold
+    ("sell", "steel", 100000, 12000),  # 100k steel @ 12,000 gold
+    ("sell", "aluminium", 50000, 7000),  # 50k aluminium @ 7,000 gold
+    ("sell", "components", 25000, 25000),  # 25k components @ 25,000 gold
     # === SELL offers — raw resources for early-game players ===
-    ("sell", "coal", 300000, 100),  # 300k coal @ 100 gold
-    ("sell", "iron", 300000, 150),  # 300k iron @ 150 gold
-    ("sell", "lumber", 300000, 80),  # 300k lumber @ 80 gold
-    ("sell", "oil", 200000, 200),  # 200k oil @ 200 gold
-    ("sell", "copper", 200000, 130),  # 200k copper @ 130 gold
-    ("sell", "bauxite", 200000, 120),  # 200k bauxite @ 120 gold
-    # === BUY offers — bot buys surplus from players ===
-    ("buy", "coal", 500000, 80),  # buy 500k coal @ 80 gold
-    ("buy", "iron", 500000, 120),  # buy 500k iron @ 120 gold
-    ("buy", "lumber", 500000, 60),  # buy 500k lumber @ 60 gold
-    ("buy", "oil", 500000, 150),  # buy 500k oil @ 150 gold
-    ("buy", "copper", 500000, 100),  # buy 500k copper @ 100 gold
-    ("buy", "bauxite", 500000, 90),  # buy 500k bauxite @ 90 gold
+    ("sell", "coal", 300000, 400),  # 300k coal @ 400 gold
+    ("sell", "iron", 300000, 1500),  # 300k iron @ 1,500 gold
+    ("sell", "lumber", 300000, 600),  # 300k lumber @ 600 gold
+    ("sell", "oil", 200000, 1200),  # 200k oil @ 1,200 gold
+    ("sell", "copper", 200000, 600),  # 200k copper @ 600 gold
+    ("sell", "bauxite", 200000, 1200),  # 200k bauxite @ 1,200 gold
+    # === BUY offers — bot buys surplus from players (~50% of sell price) ===
+    ("buy", "coal", 500000, 200),  # buy 500k coal @ 200 gold
+    ("buy", "iron", 500000, 700),  # buy 500k iron @ 700 gold
+    ("buy", "lumber", 500000, 300),  # buy 500k lumber @ 300 gold
+    ("buy", "oil", 500000, 600),  # buy 500k oil @ 600 gold
+    ("buy", "copper", 500000, 300),  # buy 500k copper @ 300 gold
+    ("buy", "bauxite", 500000, 600),  # buy 500k bauxite @ 600 gold
 ]
 
 
@@ -3767,14 +3769,10 @@ def refresh_bot_offers():
     with get_db_connection() as conn:
         db = conn.cursor()
 
-        for offer_type, resource, amount, price in BOT_OFFERS:
-            # Delete existing bot offers for this resource/type combo
-            db.execute(
-                "DELETE FROM offers WHERE user_id = %s AND resource = %s AND type = %s",
-                (BOT_USER_ID, resource, offer_type),
-            )
+        # Delete ALL existing bot offers first (cleans up stale/removed offers)
+        db.execute("DELETE FROM offers WHERE user_id = %s", (BOT_USER_ID,))
 
-            # Insert fresh offer
+        for offer_type, resource, amount, price in BOT_OFFERS:
             db.execute(
                 "INSERT INTO offers (user_id, type, resource, amount, price) "
                 "VALUES (%s, %s, %s, %s, %s)",
