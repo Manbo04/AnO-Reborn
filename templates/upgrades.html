@@ -10,7 +10,7 @@
 
     <div class="templatedivcontent">
 
-        <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease construction costs, increase efficacy in war, and even unlock new technologies to improve your economy and military.
+        <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease construction costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.
         </p>
 
         <div class="templatedivflex2 menuflex2">
@@ -32,30 +32,30 @@
             </div>
             -->
         </div>
+
+        {% if tech_rows and tech_rows|length > 0 %}
+        <div class="infodiv" style="margin-bottom: 20px;">
+            <h3 class="templatecontentheadercenter">All Technologies</h3>
+            <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
+            <form method="POST" action="/start_research">
+                <label for="tech_id">Technology</label>
+                <select class="templateselect" name="tech_id" id="tech_id" required>
+                    {% for tech in tech_rows %}
+                    <option value="{{ tech[0] }}">
+                        {{ tech[1] }} ({{ tech[2] | weight_fmt }} {{ research_cost_resource }})
+                        {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="templatedivbutton templatecenteredbutton">
+                    <span class="material-icons-outlined">science</span>Research
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
         <!--ECONOMIC-->
         <div class="economic" id="economic">
-            <div class="infodiv" style="margin-bottom: 20px;">
-                <h3 class="templatecontentheadercenter">Research (Normalized)</h3>
-                <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
-                <form method="POST" action="/start_research">
-                    <label for="tech_id">Technology</label>
-                    <select class="templateselect" name="tech_id" id="tech_id" required>
-                        {% if tech_rows and tech_rows|length > 0 %}
-                        {% for tech in tech_rows %}
-                        <option value="{{ tech[0] }}">
-                            {{ tech[1] }} ({{ tech[2] }} {{ research_cost_resource }})
-                            {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
-                        </option>
-                        {% endfor %}
-                        {% else %}
-                        <option value="" disabled selected>No technologies available</option>
-                        {% endif %}
-                    </select>
-                    <button type="submit" class="templatedivbutton templatecenteredbutton">
-                        <span class="material-icons-outlined">science</span>Research
-                    </button>
-                </form>
-            </div>
 
             <form method="POST">
 
@@ -69,18 +69,16 @@
                             <p class="templatecontentpleft">Reworking of existing nuclear reactors and regulation of future nuclear reactors results in +6 energy produced per reactor
                             </p>
 
-                            <ul>Better engineering costs 254M, 500 steel, and 420 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("betterengineering", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["betterengineering"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/betterEngineering">
                                             <span class="material-icons-outlined">
                                                 add_circle_outline
-                                            </span>Buy</button> {% endif %}
+                                            </span>Research</button> {% endif %}
                                 {% if upgrades["betterengineering"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/betterEngineering">
-                                                <span class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button> {% endif %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="templatedivflex2left">
@@ -100,18 +98,16 @@
                             <p class="templatecontentpleft">With research into optimized construction methods and rebuilding of existing structures, upkeep costs for all existing and future indsutry infrastructure is decreased by 20%
                             </p>
 
-                            <ul>Cheaper materials costs 22M, 220 lumber</ul>
+                            <ul>Costs {{ tech_costs.get("cheapermaterials", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if upgrades["cheapermaterials"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/cheaperMaterials">
-                                        <span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button> {% endif %} {% if not upgrades["cheapermaterials"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %} {% if not upgrades["cheapermaterials"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/cheaperMaterials">
                                     <span class="material-icons-outlined">
                                         add_circle_outline
-                                    </span>Buy</button> {% endif %}
+                                    </span>Research</button> {% endif %}
 
                             </div>
 
@@ -135,18 +131,16 @@
                             <p class="templatecontentpleft">Outdated malls are replaced with fulfillment centers, delivering goods to consumers. Consequently, upkeep for malls is decreased by 30%
                             </p>
 
-                            <ul>Online shopping costs 184M, 600 steel, 450 aluminium, 800 lumber</ul>
+                            <ul>Costs {{ tech_costs.get("onlineshopping", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if not upgrades["onlineshopping"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/onlineShopping">
                                     <span class="material-icons-outlined">
                                         add_circle_outline
-                                    </span>Buy</button> {% endif %} {% if upgrades["onlineshopping"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/onlineShopping">
-                                        <span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button> {% endif %}
+                                    </span>Research</button> {% endif %} {% if upgrades["onlineshopping"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -173,17 +167,15 @@
                             <p class="templatecontentpleft">Government regulation and implementation of new building standards, green energy quotas, and energy use results in retail producing 25% less pollution
                             </p>
 
-                            <ul>Government regulation costs 112M, 980 steel, 750 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("governmentregulation", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["governmentregulation"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/governmentRegulation">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["governmentregulation"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/governmentRegulation">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["governmentregulation"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -207,17 +199,15 @@
                             <p class="templatecontentpleft">Implementation of a national health institution allows for organization and effective distribution and communication, increasing each hospital's happiness increase by 30%
                             </p>
 
-                            <ul>National health institution costs 95M, 320 steel, 80 aluminium, 675 lumber</ul>
+                            <ul>Costs {{ tech_costs.get("nationalhealthinstitution", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["nationalhealthinstitution"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nationalHealthInstitution">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["nationalhealthinstitution"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/nationalHealthInstitution">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["nationalhealthinstitution"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -243,17 +233,15 @@
                             <p class="templatecontentpleft">Re-creation of existing and future monorails into high speed rail increases productivity increase by 20%
                             </p>
 
-                            <ul>High speed rail costs 220M, 1350 steel, 450 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("highspeedrail", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["highspeedrail"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/highSpeedRail">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["highspeedrail"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/highSpeedRail">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["highspeedrail"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -280,17 +268,15 @@
                             <p class="templatecontentpleft">The implementation of automation and advanced technologies into conventional farming increases farm output by 50%
                             </p>
 
-                            <ul>Advanced machinery costs 180M, 1400 steel, 320 aluminium, 850 lumber</ul>
+                            <ul>Costs {{ tech_costs.get("advancedmachinery", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["advancedmachinery"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/advancedMachinery">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["advancedmachinery"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/advancedMachinery">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["advancedmachinery"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -314,18 +300,16 @@
                             <p class="templatecontentpleft">Research and development into explosives allows for more effective buaxite harvesting, increasing production by 45%
                             </p>
 
-                            <ul>Stronger explosives costs 65M</ul>
+                            <ul>Costs {{ tech_costs.get("strongerexplosives", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if not upgrades["strongerexplosives"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/strongerExplosives">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["strongerexplosives"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/strongerExplosives">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["strongerexplosives"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -349,17 +333,15 @@
                             <p class="templatecontentpleft">Use of propaganda in media, news, and through devices allows for easy recruitment of soldiers, bringing costs down by 35%
                             </p>
 
-                            <ul>Widespread propaganda costs 150M</ul>
+                            <ul>Costs {{ tech_costs.get("widespreadpropaganda", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["widespreadpropaganda"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/widespreadPropaganda">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["widespreadpropaganda"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/widespreadPropaganda">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["widespreadpropaganda"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -385,17 +367,15 @@
                             <p class="templatecontentpleft">Increased funding and construction of new opperative bases allows for the ability to recruit and mantain more spies by a factor of 40%
                             </p>
 
-                            <ul>Increased funding costs 225M, 950 steel, 450 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("increasedfunding", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["increasedfunding"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/increasedFunding">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["increasedfunding"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/increasedFunding">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["increasedfunding"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -418,17 +398,15 @@
                             <p class="templatecontentpleft">Research and development into technologies allows for cheaper and quicker production of components, decreasing resources needed to make components by 25%
                             </p>
 
-                            <ul>Automation inergration costs 420M, 2200 steel, 1150 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("automationintegration", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["automationintegration"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/automationIntegration">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["automationintegration"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/automationIntegration">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["automationintegration"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -453,17 +431,15 @@
                             <p class="templatecontentpleft">Heavy subsidisation of the steel industry allows for investments into large scale projects, decreasing upkeep and resources make steel by 30%
                             </p>
 
-                            <ul>Larger forges costs 320M, 1850 steel, 650 aluminium</ul>
+                            <ul>Costs {{ tech_costs.get("largerforges", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["largerforges"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/largerForges">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["largerforges"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/largerForges">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["largerforges"] %}
+                                <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                                {% endif %}
 
                             </div>
 
@@ -490,17 +466,15 @@
                         <p class="templatecontentpleft">Looting teams will acquire military supplies from annexed establishments, increasing war supplies production by 10%
                         </p>
 
-                        <ul>Looting teams costs 140M, 800 steel, 350 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("lootingteams", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["lootingteams"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/lootingTeams">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["lootingteams"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/lootingTeams">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["lootingteams"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
 
@@ -524,17 +498,15 @@
                         <p class="templatecontentpleft">Organized supply lines gives annexed citizens jobs producing resources for your war economy, further increasing war supplies production by 15%
                         </p>
 
-                        <ul>Looting teams costs 200M, 1100 steel, 550 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("organizedsupplylines", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["organizedsupplylines"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/organizedSupplyLines">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["organizedsupplylines"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/organizedSupplyLines">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["organizedsupplylines"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
 
@@ -556,17 +528,15 @@
                         <p class="templatecontentpleft">Large storehouses allows for greater storage of war supplies, increasing max supplies by 25%
                         </p>
 
-                        <ul>Looting teams costs 315M, 1600 steel, 900 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("largestorehouses", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["largestorehouses"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/largeStoreHouses">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["largestorehouses"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/largeStoreHouses">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["largestorehouses"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
 
@@ -590,17 +560,15 @@
                         <p class="templatecontentpleft">Ballistic missile silos provides countries with the ability to develop and deploy ballistic missiles
                         </p>
 
-                        <ul>Looting teams costs 280M, 1200 steel, 450 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("ballisticmissilesilo", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["ballisticmissilesilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ballisticMissileSilo">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["ballisticmissilesilo"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/ballisticMissileSilo">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["ballisticmissilesilo"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
 
@@ -625,17 +593,15 @@
                         <p class="templatecontentpleft">Inter-continental ballistic missile silos allows countries to develop and deploy inter-continental ballistic missiles
                         </p>
 
-                        <ul>Looting teams costs 355M, 1550 steel, 700 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("icbmsilo", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["icbmsilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ICBMsilo">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["icbmsilo"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/ICBMsilo">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["icbmsilo"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
 
@@ -659,17 +625,15 @@
                         <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads and establish nuclear reactors
                         </p>
 
-                        <ul>Looting teams costs 575M, 2250 steel, 1050 aluminium</ul>
+                        <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} components</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["nucleartestingfacility"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nuclearTestingFacility">
                                         <span class="material-icons-outlined">
                                             add_circle_outline
-                                        </span>Buy</button> {% endif %} {% if upgrades["nucleartestingfacility"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/sell/nuclearTestingFacility">
-                                            <span class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button> {% endif %}
+                                        </span>Research</button> {% endif %} {% if upgrades["nucleartestingfacility"] %}
+                            <p class="templatecontentpleft" style="color: #4caf50; font-weight: 600;"><span class="material-icons-outlined" style="vertical-align:middle;">check_circle</span> Researched</p>
+                            {% endif %}
 
                         </div>
                     </div>
