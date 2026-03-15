@@ -79,7 +79,12 @@
                 </div>
                 <div class="templatedivflex2left">
                     <label>Resource</label>
-                    <input class="loginsignupinput" name="resource" placeholder="money, rations, oil..." required>
+                    <select class="loginsignupinput" name="resource" required>
+                        <option value="money">money (gold)</option>
+                        {% for res in RESOURCES %}
+                        <option value="{{ res }}">{{ res }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="templatedivflex2left">
                     <label>Amount</label>
