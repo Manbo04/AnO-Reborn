@@ -104,6 +104,28 @@
             <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">add_home</span>Add Provinces</button>
         </form>
 
+        <h2 class="templatecontentheaderleft">New Accounts (Last 7 Days)</h2>
+        <div class="infodiv">
+            <p style="font-size:1.3em;font-weight:700;margin:0 0 10px;">Total: {{ new_accounts_total }} new account{{ 's' if new_accounts_total != 1 }}</p>
+            <div class="templateoutertablediv inverttable">
+                <table class="templatetable templatetable2">
+                    <tr>
+                        <th>Date</th>
+                        <th>Signups</th>
+                    </tr>
+                    {% for row in new_accounts_by_day %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not new_accounts_by_day %}
+                    <tr><td colspan="2" style="text-align:center;color:#78909c;">No new accounts this week</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
         <h2 class="templatecontentheaderleft">Moderation</h2>
         <form action="/admin/command-center/ban-user" method="POST" class="infodiv">
             <div class="templatedivflex2 menuflex">
