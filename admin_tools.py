@@ -122,6 +122,19 @@ def admin_command_center():
         )
         recent_actions = db.fetchall()
 
+        # New accounts in the last 7 days
+        db.execute(
+            """
+            SELECT date, COUNT(*) AS cnt
+            FROM users
+            WHERE date::date >= CURRENT_DATE - INTERVAL '6 days'
+            GROUP BY date
+            ORDER BY date DESC
+            """
+        )
+        new_accounts_by_day = db.fetchall()
+        new_accounts_total = sum(row[1] for row in new_accounts_by_day)
+
     # Parse details into human-readable format
     parsed_actions = []
     for row in recent_actions:
@@ -144,6 +157,8 @@ def admin_command_center():
         "admin_command_center.html",
         controlled_users=controlled_users,
         recent_actions=parsed_actions,
+        new_accounts_by_day=new_accounts_by_day,
+        new_accounts_total=new_accounts_total,
     )
 
 
