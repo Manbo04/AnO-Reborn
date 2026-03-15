@@ -76,13 +76,21 @@ def upgrades():
     with get_db_cursor() as db:
         db.execute(
             """
-            SELECT tech_id, display_name, research_cost, prerequisite_tech_id
+            SELECT tech_id, display_name, research_cost, prerequisite_tech_id, name
             FROM tech_dictionary
             WHERE is_active = TRUE
             ORDER BY display_name ASC
             """
         )
         tech_rows = db.fetchall() or []
+
+        # Build legacy_key → research_cost mapping for template cards
+        tech_costs = {}
+        for row in tech_rows:
+            tech_name = row[4]  # name column
+            legacy_key = TECH_TO_LEGACY_UPGRADE.get(tech_name)
+            if legacy_key:
+                tech_costs[legacy_key] = int(row[2])  # research_cost
 
         db.execute(
             """
@@ -100,6 +108,7 @@ def upgrades():
         tech_rows=tech_rows,
         unlocked_ids=unlocked_ids,
         research_cost_resource=RESEARCH_COST_RESOURCE,
+        tech_costs=tech_costs,
     )
 
 
