@@ -25,7 +25,7 @@
             {% if userInCol %}
             <!-- if user isnt in coalition, maybe this is wrong ?-->
             <script>
-                $(document).ready(function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     joinhide();
 
@@ -40,7 +40,7 @@
 
             {% if not userInCurCol or user_role not in ["leader", "deputy_leader", "banker", "tax_collector", "foreign_ambassador", "general"] %}
             <script>
-                $(document).ready(function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     leaderhide();
 
@@ -57,7 +57,7 @@
             {% if not userInCol %}
             <!--TODO: fix this lul-->
             <script>
-                $(document).ready(function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     memberhide();
 
