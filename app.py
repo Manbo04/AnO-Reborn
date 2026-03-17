@@ -776,11 +776,7 @@ def fmt(value):
             k = num / 1000
             if k == int(k):
                 return "{:,}K".format(int(k))
-            return (
-                "{:,.1f}K".format(k).rstrip("0").rstrip(".") + "K"
-                if k != int(k)
-                else "{:,}K".format(int(k))
-            )
+            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
         elif num < 1000000000:
             # 1M - 999M
             m = num / 1000000
