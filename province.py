@@ -1020,4 +1020,8 @@ def province_sell_buy(way, units, province_id):
         except Exception:
             pass
 
-    return redirect(f"/province/{province_id}")
+    # Cache-bust parameter ensures the redirect doesn't hit a stale cached
+    # response (can happen when multiple replicas keep separate in-memory caches).
+    from time import time as _now
+
+    return redirect(f"/province/{province_id}?_={int(_now())}")
