@@ -9,7 +9,7 @@ from collections import defaultdict
 from policies import get_user_policies
 from wars.service import target_data
 import math
-from database import get_db_cursor, cache_response
+from database import get_request_cursor, cache_response
 
 load_dotenv()
 
@@ -337,7 +337,7 @@ def get_revenue(cId, db=None):
 
 def next_turn_rations(cId, prod_rations):
     """Calculate next turn rations after consumption."""
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         # Get current rations (normalized economy)
         db.execute(
             """
@@ -381,7 +381,7 @@ def next_turn_rations(cId, prod_rations):
 
 
 def delete_news(id):
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
         destination_id = db.fetchone()[0]
         if destination_id == session["user_id"]:
@@ -395,7 +395,7 @@ def delete_news(id):
 
 
 def cg_need(user_id):
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (user_id,))
         population = db.fetchone()[0]
         if population is None:
@@ -453,7 +453,7 @@ def country(cId):
             "processing": 0,
         }
 
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
         db.execute(
             """SELECT u.username, s.location, u.description,
@@ -751,7 +751,7 @@ def countries():
     sort_column = sort_map.get(sort, "influence")
     sort_direction = "DESC" if sortway == "desc" else "ASC"
 
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         filter_sql = f"""
             WITH country_rows AS (
                 SELECT
@@ -916,7 +916,7 @@ def countries():
 
 
 def update_info():
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         cId = session["user_id"]
 
         # Description changing
@@ -1051,7 +1051,7 @@ def update_info():
 
 # TODO: check if you can DELETE with one statement
 def delete_own_account():
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         cId = session["user_id"]
 
         # Track how many rows we delete from key tables for observability

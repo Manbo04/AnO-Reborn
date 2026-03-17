@@ -168,9 +168,9 @@ def ensure_signup_attempts_table():
     if _signup_table_ensured:
         return
     try:
-        from database import get_db_cursor
+        from database import get_request_cursor
 
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             # Create table if it doesn't exist (minimal primary key).
             # Afterwards, add expected columns.
             db.execute(
@@ -284,7 +284,7 @@ def discord():
 
 
 def callback():
-    from database import get_db_cursor
+    from database import get_request_cursor
 
     if request.values.get("error"):
         return request.values["error"]
@@ -340,7 +340,7 @@ def callback():
 
     discord_auth = discord_user_id
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         try:
             db.execute(
                 "SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'",
@@ -357,7 +357,7 @@ def callback():
 
 
 def discord_register():
-    from database import get_db_cursor
+    from database import get_request_cursor
     from app import app
 
     if request.method == "GET":
@@ -384,7 +384,7 @@ def discord_register():
             else:
                 client_ip = request.remote_addr
 
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 db.execute(
                     """
                     SELECT COUNT(*) FROM signup_attempts
@@ -471,7 +471,7 @@ def discord_register():
             logger.info(f"Creating account: {username}")
 
             # Create account
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 # Check if username exists
                 db.execute("SELECT id FROM users WHERE username=%s", (username,))
                 if db.fetchone():
@@ -526,7 +526,7 @@ def discord_register():
                 _init_economy_tables(db, user_id)
 
             # Mark attempt as successful
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 db.execute(
                     """
                     UPDATE signup_attempts
@@ -558,7 +558,7 @@ def discord_register():
 
 def signup():
     if request.method == "POST":
-        from database import get_db_cursor
+        from database import get_request_cursor
 
         # Defensive: ensure signup_attempts exists
         ensure_signup_attempts_table()
@@ -578,7 +578,7 @@ def signup():
             client_ip = request.remote_addr
 
         # Allow a higher threshold (or effectively bypass) for local dev/testing
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute(
                 """
                 SELECT COUNT(*) FROM signup_attempts
@@ -691,7 +691,7 @@ def signup():
 
         continent = continents[continent_number]
 
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT username FROM users WHERE username=%s", (username,))
             result = db.fetchone()
             if result:
@@ -815,7 +815,7 @@ def signup():
                 return redirect("/")
 
         # Mark attempt as successful
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute(
                 """
                 UPDATE signup_attempts

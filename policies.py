@@ -1,7 +1,7 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from flask import request, redirect, session
 from dotenv import load_dotenv
-from database import get_db_cursor, reuse_or_new_cursor
+from database import get_request_cursor, reuse_or_new_cursor
 from helpers import login_required
 
 load_dotenv()
@@ -65,7 +65,7 @@ def get_policies_from_request(type, prange, form):
 def policies():
     cId = session["user_id"]
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         military = get_policies_from_request("soldiers", 7, request.form)
         education = get_policies_from_request("education", 6, request.form)
 

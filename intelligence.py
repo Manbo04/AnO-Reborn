@@ -8,7 +8,7 @@ from random import random
 from dotenv import load_dotenv
 import variables
 import random as rand
-from database import get_db_cursor, cache_response
+from database import get_request_cursor, cache_response
 from psycopg2.extras import RealDictCursor
 
 load_dotenv()
@@ -70,7 +70,7 @@ def intelligence():
 
         data = []
         try:
-            with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            with get_request_cursor(cursor_factory=RealDictCursor) as db:
                 db.execute(
                     (
                         "SELECT spyinfo.*, users.username FROM spyinfo "
@@ -126,7 +126,7 @@ def intelligence():
 def spyAmount():
     cId = session["user_id"]
     if request.method == "GET":
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=%s", (cId,))
             yourCountry_row = db.fetchone()
             yourCountry = yourCountry_row[0] if yourCountry_row else ""
@@ -148,7 +148,7 @@ def spyAmount():
         if eId < 1:
             return error(400, "Invalid target.")
 
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
             defcon_result = db.fetchone()
             eDefcon = defcon_result[0] if defcon_result and defcon_result[0] else 1
@@ -195,7 +195,7 @@ def spyResult():
         eId = session.get("eId")
         enemyNation = None
         if eId:
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 db.execute("SELECT username FROM users WHERE id=%s", (eId,))
                 row = db.fetchone()
                 enemyNation = row[0] if row else None
@@ -218,7 +218,7 @@ def spyResult():
 
         spy_type = request.form.get("spy_type")
 
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute(
                 "SELECT spyee, date FROM spyinfo WHERE spyer=%s ORDER BY date DESC",
                 (cId,),
