@@ -23,25 +23,24 @@
     <link href="{{ url_for('static', filename='style.css') }}?v=3" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://use.fontawesome.com">
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+    <!-- Font Awesome (non-render-blocking) -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"></noscript>
+    <!-- Google Fonts (non-render-blocking) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"></noscript>
 
     <!-- JQuery -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-    <!-- Chart.js for demographic visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Chart.js & SimpleMDE loaded only on pages that need them via {% block head %} -->
 
-    <!--  -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
-    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
-
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
-    <script src="{{ url_for('static', filename='scroller.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    {% block extra_head %}{% endblock %}
     <!-- Hide dropdown arrows in navbar -->
     <style>
     .dropbtnchild .iconright { display: none; }
@@ -73,11 +72,7 @@
             }
         };
     </script>
-    <script>
-        $(document).ready(function() {
-            new WOW().init();
-        });
-    </script>
+    <!-- WOW.js removed: library was never loaded, causing silent errors -->
     {% block head %} {% endblock %}
 </head>
 

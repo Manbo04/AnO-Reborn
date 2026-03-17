@@ -1,4 +1,7 @@
-{% extends "layout.html"%} {% block title %} Home {% endblock %} {% block body %}
+{% extends "layout.html"%} {% block title %} Home {% endblock %} {% block extra_head %}
+<script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
+<script src="{{ url_for('static', filename='scroller.js') }}"></script>
+{% endblock %} {% block body %}
 <style>
     .templatecontainer {
         margin-top: 0;
