@@ -308,7 +308,7 @@ def compute_display_limits(cId, units_row=None, db=None):
     icbms = max(0, silos + 1 - military["icbms"])
     nukes = max(0, silos - military["nukes"])
 
-    upgrades = get_upgrades(cId)
+    upgrades = get_upgrades(cId, db=db)
     if upgrades.get("increasedfunding"):
         spies = int(spies * 1.4)
 
@@ -343,7 +343,7 @@ def military():
 
             limits = compute_display_limits(cId, units_dict, db=db)
 
-        upgrades = get_upgrades(cId)  # Now cached in upgrades.py
+            upgrades = get_upgrades(cId, db=db)  # Reuse cursor
 
         return render_template(
             "military.html",

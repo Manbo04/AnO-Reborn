@@ -1,7 +1,7 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from flask import request, redirect, session
 from dotenv import load_dotenv
-from database import get_db_cursor
+from database import get_db_cursor, reuse_or_new_cursor
 from helpers import login_required
 
 load_dotenv()
@@ -20,7 +20,7 @@ def get_policy_in_format(policies, name, prange):
 
 
 # Getting user policies in HTML format from only user id
-def get_user_policies(user_id):
+def get_user_policies(user_id, db=None):
     from database import query_cache
 
     cache_key = f"policies_{user_id}"
@@ -28,7 +28,7 @@ def get_user_policies(user_id):
     if cached is not None:
         return cached
 
-    with get_db_cursor() as db:
+    with reuse_or_new_cursor(db) as db:
         policies = {}
         temp_policies = {}
         db.execute(

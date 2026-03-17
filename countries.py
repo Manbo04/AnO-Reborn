@@ -1,7 +1,7 @@
 from flask import request, render_template, session, redirect
 from helpers import login_required
 from helpers import get_influence, error
-from database import invalidate_view_cache
+from database import invalidate_view_cache, reuse_or_new_cursor
 import os
 import variables
 from dotenv import load_dotenv
@@ -17,8 +17,8 @@ load_dotenv()
 
 
 # TODO: rewrite this function for fucks sake
-def get_econ_statistics(cId):
-    from database import get_db_cursor, query_cache
+def get_econ_statistics(cId, db=None):
+    from database import query_cache
     from psycopg2.extras import RealDictCursor
 
     # Check cache first
@@ -27,7 +27,7 @@ def get_econ_statistics(cId):
     if cached is not None:
         return cached
 
-    with get_db_cursor(cursor_factory=RealDictCursor) as dbdict:
+    with reuse_or_new_cursor(db, cursor_factory=RealDictCursor) as dbdict:
         total = {name: 0 for name in variables.NEW_INFRA.keys()}
         dbdict.execute(
             """
@@ -106,7 +106,7 @@ def format_econ_statistics(statistics):
     return formatted
 
 
-def get_revenue(cId):
+def get_revenue(cId, db=None):
     from database import query_cache
 
     # Check cache first - expensive calculation
@@ -115,7 +115,7 @@ def get_revenue(cId):
     if cached is not None:
         return cached
 
-    with get_db_cursor(read_only=True) as db:
+    with reuse_or_new_cursor(db, read_only=True) as db:
         # Prefetch province ids, land, productivity, and population
         db.execute(
             "SELECT id, land, productivity, population FROM provinces WHERE userid=%s",
@@ -520,9 +520,10 @@ def country(cId):
         total_working = total_working or 0
         total_elderly = total_elderly or 0
 
-        # Get policies and influence (these are already cached)
-        policies = get_user_policies(cId)
-        influence = get_influence(cId)
+        # Get policies and influence — pass cursor to avoid extra connections
+        # (~130ms saved per round-trip to Railway Postgres proxy)
+        policies = get_user_policies(cId, db=db)
+        influence = get_influence(cId, db=db)
 
         # Get provinces list with demographics
         db.execute(
@@ -624,7 +625,7 @@ def country(cId):
         # Revenue stuff - expensive, so cached
         if status:
             try:
-                revenue = get_revenue(cId)
+                revenue = get_revenue(cId, db=db)
             except Exception:
                 revenue = default_revenue_data()
 
@@ -636,7 +637,7 @@ def country(cId):
             expenses = db.fetchall()
 
             try:
-                statistics = get_econ_statistics(cId)
+                statistics = get_econ_statistics(cId, db=db)
                 statistics = format_econ_statistics(statistics)
             except Exception:
                 statistics = default_statistics_data()
