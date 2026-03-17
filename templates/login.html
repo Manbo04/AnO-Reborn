@@ -1,24 +1,5 @@
 {% extends "layout.html" %} {% block title %} Login {% endblock %} {% block body %}
 <!-- START------------------------------------------------------------------------->
-<style>
-    .templatecontainer {
-        background: rgba(255, 255, 255, 0);
-    }
-
-    .footer {
-        display: none;
-    }
-
-    .verification-success {
-        background: rgba(76, 175, 80, 0.2);
-        border: 1px solid #4CAF50;
-        color: #4CAF50;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-</style>
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
 <div class="templatediv noboxshadowtopper loginsignupdiv">
@@ -101,14 +82,14 @@
 
                     </div>
 
-                    <div class="templatecontentheadercenter" style="margin-top: 20px;">
+                    <div class="templatecontentheadercenter login-signup-link">
                         <a href="/signup" class="templatelink">Don't have an account? Get Started</a>
                     </div>
                 </form>
 
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                <div class="templatecontentheadercenter" style="color: #f44336; margin-top: 10px;">
+                <div class="templatecontentheadercenter login-error-msg">
                     {% for m in messages %}{{ m }}{% endfor %}
                 </div>
                 {% endif %}
