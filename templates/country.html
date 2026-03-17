@@ -2079,22 +2079,22 @@
         </div>
         <h2 class="templatecontentheaderleft ">Transfer Resources</h2>
 
-        <form method="POST">
+        <form method="POST" onsubmit="var tid=this.querySelector('input[name=transferee]').value;if(!tid){alert('Please enter a nation ID');return false;}this.action='/transfer/'+tid;">
             <div class="infodiv ">
                 <p style="margin-bottom: 15px; color: #666;">Transfer resources to another nation</p>
 
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left flexchildvanilla ">
                         <label for="transferTarget">Target Nation ID:</label>
-                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" required/>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{{ cId }}" required/>
                     </div>
 
                     <div class="templatedivflex2left flexchildvanilla ">
                         <label for="transferResource">Resource:</label>
-                        <select name="resource" class="templateselect ">
-                            <option disabled="true" selected="selected ">Choose one</option>
+                        <select name="resource" class="templateselect " required>
+                            <option disabled selected value="">Choose one</option>
                             <option value="gold" class="templateoption ">Money</option>
-                            <option disabled="true" class="templateoption ">---------</option>
+                            <option disabled class="templateoption ">---------</option>
                             <option value="rations" class="templateoption ">Rations</option>
                             <option value="oil" class="templateoption ">Oil</option>
                             <option value="coal" class="templateoption ">Coal</option>
@@ -2120,7 +2120,7 @@
                 </div>
 
                 <div style="text-align: center; margin-top: 20px;">
-                    <button type="submit" class="templatedivbutton templatecenteredbutton" onclick="this.form.action='/transfer/'+document.querySelector('input[name=transferee]').value"><span class="material-icons-outlined">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
                         send
                     </span>Transfer</button>
                 </div>
