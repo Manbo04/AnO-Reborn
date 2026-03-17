@@ -42,7 +42,9 @@ def _is_tech_unlocked(db, user_id: int, tech_id: int) -> bool:
     return bool(row and row[0])
 
 
-def build_structure(user_id: int, building_id: int, quantity: int, province_id: int = None) -> ActionResult:
+def build_structure(
+    user_id: int, building_id: int, quantity: int, province_id: int = None
+) -> ActionResult:
     """Build structure(s) using normalized schema.
 
     Cost is deducted from `user_economy` using `BUILD_COST_RESOURCE`.
@@ -105,7 +107,8 @@ def build_structure(user_id: int, building_id: int, quantity: int, province_id: 
 
         db.execute(
             """
-            INSERT INTO user_buildings (user_id, building_id, province_id, quantity, last_upgraded)
+            INSERT INTO user_buildings
+                (user_id, building_id, province_id, quantity, last_upgraded)
             VALUES (%s, %s, %s, %s, now())
             ON CONFLICT (user_id, building_id, province_id)
             DO UPDATE SET
@@ -183,8 +186,17 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
             (total_cost, user_id, resource_id, total_cost),
         )
         if db.fetchone() is None:
+            # Fetch current balance for a helpful error message
+            db.execute(
+                "SELECT COALESCE(quantity, 0) FROM user_economy "
+                "WHERE user_id=%s AND resource_id=%s",
+                (user_id, resource_id),
+            )
+            bal_row = db.fetchone()
+            current_bal = int(bal_row[0]) if bal_row else 0
             raise ActionLoopError(
-                f"Not enough {RESEARCH_COST_RESOURCE} to research {display_name}."
+                f"Not enough {RESEARCH_COST_RESOURCE} to research {display_name}. "
+                f"Need {total_cost:,}, but you only have {current_bal:,}."
             )
 
         db.execute(
