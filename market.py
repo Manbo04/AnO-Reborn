@@ -388,9 +388,7 @@ def buy_market_offer(offer_id):
     Requires the buyer to have enough funds to pay the seller at the listed price.
     Multi-user transactions lock in ascending user_id order to prevent deadlocks.
     """
-    with get_db_connection() as connection:
-        db = connection.cursor()
-
+    with get_request_cursor() as db:
         cId = session["user_id"]
 
         amount_str = request.form.get(f"amount_{offer_id}")
@@ -508,9 +506,7 @@ def buy_market_offer(offer_id):
 
 @login_required
 def sell_market_offer(offer_id):
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         seller_id = session["user_id"]
 
         if not offer_id.isnumeric():
@@ -628,9 +624,7 @@ def marketoffer():
 def post_offer(offer_type):
     cId = session["user_id"]
 
-    with get_db_connection() as connection:
-        db = connection.cursor()
-
+    with get_request_cursor() as db:
         resource = request.form.get("resource")
 
         amount_str = request.form.get("amount")
@@ -803,9 +797,7 @@ def trade_offer(offer_type, offeree_id):
     if request.method == "POST":
         cId = session["user_id"]
 
-        with get_db_connection() as connection:
-            db = connection.cursor()
-
+        with get_request_cursor() as db:
             resource = request.form.get("resource")
 
             amount_str = request.form.get("amount")
@@ -912,9 +904,7 @@ def decline_trade(trade_id):
 
     cId = session["user_id"]
 
-    with get_db_connection() as connection:
-        db = connection.cursor()
-
+    with get_request_cursor() as db:
         db.execute(
             (
                 "SELECT offeree, offerer, type, resource, amount, price "
@@ -954,9 +944,7 @@ def decline_trade(trade_id):
 def accept_trade(trade_id):
     cId = session["user_id"]
 
-    with get_db_connection() as connection:
-        db = connection.cursor()
-
+    with get_request_cursor() as db:
         # Prevent concurrent accept attempts on the same trade by acquiring a
         # Postgres advisory lock keyed by the trade id. If we can't acquire the
         # lock, another session is processing the trade.
@@ -1256,9 +1244,7 @@ def accept_trade(trade_id):
 def transfer(transferee):
     cId = session["user_id"]
 
-    with get_db_connection() as connection:
-        db = connection.cursor()
-
+    with get_request_cursor() as db:
         resource = request.form.get("resource")
 
         amount_str = request.form.get("amount")

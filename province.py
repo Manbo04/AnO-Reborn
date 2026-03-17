@@ -42,15 +42,13 @@ def provinces():
 @cache_response(ttl_seconds=30)  # Cache province page
 def province(pId):
     from psycopg2.extras import RealDictCursor
-    from database import get_db_connection, query_cache
+    from database import get_request_cursor, query_cache
 
     cId = session["user_id"]
 
     # OPTIMIZED: Single query to fetch province + infra + resources + stats
     # + upgrades - all in ONE database connection
-    with get_db_connection() as conn:
-        db = conn.cursor(cursor_factory=RealDictCursor)
-
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
         # Combined query for province + stats (legacy resources/proInfra tables removed)
         db.execute(
             """
@@ -391,10 +389,9 @@ def createprovince():
     cId = session["user_id"]
 
     if request.method == "POST":
-        from database import get_db_connection
+        from database import get_request_cursor
 
-        with get_db_connection() as conn:
-            db = conn.cursor()
+        with get_request_cursor() as db:
             pName = request.form.get("name")
 
             # Acquire advisory lock to prevent double-submit race condition
@@ -432,8 +429,7 @@ def createprovince():
                 # No need to INSERT INTO proInfra - user_buildings is populated
                 # dynamically when buildings are purchased
 
-                # Commit the transaction
-                conn.commit()
+                # Commit handled by teardown_request_connection
 
                 # Invalidate cached provinces page for this user
                 # so the new province appears immediately
