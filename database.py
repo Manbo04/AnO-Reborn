@@ -1008,6 +1008,46 @@ def get_user_full_data(user_id: int) -> Dict[str, Any]:
     }
 
 
+@contextmanager
+def reuse_or_new_cursor(existing_cursor=None, cursor_factory=None, read_only=False):
+    """Context manager that reuses an existing DB cursor or creates a new one.
+
+    This avoids opening a new connection from the pool (which costs ~130ms
+    in network round-trip to the Railway Postgres proxy) when the caller
+    already has a cursor open.
+
+    When *cursor_factory* is specified and the existing cursor is of a
+    different type (e.g. the caller needs a RealDictCursor but the parent
+    cursor returns tuples), a **new cursor is opened on the same
+    connection** — this avoids a pool checkout while still returning the
+    right row type.
+
+    Usage:
+        with reuse_or_new_cursor(parent_cursor) as db:
+            db.execute("SELECT ...")
+    """
+    if existing_cursor is not None:
+        # Check whether the caller needs a different cursor type
+        need_different_factory = cursor_factory is not None and not isinstance(
+            existing_cursor, cursor_factory
+        )
+        if need_different_factory:
+            # Open a new cursor on the SAME connection (no pool checkout)
+            new_cur = existing_cursor.connection.cursor(cursor_factory=cursor_factory)
+            try:
+                yield new_cur
+            finally:
+                new_cur.close()
+        else:
+            yield existing_cursor
+    else:
+        # No cursor provided — open a new one as usual
+        with get_db_cursor(
+            cursor_factory=cursor_factory, read_only=read_only
+        ) as new_cursor:
+            yield new_cursor
+
+
 def close_database_pool():
     """Close all database connections (call on application shutdown)"""
     db_pool.close_all()
