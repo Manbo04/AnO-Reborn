@@ -1,13 +1,12 @@
 from flask import Blueprint, session, request, redirect, render_template
 from helpers import (
     login_required,
-    get_db_cursor,
     error,
     get_flagname,
     check_required,
     get_influence,
 )
-from database import get_db_connection
+from database import get_db_connection, get_request_cursor
 from attack_scripts.Nations import (
     Economy as AttackEconomy,
     Economy,
@@ -35,7 +34,7 @@ wars_bp = Blueprint("wars", __name__)
 def peace_offers():
     cId = session["user_id"]
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute(
             "SELECT peace_offer_id FROM wars WHERE "
             "(attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
@@ -285,7 +284,7 @@ def send_peace_offer(war_id, enemy_id):
                         resources_amount.append(amo)
         except (ValueError, TypeError):
             return error(400, "Invalid offer!")
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             if not war_id:
                 raise Exception("War id is invalid")
             resources_string = ""
@@ -329,7 +328,7 @@ def send_peace_offer(war_id, enemy_id):
 @wars_bp.route("/war/<int:war_id>", methods=["GET"])
 @login_required
 def war_with_id(war_id):
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         # Single query to get all war data
         db.execute(
             (
@@ -539,7 +538,7 @@ def warTarget():
     cId = session["user_id"]
     eId = session["enemy_id"]
     if request.method == "GET":
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute(
                 "SELECT * FROM spyinfo WHERE spyer=(%s) AND spyee=(%s)",
                 (
@@ -602,7 +601,7 @@ def warResult():
         )
     attacker = Units.rebuild_from_dict(attack_unit_session)
     eId = session["enemy_id"]
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
         attacker_name = db.fetchone()[0]
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["enemy_id"],))
@@ -780,7 +779,7 @@ def declare_war():
     if war_type not in WAR_TYPES:
         return error(400, "Invalid war type")
     try:
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             import logging
 
             logger = logging.getLogger(__name__)
@@ -928,7 +927,7 @@ def wars():
         units = normal_units.copy()
         units.update(special_units)
         current_defense = Military.get_defense(cId)
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
             yourCountry = db.fetchone()[0]
             try:
@@ -1034,7 +1033,7 @@ def wars():
 def find_targets():
     cId = session["user_id"]
     if request.method == "GET":
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
             user_provinces = db.fetchone()[0]
             min_provinces = max(0, user_provinces - 3)
@@ -1128,7 +1127,7 @@ def find_targets():
     try:
         defender_id = int(defender_raw)
     except (TypeError, ValueError):
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute("SELECT id FROM users WHERE username=%s", (defender_raw,))
             row = db.fetchone()
             if row:

@@ -4,7 +4,7 @@ from flask import redirect, render_template, session, request
 from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
-from database import get_db_cursor, query_cache, reuse_or_new_cursor
+from database import get_request_cursor, query_cache, reuse_or_new_cursor
 from io import BytesIO
 import base64
 
@@ -74,7 +74,7 @@ def get_flagname(user_id):
         return cached
 
     # Query if not cached
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT flag FROM users WHERE id=(%s)", (user_id,))
         result = db.fetchone()
         flag_name = result[0] if result else None
@@ -594,7 +594,7 @@ def get_bulk_influence(user_ids):
     if not uncached_ids:
         return results
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         # Bulk query for all uncached users at once
         db.execute(
             """
@@ -744,7 +744,7 @@ def get_coalition_influence(coalition_id):
     if cached is not None:
         return cached
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         try:
             db.execute(
                 "SELECT user_id FROM coalition_members WHERE coalition_id=(%s)",

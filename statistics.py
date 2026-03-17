@@ -1,6 +1,6 @@
 from flask import render_template
 from helpers import login_required
-from database import get_db_cursor, cache_response
+from database import get_request_cursor, cache_response
 
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
@@ -10,7 +10,7 @@ from database import get_db_cursor, cache_response
 def statistics():
     """Display market statistics and nation stats"""
 
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         # Get market statistics for different resources
         resources = [
             "rations",

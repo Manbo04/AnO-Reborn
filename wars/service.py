@@ -1,11 +1,11 @@
 from helpers import get_influence
-from database import get_db_cursor
+from database import get_request_cursor
 from attack_scripts import Nation
 import time
 
 
 def target_data(cId):
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         influence = get_influence(cId)
         db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
         province_range = db.fetchone()[0]
@@ -19,7 +19,7 @@ def target_data(cId):
 
 def update_supply(war_id):
     MAX_SUPPLY = 2000
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute(
             (
                 "SELECT attacker_supplies,defender_supplies,last_visited "

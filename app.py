@@ -39,7 +39,12 @@ from datetime import datetime as dt
 import string
 import random
 from helpers import login_required
-from database import get_db_cursor, cache_response, get_db_connection
+from database import (
+    cache_response,
+    get_db_connection,
+    get_request_cursor,
+    teardown_request_connection,
+)
 import province
 
 # import psycopg2
@@ -162,7 +167,7 @@ def before_request():
         _ctrl_stale = (time() - _ctrl_cache_ts) > 60  # refresh every 60s
         if _ctrl_stale:
             try:
-                with get_db_cursor() as _db:
+                with get_request_cursor() as _db:
                     _db.execute(
                         """
                         SELECT COALESCE(is_banned, FALSE),
@@ -204,7 +209,7 @@ def before_request():
 
             if kick_pending:
                 try:
-                    with get_db_cursor() as _db:
+                    with get_request_cursor() as _db:
                         _db.execute(
                             (
                                 "UPDATE admin_user_controls "
@@ -225,9 +230,9 @@ def before_request():
         last_ping = session.get("_last_active_ping", 0)
         if now - last_ping > 3600:  # one hour
             try:
-                from database import get_db_cursor
+                from database import get_request_cursor
 
-                with get_db_cursor() as _db:
+                with get_request_cursor() as _db:
                     _db.execute(
                         "UPDATE users SET last_active = CURRENT_TIMESTAMP "
                         "WHERE id = %s",
@@ -251,6 +256,8 @@ try:
 except ImportError:
     # Flask-Compress not installed, continue without it
     pass
+
+app.teardown_appcontext(teardown_request_connection)
 
 # Register signup routes after app is fully initialized
 signup.register_signup_routes(app)
@@ -1000,7 +1007,7 @@ def get_resources():
     if cached is not None:
         return cached
 
-    with get_db_cursor(cursor_factory=RealDictCursor) as db:
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
         try:
             # Single query: gold from stats + all resources via LEFT JOIN
             db.execute(
@@ -1100,7 +1107,7 @@ def serve_flag(flag_type, flag_id):
         else:
             del serve_flag._cache[cache_key]
 
-    with get_db_cursor() as cur:
+    with get_request_cursor() as cur:
         if flag_type == "country":
             cur.execute("SELECT flag_data FROM users WHERE id = %s", (flag_id,))
         elif flag_type == "coalition":
@@ -1176,7 +1183,7 @@ def serve_flag(flag_type, flag_id):
 @login_required
 @cache_response(ttl_seconds=60)
 def account():
-    with get_db_cursor(cursor_factory=RealDictCursor) as db:
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
         db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
@@ -1189,9 +1196,9 @@ def account():
 @login_required
 def recruitments():
     # List coalitions marked as recruiting
-    from database import get_db_cursor
+    from database import get_request_cursor
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute(
             (
                 "SELECT id, name, type, description, flag "
@@ -1302,7 +1309,7 @@ def warresult_deprecated():
 @login_required
 def mass_purchase():
     cId = session["user_id"]
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute(
             (
                 "SELECT id, provinceName as name, "
