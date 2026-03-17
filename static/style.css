@@ -4442,3 +4442,31 @@ ul.flashes {
 .combat-stats-box p {
     margin: 5px 0;
 }
+
+/* Login/signup pages: transparent container, hidden footer */
+body:has(.loginsignupdiv) .templatecontainer {
+    background: rgba(255, 255, 255, 0);
+}
+body:has(.loginsignupdiv) .footer {
+    display: none;
+}
+
+/* Login page helper classes */
+.login-signup-link {
+    margin-top: 20px;
+}
+.login-error-msg {
+    color: #f44336;
+    margin-top: 10px;
+}
+
+/* Verification success banner (login page) */
+.verification-success {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+}
