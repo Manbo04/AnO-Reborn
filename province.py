@@ -745,10 +745,12 @@ def province_sell_buy(way, units, province_id):
         _res_id_map = {row[0]: row[1] for row in db.fetchall()}
 
         def resource_stuff(resources_data, way):
-            for resource, amount in resources_data:
-                qty = amount * wantedUnits
-                resource_id = _res_id_map.get(resource)
-                if way == "buy":
+            resources_list = list(resources_data)
+            if way == "buy":
+                # Pre-check: verify ALL resources before deducting any
+                for resource, amount in resources_list:
+                    qty = amount * wantedUnits
+                    resource_id = _res_id_map.get(resource)
                     if not resource_id:
                         return {
                             "fail": True,
@@ -756,8 +758,25 @@ def province_sell_buy(way, units, province_id):
                             "current_amount": 0,
                             "difference": -qty,
                         }
+                    db.execute(
+                        "SELECT COALESCE(quantity, 0) FROM user_economy "
+                        "WHERE user_id = %s AND resource_id = %s",
+                        (cId, resource_id),
+                    )
+                    row = db.fetchone()
+                    current_resource = int(row[0]) if row else 0
+                    if current_resource < qty:
+                        return {
+                            "fail": True,
+                            "resource": resource,
+                            "current_amount": current_resource,
+                            "difference": current_resource - qty,
+                        }
 
-                    # Atomically subtract resource if user has enough
+                # --- All checks passed — now deduct all resources ---
+                for resource, amount in resources_list:
+                    qty = amount * wantedUnits
+                    resource_id = _res_id_map.get(resource)
                     db.execute(
                         (
                             "UPDATE user_economy SET quantity = quantity - %s "
@@ -767,22 +786,18 @@ def province_sell_buy(way, units, province_id):
                         (qty, cId, resource_id, qty),
                     )
                     if db.fetchone() is None:
-                        # Not enough resource
-                        db.execute(
-                            "SELECT COALESCE(quantity, 0) FROM user_economy "
-                            "WHERE user_id = %s AND resource_id = %s",
-                            (cId, resource_id),
-                        )
-                        row = db.fetchone()
-                        current_resource = int(row[0]) if row else 0
+                        # Should not happen after pre-check, but guard anyway
                         return {
                             "fail": True,
                             "resource": resource,
-                            "current_amount": current_resource,
-                            "difference": current_resource - qty,
+                            "current_amount": 0,
+                            "difference": -qty,
                         }
 
-                elif way == "sell":
+            elif way == "sell":
+                for resource, amount in resources_list:
+                    qty = amount * wantedUnits
+                    resource_id = _res_id_map.get(resource)
                     if not resource_id:
                         continue
 
@@ -995,10 +1010,13 @@ def province_sell_buy(way, units, province_id):
         # so the UI reflects the new units/land immediately instead of waiting
         # for TTL expiry.
         try:
-            from database import query_cache
+            from database import query_cache, invalidate_view_cache
 
             query_cache.invalidate(pattern=f"provinces_{cId}_")
             query_cache.invalidate(pattern=f"province_{cId}_")
+            # Invalidate the HTML response caches so the redirect serves fresh data
+            invalidate_view_cache("province", user_id=cId)
+            invalidate_view_cache("provinces", user_id=cId)
         except Exception:
             pass
 
