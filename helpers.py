@@ -4,7 +4,7 @@ from flask import redirect, render_template, session, request
 from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
-from database import get_db_cursor, query_cache
+from database import get_db_cursor, query_cache, reuse_or_new_cursor
 from io import BytesIO
 import base64
 
@@ -387,7 +387,7 @@ def record_war_event(
 # ------------------------------------------------------------------
 
 
-def get_influence(country_id):
+def get_influence(country_id, db=None):
     # Check cache first
     cache_key = f"influence_{country_id}"
     cached = query_cache.get(cache_key)
@@ -396,7 +396,7 @@ def get_influence(country_id):
 
     cId = country_id
 
-    with get_db_cursor() as db:
+    with reuse_or_new_cursor(db) as db:
         # OPTIMIZED: Single query with filtered subqueries
         # Each subquery filters to the target user to avoid full-table scans
         db.execute(
