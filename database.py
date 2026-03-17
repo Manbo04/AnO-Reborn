@@ -479,13 +479,20 @@ class DatabasePool:
             raise
 
     def _is_connection_healthy(self, conn):
-        """Check if a connection is still usable"""
+        """Check if a connection is still usable.
+
+        Uses the libpq connection status check first (no round-trip),
+        only falling back to SELECT 1 if the status is ambiguous.
+        """
         try:
-            # Quick health check - execute a simple query
-            cur = conn.cursor()
-            cur.execute("SELECT 1")
-            cur.fetchone()
-            cur.close()
+            # Fast check: use libpq status (no network round-trip)
+            if conn.closed:
+                return False
+            # Check transaction status — if connection is in a bad state
+            # (e.g. InFailedTransaction), it's not healthy
+            status = conn.info.transaction_status
+            if status == psycopg2.extensions.TRANSACTION_STATUS_INERROR:
+                return False
             return True
         except Exception:
             return False
