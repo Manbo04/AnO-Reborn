@@ -725,13 +725,13 @@ def generate_error_code():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template("error.html", code=404, message="Page not found!")
+    return render_template("error.html", code=404, message="Page not found!"), 404
 
 
 @app.errorhandler(405)
 def method_not_allowed(error):
     message = "This request method is not allowed!"
-    return render_template("error.html", code=405, message=message)
+    return render_template("error.html", code=405, message=message), 405
 
 
 @app.errorhandler(500)
@@ -740,8 +740,11 @@ def invalid_server_error(error):
     error_code = generate_error_code()
     logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
-    return render_template(
-        "error.html", code=500, message=error_message, error_code=error_code
+    return (
+        render_template(
+            "error.html", code=500, message=error_message, error_code=error_code
+        ),
+        500,
     )
 
 
