@@ -3,7 +3,11 @@ from helpers import login_required, error
 from dotenv import load_dotenv
 import variables
 from helpers import get_date
-from database import get_db_cursor, cache_response, invalidate_user_cache
+from database import (
+    get_request_cursor,
+    cache_response,
+    invalidate_user_cache,
+)
 import os
 import math
 from action_loop import build_structure, ActionLoopError, BUILD_COST_RESOURCE
@@ -17,7 +21,7 @@ load_dotenv()
 @login_required
 @cache_response(ttl_seconds=30)
 def provinces():
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         cId = session["user_id"]
 
         db.execute(
@@ -371,7 +375,7 @@ def build_structure_action():
 
 
 def get_province_price(user_id):
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (user_id,))
         current_province_amount = db.fetchone()[0]
 
@@ -512,7 +516,7 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
 
     if db is not None:
         return _query(db)
-    with get_db_cursor() as _db:
+    with get_request_cursor() as _db:
         return _query(_db)
 
 
@@ -521,7 +525,7 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
 def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         import logging
 
         try:

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from database import get_db_cursor, cache_response
+from database import get_request_cursor, cache_response
 from dotenv import load_dotenv
 from helpers import get_date
 from upgrades import get_upgrades
@@ -273,7 +273,7 @@ def compute_display_limits(cId, units_row=None, db=None):
         db.execute(_query, (cId,))
         army_bases, harbours, aerodomes, admin_buildings, silos = db.fetchone()
     else:
-        with get_db_cursor() as _db:
+        with get_request_cursor() as _db:
             _db.execute(_query, (cId,))
             army_bases, harbours, aerodomes, admin_buildings, silos = _db.fetchone()
 
@@ -335,7 +335,7 @@ def military():
     cId = session["user_id"]
 
     if request.method == "GET":
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             units_dict, units_active = _get_user_units_with_stats(db, cId)
             db.execute("SELECT COALESCE(manpower, 0) FROM stats WHERE id=%s", (cId,))
             manpower_row = db.fetchone()
@@ -362,7 +362,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
     if request.method == "POST":
         cId = session["user_id"]
 
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             if units not in ALL_UNITS:
                 return error("No such unit exists.", 400)
 

@@ -8,7 +8,7 @@ import bcrypt
 from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
-from database import get_db_cursor
+from database import get_request_cursor
 
 load_dotenv()
 
@@ -76,7 +76,7 @@ def request_password_reset():
 
     code = generateResetCode()
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         try:
             cId = session.get("user_id")
         except KeyError:
@@ -156,7 +156,7 @@ def reset_password(code):
         new_password = new_password_raw.encode("utf-8")
 
         try:
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 logger.debug(f"Received URL code: {code}")
                 db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
                 result = db.fetchone()
@@ -209,7 +209,7 @@ def reset_password(code):
 
 @login_required
 def change():
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         cId = session["user_id"]
 
         password_raw = request.form.get("current_password")
