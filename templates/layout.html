@@ -37,7 +37,7 @@
     <!-- JQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-    <!-- Chart.js & SimpleMDE loaded only on pages that need them via {% block head %} -->
+    {# Chart.js & SimpleMDE loaded only on pages that need them via extra_head block #}
 
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     {% block extra_head %}{% endblock %}
