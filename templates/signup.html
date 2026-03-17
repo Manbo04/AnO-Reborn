@@ -2,15 +2,6 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %} {% block body%}
 <!-- START------------------------------------------------------------------------->
-<style>
-    .templatecontainer {
-        background: rgba(255, 255, 255, 0);
-    }
-
-    .footer {
-        display: none;
-    }
-</style>
 <script>
     //Code for image slider in signup page
 
@@ -111,7 +102,7 @@
             <div class="slide1 slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/tundra.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/tundra.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -132,18 +123,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource resourcesmall" />Uranium</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/savanna.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/savanna.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -163,18 +154,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/desert.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/desert.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -194,18 +185,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resuranium.png' ) }}?v=2" class="resource resourcesmall" />Uranium</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/jungle.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/jungle.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -225,18 +216,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/borealforest.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/borealforest.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -256,18 +247,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslead.png' ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/grassland.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/grassland.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -287,18 +278,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resiron.png' ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescopper.png' ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img class="slideimage" src="{{ url_for( 'static', filename='images/mountainrange.jpg' ) }}?v=2">
+                    <img class="slideimage" loading="lazy" src="{{ url_for( 'static', filename='images/mountainrange.jpg' ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -318,11 +309,11 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resrations.png' ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/reslumber.png' ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/rescoal.png' ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resbauxite.png' ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img loading="lazy" src="{{ url_for( 'static', filename='images/resoil.png' ) }}?v=2" class="resource resourcesmall" />Oil</p>
                     </div>
                 </div>
             </div>

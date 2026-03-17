@@ -42,7 +42,9 @@
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
     <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
+    {% if session.get('user_id') is none %}
     <script data-ad-client="ca-pub-2399873064840158" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    {% endif %}
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RZVBFFEGHM"></script>
     <script>
