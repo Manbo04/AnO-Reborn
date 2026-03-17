@@ -301,11 +301,10 @@ def add_cache_headers(response):
     # Cache images for 1 month
     elif request.path.endswith((".jpg", ".png", ".gif", ".ico")):
         response.headers["Cache-Control"] = "public, max-age=2592000"
-    # Don't cache HTML pages (they might change)
+    # Allow short browser cache for HTML pages so back/forward navigation is instant
+    # and repeated visits within a few seconds don't re-fetch
     else:
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+        response.headers["Cache-Control"] = "private, max-age=5, must-revalidate"
     return response
 
 

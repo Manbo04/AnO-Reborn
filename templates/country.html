@@ -3,7 +3,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=0.8">
 <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
 
-<meta name="description" content="{{ username }}'s country."> {% endblock %} {% block body %}
+<meta name="description" content="{{ username }}'s country."> {% endblock %} {% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+{% endblock %} {% block body %}
 <div class="templatediv">
 
     <div class="templatedivtopper countrytopper" style="background-image: url('{{ url_for('static', filename='images/country.jpg') }}?v=2');">
