@@ -1244,7 +1244,21 @@ def accept_trade(trade_id):
 def transfer(transferee):
     cId = session["user_id"]
 
+    # Validate transferee is a valid integer ID
+    try:
+        transferee_id = int(transferee)
+    except (ValueError, TypeError):
+        return error(400, "Invalid nation ID")
+
+    if transferee_id == cId:
+        return error(400, "You cannot transfer resources to yourself")
+
     with get_request_cursor() as db:
+        # Verify the transferee nation actually exists
+        db.execute("SELECT id FROM stats WHERE id=%s", (transferee_id,))
+        if db.fetchone() is None:
+            return error(404, "That nation does not exist")
+
         resource = request.form.get("resource")
 
         amount_str = request.form.get("amount")
@@ -1255,13 +1269,6 @@ def transfer(transferee):
         except (ValueError, TypeError):
             return error(400, "Amount must be a valid number")
 
-        # DEFINITIONS
-
-        # user - the user transferring the resource, whose id is 'cId'
-        # transferee - the user upon whom the resource is transferred
-
-        ###################
-
         if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
             return error(400, "No such resource")
 
@@ -1269,18 +1276,26 @@ def transfer(transferee):
             return error(400, "Amount cannot be less than 1")
 
         if resource in ["gold", "money"]:
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            user_money = db.fetchone()[0]
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            row = db.fetchone()
+            if not row:
+                return error(500, "Your nation data could not be found")
+            user_money = row[0] or 0
 
             if amount > user_money:
                 return error(400, "You don't have enough money.")
 
-            # Removes the money from the user
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (amount, cId))
-
-            # Gives the money to the transferee
+            # Atomically deduct from sender (prevents double-spend)
             db.execute(
-                "UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, transferee)
+                "UPDATE stats SET gold=gold-%s WHERE id=%s AND gold>=%s RETURNING gold",
+                (amount, cId, amount),
+            )
+            if db.fetchone() is None:
+                return error(400, "You don't have enough money.")
+
+            # Credit the transferee
+            db.execute(
+                "UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, transferee_id)
             )
 
         else:
@@ -1290,7 +1305,7 @@ def transfer(transferee):
 
             if amount > user_resource:
                 return error(400, "You don't have enough resources.")
-            res = give_resource(cId, transferee, resource, amount, cursor=db)
+            res = give_resource(cId, transferee_id, resource, amount, cursor=db)
             if res is not True:
                 return error(400, str(res))
 
@@ -1298,11 +1313,11 @@ def transfer(transferee):
         # fresh resource totals immediately (non-fatal if this fails).
         try:
             invalidate_user_cache(cId)
-            invalidate_user_cache(transferee)
+            invalidate_user_cache(transferee_id)
         except Exception:
             pass
 
-    return redirect(f"/country/id={transferee}")
+    return redirect(f"/country/id={transferee_id}")
 
 
 def register_market_routes(app_instance):

@@ -177,7 +177,7 @@ function toggleTheme() {
     try { theme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
     setTheme(theme);
     var slider = document.getElementById("slider");
-    if (slider) slider.checked = (theme !== "theme-dark");
+    if (slider) slider.checked = (theme === "theme-dark");
 })();
 
 // ---------------------------------------------------------------------------
