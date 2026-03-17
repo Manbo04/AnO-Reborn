@@ -49,10 +49,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["soldiers"]["quantity"] }} Soldiers</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["soldiers"]["attack"] }} ATK / {{ units["soldiers"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["soldiers"]["attack"] }} ATK / {{ units["soldiers"]["defense"] }} DEF</p>
                             {% if units["soldiers"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -95,7 +95,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/soldier.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/soldier.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -108,10 +108,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["artillery"]["quantity"] }} Artillery</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["artillery"]["attack"] }} ATK / {{ units["artillery"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["artillery"]["attack"] }} ATK / {{ units["artillery"]["defense"] }} DEF</p>
                             {% if units["artillery"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} {{ units["artillery"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} {{ units["artillery"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -147,7 +147,7 @@
                     </form>
                     <div class="templatedivflex2left">
 
-                        <img tabindex="0" class="unitimage" src="static/images/artillery.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/artillery.jpg') }}?v=2" loading="lazy" />
 
                     </div>
                 </div>
@@ -160,10 +160,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["tanks"]["quantity"] }} Tanks</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["tanks"]["attack"] }} ATK / {{ units["tanks"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["tanks"]["attack"] }} ATK / {{ units["tanks"]["defense"] }} DEF</p>
                             {% if units["tanks"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} {{ units["tanks"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} {{ units["tanks"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -201,7 +201,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/tank.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/tank.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -218,10 +218,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["fighters"]["quantity"] }} Fighter Jets</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["fighters"]["attack"] }} ATK / {{ units["fighters"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["fighters"]["attack"] }} ATK / {{ units["fighters"]["defense"] }} DEF</p>
                             {% if units["fighters"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} {{ units["fighters"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} {{ units["fighters"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -260,7 +260,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/fighterjet.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/fighterjet.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
 
@@ -274,10 +274,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["bombers"]["quantity"] }} Bombers</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["bombers"]["attack"] }} ATK / {{ units["bombers"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["bombers"]["attack"] }} ATK / {{ units["bombers"]["defense"] }} DEF</p>
                             {% if units["bombers"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} {{ units["bombers"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} {{ units["bombers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -316,7 +316,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/bomber.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/bomber.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
 
@@ -330,10 +330,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["apaches"]["quantity"] }} Attack Helicopters</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["apaches"]["attack"] }} ATK / {{ units["apaches"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["apaches"]["attack"] }} ATK / {{ units["apaches"]["defense"] }} DEF</p>
                             {% if units["apaches"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} {{ units["apaches"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} {{ units["apaches"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -372,7 +372,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/apache.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/apache.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
 
@@ -390,10 +390,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["submarines"]["quantity"] }} Submarines</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["submarines"]["attack"] }} ATK / {{ units["submarines"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["submarines"]["attack"] }} ATK / {{ units["submarines"]["defense"] }} DEF</p>
                             {% if units["submarines"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} {{ units["submarines"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} {{ units["submarines"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -430,7 +430,7 @@
                     </form>
                     <div class="templatedivflex2left">
 
-                        <img tabindex="0" class="unitimage" src="static/images/submarine.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/submarine.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -443,10 +443,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["cruisers"]["quantity"] }} Cruisers</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["cruisers"]["attack"] }} ATK / {{ units["cruisers"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["cruisers"]["attack"] }} ATK / {{ units["cruisers"]["defense"] }} DEF</p>
                             {% if units["cruisers"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
                         <p class="templatecontentpleft">Cruisers are the powerhouse of the ocean, and are very expensive. Cruisers counter destroyers, figher jets, apaches, and can obtain a naval blockade on the enemy.</p>
@@ -484,7 +484,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/cruiser.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/cruiser.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -497,10 +497,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["destroyers"]["quantity"] }} Destroyers</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["destroyers"]["attack"] }} ATK / {{ units["destroyers"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["destroyers"]["attack"] }} ATK / {{ units["destroyers"]["defense"] }} DEF</p>
                             {% if units["destroyers"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -539,7 +539,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/destroyer.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/destroyer.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -556,10 +556,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["spies"]["quantity"] }} Spies</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["spies"]["attack"] }} ATK / {{ units["spies"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["spies"]["attack"] }} ATK / {{ units["spies"]["defense"] }} DEF</p>
                             {% if units["spies"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} {{ units["spies"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} {{ units["spies"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -598,7 +598,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/spy.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/spy.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -611,10 +611,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["icbms"]["quantity"] }} Ballistic Missiles</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["icbms"]["attack"] }} ATK / {{ units["icbms"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["icbms"]["attack"] }} ATK / {{ units["icbms"]["defense"] }} DEF</p>
                             {% if units["icbms"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} {{ units["icbms"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} {{ units["icbms"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -653,7 +653,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/icbm.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/icbm.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -666,10 +666,10 @@
 
                         <h3 class="templatecontentheadercenter">You have {{ units["nukes"]["quantity"] }} Nukes</h3>
 
-                        <div style="margin: 10px 0; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px;">
-                            <p style="margin: 5px 0;"><strong>Combat Stats:</strong> {{ units["nukes"]["attack"] }} ATK / {{ units["nukes"]["defense"] }} DEF</p>
+                        <div class="combat-stats-box">
+                            <p><strong>Combat Stats:</strong> {{ units["nukes"]["attack"] }} ATK / {{ units["nukes"]["defense"] }} DEF</p>
                             {% if units["nukes"]["maintenance_per_tick"] > 0 %}
-                            <p style="margin: 5px 0;"><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} {{ units["nukes"]["maintenance_resource"] }} per tick</p>
+                            <p><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} {{ units["nukes"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
                         </div>
 
@@ -708,7 +708,7 @@
 
 
 
-                        <img tabindex="0" class="unitimage" src="static/images/nuke.jpg?v=2" />
+                        <img tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/nuke.jpg') }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>

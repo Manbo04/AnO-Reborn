@@ -1047,7 +1047,7 @@ label {
     bottom: 8px;
     width: fit-content;
     width: -moz-fit-content;
-    z-index: 1;
+    z-index: 9999;
     margin: auto 0;
     margin-bottom: 40px;
 }
@@ -1057,20 +1057,33 @@ label {
     background: #363945;
     color: #ffffff;
     box-shadow: 0 0 20px 0 rgba(58, 59, 69, .55);
-    padding: 8px;
+    padding: 12px 20px;
     justify-self: end;
     height: min-content;
     margin: auto;
-    margin-right: -50%;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 1;
+    pointer-events: auto;
     border-left: 3px solid #00a7e1;
+    border-radius: 4px;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .purchasediv div h3 {
     margin: 0;
     padding: 0;
-    font-size: 19px;
+    font-size: 16px;
+    font-weight: 500;
 }
 
 
@@ -4401,4 +4414,31 @@ canvas {
 .chart-wrapper canvas {
     max-width: 100% !important;
     max-height: 280px !important;
+}
+
+
+/* Flash message container */
+ul.flashes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+}
+
+/* Combat stats box (military page) */
+.combat-stats-box {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.combat-stats-box p {
+    margin: 5px 0;
 }
