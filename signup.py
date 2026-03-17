@@ -846,7 +846,7 @@ def verification_pending():
 
 def verify_email():
     """Verify user's email address using the token from the email link."""
-    from database import get_db_connection
+    from database import get_request_cursor
     from email_utils import verify_email_token
 
     token = request.args.get("token")
@@ -860,9 +860,8 @@ def verify_email():
             400, "Invalid or expired verification link. Please request a new one."
         )
 
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        try:
+    try:
+        with get_request_cursor() as cur:
             # Check if user exists and is not already verified
             cur.execute(
                 """
@@ -891,19 +890,14 @@ def verify_email():
             )
 
             return redirect("/login?message=verified")
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"Email verification error: {e}")
-            return error(
-                500, "An error occurred during verification. Please try again."
-            )
-        finally:
-            cur.close()
+    except Exception as e:
+        logger.error(f"Email verification error: {e}")
+        return error(500, "An error occurred during verification. Please try again.")
 
 
 def resend_verification():
     """Resend verification email."""
-    from database import get_db_connection
+    from database import get_request_cursor
     from email_utils import generate_verification_token, send_verification_email
 
     if request.method != "POST":
@@ -913,9 +907,8 @@ def resend_verification():
     if not email:
         return error(400, "Please provide your email address.")
 
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        try:
+    try:
+        with get_request_cursor() as cur:
             # Check if user exists and is not verified
             cur.execute(
                 """
@@ -959,12 +952,9 @@ def resend_verification():
                 email=email,
                 message="Verification email sent! Please check your inbox.",
             )
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"Resend verification error: {e}")
-            return error(500, "An error occurred. Please try again.")
-        finally:
-            cur.close()
+    except Exception as e:
+        logger.error(f"Resend verification error: {e}")
+        return error(500, "An error occurred. Please try again.")
 
 
 def register_signup_routes(app_instance):
