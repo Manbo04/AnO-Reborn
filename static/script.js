@@ -1,665 +1,212 @@
-/*
-ATTEMPT TO MAKE RESOURCEBAR STAY OPEN ON REFRESH
+/* ===== Affairs and Order — main script ===== */
 
-    $(document).ready(function() {
-        $(".resourcediv").click(function() {
-            var id = $(this).attr("id");
+// ---------------------------------------------------------------------------
+// Utility: safe element getter (avoids crashes on pages missing elements)
+// ---------------------------------------------------------------------------
+function _el(id) {
+    return document.getElementById(id);
+}
 
-            $('#' + id).find(".resourcedivcontentshow").removeClass("resourcedivcontentshow");
-            $('#' + id).addClass("resourcedivcontentshow");
-            localStorage.setItem("selectedolditem", id);
-        });
+// ---------------------------------------------------------------------------
+// Generic tab system — replaces 200+ lines of copy-pasted tab functions
+// ---------------------------------------------------------------------------
+function activateTab(tabId, contentId, group) {
+    // Deactivate all tabs and content panels in this group
+    group.forEach(function(item) {
+        var tab = _el(item.tab);
+        var content = _el(item.content);
+        if (tab) tab.classList.remove(item.tab + "click");
+        if (content) content.classList.remove(item.content + "click");
+    });
+    // Activate the selected tab and content
+    var tab = _el(tabId);
+    var content = _el(contentId);
+    if (tab) tab.classList.add(tabId + "click");
+    if (content) content.classList.add(contentId + "click");
+}
 
-        var selectedolditem = localStorage.getItem('selectedolditem');
+// Define tab groups
+var TAB_GROUPS = {
+    country: [
+        { tab: "countryview", content: "view" },
+        { tab: "countryrevenue", content: "revenue" },
+        { tab: "countrynews", content: "news" },
+        { tab: "countryactions", content: "actions" },
+        { tab: "countryedit", content: "edit" }
+    ],
+    province: [
+        { tab: "provincecity", content: "city" },
+        { tab: "provinceland", content: "land" }
+    ],
+    city: [
+        { tab: "cityelectricity", content: "electricity" },
+        { tab: "cityretail", content: "retail" },
+        { tab: "cityworks", content: "works" }
+    ],
+    land: [
+        { tab: "landmilitary", content: "military" },
+        { tab: "landindustry", content: "industry" },
+        { tab: "landprocessing", content: "processing" }
+    ],
+    military: [
+        { tab: "militaryland", content: "land" },
+        { tab: "militaryair", content: "air" },
+        { tab: "militarywater", content: "water" },
+        { tab: "militaryspecial", content: "special" }
+    ],
+    coalition: [
+        { tab: "coalitiongeneral", content: "general" },
+        { tab: "coalitionjoin", content: "join" },
+        { tab: "coalitionleader", content: "leader" },
+        { tab: "coalitionmember", content: "member" }
+    ],
+    upgrades: [
+        { tab: "upgradeseconomic", content: "economic" },
+        { tab: "upgradesmilitary", content: "military" }
+    ]
+};
 
-        if (selectedolditem != null) {
-            $('#' + id).find(".resourcedivcontentshow").removeClass("resourcedivcontentshow");
-            $('#' + id).addClass("resourcedivcontentshow");
+// Generate global tab functions from the groups above
+// e.g., countryview(), countryrevenue(), militaryland(), etc.
+Object.keys(TAB_GROUPS).forEach(function(groupName) {
+    var group = TAB_GROUPS[groupName];
+    group.forEach(function(item) {
+        // Create a global function named after the tab ID
+        window[item.tab] = function() {
+            activateTab(item.tab, item.content, group);
+        };
+    });
+});
+
+// Auto-activate the first tab of each group on page load (only if elements exist)
+document.addEventListener("DOMContentLoaded", function() {
+    Object.keys(TAB_GROUPS).forEach(function(groupName) {
+        var group = TAB_GROUPS[groupName];
+        if (group.length > 0 && _el(group[0].tab)) {
+            activateTab(group[0].tab, group[0].content, group);
         }
     });
-    */
+});
 
-
-// Delete item from page and send request to server
-// container_id should be inside a data-contain attribute
-function pop_from_page(req_path, container_id) {
-  let item = document.querySelector(`[data-contain="${container_id}"]`);
-  fetch(req_path, {"method": "POST"});
-  item.remove();
-}
-
-//navbar events
+// ---------------------------------------------------------------------------
+// Navbar hamburger menu
+// ---------------------------------------------------------------------------
 function menubardrop() {
-
-    document.getElementById("menubar").classList.toggle("menubarclick");
-
-    document.getElementById("menubardiv").classList.toggle("menubardivshow");
-
-    //
-
-    document.getElementById("bar1").classList.toggle("barclick1");
-
-    document.getElementById("bar2").classList.toggle("barclick2");
-
-    document.getElementById("bar3").classList.toggle("barclick3");
-
+    var menubar = _el("menubar");
+    var menudiv = _el("menubardiv");
+    if (menubar) menubar.classList.toggle("menubarclick");
+    if (menudiv) menudiv.classList.toggle("menubardivshow");
+    var bar1 = _el("bar1");
+    var bar2 = _el("bar2");
+    var bar3 = _el("bar3");
+    if (bar1) bar1.classList.toggle("barclick1");
+    if (bar2) bar2.classList.toggle("barclick2");
+    if (bar3) bar3.classList.toggle("barclick3");
     document.body.classList.toggle("body");
 }
-//
+
+// ---------------------------------------------------------------------------
+// Resource sidebar toggle
+// ---------------------------------------------------------------------------
 function resourcedivcontentshow() {
-
-    document.getElementById("resourcediv").classList.toggle("resourcedivshow");
-    document.getElementById("resourcedivcontent").classList.toggle("resourcedivcontentshow");
-    localStorage.setItem('resourcedivcontentshow', true);
-
-}
-/*
-$("#divid1").click(function() {
-    $("#divid1").hide(); //want this to keep hidden after refresh
-    $("#hideid1").hide(); //want this to keep hidden after refresh
-    $("#id1").show(); //want this to keep showing after refresh
-    localStorage.setItem('hidden', true);
-});
-
-$(function() {
-    // if localStorage has hidden as true, hide the div and show other
-    if (localStorage.getItem('hidden')) {
-        $("#divid1").hide();
-        $("#hideid1").hide();
-        $("#id1").show();
-    }
-});
-
-// Clear the storage
-function clearLocal() {
-    localStorage.clear();
-}
-*/
-//resourcediv stay open
-/*
-var clicked = false
-
-function resourcedivcontentshow() {
-    clicked = true
-}​
-function resourcedivcontentshow() {
-    if (clicked = true) {
-        alert('Test is true');
-        document.getElementById("resourcediv").classList.add("resourcedivshow");
-    } else {
-        alert('Test is false');
-    }
-} */
-//COUNTRY SLIDER
-$(document).ready(function() {
-
-    document.getElementById("countryview").classList.add("countryviewclick");
-    document.getElementById("view").classList.add("viewclick");
-
-});
-//
-function revenuehide() {
-
-    document.getElementById("countryrevenue").classList.add("hidden");
-
-}
-//
-function newshide() {
-
-    document.getElementById("countrynews").classList.add("hidden");
-
-}
-//
-function edithide() {
-
-    document.getElementById("countryedit").classList.add("hidden");
-
-}
-//
-function actionshide() {
-
-    document.getElementById("countryactions").classList.add("hidden");
-
-}
-//
-function countryview() {
-
-
-    document.getElementById("countryview").classList.add("countryviewclick");
-    document.getElementById("view").classList.add("viewclick");
-
-    //
-
-    document.getElementById("countryrevenue").classList.remove("countryrevenueclick");
-    document.getElementById("revenue").classList.remove("revenueclick");
-
-    document.getElementById("countrynews").classList.remove("countrynewsclick");
-    document.getElementById("news").classList.remove("newsclick");
-
-    document.getElementById("countryactions").classList.remove("countryactionsclick");
-    document.getElementById("actions").classList.remove("actionsclick");
-
-    document.getElementById("countryedit").classList.remove("countryeditclick");
-    document.getElementById("edit").classList.remove("editclick");
-
-}
-//
-function countryrevenue() {
-
-    document.getElementById("countryrevenue").classList.add("countryrevenueclick");
-    document.getElementById("revenue").classList.add("revenueclick");
-
-
-    //
-
-    document.getElementById("countryview").classList.remove("countryviewclick");
-    document.getElementById("view").classList.remove("viewclick");
-
-    document.getElementById("countrynews").classList.remove("countrynewsclick");
-    document.getElementById("news").classList.remove("newsclick");
-
-    document.getElementById("countryactions").classList.remove("countryactionsclick");
-    document.getElementById("actions").classList.remove("actionsclick");
-
-    document.getElementById("countryedit").classList.remove("countryeditclick");
-    document.getElementById("edit").classList.remove("editclick");
-
-}
-//
-function countrynews() {
-
-    document.getElementById("countrynews").classList.add("countrynewsclick");
-    document.getElementById("news").classList.add("newsclick");
-
-    //
-
-    document.getElementById("countryview").classList.remove("countryviewclick");
-    document.getElementById("view").classList.remove("viewclick");
-
-    document.getElementById("countryrevenue").classList.remove("countryrevenueclick");
-    document.getElementById("revenue").classList.remove("revenueclick");
-
-
-
-    document.getElementById("countryactions").classList.remove("countryactionsclick");
-    document.getElementById("actions").classList.remove("actionsclick");
-
-    document.getElementById("countryedit").classList.remove("countryeditclick");
-    document.getElementById("edit").classList.remove("editclick");
-
-}
-//
-function countryactions() {
-
-    document.getElementById("countryactions").classList.add("countryactionsclick");
-    document.getElementById("actions").classList.add("actionsclick");
-
-    //
-
-    document.getElementById("countryview").classList.remove("countryviewclick");
-    document.getElementById("view").classList.remove("viewclick");
-
-    document.getElementById("countryrevenue").classList.remove("countryrevenueclick");
-    document.getElementById("revenue").classList.remove("revenueclick");
-
-    document.getElementById("countrynews").classList.remove("countrynewsclick");
-    document.getElementById("news").classList.remove("newsclick");
-
-    document.getElementById("countryedit").classList.remove("countryeditclick");
-    document.getElementById("edit").classList.remove("editclick");
-
-}
-//
-function countryedit() {
-
-    document.getElementById("countryedit").classList.add("countryeditclick");
-    document.getElementById("edit").classList.add("editclick");
-
-    //
-
-    document.getElementById("countryview").classList.remove("countryviewclick");
-    document.getElementById("view").classList.remove("viewclick");
-
-    document.getElementById("countryrevenue").classList.remove("countryrevenueclick");
-    document.getElementById("revenue").classList.remove("revenueclick");
-
-    document.getElementById("countrynews").classList.remove("countrynewsclick");
-    document.getElementById("news").classList.remove("newsclick");
-
-    document.getElementById("countryactions").classList.remove("countryactionsclick");
-    document.getElementById("actions").classList.remove("actionsclick");
-
-}
-//PROVINCE SLIDER
-$(document).ready(function() {
-
-    document.getElementById("provincecity").classList.add("provincecityclick");
-    document.getElementById("city").classList.add("cityclick");
-
-});
-//
-function provincecity() {
-
-
-    document.getElementById("provincecity").classList.add("provincecityclick");
-    document.getElementById("city").classList.add("cityclick");
-
-    //
-
-    document.getElementById("provinceland").classList.remove("provincelandclick");
-    document.getElementById("land").classList.remove("landclick");
-
-}
-//
-function provinceland() {
-
-
-    document.getElementById("provinceland").classList.add("provincelandclick");
-    document.getElementById("land").classList.add("landclick");
-
-    //
-
-    document.getElementById("provincecity").classList.remove("provincecityclick");
-    document.getElementById("city").classList.remove("cityclick");
-}
-//CITY SLIDER
-$(document).ready(function() {
-
-    document.getElementById("cityelectricity").classList.add("cityelectricityclick");
-    document.getElementById("electricity").classList.add("electricityclick");
-
-});
-//
-function cityelectricity() {
-
-
-    document.getElementById("cityelectricity").classList.add("cityelectricityclick");
-    document.getElementById("electricity").classList.add("electricityclick");
-
-    //
-
-    document.getElementById("cityretail").classList.remove("cityretailclick");
-    document.getElementById("retail").classList.remove("retailclick");
-
-    document.getElementById("cityworks").classList.remove("cityworksclick");
-    document.getElementById("works").classList.remove("worksclick");
-
-}
-//
-function cityretail() {
-
-    document.getElementById("cityretail").classList.add("cityretailclick");
-    document.getElementById("retail").classList.add("retailclick");
-
-    //
-
-    document.getElementById("cityelectricity").classList.remove("cityelectricityclick");
-    document.getElementById("electricity").classList.remove("electricityclick");
-
-    document.getElementById("cityworks").classList.remove("cityworksclick");
-    document.getElementById("works").classList.remove("worksclick");
-
-}
-//
-function cityworks() {
-
-    document.getElementById("cityworks").classList.add("cityworksclick");
-    document.getElementById("works").classList.add("worksclick");
-
-    //
-
-    document.getElementById("cityelectricity").classList.remove("cityelectricityclick");
-    document.getElementById("electricity").classList.remove("electricityclick");
-
-    document.getElementById("cityretail").classList.remove("cityretailclick");
-    document.getElementById("retail").classList.remove("retailclick");
-
-}
-//
-//LAND SLIDER
-$(document).ready(function() {
-
-    document.getElementById("landmilitary").classList.add("landmilitaryclick");
-    document.getElementById("military").classList.add("militaryclick");
-
-});
-//
-function landmilitary() {
-
-
-    document.getElementById("landmilitary").classList.add("landmilitaryclick");
-    document.getElementById("military").classList.add("militaryclick");
-
-    //
-
-    document.getElementById("landindustry").classList.remove("landindustryclick");
-    document.getElementById("industry").classList.remove("industryclick");
-
-    document.getElementById("landprocessing").classList.remove("landprocessingclick");
-    document.getElementById("processing").classList.remove("processingclick");
-
-}
-//
-function landindustry() {
-
-    document.getElementById("landindustry").classList.add("landindustryclick");
-    document.getElementById("industry").classList.add("industryclick");
-
-    //
-
-    document.getElementById("landmilitary").classList.remove("landmilitaryclick");
-    document.getElementById("military").classList.remove("militaryclick");
-
-    document.getElementById("landprocessing").classList.remove("landprocessingclick");
-    document.getElementById("processing").classList.remove("processingclick");
-
-}
-//
-function landprocessing() {
-
-    document.getElementById("landprocessing").classList.add("landprocessingclick");
-    document.getElementById("processing").classList.add("processingclick");
-
-    //
-
-    document.getElementById("landmilitary").classList.remove("landmilitaryclick");
-    document.getElementById("military").classList.remove("militaryclick");
-
-    document.getElementById("landindustry").classList.remove("landindustryclick");
-    document.getElementById("industry").classList.remove("industryclick");
-
-}
-//MILITARY SLIDER
-$(document).ready(function() {
-
-    document.getElementById("militaryland").classList.add("militarylandclick");
-    document.getElementById("land").classList.add("landclick");
-
-});
-//
-function militaryland() {
-
-    document.getElementById("militaryland").classList.add("militarylandclick");
-    document.getElementById("land").classList.add("landclick");
-
-    //
-
-    document.getElementById("militaryair").classList.remove("militaryairclick");
-    document.getElementById("air").classList.remove("airclick");
-
-    document.getElementById("militarywater").classList.remove("militarywaterclick");
-    document.getElementById("water").classList.remove("waterclick");
-
-    document.getElementById("militaryspecial").classList.remove("militaryspecialclick");
-    document.getElementById("special").classList.remove("specialclick");
-}
-//
-function militaryair() {
-    document.getElementById("militaryair").classList.add("militaryairclick");
-    document.getElementById("air").classList.add("airclick");
-
-    //
-
-    document.getElementById("militaryland").classList.remove("militarylandclick");
-    document.getElementById("land").classList.remove("landclick");
-
-    document.getElementById("militarywater").classList.remove("militarywaterclick");
-    document.getElementById("water").classList.remove("waterclick");
-
-    document.getElementById("militaryspecial").classList.remove("militaryspecialclick");
-    document.getElementById("special").classList.remove("specialclick");
-}
-//
-function militarywater() {
-
-    document.getElementById("militarywater").classList.add("militarywaterclick");
-    document.getElementById("water").classList.add("waterclick");
-
-    //
-
-    document.getElementById("militaryland").classList.remove("militarylandclick");
-    document.getElementById("land").classList.remove("landclick");
-
-    document.getElementById("militaryair").classList.remove("militaryairclick");
-    document.getElementById("air").classList.remove("airclick");
-
-    document.getElementById("militaryspecial").classList.remove("militaryspecialclick");
-    document.getElementById("special").classList.remove("specialclick");
-}
-//
-function militaryspecial() {
-
-
-    document.getElementById("militaryspecial").classList.add("militaryspecialclick");
-    document.getElementById("special").classList.add("specialclick");
-
-    //
-    document.getElementById("militaryland").classList.remove("militarylandclick");
-    document.getElementById("land").classList.remove("landclick");
-
-    document.getElementById("militaryair").classList.remove("militaryairclick");
-    document.getElementById("air").classList.remove("airclick");
-
-    document.getElementById("militarywater").classList.remove("militarywaterclick");
-    document.getElementById("water").classList.remove("waterclick");
-
-}
-//COALITION SLIDER
-$(document).ready(function() {
-
-    document.getElementById("coalitiongeneral").classList.add("coalitiongeneralclick");
-    document.getElementById("general").classList.add("generalclick");
-
-});
-
-function joinhide() {
-
-    document.getElementById("coalitionjoin").classList.add("hidden");
-
+    var rd = _el("resourcediv");
+    var rdc = _el("resourcedivcontent");
+    if (rd) rd.classList.toggle("resourcedivshow");
+    if (rdc) rdc.classList.toggle("resourcedivcontentshow");
+    try { localStorage.setItem("resourcedivcontentshow", "true"); } catch(e) {}
 }
 
-function leaderhide() {
+// ---------------------------------------------------------------------------
+// Country page helpers
+// ---------------------------------------------------------------------------
+function revenuehide() { var el = _el("countryrevenue"); if (el) el.classList.add("hidden"); }
+function newshide() { var el = _el("countrynews"); if (el) el.classList.add("hidden"); }
+function edithide() { var el = _el("countryedit"); if (el) el.classList.add("hidden"); }
+function actionshide() { var el = _el("countryactions"); if (el) el.classList.add("hidden"); }
 
-    document.getElementById("coalitionleader").classList.add("hidden");
+// Coalition helpers
+function joinhide() { var el = _el("coalitionjoin"); if (el) el.classList.add("hidden"); }
+function leaderhide() { var el = _el("coalitionleader"); if (el) el.classList.add("hidden"); }
+function memberhide() { var el = _el("coalitionmember"); if (el) el.classList.add("hidden"); }
 
-}
+// ---------------------------------------------------------------------------
+// Image preview for flag uploads
+// ---------------------------------------------------------------------------
+var imageBackground = function(event) {
+    var output = document.getElementById("imageBackground");
+    if (!output || !event.target.files[0]) return;
+    output.src = URL.createObjectURL(event.target.files[0]);
+    output.style.width = "20vw";
+    output.style.height = "11.25vw";
+    output.onload = function() { URL.revokeObjectURL(output.src); };
+};
 
-function memberhide() {
-
-    document.getElementById("coalitionmember").classList.add("hidden");
-
-}
-//
-function coalitiongeneral() {
-
-
-    document.getElementById("coalitiongeneral").classList.add("coalitiongeneralclick");
-    document.getElementById("general").classList.add("generalclick");
-
-    //
-
-    document.getElementById("coalitionjoin").classList.remove("coalitionjoinclick");
-    document.getElementById("join").classList.remove("joinclick");
-
-    document.getElementById("coalitionleader").classList.remove("coalitionleaderclick");
-    document.getElementById("leader").classList.remove("leaderclick");
-
-    document.getElementById("coalitionmember").classList.remove("coalitionmemberclick");
-    document.getElementById("member").classList.remove("memberclick");
-
-
-}
-//
-function coalitionjoin() {
-
-    document.getElementById("coalitionjoin").classList.add("coalitionjoinclick");
-    document.getElementById("join").classList.add("joinclick");
-
-    //
-
-    document.getElementById("coalitiongeneral").classList.remove("coalitiongeneralclick");
-    document.getElementById("general").classList.remove("generalclick");
-
-
-}
-//
-function coalitionleader() {
-
-    document.getElementById("coalitionleader").classList.add("coalitionleaderclick");
-    document.getElementById("leader").classList.add("leaderclick");
-
-    //
-
-    document.getElementById("coalitiongeneral").classList.remove("coalitiongeneralclick");
-    document.getElementById("general").classList.remove("generalclick");
-
-}
-
-function coalitionmember() {
-
-    document.getElementById("coalitionmember").classList.add("coalitionmemberclick");
-    document.getElementById("member").classList.add("memberclick");
-
-    //
-
-    document.getElementById("coalitiongeneral").classList.remove("coalitiongeneralclick");
-    document.getElementById("general").classList.remove("generalclick");
-
-}
-//UPGRADES SLIDER
-$(document).ready(function() {
-
-    document.getElementById("upgradeseconomic").classList.add("upgradeseconomicclick");
-    document.getElementById("economic").classList.add("economicclick");
-
-});
-//
-function upgradeseconomic() {
-
-    document.getElementById("upgradeseconomic").classList.add("upgradeseconomicclick");
-    document.getElementById("economic").classList.add("economicclick");
-
-    //
-
-    document.getElementById("upgradesmilitary").classList.remove("upgradesmilitaryclick");
-    document.getElementById("military").classList.remove("militaryclick");
-
-}
-//
-function upgradesmilitary() {
-
-    document.getElementById("upgradesmilitary").classList.add("upgradesmilitaryclick");
-    document.getElementById("military").classList.add("militaryclick");
-
-    //
-
-    document.getElementById("upgradeseconomic").classList.remove("upgradeseconomicclick");
-    document.getElementById("economic").classList.remove("economicclick");
-
-}
-// the below 3 functions don't work, the scripts have been paraphrased in countries.html
-// var imageBackground = function(event) {
-//     var output = document.getElementById('imageBackground');
-//     output.src = URL.createObjectURL(event.target.files[0]);
-//     output.style.width = "20vw";
-//     output.style.height = "11.25vw";
-//     output.onload = function() {
-//         URL.revokeObjectURL(output.src) // free memory
-//     }
-// };
-
-// var imageBackground2 = function(event) {
-//     var output = document.getElementById('imageBackground2');
-//     output.src = URL.createObjectURL(event.target.files[0]);
-//     output.style.width = "20vw";
-//     output.style.height = "11.25vw";
-//     output.onload = function() {
-//         URL.revokeObjectURL(output.src) // free memory
-//     }
-// };
-// var imageBackground3 = function(event) {
-//     var output = document.getElementById('imageBackground3');
-//     output.src = URL.createObjectURL(event.target.files[0]);
-//     output.style.width = "20vw";
-//     output.style.height = "11.25vw";
-//     output.onload = function() {
-//         URL.revokeObjectURL(output.src) // free memory
-//     }
-// };
-
+// ---------------------------------------------------------------------------
+// Number formatting
+// ---------------------------------------------------------------------------
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-$(document).ready(function() {
-    var val = parseInt($('#resourcetag').html());
-    //Use the code in the answer above to replace the commas.
-    val = numberWithCommas(val);
-    $('#resourcetag').text(val);
-});
+// ---------------------------------------------------------------------------
+// Delete item from page and send POST request
+// ---------------------------------------------------------------------------
+function pop_from_page(req_path, container_id) {
+    var item = document.querySelector('[data-contain="' + container_id + '"]');
+    fetch(req_path, { method: "POST" });
+    if (item) item.remove();
+}
 
-
-
-/**/
-
-// function to set a given theme/color-scheme
+// ---------------------------------------------------------------------------
+// Theme toggle (light/dark)
+// ---------------------------------------------------------------------------
 function setTheme(themeName) {
-    localStorage.setItem('theme', themeName);
+    try { localStorage.setItem("theme", themeName); } catch(e) {}
     document.documentElement.className = themeName;
 }
 
-// function to toggle between light and dark theme
 function toggleTheme() {
-    if (localStorage.getItem('theme') === 'theme-dark') {
-        setTheme('theme-light');
-    } else {
-        setTheme('theme-dark');
-    }
+    var current = "theme-light";
+    try { current = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
 }
 
-// Immediately invoked function to set the theme on initial load
+// Apply saved theme on load
 (function() {
-    if (localStorage.getItem('theme') === 'theme-dark') {
-        setTheme('theme-dark');
-        document.getElementById('slider').checked = false;
-    } else {
-        setTheme('theme-light');
-        document.getElementById('slider').checked = true;
-    }
+    var theme = "theme-light";
+    try { theme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    setTheme(theme);
+    var slider = document.getElementById("slider");
+    if (slider) slider.checked = (theme !== "theme-dark");
 })();
 
-/*Warchoose stuff*/
-
-
-
-// Filter checked inputs and make ready to send by POST request
+// ---------------------------------------------------------------------------
+// War selection helpers
+// ---------------------------------------------------------------------------
 function assign_parameters() {
-    const all_inputs = document.querySelectorAll("input[type=checkbox]");
-    const hidden_inputs = document.getElementById("next_button").querySelectorAll("input[type=hidden]");
-    let next_hidden = 0;
-    let elements = all_inputs.length;
+    var all_inputs = document.querySelectorAll("input[type=checkbox]");
+    var next_button = document.getElementById("next_button");
+    if (!next_button) return false;
+    var hidden_inputs = next_button.querySelectorAll("input[type=hidden]");
+    var next_hidden = 0;
 
-    for (let i = 0; i < elements; i++) {
+    for (var i = 0; i < all_inputs.length; i++) {
         if (all_inputs[i].checked) {
             hidden_inputs[next_hidden].value = all_inputs[i].value;
             next_hidden++;
-
-            if (next_hidden == 3) {
-                return true;
-            }
+            if (next_hidden === 3) return true;
         }
     }
-
     return false;
 }
 
 function submit_special(e) {
-    const special_unit = document.querySelector("input[name=special_unit]");
-    if (document.getElementById(11).checked) {
-        special_unit.value = "nukes";
-    } else if (document.getElementById(10).checked) {
-        special_unit.value = "icbms"
-    }
+    var special_unit = document.querySelector("input[name=special_unit]");
+    if (!special_unit) return;
+    var el11 = document.getElementById("11");
+    var el10 = document.getElementById("10");
+    if (el11 && el11.checked) special_unit.value = "nukes";
+    else if (el10 && el10.checked) special_unit.value = "icbms";
 }
 
 function submit_next(e) {
@@ -668,21 +215,27 @@ function submit_next(e) {
     }
 }
 
-// POST request for wartarget
 function war_target() {
-    const element = document.getElementsByName("targeted_unit")[0];
-    const all_inputs = document.querySelectorAll("input[type=checkbox]");
-
+    var element = document.getElementsByName("targeted_unit")[0];
+    var all_inputs = document.querySelectorAll("input[type=checkbox]");
     if (element) {
-        for (let i = 0; i < all_inputs.length; i++) {
-            if (all_inputs[i].checked) {
-                element.value = all_inputs[i].value;
-            }
+        for (var i = 0; i < all_inputs.length; i++) {
+            if (all_inputs[i].checked) element.value = all_inputs[i].value;
         }
     }
 }
 
-function myFunction() {
-    var element = document.getElementById("myDIV");
-    element.classList.remove("mystyle");
-}
+// ---------------------------------------------------------------------------
+// Flash message auto-dismiss
+// ---------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    var flashes = document.querySelectorAll(".purchasediv");
+    flashes.forEach(function(flash, i) {
+        // Stagger fade-out: 3s + 0.5s per message
+        setTimeout(function() {
+            flash.style.transition = "opacity 0.5s ease-out";
+            flash.style.opacity = "0";
+            setTimeout(function() { flash.remove(); }, 500);
+        }, 3000 + (i * 500));
+    });
+});
