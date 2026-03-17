@@ -11,7 +11,7 @@ import datetime
 import logging
 import uuid
 import time
-from database import get_db_cursor
+from database import get_request_cursor
 
 load_dotenv()
 
@@ -70,7 +70,7 @@ def login():
 
             password = password.encode("utf-8")
 
-            with get_db_cursor() as db:
+            with get_request_cursor() as db:
                 has_verification, has_password = _detect_users_schema(db)
 
                 if has_verification:
@@ -275,7 +275,7 @@ def discord_login():
     current_app.config["SESSION_PERMANENT"] = True
     current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         discord = make_session(token=session.get("oauth2_token"))
         # Fetch Discord user, guard against missing/invalid token
         me_resp = discord.get(API_BASE_URL + "/users/@me")
@@ -307,7 +307,7 @@ def discord_login():
 
     # Update last_active timestamp on Discord login
     try:
-        with get_db_cursor() as db:
+        with get_request_cursor() as db:
             db.execute(
                 "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s",
                 (user_id,),

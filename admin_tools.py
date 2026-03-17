@@ -2,7 +2,7 @@ import ast
 
 from flask import jsonify, render_template, request, session, redirect, flash
 
-from database import get_db_cursor, invalidate_user_cache
+from database import get_request_cursor, invalidate_user_cache
 from helpers import error, login_required
 from variables import RESOURCES
 
@@ -83,7 +83,7 @@ def admin_command_center():
     if denied:
         return denied
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         db.execute(
@@ -187,7 +187,7 @@ def admin_add_resource():
     if not resource:
         return error(400, "Resource is required")
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         target_row = _validate_target_user(db, target_user_id)
@@ -281,7 +281,7 @@ def admin_add_provinces():
     if amount <= 0 or amount > 50:
         return error(400, "Province amount must be between 1 and 50")
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         target_row = _validate_target_user(db, target_user_id)
@@ -337,7 +337,7 @@ def admin_ban_user():
 
     reason = (request.form.get("reason") or "No reason provided").strip()
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         target_row = _validate_target_user(db, target_user_id)
@@ -386,7 +386,7 @@ def admin_unban_user():
     if target_user_id <= 0:
         return error(400, "Target user ID must be positive")
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         target_row = _validate_target_user(db, target_user_id)
@@ -439,7 +439,7 @@ def admin_kick_user():
 
     reason = (request.form.get("reason") or "No reason provided").strip()
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         target_row = _validate_target_user(db, target_user_id)
@@ -556,7 +556,7 @@ def take_economy_snapshot():
 
     Called by Celery beat (hourly) and can also be triggered manually.
     """
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         # Gold from stats table
@@ -610,7 +610,7 @@ def admin_economy_dashboard():
     if denied:
         return denied
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         # Current totals (latest snapshot per resource)
@@ -651,7 +651,7 @@ def admin_economy_api():
     if resource not in valid_resources:
         return jsonify({"error": "Unknown resource"}), 400
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         _ensure_admin_tables(db)
 
         db.execute(

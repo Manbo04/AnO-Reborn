@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, request
 from helpers import login_required, error
 from database import (
-    get_db_cursor,
+    get_request_cursor,
     query_cache,
     invalidate_user_cache,
     reuse_or_new_cursor,
@@ -78,7 +78,7 @@ def upgrades():
     cId = session["user_id"]
     upgrades = get_upgrades(cId)  # already a dict keyed by column name
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute(
             """
             SELECT tech_id, display_name, research_cost, prerequisite_tech_id, name
@@ -151,7 +151,7 @@ def upgrade_sell_buy(ttype, thing):
     if ttype != "buy":
         return error(400, "Selling upgrades is no longer supported.")
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         cId = session["user_id"]
         db.execute(
             "SELECT tech_id FROM tech_dictionary WHERE name=%s",

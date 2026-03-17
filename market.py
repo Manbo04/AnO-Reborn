@@ -1,6 +1,10 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 from helpers import login_required, error
-from database import get_db_cursor, get_db_connection, invalidate_user_cache
+from database import (
+    get_request_cursor,
+    get_db_connection,
+    invalidate_user_cache,
+)
 from flask import request, render_template, session, redirect, flash
 import variables
 import logging
@@ -235,9 +239,9 @@ def market():
     if request.method != "GET":
         return redirect("/market")
     # Use connection pool instead of direct connection
-    from database import get_db_cursor
+    from database import get_request_cursor
 
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         cId = session["user_id"]
 
         # GET Query Parameters
@@ -715,7 +719,7 @@ def post_offer(offer_type):
 def my_offers():
     cId = session["user_id"]
     offers = {}
-    with get_db_cursor(read_only=True) as db:
+    with get_request_cursor(read_only=True) as db:
         db.execute(
             (
                 "SELECT trades.offer_id, trades.price, trades.resource, "
@@ -754,7 +758,7 @@ def my_offers():
 def delete_offer(offer_id):
     cId = session["user_id"]
 
-    with get_db_cursor() as db:
+    with get_request_cursor() as db:
         db.execute("SELECT user_id FROM offers WHERE offer_id=(%s)", (offer_id,))
         result = db.fetchone()
         if not result:

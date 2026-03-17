@@ -1008,6 +1008,102 @@ def get_user_full_data(user_id: int) -> Dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Request-scoped connection: one pool checkout per HTTP request
+# ---------------------------------------------------------------------------
+
+
+def get_request_connection():
+    """Return (and lazily create) a DB connection scoped to the current
+    Flask request.  Stored on ``flask.g`` so every ``get_request_cursor()``
+    call within the same request reuses the same connection — eliminating
+    the ~130 ms Railway proxy overhead for each additional cursor.
+
+    The connection is returned to the pool automatically by
+    ``teardown_request_connection()`` (registered in app.py).
+    """
+    from flask import g
+
+    conn = getattr(g, "_db_conn", None)
+    if conn is None or getattr(conn, "closed", 1):
+        conn = db_pool.get_connection()
+        g._db_conn = conn
+    return conn
+
+
+@contextmanager
+def get_request_cursor(cursor_factory=None, read_only=False):
+    """Like ``get_db_cursor`` but reuses the request-scoped connection.
+
+    *   First call in a request checks out a connection from the pool
+        (~130 ms through Railway proxy).
+    *   Every subsequent call in the SAME request costs only the cursor
+        creation (~0 ms).
+
+    The cursor is closed when the context manager exits.  The connection
+    itself is committed/returned by ``teardown_request_connection``.
+    """
+    conn = get_request_connection()
+    cursor = conn.cursor(cursor_factory=cursor_factory)
+    try:
+        yield cursor
+    except (psycopg2.InterfaceError, psycopg2.OperationalError):
+        # Mark conn as broken so teardown closes instead of returning it
+        from flask import g
+
+        g._db_conn_broken = True
+        raise
+    except Exception:
+        raise
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+def teardown_request_connection(exc=None):
+    """Return the request-scoped connection to the pool.
+
+    Call this from ``app.teardown_appcontext`` in app.py::
+
+        app.teardown_appcontext(teardown_request_connection)
+    """
+    from flask import g
+
+    conn = getattr(g, "_db_conn", None)
+    if conn is None:
+        return
+
+    broken = getattr(g, "_db_conn_broken", False)
+    try:
+        if broken or exc is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            db_pool.return_connection(conn, close=broken)
+        else:
+            try:
+                conn.commit()
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                db_pool.return_connection(conn, close=True)
+                return
+            db_pool.return_connection(conn)
+    except Exception:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    finally:
+        g._db_conn = None
+        g._db_conn_broken = False
+
+
 @contextmanager
 def reuse_or_new_cursor(existing_cursor=None, cursor_factory=None, read_only=False):
     """Context manager that reuses an existing DB cursor or creates a new one.
