@@ -1,6 +1,11 @@
 from flask import Blueprint, render_template, session, redirect, request
 from helpers import login_required, error
-from database import get_db_cursor, query_cache, invalidate_user_cache
+from database import (
+    get_db_cursor,
+    query_cache,
+    invalidate_user_cache,
+    reuse_or_new_cursor,
+)
 from action_loop import start_research, ActionLoopError, RESEARCH_COST_RESOURCE
 
 # Game.ping() # temporarily removed this line because it might make celery not work
@@ -38,14 +43,14 @@ LEGACY_UPGRADE_TO_TECH = {
 TECH_TO_LEGACY_UPGRADE = {v: k for k, v in LEGACY_UPGRADE_TO_TECH.items()}
 
 
-def get_upgrades(cId):
+def get_upgrades(cId, db=None):
     # Check cache first
     cache_key = f"upgrades_{cId}"
     cached = query_cache.get(cache_key)
     if cached is not None:
         return cached
 
-    with get_db_cursor() as db:
+    with reuse_or_new_cursor(db) as db:
         result = {key: False for key in LEGACY_UPGRADE_TO_TECH.keys()}
 
         db.execute(
