@@ -1,6 +1,11 @@
 # Trade Agreements - Private recurring automatic trades between players
 from helpers import login_required
-from database import get_db_connection, invalidate_user_cache, cache_response
+from database import (
+    get_db_connection,
+    get_request_cursor,
+    invalidate_user_cache,
+    cache_response,
+)
 from flask import request, render_template, session, redirect, flash
 import variables
 import logging
@@ -224,9 +229,7 @@ def trade_agreements():
     """View all trade agreements for current user."""
     user_id = session["user_id"]
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         # Get agreements where user is proposer or receiver
         db.execute(
             """
@@ -343,9 +346,7 @@ def create_trade_agreement():
         flash("Invalid resource selected", "error")
         return redirect("/trade-agreements")
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         # Verify receiver exists
         db.execute("SELECT id FROM users WHERE id = %s", (receiver_id,))
         if not db.fetchone():
@@ -387,9 +388,8 @@ def create_trade_agreement():
             ),
         )
 
-        # Get the new agreement ID (not used, but commit needed)
+        # Get the new agreement ID (not used, but commit handled by teardown)
         db.fetchone()
-        conn.commit()
 
     flash("Trade agreement proposal sent!", "success")
     return redirect("/trade-agreements")
@@ -400,9 +400,7 @@ def accept_trade_agreement(agreement_id):
     """Accept a pending trade agreement."""
     user_id = session["user_id"]
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         # Get agreement
         db.execute(
             """
@@ -451,7 +449,6 @@ def accept_trade_agreement(agreement_id):
         """,
             (agreement_id,),
         )
-        conn.commit()
 
     # Execute the first trade immediately
     success, msg = execute_trade_agreement(agreement_id)
@@ -469,9 +466,7 @@ def reject_trade_agreement(agreement_id):
     """Reject a pending trade agreement."""
     user_id = session["user_id"]
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         db.execute(
             """
             SELECT receiver_id, status FROM trade_agreements WHERE id = %s
@@ -502,7 +497,6 @@ def reject_trade_agreement(agreement_id):
         """,
             (agreement_id,),
         )
-        conn.commit()
 
     flash("Agreement rejected", "success")
     return redirect("/trade-agreements")
@@ -513,9 +507,7 @@ def cancel_trade_agreement(agreement_id):
     """Cancel an active trade agreement (either party can cancel)."""
     user_id = session["user_id"]
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         db.execute(
             """
             SELECT proposer_id, receiver_id, status FROM trade_agreements WHERE id = %s
@@ -546,7 +538,6 @@ def cancel_trade_agreement(agreement_id):
         """,
             (agreement_id,),
         )
-        conn.commit()
 
     flash("Agreement cancelled", "success")
     return redirect("/trade-agreements")
@@ -557,9 +548,7 @@ def resume_trade_agreement(agreement_id):
     """Resume a paused trade agreement."""
     user_id = session["user_id"]
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-
+    with get_request_cursor() as db:
         db.execute(
             """
             SELECT proposer_id, receiver_id, status, interval_hours,
@@ -619,7 +608,6 @@ def resume_trade_agreement(agreement_id):
         """,
             (next_exec, agreement_id),
         )
-        conn.commit()
 
     flash("Agreement resumed", "success")
     return redirect("/trade-agreements")
