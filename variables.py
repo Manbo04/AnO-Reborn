@@ -475,59 +475,64 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
 
 MILDICT = {
     # LAND
-    "soldiers": {"price": 250, "resources": {"rations": 2}, "manpower": 1},
-    "tanks": {"price": 7000, "resources": {"steel": 3, "components": 3}, "manpower": 4},
+    # Resource costs synced with unit_dictionary (production_cost_* columns)
+    "soldiers": {"price": 250, "resources": {"rations": 500}, "manpower": 1},
+    "tanks": {
+        "price": 7000,
+        "resources": {"components": 5000, "steel": 50000, "gasoline": 2000},
+        "manpower": 4,
+    },
     "artillery": {
         "price": 14000,
-        "resources": {"steel": 7, "components": 2},
+        "resources": {"components": 3000, "steel": 30000, "gasoline": 1000},
         "manpower": 2,
     },
     # AIR
     "bombers": {
         "price": 22000,
-        "resources": {"aluminium": 12, "steel": 3, "components": 4},
+        "resources": {"components": 15000, "steel": 25000, "gasoline": 8000},
         "manpower": 1,
     },
     "fighters": {
         "price": 30000,
-        "resources": {"aluminium": 7, "components": 2},
+        "resources": {"components": 10000, "steel": 20000, "gasoline": 5000},
         "manpower": 1,
     },
     "apaches": {
         "price": 28000,
-        "resources": {"aluminium": 5, "steel": 2, "components": 3},
+        "resources": {"components": 8000, "steel": 15000, "gasoline": 3000},
         "manpower": 1,
     },
     # WATER
     "destroyers": {
         "price": 26000,
-        "resources": {"steel": 18, "components": 4},
+        "resources": {"rations": 500, "components": 400, "steel": 300, "gasoline": 100},
         "manpower": 6,
     },
     "cruisers": {
         "price": 48000,
-        "resources": {"steel": 35, "components": 7},
+        "resources": {"rations": 600, "components": 500, "steel": 400, "gasoline": 150},
         "manpower": 5,
     },
     "submarines": {
         "price": 40000,
-        "resources": {"steel": 12, "components": 5},
+        "resources": {"rations": 700, "components": 600, "steel": 500, "gasoline": 200},
         "manpower": 6,
     },
     # SPECIAL
     "spies": {
         "price": 25000,
-        "resources": {"rations": 50},
+        "resources": {"rations": 100, "components": 200},
         "manpower": 0,
     },
     "icbms": {
         "price": 16000000,
-        "resources": {"steel": 350},
+        "resources": {"rations": 1000, "components": 800, "steel": 600, "gasoline": 300},
         "manpower": 0,
     },
     "nukes": {
         "price": 80000000,
-        "resources": {"uranium": 800, "steel": 550},
+        "resources": {"rations": 2000, "components": 1500, "steel": 1000, "gasoline": 500},
         "manpower": 0,
     },
 }
