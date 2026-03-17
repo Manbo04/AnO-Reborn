@@ -1,4 +1,6 @@
-{% extends "layout.html" %} {% block title %} {{ province['name'] }} {% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} {{ province['name'] }} {% endblock %} {% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %} {% block body %}
 <div class="templatediv">
 
     <div class="templatedivtopper provincetopper">
