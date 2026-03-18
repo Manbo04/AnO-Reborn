@@ -771,19 +771,43 @@ class ProvinceQueries:
 
     @staticmethod
     def get_user_provinces_with_infrastructure(user_id: int) -> List[Dict[str, Any]]:
-        """Get all provinces with their infrastructure in a single JOIN query"""
+        """Get all provinces with their building counts using normalized schema."""
         query = """
             SELECT
                 p.id, p.provinceName, p.population, p.land, p.cityCount,
                 p.energy, p.happiness, p.pollution, p.productivity, p.consumer_spending,
-                pi.*
+                bd.name AS building_name, COALESCE(ub.quantity, 0) AS quantity
             FROM provinces p
-            LEFT JOIN proInfra pi ON p.id = pi.id
+            LEFT JOIN user_buildings ub ON ub.user_id = p.userId
+            LEFT JOIN building_dictionary bd
+                ON bd.building_id = ub.building_id
+                AND bd.is_active = TRUE
             WHERE p.userId = %s
-            ORDER BY p.id
+            ORDER BY p.id, bd.name
         """
         results = QueryHelper.fetch_all(query, (user_id,), dict_cursor=True)
-        return [dict(row) for row in results]
+        # Group by province
+        provinces = {}
+        for row in results:
+            pid = row["id"]
+            if pid not in provinces:
+                provinces[pid] = {
+                    "id": pid,
+                    "provinceName": row["provincename"],
+                    "population": row["population"],
+                    "land": row["land"],
+                    "cityCount": row["citycount"],
+                    "energy": row["energy"],
+                    "happiness": row["happiness"],
+                    "pollution": row["pollution"],
+                    "productivity": row["productivity"],
+                    "consumer_spending": row["consumer_spending"],
+                    "buildings": {},
+                }
+            bname = row.get("building_name")
+            if bname:
+                provinces[pid]["buildings"][bname] = row["quantity"]
+        return list(provinces.values())
 
     @staticmethod
     def get_province_ids_by_user(user_id: int) -> List[int]:
@@ -794,49 +818,17 @@ class ProvinceQueries:
 
     @staticmethod
     def get_total_infrastructure_by_user(user_id: int) -> Dict[str, int]:
-        """Get total infrastructure counts for a user in a single aggregated query"""
+        """Get total building counts for a user using normalized schema."""
         query = """
-            SELECT
-                SUM(pi.coal_burners) AS coal_burners,
-                SUM(pi.oil_burners) AS oil_burners,
-                SUM(pi.hydro_dams) AS hydro_dams,
-                SUM(pi.nuclear_reactors) AS nuclear_reactors,
-                SUM(pi.solar_fields) AS solar_fields,
-                SUM(pi.gas_stations) AS gas_stations,
-                SUM(pi.general_stores) AS general_stores,
-                SUM(pi.farmers_markets) AS farmers_markets,
-                SUM(pi.malls) AS malls,
-                SUM(pi.banks) AS banks,
-                SUM(pi.city_parks) AS city_parks,
-                SUM(pi.hospitals) AS hospitals,
-                SUM(pi.libraries) AS libraries,
-                SUM(pi.universities) AS universities,
-                SUM(pi.monorails) AS monorails,
-                SUM(pi.army_bases) AS army_bases,
-                SUM(pi.harbours) AS harbours,
-                SUM(pi.aerodomes) AS aerodomes,
-                SUM(pi.admin_buildings) AS admin_buildings,
-                SUM(pi.silos) AS silos,
-                SUM(pi.farms) AS farms,
-                SUM(pi.pumpjacks) AS pumpjacks,
-                SUM(pi.coal_mines) AS coal_mines,
-                SUM(pi.bauxite_mines) AS bauxite_mines,
-                SUM(pi.copper_mines) AS copper_mines,
-                SUM(pi.uranium_mines) AS uranium_mines,
-                SUM(pi.lead_mines) AS lead_mines,
-                SUM(pi.iron_mines) AS iron_mines,
-                SUM(pi.lumber_mills) AS lumber_mills,
-                SUM(pi.component_factories) AS component_factories,
-                SUM(pi.steel_mills) AS steel_mills,
-                SUM(pi.ammunition_factories) AS ammunition_factories,
-                SUM(pi.aluminium_refineries) AS aluminium_refineries,
-                SUM(pi.oil_refineries) AS oil_refineries
-            FROM proInfra pi
-            LEFT JOIN provinces p ON pi.id = p.id
-            WHERE p.userId = %s
+            SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS total
+            FROM building_dictionary bd
+            LEFT JOIN user_buildings ub
+                ON ub.building_id = bd.building_id AND ub.user_id = %s
+            WHERE bd.is_active = TRUE
+            GROUP BY bd.name
         """
-        result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
-        return dict(result) if result else {}
+        results = QueryHelper.fetch_all(query, (user_id,), dict_cursor=True)
+        return {row["name"]: int(row["total"]) for row in results}
 
 
 class CoalitionQueries:
