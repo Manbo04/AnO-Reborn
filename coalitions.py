@@ -1396,7 +1396,7 @@ def withdraw_from_bank(coalition_id):
     if user_role not in ["leader", "deputy_leader", "banker"]:
         return error(400, "You aren't the leader of this coalition")
 
-    resources = variables.RESOURCES
+    resources = ["money"] + variables.RESOURCES
 
     withdrew_resources = []
 
