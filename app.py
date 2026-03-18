@@ -151,7 +151,8 @@ def before_request():
         pass
 
     # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
-    if os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+    # Exempt healthcheck endpoint — Railway probes use internal HTTP
+    if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
         forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
         if forwarded_proto != "https" and not request.is_secure:
             url = request.url.replace("http://", "https://", 1)
