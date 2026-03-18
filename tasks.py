@@ -109,6 +109,10 @@ celery_beat_schedule = {
             "ECONOMY_SNAPSHOT_CRON", crontab(minute="0", hour="*/1")
         ),
     },
+    "ai_agent": {
+        "task": "tasks.task_ai_agent",
+        "schedule": get_crontab_env("AI_AGENT_CRON", crontab(minute="30", hour="*/1")),
+    },
 }
 
 celery.conf.update(
@@ -4371,3 +4375,27 @@ def task_economy_snapshot():
         print("economy_snapshot: completed successfully")
     except Exception as e:
         print(f"economy_snapshot: failed — {e}")
+
+
+# ---------------------------------------------------------------------------
+# AI Agent task
+# ---------------------------------------------------------------------------
+
+
+@celery.task(name="tasks.task_ai_agent")
+def task_ai_agent():
+    """Run the AI nation agent for configured user(s).
+
+    Disabled by default — set AI_AGENT_ENABLED=1 and AI_AGENT_PASSWORD
+    in environment to activate.
+    """
+    if os.getenv("AI_AGENT_ENABLED") != "1":
+        return
+
+    try:
+        from ai_agent import run_ai_agent
+
+        result = run_ai_agent()
+        print(f"ai_agent: completed — {result}")
+    except Exception as e:
+        print(f"ai_agent: failed — {e}")
