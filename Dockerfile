@@ -38,10 +38,10 @@ ENV PATH=/root/.local/bin:$PATH \
 
 # Health check - use /health endpoint that Railway also checks
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Default to web service
 # --preload loads the Flask app BEFORE forking workers so they can
 # immediately serve Railway's /health healthcheck on startup.
 # Shell form so $PORT expands at runtime (Railway injects PORT env var).
-CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --preload --workers 4 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 15 --keep-alive 30 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info wsgi:app
+CMD gunicorn --bind 0.0.0.0:8080 --preload --workers 4 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 15 --keep-alive 30 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info wsgi:app
