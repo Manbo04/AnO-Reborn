@@ -1,6 +1,7 @@
 import ast
 import sys
 import os
+import json
 import time as time_module
 from flask import (
     Flask,
@@ -510,6 +511,58 @@ def trigger_tasks():
         results["task_send_error"] = str(e)
 
     return results
+
+
+@app.route("/_admin/ai_agent", methods=["POST"])
+def admin_ai_agent():
+    """Admin endpoint to manually trigger the AI agent.
+
+    Requires AI_AGENT_PASSWORD to be configured.
+    POST body can include JSON {"user_id": 1} to override target user.
+    """
+    if not os.getenv("AI_AGENT_PASSWORD"):
+        return {"error": "AI_AGENT_PASSWORD not configured"}, 503
+
+    try:
+        from ai_agent import run_ai_agent
+
+        user_id = None
+        if request.is_json:
+            user_id = request.json.get("user_id")
+
+        result = run_ai_agent(user_id)
+        return result
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+
+@app.route("/_admin/ai_logs")
+def admin_ai_logs():
+    """View recent AI agent decision logs."""
+    import glob as _glob
+
+    log_dir = os.path.join(os.path.dirname(__file__), "ai_logs")
+    if not os.path.exists(log_dir):
+        return {"logs": [], "summary": "No logs yet"}
+
+    # Return last 10 log files
+    files = sorted(_glob.glob(os.path.join(log_dir, "cycle_*.json")), reverse=True)[:10]
+    logs = []
+    for fp in files:
+        try:
+            with open(fp) as f:
+                logs.append(json.loads(f.read()))
+        except Exception:
+            pass
+
+    # Return summary CSV if it exists
+    summary_path = os.path.join(log_dir, "summary.csv")
+    summary = ""
+    if os.path.exists(summary_path):
+        with open(summary_path) as f:
+            summary = f.read()
+
+    return {"logs": logs, "summary": summary}
 
 
 @app.route("/_admin/db_diagnostics")
