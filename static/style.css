@@ -346,51 +346,69 @@
 }
 
 .theme-light {
-    --background: #f1f1f1;
-    --foreground: white;
-    --foregroundTwo: #fdfdfd;
-    --foregroundThree: #f7f7f7;
-    --foregroundFour: rgb(246.5, 246.5, 246.5);
-    --foregroundFive: #fdfdfd;
-    --foregroundSix: #f7f7f7;
-    --foregroundSeven: #f7f9fd;
-    --foregroundEight: #f7f9fd;
-    --border: #e3e9f0;
-    --tableOne: #f7f9fd95;
-    --tableTwo: white;
-    --colorOne: rgb(0, 0, 0);
-    --colorTwo: rgb(255, 255, 255);
+    --background: #eef1f5;
+    --foreground: #ffffff;
+    --foregroundTwo: #f8f9fc;
+    --foregroundThree: #f0f2f7;
+    --foregroundFour: #e8ecf3;
+    --foregroundFive: #f4f6fa;
+    --foregroundSix: #f0f2f7;
+    --foregroundSeven: #e8ecf3;
+    --foregroundEight: #e3e8f0;
+    --border: #d0d7e2;
+    --tableOne: #f4f6fa;
+    --tableTwo: #ffffff;
+    --colorOne: #1a2332;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #0090c4;
+    --accent-subtle: #e6f6fc;
+    --gold: #d4a843;
+    --success: #2d9f6f;
+    --danger: #d35649;
+    --text-secondary: #5c6b7f;
+    --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
+    --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
 }
 
 .theme-dark {
-    --background: #4a4c58;
-    --foreground: #42444e;
-    --foregroundTwo: #4a4c58;
-    --foregroundThree: #4a4c58;
-    --foregroundFour: #5d606b;
-    --foregroundFive: #525561;
-    --foregroundSix: #f7f7f7;
-    --foregroundSeven: #363945;
-    --foregroundEight: #4a4c58;
-    --border: #5d606b;
-    --tableOne: #42444e;
-    --tableTwo: #4a4c58;
-    --colorOne: rgb(255, 255, 255);
-    --colorTwo: rgb(255, 255, 255);
+    --background: #13171e;
+    --foreground: #1c2029;
+    --foregroundTwo: #212630;
+    --foregroundThree: #262b36;
+    --foregroundFour: #2a3040;
+    --foregroundFive: #1e2330;
+    --foregroundSix: #262b36;
+    --foregroundSeven: #1a1e28;
+    --foregroundEight: #1c2029;
+    --border: #2a3040;
+    --tableOne: #1c2029;
+    --tableTwo: #212630;
+    --colorOne: #e0e4ea;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #33b8e8;
+    --accent-subtle: #0a2a3a;
+    --gold: #e0b84d;
+    --success: #3ab87e;
+    --danger: #e05a4d;
+    --text-secondary: #8b95a5;
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 body::-webkit-scrollbar {
-    width: 14px;
-    background: #e3e9f0;
+    width: 10px;
+    background: var(--foregroundThree);
 }
 
 body::-webkit-scrollbar-thumb {
-    background: #36394550;
-    width: 100%;
+    background: var(--border);
+    border-radius: 5px;
 }
 
 body::-webkit-scrollbar-thumb:hover {
-    background: #36394580;
+    background: var(--text-secondary);
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap");
@@ -425,8 +443,7 @@ label {
     width: -moz-fit-content;
     margin: auto;
     font-size: 16px;
-    color: var(--colorOne);
-    opacity: 0.7;
+    color: var(--text-secondary);
 }
 
 .background {
@@ -442,7 +459,7 @@ label {
 /*navbarparent*/
 
 .navbarparent {
-    background: #363945;
+    background: #1c2029;
     position: fixed;
     width: 90%;
     height: 55px;
@@ -450,12 +467,13 @@ label {
     top: 0;
     animation: navbarparentload 0.5s;
     padding: 0 5%;
-    box-shadow: 0 0 0.5rem 0 rgba(58, 59, 69, 0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid var(--accent);
     transition: all 0.3s;
 }
 
 .navbarparent:hover {
-    background: #363945 !important;
+    background: #1c2029 !important;
 }
 
 .navbarparenttitle {
@@ -542,7 +560,7 @@ label {
 
 .menubardiv {
     width: 250px;
-    background: #363945;
+    background: #1c2029;
     position: fixed;
     left: 0px;
     top: 55px;
@@ -553,6 +571,7 @@ label {
     overflow: hidden;
     font-size: 19px;
     padding-bottom: 20px;
+    border-right: 1px solid var(--border);
 }
 
 @media all and (max-width: 856px) {
@@ -583,23 +602,27 @@ label {
 }
 
 .menubardiv::-webkit-scrollbar {
-    width: 10px;
-    background: #e3e9f0;
+    width: 8px;
+    background: transparent;
 }
 
 .menubardiv::-webkit-scrollbar-thumb {
-    background: #36394550;
-    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
 }
 
 .menubardiv::-webkit-scrollbar-thumb:hover {
-    background: #36394580;
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .menubardiv h3 {
-    color: #15aee6;
+    color: var(--accent);
     margin: 18px;
     margin-left: 10px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
 }
 
 @media all and (max-width: 600px) {
@@ -626,7 +649,9 @@ label {
 
 .menubara:hover {
     color: rgb(255, 255, 255);
-    background: #515463;
+    background: rgba(0, 167, 225, 0.15);
+    border-left: 3px solid var(--accent);
+    padding-left: 17px;
 }
 
 .menubaranotification {
@@ -686,7 +711,7 @@ label {
     border-radius: 4px;
     transition: all 0.2s;
     width: max-content;
-    background: #363945;
+    background: #1c2029;
     padding: 0 12px;
     cursor: pointer;
 }
@@ -694,7 +719,7 @@ label {
 .dropbtn:hover .dropbtnchild {
     opacity: 1 !important;
     box-shadow: inset rgba(255, 255, 255, 0.103) 0 0 10000px 0;
-    background: #363945;
+    background: #1c2029;
 }
 
 .dropbtn:hover {
@@ -740,13 +765,14 @@ label {
 }
 
 .dropdown-contentchild {
-    box-shadow: rgba(0, 0, 0, 0.15) 0 12px 22px 2px, rgba(0, 0, 0, 0.055) 0 12px 12px;
-    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
     overflow: hidden;
-    background: #363945;
+    background: #1c2029;
     min-width: 200px;
     width: max-content;
     transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dropdown-contentchild:hover {
@@ -754,21 +780,20 @@ label {
 }
 
 .dropdown-content a {
-    color: white;
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     display: block;
     transition: all 0.2s;
-    padding: 4px 10px;
-    padding-bottom: 8px;
-    margin: 8px 6px;
-    border-radius: 4px;
+    padding: 8px 14px;
+    margin: 4px 6px;
+    border-radius: 6px;
     font-weight: normal;
+    font-size: 14px;
 }
 
 .dropdown-content a:hover {
-    background-color: #515463;
+    background-color: rgba(0, 167, 225, 0.15);
     color: white;
-    box-shadow: inset rgba(58, 59, 69, 0.4) 0px 2px 9px 0px;
 }
 
 .dropdown:hover .dropdown-content {
@@ -789,7 +814,7 @@ label {
     top: 75px;
     right: 20px;
     position: fixed;
-    background-color: #363945;
+    background-color: #1c2029;
     width: 56px;
     z-index: 1000;
     height: 56px;
@@ -812,7 +837,7 @@ label {
 
 .resourcedivshow {
     box-shadow: rgba(58, 59, 69, 0.4) 0px 6px -6px 0px, inset rgba(58, 59, 69, 0.4) 0px 2px 9px 0px;
-    background-color: #515463;
+    background-color: rgba(0, 167, 225, 0.15);
     border-radius: 0;
     right: 0px;
     padding: 0;
@@ -873,7 +898,7 @@ label {
     top: 75px;
     right: 0px;
     bottom: 0px;
-    background-color: #363945;
+    background-color: #1c2029;
     width: 200px;
     margin-right: -200px;
     transition: all 0.4s ease;
@@ -930,11 +955,11 @@ label {
 }
 
 .resourcetagparent:hover {
-    background: #515463;
+    background: rgba(0, 167, 225, 0.15);
 }
 
 .resourcetagparent:focus {
-    background: #515463;
+    background: rgba(0, 167, 225, 0.15);
     height: auto;
     outline: none;
 }
@@ -987,7 +1012,7 @@ label {
         width: 56px !important;
         border-radius: 100px !important;
         padding-left: 0 !important;
-        background-color: #363945 !important;
+        background-color: #1c2029 !important;
     }
 
     .resourcedivshow .resourcedivchild {
@@ -1054,7 +1079,7 @@ label {
 
 .purchasediv div {
     width: 100%;
-    background: #363945;
+    background: #1c2029;
     color: #ffffff;
     box-shadow: 0 0 20px 0 rgba(58, 59, 69, .55);
     padding: 12px 20px;
@@ -1272,8 +1297,10 @@ label {
     margin-top: 180px;
     padding-bottom: 25px;
     overflow: visible;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0 20px 50px 0px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease;
 }
 
 @media all and (max-width: 750px) {
@@ -1290,6 +1317,9 @@ label {
     position: relative;
     background: var(--foregroundEight);
     background-attachment: fixed;
+    border-bottom: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
 }
 
 @media all and (max-width: 750px) {
@@ -1528,25 +1558,28 @@ label {
 
 .templatecontentheaderleft {
     background: var(--foregroundThree);
-    font-size: 25px;
+    font-size: 22px;
     margin: 20px 6px;
-    padding: 8px 12px;
+    padding: 10px 16px;
     color: var(--colorOne);
-    border-radius: 4px;
-    font-weight: normal;
+    border-radius: 6px;
+    font-weight: 600;
     text-align: center;
+    border-left: 4px solid var(--accent);
 }
 
 .templatecontentheadercenter {
     text-align: center;
-    font-size: 28px;
-    font-weight: normal;
+    font-size: 24px;
+    font-weight: 700;
     color: var(--colorOne);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    position: relative;
 }
 
 .templatecontentpleft {
-    color: var(--colorOne);
-    opacity: 0.7;
+    color: var(--text-secondary);
     text-align: justify;
     margin-top: 0;
     width: 80%;
@@ -1560,44 +1593,80 @@ label {
 }
 
 .templatecontentpcenter {
-    text-align: justify;
-    font-size: 17px;
-    color: var(--colorOne);
     text-align: center;
+    font-size: 17px;
+    color: var(--text-secondary);
     margin-top: 0;
-    opacity: 0.7;
 }
 
 .templatedivbutton {
     width: fit-content;
     width: -moz-fit-content;
     margin: 5px;
-    padding: 5px 40px;
+    padding: 8px 32px;
     line-height: 27.2px;
     text-decoration: none;
     color: white;
     border: none;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     user-select: none;
     outline: none !important;
     text-align: center;
     text-transform: uppercase;
-    transition: all 0.3s ease-in-out;
-    background-color: #00a7e1;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
     display: block;
     width: max-content;
-    letter-spacing: 1px;
-    box-shadow: inset rgba(39, 41, 59, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.15) 0 2px 6px 0;
-    border-radius: 100px;
+    letter-spacing: 1.2px;
+    box-shadow: 0 2px 8px rgba(0, 167, 225, 0.25);
+    border-radius: 8px;
     animation: templatedivcontentload 1.25s;
     position: relative;
-    font-weight: normal;
+    font-weight: 600;
 }
 
 .templatedivbutton:hover {
-    box-shadow: inset rgba(39, 41, 59, 0.3) 0px 0px 150px 2px, rgba(0, 0, 0, 0.15) 0 4px 10px 0;
+    box-shadow: 0 4px 14px rgba(0, 167, 225, 0.35);
+    transform: translateY(-1px);
     color: white;
+}
+
+.templatedivbutton:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 167, 225, 0.2);
+}
+
+.templatedivbutton-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    box-shadow: none;
+}
+
+.templatedivbutton-secondary:hover {
+    background: var(--accent-subtle);
+    box-shadow: none;
+    transform: translateY(-1px);
+    color: var(--accent);
+}
+
+.templatedivbutton-danger {
+    background: linear-gradient(135deg, var(--danger), #b8443a);
+    box-shadow: 0 2px 8px rgba(211, 86, 73, 0.25);
+}
+
+.templatedivbutton-danger:hover {
+    box-shadow: 0 4px 14px rgba(211, 86, 73, 0.35);
+}
+
+.templatedivbutton-success {
+    background: linear-gradient(135deg, var(--success), #248a5e);
+    box-shadow: 0 2px 8px rgba(45, 159, 111, 0.25);
+}
+
+.templatedivbutton-success:hover {
+    box-shadow: 0 4px 14px rgba(45, 159, 111, 0.35);
 }
 
 .templatedivbutton:focus {
@@ -1622,9 +1691,9 @@ label {
 }
 
 .templateclosedbutton {
-    background: #00a9e18a;
+    background: rgba(0, 167, 225, 0.3);
     cursor: not-allowed;
-    color: black;
+    color: var(--text-secondary);
     position: relative;
 }
 
@@ -1887,30 +1956,28 @@ label {
 }
 
 .templateselect {
-    padding: 10px;
+    padding: 10px 12px;
     margin: 8px auto;
     outline: none;
-    font-size: 16px;
-    transition: all 0.2s;
+    font-size: 15px;
+    transition: all 0.2s ease;
     cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    background: linear-gradient(-90deg, var(--foregroundFive) 50%, var(--foregroundFour) 50%);
+    background: var(--foreground);
     border: 1.5px solid var(--border);
     color: var(--colorOne);
-    background-size: 400% 400%;
-    background-position: -50% 0%;
     float: none;
-    border-radius: 4px;
+    border-radius: 8px;
     box-sizing: border-box;
 }
 
 .templateselect:hover {
-    box-shadow: rgba(39, 41, 59, 0.10) 0px 8px 12px 0px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 167, 225, 0.1);
 }
 
 .templateselect:focus {
-    background-position: -100% 0%;
-    box-shadow: rgba(39, 41, 59, 0.10) 0px 8px 12px 0px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 167, 225, 0.15);
 }
 
 .templateselect option {
@@ -1922,29 +1989,28 @@ label {
     padding-left: 25px;
     cursor: pointer;
     user-select: none;
-    padding: 8px;
+    padding: 8px 12px;
     padding-top: 5px;
     outline: none;
-    font-size: 16px;
+    font-size: 15px;
     margin: 12px auto;
-    transition: all 0.3s ease-in-out;
-    background: linear-gradient(-90deg, var(--foregroundFive) 50%, var(--foregroundFour) 50%);
+    transition: all 0.2s ease;
+    background: var(--foreground);
     border: 1.5px solid var(--border);
     color: var(--colorOne);
-    background-size: 400% 400%;
-    background-position: -50% 0%;
     float: none;
     opacity: 1;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 .imageinput:hover {
-    box-shadow: rgba(39, 41, 59, 0.10) 0px 8px 12px 0px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 167, 225, 0.1);
 }
 
 .imageinput:focus {
-    background-position: -100% 0%;
-    box-shadow: rgba(39, 41, 59, 0.10) 0px 8px 12px 0px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 167, 225, 0.15);
 }
 
 .imageinput input {
@@ -1956,24 +2022,19 @@ label {
 }
 
 .templatetextarea {
-    border-radius: 4px;
-    padding: 10px;
+    border-radius: 8px;
+    padding: 10px 12px;
     margin: 8px;
     outline: none;
-    font-size: 16px;
-    transition: all 0.2s;
-    background: white;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    background: var(--foreground);
     min-width: 40vw;
     min-height: 40vh;
     max-width: 40vw;
     max-height: 40vh;
-    box-shadow: rgba(39, 41, 59, 0.15) 0px 2px 5px 0px;
-    transition: all 0.3s ease-in-out;
-    background: linear-gradient(-90deg, var(--foregroundFive) 50%, var(--foregroundFour) 50%);
     border: 1.5px solid var(--border);
     color: var(--colorOne);
-    background-size: 400% 400%;
-    background-position: -50% 0%;
     float: none;
 }
 
@@ -2029,15 +2090,16 @@ label {
 }
 
 .notificationdiv ul {
-    background: #363945;
+    background: #1c2029;
     color: #ffffff;
-    box-shadow: rgba(58, 59, 69, 0.3) 0 3px 8px 0;
-    padding: 10px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px 14px !important;
     margin: 6px 0 !important;
     font-size-adjust: 16px;
     justify-self: end;
     height: fit-content;
-    border-left: 3px solid #00a7e1;
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
     text-align: left;
 }
 
@@ -2185,10 +2247,11 @@ button {
     padding: 0;
     min-width: 10% !important;
     height: 100%;
-    background: #f7f7f7;
-    border-radius: 0px;
+    background: var(--foregroundTwo);
+    border-radius: 8px;
     overflow: hidden;
     font-size: 14px;
+    border: 1px solid var(--border);
 }
 
 @media all and (max-width: 600px) {
@@ -2222,14 +2285,16 @@ button {
 }
 
 .templatetable {
-    padding: 6px;
-    margin: 4px auto;
+    padding: 0;
+    margin: 10px auto;
     width: 90%;
     background: var(--tableTwo);
-    box-shadow: rgba(58, 59, 69, 0.15) 0px 0px 48px 0px;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     border-collapse: initial;
+    border-spacing: 0;
     align-items: center;
+    overflow: hidden;
 }
 
 .templatetable tr {
@@ -2237,27 +2302,27 @@ button {
 }
 
 .templatetable th {
-    height: 35px;
-    background-color: #00a7e1;
+    height: 40px;
+    background-color: var(--accent);
     color: white;
-    font-size: 19px;
+    font-size: 15px;
     column-span: 1;
-    letter-spacing: 0.5px;
-    font-weight: 450px;
+    letter-spacing: 0.8px;
+    font-weight: 600;
     position: relative;
-    box-shadow: rgba(0, 0, 0, 0.12) 0px 2px 3px 0px, rgba(39, 41, 59, 0.15) 0px 2px 5px 0px;
-    text-transform: capitalize;
+    text-transform: uppercase;
     text-align: center;
+    padding: 10px 14px;
 }
 
 .templatetable th:first-child {
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .templatetable th:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .templatetable tr:nth-child(odd) {
@@ -2268,9 +2333,14 @@ button {
     background: var(--tableTwo);
 }
 
+.templatetable tbody tr:hover {
+    background: var(--accent-subtle);
+    transition: background 0.15s ease;
+}
+
 .templatetable td {
     margin: 0px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     width: 50%;
     min-width: 40px;
     text-align: left;
@@ -2279,11 +2349,12 @@ button {
     color: var(--colorOne);
     font-size: 14px;
     position: relative;
-    line-height: 1.4;
+    line-height: 1.5;
     height: auto;
     white-space: normal;
     overflow: visible;
     vertical-align: middle;
+    border-bottom: 1px solid var(--border);
 }
 
 .templatetable td:nth-child(even) {
@@ -3070,32 +3141,30 @@ button {
 }
 
 .loginsignupinput {
-    padding: 10px;
+    padding: 12px 14px;
     outline: none;
-    font-size: 16px;
-    transition: all 0.2s;
+    font-size: 15px;
+    transition: all 0.2s ease;
     display: block;
     margin: 8px auto;
-    transition: all 0.3s ease-in-out;
-    background: linear-gradient(-90deg, var(--foregroundFive) 50%, var(--foregroundFour) 50%);
+    background: var(--foreground);
     border: 1.5px solid var(--border);
     color: var(--colorOne);
-    background-size: 400% 400%;
-    background-position: -50% 0%;
     float: none;
-    border-radius: 4px;
+    border-radius: 8px;
     line-height: normal;
     font-weight: 400;
     box-sizing: border-box;
 }
 
 .loginsignupinput:focus {
-    background-position: -100% 0%;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 167, 225, 0.15);
 }
 
 .loginsignupinput::placeholder {
-    color: var(--colorOne);
-    opacity: 0.8;
+    color: var(--text-secondary);
+    opacity: 1;
 }
 
 .loginsignupbutton {
@@ -3113,7 +3182,7 @@ button {
 }
 
 .loginsignupforgot {
-    color: #00a7e1;
+    color: var(--accent);
     padding: 2px;
     transition: all 0.2s;
     text-decoration: none;
@@ -3122,7 +3191,7 @@ button {
 }
 
 .loginsignupforgot:hover {
-    color: rgb(88, 196, 231);
+    color: var(--accent-hover);
 }
 
 .login,
@@ -3198,7 +3267,7 @@ button {
     background-size: cover;
     object-fit: cover;
     background-position: center;
-    border: 6px solid #36394590;
+    border: 6px solid #1c202990;
     position: relative;
     user-select: initial;
 }
@@ -3265,24 +3334,26 @@ button {
 .notificationchildleft,
 .notificationchildright {
     padding: 6px 20px !important;
-    border-radius: 4px;
+    border-radius: 8px;
     color: white !important;
-    box-shadow: rgba(0, 0, 0, 0.12) 0px 2px 3px 0px, rgba(39, 41, 59, 0.15) 0px 2px 5px 0px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .notificationchildleft {
-    background-color: #00a7e1;
+    background: linear-gradient(135deg, var(--success), #248a5e);
 }
 
 .notificationchildright {
-    background-color: red;
+    background: linear-gradient(135deg, var(--danger), #b8443a);
 }
 
 .provinceimage {
     margin-top: -15px;
     width: 100%;
     height: 20vh;
-    background: #f7f7f7;
+    background: var(--foregroundThree);
 }
 
 .city,
