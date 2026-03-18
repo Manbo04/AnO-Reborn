@@ -434,10 +434,13 @@ def createprovince():
                 # Invalidate cached provinces page for this user
                 # so the new province appears immediately
                 try:
-                    from database import query_cache
+                    from database import query_cache, invalidate_user_cache
 
                     pattern = f"provinces_{cId}_"
                     query_cache.invalidate(pattern=pattern)
+                    # Also invalidate influence/resources cache so the
+                    # new province is reflected in influence score
+                    invalidate_user_cache(cId)
                 except Exception:
                     # Best-effort: cache invalidation should not raise on failure
                     pass
