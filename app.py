@@ -551,11 +551,11 @@ def db_diagnostics():
                     if kind == "infra":
                         sql = (
                             "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) "
-                            "SELECT proInfra.id, provinces.userId, "
-                            "provinces.land, provinces.productivity "
-                            "FROM proInfra "
-                            "INNER JOIN provinces ON proInfra.id = provinces.id "
-                            "ORDER BY proInfra.id ASC LIMIT 500;"
+                            "SELECT ub.user_id, bd.name, ub.quantity "
+                            "FROM user_buildings ub "
+                            "INNER JOIN building_dictionary bd "
+                            "ON ub.building_id = bd.building_id "
+                            "ORDER BY ub.user_id ASC LIMIT 500;"
                         )
                     elif kind == "stats":
                         sql = (
