@@ -753,6 +753,12 @@
                             <td>Monetary net:</td>
                             <td>{{ revenue["net"]["money"] | fmt }}</td>
                         </tr>
+                        {% if revenue.get("coalition_tax") %}
+                        <tr>
+                            <td>Coalition tax:</td>
+                            <td style="color: #e74c3c;">-{{ revenue["coalition_tax"] | fmt }}</td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <td>Rations:</td>
                             <td>{{ revenue["net"]["rations"] | fmt }}</td>
