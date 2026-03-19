@@ -279,24 +279,115 @@ def get_revenue(cId, db=None):
                 multiplier = base_multiplier + (base_multiplier * land_multiplier)
                 ti_money += multiplier * population
 
-            total_pop_ti = sum(p for p, _ in ti_provinces)
-            max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
-            if consumer_goods != 0 and max_cg != 0:
-                if max_cg <= consumer_goods:
-                    ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
-                else:
-                    cg_multiplier = consumer_goods / max_cg
-                    ti_money *= 1 + (0.5 * cg_multiplier)
+            # CG tax multiplier — mirror the actual tax_income task logic.
+            # When FEATURE_DEMOGRAPHIC_CONSUMPTION is enabled, use the
+            # demographic-based CG need and distribution-capacity check;
+            # otherwise fall back to the legacy population/CONSUMER_GOODS_PER
+            # formula.
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+                # Demographic CG need (matches tax_income)
+                total_cg_need = 0.0
+                for row in province_rows:
+                    pw = row[3] if row[3] else 0  # population as proxy
+                    # Use per-province demographic data if available
+                    total_cg_need += (
+                        pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+                    )
+                # We don't have per-province demographic splits in
+                # province_rows (only id, land, productivity, population),
+                # so fetch them in one query.
+                db.execute(
+                    "SELECT COALESCE(SUM(pop_working), 0) AS pw,"
+                    "       COALESCE(SUM(pop_children), 0) AS pc,"
+                    "       COALESCE(SUM(pop_elderly), 0) AS pe "
+                    "FROM provinces WHERE userid = %s",
+                    (cId,),
+                )
+                demo_row = db.fetchone()
+                if demo_row:
+                    pw_sum = demo_row[0] or 0
+                    pc_sum = demo_row[1] or 0
+                    pe_sum = demo_row[2] or 0
+                    total_cg_need = (
+                        pw_sum
+                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+                        + pc_sum
+                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
+                        + pe_sum
+                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                    )
+                # Distribution capacity check
+                db.execute(
+                    "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty "
+                    "FROM user_buildings ub "
+                    "JOIN building_dictionary bd "
+                    "  ON bd.building_id = ub.building_id "
+                    "WHERE ub.user_id = %s "
+                    "  AND bd.name IN ("
+                    "    'distribution_centers','malls',"
+                    "    'general_stores','gas_stations'"
+                    "  ) "
+                    "GROUP BY bd.name",
+                    (cId,),
+                )
+                dist_capacity = 0
+                for drow in db.fetchall():
+                    bname = drow[0]
+                    qty = drow[1] or 0
+                    cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
+                        bname,
+                        variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT,
+                    )
+                    dist_capacity += qty * cap
+                available_to_consume = min(consumer_goods, dist_capacity)
+                if total_cg_need > 0:
+                    if available_to_consume >= total_cg_need:
+                        ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                    else:
+                        cg_ratio = available_to_consume / total_cg_need
+                        ti_money *= 1 + (0.5 * cg_ratio)
+            else:
+                total_pop_ti = sum(p for p, _ in ti_provinces)
+                max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
+                if consumer_goods != 0 and max_cg != 0:
+                    if max_cg <= consumer_goods:
+                        ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
+                    else:
+                        cg_multiplier = consumer_goods / max_cg
+                        ti_money *= 1 + (0.5 * cg_multiplier)
 
         ti_money = math.floor(ti_money)
 
+        # Deduct coalition tax so the displayed net matches what the player
+        # actually receives (tax_income task deducts this before crediting).
+        coalition_tax_deducted = 0
+        try:
+            db.execute(
+                "SELECT cl.colid, COALESCE(cn.tax_rate, 0) AS tax_rate "
+                "FROM coalitions_legacy cl "
+                "JOIN colNames cn ON cn.id = cl.colid "
+                "WHERE cl.userid = %s AND COALESCE(cn.tax_rate, 0) > 0",
+                (cId,),
+            )
+            ctax_row = db.fetchone()
+            if ctax_row:
+                tax_rate = ctax_row[1]
+                coalition_tax_deducted = int(ti_money * tax_rate / 100)
+        except Exception:
+            pass
+
         # Updates money
         revenue["gross"]["money"] += ti_money
-        revenue["net"]["money"] += ti_money
+        revenue["net"]["money"] += ti_money - coalition_tax_deducted
+        if coalition_tax_deducted:
+            revenue["coalition_tax"] = coalition_tax_deducted
 
         # Reuse already-fetched data for CG need calculation
         total_population = sum(row[3] or 0 for row in province_rows)
-        citizen_cg_need = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
+        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+            citizen_cg_need = math.ceil(total_cg_need) if ti_provinces else 0
+        else:
+            citizen_cg_need = math.ceil(total_population / variables.CONSUMER_GOODS_PER)
 
         # Net consumer goods = gross production - citizen need
         # (gross already includes production from buildings that would operate)
