@@ -14,7 +14,11 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link href="{{ url_for('static', filename='style.css') }}?v=3" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=4" rel="stylesheet" type="text/css" />
+    <script>
+    /* Apply saved theme immediately to prevent flash of wrong theme */
+    (function(){try{var t=localStorage.getItem("theme");if(t)document.documentElement.className=t;}catch(e){}})();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -31,7 +35,7 @@
     {# jQuery removed — all templates converted to vanilla JS #}
     {# Chart.js & SimpleMDE loaded only on pages that need them via extra_head block #}
 
-    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='script.js') }}?v=4"></script>
     {% block extra_head %}{% endblock %}
     <!-- Hide dropdown arrows in navbar -->
     <style>
