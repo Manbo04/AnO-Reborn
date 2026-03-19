@@ -901,9 +901,68 @@ def province_sell_buy(way, units, province_id):
 
             res_error = resource_stuff(resources_data, way)
             if res_error:
-                missing_count = res_error["difference"] * -1
-                missing_res = res_error["resource"]
-                return error(400, f"Missing {missing_count} {missing_res}")
+                # Gather ALL resource shortages (not just the first)
+                shortages = []
+                resources_list = list(
+                    variables.PROVINCE_UNIT_PRICES.get(
+                        f"{units}_resource", {}
+                    ).items()
+                )
+                for resource, amount in resources_list:
+                    qty = amount * wantedUnits
+                    resource_id = _res_id_map.get(resource)
+                    if not resource_id:
+                        shortages.append(
+                            {
+                                "resource": resource,
+                                "needed": qty,
+                                "have": 0,
+                                "short": qty,
+                                "cheapest_price": None,
+                            }
+                        )
+                        continue
+                    db.execute(
+                        "SELECT COALESCE(quantity, 0) FROM user_economy "
+                        "WHERE user_id = %s AND resource_id = %s",
+                        (cId, resource_id),
+                    )
+                    row = db.fetchone()
+                    current = int(row[0]) if row else 0
+                    short = max(0, qty - current)
+                    # Find cheapest sell offer on the market
+                    db.execute(
+                        "SELECT MIN(price) FROM offers "
+                        "WHERE resource = %s AND type = 'sell'",
+                        (resource,),
+                    )
+                    price_row = db.fetchone()
+                    cheapest = (
+                        int(price_row[0]) if price_row and price_row[0] else None
+                    )
+                    shortages.append(
+                        {
+                            "resource": resource,
+                            "needed": qty,
+                            "have": current,
+                            "short": short,
+                            "cheapest_price": cheapest,
+                        }
+                    )
+
+                # Find the resource with the biggest shortage for the market link
+                primary = max(shortages, key=lambda s: s["short"])
+                unit_display = units.replace("_", " ").title()
+
+                return (
+                    render_template(
+                        "resource_shortage.html",
+                        shortages=[s for s in shortages if s["short"] > 0],
+                        unit_display=unit_display,
+                        primary_resource=primary["resource"],
+                    ),
+                    400,
+                )
 
             # Capture gold before and perform atomic decrement
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
