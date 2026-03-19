@@ -451,3 +451,41 @@ git push origin master  # Railway auto-deploys
 - Document the "beat process dies on deploy with exit code 0" issue and solution for future reference
 
 ```
+
+---
+
+### Session: 2026-03-18
+
+**Task**: 50M gold giveaway delivery to LD + fix revenue display bug
+
+**What Was Done**:
+
+1. **50M Gold Giveaway Delivery**:
+   - Sent 50,000,000 gold to giveaway winner "Donnerkrawall" (Discord) / **ld_real** (in-game, user ID 69697533)
+   - Used `admin_add_resource()` to add gold — updated `stats.gold` from 40,010,376 → 90,010,376
+   - Verified delivery via DB query
+
+2. **Revenue Display Bug Fix (countries.py + country.html)**:
+   - **Bug 1 — Coalition tax not shown**: `get_revenue()` did not account for coalition tax. LD is in "Leviathan" coalition (colid 86) with 20% tax rate. Display showed ~17.6M net but actual income after tax was ~13.9M (matching LD's reported "12m"). Fixed by adding coalition tax lookup from `coalitions_legacy + colNames` tables and deducting from displayed net money. Added `revenue["coalition_tax"]` field.
+   - **Bug 2 — CG formula mismatch**: Display used legacy `pop/80000` formula while actual `tax_income()` task uses demographic-based consumption (`FEATURE_DEMOGRAPHIC_CONSUMPTION`). Fixed by adding demographic branch to `get_revenue()` with distribution capacity check, falling back to legacy formula when feature flag is off.
+   - **Template update**: Added coalition tax line item in red on country page (`country.html`) after "Monetary net" row.
+
+3. **Discord Response**:
+   - Posted message in #50m-giveaway channel explaining the fix to LD and confirming giveaway delivery
+
+**Commits**:
+- `25a4211f` — "fix: revenue display now accounts for coalition tax & demographic CG consumption" — pushed to master
+
+**Files Changed**:
+- `countries.py` — `get_revenue()` function: added coalition tax deduction, demographic CG formula
+- `templates/country.html` — added coalition tax display row
+
+**What To Watch**:
+- Verify LD's country page now shows ~13.9M net (down from ~17.6M) after deploy
+- Other players in coalitions with tax rates should also now see accurate net revenue
+- The demographic CG formula and legacy formula converge for most players but could diverge for edge cases with unusual demographic distributions
+
+**Next Steps**:
+- Monitor player feedback on revenue accuracy
+- Consider adding coalition tax rate to the revenue breakdown tooltip or info panel
+- Legacy table references still exist in test files and scripts — update when exercised
