@@ -478,7 +478,24 @@ def warChoose(war_id):
 @check_required
 def warAmount():
     cId = session["user_id"]
-    attack_units = Units.rebuild_from_dict(session["attack_units"])
+    attack_unit_session = session.get("attack_units")
+    if not attack_unit_session:
+        return error(
+            400,
+            "No attack units selected. Please start again.",
+        )
+    try:
+        attack_units = Units.rebuild_from_dict(attack_unit_session)
+    except Exception:
+        return error(
+            400,
+            "Attack session expired. Please start again.",
+        )
+    if not attack_units.selected_units:
+        return error(
+            400,
+            "No attack units selected. Please start again.",
+        )
     if request.method == "GET":
         unitamounts = Military.get_particular_units_list(
             cId, attack_units.selected_units_list
@@ -492,14 +509,13 @@ def warAmount():
             unit_interfaces=Units.allUnitInterfaces,
         )
     elif request.method == "POST":
-        selected_units = attack_units.selected_units_list
         selected_units = attack_units.selected_units.copy()
         units_name = list(selected_units.keys())
         incoming_unit = list(request.form)
         if len(units_name) == 3 and len(incoming_unit) == 3:
             for unit in incoming_unit:
                 if unit not in Military.allUnits:
-                    return "Invalid unit!"
+                    return error(400, "Invalid unit type!")
                 unit_amount = request.form[unit]
                 try:
                     selected_units[unit] = int(unit_amount)
@@ -508,9 +524,9 @@ def warAmount():
             if not sum(selected_units.values()):
                 return error(400, "Can't attack because you haven't sent any units")
             err_valid = attack_units.attach_units(selected_units, 3)
-            session["attack_units"] = attack_units.__dict__
             if err_valid:
                 return error(400, err_valid)
+            session["attack_units"] = attack_units.__dict__
             return redirect("/warResult")
         elif len(units_name) == 1:
             amount_str = request.form.get(units_name[0])
@@ -524,19 +540,21 @@ def warAmount():
                 return error(400, "Can't attack because you haven't sent any units")
             selected_units[units_name[0]] = amount
             err_valid = attack_units.attach_units(selected_units, 1)
-            session["attack_units"] = attack_units.__dict__
             if err_valid:
                 return error(400, err_valid)
+            session["attack_units"] = attack_units.__dict__
             return redirect("/wartarget")
         else:
-            return "everything just broke"
+            return error(400, "Invalid attack request. Please start again.")
 
 
 @wars_bp.route("/wartarget", methods=["GET", "POST"])
 @login_required
 def warTarget():
     cId = session["user_id"]
-    eId = session["enemy_id"]
+    eId = session.get("enemy_id")
+    if eId is None:
+        return error(400, "No enemy selected. Please start again.")
     if request.method == "GET":
         with get_request_cursor() as db:
             db.execute(
@@ -567,9 +585,23 @@ def warTarget():
         )
     if request.method == "POST":
         target = request.form.get("targeted_unit")
+        if not target or target not in Military.allUnits:
+            return error(400, "Invalid target unit type")
         target_amount = Military.get_particular_units_list(eId, [target])
         defender = Units(eId, {target: target_amount[0]}, selected_units_list=[target])
-        attack_units = Units.rebuild_from_dict(session["attack_units"])
+        attack_unit_session = session.get("attack_units")
+        if not attack_unit_session:
+            return error(
+                400,
+                "Attack session expired. Please start again.",
+            )
+        try:
+            attack_units = Units.rebuild_from_dict(attack_unit_session)
+        except Exception:
+            return error(
+                400,
+                "Attack session expired. Please start again.",
+            )
         special_fight_result = Military.special_fight(
             attack_units, defender, defender.selected_units_list[0]
         )
@@ -599,13 +631,26 @@ def warResult():
             defender_result={"nation_name": ""},
             attacker_result={"nation_name": ""},
         )
-    attacker = Units.rebuild_from_dict(attack_unit_session)
-    eId = session["enemy_id"]
+    try:
+        attacker = Units.rebuild_from_dict(attack_unit_session)
+    except Exception:
+        logger.exception("Failed to rebuild Units from session")
+        session.pop("attack_units", None)
+        return error(
+            400,
+            "Attack session expired. Please start again.",
+        )
+    eId = session.get("enemy_id")
+    if eId is None:
+        session.pop("attack_units", None)
+        return error(400, "No enemy selected. Please start again.")
     with get_request_cursor() as db:
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
-        attacker_name = db.fetchone()[0]
-        db.execute("SELECT username FROM users WHERE id=(%s)", (session["enemy_id"],))
-        defender_name = db.fetchone()[0]
+        row = db.fetchone()
+        attacker_name = row[0] if row else "Unknown"
+        db.execute("SELECT username FROM users WHERE id=(%s)", (eId,))
+        row = db.fetchone()
+        defender_name = row[0] if row else "Unknown"
         attacker_result = {"nation_name": attacker_name}
         defender_result = {"nation_name": defender_name}
         win_condition = None
@@ -683,7 +728,21 @@ def warResult():
             if not war_rows:
                 return error(500, "Something went wrong")
             war_type = war_rows[-1][0]
-            winner, win_condition, attack_effects = Military.fight(attacker, defender)
+            try:
+                winner, win_condition, attack_effects = Military.fight(
+                    attacker, defender
+                )
+            except Exception:
+                logger.exception(
+                    "Military.fight() crashed for attacker=%s defender=%s",
+                    attacker.user_id,
+                    eId,
+                )
+                session.pop("attack_units", None)
+                session.pop("enemy_id", None)
+                return error(
+                    500, "An error occurred during the battle. Please try again."
+                )
             if len(war_type) > 0:
                 if war_type == "Raze":
                     attack_effects[0] = attack_effects[0] * 10
@@ -750,10 +809,10 @@ def warResult():
         else:
             defender_result["unit_loss"] = result[0]
             defender_result["infra_damage"] = result[1]
-            del session["from_wartarget"]
+            session.pop("from_wartarget", None)
     attacker.save()
-    del session["attack_units"]
-    del session["enemy_id"]
+    session.pop("attack_units", None)
+    session.pop("enemy_id", None)
     return render_template(
         "warResult.html",
         winner=winner,
