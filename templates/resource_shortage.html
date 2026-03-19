@@ -1,0 +1,66 @@
+{% extends "layout.html" %} {% block title %} Missing Resources {% endblock %} {% block body %}
+<div class="templatediv noboxshadowtopper loginsignupdiv errordiv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            highlight_off
+            </span>Missing Resources</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <br />
+        <p class="landingpagecontent center">You need the following resources to buy <b>{{ unit_display }}</b>:</p>
+        <br />
+
+        <table class="templatetable" style="width:100%; max-width:500px; margin:0 auto;">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Needed</th>
+                    <th>You Have</th>
+                    <th>Short</th>
+                    <th>Market</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in shortages %}
+                <tr>
+                    <td style="text-transform:capitalize;">{{ item.resource }}</td>
+                    <td>{{ "{:,}".format(item.needed) }}</td>
+                    <td>{{ "{:,}".format(item.have) }}</td>
+                    <td style="color:var(--errorcolor); font-weight:600;">{{ "{:,}".format(item.short) }}</td>
+                    <td>
+                        {% if item.cheapest_price %}
+                        <span style="font-size:0.85em;">{{ "{:,}".format(item.cheapest_price) }}$/ea</span>
+                        {% else %}
+                        <span style="font-size:0.85em; opacity:0.6;">No offers</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br />
+
+        <div class="templatedivflex2 divflex2center">
+            <div class="templatedivflex2left">
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="#" onclick="history.go(-1)"><span class="material-icons-outlined landingicon">
+                    arrow_back
+                    </span>Back</a>
+            </div>
+            <div class="templatedivflex2right">
+                {% if primary_resource %}
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="/market?filtered_resource={{ primary_resource }}&offer_type=sell&price_type=ASC"><span class="material-icons-outlined landingicon">
+                    storefront
+                    </span>Go To Market</a>
+                {% else %}
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="/market"><span class="material-icons-outlined landingicon">
+                    storefront
+                    </span>Go To Market</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
