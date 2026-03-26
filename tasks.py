@@ -3740,29 +3740,7 @@ def cleanup_orphan_user_rows():
 # Bot market offers configuration
 BOT_USER_ID = 9999  # Market Bot account
 BOT_OFFERS = [
-    # (type, resource, amount, price)
-    # Prices set at ~2.5x production cost — bot is a convenience backstop,
-    # not a cheap alternative to building your own economy.
-    # === SELL offers — processed goods ===
-    ("sell", "consumer_goods", 200000, 5000),  # 200k CG @ 5,000 gold
-    ("sell", "rations", 500000, 600),  # 500k rations @ 600 gold
-    ("sell", "steel", 100000, 12000),  # 100k steel @ 12,000 gold
-    ("sell", "aluminium", 50000, 7000),  # 50k aluminium @ 7,000 gold
-    ("sell", "components", 25000, 25000),  # 25k components @ 25,000 gold
-    # === SELL offers — raw resources for early-game players ===
-    ("sell", "coal", 300000, 400),  # 300k coal @ 400 gold
-    ("sell", "iron", 300000, 1500),  # 300k iron @ 1,500 gold
-    ("sell", "lumber", 300000, 600),  # 300k lumber @ 600 gold
-    ("sell", "oil", 200000, 1200),  # 200k oil @ 1,200 gold
-    ("sell", "copper", 200000, 600),  # 200k copper @ 600 gold
-    ("sell", "bauxite", 200000, 1200),  # 200k bauxite @ 1,200 gold
-    # === BUY offers — bot buys surplus from players (~50% of sell price) ===
-    ("buy", "coal", 500000, 200),  # buy 500k coal @ 200 gold
-    ("buy", "iron", 500000, 700),  # buy 500k iron @ 700 gold
-    ("buy", "lumber", 500000, 300),  # buy 500k lumber @ 300 gold
-    ("buy", "oil", 500000, 600),  # buy 500k oil @ 600 gold
-    ("buy", "copper", 500000, 300),  # buy 500k copper @ 300 gold
-    ("buy", "bauxite", 500000, 600),  # buy 500k bauxite @ 600 gold
+    # Market bot disabled — all trading is player-driven.
 ]
 
 
