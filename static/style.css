@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @font-face {
     font-family: 'Material Icons';
@@ -399,6 +400,58 @@
     --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
+.theme-eclipse {
+    --background: #0a0e1a; --foreground: #111827; --foregroundTwo: #151c2e;
+    --foregroundThree: #1a2236; --foregroundFour: #1e2740; --foregroundFive: #182033;
+    --foregroundSix: #c8d6e5; --foregroundSeven: #0d1321; --foregroundEight: #151c2e;
+    --border: #2a3a5c; --tableOne: #111827; --tableTwo: #151c2e;
+    --colorOne: #c8d6e5; --colorTwo: #ffffff;
+    --accent: #3b82f6; --accent-hover: #5b9af7; --accent-subtle: #0f1a3a;
+    --gold: #e0b84d; --success: #3ab87e; --danger: #e05a4d;
+    --text-secondary: #7b8da5;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.4);
+    --shadow-card-hover: 0 4px 20px rgba(59,130,246,0.2);
+}
+
+.theme-ember {
+    --background: #1a0a0a; --foreground: #1f1010; --foregroundTwo: #291414;
+    --foregroundThree: #2d1616; --foregroundFour: #3a1e1e; --foregroundFive: #251212;
+    --foregroundSix: #e8c4b8; --foregroundSeven: #1a0c0c; --foregroundEight: #1f1010;
+    --border: #5c2a2a; --tableOne: #1f1010; --tableTwo: #291414;
+    --colorOne: #e8c4b8; --colorTwo: #ffffff;
+    --accent: #ef4444; --accent-hover: #f26a6a; --accent-subtle: #3a0f0f;
+    --gold: #e0b84d; --success: #3ab87e; --danger: #ef4444;
+    --text-secondary: #a88a7e;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.4);
+    --shadow-card-hover: 0 4px 20px rgba(239,68,68,0.2);
+}
+
+.theme-frost {
+    --background: #0a1a1a; --foreground: #0f1f1f; --foregroundTwo: #122828;
+    --foregroundThree: #142d2d; --foregroundFour: #1a3a3a; --foregroundFive: #102424;
+    --foregroundSix: #b8e8e8; --foregroundSeven: #0c1a1a; --foregroundEight: #0f1f1f;
+    --border: #2a5c5c; --tableOne: #0f1f1f; --tableTwo: #122828;
+    --colorOne: #b8e8e8; --colorTwo: #ffffff;
+    --accent: #06b6d4; --accent-hover: #33c7de; --accent-subtle: #0a2a33;
+    --gold: #e0b84d; --success: #3ab87e; --danger: #e05a4d;
+    --text-secondary: #7ea8a8;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.4);
+    --shadow-card-hover: 0 4px 20px rgba(6,182,212,0.2);
+}
+
+.theme-sovereign {
+    --background: #120a1a; --foreground: #18102a; --foregroundTwo: #1e1433;
+    --foregroundThree: #221838; --foregroundFour: #2d1f47; --foregroundFive: #1a1230;
+    --foregroundSix: #d4b8e8; --foregroundSeven: #140c1f; --foregroundEight: #18102a;
+    --border: #3d2a5c; --tableOne: #18102a; --tableTwo: #1e1433;
+    --colorOne: #d4b8e8; --colorTwo: #ffffff;
+    --accent: #a855f7; --accent-hover: #bb77f9; --accent-subtle: #1f0a3a;
+    --gold: #e0b84d; --success: #3ab87e; --danger: #e05a4d;
+    --text-secondary: #9a7eb8;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.4);
+    --shadow-card-hover: 0 4px 20px rgba(168,85,247,0.2);
+}
+
 body::-webkit-scrollbar {
     width: 10px;
     background: var(--foregroundThree);
@@ -425,7 +478,7 @@ body {
 
 * {
     scroll-behavior: smooth;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Inter', 'Raleway', sans-serif;
 }
 
 a {
@@ -4542,3 +4595,17 @@ body:has(.loginsignupdiv) .footer {
     margin-bottom: 20px;
     text-align: center;
 }
+
+
+/* ===== Theme Picker ===== */
+.theme-picker { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:8px 0; }
+.theme-picker-btn { display:flex; align-items:center; gap:8px; padding:10px 18px; border:2px solid var(--border); border-radius:6px; background:var(--foregroundTwo); color:var(--colorOne); cursor:pointer; transition:all .3s ease; font-family:'Inter','Raleway',sans-serif; font-size:14px; font-weight:500; }
+.theme-picker-btn:hover { border-color:var(--accent); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.2); }
+.theme-picker-btn.active { border-color:var(--accent); background:var(--foregroundFour); box-shadow:0 0 12px rgba(0,167,225,.25); }
+.theme-swatch { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,.2); flex-shrink:0; }
+.theme-swatch-light { background:linear-gradient(135deg,#eef1f5,#d0d7e2); }
+.theme-swatch-dark { background:linear-gradient(135deg,#1c2029,#2a3040); }
+.theme-swatch-eclipse { background:linear-gradient(135deg,#0a0e1a,#3b82f6); }
+.theme-swatch-ember { background:linear-gradient(135deg,#1a0a0a,#ef4444); }
+.theme-swatch-frost { background:linear-gradient(135deg,#0a1a1a,#06b6d4); }
+.theme-swatch-sovereign { background:linear-gradient(135deg,#120a1a,#a855f7); }

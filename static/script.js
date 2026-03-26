@@ -158,7 +158,7 @@ function pop_from_page(req_path, container_id) {
 }
 
 // ---------------------------------------------------------------------------
-// Theme toggle (light/dark)
+// Theme toggle (light/dark + Eclipse/Ember/Frost/Sovereign)
 // ---------------------------------------------------------------------------
 function setTheme(themeName) {
     try { localStorage.setItem("theme", themeName); } catch(e) {}
@@ -169,6 +169,23 @@ function toggleTheme() {
     var current = "theme-light";
     try { current = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
     setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
+    updateThemePickerUI();
+}
+
+function selectTheme(themeName) {
+    setTheme(themeName);
+    var slider = document.getElementById("slider");
+    if (slider) slider.checked = (themeName === "theme-light");
+    updateThemePickerUI();
+}
+
+function updateThemePickerUI() {
+    var currentTheme = "theme-light";
+    try { currentTheme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    var btns = document.querySelectorAll(".theme-picker-btn");
+    btns.forEach(function(btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-theme") === currentTheme);
+    });
 }
 
 // Apply saved theme on load

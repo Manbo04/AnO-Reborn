@@ -58,19 +58,35 @@
 
         <div class="infodiv">
 
-            <!--
-            <input class="loginsignupinput" name="" placeholder="Discord Username" />
-            -->
-
             <label class="templatecheckmarklabel fit">Dark Mode
                 <input type="checkbox" onchange="toggleTheme()" id="slider">
                 <span class="templatecheckmark center"></span>
-              </label>
+            </label>
 
-            <!-- <button id="templatedivbutton" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                        check
-                    </span>Update</button>
-                -->
+            <h2 class="templatecontentheaderleft" style="margin-top: 16px;">Theme</h2>
+
+            <div class="theme-picker">
+                <button class="theme-picker-btn" data-theme="theme-light" onclick="selectTheme('theme-light')">
+                    <span class="theme-swatch theme-swatch-light"></span> Light
+                </button>
+                <button class="theme-picker-btn" data-theme="theme-dark" onclick="selectTheme('theme-dark')">
+                    <span class="theme-swatch theme-swatch-dark"></span> Dark
+                </button>
+                <button class="theme-picker-btn" data-theme="theme-eclipse" onclick="selectTheme('theme-eclipse')">
+                    <span class="theme-swatch theme-swatch-eclipse"></span> Eclipse
+                </button>
+                <button class="theme-picker-btn" data-theme="theme-ember" onclick="selectTheme('theme-ember')">
+                    <span class="theme-swatch theme-swatch-ember"></span> Ember
+                </button>
+                <button class="theme-picker-btn" data-theme="theme-frost" onclick="selectTheme('theme-frost')">
+                    <span class="theme-swatch theme-swatch-frost"></span> Frost
+                </button>
+                <button class="theme-picker-btn" data-theme="theme-sovereign" onclick="selectTheme('theme-sovereign')">
+                    <span class="theme-swatch theme-swatch-sovereign"></span> Sovereign
+                </button>
+            </div>
+
+            <script>document.addEventListener('DOMContentLoaded', function() { updateThemePickerUI(); });</script>
 
         </div>
     </div>
