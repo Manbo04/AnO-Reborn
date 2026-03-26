@@ -16,8 +16,12 @@
 
     <link href="{{ url_for('static', filename='style.css') }}?v=6" rel="stylesheet" type="text/css" />
     <script>
-    /* Apply saved theme immediately to prevent flash of wrong theme */
+    /* Apply saved theme immediately + define theme functions globally */
     (function(){try{var t=localStorage.getItem("theme");if(t)document.documentElement.className=t;}catch(e){}})();
+    window.setTheme=function(n){try{localStorage.setItem("theme",n);}catch(e){}document.documentElement.className=n;};
+    window.toggleTheme=function(){var c="theme-light";try{c=localStorage.getItem("theme")||"theme-light";}catch(e){}window.setTheme(c==="theme-dark"?"theme-light":"theme-dark");window.updateThemePickerUI();};
+    window.selectTheme=function(n){window.setTheme(n);var s=document.getElementById("slider");if(s)s.checked=(n==="theme-light");window.updateThemePickerUI();};
+    window.updateThemePickerUI=function(){var c="theme-light";try{c=localStorage.getItem("theme")||"theme-light";}catch(e){}var b=document.querySelectorAll(".theme-picker-btn");b.forEach(function(btn){btn.classList.toggle("active",btn.getAttribute("data-theme")===c);});};
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
