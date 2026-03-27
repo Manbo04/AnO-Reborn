@@ -1250,9 +1250,6 @@ def transfer(transferee):
     except (ValueError, TypeError):
         return error(400, "Invalid nation ID")
 
-    if transferee_id == cId:
-        return error(400, "You cannot transfer resources to yourself")
-
     with get_request_cursor() as db:
         # Verify the transferee nation actually exists
         db.execute("SELECT id FROM stats WHERE id=%s", (transferee_id,))

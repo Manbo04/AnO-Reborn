@@ -2092,7 +2092,7 @@
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left flexchildvanilla ">
                         <label for="transferTarget">Target Nation ID:</label>
-                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{{ cId }}" required/>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{% if not status %}{{ cId }}{% endif %}" required/>
                     </div>
 
                     <div class="templatedivflex2left flexchildvanilla ">
