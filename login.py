@@ -235,7 +235,7 @@ OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 environment = os.getenv("ENVIRONMENT", "DEV")
 
 if environment == "PROD":
-    OAUTH2_REDIRECT_URI = "https://affairsandorder.com/callback"
+    OAUTH2_REDIRECT_URI = "https://www.affairsandorder.com/callback"
 else:
     OAUTH2_REDIRECT_URI = "http://localhost:5000/callback"
 
