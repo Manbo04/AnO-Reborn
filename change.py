@@ -237,6 +237,109 @@ def change():
     return redirect("/account")
 
 
+@login_required
+def generate_recovery_key():
+    import secrets
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    with get_request_cursor() as db:
+        cId = session["user_id"]
+        
+        # Check current password before generating
+        password_raw = request.form.get("password")
+        if not password_raw:
+            flash("You must provide your password to generate a recovery key.")
+            return redirect("/account")
+        
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+        if not row or not row[0]:
+            return error(500, "Account data is missing.")
+            
+        if not bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8")):
+            flash("Incorrect password.")
+            return redirect("/account")
+            
+        raw_key = secrets.token_hex(8)
+        hashed_key = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt(14)).decode("utf-8")
+        
+        db.execute("UPDATE users SET recovery_key=%s WHERE id=%s", (hashed_key, cId))
+        
+        flash(f"Your new Backup Recovery Key is: {raw_key} - SAVE THIS SECURELY. IT WILL ONLY BE SHOWN ONCE.")
+        logger.info("Generated new recovery key for user_id=%s", cId)
+        
+    return redirect("/account")
+
+
+def reset_password_recovery_key():
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        recovery_key = request.form.get("recovery_key")
+
+        if not username or not recovery_key:
+            flash("Username and Recovery Key are required.")
+            return redirect("/forgot_password")
+
+        with get_request_cursor() as db:
+            db.execute("SELECT id, recovery_key FROM users WHERE username=%s LIMIT 1", (username,))
+            user = db.fetchone()
+
+            if not user or not user[1]:
+                flash("Invalid username or recovery key.")
+                return redirect("/forgot_password")
+
+            user_id = user[0]
+            stored_hash = user[1].encode("utf-8")
+
+            if bcrypt.checkpw(recovery_key.encode("utf-8"), stored_hash):
+                session['reset_user_id'] = user_id
+                # Wipe the recovery key so it can only be used once
+                db.execute("UPDATE users SET recovery_key=NULL WHERE id=%s", (user_id,))
+                return redirect("/discord_reset_password_page")
+            else:
+                flash("Invalid username or recovery key.")
+                return redirect("/forgot_password")
+    
+    return redirect("/forgot_password")
+
+
+def discord_reset_password_page():
+    if 'reset_user_id' not in session:
+        return error(400, "Reset session expired or invalid.")
+
+    if request.method == "GET":
+        return render_template("reset_password_discord.html")
+    else:
+        import logging
+        logger = logging.getLogger(__name__)
+
+        new_password_raw = request.form.get("password")
+        if not new_password_raw:
+            flash("Please provide a new password.")
+            return render_template("reset_password_discord.html"), 400
+        if len(new_password_raw) < 6:
+            flash("Password must be at least 6 characters long.")
+            return render_template("reset_password_discord.html"), 400
+
+        new_password = new_password_raw.encode("utf-8")
+        user_id = session.pop('reset_user_id')
+
+        try:
+            with get_request_cursor() as db:
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
+                db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
+                logger.info("Password reset successful via Discord for user_id=%s", user_id)
+        except Exception as exc:
+            return error(500, "An error occurred while resetting your password.")
+
+        flash("Password successfully reset. You can now log in.")
+        return redirect("/")
+
+
 def register_change_routes(app_instance):
     """Register all change routes with the Flask app instance"""
     app_instance.add_url_rule(
@@ -252,3 +355,21 @@ def register_change_routes(app_instance):
         methods=["GET", "POST"],
     )
     app_instance.add_url_rule("/change", "change", change, methods=["POST"])
+    app_instance.add_url_rule(
+        "/discord_reset_password_page",
+        "discord_reset_password_page",
+        discord_reset_password_page,
+        methods=["GET", "POST"],
+    )
+    app_instance.add_url_rule(
+        "/generate_recovery_key",
+        "generate_recovery_key",
+        generate_recovery_key,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/reset_password_recovery_key",
+        "reset_password_recovery_key",
+        reset_password_recovery_key,
+        methods=["POST"],
+    )

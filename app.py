@@ -1243,7 +1243,7 @@ def account():
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
-        db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
+        db.execute("SELECT username, email, date, discord_id FROM users WHERE id=%s", (cId,))
         user = dict(db.fetchone())
 
     return render_template("account.html", user=user)

@@ -155,6 +155,7 @@ def make_session(token=None, state=None, scope=None):
     )
 
 
+
 _signup_table_ensured = False
 
 
@@ -275,10 +276,12 @@ def _get_app():
 
 def discord():
     scope = request.args.get("scope", "identify email")
+    intent = request.args.get("intent", "login")
 
     discord = make_session(scope=scope.split(" "))
     authorization_url, state = discord.authorization_url(AUTHORIZATION_BASE_URL)
     session["oauth2_state"] = state
+    session["oauth2_intent"] = intent
 
     return redirect(authorization_url)  # oauth2/authorize
 
@@ -301,6 +304,46 @@ def callback():
             client_secret=OAUTH2_CLIENT_SECRET,
             authorization_response=request.url,
         )
+        session["oauth2_token"] = token
+
+        discord = make_session(token=token)
+        user_info = discord.get(API_BASE_URL + '/users/@me').json()
+        discord_user_id = user_info['id']
+        session['discord_email'] = user_info.get('email')
+
+        intent = session.get('oauth2_intent', 'login')
+        
+        with get_request_cursor() as db:
+            if intent == 'link':
+                if 'user_id' not in session:
+                    return error(401, "You must be logged in to link your Discord account.")
+                db.execute("UPDATE users SET discord_id=%s WHERE id=%s", (discord_user_id, session['user_id']))
+                session.pop('oauth2_intent', None)
+                return redirect("/account")
+                
+            elif intent == 'reset':
+                db.execute(
+                    "SELECT id FROM users WHERE discord_id=%s OR (hash=%s AND auth_type='discord') LIMIT 1",
+                    (discord_user_id, discord_user_id)
+                )
+                user = db.fetchone()
+                if user:
+                    session['reset_user_id'] = user[0]
+                    session.pop('oauth2_intent', None)
+                    return redirect("/discord_reset_password_page")
+                else:
+                    return error(400, "No account linked to this Discord ID was found.")
+
+            db.execute(
+                "SELECT 1 FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
+                (discord_user_id, discord_user_id)
+            )
+            duplicate = db.fetchone() is not None
+
+        if duplicate:
+            return redirect("/discord_login/")
+        else:
+            return redirect("/discord_signup")
     except Exception as e:
         err_name = type(e).__name__
         err_str = str(e)
@@ -332,28 +375,6 @@ def callback():
                 raise
         else:
             raise
-
-    session["oauth2_token"] = token
-
-    discord = make_session(token=token)
-    discord_user_id = discord.get(API_BASE_URL + "/users/@me").json().get("id")
-
-    discord_auth = discord_user_id
-
-    with get_request_cursor() as db:
-        try:
-            db.execute(
-                "SELECT * FROM users WHERE hash=(%s) AND auth_type='discord'",
-                (discord_auth,),
-            )
-            duplicate = db.fetchone()[0]
-            duplicate = True
-        except TypeError:
-            duplicate = False
-
-    if duplicate:
-        return redirect("/discord_login")
-    return redirect("/discord_signup")
 
 
 def discord_register():
