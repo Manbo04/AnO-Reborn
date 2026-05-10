@@ -4,6 +4,7 @@ Provides connection pooling, query helpers, and unified database access patterns
 """
 
 import psycopg2
+import psycopg2.pool
 from psycopg2.extras import RealDictCursor, execute_batch
 import os
 from contextlib import contextmanager
