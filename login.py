@@ -235,11 +235,13 @@ OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 environment = os.getenv("ENVIRONMENT", "DEV")
 
 if environment == "PROD":
-    OAUTH2_REDIRECT_URI = "https://www.affairsandorder.com/callback"
+    OAUTH2_REDIRECT_URI = os.getenv(
+        "DISCORD_REDIRECT_URI", "https://affairsandorder.com/callback"
+    )
 else:
     OAUTH2_REDIRECT_URI = "http://localhost:5000/callback"
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://discordapp.com/api")
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://discord.com/api")
 AUTHORIZATION_BASE_URL = API_BASE_URL + "/oauth2/authorize"
 TOKEN_URL = API_BASE_URL + "/oauth2/token"
 
@@ -247,7 +249,7 @@ TOKEN_URL = API_BASE_URL + "/oauth2/token"
 # to avoid circular imports
 
 if "http://" in OAUTH2_REDIRECT_URI:
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 
 def token_updater(token):
