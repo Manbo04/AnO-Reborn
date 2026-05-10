@@ -4,7 +4,8 @@ import config
 
 def migrate():
     try:
-        conn = psycopg2.connect(config.get_database_url())
+        db_url = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PUBLIC_URL")
+        conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_key VARCHAR(255)")
         # Also add discord_id for Discord account linking
