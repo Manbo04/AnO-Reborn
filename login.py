@@ -291,8 +291,8 @@ def discord_login():
         discord_auth = discord_user_id
 
         db.execute(
-            "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord'",
-            (discord_auth,),
+            "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
+            (discord_auth, discord_auth),
         )
         row = db.fetchone()
         if not row:

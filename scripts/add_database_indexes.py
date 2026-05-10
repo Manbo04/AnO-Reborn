@@ -7,6 +7,11 @@ Run this once to optimize the database for the AnO application.
 import psycopg2
 import os
 from dotenv import load_dotenv
+import sys
+
+# Add parent directory to path to import config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
 
 load_dotenv()
 
@@ -14,12 +19,28 @@ load_dotenv()
 def add_indexes():
     """Add critical indexes for performance optimization."""
 
+    # Prefer public URL if running from outside Railway network
+    database_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
+    
+    if database_url:
+        import urllib.parse as urlparse
+        parsed = urlparse.urlparse(database_url)
+        db_params = {
+            "database": parsed.path[1:],
+            "user": parsed.username,
+            "password": parsed.password,
+            "host": parsed.hostname,
+            "port": parsed.port or 5432,
+        }
+    else:
+        db_params = config.parse_database_url()
+
     connection = psycopg2.connect(
-        database=os.getenv("PG_DATABASE"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-        host=os.getenv("PG_HOST"),
-        port=os.getenv("PG_PORT"),
+        database=db_params["database"],
+        user=db_params["user"],
+        password=db_params["password"],
+        host=db_params["host"],
+        port=db_params["port"],
     )
 
     db = connection.cursor()

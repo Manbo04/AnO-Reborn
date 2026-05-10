@@ -10,4 +10,5 @@ bg_flag VARCHAR(30),
 discord_id VARCHAR(100),
 coalition_id INTEGER,
 is_verified BOOLEAN DEFAULT FALSE,
-auth_type VARCHAR(50));
+auth_type VARCHAR(50),
+recovery_key VARCHAR(255));
