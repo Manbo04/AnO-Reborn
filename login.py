@@ -288,12 +288,20 @@ def discord_login():
         if not discord_user_id:
             return error(401, "Discord authentication failed. Missing user id.")
 
-        discord_auth = discord_user_id
+        discord_auth = str(discord_user_id)
 
-        db.execute(
-            "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
-            (discord_auth, discord_auth),
-        )
+        try:
+            db.execute(
+                "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
+                (discord_auth, discord_auth),
+            )
+        except Exception:
+            db.connection.rollback()
+            db.execute(
+                "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
+                (discord_auth,),
+            )
+            
         row = db.fetchone()
         if not row:
             return error(404, "No account linked to this Discord. Please sign up.")
