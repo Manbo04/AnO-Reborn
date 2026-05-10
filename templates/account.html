@@ -43,6 +43,15 @@
                             <td>{{ user["date"] }}</td>
                             <td></td>
                         </tr>
+                        <tr>
+                            <td>Discord:</td>
+                            <td>{% if user.get('discord_id') %}Linked{% else %}Not Linked{% endif %}</td>
+                            <td>
+                                <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton" style="width: auto; padding: 5px 15px;">
+                                    <span class="material-icons-outlined">link</span>{% if user.get('discord_id') %}Relink{% else %}Link{% endif %} Discord
+                                </button>
+                            </td>
+                        </tr>
                     </table>
                 </div>
 
@@ -53,6 +62,15 @@
                     </span>Update</button>
             </div>
         </form>
+
+        <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
+        <div class="infodiv">
+            <p style="color: #ccc; margin-bottom: 10px;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
+            <form action="/generate_recovery_key" method="POST" style="display: flex; gap: 10px; align-items: center;">
+                <input class="loginsignupinput" type="password" name="password" placeholder="Enter current password to generate" required />
+                <button type="submit" class="templatedivbutton"><span class="material-icons-outlined">key</span>Generate Key</button>
+            </form>
+        </div>
 
         <h2 class="templatecontentheaderleft">General</h2>
 
