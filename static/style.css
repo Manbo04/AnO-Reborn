@@ -4938,3 +4938,10 @@ body:has(.loginsignupdiv) .footer {
     margin: 0;
     padding: 0;
 }
+
+/* Tutorial page — escape default white templatediv card */
+html.page-tutorial .tutorial-academy.templatediv {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
