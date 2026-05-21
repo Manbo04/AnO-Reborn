@@ -10,7 +10,7 @@
 {% endblock %} {% block body %}
 <div class="templatediv">
 
-    <div class="templatedivtopper countrytopper" style="background-image: url('{{ url_for('static', filename='images/country.jpg') }}?v=2');">
+    <div class="templatedivtopper countrytopper">
         <!-- <img src="{{ url_for('static', filename='images/country.jpg') }}?v=2" /> -->
         <h1 class="templatedivtitle"><i class="fas fa-flag iconlarge" aria-hidden="true"></i>{{ username }}</h1>
     </div>
@@ -127,7 +127,7 @@
                             <td><span class="material-icons-outlined">
                                 tag
                                 </span>Founder Rank:</td>
-                            <td>{% if join_number %}<span style="font-weight: 600; color: var(--colorOne);">#{{ join_number }}</span>{% else %}—{% endif %}</td>
+                            <td>{% if join_number %}<span class="text-accent">#{{ join_number }}</span>{% else %}—{% endif %}</td>
                         </tr>
                         <tr>
                             <td><span class="material-icons-outlined">
@@ -267,9 +267,9 @@
                     {% if session.get('user_id') and session['user_id']|string != cId|string %}
                     <table class="templatetable">
                         <tr>
-                            <td style="padding-top: 10px;">
-                                <form method="POST" action="/nation/{{ cId }}/invite" style="display: inline;">
-                                    <button type="submit" class="templatedivbutton" style="width: 100%;">
+                            <td class="pt-cell">
+                                <form method="POST" action="/nation/{{ cId }}/invite" class="inline-form">
+                                    <button type="submit" class="templatedivbutton" class="w-full">
                                         <span class="material-icons-outlined">mail</span>
                                         Invite to Coalition
                                     </button>
@@ -329,22 +329,22 @@
                 </div>
                 <div class="templatedivflex2right">
                     <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics by Province</h3>
-                    <canvas id="demographicsRadarChart" style="max-width: 100%; max-height: 450px; margin: 20px auto;"></canvas>
-                    <table class="templatetable" style="margin-top: 10px;">
+                    <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
+                    <table class="templatetable table-mt">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
                         </tr>
-                        <tr style="border-left: 4px solid rgba(54, 162, 235, 0.8);">
-                            <td><span class="material-icons-outlined" style="color: rgba(54, 162, 235, 1);">child_care</span>Children:</td>
-                            <td style="color: rgba(54, 162, 235, 0.9); font-weight: 600;">{{ total_children | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                        <tr class="demographic-children">
+                            <td><span class="material-icons-outlined" >child_care</span>Children:</td>
+                            <td >{{ total_children | fmt }} <span >({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
-                        <tr style="border-left: 4px solid rgba(75, 192, 92, 0.8);">
-                            <td><span class="material-icons-outlined" style="color: rgba(75, 192, 92, 1);">work</span>Working Age:</td>
-                            <td style="color: rgba(75, 192, 92, 0.9); font-weight: 600;">{{ total_working | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                        <tr class="demographic-working">
+                            <td><span class="material-icons-outlined" >work</span>Working Age:</td>
+                            <td >{{ total_working | fmt }} <span >({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
-                        <tr style="border-left: 4px solid rgba(220, 88, 88, 0.8);">
-                            <td><span class="material-icons-outlined" style="color: rgba(220, 88, 88, 1);">elderly</span>Elderly:</td>
-                            <td style="color: rgba(220, 88, 88, 0.9); font-weight: 600;">{{ total_elderly | fmt }} <span style="font-weight: normal; opacity: 0.8;">({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
+                        <tr class="demographic-elderly">
+                            <td><span class="material-icons-outlined" >elderly</span>Elderly:</td>
+                            <td >{{ total_elderly | fmt }} <span >({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
                         </tr>
                     </table>
                 </div>
@@ -517,16 +517,16 @@
             </script>
 
                 <h2 class="templatecontentheaderleft">Buildings</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px auto; width: 95%;">
+                <div class="stat-grid">
                     {% if building_rows and building_rows|length > 0 %}
                     {% for building_name, building_qty in building_rows %}
-                    <div class="templatedivflex2left" style="margin: 0; padding: 16px; text-align: center;">
-                        <strong style="display: block; margin-bottom: 8px;">{{ building_name }}</strong>
-                        <span style="font-size: 18px; font-weight: bold; color: var(--colorOne);">{{ (building_qty or 0) }}</span>
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label">{{ building_name }}</strong>
+                        <span class="stat-value">{{ (building_qty or 0) }}</span>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="templatedivflex2left" style="margin: 0; grid-column: 1 / -1; text-align: center;">
+                    <div class="templatedivflex2left stat-card stat-card-wide">
                         <em>No buildings</em>
                     </div>
                     {% endif %}
@@ -627,7 +627,7 @@
                         <tr>
                             <th><span class="material-icons-outlined">
                                 article
-                                </span>Gross Raw <small style="font-weight: normal;">(Hourly)</small></th>
+                                </span>Gross Raw <small class="font-normal-sub">(Hourly)</small></th>
                         </tr>
                         <!--
                         <tr>
@@ -694,7 +694,7 @@
                         <tr>
                             <th><span class="material-icons-outlined">
                                 article
-                                </span>Gross Processed <small style="font-weight: normal;">(Hourly)</small></th>
+                                </span>Gross Processed <small class="font-normal-sub">(Hourly)</small></th>
                         </tr>
                         {% if revenue["gross"]["components"] > 0 %}
                         <tr>
@@ -741,7 +741,7 @@
                         <tr>
                             <th><span class="material-icons-outlined">
                                 article
-                                </span>Net Raw <small style="font-weight: normal;">(Hourly)</small></th>
+                                </span>Net Raw <small class="font-normal-sub">(Hourly)</small></th>
                         </tr>
                         <!--
                         <tr>
@@ -756,7 +756,7 @@
                         {% if revenue.get("coalition_tax") %}
                         <tr>
                             <td>Coalition tax:</td>
-                            <td style="color: #e74c3c;">-{{ revenue["coalition_tax"] | fmt }}</td>
+                            <td class="text-danger">-{{ revenue["coalition_tax"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         <tr>
@@ -814,7 +814,7 @@
                         <tr>
                             <th><span class="material-icons-outlined">
                                 article
-                                </span>Net Processed <small style="font-weight: normal;">(Hourly)</small></th>
+                                </span>Net Processed <small class="font-normal-sub">(Hourly)</small></th>
                         </tr>
                         {% if revenue["gross"]["components"] > 0 %}
                         <tr>
@@ -1020,7 +1020,7 @@
                     <tr>
                         <th>
                             <span class="material-icons-outlined">article</span>{{new[1]}}
-                            <span onclick="pop_from_page('/delete_news/{{new[2]}}', {{new[2]}})" class="material-icons-outlined dismiss-notification" style="color:red;position:absolute;right:2%;">highlight_off</span>
+                            <span onclick="pop_from_page('/delete_news/{{new[2]}}', {{new[2]}})" class="material-icons-outlined dismiss-notification">highlight_off</span>
                         </th>
                     </tr>
                     <tr>
@@ -2087,7 +2087,7 @@
 
         <form method="POST" onsubmit="var tid=this.querySelector('input[name=transferee]').value;if(!tid){alert('Please enter a nation ID');return false;}this.action='/transfer/'+tid;">
             <div class="infodiv ">
-                <p style="margin-bottom: 15px; color: #666;">Transfer resources to another nation</p>
+                <p class="mb-md text-muted">Transfer resources to another nation</p>
 
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left flexchildvanilla ">
@@ -2125,7 +2125,7 @@
                     </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 20px;">
+                <div class="text-center mt-md">
                     <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
                         send
                     </span>Transfer</button>

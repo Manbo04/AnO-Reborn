@@ -74,7 +74,7 @@
 
         <!-- Result count info -->
         {% if total_count is defined %}
-        <p class="text-muted" style="text-align: center; margin: 10px 0;">
+        <p class="text-muted text-center mt-sm">
             Showing {{ offers|length }} of {{ total_count }} offers
         </p>
         {% endif %}
@@ -181,7 +181,7 @@
 
         <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
-        <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
+        <div class="pagination" class="pagination-bar">
             {% if current_page > 1 %}
                 <a href="{{ url_for('market', page=1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
                 <a href="{{ url_for('market', page=current_page - 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
@@ -192,7 +192,7 @@
 
             {% for p in range(start_page, end_page + 1) %}
                 {% if p == current_page %}
-                    <span class="templatedivbutton smallactionbutton" style="background: #444;">{{ p }}</span>
+                    <span class="templatedivbutton smallactionbutton" class="is-current">{{ p }}</span>
                 {% else %}
                     <a href="{{ url_for('market', page=p, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
                 {% endif %}
