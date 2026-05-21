@@ -975,7 +975,8 @@ def countries():
         db.execute(
             f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
         )
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         total_pages = max(1, (total_count + per_page - 1) // per_page)
         if page < 1:
@@ -1015,7 +1016,7 @@ def update_info():
         cId = session["user_id"]
 
         # Description changing
-        description = request.form["description"]
+        description = request.form.get("description", "")
 
         if description not in ["None", ""]:
             db.execute(
@@ -1040,7 +1041,10 @@ def update_info():
 
             try:
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
-                current_flag = db.fetchone()[0]
+                flag_row = db.fetchone()
+                current_flag = flag_row[0] if flag_row else None
+                if not current_flag:
+                    raise OSError("No existing flag")
                 from flask import current_app
 
                 os.remove(

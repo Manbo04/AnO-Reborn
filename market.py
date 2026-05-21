@@ -303,7 +303,8 @@ def market():
         # Count total matching offers
         count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
         db.execute(count_query, tuple(params))
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         # Calculate pagination
         total_pages = max(1, (total_count + per_page - 1) // per_page)
