@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png') }}?v=3" />
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3">
-    <meta name="viewport" content="width=device-width, initial-scale=0.8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
     <meta name="description" content="Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries,
     and wage war on adversaries.">
@@ -14,7 +14,7 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link href="{{ url_for('static', filename='style.css') }}?v=3" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=4" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -93,6 +93,11 @@
             <a class="loginsignup borderbutton" href="/signup"><span class="material-icons-outlined">
                 person_add_alt_1
                 </span>Get Started</a> {% elif session.get('user_id') != None %}
+
+            <button type="button" class="theme-toggle-btn" id="navbar-theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle theme">
+                <span class="material-icons-outlined theme-toggle-icon-light">light_mode</span>
+                <span class="material-icons-outlined theme-toggle-icon-dark">dark_mode</span>
+            </button>
 
             <div class="dropdown">
                 <div class="dropbtn"><button class="dropbtnchild">Other<span class="material-icons-outlined iconright">
@@ -181,7 +186,7 @@
         {% endif %}
 
     </div>
-    </div> {% if session.get('user_id') != None %}
+    {% if session.get('user_id') != None %}
     <div class="menubardiv" id="menubardiv">
 
         <h3>Internal Affairs</h3>
@@ -375,20 +380,20 @@
         -->
     <div class="templatecontainer">{% block body %} {% endblock %}
 
-        <!-- Code for message flashes (You bought x soldiers, etc)-->
-        <!-- Please fix the html (not jinja templating) so it would show up somewhere, I recommend the bottom right corner of the screen.-->
-        <!-- t0dd -->
-        {% with messages = get_flashed_messages() %} {% if messages %}
-        <ul class=flashes>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="toast-container" id="toast-container" role="status" aria-live="polite">
             {% for message in messages %}
-            <div class="purchasediv">
-                <div class="purchasenotif">
-                    <h3>{{ message }}</h3>
-                </div>
+            <div class="toast-item">
+                <span class="toast-message">{{ message }}</span>
+                <button type="button" class="toast-dismiss" onclick="dismissToast(this.parentElement)" aria-label="Dismiss notification">
+                    <span class="material-icons-outlined">close</span>
+                </button>
             </div>
             {% endfor %}
-        </ul>
-        {% endif %} {% endwith %}
+        </div>
+        {% endif %}
+        {% endwith %}
 
 
     </div>
