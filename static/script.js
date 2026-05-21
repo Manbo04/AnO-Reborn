@@ -117,6 +117,16 @@ function resourcedivcontentshow() {
 }
 
 // ---------------------------------------------------------------------------
+// Province page helpers
+// ---------------------------------------------------------------------------
+function provincesettingstoggle() {
+    var btn = _el("provincesettingsbutton");
+    var parent = _el("provincesettingsparent");
+    if (btn) btn.classList.toggle("provincesettingsbuttonshow");
+    if (parent) parent.classList.toggle("provincesettingsparentshow");
+}
+
+// ---------------------------------------------------------------------------
 // Country page helpers
 // ---------------------------------------------------------------------------
 function revenuehide() { var el = _el("countryrevenue"); if (el) el.classList.add("hidden"); }
@@ -168,15 +178,15 @@ function setTheme(themeName) {
 }
 
 function toggleTheme() {
-    var current = "theme-light";
-    try { current = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    var current = "theme-dark";
+    try { current = localStorage.getItem("theme") || "theme-dark"; } catch(e) {}
     setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
 }
 
-// Apply saved theme on load
+// Apply saved theme on load (dark default — matches navbar)
 (function() {
-    var theme = "theme-light";
-    try { theme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    var theme = "theme-dark";
+    try { theme = localStorage.getItem("theme") || "theme-dark"; } catch(e) {}
     setTheme(theme);
     var slider = document.getElementById("slider");
     if (slider) slider.checked = (theme === "theme-dark");

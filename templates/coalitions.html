@@ -79,7 +79,7 @@
                     <tr>
                         <td>{{ loop.index }})</td>
                         <td>
-                            <img src="{{ col.flag_src }}" alt="" loading="lazy" style="width: 24px; height: 16px; vertical-align: middle; margin-right: 6px; border-radius: 2px; object-fit: cover;">
+                            <img src="{{ col.flag_src }}" alt="" loading="lazy" class="flag-thumb">
                             <a href="/coalition/{{ col.id }}">{{ col.name }}</a>
                         </td>
                         <td>{{ col.influence }}</td>
@@ -93,7 +93,7 @@
 
             <!-- Result count info -->
             {% if total_count is defined %}
-            <p style="text-align: center; margin: 10px 0; color: #888;">
+            <p class="text-muted text-center mt-sm">
                 Showing {{ coalitions|length }} of {{ total_count }} coalitions
                 {% if search %} matching "{{ search }}"{% endif %}
             </p>
@@ -101,7 +101,7 @@
 
             <!-- Pagination controls -->
             {% if total_pages and total_pages > 1 %}
-            <div class="pagination" style="text-align: center; margin-top: 20px; padding: 10px;">
+            <div class="pagination" class="pagination-bar">
                 {% if current_page > 1 %}
                     <a href="{{ url_for('coalitions', page=1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
                     <a href="{{ url_for('coalitions', page=current_page - 1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
@@ -113,7 +113,7 @@
 
                 {% for p in range(start_page, end_page + 1) %}
                     {% if p == current_page %}
-                        <span class="templatedivbutton smallactionbutton" style="background: #444;">{{ p }}</span>
+                        <span class="templatedivbutton smallactionbutton" class="is-current">{{ p }}</span>
                     {% else %}
                         <a href="{{ url_for('coalitions', page=p, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
                     {% endif %}
