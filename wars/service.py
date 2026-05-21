@@ -8,7 +8,8 @@ def target_data(cId):
     with get_request_cursor() as db:
         influence = get_influence(cId)
         db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
-        province_range = db.fetchone()[0]
+        prov_row = db.fetchone()
+        province_range = prov_row[0] if prov_row else 0
     data = {
         "upper": influence * 2,
         "lower": influence * 0.9,
@@ -27,7 +28,10 @@ def update_supply(war_id):
             ),
             (war_id,),
         )
-        attacker_supplies, defender_supplies, supply_date = db.fetchall()[0]
+        war_rows = db.fetchall()
+        if not war_rows:
+            return
+        attacker_supplies, defender_supplies, supply_date = war_rows[0]
         current_time = time.time()
         if current_time < int(supply_date):
             return "TIME STAMP IS CORRUPTED"

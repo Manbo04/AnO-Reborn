@@ -474,7 +474,10 @@ def next_turn_rations(cId, prod_rations):
 def delete_news(id):
     with get_request_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
-        destination_id = db.fetchone()[0]
+        news_row = db.fetchone()
+        if not news_row:
+            return "404"
+        destination_id = news_row[0]
         if destination_id == session["user_id"]:
             db.execute("DELETE FROM news WHERE id=(%s)", (id,))
             return "200"
@@ -488,7 +491,8 @@ def delete_news(id):
 def cg_need(user_id):
     with get_request_cursor() as db:
         db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (user_id,))
-        population = db.fetchone()[0]
+        pop_row = db.fetchone()
+        population = pop_row[0] if pop_row else None
         if population is None:
             population = 0
 
@@ -971,7 +975,8 @@ def countries():
         db.execute(
             f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
         )
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         total_pages = max(1, (total_count + per_page - 1) // per_page)
         if page < 1:
@@ -1011,7 +1016,7 @@ def update_info():
         cId = session["user_id"]
 
         # Description changing
-        description = request.form["description"]
+        description = request.form.get("description", "")
 
         if description not in ["None", ""]:
             db.execute(
@@ -1036,7 +1041,10 @@ def update_info():
 
             try:
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
-                current_flag = db.fetchone()[0]
+                flag_row = db.fetchone()
+                current_flag = flag_row[0] if flag_row else None
+                if not current_flag:
+                    raise OSError("No existing flag")
                 from flask import current_app
 
                 os.remove(
@@ -1202,25 +1210,24 @@ def delete_own_account():
             pass
         else:
             db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
-            user_coalition = db.fetchone()[0]
-
-            db.execute(
-                "SELECT COUNT(userid) FROM coalitions_legacy "
-                "WHERE role='leader' AND colid=%s",
-                (user_coalition,),
-            )
-            leader_count = db.fetchone()[0]
-
-            if leader_count != 1:
-                pass
-            else:
+            coalition_row = db.fetchone()
+            if coalition_row:
+                user_coalition = coalition_row[0]
                 db.execute(
-                    "DELETE FROM coalitions_legacy WHERE colid=%s",
+                    "SELECT COUNT(userid) FROM coalitions_legacy "
+                    "WHERE role='leader' AND colid=%s",
                     (user_coalition,),
                 )
-                db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
-                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+                leader_row = db.fetchone()
+                leader_count = leader_row[0] if leader_row else 0
+                if leader_count == 1:
+                    db.execute(
+                        "DELETE FROM coalitions_legacy WHERE colid=%s",
+                        (user_coalition,),
+                    )
+                    db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
+                    db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
+                    db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
         db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
