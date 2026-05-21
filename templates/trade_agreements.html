@@ -15,20 +15,21 @@
             Create automatic recurring trades with other players. Once accepted, trades execute automatically at the interval you set.
         </p>
 
-        <!-- Create New Agreement Form -->
-        <div class="infodiv">
+        <div class="infodiv trade-agreement-form">
             <form action="{{ url_for('create_trade_agreement') }}" method="POST">
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <select name="receiver_id" required class="templateselect">
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label">Trade partner</label>
+                        <select name="receiver_id" required class="templateselect w-full">
                             <option value="" disabled selected>Select a player...</option>
                             {% for uid, uname in users %}
                             <option value="{{ uid }}" class="templateoption">{{ uname }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="templatedivflex2right">
-                        <select name="interval_hours" required class="templateselect">
+                    <div class="form-field">
+                        <label class="form-label">Interval</label>
+                        <select name="interval_hours" required class="templateselect w-full">
                             <option value="1" class="templateoption">Every 1 hour</option>
                             <option value="6" class="templateoption">Every 6 hours</option>
                             <option value="12" class="templateoption">Every 12 hours</option>
@@ -39,45 +40,49 @@
                         </select>
                     </div>
                 </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <input class="loginsignupinput" name="proposer_amount" type="number" min="1" placeholder="You give (amount)" required/>
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label">You give (amount)</label>
+                        <input class="loginsignupinput w-full" name="proposer_amount" type="number" min="1" placeholder="Amount" required/>
                     </div>
-                    <div class="templatedivflex2right">
-                        <select name="proposer_resource" required class="templateselect">
+                    <div class="form-field">
+                        <label class="form-label">Resource</label>
+                        <select name="proposer_resource" required class="templateselect w-full">
                             {% for res in resources %}
                             <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <input class="loginsignupinput" name="receiver_amount" type="number" min="1" placeholder="You receive (amount)" required/>
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label">You receive (amount)</label>
+                        <input class="loginsignupinput w-full" name="receiver_amount" type="number" min="1" placeholder="Amount" required/>
                     </div>
-                    <div class="templatedivflex2right">
-                        <select name="receiver_resource" required class="templateselect">
+                    <div class="form-field">
+                        <label class="form-label">Resource</label>
+                        <select name="receiver_resource" required class="templateselect w-full">
                             {% for res in resources %}
                             <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <input class="loginsignupinput" name="max_executions" type="number" min="1" placeholder="Max trades (optional)"/>
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label">Max trades (optional)</label>
+                        <input class="loginsignupinput w-full" name="max_executions" type="number" min="1" placeholder="Unlimited if empty"/>
                     </div>
-                    <div class="templatedivflex2right">
-                        <input class="loginsignupinput" name="message" type="text" maxlength="200" placeholder="Message (optional)"/>
+                    <div class="form-field">
+                        <label class="form-label">Message (optional)</label>
+                        <input class="loginsignupinput w-full" name="message" type="text" maxlength="200" placeholder="Note for the other player"/>
                     </div>
                 </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <button type="submit" class="templatedivbutton templatecenteredbutton">
-                            <span class="material-icons-outlined">send</span>
-                            Send Proposal
-                        </button>
-                    </div>
+                <div class="form-actions">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton">
+                        <span class="material-icons-outlined">send</span>
+                        Send Proposal
+                    </button>
                 </div>
             </form>
         </div>
