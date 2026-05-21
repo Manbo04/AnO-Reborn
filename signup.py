@@ -431,7 +431,8 @@ def discord_register():
                 """,
                     (client_ip,),
                 )
-                attempt_count = db.fetchone()[0]
+                attempt_row = db.fetchone()
+                attempt_count = attempt_row[0] if attempt_row else 0
                 if attempt_count >= 3:
                     return error(
                         429,
@@ -542,7 +543,10 @@ def discord_register():
 
                 # Get the new user ID
                 db.execute("SELECT id FROM users WHERE hash=%s", (discord_auth,))
-                user_id = db.fetchone()[0]
+                discord_user_row = db.fetchone()
+                if not discord_user_row:
+                    return error(500, "Signup failed: could not create user")
+                user_id = discord_user_row[0]
 
                 session["user_id"] = user_id
                 session.permanent = True
@@ -625,7 +629,8 @@ def signup():
             """,
                 (client_ip,),
             )
-            attempt_count = db.fetchone()[0]
+            attempt_row = db.fetchone()
+            attempt_count = attempt_row[0] if attempt_row else 0
 
             # Use a relaxed limit for local development and tests so automated
             # test runs from 127.0.0.1 don't get rate limited.
@@ -689,8 +694,12 @@ def signup():
         # Gets user's form inputs
         username = request.form.get("username")
         email = request.form.get("email")
-        password = request.form.get("password").encode("utf-8")
-        confirmation = request.form.get("confirmation").encode("utf-8")
+        password_raw = request.form.get("password")
+        confirmation_raw = request.form.get("confirmation")
+        if not password_raw or not confirmation_raw:
+            return error(400, "Password and confirmation are required")
+        password = password_raw.encode("utf-8")
+        confirmation = confirmation_raw.encode("utf-8")
 
         # Additional debug logging to help diagnose flaky test failures
         logger.debug(
@@ -797,7 +806,10 @@ def signup():
             # Selects the id of the user that was just registered.
             # (Because id is AUTO-INCREMENT'ed)
             db.execute("SELECT id FROM users WHERE username = (%s)", (username,))
-            user_id = db.fetchone()[0]
+            new_user_row = db.fetchone()
+            if not new_user_row:
+                return error(500, "Signup failed: could not create user")
+            user_id = new_user_row[0]
 
             # Send verification email if configured
             if verification_token and is_email_configured():

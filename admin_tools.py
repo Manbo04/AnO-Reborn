@@ -292,7 +292,8 @@ def admin_add_provinces():
             "SELECT COALESCE(MAX(id), 0) FROM provinces WHERE userId=%s",
             (target_user_id,),
         )
-        current_max = db.fetchone()[0]
+        max_row = db.fetchone()
+        current_max = max_row[0] if max_row else 0
 
         for idx in range(1, amount + 1):
             db.execute(
@@ -626,7 +627,8 @@ def admin_economy_dashboard():
 
         # Check how many snapshots we have
         db.execute("SELECT COUNT(*) FROM game_economy_snapshots")
-        snapshot_count = db.fetchone()[0]
+        snap_row = db.fetchone()
+        snapshot_count = snap_row[0] if snap_row else 0
 
     resource_list = ["gold"] + RESOURCES
 
