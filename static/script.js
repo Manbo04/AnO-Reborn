@@ -170,26 +170,38 @@ function pop_from_page(req_path, container_id) {
 // ---------------------------------------------------------------------------
 // Theme toggle (light/dark)
 // ---------------------------------------------------------------------------
+function updateThemeToggleUi(themeName) {
+    var isDark = themeName === "theme-dark";
+    var iconName = isDark ? "light_mode" : "dark_mode";
+    var label = isDark ? "Switch to light mode" : "Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle-icon]").forEach(function(el) {
+        el.textContent = iconName;
+    });
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(btn) {
+        btn.setAttribute("title", label);
+        btn.setAttribute("aria-label", label);
+    });
+}
+
 function setTheme(themeName) {
     try { localStorage.setItem("theme", themeName); } catch(e) {}
     document.documentElement.className = themeName;
     var slider = document.getElementById("slider");
     if (slider) slider.checked = (themeName === "theme-dark");
+    updateThemeToggleUi(themeName);
 }
 
 function toggleTheme() {
-    var current = "theme-dark";
-    try { current = localStorage.getItem("theme") || "theme-dark"; } catch(e) {}
+    var current = "theme-light";
+    try { current = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
     setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
 }
 
-// Apply saved theme on load (dark default — matches navbar)
+// Apply saved theme on load (light default; dark available via toggle)
 (function() {
-    var theme = "theme-dark";
-    try { theme = localStorage.getItem("theme") || "theme-dark"; } catch(e) {}
+    var theme = "theme-light";
+    try { theme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
     setTheme(theme);
-    var slider = document.getElementById("slider");
-    if (slider) slider.checked = (theme === "theme-dark");
 })();
 
 // ---------------------------------------------------------------------------
