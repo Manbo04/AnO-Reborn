@@ -325,11 +325,6 @@
     }
 
     /* Flip cards — track reveals */
-    root.querySelectorAll(".tutorial-flip-card").forEach(function (card) {
-        card.addEventListener("click", function () {
-            card.classList.toggle("is-flipped");
-        });
-    });
 
     /* Quizzes */
     function setupQuiz(panel, chapterIndex) {
