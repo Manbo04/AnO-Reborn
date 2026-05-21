@@ -14,7 +14,7 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link href="{{ url_for('static', filename='style.css') }}?v=4" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=5" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -83,7 +83,12 @@
         <a class="navbarparenttitle" href="/">
             <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=2" class="navbarparenttitleimage" /> Affairs and Order</a>
 
-        <!---->
+        {% if session.get('user_id') != None %}
+        <button type="button" class="theme-toggle-btn navbar-theme-toggle" id="navbar-theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle theme">
+            <span class="material-icons-outlined theme-toggle-icon-light">light_mode</span>
+            <span class="material-icons-outlined theme-toggle-icon-dark">dark_mode</span>
+        </button>
+        {% endif %}
 
         <div class="navbarparentloginsignupdiv">
             {% if session.get('user_id') == None %}
@@ -93,11 +98,6 @@
             <a class="loginsignup borderbutton" href="/signup"><span class="material-icons-outlined">
                 person_add_alt_1
                 </span>Get Started</a> {% elif session.get('user_id') != None %}
-
-            <button type="button" class="theme-toggle-btn" id="navbar-theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle theme">
-                <span class="material-icons-outlined theme-toggle-icon-light">light_mode</span>
-                <span class="material-icons-outlined theme-toggle-icon-dark">dark_mode</span>
-            </button>
 
             <div class="dropdown">
                 <div class="dropbtn"><button class="dropbtnchild">Other<span class="material-icons-outlined iconright">
@@ -231,6 +231,11 @@
             </span>Assembly</a>
         -->
         <h3>Other</h3>
+        <button type="button" class="menubara menubara-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+            <span class="material-icons-outlined theme-toggle-icon-light">light_mode</span>
+            <span class="material-icons-outlined theme-toggle-icon-dark">dark_mode</span>
+            Theme
+        </button>
         <a class="menubara" href="/account"><span class="material-icons-outlined">
                 perm_identity
             </span>Account</a>
