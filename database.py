@@ -833,16 +833,16 @@ class ProvinceQueries:
 
 
 class CoalitionQueries:
-    """Optimized queries for coalition-related operations"""
+    """Optimized queries for coalition-related operations (coalitions_legacy schema)."""
 
     @staticmethod
     def get_coalition_members(coalition_id: int) -> List[Dict[str, Any]]:
         """Get all coalition members with their roles in a single query"""
         query = """
-            SELECT c.userId, c.role, u.username
-            FROM coalitions c
-            JOIN users u ON c.userId = u.id
-            WHERE c.colId = %s
+            SELECT c.userid, c.role, u.username
+            FROM coalitions_legacy c
+            JOIN users u ON c.userid = u.id
+            WHERE c.colid = %s
             ORDER BY
                 CASE c.role
                     WHEN 'leader' THEN 1
@@ -864,14 +864,14 @@ class CoalitionQueries:
         # Pre-aggregate core influence metrics (military/resources scoring to be added)
         query = """
             SELECT
-                c.userId,
-                COALESCE(SUM(p.cityCount), 0) * 10 as cities_score,
+                c.userid,
+                COALESCE(SUM(p.citycount), 0) * 10 as cities_score,
                 COALESCE(SUM(p.land), 0) * 10 as land_score,
                 COUNT(p.id) * 300 as provinces_score
-            FROM coalitions c
-            LEFT JOIN provinces p ON c.userId = p.id
-            WHERE c.colId = %s
-            GROUP BY c.userId
+            FROM coalitions_legacy c
+            LEFT JOIN provinces p ON c.userid = p.userid
+            WHERE c.colid = %s
+            GROUP BY c.userid
         """
         results = QueryHelper.fetch_all(query, (coalition_id,), dict_cursor=True)
         # Would need to add military and resource scores
