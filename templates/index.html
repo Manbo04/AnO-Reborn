@@ -13,30 +13,18 @@
     };
 
     function scrolltop() {
-
+        var nav = document.getElementById("navbarparent");
+        if (!nav) return;
+        /* Keep navbar solid — transparent nav causes Safari/Chrome to re-tint the browser UI */
+        nav.style.backgroundColor = "#1c2029";
         if (document.body.scrollTop > 1 || document.documentElement.scrollTop > 1) {
-
-            document.getElementById("navbarparent").style.backgroundColor = "#363945";
-            document.getElementById("navbarparent").style.boxShadow = "rgba(58, 59, 69, 0)";
-
-            document.getElementById("navbarparent").style.transition = "all 0.2s";
-
+            nav.style.boxShadow = "none";
         } else {
-
-            document.getElementById("navbarparent").style.backgroundColor = "transparent";
-            document.getElementById("navbarparent").style.boxShadow = "rgba(58, 59, 69, 0.8)";
-
-            document.getElementById("navbarparent").style.transition = "all 0.2s";
-
+            nav.style.boxShadow = "rgba(58, 59, 69, 0.8)";
         }
     }
+    scrolltop();
 </script>
-<style>
-    .navbarparent {
-        background: #36394500;
-        box-shadow: none;
-    }
-</style>
 <div class="templatediv landingpagediv">
 
 
