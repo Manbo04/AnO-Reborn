@@ -91,6 +91,9 @@
         chapterBtns.forEach(function (btn, i) {
             btn.classList.toggle("is-active", i === index);
             btn.setAttribute("aria-current", i === index ? "step" : "false");
+            if (i === index && btn.scrollIntoView) {
+                btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+            }
         });
 
         var activePanel = chapters[index];
@@ -112,10 +115,7 @@
             var unlocked = i === 0 || !!progress.completed[i - 1];
             btn.disabled = !unlocked;
             btn.classList.toggle("is-complete", !!progress.completed[i]);
-            var icon = btn.querySelector(".tutorial-chapter-icon");
-            if (icon) {
-                icon.textContent = progress.completed[i] ? "check_circle" : "radio_button_unchecked";
-            }
+            btn.setAttribute("aria-label", progress.completed[i] ? "Chapter complete" : "Chapter " + (i + 1));
         });
     }
 
