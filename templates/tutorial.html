@@ -1,10 +1,11 @@
 {% extends "layout.html" %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
-<link href="{{ url_for('static', filename='tutorial.css') }}?v=3" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=3"></script>
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=4" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=4"></script>
 {% endblock %}
 {% block body %}
+<script>document.documentElement.classList.add('page-tutorial');</script>
 <div class="templatediv tutorial-interactive tutorial-academy" id="tutorial-interactive"
      data-constants='{{ tutorial_constants | tojson }}'>
 
@@ -39,70 +40,64 @@
     </header>
 
     <div class="templatedivcontent tutorial-academy-content">
+        <div class="tutorial-shell">
+            <aside class="tutorial-sidebar" aria-label="Chapters">
+                <p class="tutorial-sidebar-heading">Chapters</p>
+                <nav class="tutorial-chapter-nav">
+                    <button type="button" class="tutorial-chapter-btn is-active" data-chapter="0">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">explore</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Welcome</span><span class="tutorial-chapter-num">Chapter 1</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="1">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">location_city</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Provinces</span><span class="tutorial-chapter-num">Chapter 2</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="2">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">inventory_2</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Resources</span><span class="tutorial-chapter-num">Chapter 3</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="3">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">account_balance</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Economy</span><span class="tutorial-chapter-num">Chapter 4</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="4">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">groups</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Population</span><span class="tutorial-chapter-num">Chapter 5</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="5">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">military_tech</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Military</span><span class="tutorial-chapter-num">Chapter 6</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="6">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">storefront</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Market</span><span class="tutorial-chapter-num">Chapter 7</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="7">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">upgrade</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Upgrades</span><span class="tutorial-chapter-num">Chapter 8</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="8">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">gavel</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">War</span><span class="tutorial-chapter-num">Chapter 9</span></span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="9">
+                        <span class="tutorial-chapter-icon-wrap"><span class="material-icons-outlined">handshake</span></span>
+                        <span class="tutorial-chapter-text"><span class="tutorial-chapter-label">Coalitions</span><span class="tutorial-chapter-num">Chapter 10</span></span>
+                    </button>
+                </nav>
+            </aside>
 
-        <nav class="tutorial-chapter-grid" aria-label="Choose a chapter">
-            <button type="button" class="tutorial-chapter-btn is-active" data-chapter="0">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">explore</span>
-                <span class="tutorial-chapter-label">Welcome</span>
-                <span class="tutorial-chapter-num">1</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="1">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">location_city</span>
-                <span class="tutorial-chapter-label">Provinces</span>
-                <span class="tutorial-chapter-num">2</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="2">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">inventory_2</span>
-                <span class="tutorial-chapter-label">Resources</span>
-                <span class="tutorial-chapter-num">3</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="3">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">account_balance</span>
-                <span class="tutorial-chapter-label">Economy</span>
-                <span class="tutorial-chapter-num">4</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="4">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">groups</span>
-                <span class="tutorial-chapter-label">Population</span>
-                <span class="tutorial-chapter-num">5</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="5">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">military_tech</span>
-                <span class="tutorial-chapter-label">Military</span>
-                <span class="tutorial-chapter-num">6</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="6">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">storefront</span>
-                <span class="tutorial-chapter-label">Market</span>
-                <span class="tutorial-chapter-num">7</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="7">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">upgrade</span>
-                <span class="tutorial-chapter-label">Upgrades</span>
-                <span class="tutorial-chapter-num">8</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="8">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">gavel</span>
-                <span class="tutorial-chapter-label">War</span>
-                <span class="tutorial-chapter-num">9</span>
-            </button>
-            <button type="button" class="tutorial-chapter-btn" data-chapter="9">
-                <span class="material-icons-outlined tutorial-chapter-card-icon">handshake</span>
-                <span class="tutorial-chapter-label">Coalitions</span>
-                <span class="tutorial-chapter-num">10</span>
-            </button>
-        </nav>
-
-        <div class="tutorial-layout">
-            <div class="tutorial-main-panel landingcontactdiv warflexparentcolors">
+            <div class="tutorial-stage">
 
                 <!-- Chapter 1 -->
                 <article class="tutorial-chapter-panel is-visible" data-chapter-index="0">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">explore</span>
-                        Welcome &amp; The Game Loop
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/administrativebuilding.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Welcome &amp; The Game Loop</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">AnO runs on <strong>hourly ticks</strong>. Background tasks generate tax income, consume rations and consumer goods, grow population, and produce resources from your buildings. Your job: build infrastructure, balance inputs, and expand before rivals do.</p>
 
                     <div class="tutorial-tabs" role="tablist">
@@ -113,13 +108,28 @@
                         <div class="tutorial-callout">
                             <strong>Core loop:</strong> Build provinces → extract &amp; process resources → fund military &amp; upgrades → trade or fight → repeat.
                         </div>
-                        <div class="tutorial-flip-grid">
-                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Hourly ticks</div><div class="tutorial-flip-back">Tax, CG, rations, production, and population all update on a schedule</div></div></div>
-                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Provinces</div><div class="tutorial-flip-back">Each province has its own buildings, pollution, and population cap</div></div></div>
-                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Global market</div><div class="tutorial-flip-back">Player-driven prices for every resource</div></div></div>
-                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Coalitions</div><div class="tutorial-flip-back">Shared banks, taxes, and diplomatic cover</div></div></div>
+                        <div class="tutorial-insight-grid">
+                            <div class="tutorial-insight-card">
+                                <span class="material-icons-outlined">schedule</span>
+                                <h4>Hourly ticks</h4>
+                                <p>Tax, CG, rations, production, and population update on a schedule.</p>
+                            </div>
+                            <div class="tutorial-insight-card">
+                                <span class="material-icons-outlined">map</span>
+                                <h4>Provinces</h4>
+                                <p>Each province has its own buildings, pollution, and population cap.</p>
+                            </div>
+                            <div class="tutorial-insight-card">
+                                <span class="material-icons-outlined">public</span>
+                                <h4>Global market</h4>
+                                <p>Player-driven prices for every resource.</p>
+                            </div>
+                            <div class="tutorial-insight-card">
+                                <span class="material-icons-outlined">groups</span>
+                                <h4>Coalitions</h4>
+                                <p>Shared banks, taxes, and diplomatic cover.</p>
+                            </div>
                         </div>
-                        <p class="templatecontentpleft muted">Click each card to reveal details.</p>
                     </div>
                     <div id="ch0-deep" class="tutorial-tab-panel">
                         <div class="tutorial-accordion">
@@ -156,15 +166,18 @@
                         <button type="button" class="templatelink" data-chapter-skip>Skip (−25 XP)</button>
                         <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 2 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="1">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">location_city</span>
-                        Provinces &amp; Buildings
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Provinces &amp; Buildings</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Provinces are the foundation of your nation. Each holds population, infrastructure slots (land/city), and buildings that produce resources or gold.</p>
@@ -201,16 +214,19 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 3 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="2">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">inventory_2</span>
-                        Resources &amp; Production Chains
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
-                    <p class="templatecontentpleft">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/coalmine.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Resources &amp; Production Chains</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
+                    <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
 
                     <div class="tutorial-widget" data-widget="chain-game">
                         <h4><span class="material-icons-outlined">timeline</span> Chain challenge — click in order</h4>
@@ -259,15 +275,18 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 4 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="3">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">account_balance</span>
-                        Economy &amp; Tax Income
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/bank.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Economy &amp; Tax Income</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Base tax is <strong>${{ tutorial_constants.tax_per_citizen }}</strong> per citizen per hour. Consumer goods supply adds +50%. Missing rations (−30%) or energy (−15%) stack multiplicatively. Land slots add up to +100%.</p>
@@ -309,16 +328,19 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 5 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="4">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">groups</span>
-                        Population &amp; Welfare
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
-                    <p class="templatecontentpleft">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness boosts growth (~4% per point); pollution reduces it (~2% per point).</p>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/washington.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Population &amp; Welfare</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
+                    <p class="tutorial-lead">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness boosts growth (~4% per point); pollution reduces it (~2% per point).</p>
                     <div class="tutorial-callout">
                         <strong>Distribution capacity:</strong> Each distribution building serves roughly 400k population. Without coverage, rations and CG never reach citizens — even if you produce them.
                     </div>
@@ -346,15 +368,18 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 6 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="5">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">military_tech</span>
-                        Military &amp; Supplies
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/cruiser.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Military &amp; Supplies</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Units cost manpower and resources to recruit. <strong>Attacks require supplies</strong> — you need at least {{ tutorial_constants.min_attack_supplies }} supplies for an offensive. Infantry costs 1 supply each; many armored/air units cost 5; capital ships cost far more.</p>
@@ -392,23 +417,21 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 7 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="6">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">storefront</span>
-                        Market &amp; Trade
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
-                    <div class="tutorial-media-row">
-                        <div>
-                            <p class="templatecontentpleft">The market is player-driven. Place buy/sell offers, watch statistics for average prices, and use trade agreements for recurring deals. Selling surplus raw materials funds early buildings; buying shortcuts late-game bottlenecks.</p>
-                            <div class="tutorial-callout">
-                                <strong>Pro tip:</strong> Check <a href="/statistics" class="templatelink">Statistics</a> before listing — undercutting the average burns gold; pricing at average sells steadily.
-                            </div>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Market &amp; Trade</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/market.jpg') }}?v=2" alt="Market" />
+                    </div>
+                    <div class="tutorial-chapter-body">
+                    <p class="tutorial-lead">The market is player-driven. Place buy/sell offers, watch statistics for average prices, and use trade agreements for recurring deals.</p>
+                    <div class="tutorial-callout">
+                        <strong>Pro tip:</strong> Check <a href="/statistics" class="templatelink">Statistics</a> before listing — undercutting the average burns gold; pricing at average sells steadily.
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
@@ -429,20 +452,22 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 8 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="7">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">upgrade</span>
-                        Upgrades &amp; Technology
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/upgrades.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Upgrades &amp; Technology</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, supply regen, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/upgrades.jpg') }}?v=2" alt="Upgrades" />
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
@@ -463,15 +488,18 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 9 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="8">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">gavel</span>
-                        War &amp; Combat
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">War &amp; Combat</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Combat calculates morale loss and damage <strong>per unit</strong>, scaled to opposing forces — matched fights won't instantly zero morale. Choose unit mixes, respect supply costs, and coordinate with coalition mates.</p>
@@ -481,7 +509,6 @@
                                 <li>Defensive upgrades and terrain (naval/air) matter for outcomes.</li>
                             </ul>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/war.jpg') }}?v=2" alt="War" />
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
@@ -503,22 +530,23 @@
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                         <button type="button" class="templatelink" data-nav-next>Next →</button>
                     </div>
+                    </div>
                 </article>
 
                 <!-- Chapter 10 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="9">
-                    <h2 class="tutorial-chapter-title">
-                        <span class="material-icons-outlined">handshake</span>
-                        Coalitions &amp; Mastery
-                        <span class="tutorial-xp-badge">+100 XP</span>
-                    </h2>
+                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}?v=2');">
+                        <div class="tutorial-chapter-banner-inner">
+                            <h2 class="tutorial-chapter-title">Coalitions &amp; Mastery</h2>
+                            <span class="tutorial-xp-badge">+100 XP</span>
+                        </div>
+                    </div>
+                    <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Coalitions offer shared banks, optional tax rates on member income, and diplomatic strength. Leaders approve withdrawals; members contribute to coalition banks for mutual defense funding.</p>
                             <p class="templatecontentpleft"><strong>Endgame mastery:</strong> Balance tax/display accuracy (check coalition tax on country page), monitor statistics, tune policies, and grow before declaring wide wars.</p>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/coalition.jpg') }}?v=2" alt="Coalitions" />
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/statistics.jpg') }}?v=2" alt="Statistics" style="margin-top:12px;" />
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Final exam</h3>
@@ -547,6 +575,7 @@
                         <button type="button" class="templatedivbutton" data-chapter-complete><span class="material-icons-outlined">emoji_events</span> Graduate!</button>
                         <button type="button" class="templatelink" data-nav-prev>← Previous</button>
                     </div>
+                    </div>
                 </article>
 
                 <div class="tutorial-nav-global">
@@ -554,6 +583,7 @@
                     <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
                 </div>
             </div>
+        </div>
         </div>
 
         <div class="tutorial-footer landingcontactdiv warflexparentcolors">
