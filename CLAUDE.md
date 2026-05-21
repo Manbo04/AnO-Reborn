@@ -108,6 +108,31 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-21
+
+**Task**: Fix widespread 500 errors across the site (user report + error_id `km6f39sn3ymh13igdxmr-1779394214`)
+
+**What Was Done**:
+- Fixed **swapped `error()` arguments** in `province.py` (3 sites) and `military.py` (1 site) — validation failures were using a string as HTTP status, triggering the global 500 handler instead of 400
+- Fixed broken Jinja in `templates/province.html` line 1348 (silos `prores` line missing `}}`)
+- Added signup password/confirmation null guards before `.encode()` in `signup.py`
+- Hardened `fetchone()[0]` access in `province.py`, `countries.py`, `market.py`, `wars/routes.py`, `coalitions.py`
+- Wrapped coalition bank `int(resource)` parsing in try/except
+- Added `tests/test_error_handler_status.py` regression tests (error status order, template compile, signup encode)
+- Added `.github/workflows/ci.yml` with offline-capable checks; deprecated dummy CI bypass workflow
+
+**Commit**: `94c2a4d4` on branch `cursor/fix-widespread-500-errors-a503`
+
+**What To Watch**:
+- Province/military buy/sell validation should return 400 pages, not global 500 with `error_code`
+- Production smoke on test account 16 after deploy (province page, market, wars)
+
+**Next Steps**:
+- Monitor Railway logs for `[ERROR! ^^^]` after deploy
+- Run DB-backed integration tests in CI when Postgres service is available
+
+---
+
 ### Session: 2026-03-04
 
 **Task**: Master Game Economy & Architecture Audit - comprehensive documentation of all economic systems

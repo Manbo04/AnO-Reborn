@@ -554,9 +554,10 @@ def establish_coalition():
                 db.execute(insert_query, (name, cType, desc, date, recruiting))
 
                 db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
-                coalition_id = db.fetchone()[
-                    0
-                ]  # Gets the coalition id of the just inserted coalition
+                coalition_row = db.fetchone()
+                if not coalition_row:
+                    return error(500, "Failed to create coalition")
+                coalition_id = coalition_row[0]
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
@@ -638,7 +639,8 @@ def coalitions():
             {where_clause}
         """
         db.execute(count_query, tuple(params))
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         # Calculate pagination
         total_pages = max(1, (total_count + per_page - 1) // per_page)
@@ -1199,8 +1201,12 @@ def deposit_into_bank(coalition_id):
             resource = ""
 
         if resource is not None and resource != "":
-            if int(resource) > 0:
-                res_tuple = (res, int(resource))
+            try:
+                resource_amount = int(resource)
+            except (ValueError, TypeError):
+                return error(400, f"Invalid amount for {res}")
+            if resource_amount > 0:
+                res_tuple = (res, resource_amount)
                 deposited_resources.append(res_tuple)
 
     # Whitelist of valid colBanks column names
@@ -1454,7 +1460,11 @@ def request_from_bank(coalition_id):
                 resource = ""
 
             if resource is not None and resource != "":
-                res_tuple = (res, int(resource))
+                try:
+                    request_amount = int(resource)
+                except (ValueError, TypeError):
+                    return error(400, f"Invalid amount for {res}")
+                res_tuple = (res, request_amount)
                 requested_resources.append(res_tuple)
 
         if len(requested_resources) > 1:

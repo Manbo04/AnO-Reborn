@@ -298,7 +298,8 @@ def send_peace_offer(war_id, enemy_id):
                     resources_string += res + ","
                     amount_string += str(amo) + ","
             db.execute("SELECT peace_offer_id FROM wars WHERE war_id=(%s)", (war_id,))
-            peace_offer_id = db.fetchone()[0]
+            peace_row = db.fetchone()
+            peace_offer_id = peace_row[0] if peace_row else None
             if not peace_offer_id:
                 db.execute(
                     (
@@ -308,7 +309,10 @@ def send_peace_offer(war_id, enemy_id):
                     (cId, resources_string[:-1], amount_string[:-1]),
                 )
                 db.execute("SELECT CURRVAL('peace_id_seq')")
-                lastrowid = db.fetchone()[0]
+                peace_id_row = db.fetchone()
+                if not peace_id_row:
+                    return error(500, "Failed to create peace offer")
+                lastrowid = peace_id_row[0]
                 db.execute(
                     "UPDATE wars SET peace_offer_id=(%s) " "WHERE war_id=(%s)",
                     (lastrowid, war_id),
@@ -929,7 +933,10 @@ def declare_war():
                 ),
             )
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
-            attacker_name = db.fetchone()[0]
+            attacker_row = db.fetchone()
+            attacker_name = (
+                attacker_row[0] if attacker_row else f"Nation {attacker.id}"
+            )
             # Insert news directly using current cursor (avoid nested DB contexts)
             attacker_news = f"{attacker_name} declared war!"
             db.execute(
@@ -988,7 +995,8 @@ def wars():
         current_defense = Military.get_defense(cId)
         with get_request_cursor() as db:
             db.execute("SELECT username FROM users WHERE id=(%s)", (cId,))
-            yourCountry = db.fetchone()[0]
+            country_row = db.fetchone()
+            yourCountry = country_row[0] if country_row else "Unknown"
             try:
                 db.execute(
                     (
@@ -1094,7 +1102,8 @@ def find_targets():
     if request.method == "GET":
         with get_request_cursor() as db:
             db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
-            user_provinces = db.fetchone()[0]
+            provinces_row = db.fetchone()
+            user_provinces = provinces_row[0] if provinces_row else 0
             min_provinces = max(0, user_provinces - 3)
             max_provinces = user_provinces + 1
             user_influence = get_influence(cId)
