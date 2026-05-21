@@ -38,63 +38,31 @@
     </div>
 
     <div class="templatedivcontent">
-
-        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
-
+        <div class="auth-columns">
             {% if way != "discord" %}
-            <form action="/discord" method="GET">
-                <div class="templatedivflex2left">
-                    <div class="templatecontentheadercenter">Discord Sign Up</div>
-                    <div class="templatedivflex2">
-                        <div class="templatedivflex2left">
-                            <button class="templatedivbutton discordbutton">
-                        <span class="material-icons-outlined">
-                            add_circle_outline
-                        </span>Discord Sign Up</button>
-
-                        </div>
-                    </div>
-
-                </div>
-            </form>
+            <div class="auth-panel">
+                <form action="/discord" method="GET">
+                    <h2 class="templatecontentheadercenter">Discord Sign Up</h2>
+                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton">
+                        <span class="material-icons-outlined">add_circle_outline</span>Discord Sign Up
+                    </button>
+                </form>
+            </div>
             {% endif %}
 
-            <div class="templatedivflex2left warflexparentcolors">
-
-                <div class="templatecontentheadercenter">Default Sign Up</div>
-
+            <div class="auth-panel auth-panel-wide">
+                <h2 class="templatecontentheadercenter">Default Sign Up</h2>
                 {% if way != "discord" %}
                 <form id="signup-form" class="loginsignupform" action="/signup" method="POST">
-                    {% elif way == "discord" %}
-                    <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
-                        {% endif %}
-
-                        <div class="templatedivflex2 divflex2center signupdiv">
-                            <div class="templatedivflex2left">
-                                <input class="loginsignupinput" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
-                            </div>
-
-                            {% if way != "discord" %}
-                            <div class="templatedivflex2left">
-                                <input class="loginsignupinput" autocomplete="off" name="email" type="email" placeholder="Email" required />
-                            </div>
-                            {% endif %}
-
-                        </div>
-
-                        {% if way != "discord" %}
-                        <div class="templatedivflex2 divflex2center signupdiv">
-                            <div class="templatedivflex2left">
-                                <input class="loginsignupinput" autocomplete="off" type="password" name="password" placeholder="Password" required/>
-                            </div>
-                            <div class="templatedivflex2left">
-                                <input class="loginsignupinput" autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password" required/>
-                            </div>
-                        </div>
-                        {% endif %}
-
-            </div>
-        </div>
+                {% elif way == "discord" %}
+                <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
+                {% endif %}
+                    <input class="loginsignupinput w-full" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
+                    {% if way != "discord" %}
+                    <input class="loginsignupinput w-full" autocomplete="off" name="email" type="email" placeholder="Email" required />
+                    <input class="loginsignupinput w-full" autocomplete="off" type="password" name="password" placeholder="Password" required/>
+                    <input class="loginsignupinput w-full" autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password" required/>
+                    {% endif %}
 
         <h2 class="templatecontentheaderleft">Choose a Biome</h2>
 
@@ -324,19 +292,14 @@
 
         <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
 
-        <div class="templatedivflex2 divflex2center">
-            <div class="templatedivflex2left">
-
-                <button class="templatedivbutton center">
-                <span class="material-icons-outlined">
-                    add_circle_outline
-                </span>Sign up</button>
-
+        <div class="form-actions">
+            <button type="submit" class="templatedivbutton templatecenteredbutton">
+                <span class="material-icons-outlined">add_circle_outline</span>Sign Up
+            </button>
+        </div>
+                </form>
             </div>
         </div>
-        </form>
     </div>
-
-</div>
 </div>
 {% endblock %}

@@ -4624,12 +4624,8 @@ body:has(.loginsignupdiv) .footer {
     font-size: 22px;
 }
 
-.theme-dark .theme-toggle-icon-light {
-    display: none;
-}
-
-.theme-light .theme-toggle-icon-dark {
-    display: none;
+.theme-toggle-btn [data-theme-toggle-icon] {
+    display: block;
 }
 
 .text-muted {
@@ -4794,4 +4790,131 @@ body:has(.loginsignupdiv) .footer {
         top: 5px;
         right: 5px;
     }
+}
+
+/* === UI hotfix: auth pages & forms === */
+.loginsignupdiv.templatediv {
+    background: rgba(28, 32, 41, 0.96);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.loginsignupdiv .templatedivcontent {
+    padding: 8px 16px 24px;
+}
+
+.auth-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.auth-panel {
+    flex: 1 1 280px;
+    max-width: 420px;
+    padding: 24px 20px;
+    background: var(--foregroundTwo);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.auth-panel .templatecontentheadercenter,
+.auth-panel h2.templatecontentheadercenter {
+    margin-top: 0;
+    color: var(--colorOne);
+}
+
+.auth-panel .loginsignupinput {
+    width: 100%;
+    max-width: 100%;
+}
+
+.auth-row-split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 0 16px;
+}
+
+.auth-panel .templatedivbutton {
+    margin: 16px auto 8px;
+}
+
+.auth-panel-wide {
+    flex: 1 1 100%;
+    max-width: 100%;
+}
+
+.auth-panel-wide .slidecontainer {
+    width: 90%;
+}
+
+.trade-agreement-form {
+    max-width: 720px;
+    margin: 20px auto;
+    padding: 24px;
+}
+
+.trade-agreement-form .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+@media all and (max-width: 700px) {
+    .trade-agreement-form .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.trade-agreement-form .form-field {
+    width: 100%;
+    min-width: 0;
+}
+
+.trade-agreement-form .form-label {
+    display: block;
+    text-align: left;
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--colorOne);
+    width: 100%;
+}
+
+.trade-agreement-form .templateselect,
+.trade-agreement-form .loginsignupinput {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.trade-agreement-form .form-actions {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.trade-agreement-form .templatedivbutton {
+    margin: 8px auto;
+}
+
+/* Override broken divflex2center sizing inside structured forms */
+.trade-agreement-form .form-grid-2 .templatedivflex2left,
+.trade-agreement-form .form-grid-2 .templatedivflex2right,
+.auth-columns .templatedivflex2left,
+.auth-columns .templatedivflex2right {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
 }
