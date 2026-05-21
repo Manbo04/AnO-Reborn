@@ -1303,7 +1303,19 @@ def logout():
 
 @app.route("/tutorial", methods=["GET"])
 def tutorial():
-    return render_template("tutorial.html")
+    import variables as game_vars
+
+    tutorial_constants = {
+        "tax_per_citizen": game_vars.DEFAULT_TAX_INCOME,
+        "cg_tax_multiplier": game_vars.CONSUMER_GOODS_TAX_MULTIPLIER,
+        "no_energy_tax_multiplier": game_vars.NO_ENERGY_TAX_MULTIPLIER,
+        "no_food_tax_multiplier": game_vars.NO_FOOD_TAX_MULTIPLIER,
+        "land_tax_multiplier": game_vars.DEFAULT_LAND_TAX_MULTIPLIER,
+        "province_base_cost": 8_000_000,
+        "province_cost_scale": 0.16,
+        "min_attack_supplies": 200,
+    }
+    return render_template("tutorial.html", tutorial_constants=tutorial_constants)
 
 
 @app.route("/mechanics", methods=["GET"])

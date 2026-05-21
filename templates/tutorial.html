@@ -1,239 +1,601 @@
-{% extends "layout.html" %} {% block title %} Tutorial {% endblock %} {% block body %}
-<div class="templatediv">
+{% extends "layout.html" %}
+{% block title %} Tutorial {% endblock %}
+{% block extra_head %}
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=1" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=1"></script>
+{% endblock %}
+{% block body %}
+<div class="templatediv tutorial-interactive" id="tutorial-interactive"
+     data-constants='{{ tutorial_constants | tojson }}'>
 
     <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            school
-            </span>Tutorial</h1>
+        <h1 class="templatedivtitle">
+            <span class="material-icons-outlined iconlarge">school</span>
+            Interactive Tutorial
+        </h1>
     </div>
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheadercenter">Welcome to AnO - Your Journey Begins!</h2>
-        <p class="templatecontentpleft landingpagecontent">Follow these steps to learn the basics of nation management, economy building, and warfare in AnO.</p>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#1 Create Your First Province</h2>
-                <p class="templatecontentpleft landingpagecontent">Provinces are the foundation of your nation. They provide population, resources, and infrastructure. Start by creating your first province to establish your economic base.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/createprovince" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>Create Province</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
+        <section class="tutorial-hero">
+            <h2 class="templatecontentheadercenter">Command Your Nation — Learn by Doing</h2>
+            <p class="templatecontentpleft landingpagecontent tutorial-hero-sub">
+                Work through guided chapters with live calculators, knowledge checks, and deep dives into economy, military, and diplomacy.
+                Earn XP as you go — your progress saves automatically in this browser.
+            </p>
+            <div class="tutorial-stats-bar">
+                <div class="tutorial-stat-pill">
+                    <strong data-tutorial-xp>0</strong>
+                    <span>XP earned</span>
+                </div>
+                <div class="tutorial-stat-pill">
+                    <strong data-tutorial-rank>Recruit</strong>
+                    <span>Your rank</span>
+                </div>
+                <div class="tutorial-stat-pill">
+                    <strong data-tutorial-pct>0%</strong>
+                    <span>Course complete</span>
                 </div>
             </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="Province creation interface" />
+            <div class="tutorial-progress-wrap">
+                <div class="tutorial-progress-label">
+                    <span>Overall progress</span>
+                    <button type="button" class="templatelink tutorial-reset-btn" data-tutorial-reset>Reset progress</button>
+                </div>
+                <div class="tutorial-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    <div class="tutorial-progress-fill"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="tutorial-layout">
+            <nav class="tutorial-chapter-nav" aria-label="Tutorial chapters">
+                <button type="button" class="tutorial-chapter-btn is-active" data-chapter="0">
+                    <span class="tutorial-chapter-num">1</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Welcome &amp; Game Loop</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="1">
+                    <span class="tutorial-chapter-num">2</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Provinces &amp; Buildings</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="2">
+                    <span class="tutorial-chapter-num">3</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Resources &amp; Chains</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="3">
+                    <span class="tutorial-chapter-num">4</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Economy &amp; Tax</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="4">
+                    <span class="tutorial-chapter-num">5</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Population &amp; Welfare</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="5">
+                    <span class="tutorial-chapter-num">6</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Military &amp; Supplies</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="6">
+                    <span class="tutorial-chapter-num">7</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Market &amp; Trade</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="7">
+                    <span class="tutorial-chapter-num">8</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Upgrades &amp; Tech</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="8">
+                    <span class="tutorial-chapter-num">9</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> War &amp; Combat</span>
+                </button>
+                <button type="button" class="tutorial-chapter-btn" data-chapter="9">
+                    <span class="tutorial-chapter-num">10</span>
+                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Coalitions &amp; Mastery</span>
+                </button>
+            </nav>
+
+            <div class="tutorial-main-panel">
+
+                <!-- Chapter 1 -->
+                <article class="tutorial-chapter-panel is-visible" data-chapter-index="0">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">explore</span>
+                        Welcome &amp; The Game Loop
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <p class="templatecontentpleft">AnO runs on <strong>hourly ticks</strong>. Background tasks generate tax income, consume rations and consumer goods, grow population, and produce resources from your buildings. Your job: build infrastructure, balance inputs, and expand before rivals do.</p>
+
+                    <div class="tutorial-tabs" role="tablist">
+                        <button type="button" class="tutorial-tab is-active" data-tab="ch0-overview" aria-selected="true">Overview</button>
+                        <button type="button" class="tutorial-tab" data-tab="ch0-deep">Deep dive</button>
+                    </div>
+                    <div id="ch0-overview" class="tutorial-tab-panel is-active">
+                        <div class="tutorial-callout">
+                            <strong>Core loop:</strong> Build provinces → extract &amp; process resources → fund military &amp; upgrades → trade or fight → repeat.
+                        </div>
+                        <div class="tutorial-flip-grid">
+                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Hourly ticks</div><div class="tutorial-flip-back">Tax, CG, rations, production, and population all update on a schedule</div></div></div>
+                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Provinces</div><div class="tutorial-flip-back">Each province has its own buildings, pollution, and population cap</div></div></div>
+                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Global market</div><div class="tutorial-flip-back">Player-driven prices for every resource</div></div></div>
+                            <div class="tutorial-flip-card"><div class="tutorial-flip-inner"><div class="tutorial-flip-front">Coalitions</div><div class="tutorial-flip-back">Shared banks, taxes, and diplomatic cover</div></div></div>
+                        </div>
+                        <p class="templatecontentpleft muted">Click each card to reveal details.</p>
+                    </div>
+                    <div id="ch0-deep" class="tutorial-tab-panel">
+                        <div class="tutorial-accordion">
+                            <button type="button" class="tutorial-accordion-trigger" aria-expanded="false">
+                                What happens every hour? <span class="material-icons-outlined">expand_more</span>
+                            </button>
+                            <div class="tutorial-accordion-body">
+                                <ul class="templatecontentpleft">
+                                    <li><strong>Tax income</strong> — charged per citizen; boosted by consumer goods, penalized without rations or energy.</li>
+                                    <li><strong>Province revenue</strong> — buildings produce and consume resources; operating costs deduct gold.</li>
+                                    <li><strong>Population growth</strong> — needs rations, influenced by happiness and pollution.</li>
+                                    <li><strong>Trade agreements</strong> — automated exchanges if configured.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="templatecontentpleft">New players should start at <a href="/createprovince" class="templatelink">Create Province</a>, then visit <a href="/mechanics" class="templatelink">Game Mechanics</a> for reference tables.</p>
+                    </div>
+
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>How often do most economic systems (tax, production, consumption) update?</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" name="q0a" hidden> Every minute</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" name="q0a" hidden> Hourly (scheduled ticks)</label>
+                                <label class="tutorial-quiz-option"><input type="radio" name="q0a" hidden> Only when you log in</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <button type="button" class="templatedivbutton" data-chapter-complete><span class="material-icons-outlined">done</span> Complete chapter</button>
+                        <button type="button" class="templatelink" data-chapter-skip>Skip (−25 XP)</button>
+                        <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 2 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="1">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">location_city</span>
+                        Provinces &amp; Buildings
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Provinces are the foundation of your nation. Each holds population, infrastructure slots (land/city), and buildings that produce resources or gold.</p>
+                            <div class="tutorial-widget" data-widget="province-calc">
+                                <h4><span class="material-icons-outlined">calculate</span> Province cost calculator</h4>
+                                <div class="tutorial-slider-row">
+                                    <label>Provinces you already own: <strong data-prov-count-label>0</strong></label>
+                                    <input type="range" data-prov-count min="0" max="20" value="0" />
+                                </div>
+                                <div class="tutorial-result-box" data-prov-result></div>
+                            </div>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="Province management" />
+                    </div>
+                    <div class="tutorial-callout tip-warn">
+                        <strong>Starter tip:</strong> Build power first (coal/oil burners use Tier-1 resources only), then farms and distribution so rations reach your population.
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Province acquisition cost scales with the number of provinces you already have. The formula uses a base of $8M plus what factor per existing province?</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> +5% flat</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> +16% per province owned</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Fixed $8M always</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/createprovince" class="templatedivbutton"><span class="material-icons-outlined">north_east</span> Create Province</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 3 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="2">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">inventory_2</span>
+                        Resources &amp; Production Chains
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <p class="templatecontentpleft">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
+
+                    <div class="tutorial-widget" data-widget="chain-game">
+                        <h4><span class="material-icons-outlined">timeline</span> Chain challenge — click in order</h4>
+                        <p class="muted" data-chain-msg>Click each step in order from raw material to finished goods.</p>
+                        <div class="tutorial-chain">
+                            <span class="tutorial-chain-node" data-chain-id="bauxite">Bauxite Mine</span>
+                            <span class="tutorial-chain-arrow">→</span>
+                            <span class="tutorial-chain-node" data-chain-id="aluminium">Aluminium Refinery</span>
+                            <span class="tutorial-chain-arrow">→</span>
+                            <span class="tutorial-chain-node" data-chain-id="components">Component Factory</span>
+                            <span class="tutorial-chain-arrow">→</span>
+                            <span class="tutorial-chain-node" data-chain-id="cg">Retail / CG</span>
+                        </div>
+                        <button type="button" class="templatelink" data-chain-reset>Reset chain</button>
+                        <p class="templatecontentpleft muted" style="margin-top:8px;">Correct path for CG pipeline: <strong>Bauxite → Aluminium → Components → Consumer Goods</strong> (iron is a separate chain for steel).</p>
+                    </div>
+
+                    <div class="tutorial-accordion">
+                        <button type="button" class="tutorial-accordion-trigger" aria-expanded="false">Essential vs strategic resources <span class="material-icons-outlined">expand_more</span></button>
+                        <div class="tutorial-accordion-body">
+                            <table class="templatetable">
+                                <tr><td><strong>Rations</strong></td><td>Population growth; −30% tax if missing</td></tr>
+                                <tr><td><strong>Energy</strong></td><td>Powers buildings; −15% tax if short</td></tr>
+                                <tr><td><strong>Components</strong></td><td>Military units &amp; CG manufacturing</td></tr>
+                                <tr><td><strong>Gold</strong></td><td>Buildings, units, provinces — tax is main source</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>What happens to tax income if your nation lacks rations distribution?</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> +50% bonus</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> −30% tax income</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> No effect</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/mechanics/resources" class="templatedivbutton">Resource mechanics</a>
+                        <a href="/country" class="templatedivbutton">View your resources</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 4 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="3">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">account_balance</span>
+                        Economy &amp; Tax Income
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Base tax is <strong>${{ tutorial_constants.tax_per_citizen }}</strong> per citizen per hour. Consumer goods supply adds +50%. Missing rations (−30%) or energy (−15%) stack multiplicatively. Land slots add up to +100%.</p>
+                            <div class="tutorial-widget" data-widget="tax-calc">
+                                <h4><span class="material-icons-outlined">calculate</span> Live tax calculator</h4>
+                                <div class="tutorial-slider-row">
+                                    <label>Population: <strong data-tax-pop-label>500,000</strong></label>
+                                    <input type="range" data-tax-pop min="0" max="5000000" step="50000" value="500000" />
+                                </div>
+                                <div class="tutorial-slider-row">
+                                    <label>Land slots: <strong data-tax-land-label>5</strong></label>
+                                    <input type="range" data-tax-land min="0" max="50" value="5" />
+                                </div>
+                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-cg checked> Consumer goods fully supplied (+50%)</label>
+                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-food checked> Rations supplied (no −30% penalty)</label>
+                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-energy checked> Energy supplied (no −15% penalty)</label>
+                                <div class="tutorial-result-box" data-tax-result></div>
+                            </div>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/country.jpg') }}?v=2" alt="Country resources and revenue" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>With full consumer goods distribution, your tax multiplier becomes:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> 1.25×</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> 1.5× (+50%)</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> 2.0×</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/mechanics/revenue" class="templatedivbutton">Revenue mechanics</a>
+                        <a href="/country" class="templatedivbutton">Your country page</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 5 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="4">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">groups</span>
+                        Population &amp; Welfare
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <p class="templatecontentpleft">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness boosts growth (~4% per point); pollution reduces it (~2% per point).</p>
+                    <div class="tutorial-callout">
+                        <strong>Distribution capacity:</strong> Each distribution building serves roughly 400k population. Without coverage, rations and CG never reach citizens — even if you produce them.
+                    </div>
+                    <table class="templatetable">
+                        <tr><td><strong>Unemployment &gt;30%</strong></td><td>−10 happiness</td></tr>
+                        <tr><td><strong>Elderly &gt;40%</strong></td><td>Pension crisis (−5k gold/hour)</td></tr>
+                        <tr><td><strong>Pollution</strong></td><td>Reduces growth; Chernobyl events floor efficiency at 20%</td></tr>
+                    </table>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Who consumes the most consumer goods per capita?</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Children</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Working adults</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Elderly (2× rate)</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/mechanics/consumer_goods" class="templatedivbutton">Consumer goods guide</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 6 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="5">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">military_tech</span>
+                        Military &amp; Supplies
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Units cost manpower and resources to recruit. <strong>Attacks require supplies</strong> — you need at least {{ tutorial_constants.min_attack_supplies }} supplies for an offensive. Infantry costs 1 supply each; many armored/air units cost 5; capital ships cost far more.</p>
+                            <div class="tutorial-widget" data-widget="supply-calc">
+                                <h4><span class="material-icons-outlined">calculate</span> Attack supply planner</h4>
+                                <div class="tutorial-slider-row">
+                                    <label>Infantry attacking: <strong data-sup-infantry-label>100</strong></label>
+                                    <input type="range" data-sup-infantry min="0" max="500" value="100" />
+                                </div>
+                                <div class="tutorial-slider-row">
+                                    <label>Tanks attacking: <strong data-sup-tanks-label>20</strong></label>
+                                    <input type="range" data-sup-tanks min="0" max="100" value="20" />
+                                </div>
+                                <div class="tutorial-result-box" data-sup-result></div>
+                            </div>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/military.jpg') }}?v=2" alt="Military interface" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Minimum supplies required to launch an attack:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> 50</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> {{ tutorial_constants.min_attack_supplies }}</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> 1000</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/military" class="templatedivbutton">Military page</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 7 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="6">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">storefront</span>
+                        Market &amp; Trade
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">The market is player-driven. Place buy/sell offers, watch statistics for average prices, and use trade agreements for recurring deals. Selling surplus raw materials funds early buildings; buying shortcuts late-game bottlenecks.</p>
+                            <div class="tutorial-callout">
+                                <strong>Pro tip:</strong> Check <a href="/statistics" class="templatelink">Statistics</a> before listing — undercutting the average burns gold; pricing at average sells steadily.
+                            </div>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/market.jpg') }}?v=2" alt="Market" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>The market price of a resource is primarily determined by:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Fixed NPC prices</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Player buy/sell offers</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Random hourly rolls</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/market" class="templatedivbutton">Visit market</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 8 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="7">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">upgrade</span>
+                        Upgrades &amp; Technology
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, supply regen, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/upgrades.jpg') }}?v=2" alt="Upgrades" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Supply-related upgrades are especially valuable because:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> They replace the need for armies</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> They help sustain repeated offensives (200+ supply threshold)</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> They disable coalition tax</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/upgrades" class="templatedivbutton">View upgrades</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 9 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="8">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">gavel</span>
+                        War &amp; Combat
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Combat calculates morale loss and damage <strong>per unit</strong>, scaled to opposing forces — matched fights won't instantly zero morale. Choose unit mixes, respect supply costs, and coordinate with coalition mates.</p>
+                            <ul class="templatecontentpleft">
+                                <li>Declare war from the wars page; select targets and unit counts.</li>
+                                <li>War reparations can transfer resources when wars end.</li>
+                                <li>Defensive upgrades and terrain (naval/air) matter for outcomes.</li>
+                            </ul>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/war.jpg') }}?v=2" alt="War" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Modern combat morale/damage is calculated:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> All-or-nothing per battle</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Per-unit, proportional to force sizes</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Only by nation GDP</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/mechanics/war" class="templatedivbutton">War mechanics</a>
+                        <a href="/wars" class="templatedivbutton">War page</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                        <button type="button" class="templatelink" data-nav-next>Next →</button>
+                    </div>
+                </article>
+
+                <!-- Chapter 10 -->
+                <article class="tutorial-chapter-panel" data-chapter-index="9">
+                    <h2 class="tutorial-chapter-title">
+                        <span class="material-icons-outlined">handshake</span>
+                        Coalitions &amp; Mastery
+                        <span class="tutorial-xp-badge">+100 XP</span>
+                    </h2>
+                    <div class="tutorial-media-row">
+                        <div>
+                            <p class="templatecontentpleft">Coalitions offer shared banks, optional tax rates on member income, and diplomatic strength. Leaders approve withdrawals; members contribute to coalition banks for mutual defense funding.</p>
+                            <p class="templatecontentpleft"><strong>Endgame mastery:</strong> Balance tax/display accuracy (check coalition tax on country page), monitor statistics, tune policies, and grow before declaring wide wars.</p>
+                        </div>
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/coalition.jpg') }}?v=2" alt="Coalitions" />
+                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/statistics.jpg') }}?v=2" alt="Statistics" style="margin-top:12px;" />
+                    </div>
+                    <div class="tutorial-quiz">
+                        <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Final exam</h3>
+                        <div class="tutorial-quiz-question">
+                            <p>Coalition tax on member income is shown on:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Market page only</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Country page revenue breakdown</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Province page only</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-question">
+                            <p>The best early-game priority is usually:</p>
+                            <div class="tutorial-quiz-options">
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Max military before any economy</label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Stable power → food → distribution → tax/CG</label>
+                                <label class="tutorial-quiz-option"><input type="radio" hidden> Ignore provinces and only trade</label>
+                            </div>
+                        </div>
+                        <div class="tutorial-quiz-feedback"></div>
+                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                    </div>
+                    <div class="tutorial-actions">
+                        <a href="/coalitions" class="templatedivbutton">Browse coalitions</a>
+                        <a href="/statistics" class="templatedivbutton">Statistics</a>
+                        <button type="button" class="templatedivbutton" data-chapter-complete><span class="material-icons-outlined">emoji_events</span> Graduate!</button>
+                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
+                    </div>
+                </article>
+
+                <div class="tutorial-actions" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                    <button type="button" class="templatelink" data-nav-prev>← Previous chapter</button>
+                    <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
+                </div>
             </div>
         </div>
 
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#2 Understand Your Resources</h2>
-                <p class="templatecontentpleft landingpagecontent">Check your country page to see your resources: gold, manpower, food, coal, oil, uranium, and more. These resources are generated by your provinces and used for military units, upgrades, and trading.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/country" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>View Resources</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/country.jpg') }}?v=2" alt="Resources display" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#3 Build Your Military</h2>
-                <p class="templatecontentpleft landingpagecontent">Military units are essential for defense and conquest. Use your manpower and resources to recruit infantry, tanks, aircraft, and naval vessels. Your military strength determines your position in the world. Remember that each unit type has a supply cost for attacks, and you'll need at least 200 supplies to launch an offensive.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/military" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>Military Page</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/military.jpg') }}?v=2" alt="Military units interface" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#4 Explore the Market</h2>
-                <p class="templatecontentpleft landingpagecontent">The market is where you can buy and sell resources. Check current prices, place offers, and manage your trades. Strategic trading can help you acquire rare resources or generate gold income.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/market" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>Visit Market</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/market.jpg') }}?v=2" alt="Market trading interface" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#5 Research Upgrades</h2>
-                <p class="templatecontentpleft landingpagecontent">Upgrades improve your nation's capabilities. Research better military technology, economic boosts, and infrastructure improvements. Each upgrade requires resources and time to complete. Some upgrades can increase your supply regeneration rate or capacity, helping sustain longer wars.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/upgrades" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>View Upgrades</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/upgrades.jpg') }}?v=2" alt="Upgrades and technology" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#6 War & Combat Mechanics</h2>
-                <p class="templatecontentpleft landingpagecontent">Combat has been updated: morale loss and damage are now calculated per-unit and scaled proportionally to opposing forces, so a matched fight will not wipe morale instantly.</p>
-
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/wars" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>War Page</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/war.jpg') }}?v=2" alt="Combat mechanics" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#7 Join a Coalition</h2>
-                <p class="templatecontentpleft landingpagecontent">Coalitions provide protection, shared resources, and diplomatic advantages. Join an existing coalition or create your own. Alliances can be crucial for survival in competitive wars.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/coalitions" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>Browse Coalitions</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Skip</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/coalition.jpg') }}?v=2" alt="Coalition interface" />
-            </div>
-        </div>
-
-        <div class="templatedivflex2 menuflex tutorialdiv warflexparentcolors">
-            <div class="checkmarkparent">
-                <span class="material-icons-outlined checkmarkchild">
-                    check
-                </span>
-            </div>
-            <div class="templatedivflex2left">
-                <h2 class="templatecontentheadercenter">#8 Advanced Strategies</h2>
-                <p class="templatecontentpleft landingpagecontent">Master the art of diplomacy, economic planning, and military tactics. Monitor your nation's statistics, manage policies, and adapt to changing circumstances. The most successful nations balance growth with strategic warfare.</p>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-                        <a href="/statistics" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        north_east
-                        </span>View Statistics</a>
-                    </div>
-                    <div class="templatedivflex2left">
-                        <button class="templatelink templatecenteredbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                        </span>Complete Tutorial</button>
-                    </div>
-                </div>
-            </div>
-            <div class="templatedivflex2left">
-                <img tabindex="0" class="unitimage imageborder" src="{{ url_for('static', filename='images/statistics.jpg') }}?v=2" alt="Strategy and statistics" />
-            </div>
-        </div>
-
-        <div class="tutorialfooter">
+        <div class="tutorial-footer">
             <p class="templatecontentpleft landingpagecontent">
-                <strong>Need help?</strong> Join our <a href="https://discord.gg/SEae3Ua" target="_blank" class="templatelink">Discord community</a> for support, strategy discussions, and to find coalition partners.
+                <strong>Need help?</strong> Join our
+                <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener" class="templatelink">Discord community</a>
+                for support, strategy, and coalition recruitment.
+                Reference docs: <a href="/mechanics" class="templatelink">Game Mechanics</a>.
             </p>
         </div>
+    </div>
 </div>
 
+<div class="tutorial-complete-overlay" aria-hidden="true">
+    <div class="tutorial-complete-card">
+        <span class="material-icons-outlined iconlarge" style="color:#f1c40f;">emoji_events</span>
+        <h2>Congratulations, Commander!</h2>
+        <p>You've completed the interactive tutorial. Put your knowledge to work on the battlefield and in the markets.</p>
+        <a href="/country" class="templatedivbutton">Go to your country</a>
+        <button type="button" class="templatelink" data-close-graduation style="display:block;margin:12px auto 0;">Close</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    function bindSliderLabel(input, attr) {
+        if (!input) return;
+        var panel = input.closest('.tutorial-widget') || document.getElementById('tutorial-interactive');
+        function upd() {
+            var el = panel && panel.querySelector('[' + attr + ']');
+            if (!el) el = document.querySelector('[' + attr + ']');
+            if (el) {
+                var v = parseInt(input.value, 10);
+                el.textContent = isNaN(v) ? input.value : v.toLocaleString();
+            }
+        }
+        input.addEventListener('input', upd);
+        upd();
+    }
+    document.querySelectorAll('[data-tax-pop]').forEach(function (i) { bindSliderLabel(i, 'data-tax-pop-label'); });
+    document.querySelectorAll('[data-tax-land]').forEach(function (i) { bindSliderLabel(i, 'data-tax-land-label'); });
+    document.querySelectorAll('[data-prov-count]').forEach(function (i) { bindSliderLabel(i, 'data-prov-count-label'); });
+    document.querySelectorAll('[data-sup-infantry]').forEach(function (i) { bindSliderLabel(i, 'data-sup-infantry-label'); });
+    document.querySelectorAll('[data-sup-tanks]').forEach(function (i) { bindSliderLabel(i, 'data-sup-tanks-label'); });
+})();
+</script>
 {% endblock %}
