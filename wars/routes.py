@@ -874,11 +874,13 @@ def declare_war():
             db.execute(
                 "SELECT COUNT(id) FROM provinces WHERE userId=%s", (attacker.id,)
             )
-            attacker_provinces = db.fetchone()[0] or 0
+            attacker_row = db.fetchone()
+            attacker_provinces = (attacker_row[0] or 0) if attacker_row else 0
             db.execute(
                 "SELECT COUNT(id) FROM provinces WHERE userId=%s", (defender.id,)
             )
-            defender_provinces = db.fetchone()[0] or 0
+            defender_row = db.fetchone()
+            defender_provinces = (defender_row[0] or 0) if defender_row else 0
             logger.debug(
                 "declare_war: attacker_provinces=%s defender_provinces=%s",
                 attacker_provinces,
@@ -1082,7 +1084,8 @@ def wars():
                     ),
                     (cId, cId),
                 )
-                warsCount = db.fetchone()[0]
+                wars_row = db.fetchone()
+                warsCount = wars_row[0] if wars_row else 0
             except Exception:
                 warsCount = 0
         return render_template(

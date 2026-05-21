@@ -20,6 +20,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check error() argument order in routes
+        run: python scripts/check_error_call_order.py
+
       - name: Run targeted pytest (no DB required)
         run: |
           python -m pytest \
