@@ -163,6 +163,8 @@ function pop_from_page(req_path, container_id) {
 function setTheme(themeName) {
     try { localStorage.setItem("theme", themeName); } catch(e) {}
     document.documentElement.className = themeName;
+    var slider = document.getElementById("slider");
+    if (slider) slider.checked = (themeName === "theme-dark");
 }
 
 function toggleTheme() {
@@ -226,12 +228,27 @@ function war_target() {
 }
 
 // ---------------------------------------------------------------------------
-// Flash message auto-dismiss
+// Toast notifications (flash messages)
 // ---------------------------------------------------------------------------
+function dismissToast(el) {
+    if (!el) return;
+    el.style.transition = "opacity 0.3s ease-out, transform 0.3s ease-out";
+    el.style.opacity = "0";
+    el.style.transform = "translateX(100%)";
+    setTimeout(function() {
+        el.remove();
+        var container = document.getElementById("toast-container");
+        if (container && container.children.length === 0) container.remove();
+    }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-    var flashes = document.querySelectorAll(".purchasediv");
-    flashes.forEach(function(flash, i) {
-        // Stagger fade-out: 3s + 0.5s per message
+    var toasts = document.querySelectorAll(".toast-item");
+    toasts.forEach(function(toast, i) {
+        setTimeout(function() { dismissToast(toast); }, 5000 + (i * 400));
+    });
+    var legacy = document.querySelectorAll(".purchasediv");
+    legacy.forEach(function(flash, i) {
         setTimeout(function() {
             flash.style.transition = "opacity 0.5s ease-out";
             flash.style.opacity = "0";
