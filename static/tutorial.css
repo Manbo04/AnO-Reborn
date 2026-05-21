@@ -18,7 +18,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     padding: 0;
 }
 
-/* Hero */
+/* Hero — always light text (immune to .templatedivcontent / theme body colors) */
 .tutorial-hero-band {
     position: relative;
     margin-bottom: 20px;
@@ -27,6 +27,13 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     background: linear-gradient(135deg, #12161f 0%, #0d3d52 50%, #1c2029 100%);
     border: 1px solid rgba(0, 167, 225, 0.4);
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+    color: #ffffff;
+}
+
+.tutorial-hero-band p,
+.tutorial-hero-band span,
+.tutorial-hero-band strong {
+    color: inherit;
 }
 
 .tutorial-hero-band::after {
@@ -85,7 +92,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     max-width: 32rem;
     font-size: 0.98rem;
     line-height: 1.55;
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .tutorial-hud {
@@ -128,7 +135,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-hud-pct {
-    color: #6dd4f7;
+    color: #7dd3fc !important;
     font-weight: 700;
 }
 
@@ -395,9 +402,10 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     color: var(--text-secondary);
 }
 
-.tutorial-interactive .templatecontentpleft,
-.tutorial-interactive p,
-.tutorial-interactive li {
+.tutorial-chapter-body .templatecontentpleft,
+.tutorial-chapter-body p,
+.tutorial-chapter-body li,
+.tutorial-footer p {
     width: 100% !important;
     max-width: none !important;
     margin: 0 0 14px !important;
