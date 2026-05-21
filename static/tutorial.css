@@ -9,7 +9,8 @@ html.page-tutorial .tutorial-academy.templatediv {
     border: none !important;
     box-shadow: none !important;
     width: min(1120px, 96%) !important;
-    margin: 110px auto 40px !important;
+    /* Clear fixed navbar (55px) + templatecontainer pull-up (-90px) */
+    margin: 155px auto 40px !important;
     padding: 0 !important;
     overflow: visible !important;
 }
@@ -53,7 +54,12 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 20px;
-    align-items: end;
+    align-items: start;
+}
+
+.tutorial-hero-copy {
+    padding-top: 2px;
+    min-width: 0;
 }
 
 @media (max-width: 720px) {
@@ -65,19 +71,25 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 .tutorial-eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin: 0 0 6px;
-    font-size: 0.75rem;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 0;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    line-height: 1.5;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #6dd4f7;
+    color: #7dd3fc !important;
 }
 
-.tutorial-eyebrow .material-icons-outlined {
-    font-size: 16px !important;
-    top: 0;
-    right: 0;
+.tutorial-hero-band .material-icons-outlined {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    margin: 0 !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    color: #7dd3fc !important;
 }
 
 .tutorial-hero-title {
@@ -153,9 +165,9 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 
 .tutorial-hero-band .tutorial-reset-btn {
     position: absolute;
-    top: 10px;
-    right: 12px;
-    z-index: 2;
+    top: 14px;
+    right: 16px;
+    z-index: 3;
     font-size: 0.72rem;
     color: rgba(255, 255, 255, 0.45);
     background: none;
