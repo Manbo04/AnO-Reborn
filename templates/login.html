@@ -1,70 +1,44 @@
-{% extends "layout.html" %} {% block title %} Login {% endblock %} {% block body %}
-<!-- START------------------------------------------------------------------------->
+{% extends "layout.html" %}
+{% block title %}Login{% endblock %}
+{% block body %}
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
 <div class="templatediv noboxshadowtopper loginsignupdiv">
 
     <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            login
-            </span>Login</h1>
+        <h1 class="templatedivtitle">
+            <span class="material-icons-outlined iconlarge">login</span>Login
+        </h1>
     </div>
 
     <div class="templatedivcontent">
         {% if verification_message %}
-        <div class="verification-success">
-            {{ verification_message }}
-        </div>
+        <div class="verification-success">{{ verification_message }}</div>
         {% endif %}
 
-        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
-
-            <div class="templatedivflex2left">
-
+        <div class="auth-columns">
+            <div class="auth-panel">
                 <form action="/discord" method="GET">
-                    <div class="templatecontentheadercenter">Discord Login</div>
-
-                    <button class="templatedivbutton discordbutton">
-                    <span class="material-icons-outlined">
-                        login
-                        </span>Discord</button>
-
+                    <h2 class="templatecontentheadercenter">Discord Login</h2>
+                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton">
+                        <span class="material-icons-outlined">login</span>Discord
+                    </button>
+                </form>
             </div>
-            </form>
 
-            <div class="templatedivflex2left warflexparentcolors">
+            <div class="auth-panel">
                 <form action="/login/" id="login-form" class="loginsignupform" method="POST">
+                    <h2 class="templatecontentheadercenter">Default Login</h2>
 
-                    <div class="templatecontentheadercenter">Default Login</div>
+                    <input class="loginsignupinput w-full" name="username" placeholder="Country Name" type="text" autocomplete="username" />
+                    <input class="loginsignupinput w-full" name="password" placeholder="Password" type="password" autocomplete="current-password" />
 
-                    <div class="templatedivflex2 divflex2center signupdiv">
-                        <div class="templatedivflex2left">
-
-                            <input class="loginsignupinput" name="username" placeholder="Country Name" type="text" />
-                            <!-- maybe accept emails later on -->
-
-                        </div>
-                        <div class="templatedivflex2left">
-
-                            <input class="loginsignupinput" name="password" placeholder="Password" type="password" />
-
-                        </div>
-                    </div>
-
-                    <div class="templatedivflex2 divflex2center">
-                        <div class="templatedivflex2left">
-
-                            <a class="forgotpasscode loginsignupforgot" href="/forgot_password">Forgot password</a>
-
-                        </div>
-                        <div class="templatedivflex2left">
-
-                            <label class="templatecheckmarklabel fit">Remember Me
-                        <input type="checkbox" name="rememberme">
-                        <span class="templatecheckmark center"></span>
-                      </label>
-
-                        </div>
+                    <div class="auth-row-split">
+                        <a class="forgotpasscode loginsignupforgot" href="/forgot_password">Forgot password</a>
+                        <label class="templatecheckmarklabel fit">Remember Me
+                            <input type="checkbox" name="rememberme">
+                            <span class="templatecheckmark center"></span>
+                        </label>
                     </div>
 
                     <script>
@@ -73,18 +47,15 @@
                         }
                     </script>
 
-                    <div class="templatedivflex2 divflex2center signupdiv">
+                    <button type="button" class="g-recaptcha templatedivbutton templatecenteredbutton w-full"
+                        data-sitekey="6LdIi_4ZAAAAAL479XXAbPpVAK1rUHmw7iTMdtIC"
+                        data-callback="onSubmit" data-action="submit">
+                        <span class="material-icons-outlined">login</span>Login
+                    </button>
 
-                        <button class="g-recaptcha templatedivbutton" data-sitekey="6LdIi_4ZAAAAAL479XXAbPpVAK1rUHmw7iTMdtIC" data-callback='onSubmit' data-action='submit'>
-                            <span class="material-icons-outlined">
-                                login
-                                </span>Login</button>
-
-                    </div>
-
-                    <div class="templatecontentheadercenter login-signup-link">
+                    <p class="templatecontentheadercenter login-signup-link">
                         <a href="/signup" class="templatelink">Don't have an account? Get Started</a>
-                    </div>
+                    </p>
                 </form>
 
                 {% with messages = get_flashed_messages() %}
@@ -94,7 +65,6 @@
                 </div>
                 {% endif %}
                 {% endwith %}
-
             </div>
         </div>
     </div>
