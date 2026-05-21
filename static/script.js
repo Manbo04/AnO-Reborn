@@ -188,6 +188,10 @@ function setTheme(themeName) {
     document.documentElement.className = themeName;
     var slider = document.getElementById("slider");
     if (slider) slider.checked = (themeName === "theme-dark");
+    var metaTheme = document.getElementById("meta-theme-color");
+    if (metaTheme) {
+        metaTheme.content = themeName === "theme-dark" ? "#1c2029" : "#eef1f5";
+    }
     updateThemeToggleUi(themeName);
 }
 

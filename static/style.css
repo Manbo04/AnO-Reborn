@@ -345,6 +345,14 @@
     background: #00a7e1 !important;
 }
 
+html.theme-light {
+    color-scheme: light;
+}
+
+html.theme-dark {
+    color-scheme: dark;
+}
+
 .theme-light {
     --background: #eef1f5;
     --foreground: #ffffff;
@@ -469,11 +477,13 @@ label {
     padding: 0 5%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     border-bottom: 2px solid var(--accent);
-    transition: all 0.3s;
+    /* Only transition visual chrome — never use `all` (can confuse browser UI tinting) */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Keep hover identical to default — avoids Safari/Chrome re-tinting the browser chrome */
 .navbarparent:hover {
-    background: #1c2029 !important;
+    background: #1c2029;
 }
 
 .navbarparenttitle {
