@@ -1,0 +1,51 @@
+<div class="center fit notificationparent divflex2full">
+    <div class="left fit notificationchild">
+        {% if has_power %}
+        <ul class="right vanilla notificationchildleft">
+            <span class="material-icons-outlined">check</span>
+            Your province is powered
+        </ul>
+        {% else %}
+        <ul class="right vanilla notificationchildright">
+            <span class="material-icons-outlined">clear</span>
+            Your province is not powered
+        </ul>
+        {% endif %}
+    </div>
+    <div class="left fit notificationchild">
+        {% if enough_rations %}
+        <ul class="right vanilla notificationchildleft">
+            <span class="material-icons-outlined">check</span>
+            Your citizens have rations
+        </ul>
+        {% else %}
+        <ul class="right vanilla notificationchildright">
+            <span class="material-icons-outlined">clear</span>
+            Your citizens do not have rations
+        </ul>
+        {% endif %}
+        {% if distribution_capacity is not none %}
+        <ul class="right vanilla notificationchild">
+            Ration distribution serves {{ distribution_capacity | commas }} population
+        </ul>
+        {% endif %}
+    </div>
+    <div class="left fit notificationchild">
+        {% if enough_consumer_goods %}
+        <ul class="right vanilla notificationchildleft">
+            <span class="material-icons-outlined">check</span>
+            Your citizens have consumer goods
+        </ul>
+        {% else %}
+        <ul class="right vanilla notificationchildright">
+            <span class="material-icons-outlined">clear</span>
+            Your citizens do not have consumer goods
+        </ul>
+        {% endif %}
+        {% if cg_distribution_capacity is not none %}
+        <ul class="right vanilla notificationchild">
+            CG distribution serves {{ cg_distribution_capacity | commas }} population
+        </ul>
+        {% endif %}
+    </div>
+</div>
