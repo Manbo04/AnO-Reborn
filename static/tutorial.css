@@ -22,12 +22,13 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 .tutorial-hero-band {
     position: relative;
     margin-bottom: 20px;
-    padding: 26px 28px 22px;
+    padding: 44px 28px 26px;
     border-radius: 12px;
     background: linear-gradient(135deg, #12161f 0%, #0d3d52 50%, #1c2029 100%);
     border: 1px solid rgba(0, 167, 225, 0.4);
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
     color: #ffffff;
+    overflow: visible;
 }
 
 .tutorial-hero-band p,
