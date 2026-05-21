@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
-<link href="{{ url_for('static', filename='tutorial.css') }}?v=6" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=6"></script>
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=7" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=7"></script>
 {% endblock %}
 {% block body %}
 <script>document.documentElement.classList.add('page-tutorial');</script>
@@ -150,21 +150,22 @@
 
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>How often do most economic systems (tax, production, consumption) update?</p>
+                            <p class="tutorial-quiz-q">How often do most economic systems (tax, production, consumption) update?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" name="q0a" hidden> Every minute</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" name="q0a" hidden> Hourly (scheduled ticks)</label>
-                                <label class="tutorial-quiz-option"><input type="radio" name="q0a" hidden> Only when you log in</label>
+                                <label class="tutorial-quiz-option"><input type="radio" name="q0a"><span class="tutorial-option-label">Every minute</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" name="q0a"><span class="tutorial-option-label">Hourly (scheduled ticks)</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio" name="q0a"><span class="tutorial-option-label">Only when you log in</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
-                        <button type="button" class="templatedivbutton" data-chapter-complete><span class="material-icons-outlined">done</span> Complete chapter</button>
-                        <button type="button" class="templatelink" data-chapter-skip>Skip (−25 XP)</button>
-                        <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
+                        <p class="tutorial-actions-label">After you pass the quiz:</p>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled><span class="material-icons-outlined">arrow_forward</span> Complete &amp; unlock next chapter</button>
+                        <button type="button" class="templatelink tutorial-btn-skip" data-chapter-skip>Skip this chapter (−25 XP)</button>
                     </div>
                     </div>
                 </article>
@@ -197,23 +198,22 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Province acquisition cost scales with the number of provinces you already have. The formula uses a base of $8M plus what factor per existing province?</p>
+                            <p class="tutorial-quiz-q">Province acquisition cost scales with the number of provinces you already have. The formula uses a base of $8M plus what factor per existing province?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> +5% flat</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> +16% per province owned</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Fixed $8M always</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">+5% flat</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">+16% per province owned</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Fixed $8M always</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/createprovince" class="templatedivbutton"><span class="material-icons-outlined">north_east</span> Create Province</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -257,24 +257,23 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>What happens to tax income if your nation lacks rations distribution?</p>
+                            <p class="tutorial-quiz-q">What happens to tax income if your nation lacks rations distribution?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> +50% bonus</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> −30% tax income</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> No effect</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">+50% bonus</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">−30% tax income</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">No effect</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/mechanics/resources" class="templatedivbutton">Resource mechanics</a>
                         <a href="/country" class="templatedivbutton">View your resources</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -310,24 +309,23 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>With full consumer goods distribution, your tax multiplier becomes:</p>
+                            <p class="tutorial-quiz-q">With full consumer goods distribution, your tax multiplier becomes:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> 1.25×</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> 1.5× (+50%)</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> 2.0×</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">1.25×</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">1.5× (+50%)</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">2.0×</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/mechanics/revenue" class="templatedivbutton">Revenue mechanics</a>
                         <a href="/country" class="templatedivbutton">Your country page</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -351,23 +349,22 @@
                     </table>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Who consumes the most consumer goods per capita?</p>
+                            <p class="tutorial-quiz-q">Who consumes the most consumer goods per capita?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Children</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Working adults</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Elderly (2× rate)</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Children</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Working adults</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">Elderly (2× rate)</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/mechanics/consumer_goods" class="templatedivbutton">Consumer goods guide</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -400,23 +397,22 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Minimum supplies required to launch an attack:</p>
+                            <p class="tutorial-quiz-q">Minimum supplies required to launch an attack:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> 50</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> {{ tutorial_constants.min_attack_supplies }}</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> 1000</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">50</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">{{ tutorial_constants.min_attack_supplies }}</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">1000</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/military" class="templatedivbutton">Military page</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -435,23 +431,22 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>The market price of a resource is primarily determined by:</p>
+                            <p class="tutorial-quiz-q">The market price of a resource is primarily determined by:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Fixed NPC prices</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Player buy/sell offers</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Random hourly rolls</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Fixed NPC prices</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">Player buy/sell offers</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Random hourly rolls</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/market" class="templatedivbutton">Visit market</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -471,23 +466,22 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Supply-related upgrades are especially valuable because:</p>
+                            <p class="tutorial-quiz-q">Supply-related upgrades are especially valuable because:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> They replace the need for armies</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> They help sustain repeated offensives (200+ supply threshold)</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> They disable coalition tax</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">They replace the need for armies</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">They help sustain repeated offensives (200+ supply threshold)</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">They disable coalition tax</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/upgrades" class="templatedivbutton">View upgrades</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -512,24 +506,23 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Modern combat morale/damage is calculated:</p>
+                            <p class="tutorial-quiz-q">Modern combat morale/damage is calculated:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> All-or-nothing per battle</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Per-unit, proportional to force sizes</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Only by nation GDP</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">All-or-nothing per battle</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">Per-unit, proportional to force sizes</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Only by nation GDP</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/mechanics/war" class="templatedivbutton">War mechanics</a>
                         <a href="/wars" class="templatedivbutton">War page</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete>Complete chapter</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                        <button type="button" class="templatelink" data-nav-next>Next →</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
+</div>
                     </div>
                 </article>
 
@@ -550,39 +543,34 @@
                     </div>
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Final exam</h3>
+                        <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p>Coalition tax on member income is shown on:</p>
+                            <p class="tutorial-quiz-q">Coalition tax on member income is shown on:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Market page only</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Country page revenue breakdown</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Province page only</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Market page only</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">Country page revenue breakdown</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Province page only</span></label>
                             </div>
                         </div>
                         <div class="tutorial-quiz-question">
-                            <p>The best early-game priority is usually:</p>
+                            <p class="tutorial-quiz-q">The best early-game priority is usually:</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Max military before any economy</label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio" hidden> Stable power → food → distribution → tax/CG</label>
-                                <label class="tutorial-quiz-option"><input type="radio" hidden> Ignore provinces and only trade</label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Max military before any economy</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">Stable power → food → distribution → tax/CG</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Ignore provinces and only trade</span></label>
                             </div>
                         </div>
-                        <div class="tutorial-quiz-feedback"></div>
-                        <button type="button" class="templatedivbutton" data-quiz-submit>Check answers</button>
+                        <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
+                        <button type="button" class="templatedivbutton tutorial-btn-check" data-quiz-submit disabled>Check my answer</button>
                     </div>
                     <div class="tutorial-actions">
                         <a href="/coalitions" class="templatedivbutton">Browse coalitions</a>
                         <a href="/statistics" class="templatedivbutton">Statistics</a>
-                        <button type="button" class="templatedivbutton" data-chapter-complete><span class="material-icons-outlined">emoji_events</span> Graduate!</button>
-                        <button type="button" class="templatelink" data-nav-prev>← Previous</button>
-                    </div>
+                        <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled><span class="material-icons-outlined">emoji_events</span> Graduate!</button>
+</div>
                     </div>
                 </article>
-
-                <div class="tutorial-nav-global">
-                    <button type="button" class="templatelink" data-nav-prev>← Previous chapter</button>
-                    <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
-                </div>
-            </div>
+</div>
         </div>
         </div>
 
@@ -594,6 +582,19 @@
                 Reference docs: <a href="/mechanics" class="templatelink">Game Mechanics</a>.
             </p>
         </div>
+    </div>
+</div>
+
+<div class="tutorial-intro-overlay" id="tutorial-intro-overlay" aria-hidden="true">
+    <div class="tutorial-intro-card">
+        <h2><span class="material-icons-outlined">school</span> How this tutorial works</h2>
+        <ol class="tutorial-intro-steps">
+            <li><strong>Pick a chapter</strong> in the left menu (or top row on mobile).</li>
+            <li><strong>Read</strong> the lesson — try sliders and mini-games in the blue boxes.</li>
+            <li><strong>Quiz:</strong> click one radio answer, then press <strong>Check my answer</strong>.</li>
+            <li>When correct, press <strong>Complete &amp; unlock next chapter</strong> to advance.</li>
+        </ol>
+        <button type="button" class="templatedivbutton" id="tutorial-intro-dismiss">Got it — start learning</button>
     </div>
 </div>
 

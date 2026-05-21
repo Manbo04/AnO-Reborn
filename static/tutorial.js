@@ -102,12 +102,81 @@
             if (firstTab && !activePanel.querySelector(".tutorial-tab.is-active")) {
                 activateTab(firstTab);
             }
+            syncChapterControls(index);
         }
 
         if (scroll) {
-            var main = root.querySelector(".tutorial-main-panel");
-            if (main) main.scrollIntoView({ behavior: "smooth", block: "start" });
+            var stage = root.querySelector(".tutorial-stage");
+            if (stage) stage.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
+    }
+
+    function syncChapterControls(chapterIndex) {
+        var panel = chapters[chapterIndex];
+        if (!panel) return;
+        var quizKey = "ch" + chapterIndex;
+        var passed = !!progress.quizzes[quizKey];
+        var completeBtn = panel.querySelector("[data-chapter-complete]");
+        if (completeBtn) {
+            var hasQuiz = !!panel.querySelector(".tutorial-quiz");
+            if (!hasQuiz || passed) {
+                completeBtn.disabled = false;
+                completeBtn.classList.remove("is-locked");
+            } else {
+                completeBtn.disabled = true;
+                completeBtn.classList.add("is-locked");
+            }
+        }
+        var howto = panel.querySelector(".tutorial-howto");
+        if (howto) {
+            howto.classList.toggle("is-step-quiz", !passed);
+            howto.classList.toggle("is-done", passed);
+        }
+    }
+
+    function injectHowTo() {
+        chapters.forEach(function (panel, i) {
+            if (panel.querySelector(".tutorial-howto")) return;
+            var quiz = panel.querySelector(".tutorial-quiz");
+            var anchor = quiz || panel.querySelector(".tutorial-chapter-body");
+            if (!anchor) return;
+            var howto = document.createElement("div");
+            howto.className = "tutorial-howto";
+            howto.innerHTML =
+                '<h4 class="tutorial-howto-title"><span class="material-icons-outlined">checklist</span> What to do in this chapter</h4>' +
+                '<ol class="tutorial-howto-list">' +
+                "<li><span>1</span> Read the lesson (use tabs if you see them).</li>" +
+                "<li><span>2</span> Try any <strong>interactive box</strong> (sliders, chain game).</li>" +
+                "<li><span>3</span> Answer the quiz below, then press <strong>Check my answer</strong>.</li>" +
+                "<li><span>4</span> Press <strong>Complete &amp; unlock next chapter</strong>.</li>" +
+                "</ol>";
+            if (quiz) {
+                quiz.parentNode.insertBefore(howto, quiz);
+            } else {
+                anchor.insertBefore(howto, anchor.firstChild);
+            }
+        });
+    }
+
+    function normalizeQuizRadios(quiz, chapterIndex) {
+        var questions = quiz.querySelectorAll(".tutorial-quiz-question");
+        questions.forEach(function (q, qi) {
+            var name = "ch" + chapterIndex + "q" + qi;
+            q.querySelectorAll('input[type="radio"]').forEach(function (inp, oi) {
+                inp.name = name;
+                inp.value = inp.value || String.fromCharCode(97 + oi);
+                inp.removeAttribute("hidden");
+            });
+        });
+    }
+
+    function quizAllAnswered(quiz) {
+        var ok = true;
+        quiz.querySelectorAll(".tutorial-quiz-question").forEach(function (q) {
+            if (!q.querySelector('input[type="radio"]:checked')) ok = false;
+        });
+        return ok;
     }
 
     function unlockChapters() {
@@ -324,24 +393,43 @@
         updateSupply();
     }
 
-    /* Flip cards — track reveals */
-
     /* Quizzes */
     function setupQuiz(panel, chapterIndex) {
         var quiz = panel.querySelector(".tutorial-quiz");
         if (!quiz) return;
+
+        normalizeQuizRadios(quiz, chapterIndex);
 
         var questions = quiz.querySelectorAll(".tutorial-quiz-question");
         var submitBtn = quiz.querySelector("[data-quiz-submit]");
         var feedback = quiz.querySelector(".tutorial-quiz-feedback");
         var quizKey = "ch" + chapterIndex;
 
-        if (progress.quizzes[quizKey]) {
+        function updateCheckButton() {
+            if (!submitBtn) return;
+            var ready = quizAllAnswered(quiz);
+            submitBtn.disabled = !ready;
+            if (ready && !progress.quizzes[quizKey]) {
+                submitBtn.textContent = "Check my answer";
+            }
+        }
+
+        function markPassedUI() {
             quiz.classList.add("is-done");
             if (feedback) {
-                feedback.textContent = "Quiz passed! +" + XP_QUIZ_BONUS + " XP earned.";
-                feedback.style.color = "#2ecc71";
+                feedback.textContent =
+                    "Correct! +" + XP_QUIZ_BONUS + " XP. Now press Complete below.";
+                feedback.className = "tutorial-quiz-feedback is-success";
             }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Quiz passed";
+            }
+            syncChapterControls(chapterIndex);
+        }
+
+        if (progress.quizzes[quizKey]) {
+            markPassedUI();
             questions.forEach(function (q) {
                 var correct = q.querySelector("[data-correct='true']");
                 if (correct) correct.classList.add("is-correct");
@@ -349,26 +437,51 @@
             return;
         }
 
+        quiz.querySelectorAll('input[type="radio"]').forEach(function (inp) {
+            inp.addEventListener("change", function () {
+                var opt = inp.closest(".tutorial-quiz-option");
+                var q = inp.closest(".tutorial-quiz-question");
+                if (q) {
+                    q.querySelectorAll(".tutorial-quiz-option").forEach(function (o) {
+                        o.classList.remove("is-selected");
+                    });
+                }
+                if (opt) opt.classList.add("is-selected");
+                if (feedback && !progress.quizzes[quizKey]) {
+                    feedback.textContent = "";
+                    feedback.className = "tutorial-quiz-feedback";
+                }
+                updateCheckButton();
+            });
+        });
+
         if (submitBtn) {
             submitBtn.addEventListener("click", function () {
+                if (!quizAllAnswered(quiz)) {
+                    if (feedback) {
+                        feedback.textContent = "Select an answer for each question first.";
+                        feedback.className = "tutorial-quiz-feedback is-warn";
+                    }
+                    return;
+                }
+
                 var allCorrect = true;
                 questions.forEach(function (q) {
-                    var selected = q.querySelector(
-                        ".tutorial-quiz-option.is-selected"
-                    );
+                    var checked = q.querySelector('input[type="radio"]:checked');
                     var correctOpt = q.querySelector("[data-correct='true']");
                     q.querySelectorAll(".tutorial-quiz-option").forEach(function (opt) {
                         opt.classList.remove("is-correct", "is-wrong");
                     });
-                    if (!selected) {
+                    if (!checked) {
                         allCorrect = false;
                         return;
                     }
-                    if (selected === correctOpt) {
-                        selected.classList.add("is-correct");
+                    var chosen = checked.closest(".tutorial-quiz-option");
+                    if (chosen === correctOpt) {
+                        chosen.classList.add("is-correct");
                     } else {
                         allCorrect = false;
-                        selected.classList.add("is-wrong");
+                        if (chosen) chosen.classList.add("is-wrong");
                         if (correctOpt) correctOpt.classList.add("is-correct");
                     }
                 });
@@ -378,35 +491,25 @@
                     progress.xp += XP_QUIZ_BONUS;
                     saveProgress(progress);
                     updateStatsUI();
-                    if (feedback) {
-                        feedback.textContent =
-                            "Excellent! +" + XP_QUIZ_BONUS + " XP. You can complete this chapter.";
-                        feedback.style.color = "#2ecc71";
-                    }
-                    quiz.classList.add("is-done");
+                    markPassedUI();
                 } else {
                     if (feedback) {
                         feedback.textContent =
-                            "Some answers were wrong — review the lesson and try again!";
-                        feedback.style.color = "#e74c3c";
+                            "Not quite — read the lesson again, pick a new answer, and retry.";
+                        feedback.className = "tutorial-quiz-feedback is-error";
                     }
                 }
             });
         }
 
-        quiz.querySelectorAll(".tutorial-quiz-option").forEach(function (opt) {
-            opt.addEventListener("click", function () {
-                var q = opt.closest(".tutorial-quiz-question");
-                q.querySelectorAll(".tutorial-quiz-option").forEach(function (o) {
-                    o.classList.remove("is-selected");
-                });
-                opt.classList.add("is-selected");
-            });
-        });
+        updateCheckButton();
     }
+
+    injectHowTo();
 
     chapters.forEach(function (panel, i) {
         setupQuiz(panel, i);
+        syncChapterControls(i);
 
         var completeBtn = panel.querySelector("[data-chapter-complete]");
         if (completeBtn) {
@@ -448,30 +551,20 @@
         });
     });
 
-    var prevBtn = root.querySelector("[data-nav-prev]");
-    var nextBtn = root.querySelector("[data-nav-next]");
-    if (prevBtn) {
-        prevBtn.addEventListener("click", function () {
-            if (progress.current > 0) setChapter(progress.current - 1, true);
-        });
+    var introOverlay = document.getElementById("tutorial-intro-overlay");
+    var introDismiss = document.getElementById("tutorial-intro-dismiss");
+    var INTRO_KEY = "ano_tutorial_intro_seen";
+    if (introOverlay && !localStorage.getItem(INTRO_KEY)) {
+        introOverlay.classList.add("is-show");
+        introOverlay.setAttribute("aria-hidden", "false");
     }
-    if (nextBtn) {
-        nextBtn.addEventListener("click", function () {
-            var quizKey = "ch" + progress.current;
-            var panel = chapters[progress.current];
-            var quiz = panel && panel.querySelector(".tutorial-quiz");
-            if (quiz && !progress.quizzes[quizKey]) {
-                var fb = quiz.querySelector(".tutorial-quiz-feedback");
-                if (fb) {
-                    fb.textContent = "Complete the quiz or use 'Mark complete' to continue.";
-                    fb.style.color = "#f39c12";
-                }
-                return;
-            }
-            markChapterComplete(progress.current);
-            if (progress.current + 1 < totalChapters) {
-                setChapter(progress.current + 1, true);
-            }
+    if (introDismiss && introOverlay) {
+        introDismiss.addEventListener("click", function () {
+            introOverlay.classList.remove("is-show");
+            introOverlay.setAttribute("aria-hidden", "true");
+            try {
+                localStorage.setItem(INTRO_KEY, "1");
+            } catch (e) {}
         });
     }
 
