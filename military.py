@@ -364,7 +364,7 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
 
         with get_request_cursor() as db:
             if units not in ALL_UNITS:
-                return error("No such unit exists.", 400)
+                return error(400, "No such unit exists.")
 
             units_str = request.form.get(units)
             if not units_str:
