@@ -110,7 +110,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     display: block;
     font-size: 1.2rem;
     font-weight: 800;
-    color: #fff;
+    color: #ffffff !important;
 }
 
 .tutorial-hud-label {
@@ -118,7 +118,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.72) !important;
 }
 
 .tutorial-hud-progress-head {
