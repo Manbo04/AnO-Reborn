@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
-<link href="{{ url_for('static', filename='tutorial.css') }}?v=1" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=1"></script>
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=2" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=2"></script>
 {% endblock %}
 {% block body %}
 <div class="templatediv tutorial-interactive" id="tutorial-interactive"
@@ -40,7 +40,7 @@
             <div class="tutorial-progress-wrap">
                 <div class="tutorial-progress-label">
                     <span>Overall progress</span>
-                    <button type="button" class="templatelink tutorial-reset-btn" data-tutorial-reset>Reset progress</button>
+                    <button type="button" class="tutorial-reset-btn" data-tutorial-reset>Reset progress</button>
                 </div>
                 <div class="tutorial-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                     <div class="tutorial-progress-fill"></div>
@@ -49,50 +49,62 @@
         </section>
 
         <div class="tutorial-layout">
-            <nav class="tutorial-chapter-nav" aria-label="Tutorial chapters">
-                <button type="button" class="tutorial-chapter-btn is-active" data-chapter="0">
-                    <span class="tutorial-chapter-num">1</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Welcome &amp; Game Loop</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="1">
-                    <span class="tutorial-chapter-num">2</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Provinces &amp; Buildings</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="2">
-                    <span class="tutorial-chapter-num">3</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Resources &amp; Chains</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="3">
-                    <span class="tutorial-chapter-num">4</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Economy &amp; Tax</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="4">
-                    <span class="tutorial-chapter-num">5</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Population &amp; Welfare</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="5">
-                    <span class="tutorial-chapter-num">6</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Military &amp; Supplies</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="6">
-                    <span class="tutorial-chapter-num">7</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Market &amp; Trade</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="7">
-                    <span class="tutorial-chapter-num">8</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Upgrades &amp; Tech</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="8">
-                    <span class="tutorial-chapter-num">9</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> War &amp; Combat</span>
-                </button>
-                <button type="button" class="tutorial-chapter-btn" data-chapter="9">
-                    <span class="tutorial-chapter-num">10</span>
-                    <span><span class="material-icons-outlined tutorial-chapter-icon">radio_button_unchecked</span> Coalitions &amp; Mastery</span>
-                </button>
-            </nav>
+            <div class="tutorial-stepper-wrap">
+                <nav class="tutorial-chapter-nav" aria-label="Tutorial chapters">
+                    <button type="button" class="tutorial-chapter-btn is-active" data-chapter="0" title="Welcome">
+                        <span class="tutorial-chapter-num">1</span>
+                        <span class="tutorial-chapter-label">Welcome</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="1" title="Provinces">
+                        <span class="tutorial-chapter-num">2</span>
+                        <span class="tutorial-chapter-label">Provinces</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="2" title="Resources">
+                        <span class="tutorial-chapter-num">3</span>
+                        <span class="tutorial-chapter-label">Resources</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="3" title="Economy">
+                        <span class="tutorial-chapter-num">4</span>
+                        <span class="tutorial-chapter-label">Economy</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="4" title="Population">
+                        <span class="tutorial-chapter-num">5</span>
+                        <span class="tutorial-chapter-label">Population</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="5" title="Military">
+                        <span class="tutorial-chapter-num">6</span>
+                        <span class="tutorial-chapter-label">Military</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="6" title="Market">
+                        <span class="tutorial-chapter-num">7</span>
+                        <span class="tutorial-chapter-label">Market</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="7" title="Upgrades">
+                        <span class="tutorial-chapter-num">8</span>
+                        <span class="tutorial-chapter-label">Upgrades</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="8" title="War">
+                        <span class="tutorial-chapter-num">9</span>
+                        <span class="tutorial-chapter-label">War</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                    <button type="button" class="tutorial-chapter-btn" data-chapter="9" title="Coalitions">
+                        <span class="tutorial-chapter-num">10</span>
+                        <span class="tutorial-chapter-label">Coalitions</span>
+                        <span class="material-icons-outlined tutorial-chapter-icon" aria-hidden="true">radio_button_unchecked</span>
+                    </button>
+                </nav>
+            </div>
 
-            <div class="tutorial-main-panel">
+            <div class="tutorial-main-panel warflexparentcolors">
 
                 <!-- Chapter 1 -->
                 <article class="tutorial-chapter-panel is-visible" data-chapter-index="0">
@@ -547,7 +559,7 @@
                     </div>
                 </article>
 
-                <div class="tutorial-actions" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                <div class="tutorial-nav-global">
                     <button type="button" class="templatelink" data-nav-prev>← Previous chapter</button>
                     <button type="button" class="templatelink" data-nav-next>Next chapter →</button>
                 </div>
