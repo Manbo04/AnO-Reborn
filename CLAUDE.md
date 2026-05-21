@@ -128,6 +128,8 @@ At the end of each session or major task, document:
 - Safe `request.form.get("description")` in countries `update_info`
 - `wars/service.py` guard for missing war rows in `update_supply`
 - CI script `scripts/check_error_call_order.py` to prevent swapped `error()` regressions
+- Removed deprecated `tasks_revenue_optimized.py` (legacy proInfra/resources SQL)
+- Fixed unused `CoalitionQueries` in `database.py` to use `coalitions_legacy` schema
 
 **What To Watch**:
 - Province/military buy/sell validation should return 400 pages, not global 500 with `error_code`
