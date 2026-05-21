@@ -375,7 +375,8 @@ def build_structure_action():
 def get_province_price(user_id):
     with get_request_cursor() as db:
         db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (user_id,))
-        current_province_amount = db.fetchone()[0]
+        count_row = db.fetchone()
+        current_province_amount = count_row[0] if count_row else 0
 
         multiplier = 1 + (0.16 * current_province_amount)
         price = int(8000000 * multiplier)
@@ -632,7 +633,10 @@ def province_sell_buy(way, units, province_id):
         ]
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        gold = db.fetchone()[0]
+        gold_row = db.fetchone()
+        if not gold_row:
+            return error(500, "Nation data could not be found")
+        gold = gold_row[0] or 0
 
         try:
             wantedUnits = int(request.form.get(units))
@@ -684,7 +688,7 @@ def province_sell_buy(way, units, province_id):
         unit_prices["cityCount_price"] = cityCount_price
 
         if units not in allUnits:
-            return error("No such unit exists.", 400)
+            return error(400, "No such unit exists.")
 
         price = unit_prices[f"{units}_price"]
 
@@ -817,7 +821,7 @@ def province_sell_buy(way, units, province_id):
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
-                return error("You don't have enough units.", 400)
+                return error(400, "You don't have enough units.")
 
             if units in ["land", "cityCount"]:
                 unitUpd = f"UPDATE provinces SET {units}=%s WHERE id=%s"
@@ -838,7 +842,10 @@ def province_sell_buy(way, units, province_id):
 
             # Capture gold before and perform atomic increment
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_before = db.fetchone()[0]
+            gold_before_row = db.fetchone()
+            if not gold_before_row:
+                return error(500, "Nation data could not be found")
+            gold_before = gold_before_row[0] or 0
 
             db.execute(
                 "UPDATE stats SET gold = gold + %s WHERE id = %s",
@@ -846,7 +853,8 @@ def province_sell_buy(way, units, province_id):
             )
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_after = db.fetchone()[0]
+            gold_after_row = db.fetchone()
+            gold_after = (gold_after_row[0] or 0) if gold_after_row else gold_before
 
             # Audit the sell event
             db.execute(
@@ -894,7 +902,7 @@ def province_sell_buy(way, units, province_id):
             if (
                 totalPrice > gold
             ):  # Checks if user wants to buy more units than he has gold
-                return error("You don't have enough money.", 400)
+                return error(400, "You don't have enough money.")
 
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
                 return error(400, f"Not enough {slot_type} slots for {wantedUnits}")
@@ -907,12 +915,16 @@ def province_sell_buy(way, units, province_id):
 
             # Capture gold before and perform atomic decrement
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_before = db.fetchone()[0]
+            gold_before_row = db.fetchone()
+            if not gold_before_row:
+                return error(500, "Nation data could not be found")
+            gold_before = gold_before_row[0] or 0
 
             db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId))
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_after = db.fetchone()[0]
+            gold_after_row = db.fetchone()
+            gold_after = (gold_after_row[0] or 0) if gold_after_row else gold_before
 
             if units in ["land", "cityCount"]:
                 updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"

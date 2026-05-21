@@ -474,7 +474,10 @@ def next_turn_rations(cId, prod_rations):
 def delete_news(id):
     with get_request_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
-        destination_id = db.fetchone()[0]
+        news_row = db.fetchone()
+        if not news_row:
+            return "404"
+        destination_id = news_row[0]
         if destination_id == session["user_id"]:
             db.execute("DELETE FROM news WHERE id=(%s)", (id,))
             return "200"
@@ -488,7 +491,8 @@ def delete_news(id):
 def cg_need(user_id):
     with get_request_cursor() as db:
         db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (user_id,))
-        population = db.fetchone()[0]
+        pop_row = db.fetchone()
+        population = pop_row[0] if pop_row else None
         if population is None:
             population = 0
 
@@ -1202,25 +1206,24 @@ def delete_own_account():
             pass
         else:
             db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
-            user_coalition = db.fetchone()[0]
-
-            db.execute(
-                "SELECT COUNT(userid) FROM coalitions_legacy "
-                "WHERE role='leader' AND colid=%s",
-                (user_coalition,),
-            )
-            leader_count = db.fetchone()[0]
-
-            if leader_count != 1:
-                pass
-            else:
+            coalition_row = db.fetchone()
+            if coalition_row:
+                user_coalition = coalition_row[0]
                 db.execute(
-                    "DELETE FROM coalitions_legacy WHERE colid=%s",
+                    "SELECT COUNT(userid) FROM coalitions_legacy "
+                    "WHERE role='leader' AND colid=%s",
                     (user_coalition,),
                 )
-                db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
-                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+                leader_row = db.fetchone()
+                leader_count = leader_row[0] if leader_row else 0
+                if leader_count == 1:
+                    db.execute(
+                        "DELETE FROM coalitions_legacy WHERE colid=%s",
+                        (user_coalition,),
+                    )
+                    db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
+                    db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
+                    db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
         db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))

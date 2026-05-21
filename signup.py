@@ -689,8 +689,12 @@ def signup():
         # Gets user's form inputs
         username = request.form.get("username")
         email = request.form.get("email")
-        password = request.form.get("password").encode("utf-8")
-        confirmation = request.form.get("confirmation").encode("utf-8")
+        password_raw = request.form.get("password")
+        confirmation_raw = request.form.get("confirmation")
+        if not password_raw or not confirmation_raw:
+            return error(400, "Password and confirmation are required")
+        password = password_raw.encode("utf-8")
+        confirmation = confirmation_raw.encode("utf-8")
 
         # Additional debug logging to help diagnose flaky test failures
         logger.debug(
