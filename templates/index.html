@@ -31,7 +31,6 @@
         }
     }
 </script>
-<script src="{{ url_for('static', filename='countdown.js') }}"></script>
 <style>
     .navbarparent {
         background: #36394500;
@@ -49,12 +48,7 @@
 
                 <h1 class="landingheader"><strong class="landingblueheader">Massively Multiplayer</strong> <strong class="landingwhiteheader">Nation Simulator</strong></h1>
 
-                <div id="countdown" style="color: white;">
-                    <h1 style="text-align: center;">Private Beta Launch</h1>
-                    <h1 id="count" style="text-align: center; color: #00a7e1;">time</h1>
-                </div>
-
-                <h2 class="landingcontent">Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.<br /><br />Please note that the game is not yet released. Stay up to date on the release date through our <a class="templatelink" href="https://discord.gg/SEae3Ua" target="blank" aria-label="discord" rel="noreferrer">discord server</a>.</h2>
+                <h2 class="landingcontent">Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. Trade on the global market, join coalitions, and wage war to grow your nation.</h2>
 
                 <div class="landingchildcontainerparent">
                     <div class="landingchildcontainerchild">
@@ -196,6 +190,33 @@
                 </div>
             </div>
         </div>
+    </div>
+    {% else %}
+    <div class="quick-links-grid" aria-label="Quick navigation">
+        <a class="quick-link-card" href="/country/id={{ session['user_id'] }}">
+            <span class="material-icons-outlined">flag</span>
+            <span>Country</span>
+        </a>
+        <a class="quick-link-card" href="/provinces">
+            <span class="material-icons-outlined">account_balance</span>
+            <span>Provinces</span>
+        </a>
+        <a class="quick-link-card" href="/market">
+            <span class="material-icons-outlined">local_grocery_store</span>
+            <span>Market</span>
+        </a>
+        <a class="quick-link-card" href="/military">
+            <span class="material-icons-outlined">shield</span>
+            <span>Military</span>
+        </a>
+        <a class="quick-link-card" href="/wars">
+            <span class="material-icons-outlined">military_tech</span>
+            <span>Wars</span>
+        </a>
+        <a class="quick-link-card" href="/my_coalition">
+            <span class="material-icons-outlined">group</span>
+            <span>Coalition</span>
+        </a>
     </div>
     {% endif %}
 </div>
