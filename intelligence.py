@@ -260,7 +260,10 @@ def spyResult():
                 ),
                 (cId, eId, time.time()),
             )
-            operation_id = db.fetchone()[0]
+            op_row = db.fetchone()
+            if not op_row:
+                return error(500, "Failed to record spy operation")
+            operation_id = op_row[0]
 
             object_list = variables.RESOURCES
 

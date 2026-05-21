@@ -121,7 +121,13 @@ At the end of each session or major task, document:
 - Added `tests/test_error_handler_status.py` regression tests (error status order, template compile, signup encode)
 - Added `.github/workflows/ci.yml` with offline-capable checks; deprecated dummy CI bypass workflow
 
-**Commit**: `94c2a4d4` on branch `cursor/fix-widespread-500-errors-a503`
+**Commits**: `64106825`, follow-up hardening on same branch
+
+**Follow-up (same session)**:
+- Additional `fetchone()` guards in wars, signup, market, countries, intelligence, admin_tools
+- Safe `request.form.get("description")` in countries `update_info`
+- `wars/service.py` guard for missing war rows in `update_supply`
+- CI script `scripts/check_error_call_order.py` to prevent swapped `error()` regressions
 
 **What To Watch**:
 - Province/military buy/sell validation should return 400 pages, not global 500 with `error_code`
