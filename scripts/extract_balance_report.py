@@ -21,9 +21,9 @@ def generate_report():
     print("\n1. DEMOGRAPHIC RATES (Per Tick)")
     print("-" * 80)
     aging_rates = variables.DEMO_AGING_RATES
-    elderly_death = aging_rates.get("elderly_death_rate", 0) * 100
-    working_to_elderly = aging_rates.get("working_to_elderly_rate", 0) * 100
-    children_to_working = aging_rates.get("children_to_working_rate", 0) * 100
+    elderly_death = aging_rates.get("elderly_death", 0) * 100
+    working_to_elderly = aging_rates.get("working_to_elderly", 0) * 100
+    children_to_working = aging_rates.get("children_to_working", 0) * 100
     print(f"  Elderly Death Rate:            {elderly_death:.1f}% per tick")
     print(f"  Working → Elderly Shift:       " f"{working_to_elderly:.1f}% per tick")
     print(f"  Children → Working Graduation: " f"{children_to_working:.1f}% per tick")
