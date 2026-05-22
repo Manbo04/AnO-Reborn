@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, redirect
+from flask import Blueprint, request, render_template, session, redirect, jsonify
 from helpers import login_required, error
 from dotenv import load_dotenv
 import variables
@@ -11,7 +11,12 @@ from database import (
 import os
 import math
 from action_loop import build_structure, ActionLoopError, BUILD_COST_RESOURCE
-
+from game_ui import (
+    FEATURE_PROVINCE_BASE_VIEW,
+    SLOT_THEMES,
+    build_province_layout_payload,
+    get_slot_config,
+)
 bp = Blueprint("province", __name__)
 
 load_dotenv()
@@ -317,6 +322,11 @@ def province(pId):
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
 
+        province_base_layout = None
+        if FEATURE_PROVINCE_BASE_VIEW:
+            province["own"] = province.get("own", province["user"] == cId)
+            province_base_layout = build_province_layout_payload(province, units)
+
         return render_template(
             "province.html",
             province=province,
@@ -337,7 +347,201 @@ def province(pId):
             cg_distribution_capacity=(
                 cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
+            province_base_layout=province_base_layout,
         )
+
+
+@bp.route("/api/province/<int:pId>/layout", methods=["GET"])
+@login_required
+def province_layout_api(pId):
+    """JSON layout for province base canvas (mobile game view)."""
+    from psycopg2.extras import RealDictCursor
+
+    cId = session["user_id"]
+    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+        db.execute(
+            """
+            SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
+                   p.population, p.energy AS electricity, s.location
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            WHERE p.id = %s
+            """,
+            (pId,),
+        )
+        row = db.fetchone()
+        if not row:
+            return jsonify({"error": "Province not found"}), 404
+
+        province = dict(row)
+        province["location"] = province.get("location") or "Grassland"
+
+        db.execute(
+            """
+            SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+            FROM building_dictionary bd
+            LEFT JOIN user_buildings ub
+                ON ub.building_id = bd.building_id
+                AND ub.user_id = %s
+                AND ub.province_id = %s
+            WHERE bd.is_active = TRUE
+            """,
+            (cId, pId),
+        )
+        units = {r["name"]: r["quantity"] for r in db.fetchall()}
+
+    return jsonify(build_province_layout_payload(province, units))
+
+
+def _province_units_for_user(db, cId, pId):
+    db.execute(
+        """
+        SELECT bd.building_id, bd.name, bd.display_name, bd.base_cost,
+               COALESCE(ub.quantity, 0) AS quantity
+        FROM building_dictionary bd
+        LEFT JOIN user_buildings ub
+            ON ub.building_id = bd.building_id
+            AND ub.user_id = %s
+            AND ub.province_id = %s
+        WHERE bd.is_active = TRUE
+        ORDER BY bd.display_name ASC
+        """,
+        (cId, pId),
+    )
+    return db.fetchall()
+
+
+@bp.route("/api/province/<int:pId>/slot/<slot_id>", methods=["GET"])
+@login_required
+def province_slot_api(pId, slot_id):
+    """Buildings in a category for interactive base sheet."""
+    from psycopg2.extras import RealDictCursor
+
+    slot = get_slot_config(slot_id)
+    if not slot:
+        return jsonify({"error": "Unknown category"}), 404
+
+    cId = session["user_id"]
+    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+        db.execute(
+            "SELECT id, userId AS owner_id FROM provinces WHERE id = %s",
+            (pId,),
+        )
+        prow = db.fetchone()
+        if not prow:
+            return jsonify({"error": "Province not found"}), 404
+        if prow["owner_id"] != cId:
+            return jsonify({"error": "Forbidden"}), 403
+
+        rows = _province_units_for_user(db, cId, pId)
+        names = set(slot["buildings"])
+        buildings = []
+        for row in rows:
+            if row["name"] not in names:
+                continue
+            qty = int(row["quantity"] or 0)
+            buildings.append(
+                {
+                    "building_id": row["building_id"],
+                    "name": row["name"],
+                    "display_name": row["display_name"],
+                    "quantity": qty,
+                    "base_cost": int(row["base_cost"] or 0),
+                    "can_build": True,
+                }
+            )
+        buildings.sort(key=lambda b: (-b["quantity"], b["display_name"]))
+
+    theme = SLOT_THEMES.get(slot_id, {})
+    return jsonify(
+        {
+            "slot_id": slot_id,
+            "label": slot["label"],
+            "icon": slot["icon"],
+            "theme": theme,
+            "buildings": buildings,
+            "build_cost_resource": BUILD_COST_RESOURCE,
+        }
+    )
+
+
+@bp.route("/api/province/<int:pId>/quick_build", methods=["POST"])
+@login_required
+def province_quick_build_api(pId):
+    """JSON quick-build (+1) from base sheet without full page reload."""
+    from psycopg2.extras import RealDictCursor
+
+    cId = session["user_id"]
+    payload = request.get_json(silent=True) or {}
+    try:
+        building_id = int(payload.get("building_id", 0))
+        quantity = int(payload.get("quantity", 1))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Invalid request"}), 400
+
+    if quantity < 1 or quantity > 50:
+        return jsonify({"ok": False, "error": "Quantity must be 1–50"}), 400
+
+    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+        db.execute(
+            "SELECT userId AS owner_id FROM provinces WHERE id = %s",
+            (pId,),
+        )
+        row = db.fetchone()
+        if not row:
+            return jsonify({"ok": False, "error": "Province not found"}), 404
+        if row["owner_id"] != cId:
+            return jsonify({"ok": False, "error": "Forbidden"}), 403
+
+    try:
+        build_structure(cId, building_id, quantity, province_id=pId)
+    except ActionLoopError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
+    try:
+        invalidate_user_cache(cId)
+    except Exception:
+        pass
+
+    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+        db.execute(
+            """
+            SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
+                   p.population, p.energy AS electricity, s.location,
+                   p.userId AS owner_id
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            WHERE p.id = %s
+            """,
+            (pId,),
+        )
+        province_row = db.fetchone()
+        province = dict(province_row) if province_row else {}
+        province["location"] = province.get("location") or "Grassland"
+        province["own"] = province.get("owner_id") == cId
+
+        db.execute(
+            """
+            SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+            FROM building_dictionary bd
+            LEFT JOIN user_buildings ub
+                ON ub.building_id = bd.building_id
+                AND ub.user_id = %s
+                AND ub.province_id = %s
+            WHERE bd.is_active = TRUE
+            """,
+            (cId, pId),
+        )
+        units = {r["name"]: r["quantity"] for r in db.fetchall()}
+
+    return jsonify(
+        {
+            "ok": True,
+            "message": "Structure built!",
+            "layout": build_province_layout_payload(province, units),
+            "building_id": building_id,
+        }
+    )
 
 
 @bp.route("/build_structure", methods=["POST"])
@@ -375,7 +579,8 @@ def build_structure_action():
 def get_province_price(user_id):
     with get_request_cursor() as db:
         db.execute("SELECT COUNT(id) FROM provinces WHERE userId=(%s)", (user_id,))
-        current_province_amount = db.fetchone()[0]
+        count_row = db.fetchone()
+        current_province_amount = count_row[0] if count_row else 0
 
         multiplier = 1 + (0.16 * current_province_amount)
         price = int(8000000 * multiplier)
@@ -632,7 +837,10 @@ def province_sell_buy(way, units, province_id):
         ]
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        gold = db.fetchone()[0]
+        gold_row = db.fetchone()
+        if not gold_row:
+            return error(500, "Nation data could not be found")
+        gold = gold_row[0] or 0
 
         try:
             wantedUnits = int(request.form.get(units))
@@ -684,7 +892,7 @@ def province_sell_buy(way, units, province_id):
         unit_prices["cityCount_price"] = cityCount_price
 
         if units not in allUnits:
-            return error("No such unit exists.", 400)
+            return error(400, "No such unit exists.")
 
         price = unit_prices[f"{units}_price"]
 
@@ -817,7 +1025,7 @@ def province_sell_buy(way, units, province_id):
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
-                return error("You don't have enough units.", 400)
+                return error(400, "You don't have enough units.")
 
             if units in ["land", "cityCount"]:
                 unitUpd = f"UPDATE provinces SET {units}=%s WHERE id=%s"
@@ -838,7 +1046,10 @@ def province_sell_buy(way, units, province_id):
 
             # Capture gold before and perform atomic increment
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_before = db.fetchone()[0]
+            gold_before_row = db.fetchone()
+            if not gold_before_row:
+                return error(500, "Nation data could not be found")
+            gold_before = gold_before_row[0] or 0
 
             db.execute(
                 "UPDATE stats SET gold = gold + %s WHERE id = %s",
@@ -846,7 +1057,8 @@ def province_sell_buy(way, units, province_id):
             )
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_after = db.fetchone()[0]
+            gold_after_row = db.fetchone()
+            gold_after = (gold_after_row[0] or 0) if gold_after_row else gold_before
 
             # Audit the sell event
             db.execute(
@@ -894,7 +1106,7 @@ def province_sell_buy(way, units, province_id):
             if (
                 totalPrice > gold
             ):  # Checks if user wants to buy more units than he has gold
-                return error("You don't have enough money.", 400)
+                return error(400, "You don't have enough money.")
 
             if free_slots < wantedUnits and units not in ["cityCount", "land"]:
                 return error(400, f"Not enough {slot_type} slots for {wantedUnits}")
@@ -907,12 +1119,16 @@ def province_sell_buy(way, units, province_id):
 
             # Capture gold before and perform atomic decrement
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_before = db.fetchone()[0]
+            gold_before_row = db.fetchone()
+            if not gold_before_row:
+                return error(500, "Nation data could not be found")
+            gold_before = gold_before_row[0] or 0
 
             db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId))
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_after = db.fetchone()[0]
+            gold_after_row = db.fetchone()
+            gold_after = (gold_after_row[0] or 0) if gold_after_row else gold_before
 
             if units in ["land", "cityCount"]:
                 updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"
