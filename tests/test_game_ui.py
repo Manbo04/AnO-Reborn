@@ -1,7 +1,7 @@
 """Tests for hybrid game UI module and templates."""
-import json
-
 import pytest
+
+pytestmark = pytest.mark.no_server
 
 from game_ui import (
     FEATURE_GAME_SHELL,
@@ -26,6 +26,12 @@ def test_legacy_building_image():
 def test_game_asset_path_fallback():
     path = game_asset_path("buildings", "coal_burners")
     assert "coal" in path
+
+
+def test_game_asset_path_uses_pilot_svg_when_present():
+    path = game_asset_path("resources", "gold")
+    assert path.endswith(".svg")
+    assert "game/resources" in path
 
 
 def test_province_layout_payload():
