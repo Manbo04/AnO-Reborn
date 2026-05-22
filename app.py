@@ -135,6 +135,9 @@ app.config["SESSION_COOKIE_SECURE"] = (
 def before_request():
     # Track request start time for performance monitoring
     from time import time
+    from database import ensure_schema_compat
+
+    ensure_schema_compat()
 
     request.start_time = time()
 
@@ -1245,13 +1248,17 @@ def account():
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
-        try:
-            db.execute("SELECT username, email, date, discord_id FROM users WHERE id=%s", (cId,))
-        except Exception:
-            db.connection.rollback()
-            db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
-            
-        user = dict(db.fetchone())
+        from database import users_table_has_column, rollback_db_cursor
+
+        user_cols = "username, email, date"
+        if users_table_has_column("discord_id"):
+            user_cols += ", discord_id"
+        db.execute(f"SELECT {user_cols} FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+        if not row:
+            rollback_db_cursor(db)
+            return error(404, "Account not found")
+        user = dict(row)
 
     return render_template("account.html", user=user)
 
