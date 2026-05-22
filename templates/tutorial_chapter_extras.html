@@ -1,12 +1,13 @@
 {% macro chapter_video_follow(chapter) %}
                     <div class="tutorial-lesson-video-wrap">
-                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson walkthrough <span class="tutorial-lesson-video-dur">~1 min</span></p>
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Guided in-game walkthrough <span class="tutorial-lesson-video-dur">~2 min</span></p>
                         <video class="tutorial-lesson-video" controls playsinline preload="metadata"
                                poster="{{ url_for('static', filename=chapter.poster) }}?v=2"
                                aria-label="{{ chapter.aria_label }}">
-                            <source src="{{ url_for('static', filename='tutorial/videos/' ~ chapter.stem ~ '.mp4') }}?v=3" type="video/mp4">
-                            <track kind="captions" src="{{ url_for('static', filename='tutorial/captions/' ~ chapter.stem ~ '.vtt') }}?v=3" srclang="en" label="English" default>
+                            <source src="{{ url_for('static', filename='tutorial/videos/' ~ chapter.stem ~ '.mp4') }}?v=4" type="video/mp4">
+                            <track kind="captions" src="{{ url_for('static', filename='tutorial/captions/' ~ chapter.stem ~ '.vtt') }}?v=4" srclang="en" label="Step labels">
                         </video>
+                        <p class="tutorial-video-hint">Silent video with on-screen step labels. Turn on <strong>Step labels</strong> in the player menu for the same text as captions.</p>
                     </div>
                     <nav class="tutorial-follow-along" aria-label="Follow along in the game">
                         <h4 class="tutorial-follow-along-title"><span class="material-icons-outlined" aria-hidden="true">open_in_new</span> Follow along in the game</h4>
