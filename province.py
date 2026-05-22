@@ -15,8 +15,6 @@ from game_ui import (
     FEATURE_PROVINCE_BASE_VIEW,
     build_province_layout_payload,
 )
-from flask import jsonify
-
 bp = Blueprint("province", __name__)
 
 load_dotenv()
