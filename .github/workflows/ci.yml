@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check error() argument order in routes
+        run: python scripts/check_error_call_order.py
+
+      - name: Run targeted pytest (no DB required)
+        run: |
+          python -m pytest \
+            tests/test_error_handler_status.py::test_error_returns_numeric_http_status \
+            tests/test_error_handler_status.py::test_error_500_status \
+            tests/test_error_handler_status.py::test_swapped_error_args_produce_invalid_status \
+            tests/test_error_handler_status.py::test_all_templates_compile \
+            tests/test_error_handler_status.py::test_signup_missing_password_returns_400 \
+            tests/test_import_app.py::test_import_app \
+            tests/test_country_policies.py \
+            tests/test_game_ui.py \
+            -q --tb=short

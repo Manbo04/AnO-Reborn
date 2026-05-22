@@ -14,7 +14,7 @@ load_dotenv()
 import variables  # noqa: E402
 import datetime  # noqa: E402
 from database import get_db_cursor, get_request_cursor  # noqa: E402
-from database import cache_response  # noqa: E402
+from database import cache_response, rollback_db_cursor  # noqa: E402
 
 # flake8: noqa -- Temporarily disable flake8 for this file to avoid blocking critical fixes; remove when refactoring is complete
 
@@ -36,8 +36,7 @@ def coalition(coalition_id):
 
         # OPTIMIZATION: Single query for basic coalition info + member count + total influence
         # Only aggregates provinces for members of THIS coalition (not all users)
-        db.execute(
-            """
+        _COALITION_HEADER_SQL = """
             SELECT
                 c.name, c.type, c.description, c.flag, c.name_changes_used,
                 COALESCE(c.tax_rate, 0),
@@ -46,17 +45,51 @@ def coalition(coalition_id):
             FROM colNames c
             LEFT JOIN coalitions_legacy coal ON c.id = coal.colid
             LEFT JOIN (
-                SELECT p.userId, COALESCE(SUM(p.population), 0) AS total_pop
+                SELECT p.userid, COALESCE(SUM(p.population), 0) AS total_pop
                 FROM provinces p
-                WHERE p.userId IN (SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s)
-                GROUP BY p.userId
-            ) prov ON coal.userid = prov.userId
+                WHERE p.userid IN (
+                    SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s
+                )
+                GROUP BY p.userid
+            ) prov ON coal.userid = prov.userid
             WHERE c.id = %s
-            GROUP BY c.id, c.name, c.type, c.description, c.flag, c.name_changes_used, c.tax_rate
-            """,
-            (coalition_id, coalition_id),
-        )
-        result = db.fetchone()
+            GROUP BY c.id, c.name, c.type, c.description, c.flag,
+                     c.name_changes_used, c.tax_rate
+        """
+        _COALITION_HEADER_NO_TAX_SQL = """
+            SELECT
+                c.name, c.type, c.description, c.flag, c.name_changes_used,
+                0,
+                COUNT(DISTINCT coal.userid) AS members_count,
+                COALESCE(SUM(prov.total_pop), 0) AS total_influence
+            FROM colNames c
+            LEFT JOIN coalitions_legacy coal ON c.id = coal.colid
+            LEFT JOIN (
+                SELECT p.userid, COALESCE(SUM(p.population), 0) AS total_pop
+                FROM provinces p
+                WHERE p.userid IN (
+                    SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s
+                )
+                GROUP BY p.userid
+            ) prov ON coal.userid = prov.userid
+            WHERE c.id = %s
+            GROUP BY c.id, c.name, c.type, c.description, c.flag,
+                     c.name_changes_used
+        """
+        result = None
+        try:
+            db.execute(_COALITION_HEADER_SQL, (coalition_id, coalition_id))
+            result = db.fetchone()
+        except Exception:
+            rollback_db_cursor(db)
+            try:
+                db.execute(
+                    _COALITION_HEADER_NO_TAX_SQL, (coalition_id, coalition_id)
+                )
+                result = db.fetchone()
+            except Exception:
+                rollback_db_cursor(db)
+                raise
         if not result:
             return error(404, "This coalition doesn't exist")
         (
@@ -72,19 +105,24 @@ def coalition(coalition_id):
         average_influence = total_influence // members_count if members_count > 0 else 0
 
         # Calculate coalition statistics (provinces, cities, land, GDP)
-        db.execute(
-            """
-            SELECT
-                COALESCE(COUNT(p.id), 0) AS total_provinces,
-                COALESCE(SUM(p.cityCount), 0) AS total_cities,
-                COALESCE(SUM(p.land), 0) AS total_land
-            FROM coalitions_legacy coal
-            LEFT JOIN provinces p ON coal.userid = p.userId
-            WHERE coal.colid = %s
-            """,
-            (coalition_id,),
-        )
-        stats_result = db.fetchone()
+        stats_result = None
+        try:
+            db.execute(
+                """
+                SELECT
+                    COALESCE(COUNT(p.id), 0) AS total_provinces,
+                    COALESCE(SUM(p.citycount), 0) AS total_cities,
+                    COALESCE(SUM(p.land), 0) AS total_land
+                FROM coalitions_legacy coal
+                LEFT JOIN provinces p ON coal.userid = p.userid
+                WHERE coal.colid = %s
+                """,
+                (coalition_id,),
+            )
+            stats_result = db.fetchone()
+        except Exception:
+            rollback_db_cursor(db)
+            stats_result = (0, 0, 0)
         coalition_provinces = stats_result[0] if stats_result else 0
         coalition_cities = stats_result[1] if stats_result else 0
         coalition_land = stats_result[2] if stats_result else 0
@@ -121,27 +159,57 @@ def coalition(coalition_id):
             # stats table has no influence column; keep list lightweight and avoid bad column reference
             # Uses pre-aggregated subquery to avoid N+1 per-member province count lookups
             # Only aggregates provinces for THIS coalition's members
-            db.execute(
-                """
-                SELECT coalitions_legacy.userid,
-                       users.username,
-                       coalitions_legacy.role,
-                       0 AS influence,
-                       COALESCE(prov.province_count, 0) AS province_count,
-                       users.last_active
-                FROM coalitions_legacy
-                INNER JOIN users ON coalitions_legacy.userid = users.id
-                LEFT JOIN (
-                    SELECT p.userId, COUNT(*) AS province_count
-                    FROM provinces p
-                    WHERE p.userId IN (SELECT cl.userid FROM coalitions_legacy cl WHERE cl.colid = %s)
-                    GROUP BY p.userId
-                ) prov ON coalitions_legacy.userid = prov.userId
-                WHERE coalitions_legacy.colid = %s
-                """,
-                (coalition_id, coalition_id),
-            )
-            members = db.fetchall()
+            try:
+                db.execute(
+                    """
+                    SELECT coalitions_legacy.userid,
+                           users.username,
+                           coalitions_legacy.role,
+                           0 AS influence,
+                           COALESCE(prov.province_count, 0) AS province_count,
+                           users.last_active
+                    FROM coalitions_legacy
+                    INNER JOIN users ON coalitions_legacy.userid = users.id
+                    LEFT JOIN (
+                        SELECT p.userid, COUNT(*) AS province_count
+                        FROM provinces p
+                        WHERE p.userid IN (
+                            SELECT cl.userid FROM coalitions_legacy cl
+                            WHERE cl.colid = %s
+                        )
+                        GROUP BY p.userid
+                    ) prov ON coalitions_legacy.userid = prov.userid
+                    WHERE coalitions_legacy.colid = %s
+                    """,
+                    (coalition_id, coalition_id),
+                )
+                members = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+                db.execute(
+                    """
+                    SELECT coalitions_legacy.userid,
+                           users.username,
+                           coalitions_legacy.role,
+                           0 AS influence,
+                           COALESCE(prov.province_count, 0) AS province_count,
+                           NULL::timestamptz AS last_active
+                    FROM coalitions_legacy
+                    INNER JOIN users ON coalitions_legacy.userid = users.id
+                    LEFT JOIN (
+                        SELECT p.userid, COUNT(*) AS province_count
+                        FROM provinces p
+                        WHERE p.userid IN (
+                            SELECT cl.userid FROM coalitions_legacy cl
+                            WHERE cl.colid = %s
+                        )
+                        GROUP BY p.userid
+                    ) prov ON coalitions_legacy.userid = prov.userid
+                    WHERE coalitions_legacy.colid = %s
+                    """,
+                    (coalition_id, coalition_id),
+                )
+                members = db.fetchall()
         except (TypeError, AttributeError, IndexError):
             members = []
 
@@ -554,9 +622,10 @@ def establish_coalition():
                 db.execute(insert_query, (name, cType, desc, date, recruiting))
 
                 db.execute("SELECT id FROM colNames WHERE name = (%s)", (name,))
-                coalition_id = db.fetchone()[
-                    0
-                ]  # Gets the coalition id of the just inserted coalition
+                coalition_row = db.fetchone()
+                if not coalition_row:
+                    return error(500, "Failed to create coalition")
+                coalition_id = coalition_row[0]
 
                 # Inserts the user as the leader of the coalition
                 db.execute(
@@ -638,7 +707,8 @@ def coalitions():
             {where_clause}
         """
         db.execute(count_query, tuple(params))
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         # Calculate pagination
         total_pages = max(1, (total_count + per_page - 1) // per_page)
@@ -651,7 +721,7 @@ def coalitions():
         # Main query with pagination - all filtering/sorting in SQL
         # flag_data is fetched here so templates can inline it as a data URI
         # and avoid 22 separate /flag/coalition/X sub-requests per page.
-        main_query = f"""
+        main_query_flag = f"""
             SELECT
                 cn.id AS coalition_id,
                 cn.type,
@@ -674,8 +744,37 @@ def coalitions():
             ORDER BY {order_by}
             LIMIT %s OFFSET %s
         """
-        db.execute(main_query, tuple(params) + (per_page, offset))
-        coalitionsDb = db.fetchall()
+        main_query_no_flag = f"""
+            SELECT
+                cn.id AS coalition_id,
+                cn.type,
+                cn.name,
+                cn.flag,
+                COUNT(DISTINCT cm.userid) AS members,
+                cn.date AS date,
+                COALESCE(SUM(prov.total_pop), 0) AS total_influence,
+                NULL::text AS flag_data
+            FROM colNames cn
+            LEFT JOIN coalitions_legacy cm ON cn.id = cm.colid
+            LEFT JOIN (
+                SELECT userid, COALESCE(SUM(population), 0) AS total_pop
+                FROM provinces
+                WHERE userid IN (SELECT userid FROM coalitions_legacy)
+                GROUP BY userid
+            ) prov ON cm.userid = prov.userid
+            {where_clause}
+            GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date
+            ORDER BY {order_by}
+            LIMIT %s OFFSET %s
+        """
+        page_args = tuple(params) + (per_page, offset)
+        try:
+            db.execute(main_query_flag, page_args)
+            coalitionsDb = db.fetchall()
+        except Exception:
+            rollback_db_cursor(db)
+            db.execute(main_query_no_flag, page_args)
+            coalitionsDb = db.fetchall()
 
         default_flag_src = "/static/flags/default_flag.jpg"
 
@@ -1199,8 +1298,12 @@ def deposit_into_bank(coalition_id):
             resource = ""
 
         if resource is not None and resource != "":
-            if int(resource) > 0:
-                res_tuple = (res, int(resource))
+            try:
+                resource_amount = int(resource)
+            except (ValueError, TypeError):
+                return error(400, f"Invalid amount for {res}")
+            if resource_amount > 0:
+                res_tuple = (res, resource_amount)
                 deposited_resources.append(res_tuple)
 
     # Whitelist of valid colBanks column names
@@ -1454,7 +1557,11 @@ def request_from_bank(coalition_id):
                 resource = ""
 
             if resource is not None and resource != "":
-                res_tuple = (res, int(resource))
+                try:
+                    request_amount = int(resource)
+                except (ValueError, TypeError):
+                    return error(400, f"Invalid amount for {res}")
+                res_tuple = (res, request_amount)
                 requested_resources.append(res_tuple)
 
         if len(requested_resources) > 1:

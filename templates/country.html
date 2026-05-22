@@ -17,6 +17,8 @@
 
     <div class="templatedivcontent">
 
+        {% include 'partials/game_country_hub.html' %}
+
         <div class="templatedivflex2 menuflex2">
             <div class="templatedivflex2left" id="countryview" onclick="countryview()">
 
@@ -555,6 +557,21 @@
 
             <h2 class="templatecontentheaderleft">Provinces</h2>
 
+            <div class="game-card-list game-card-list--mobile-only">
+            {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness = province[5] %} {% set provinceProductivity = province[6] %}
+            <a href="/province/{{ provinceId }}" class="game-province-card">
+                <div class="game-province-card-stats">
+                    <h3 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h3>
+                    <span><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
+                    <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
+                    <span><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
+                </div>
+                <img class="game-province-card-thumb" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="" />
+            </a>
+            {% endfor %}
+            </div>
+
+            <div class="game-table-fallback--hide-mobile">
             {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness
             = province[5] %} {% set provinceProductivity = province[6] %}
             <a href="/province/{{ provinceId }}">
@@ -609,6 +626,7 @@
             </a>
 
             {% endfor %}
+            </div>
         </div>
         <!--Revenue-->
         <div class="revenue" id="revenue">
@@ -1361,6 +1379,7 @@
             </div>
         </div>
 
+        {% if status %}
         <script type="text/javascript">
             // Hacky JavaScript script to check and uncheck policies
             const policies = JSON.parse('{{ policies | tojson }}')
@@ -1371,6 +1390,7 @@
                 else checkbox.unchecked = true;
             }
         </script>
+        {% endif %}
 
         <!--
             <h2 class="templatecontentheaderleft">Policies</h2>

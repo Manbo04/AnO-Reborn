@@ -7,3 +7,7 @@ cmds = [
   "python -m venv --copies /opt/venv",
   ". /opt/venv/bin/activate && pip install -r requirements.txt"
 ]
+
+# Bundle game UI CSS into style.css on every deploy (Railway must not serve stale partial assets).
+[phases.build]
+cmds = ["python3 scripts/bundle_game_css.py"]

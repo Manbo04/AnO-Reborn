@@ -9,6 +9,12 @@
     </div>
 
     <div class="templatedivcontent">
+        {% if FEATURE_GAME_SHELL %}
+        <div class="game-world-stub" aria-hidden="false">
+            <span class="material-icons-outlined">public</span>
+            <p><strong>World map</strong> is planned for a later update. Browse nations below — tap a row to open their country profile.</p>
+        </div>
+        {% endif %}
         <form action="/countries" method="GET">
             <div class="templatedivflex2 divflex2full">
 

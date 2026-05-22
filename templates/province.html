@@ -2,6 +2,9 @@
 {% block title %}{{ province['name'] }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+<script defer src="{{ url_for('static', filename='province-base.js') }}?v=5"></script>
+{% endif %}
 {% endblock %}
 {% block body %}
 <div class="templatediv">
@@ -14,6 +17,14 @@
 
     <div class="templatedivcontent">
 
+        {% include 'partials/province_base_view.html' %}
+        {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+        <p class="province-view-nudge" id="province-view-nudge" hidden>
+            <span class="material-icons-outlined">map</span>
+            Try the <strong>district map</strong> above — tap <button type="button" class="province-view-nudge-btn" data-province-view-toggle>Base view</button>
+        </p>
+        {% endif %}
+        <div id="province-classic-view"{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} hidden{% endif %}>
         {% include 'partials/province_status.html' %}
         {% include 'partials/province_settings.html' %}
         {% include 'partials/province_info.html' %}
@@ -1345,7 +1356,7 @@
                                 <p class="templatecontentpleft">Silos allow for the production, storage, and launch of Ballistic Missiles and nukes once prerequisites are acquired.</p>
 
                                 <ul>Silos cost {{ infra["silos_money"] | fmt }} per hour</ul>
-                                <ul>{{ "silos" | prores }}/ul>
+                                <ul>{{ "silos" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="silos" type="number" placeholder="Amount" />
@@ -2304,6 +2315,7 @@
         </form>
         {% endif %}
         </div>
+        </div><!-- /province-classic-view -->
     </div>
 </div>
 {% endblock %}
