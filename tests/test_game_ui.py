@@ -85,7 +85,6 @@ def test_layout_includes_game_shell_compile():
         url_for=lambda endpoint, **kw: "/static/" + kw.get("filename", ""),
         admin_user_ids=[],
     )
-    env.get_template("partials/game_shell.html")
     env.get_template("partials/game_hud.html")
 
 

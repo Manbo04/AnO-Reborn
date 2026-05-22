@@ -180,32 +180,7 @@
         </div>
     </div>
     {% else %}
-    <div class="quick-links-grid" aria-label="Quick navigation">
-        <a class="quick-link-card" href="/country/id={{ session['user_id'] }}">
-            <span class="material-icons-outlined">flag</span>
-            <span>Country</span>
-        </a>
-        <a class="quick-link-card" href="/provinces">
-            <span class="material-icons-outlined">account_balance</span>
-            <span>Provinces</span>
-        </a>
-        <a class="quick-link-card" href="/market">
-            <span class="material-icons-outlined">local_grocery_store</span>
-            <span>Market</span>
-        </a>
-        <a class="quick-link-card" href="/military">
-            <span class="material-icons-outlined">shield</span>
-            <span>Military</span>
-        </a>
-        <a class="quick-link-card" href="/wars">
-            <span class="material-icons-outlined">military_tech</span>
-            <span>Wars</span>
-        </a>
-        <a class="quick-link-card" href="/my_coalition">
-            <span class="material-icons-outlined">group</span>
-            <span>Coalition</span>
-        </a>
-    </div>
+    {% include 'partials/quick_nav.html' %}
     {% endif %}
 </div>
 

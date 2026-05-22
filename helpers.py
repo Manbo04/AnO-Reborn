@@ -123,6 +123,20 @@ def check_required(func):
     return check_session
 
 
+def empty_state(title, message, actions=None, icon="info"):
+    """Friendly page when the player lacks something (coalition, province, etc.)."""
+    return (
+        render_template(
+            "empty_state.html",
+            title=title,
+            message=message,
+            actions=actions or [],
+            icon=icon,
+        ),
+        200,
+    )
+
+
 def error(code, message):
     # Return the proper HTTP status code along with the error template to
     # ensure external clients receive the correct status for assertion checks
