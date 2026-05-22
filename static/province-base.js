@@ -1,14 +1,15 @@
 /**
- * Province home base view (Phaser 3) — category slots, tap for detail sheet.
+ * Interactive province command center — tap districts, quick-build, live updates.
  */
 (function () {
     'use strict';
 
-    var gameInstance = null;
     var layoutData = null;
+    var meta = null;
+    var activeSlotId = null;
 
-    function getLayout() {
-        var el = document.getElementById('province-base-data');
+    function parseJson(id) {
+        var el = document.getElementById(id);
         if (!el || !el.textContent) return null;
         try {
             return JSON.parse(el.textContent);
@@ -17,166 +18,284 @@
         }
     }
 
-    function slotFromId(id) {
-        if (!layoutData || !layoutData.slots) return null;
-        return layoutData.slots.find(function (s) { return s.id === id; }) || null;
+    function qs(sel, root) {
+        return (root || document).querySelector(sel);
     }
 
-    function openSlotSheet(slot) {
+    function qsa(sel, root) {
+        return Array.from((root || document).querySelectorAll(sel));
+    }
+
+    function showToast(msg, isError) {
+        var t = document.getElementById('province-base-toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.style.background = isError ? 'var(--danger, #d35649)' : 'var(--success, #2d9f6f)';
+        t.classList.add('is-visible');
+        clearTimeout(showToast._tm);
+        showToast._tm = setTimeout(function () {
+            t.classList.remove('is-visible');
+        }, 2200);
+    }
+
+    function playClick() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var o = ctx.createOscillator();
+            var g = ctx.createGain();
+            o.connect(g);
+            g.connect(ctx.destination);
+            o.frequency.value = 520;
+            g.gain.setValueAtTime(0.08, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+            o.start(ctx.currentTime);
+            o.stop(ctx.currentTime + 0.08);
+        } catch (e) { /* optional */ }
+    }
+
+    function playSuccess() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [660, 880].forEach(function (freq, i) {
+                var o = ctx.createOscillator();
+                var g = ctx.createGain();
+                o.connect(g);
+                g.connect(ctx.destination);
+                o.frequency.value = freq;
+                var t0 = ctx.currentTime + i * 0.06;
+                g.gain.setValueAtTime(0.06, t0);
+                g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
+                o.start(t0);
+                o.stop(t0 + 0.12);
+            });
+        } catch (e) { /* optional */ }
+    }
+
+    function closeSheet() {
         var sheet = document.getElementById('province-base-slot-sheet');
-        if (!sheet) return;
-        var title = sheet.querySelector('[data-slot-title]');
-        var body = sheet.querySelector('[data-slot-body]');
-        var anchor = sheet.querySelector('[data-slot-anchor]');
-        if (title) title.textContent = slot.label + ' (' + slot.quantity + ')';
-        if (body) {
-            body.textContent =
-                slot.quantity > 0
-                    ? 'Tap Classic view below to manage individual buildings in this category.'
-                    : 'No structures built in this category yet. Switch to Classic view to build.';
+        if (sheet) {
+            sheet.classList.remove('is-open');
+            sheet.setAttribute('aria-hidden', 'true');
         }
-        if (anchor) {
-            anchor.href = '#province-classic-view';
-            anchor.onclick = function () {
-                var toggle = document.querySelector('[data-province-view-toggle]');
-                if (toggle) toggle.click();
-                sheet.classList.remove('is-open');
-                setTimeout(function () {
-                    var classic = document.getElementById('province-classic-view');
-                    if (classic) classic.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-            };
-        }
-        sheet.classList.add('is-open');
+        activeSlotId = null;
     }
 
-    function closeSlotSheet() {
-        var sheet = document.getElementById('province-base-slot-sheet');
-        if (sheet) sheet.classList.remove('is-open');
-    }
-
-    function bootPhaser() {
-        if (typeof Phaser === 'undefined') {
-            console.warn('Phaser not loaded');
+    function renderBuildingList(buildings, costResource) {
+        var list = qs('[data-building-list]');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!buildings.length) {
+            list.innerHTML = '<p class="province-base-sheet-sub">No structures in this district yet. Tap + to build.</p>';
             return;
         }
-        layoutData = getLayout();
-        if (!layoutData || !layoutData.slots) return;
+        var own = meta && meta.own;
+        buildings.forEach(function (b) {
+            var row = document.createElement('div');
+            row.className = 'province-base-building-row';
+            row.setAttribute('role', 'listitem');
+            row.innerHTML =
+                '<div><div class="province-base-building-name">' +
+                escapeHtml(b.display_name) +
+                '</div><div class="province-base-building-meta">' +
+                formatCost(b.base_cost, costResource) +
+                '</div></div>' +
+                '<span class="province-base-building-qty" data-qty>' +
+                b.quantity +
+                '</span>' +
+                (own
+                    ? '<button type="button" class="province-base-build-btn" data-build-id="' +
+                      b.building_id +
+                      '" aria-label="Build one">+</button>'
+                    : '');
 
-        var parent = 'province-base-canvas';
-        var container = document.getElementById(parent);
-        if (!container) return;
-
-        if (gameInstance) {
-            gameInstance.destroy(true);
-            gameInstance = null;
-        }
-
-        var w = container.clientWidth || 360;
-        var h = Math.round(w * 0.75);
-
-        var BootScene = new Phaser.Class({
-            Extends: Phaser.Scene,
-            initialize: function BootScene() {
-                Phaser.Scene.call(this, { key: 'Boot' });
-            },
-            preload: function () {
-                var bg = layoutData.biome_background || 'images/grassland.jpg';
-                this.load.image('biome_bg', '/static/' + bg.replace(/^\//, ''));
-                layoutData.slots.forEach(function (slot, i) {
-                    var img = slot.image || 'images/province.jpg';
-                    this.load.image('slot_' + i, '/static/' + img.replace(/^\//, ''));
-                }, this);
-            },
-            create: function () {
-                var scene = this;
-                var cx = w / 2;
-                var cy = h / 2;
-
-                if (scene.textures.exists('biome_bg')) {
-                    var bg = scene.add.image(cx, cy, 'biome_bg');
-                    var scale = Math.max(w / bg.width, h / bg.height);
-                    bg.setScale(scale).setAlpha(0.35);
-                }
-
-                scene.add.rectangle(cx, cy, w - 16, h - 16, 0x1c2029, 0.55)
-                    .setStrokeStyle(2, 0x00a7e1, 0.5);
-
-                var slots = layoutData.slots;
-                var radius = Math.min(w, h) * 0.32;
-                var n = slots.length;
-
-                slots.forEach(function (slot, i) {
-                    var angle = (i / n) * Math.PI * 2 - Math.PI / 2;
-                    var x = cx + Math.cos(angle) * radius;
-                    var y = cy + Math.sin(angle) * radius;
-                    var key = 'slot_' + i;
-                    var size = 56;
-
-                    var pad = scene.add.rectangle(x, y, size + 8, size + 8, 0x212630, 0.9)
-                        .setStrokeStyle(2, slot.quantity > 0 ? 0x2d9f6f : 0x5c6b7f, 1)
-                        .setInteractive({ useHandCursor: true });
-
-                    if (scene.textures.exists(key)) {
-                        var icon = scene.add.image(x, y, key);
-                        icon.setDisplaySize(size, size);
-                    } else {
-                        scene.add.text(x, y, slot.label.charAt(0), {
-                            fontSize: '20px',
-                            color: '#ffffff',
-                        }).setOrigin(0.5);
-                    }
-
-                    var qty = slot.quantity || 0;
-                    if (qty > 0) {
-                        scene.add.text(x + size / 2 - 4, y - size / 2 + 4, String(qty), {
-                            fontSize: '12px',
-                            color: '#ffffff',
-                            backgroundColor: '#00a7e1',
-                            padding: { x: 4, y: 2 },
-                        }).setOrigin(1, 0);
-                    }
-
-                    scene.add.text(x, y + size / 2 + 10, slot.label, {
-                        fontSize: '11px',
-                        color: '#e6f6fc',
-                    }).setOrigin(0.5, 0);
-
-                    pad.on('pointerup', function () {
-                        openSlotSheet(slot);
-                    });
-                });
-
-                scene.add.text(cx, 24, layoutData.name || 'Province', {
-                    fontSize: '16px',
-                    color: '#ffffff',
-                    fontStyle: 'bold',
-                }).setOrigin(0.5);
-            },
+            list.appendChild(row);
         });
 
-        gameInstance = new Phaser.Game({
-            type: Phaser.AUTO,
-            parent: parent,
-            width: w,
-            height: h,
-            backgroundColor: '#13171e',
-            scene: BootScene,
-            scale: {
-                mode: Phaser.Scale.NONE,
-            },
+        if (own) {
+            list.querySelectorAll('[data-build-id]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    quickBuild(parseInt(btn.getAttribute('data-build-id'), 10), btn);
+                });
+            });
+        }
+    }
+
+    function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function formatCost(n, res) {
+        return '$' + Number(n).toLocaleString() + ' · ' + (res || 'gold');
+    }
+
+    function openSheet(slotId) {
+        if (!meta || !meta.provinceId) return;
+        activeSlotId = slotId;
+        var sheet = document.getElementById('province-base-slot-sheet');
+        if (!sheet) return;
+
+        playClick();
+        sheet.classList.add('is-open');
+        sheet.setAttribute('aria-hidden', 'false');
+
+        var list = qs('[data-building-list]');
+        if (list) list.innerHTML = '<p class="province-base-sheet-sub">Loading…</p>';
+
+        fetch('/api/province/' + meta.provinceId + '/slot/' + slotId, {
+            credentials: 'same-origin',
+        })
+            .then(function (r) {
+                return r.json().then(function (data) {
+                    if (!r.ok) throw new Error(data.error || 'Failed to load');
+                    return data;
+                });
+            })
+            .then(function (data) {
+                var iconEl = qs('[data-sheet-icon]');
+                var iconWrap = qs('[data-sheet-icon-wrap]');
+                var title = qs('[data-slot-title]');
+                var sub = qs('[data-slot-sub]');
+                if (iconEl) iconEl.textContent = data.icon || 'category';
+                if (iconWrap && data.theme) {
+                    iconWrap.style.background = data.theme.gradient || '';
+                    iconWrap.style.boxShadow = '0 4px 16px ' + (data.theme.glow || 'rgba(0,167,225,0.3)');
+                }
+                if (title) title.textContent = data.label;
+                if (sub) {
+                    var total = (data.buildings || []).reduce(function (s, b) {
+                        return s + (b.quantity || 0);
+                    }, 0);
+                    sub.textContent = total + ' structure' + (total === 1 ? '' : 's') + ' · tap + to expand';
+                }
+                renderBuildingList(data.buildings || [], data.build_cost_resource);
+            })
+            .catch(function (err) {
+                if (list) list.innerHTML = '<p class="province-base-sheet-sub">' + escapeHtml(err.message) + '</p>';
+            });
+    }
+
+    function quickBuild(buildingId, btn) {
+        if (!meta || !meta.provinceId) return;
+        var row = btn.closest('.province-base-building-row');
+        if (row) row.classList.add('is-busy');
+        btn.disabled = true;
+
+        fetch('/api/province/' + meta.provinceId + '/quick_build', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ building_id: buildingId, quantity: 1 }),
+        })
+            .then(function (r) {
+                return r.json().then(function (data) {
+                    if (!r.ok || !data.ok) throw new Error(data.error || 'Build failed');
+                    return data;
+                });
+            })
+            .then(function (data) {
+                playSuccess();
+                showToast(data.message || 'Built!');
+                if (data.layout) {
+                    layoutData = data.layout;
+                    refreshSlotGrid();
+                    if (activeSlotId) {
+                        openSheet(activeSlotId);
+                    }
+                }
+                if (row) {
+                    row.classList.remove('is-busy');
+                    row.classList.add('is-success');
+                    setTimeout(function () {
+                        row.classList.remove('is-success');
+                    }, 500);
+                }
+            })
+            .catch(function (err) {
+                showToast(err.message, true);
+                if (row) row.classList.remove('is-busy');
+            })
+            .finally(function () {
+                btn.disabled = false;
+            });
+    }
+
+    function refreshSlotGrid() {
+        if (!layoutData || !layoutData.slots) return;
+        layoutData.slots.forEach(function (slot) {
+            var card = document.querySelector('[data-slot-id="' + slot.id + '"]');
+            if (!card) return;
+            var qty = slot.quantity || 0;
+            card.classList.toggle('has-buildings', qty > 0);
+            var qtyEl = card.querySelector('.province-base-slot-qty');
+            if (qtyEl) qtyEl.textContent = String(qty);
+        });
+        updateVitals();
+    }
+
+    function updateVitals() {
+        if (!layoutData) return;
+        var happy = qs('.province-vital-fill--happy');
+        var poll = qs('.province-vital-fill--pollution');
+        var pow = qs('.province-vital-fill--power');
+        if (happy) happy.style.width = Math.min(100, layoutData.happiness || 0) + '%';
+        if (poll) poll.style.width = Math.min(100, layoutData.pollution || 0) + '%';
+        if (pow) pow.style.width = Math.min(100, layoutData.electricity || 0) + '%';
+    }
+
+    function initSlotGrid() {
+        qsa('.province-base-slot-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                openSheet(card.getAttribute('data-slot-id'));
+            });
         });
     }
 
-    function initHtmlSlots() {
-        var grid = document.getElementById('province-base-slots-grid');
-        if (!grid) return;
-        layoutData = getLayout();
-        grid.querySelectorAll('.province-base-slot-card').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var slot = slotFromId(btn.getAttribute('data-slot-id'));
-                if (slot) openSlotSheet(slot);
+    function initSheetControls() {
+        qsa('[data-slot-sheet-close]').forEach(function (el) {
+            el.addEventListener('click', closeSheet);
+        });
+        var classic = qs('[data-slot-classic]');
+        if (classic) {
+            classic.addEventListener('click', function () {
+                closeSheet();
+                var toggle = qs('[data-province-view-toggle]');
+                if (toggle) toggle.click();
+                setTimeout(function () {
+                    var el = document.getElementById('province-classic-view');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 120);
             });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeSheet();
+        });
+    }
+
+    function initViewToggle() {
+        var toggle = qs('[data-province-view-toggle]');
+        var classic = document.getElementById('province-classic-view');
+        var base = document.getElementById('province-base-view');
+        if (!toggle || !classic || !base) return;
+
+        var key = 'ano_province_view';
+        var mode = localStorage.getItem(key) || 'base';
+
+        function apply(m) {
+            var isBase = m === 'base';
+            base.hidden = !isBase;
+            classic.hidden = isBase;
+            toggle.setAttribute('aria-pressed', isBase ? 'true' : 'false');
+            toggle.textContent = isBase ? 'Classic view' : 'Base view';
+        }
+
+        apply(mode);
+        toggle.addEventListener('click', function () {
+            mode = mode === 'base' ? 'classic' : 'base';
+            localStorage.setItem(key, mode);
+            apply(mode);
+            playClick();
         });
     }
 
@@ -184,46 +303,13 @@
         var baseView = document.getElementById('province-base-view');
         if (!baseView || baseView.hidden) return;
 
-        layoutData = getLayout();
-        initHtmlSlots();
+        layoutData = parseJson('province-base-data');
+        meta = parseJson('province-base-meta');
 
-        var closeBtn = document.querySelector('[data-slot-sheet-close]');
-        if (closeBtn) closeBtn.addEventListener('click', closeSlotSheet);
-
-        function tryPhaser() {
-            if (typeof Phaser === 'undefined') return;
-            document.body.classList.add('province-base-phaser-active');
-            var wrap = document.getElementById('province-base-canvas');
-            if (wrap) wrap.setAttribute('aria-hidden', 'false');
-            bootPhaser();
-        }
-
-        if (document.readyState === 'complete') {
-            tryPhaser();
-        } else {
-            window.addEventListener('load', tryPhaser);
-        }
+        initSlotGrid();
+        initSheetControls();
+        initViewToggle();
     }
-
-    window.AnoProvinceBase = {
-        resize: function () {
-            if (!gameInstance) {
-                bootPhaser();
-                return;
-            }
-            var container = document.getElementById('province-base-canvas');
-            if (container && gameInstance.scale) {
-                var w = container.clientWidth || 360;
-                gameInstance.scale.resize(w, Math.round(w * 0.75));
-            }
-        },
-        destroy: function () {
-            if (gameInstance) {
-                gameInstance.destroy(true);
-                gameInstance = null;
-            }
-        },
-    };
 
     document.addEventListener('DOMContentLoaded', init);
 })();
