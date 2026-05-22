@@ -1,0 +1,82 @@
+/**
+ * Province home base canvas container (Phaser)
+ */
+.province-base-section {
+    margin-bottom: var(--game-space-lg);
+    border-radius: var(--game-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--foregroundThree);
+}
+
+.province-base-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--game-space-sm) var(--game-space-md);
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: var(--game-space-sm);
+}
+
+.province-base-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.province-base-toggle {
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+#province-base-canvas {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 220px;
+    display: block;
+    touch-action: none;
+}
+
+#province-classic-view[hidden],
+#province-base-view[hidden] {
+    display: none !important;
+}
+
+.province-base-slot-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    z-index: 950;
+    max-height: 45vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-md);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.province-base-slot-sheet.is-open {
+    display: block;
+}
+
+.province-base-slot-sheet h3 {
+    margin-top: 0;
+}
+
+.province-base-slot-sheet .templatedivbutton {
+    margin-top: var(--game-space-sm);
+}

@@ -1,0 +1,22 @@
+{% macro game_picture(kind, key, alt='', css_class='unitimage', lazy=true) %}
+{% set path = game_asset_path(kind, key) %}
+{% set legacy = path.split('/')[-1] %}
+<picture>
+  <source srcset="{{ url_for('static', filename=path.replace('.jpg', '.webp').replace('.png', '.webp')) }}" type="image/webp">
+  <img
+    src="{{ url_for('static', filename=path) }}"
+    alt="{{ alt or key }}"
+    class="{{ css_class }}"
+    {% if lazy %}loading="lazy"{% endif %}
+    onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/' ~ legacy) }}';"
+  />
+</picture>
+{% endmacro %}
+
+{% macro resource_icon(name, css_class='resource') %}
+{{ game_picture('resources', name, name, css_class) }}
+{% endmacro %}
+
+{% macro building_image(building_key, alt='', css_class='unitimage') %}
+{{ game_picture('buildings', building_key, alt or building_key, css_class) }}
+{% endmacro %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, redirect
+from flask import Blueprint, request, render_template, session, redirect, jsonify
 from helpers import login_required, error
 from dotenv import load_dotenv
 import variables
@@ -11,6 +11,11 @@ from database import (
 import os
 import math
 from action_loop import build_structure, ActionLoopError, BUILD_COST_RESOURCE
+from game_ui import (
+    FEATURE_PROVINCE_BASE_VIEW,
+    build_province_layout_payload,
+)
+from flask import jsonify
 
 bp = Blueprint("province", __name__)
 
@@ -317,6 +322,10 @@ def province(pId):
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
 
+        province_base_layout = None
+        if FEATURE_PROVINCE_BASE_VIEW:
+            province_base_layout = build_province_layout_payload(province, units)
+
         return render_template(
             "province.html",
             province=province,
@@ -337,7 +346,50 @@ def province(pId):
             cg_distribution_capacity=(
                 cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
+            province_base_layout=province_base_layout,
         )
+
+
+@bp.route("/api/province/<int:pId>/layout", methods=["GET"])
+@login_required
+def province_layout_api(pId):
+    """JSON layout for province base canvas (mobile game view)."""
+    from psycopg2.extras import RealDictCursor
+
+    cId = session["user_id"]
+    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+        db.execute(
+            """
+            SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
+                   p.population, p.energy AS electricity, s.location
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            WHERE p.id = %s
+            """,
+            (pId,),
+        )
+        row = db.fetchone()
+        if not row:
+            return jsonify({"error": "Province not found"}), 404
+
+        province = dict(row)
+        province["location"] = province.get("location") or "Grassland"
+
+        db.execute(
+            """
+            SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+            FROM building_dictionary bd
+            LEFT JOIN user_buildings ub
+                ON ub.building_id = bd.building_id
+                AND ub.user_id = %s
+                AND ub.province_id = %s
+            WHERE bd.is_active = TRUE
+            """,
+            (cId, pId),
+        )
+        units = {r["name"]: r["quantity"] for r in db.fetchall()}
+
+    return jsonify(build_province_layout_payload(province, units))
 
 
 @bp.route("/build_structure", methods=["POST"])

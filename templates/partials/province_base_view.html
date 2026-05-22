@@ -1,0 +1,17 @@
+{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+<section class="province-base-section" id="province-base-view" aria-label="Province base">
+    <div class="province-base-header">
+        <h2><span class="material-icons-outlined">castle</span> Base</h2>
+        <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true">Classic view</button>
+    </div>
+    <div id="province-base-canvas"></div>
+    <script id="province-base-data" type="application/json">{{ province_base_layout | tojson }}</script>
+</section>
+
+<div class="province-base-slot-sheet" id="province-base-slot-sheet" role="dialog" aria-label="Building category">
+    <h3 data-slot-title>Category</h3>
+    <p data-slot-body></p>
+    <a href="#" class="templatedivbutton templatecenteredbutton" data-slot-anchor>Manage buildings</a>
+    <button type="button" class="templatedivbutton templatecenteredbutton" data-slot-sheet-close>Close</button>
+</div>
+{% endif %}

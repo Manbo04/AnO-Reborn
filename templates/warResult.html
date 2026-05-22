@@ -10,6 +10,14 @@
 
     <div class="templatedivcontent">
 
+        <div class="game-war-result-banner {% if winner and winner == attacker_result['nation_name'] %}victory{% elif winner %}defeat{% endif %}">
+            {% if winner == None %}
+            <strong>No decisive winner</strong>
+            {% else %}
+            <strong>{{ winner }} wins</strong>
+            {% endif %}
+        </div>
+
         {% if win_condition == None %}
         <h3 class="templatecontentheaderleft">Special attack</h3>
         {% else %}

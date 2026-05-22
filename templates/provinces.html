@@ -26,6 +26,22 @@
             </div>
         </div>
 
+        <div class="game-card-list game-card-list--mobile-only">
+        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6] %} {% set energy = province[7] %}
+        <a href="/province/{{ pId }}" class="game-province-card">
+            <div class="game-province-card-stats">
+                <h2 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
+                <span><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
+                <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}% happy</span>
+                <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
+                <span><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
+            </div>
+            <img class="game-province-card-thumb" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="" />
+        </a>
+        {% endfor %}
+        </div>
+
+        <div class="game-table-fallback--hide-mobile">
         {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
         %} {% set energy = province[7] %}
         <a href="/province/{{ pId }}">
@@ -77,7 +93,6 @@
                             {% else %}
                             <td>No</td>
                             {% endif %}
-                            <!-- how much you have out of how much you need -->
                         </tr>
                     </table>
                 </div>
@@ -89,6 +104,7 @@
             </div>
         </a>
         {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}
