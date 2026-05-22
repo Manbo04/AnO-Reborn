@@ -1,0 +1,12 @@
+{# HTML fallback — always visible; works without Phaser/CDN #}
+{% if province_base_layout and province_base_layout.slots %}
+<div class="province-base-slots-grid" id="province-base-slots-grid" role="list" aria-label="Province building categories">
+    {% for slot in province_base_layout.slots %}
+    <button type="button" class="province-base-slot-card{% if slot.quantity > 0 %} has-buildings{% endif %}" data-slot-id="{{ slot.id }}" role="listitem">
+        <img src="{{ url_for('static', filename=slot.image) }}?v=3" alt="" class="province-base-slot-img" loading="lazy" />
+        <span class="province-base-slot-label">{{ slot.label }}</span>
+        <span class="province-base-slot-qty{% if slot.quantity > 0 %} has-buildings{% endif %}">{{ slot.quantity }} built</span>
+    </button>
+    {% endfor %}
+</div>
+{% endif %}

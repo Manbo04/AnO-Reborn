@@ -9,7 +9,8 @@
         </span>
         <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true">Classic view</button>
     </div>
-    <div id="province-base-canvas"></div>
+    {% include 'partials/province_base_slots.html' %}
+    <div id="province-base-canvas" class="province-base-canvas-wrap" aria-hidden="true"></div>
     <script id="province-base-data" type="application/json">{{ province_base_layout | tojson }}</script>
 </section>
 
