@@ -10,9 +10,17 @@ load_dotenv()
 # Getting a policy for HTML format from database format
 def get_policy_in_format(policies, name, prange):
     actual_policies = {}
+    policy_list = policies.get(name)
+    if policy_list is None:
+        policy_list = []
+    elif not isinstance(policy_list, list):
+        try:
+            policy_list = list(policy_list)
+        except TypeError:
+            policy_list = []
     for i in range(1, prange + 1):
         try:
-            policies[name].index(i)
+            policy_list.index(i)
             actual_policies[f"{name}{i}"] = True
         except ValueError:
             actual_policies[f"{name}{i}"] = False
@@ -36,7 +44,11 @@ def get_user_policies(user_id, db=None):
         )
         result = db.fetchone()
         if result:
-            temp_policies["soldiers"], temp_policies["education"] = result
+            soldiers_raw, education_raw = result
+            temp_policies["soldiers"] = soldiers_raw if soldiers_raw is not None else []
+            temp_policies["education"] = (
+                education_raw if education_raw is not None else []
+            )
         else:
             temp_policies["soldiers"] = []
             temp_policies["education"] = []

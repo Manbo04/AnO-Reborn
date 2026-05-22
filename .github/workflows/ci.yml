@@ -32,4 +32,5 @@ jobs:
             tests/test_error_handler_status.py::test_all_templates_compile \
             tests/test_error_handler_status.py::test_signup_missing_password_returns_400 \
             tests/test_import_app.py::test_import_app \
+            tests/test_country_policies.py \
             -q --tb=short
