@@ -4948,3 +4948,614 @@ html.page-tutorial .tutorial-academy.templatediv {
     border: none !important;
     box-shadow: none !important;
 }
+
+/* === GAME UI BUNDLE (auto-generated) === */
+
+/* --- static/css/tokens.css --- */
+/**
+ * Game UI design tokens — extends theme variables in style.css
+ */
+:root {
+    --game-radius-sm: 8px;
+    --game-radius-md: 12px;
+    --game-radius-lg: 16px;
+    --game-radius-xl: 24px;
+    --game-space-xs: 4px;
+    --game-space-sm: 8px;
+    --game-space-md: 16px;
+    --game-space-lg: 24px;
+    --game-space-xl: 32px;
+    --game-font-display: "Roboto", system-ui, sans-serif;
+    --game-panel-bg: var(--foreground);
+    --game-panel-border: var(--border);
+    --game-hud-height: 52px;
+    --game-bottom-nav-height: 64px;
+    --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
+    --game-card-shadow: var(--shadow-card);
+}
+
+.theme-dark {
+    --game-panel-bg: var(--foregroundTwo);
+}
+
+
+/* --- static/css/game-shell.css --- */
+/**
+ * Mobile game shell: bottom nav, HUD strip, cards, more sheet
+ */
+
+body.game-shell-active {
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+}
+
+body.game-shell-active .templatecontainer {
+    padding-bottom: var(--game-space-md);
+}
+
+/* Compact resource HUD (top, mobile-first) */
+.game-hud {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    background: linear-gradient(180deg, var(--foreground) 0%, rgba(28, 32, 41, 0.92) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: var(--game-space-sm) var(--game-space-md);
+    gap: var(--game-space-sm);
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.game-hud::-webkit-scrollbar {
+    display: none;
+}
+
+body.game-shell-active .game-hud {
+    display: flex;
+}
+
+.game-hud-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 6px 10px;
+    background: var(--foregroundThree);
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--colorOne);
+}
+
+.theme-dark .game-hud-chip {
+    color: var(--colorTwo);
+}
+
+.game-hud-chip img.resource,
+.game-hud-chip .game-hud-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.game-hud-chip .game-hud-value {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.game-hud-expand {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Bottom navigation */
+.game-bottom-nav {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    height: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    padding-bottom: var(--game-safe-bottom);
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+}
+
+body.game-shell-active .game-bottom-nav {
+    display: flex;
+}
+
+.game-bottom-nav-inner {
+    display: flex;
+    width: 100%;
+    height: var(--game-bottom-nav-height);
+    align-items: stretch;
+    justify-content: space-around;
+}
+
+.game-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 2px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.game-nav-item .material-icons-outlined {
+    font-size: 1.35rem;
+}
+
+.game-nav-item.is-active,
+.game-nav-item:hover,
+.game-nav-item:focus-visible {
+    color: var(--accent);
+}
+
+.game-nav-item.is-active {
+    text-shadow: var(--game-glow-accent);
+}
+
+/* Hide desktop dropdown nav on mobile when shell active */
+@media (max-width: 857px) {
+    body.game-shell-active .navbarparentloginsignupdiv {
+        display: none !important;
+    }
+
+    body.game-shell-active .resourcediv {
+        display: none;
+    }
+
+    body.game-shell-active .menubardiv .resourcedivcontent {
+        display: none;
+    }
+}
+
+/* More menu sheet */
+.game-more-sheet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    pointer-events: none;
+}
+
+.game-more-sheet.is-open {
+    display: block;
+    pointer-events: auto;
+}
+
+.game-more-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.game-more-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-lg) var(--game-space-md);
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom) + var(--game-space-md));
+}
+
+.game-more-panel a {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    min-height: 48px;
+    padding: var(--game-space-sm);
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--game-radius-sm);
+}
+
+.game-more-panel a:hover {
+    background: var(--foregroundThree);
+}
+
+/* Province / country cards (mobile) */
+.game-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-md);
+}
+
+.game-province-card {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: var(--game-space-md);
+    padding: var(--game-space-md);
+    background: var(--game-panel-bg);
+    border: 1px solid var(--game-panel-border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--game-card-shadow);
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.game-province-card:active {
+    transform: scale(0.98);
+}
+
+body.game-reduced-motion .game-province-card,
+body.game-reduced-motion .game-nav-item,
+body.game-reduced-motion * {
+    transition: none !important;
+}
+
+.game-province-card-stats {
+    display: grid;
+    gap: 4px;
+    font-size: 0.9rem;
+}
+
+.game-province-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--game-space-sm);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.game-province-card-thumb {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: var(--game-radius-md);
+    border: 2px solid var(--border);
+}
+
+@media (min-width: 858px) {
+    .game-card-list--mobile-only .game-province-card {
+        display: none;
+    }
+}
+
+@media (max-width: 857px) {
+    .game-table-fallback--hide-mobile {
+        display: none !important;
+    }
+}
+
+/* War unit cards enhancement */
+.game-unit-card-grid .warflexparent {
+    border-radius: var(--game-radius-md);
+    overflow: hidden;
+}
+
+/* Timer badge on HUD */
+.game-tick-badge {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+/* Countries list map stub (no world map v1) */
+.game-world-stub {
+    padding: var(--game-space-lg);
+    text-align: center;
+    background: var(--foregroundThree);
+    border-radius: var(--game-radius-lg);
+    border: 1px dashed var(--border);
+    margin-bottom: var(--game-space-md);
+}
+
+.game-world-stub .material-icons-outlined {
+    font-size: 3rem;
+    color: var(--accent);
+    opacity: 0.7;
+}
+
+
+/* --- static/css/province-base.css --- */
+/**
+ * Province home base canvas container (Phaser)
+ */
+.province-base-section {
+    margin-bottom: var(--game-space-lg);
+    border-radius: var(--game-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--foregroundThree);
+}
+
+.province-base-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--game-space-sm) var(--game-space-md);
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: var(--game-space-sm);
+}
+
+.province-base-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.province-base-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.province-base-stats .material-icons-outlined {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
+.province-base-toggle {
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Category grid — primary visual (no Phaser required) */
+.province-base-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--game-space-sm);
+    padding: var(--game-space-md);
+    background: linear-gradient(180deg, var(--foregroundThree) 0%, var(--foreground) 100%);
+}
+
+.province-base-slot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 110px;
+    padding: var(--game-space-sm);
+    border: 2px solid var(--border);
+    border-radius: var(--game-radius-md);
+    background: var(--foreground);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    color: inherit;
+    font: inherit;
+}
+
+.province-base-slot-card:hover,
+.province-base-slot-card:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--game-glow-accent);
+    transform: translateY(-2px);
+}
+
+.province-base-slot-card.has-buildings,
+.province-base-slot-qty.has-buildings {
+    border-color: var(--success);
+}
+
+.province-base-slot-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: var(--game-radius-sm);
+    border: 1px solid var(--border);
+}
+
+.province-base-slot-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.province-base-slot-qty {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--foregroundThree);
+    padding: 2px 10px;
+    border-radius: 999px;
+}
+
+.province-base-slot-qty.has-buildings {
+    color: var(--success);
+    background: rgba(45, 159, 111, 0.15);
+}
+
+.province-base-canvas-wrap {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    display: none;
+    touch-action: none;
+}
+
+body.province-base-phaser-active .province-base-canvas-wrap {
+    display: block;
+    min-height: 220px;
+}
+
+body.province-base-phaser-active .province-base-slots-grid {
+    display: none;
+}
+
+#province-base-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#province-classic-view[hidden],
+#province-base-view[hidden] {
+    display: none !important;
+}
+
+.province-base-slot-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    z-index: 950;
+    max-height: 45vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-md);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.province-base-slot-sheet.is-open {
+    display: block;
+}
+
+.province-base-slot-sheet h3 {
+    margin-top: 0;
+}
+
+.province-base-slot-sheet .templatedivbutton {
+    margin-top: var(--game-space-sm);
+}
+
+
+/* --- static/css/game-country.css --- */
+/**
+ * Country page — mobile game hub
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .game-country-hub {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--game-space-sm);
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .game-country-hub a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 72px;
+        padding: var(--game-space-sm);
+        background: var(--game-panel-bg);
+        border: 1px solid var(--game-panel-border);
+        border-radius: var(--game-radius-md);
+        text-decoration: none;
+        color: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        gap: 4px;
+    }
+
+    body.game-shell-active .game-country-hub a:active {
+        transform: scale(0.97);
+        border-color: var(--accent);
+    }
+
+    body.game-shell-active .game-country-hub .material-icons-outlined {
+        font-size: 1.5rem;
+        color: var(--accent);
+    }
+
+    body.game-shell-active .countryimagediv {
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .menuflex2 {
+        flex-wrap: wrap;
+        gap: var(--game-space-xs);
+    }
+
+    body.game-shell-active .menuflex2 .templatedivflex2left {
+        flex: 1 1 30%;
+        min-width: 80px;
+    }
+}
+
+@media (min-width: 858px) {
+    .game-country-hub {
+        display: none;
+    }
+}
+
+
+/* --- static/css/game-war.css --- */
+/**
+ * War / military screens — mobile game card polish
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .warflexparent.templatedivflex2 {
+        flex-direction: column;
+    }
+
+    body.game-shell-active .warflexparent .unitimage {
+        max-height: 140px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: var(--game-radius-md);
+    }
+
+    body.game-shell-active .unitcardparent,
+    body.game-shell-active .warchoose-unit-card,
+    body.game-shell-active .warflexparent .templatedivflex2left {
+        min-height: 44px;
+    }
+
+    body.game-shell-active input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+    }
+}
+
+.game-war-result-banner {
+    padding: var(--game-space-md);
+    border-radius: var(--game-radius-lg);
+    background: linear-gradient(135deg, var(--foregroundThree), var(--foreground));
+    border: 1px solid var(--border);
+    margin-bottom: var(--game-space-md);
+    text-align: center;
+}
+
+.game-war-result-banner.victory {
+    border-color: var(--success);
+    box-shadow: 0 0 16px rgba(45, 159, 111, 0.25);
+}
+
+.game-war-result-banner.defeat {
+    border-color: var(--danger);
+}
+

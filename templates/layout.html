@@ -14,19 +14,8 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link href="{{ url_for('static', filename='css/tokens.css') }}?v=2" rel="stylesheet" type="text/css" />
-    <link href="{{ url_for('static', filename='style.css') }}?v=11" rel="stylesheet" type="text/css" />
-    {% if session.get('user_id') and (FEATURE_GAME_SHELL or FEATURE_PROVINCE_BASE_VIEW) %}
-    {% if FEATURE_GAME_SHELL %}
-    <link href="{{ url_for('static', filename='css/game-shell.css') }}?v=2" rel="stylesheet" type="text/css" />
-    {% endif %}
-    {% if FEATURE_PROVINCE_BASE_VIEW %}
-    <link href="{{ url_for('static', filename='css/province-base.css') }}?v=2" rel="stylesheet" type="text/css" />
-    {% endif %}
-    {% if FEATURE_GAME_SHELL %}
-    <link href="{{ url_for('static', filename='css/game-war.css') }}?v=2" rel="stylesheet" type="text/css" />
-    <link href="{{ url_for('static', filename='css/game-country.css') }}?v=2" rel="stylesheet" type="text/css" />
-    {% endif %}
+    {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
+    <link href="{{ url_for('static', filename='style.css') }}?v=12" rel="stylesheet" type="text/css" />
     {% if FEATURE_GAME_PWA %}
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <script>
