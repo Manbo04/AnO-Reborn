@@ -897,10 +897,10 @@ def join_col(coalition_id):
     with get_request_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
-        row = db.fetchone()
-        if row:
-            return error(400, "You're already in a coalition")
+        existing_id = _coalition_id_for_user(db, cId)
+        if existing_id:
+            flash("You're already in a coalition.")
+            return redirect(f"/coalition/{existing_id}")
 
         db.execute("SELECT type FROM colNames WHERE id=%s", (coalition_id,))
         row = db.fetchone()
