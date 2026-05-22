@@ -174,6 +174,15 @@ def cache_response(ttl_seconds=60):
             # Call actual function
             response = f(*args, **kwargs)
 
+            # Do not cache error responses (avoids serving stale 500s after fixes)
+            status_code = 200
+            if isinstance(response, tuple) and len(response) > 1:
+                status_code = response[1]
+            elif hasattr(response, "status_code"):
+                status_code = response.status_code
+            if status_code >= 400:
+                return response
+
             # Cache the response
             cache[cache_key] = (response, time())
             cache.move_to_end(cache_key)
