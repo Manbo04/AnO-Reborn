@@ -242,6 +242,60 @@ SLOT_THEMES: dict[str, dict[str, str]] = {
     },
 }
 
+# Material icon per building (province map mini-buildings).
+BUILDING_VISUAL_ICONS: dict[str, str] = {
+    "coal_burners": "local_fire_department",
+    "oil_burners": "oil_barrel",
+    "solar_fields": "solar_power",
+    "hydro_dams": "water",
+    "nuclear_reactors": "science",
+    "farms": "agriculture",
+    "gas_stations": "local_gas_station",
+    "general_stores": "store",
+    "farmers_markets": "storefront",
+    "banks": "account_balance",
+    "malls": "shopping_bag",
+    "distribution_centers": "inventory_2",
+    "coal_mines": "landscape",
+    "iron_mines": "terrain",
+    "copper_mines": "brightness_1",
+    "bauxite_mines": "grain",
+    "lead_mines": "circle",
+    "uranium_mines": "radioactive",
+    "pumpjacks": "propane",
+    "lumber_mills": "forest",
+    "component_factories": "precision_manufacturing",
+    "steel_mills": "factory",
+    "ammunition_factories": "whatshot",
+    "aluminium_refineries": "layers",
+    "oil_refineries": "water_drop",
+    "industrial_district": "domain",
+    "city_parks": "park",
+    "libraries": "menu_book",
+    "hospitals": "local_hospital",
+    "universities": "school",
+    "monorails": "train",
+    "primary_school": "child_care",
+    "high_school": "school",
+    "army_bases": "military_tech",
+    "aerodomes": "flight",
+    "harbours": "anchor",
+    "admin_buildings": "apartment",
+    "silos": "warehouse",
+}
+
+BIOME_ICONS: dict[str, str] = {
+    "grassland": "grass",
+    "tundra": "ac_unit",
+    "desert": "wb_sunny",
+    "jungle": "forest",
+    "savanna": "nature",
+    "boreal forest": "park",
+    "borealforest": "park",
+    "mountain range": "landscape",
+    "mountainrange": "landscape",
+}
+
 BIOME_THEMES: dict[str, dict[str, str]] = {
     "grassland": {
         "sky": "linear-gradient(180deg, #1a3a5c 0%, #2d6a8f 35%, #4a9e6f 70%, #1a4d32 100%)",
@@ -292,6 +346,19 @@ def get_slot_config(slot_id: str) -> dict[str, Any] | None:
 def biome_theme(location: str | None) -> dict[str, str]:
     key = (location or "grassland").strip().lower()
     return BIOME_THEMES.get(key, BIOME_THEMES["grassland"])
+
+
+def biome_icon(location: str | None) -> str:
+    key = (location or "grassland").strip().lower()
+    return BIOME_ICONS.get(key, "public")
+
+
+def building_display_label(name: str) -> str:
+    return name.replace("_", " ").title()
+
+
+def building_visual_icon(name: str) -> str:
+    return BUILDING_VISUAL_ICONS.get(name, "domain")
 
 
 @lru_cache(maxsize=1)
@@ -380,16 +447,25 @@ def biome_background(location: str | None) -> str:
 def build_province_layout_payload(province: dict, units: dict) -> dict[str, Any]:
     """JSON-serializable layout for interactive province base."""
     slots = []
+    total_structures = 0
     for slot in PROVINCE_BASE_SLOTS:
         theme = SLOT_THEMES.get(slot["id"], SLOT_THEMES["power"])
         breakdown = []
         total = 0
         for b in slot["buildings"]:
             q = int(units.get(b, 0) or 0)
-            if q > 0:
-                breakdown.append({"name": b, "quantity": q})
             total += q
+            if q > 0:
+                breakdown.append(
+                    {
+                        "name": b,
+                        "display_name": building_display_label(b),
+                        "icon": building_visual_icon(b),
+                        "quantity": q,
+                    }
+                )
         breakdown.sort(key=lambda x: -x["quantity"])
+        total_structures += total
         slots.append(
             {
                 "id": slot["id"],
@@ -406,15 +482,20 @@ def build_province_layout_payload(province: dict, units: dict) -> dict[str, Any]
     bt = biome_theme(loc)
     happiness = int(province.get("happiness") or 0)
     pollution = int(province.get("pollution") or 0)
+    pop = province.get("population") or 0
     return {
         "province_id": province.get("id"),
         "name": province.get("name"),
         "location": loc,
         "biome": bt,
+        "biome_icon": biome_icon(loc),
         "happiness": happiness,
         "pollution": pollution,
-        "population": province.get("population"),
+        "population": pop,
+        "population_fmt": f"{int(pop):,}" if pop else "0",
         "electricity": province.get("electricity"),
+        "total_structures": total_structures,
+        "hub_tier": min(5, max(0, total_structures // 3)),
         "slots": slots,
         "own": province.get("own", True),
     }

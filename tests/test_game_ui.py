@@ -50,6 +50,9 @@ def test_province_layout_payload():
     assert len(payload["slots"]) >= 5
     food_slot = next(s for s in payload["slots"] if s["id"] == "food")
     assert food_slot["quantity"] == 2
+    assert payload["total_structures"] == 3
+    assert food_slot["breakdown"][0]["icon"] == "agriculture"
+    assert payload["biome_icon"] == "grass"
 
 
 def test_jinja_game_macros_compile():

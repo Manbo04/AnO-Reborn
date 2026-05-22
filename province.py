@@ -15,6 +15,7 @@ from game_ui import (
     FEATURE_PROVINCE_BASE_VIEW,
     SLOT_THEMES,
     build_province_layout_payload,
+    building_visual_icon,
     get_slot_config,
 )
 bp = Blueprint("province", __name__)
@@ -445,6 +446,7 @@ def province_slot_api(pId, slot_id):
                     "building_id": row["building_id"],
                     "name": row["name"],
                     "display_name": row["display_name"],
+                    "icon": building_visual_icon(row["name"]),
                     "quantity": qty,
                     "base_cost": int(row["base_cost"] or 0),
                     "can_build": True,
