@@ -634,7 +634,7 @@ def country(cId):
         # Get provinces list with demographics
         db.execute(
             "SELECT provinceName, id, population, "
-            "CAST(cityCount AS INTEGER) as cityCount, "
+            "CAST(citycount AS INTEGER) as cityCount, "
             "land, happiness, productivity, "
             "COALESCE(pop_children, 0) as pop_children, "
             "COALESCE(pop_working, 0) as pop_working, "
