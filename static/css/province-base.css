@@ -28,6 +28,19 @@
     gap: 6px;
 }
 
+.province-base-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.province-base-stats .material-icons-outlined {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
 .province-base-toggle {
     min-height: 44px;
     padding: 8px 14px;

@@ -2,6 +2,11 @@
 <section class="province-base-section" id="province-base-view" aria-label="Province base">
     <div class="province-base-header">
         <h2><span class="material-icons-outlined">castle</span> Base</h2>
+        <span class="province-base-stats">
+            <span class="material-icons-outlined" title="Happiness">sentiment_satisfied</span>{{ province_base_layout.happiness }}%
+            <span class="material-icons-outlined" title="Pollution">cloud</span>{{ province_base_layout.pollution }}%
+            <span class="material-icons-outlined" title="Population">people_alt</span>{{ province_base_layout.population | fmt }}
+        </span>
         <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true">Classic view</button>
     </div>
     <div id="province-base-canvas"></div>

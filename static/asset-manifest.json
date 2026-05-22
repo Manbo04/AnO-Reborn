@@ -208,7 +208,7 @@
   "resources": {
     "gold": {
       "legacy": "resmoney.png",
-      "path": "images/game/resources/gold.png"
+      "path": "images/game/resources/gold.svg"
     },
     "money": {
       "legacy": "resmoney.png",
@@ -216,11 +216,11 @@
     },
     "rations": {
       "legacy": "resrations.png",
-      "path": "images/game/resources/rations.png"
+      "path": "images/game/resources/rations.svg"
     },
     "oil": {
       "legacy": "resoil.png",
-      "path": "images/game/resources/oil.png"
+      "path": "images/game/resources/oil.svg"
     },
     "coal": {
       "legacy": "rescoal.png",
@@ -256,11 +256,11 @@
     },
     "steel": {
       "legacy": "ressteel.png",
-      "path": "images/game/resources/steel.png"
+      "path": "images/game/resources/steel.svg"
     },
     "consumer_goods": {
       "legacy": "resconsumer_goods.png",
-      "path": "images/game/resources/consumer_goods.png"
+      "path": "images/game/resources/consumer_goods.svg"
     },
     "aluminium": {
       "legacy": "resaluminium.png",

@@ -63,7 +63,11 @@ def _patch_economy_get_particular_resources():
     import importlib
 
     # Ensure module is loaded then patch the class method directly.
-    m = importlib.import_module("attack_scripts.Nations")
+    try:
+        m = importlib.import_module("attack_scripts.Nations")
+    except ModuleNotFoundError:
+        yield
+        return
 
     def _impl_get_particular_resources(nationID, resources):
         from database import get_db_connection, fetchone_first

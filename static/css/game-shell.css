@@ -219,6 +219,12 @@ body.game-shell-active .game-bottom-nav {
     transform: scale(0.98);
 }
 
+body.game-reduced-motion .game-province-card,
+body.game-reduced-motion .game-nav-item,
+body.game-reduced-motion * {
+    transition: none !important;
+}
+
 .game-province-card-stats {
     display: grid;
     gap: 4px;
