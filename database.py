@@ -1064,6 +1064,14 @@ def get_request_cursor(cursor_factory=None, read_only=False):
             pass
 
 
+def rollback_db_cursor(db):
+    """Reset the request connection after a failed SQL statement (aborted txn)."""
+    try:
+        db.connection.rollback()
+    except Exception:
+        pass
+
+
 def teardown_request_connection(exc=None):
     """Return the request-scoped connection to the pool.
 
