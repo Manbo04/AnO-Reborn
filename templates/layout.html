@@ -15,7 +15,7 @@
 
 
     {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
-    <link href="{{ url_for('static', filename='style.css') }}?v=14" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=15" rel="stylesheet" type="text/css" />
     {% if FEATURE_GAME_PWA %}
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <script>
@@ -44,7 +44,7 @@
 
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     {% if FEATURE_GAME_SHELL and session.get('user_id') %}
-    <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=4"></script>
+    <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=5"></script>
     {% endif %}
     {% block extra_head %}{% endblock %}
     <!-- Hide dropdown arrows in navbar -->

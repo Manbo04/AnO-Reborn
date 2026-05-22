@@ -288,9 +288,20 @@
             classic.hidden = isBase;
             toggle.setAttribute('aria-pressed', isBase ? 'true' : 'false');
             toggle.textContent = isBase ? 'Classic view' : 'Base view';
+            var nudge = document.getElementById('province-view-nudge');
+            if (nudge) nudge.hidden = isBase;
         }
 
         apply(mode);
+        qsa('[data-province-view-toggle]').forEach(function (btn) {
+            if (btn === toggle) return;
+            btn.addEventListener('click', function () {
+                mode = mode === 'base' ? 'classic' : 'base';
+                localStorage.setItem(key, mode);
+                apply(mode);
+                playClick();
+            });
+        });
         toggle.addEventListener('click', function () {
             mode = mode === 'base' ? 'classic' : 'base';
             localStorage.setItem(key, mode);
