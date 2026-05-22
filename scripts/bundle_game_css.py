@@ -9,6 +9,7 @@ FILES = [
     "static/css/tokens.css",
     "static/css/game-shell.css",
     "static/css/province-base.css",
+    "static/css/game-experience.css",
     "static/css/game-country.css",
     "static/css/game-war.css",
 ]
