@@ -2,30 +2,85 @@
 <section class="province-base-section" id="province-base-view" aria-label="Province command center"
     style="--province-biome-sky: {{ province_base_layout.biome.sky }}; --province-biome-ground: {{ province_base_layout.biome.ground }};">
     <div class="province-base-header">
-        <h2><span class="material-icons-outlined">castle</span> {{ province['name'] }}</h2>
+        <div class="province-base-title-block">
+            <h2><span class="material-icons-outlined">castle</span> {{ province['name'] }}</h2>
+            <div class="province-base-stats">
+                <span class="province-stat-chip">
+                    <span class="material-icons-outlined">public</span>
+                    {{ province_base_layout.location }}
+                </span>
+                <span class="province-stat-chip">
+                    <span class="material-icons-outlined">groups</span>
+                    {{ province_base_layout.population_fmt }}
+                </span>
+                <span class="province-stat-chip">
+                    <span class="material-icons-outlined">domain</span>
+                    {{ province_base_layout.total_structures }} buildings
+                </span>
+            </div>
+        </div>
         <div class="province-base-vitals">
             <div class="province-vital">
-                <span class="province-vital-label"><span class="material-icons-outlined">sentiment_satisfied</span> Happy</span>
+                <span class="province-vital-label"><span class="material-icons-outlined">sentiment_satisfied</span> {{ province_base_layout.happiness }}%</span>
                 <div class="province-vital-bar"><div class="province-vital-fill province-vital-fill--happy" style="width: {{ [province_base_layout.happiness, 100]|min }}%;"></div></div>
             </div>
             <div class="province-vital">
-                <span class="province-vital-label"><span class="material-icons-outlined">cloud</span> Pollution</span>
+                <span class="province-vital-label"><span class="material-icons-outlined">cloud</span> {{ province_base_layout.pollution }}%</span>
                 <div class="province-vital-bar"><div class="province-vital-fill province-vital-fill--pollution" style="width: {{ [province_base_layout.pollution, 100]|min }}%;"></div></div>
             </div>
             <div class="province-vital">
-                <span class="province-vital-label"><span class="material-icons-outlined">bolt</span> Power</span>
+                <span class="province-vital-label"><span class="material-icons-outlined">bolt</span> {{ province_base_layout.electricity|default(0, true) }}%</span>
                 <div class="province-vital-bar"><div class="province-vital-fill province-vital-fill--power" style="width: {{ [province_base_layout.electricity|default(0, true), 100]|min }}%;"></div></div>
             </div>
         </div>
         <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true" title="Switch between district map and classic tabs">Classic view</button>
-        <p class="province-base-hint" id="province-base-hint" hidden>If you only see tabs below, tap <strong>Base view</strong> above or clear site data for this page.</p>
     </div>
 
     <div class="province-base-arena">
-        <div class="province-base-particles" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
+        <div class="province-map-scenery" aria-hidden="true">
+            <div class="province-map-cloud province-map-cloud--1"></div>
+            <div class="province-map-cloud province-map-cloud--2"></div>
+            <div class="province-map-cloud province-map-cloud--3"></div>
+            <div class="province-map-tree province-map-tree--1"></div>
+            <div class="province-map-tree province-map-tree--2"></div>
+            <div class="province-map-tree province-map-tree--3"></div>
+            <div class="province-map-road"></div>
         </div>
+
+        <div class="province-map-hub" data-province-hub aria-label="Capital district">
+            <div class="province-map-hub-platform">
+                <span class="material-icons-outlined province-map-hub-icon">{{ province_base_layout.biome_icon }}</span>
+            </div>
+            <div class="province-map-hub-skyline" data-hub-skyline>
+                {% set hub_blocks = [province_base_layout.total_structures, 12]|min %}
+                {% for i in range(hub_blocks) %}
+                <span class="province-hub-block" style="--hub-i: {{ i }};"></span>
+                {% endfor %}
+            </div>
+            <span class="province-map-hub-label">{{ province['name'] }}</span>
+            {% if province_base_layout.total_structures == 0 %}
+            <span class="province-map-hub-empty">Tap a district to build</span>
+            {% endif %}
+        </div>
+
         {% include 'partials/province_base_slots.html' %}
+    </div>
+
+    <div class="province-dock" id="province-dock" hidden>
+        <div class="province-dock-header">
+            <div class="province-dock-icon" data-dock-icon-wrap>
+                <span class="material-icons-outlined" data-dock-icon>category</span>
+            </div>
+            <div class="province-dock-titles">
+                <h3 data-dock-title>District</h3>
+                <p data-dock-sub>Select a district on the map</p>
+            </div>
+            <button type="button" class="province-dock-expand" data-dock-open-sheet title="Full panel">
+                <span class="material-icons-outlined">open_in_full</span>
+            </button>
+        </div>
+        <div class="province-dock-buildings" data-dock-buildings></div>
+        <p class="province-dock-hint" data-dock-hint>Tap <strong>+</strong> to build instantly · expand for full list</p>
     </div>
 
     <script id="province-base-data" type="application/json">{{ province_base_layout | tojson }}</script>

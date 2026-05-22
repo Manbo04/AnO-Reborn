@@ -13,10 +13,36 @@
         0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
+.province-base-title-block h2 {
+    margin: 0 0 6px;
+}
+
+.province-base-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.province-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+}
+
+.province-stat-chip .material-icons-outlined {
+    font-size: 0.95rem;
+    color: var(--accent);
+}
+
 .province-base-arena {
     position: relative;
-    min-height: 320px;
-    padding: var(--game-space-md);
+    min-height: min(58vh, 520px);
+    padding: 0;
     background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
     overflow: hidden;
 }
@@ -26,21 +52,8 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse 80% 50% at 50% 100%, var(--province-biome-ground, #1e5c38) 0%, transparent 70%),
-        repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 48px,
-            rgba(255, 255, 255, 0.02) 48px,
-            rgba(255, 255, 255, 0.02) 49px
-        ),
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 48px,
-            rgba(255, 255, 255, 0.02) 48px,
-            rgba(255, 255, 255, 0.02) 49px
-        );
+        radial-gradient(ellipse 90% 55% at 50% 88%, var(--province-biome-ground, #1e5c38) 0%, transparent 72%),
+        radial-gradient(ellipse 40% 30% at 50% 45%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -160,126 +173,479 @@
     transform: scale(0.96);
 }
 
-/* Isometric-style slot grid */
-.province-base-slots-grid {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-    gap: 14px;
-    padding: var(--game-space-lg) var(--game-space-md);
-    perspective: 800px;
+/* Map scenery */
+.province-map-scenery {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
 }
 
-.province-base-slot-card {
-    --slot-gradient: linear-gradient(145deg, #333, #555);
-    --slot-glow: rgba(0, 167, 225, 0.4);
-    --slot-accent: #00a7e1;
-    position: relative;
+.province-map-cloud {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    filter: blur(2px);
+    animation: cloud-drift 24s ease-in-out infinite;
+}
+
+.province-map-cloud--1 { width: 80px; height: 28px; left: 8%; top: 12%; }
+.province-map-cloud--2 { width: 110px; height: 36px; right: 10%; top: 18%; animation-delay: -8s; }
+.province-map-cloud--3 { width: 60px; height: 22px; left: 42%; top: 8%; animation-delay: -14s; }
+
+@keyframes cloud-drift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(18px); }
+}
+
+.province-map-tree {
+    position: absolute;
+    bottom: 18%;
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-bottom: 36px solid rgba(20, 60, 35, 0.85);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+}
+
+.province-map-tree::after {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 34px;
+    width: 6px;
+    height: 14px;
+    background: #3d2818;
+    border-radius: 2px;
+}
+
+.province-map-tree--1 { left: 6%; }
+.province-map-tree--2 { right: 8%; transform: scale(1.15); }
+.province-map-tree--3 { left: 22%; bottom: 22%; transform: scale(0.85); opacity: 0.7; }
+
+.province-map-road {
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    bottom: 28%;
+    height: 8px;
+    background: rgba(60, 50, 40, 0.45);
+    border-radius: 4px;
+    transform: perspective(200px) rotateX(55deg);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Central capital hub */
+.province-map-hub {
+    position: absolute;
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    min-height: 128px;
-    padding: 12px 10px 14px;
+    width: min(160px, 36vw);
+    pointer-events: none;
+}
+
+.province-map-hub-platform {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.25));
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 -6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.province-map-hub-icon {
+    font-size: 2.5rem;
+    color: #fff;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.province-map-hub-skyline {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    min-height: 44px;
+    margin-top: -12px;
+    padding: 0 8px;
+}
+
+.province-hub-block {
+    display: block;
+    width: 10px;
+    height: calc(12px + var(--hub-i) * 3px);
+    max-height: 36px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, #7eb8f0, #3d5a7a);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+    animation: hub-rise 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    animation-delay: calc(var(--hub-i) * 0.04s);
+}
+
+@keyframes hub-rise {
+    from { transform: scaleY(0); opacity: 0; }
+}
+
+.province-map-hub-label {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.province-map-hub-empty {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 4px;
+    animation: pulse-hint 2s ease infinite;
+}
+
+@keyframes pulse-hint {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* District nodes on map */
+.province-map-nodes {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+}
+
+.province-map-node {
+    --slot-gradient: linear-gradient(145deg, #333, #555);
+    --slot-glow: rgba(0, 167, 225, 0.4);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(118px, 28vw);
+    padding: 0;
     border: none;
-    border-radius: 16px;
-    background: var(--slot-gradient);
+    background: transparent;
     cursor: pointer;
     color: #fff;
     font: inherit;
     text-align: center;
-    box-shadow:
-        0 6px 0 rgba(0, 0, 0, 0.25),
-        0 8px 24px rgba(0, 0, 0, 0.35);
-    transform: translateY(0) rotateX(8deg);
-    transition:
-        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.2s;
-    animation: slot-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: node-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
-.province-base-slot-card:nth-child(1) { animation-delay: 0.05s; }
-.province-base-slot-card:nth-child(2) { animation-delay: 0.1s; }
-.province-base-slot-card:nth-child(3) { animation-delay: 0.15s; }
-.province-base-slot-card:nth-child(4) { animation-delay: 0.2s; }
-.province-base-slot-card:nth-child(5) { animation-delay: 0.25s; }
-.province-base-slot-card:nth-child(6) { animation-delay: 0.3s; }
-.province-base-slot-card:nth-child(7) { animation-delay: 0.35s; }
+.province-map-node:nth-child(1) { animation-delay: 0.05s; }
+.province-map-node:nth-child(2) { animation-delay: 0.1s; }
+.province-map-node:nth-child(3) { animation-delay: 0.15s; }
+.province-map-node:nth-child(4) { animation-delay: 0.2s; }
+.province-map-node:nth-child(5) { animation-delay: 0.25s; }
+.province-map-node:nth-child(6) { animation-delay: 0.3s; }
+.province-map-node:nth-child(7) { animation-delay: 0.35s; }
 
-@keyframes slot-enter {
-    from {
-        opacity: 0;
-        transform: translateY(24px) scale(0.85) rotateX(12deg);
-    }
+@keyframes node-pop {
+    from { opacity: 0; transform: scale(0.7); }
 }
 
-.province-base-slot-card:hover,
-.province-base-slot-card:focus-visible {
-    transform: translateY(-6px) rotateX(4deg) scale(1.03);
-    box-shadow:
-        0 10px 0 rgba(0, 0, 0, 0.2),
-        0 0 28px var(--slot-glow);
+.province-map-node--power { left: 50%; top: 6%; transform: translate(-50%, 0); }
+.province-map-node--food { left: 14%; top: 22%; }
+.province-map-node--retail { right: 14%; top: 22%; }
+.province-map-node--mines { left: 6%; top: 48%; }
+.province-map-node--industry { right: 6%; top: 48%; }
+.province-map-node--civic { left: 22%; bottom: 10%; }
+.province-map-node--military { right: 22%; bottom: 10%; }
+
+.province-map-node:hover,
+.province-map-node:focus-visible,
+.province-map-node.is-selected {
+    transform: translate(-50%, 0) scale(1.08);
     outline: none;
+    z-index: 5;
 }
 
-.province-base-slot-card:active {
-    transform: translateY(2px) rotateX(10deg);
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+.province-map-node--food:hover,
+.province-map-node--food:focus-visible,
+.province-map-node--food.is-selected { transform: scale(1.08); }
+.province-map-node--retail:hover,
+.province-map-node--retail:focus-visible,
+.province-map-node--retail.is-selected { transform: scale(1.08); }
+.province-map-node--mines:hover,
+.province-map-node--mines:focus-visible,
+.province-map-node--mines.is-selected { transform: scale(1.08); }
+.province-map-node--industry:hover,
+.province-map-node--industry:focus-visible,
+.province-map-node--industry.is-selected { transform: scale(1.08); }
+.province-map-node--civic:hover,
+.province-map-node--civic:focus-visible,
+.province-map-node--civic.is-selected { transform: scale(1.08); }
+.province-map-node--military:hover,
+.province-map-node--military:focus-visible,
+.province-map-node--military.is-selected { transform: scale(1.08); }
+
+.province-map-node.is-selected .province-map-node-pin {
+    box-shadow: 0 0 0 3px #fff, 0 0 24px var(--slot-glow);
 }
 
-.province-base-slot-card.has-buildings::after {
-    content: "";
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #5cd39a;
-    box-shadow: 0 0 10px #2d9f6f;
-    animation: pulse-dot 2s ease infinite;
-}
-
-@keyframes pulse-dot {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-}
-
-.province-base-slot-icon {
+.province-map-node-pin {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--slot-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 8px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.25);
-    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 6px 0 rgba(0, 0, 0, 0.3),
+        0 10px 28px rgba(0, 0, 0, 0.35);
+    transition: box-shadow 0.2s;
 }
 
-.province-base-slot-icon .material-icons-outlined {
-    font-size: 2rem;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+.province-map-node-icon .material-icons-outlined {
+    font-size: 1.85rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
 }
 
-.province-base-slot-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.province-base-slot-qty {
-    margin-top: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 3px 12px;
+.province-map-node-qty {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.35);
+    background: #1c2029;
+    border: 2px solid #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 18px;
 }
 
-.province-base-slot-card.has-buildings .province-base-slot-qty {
-    background: rgba(255, 255, 255, 0.2);
+.province-map-node.has-buildings .province-map-node-qty {
+    background: var(--slot-accent, #00a7e1);
+}
+
+.province-map-node-label {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+.province-map-node-skyline {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    min-height: 32px;
+    margin-top: 4px;
+}
+
+.province-node-block {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 14px;
+    height: var(--block-h, 12px);
+    min-height: 8px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.35));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.province-node-block .material-icons-outlined {
+    font-size: 0.65rem;
+    margin-bottom: 2px;
+    opacity: 0.9;
+}
+
+.province-node-block--empty {
+    width: 20px;
+    height: 8px;
+    opacity: 0.35;
+    border: 1px dashed rgba(255, 255, 255, 0.4);
+    background: transparent;
+}
+
+.province-map-node-chips {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.province-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.province-chip .material-icons-outlined {
+    font-size: 0.75rem;
+}
+
+.province-map-node-cta {
+    margin-top: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(0, 167, 225, 0.45);
+    animation: pulse-hint 2s ease infinite;
+}
+
+.province-map-node.is-empty .province-map-node-pin {
+    opacity: 0.92;
+}
+
+/* Inline dock (desktop / tablet) */
+.province-dock {
+    margin: 0;
+    padding: var(--game-space-md);
+    background: rgba(28, 32, 41, 0.95);
+    border-top: 1px solid rgba(0, 167, 225, 0.25);
+}
+
+.province-dock[hidden] {
+    display: none !important;
+}
+
+.province-dock-header {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-md);
+    margin-bottom: var(--game-space-md);
+}
+
+.province-dock-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+}
+
+.province-dock-icon .material-icons-outlined {
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.province-dock-titles h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.province-dock-titles p {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.province-dock-expand {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--foregroundThree);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.province-dock-buildings {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.province-dock-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+    border: 1px solid var(--border);
+}
+
+.province-dock-card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.province-dock-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(0, 167, 225, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.province-dock-card-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    flex: 1;
+}
+
+.province-dock-card-qty {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.province-dock-hint {
+    margin: var(--game-space-md) 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .province-base-arena {
+        min-height: 420px;
+    }
+
+    .province-map-node {
+        width: min(100px, 26vw);
+    }
+
+    .province-map-node-pin {
+        width: 54px;
+        height: 54px;
+    }
+
+    .province-map-node-skyline,
+    .province-map-node-chips {
+        display: none;
+    }
+
+    .province-dock {
+        display: none !important;
+    }
 }
 
 /* Interactive bottom sheet */
@@ -487,7 +853,9 @@
     display: none !important;
 }
 
-body.game-reduced-motion .province-base-slot-card,
+body.game-reduced-motion .province-map-node,
+body.game-reduced-motion .province-map-cloud,
+body.game-reduced-motion .province-hub-block,
 body.game-reduced-motion .province-base-particles span {
     animation: none;
 }
