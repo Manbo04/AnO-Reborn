@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
-<link href="{{ url_for('static', filename='tutorial.css') }}?v=11" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=11"></script>
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=12" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=12"></script>
 {% endblock %}
-{% from "tutorial_chapter_extras.html" import chapter_video_follow %}
+{% from "tutorial_chapter_extras.html" import chapter_video_block, chapter_follow_block %}
 {% block body %}
 <script>document.documentElement.classList.add('page-tutorial');</script>
 <div class="templatediv tutorial-interactive tutorial-academy" id="tutorial-interactive"
@@ -98,7 +98,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[0]) }}
+                    {{ chapter_video_block(tutorial_chapters[0]) }}
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">AnO runs on <strong>hourly ticks</strong>. Background tasks generate tax income, consume rations and consumer goods, grow population, and produce resources from your buildings. Your job: build infrastructure, balance inputs, and expand before rivals do.</p>
 
@@ -150,6 +150,7 @@
                         <p class="templatecontentpleft">New players should start at <a href="/createprovince" class="templatelink">Create Province</a>, then visit <a href="/mechanics" class="templatelink">Game Mechanics</a> for reference tables.</p>
                     </div>
 
+                    {{ chapter_follow_block(tutorial_chapters[0]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -180,7 +181,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[1]) }}
+                    {{ chapter_video_block(tutorial_chapters[1]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -199,6 +200,7 @@
                     <div class="tutorial-callout tip-warn">
                         <strong>Starter tip:</strong> Build power first (coal/oil burners use Tier-1 resources only), then farms and distribution so rations reach your population.
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[1]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -228,7 +230,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[2]) }}
+                    {{ chapter_video_block(tutorial_chapters[2]) }}
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
 
@@ -259,6 +261,7 @@
                             </table>
                         </div>
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[2]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -289,7 +292,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[3]) }}
+                    {{ chapter_video_block(tutorial_chapters[3]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -312,6 +315,7 @@
                         </div>
                         <img class="unitimage imageborder" src="{{ url_for('static', filename='images/country.jpg') }}?v=2" alt="Country resources and revenue" />
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[3]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -342,7 +346,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[4]) }}
+                    {{ chapter_video_block(tutorial_chapters[4]) }}
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness boosts growth (~4% per point); pollution reduces it (~2% per point).</p>
                     <div class="tutorial-callout">
@@ -353,6 +357,7 @@
                         <tr><td><strong>Elderly &gt;40%</strong></td><td>Pension crisis (−5k gold/hour)</td></tr>
                         <tr><td><strong>Pollution</strong></td><td>Reduces growth; Chernobyl events floor efficiency at 20%</td></tr>
                     </table>
+                    {{ chapter_follow_block(tutorial_chapters[4]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -382,7 +387,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[5]) }}
+                    {{ chapter_video_block(tutorial_chapters[5]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -402,6 +407,7 @@
                         </div>
                         <img class="unitimage imageborder" src="{{ url_for('static', filename='images/military.jpg') }}?v=2" alt="Military interface" />
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[5]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -431,12 +437,13 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[6]) }}
+                    {{ chapter_video_block(tutorial_chapters[6]) }}
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">The market is player-driven. Place buy/sell offers, watch statistics for average prices, and use trade agreements for recurring deals.</p>
                     <div class="tutorial-callout">
                         <strong>Pro tip:</strong> Check <a href="/statistics" class="templatelink">Statistics</a> before listing — undercutting the average burns gold; pricing at average sells steadily.
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[6]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -466,13 +473,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[7]) }}
+                    {{ chapter_video_block(tutorial_chapters[7]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
                             <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, supply regen, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
                         </div>
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[7]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -502,7 +510,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[8]) }}
+                    {{ chapter_video_block(tutorial_chapters[8]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -514,6 +522,7 @@
                             </ul>
                         </div>
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[8]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
@@ -544,7 +553,7 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
-                    {{ chapter_video_follow(tutorial_chapters[9]) }}
+                    {{ chapter_video_block(tutorial_chapters[9]) }}
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -552,6 +561,7 @@
                             <p class="templatecontentpleft"><strong>Endgame mastery:</strong> Balance tax/display accuracy (check coalition tax on country page), monitor statistics, tune policies, and grow before declaring wide wars.</p>
                         </div>
                     </div>
+                    {{ chapter_follow_block(tutorial_chapters[9]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Final exam</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
