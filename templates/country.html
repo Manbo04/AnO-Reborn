@@ -1361,6 +1361,7 @@
             </div>
         </div>
 
+        {% if status %}
         <script type="text/javascript">
             // Hacky JavaScript script to check and uncheck policies
             const policies = JSON.parse('{{ policies | tojson }}')
@@ -1371,6 +1372,7 @@
                 else checkbox.unchecked = true;
             }
         </script>
+        {% endif %}
 
         <!--
             <h2 class="templatecontentheaderleft">Policies</h2>
