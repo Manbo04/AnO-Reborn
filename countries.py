@@ -553,17 +553,24 @@ def country(cId):
             "processing": 0,
         }
 
+    join_number = None
+    last_active = None
+    total_children = 0
+    total_working = 0
+    total_elderly = 0
+    resource_rows = []
+    building_rows = []
+    technology_rows = []
+
     with get_request_cursor(read_only=True) as db:
-        # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
+        # Core query: columns required on every production DB
         db.execute(
             """SELECT u.username, s.location, u.description,
-                      u.date, u.flag, u.join_number,
+                      u.date, u.flag,
                       c.id AS coalition_id, cm.role,
                       c.name as colName,
                       p.total_pop, p.avg_happiness,
-                      p.avg_productivity, p.province_count,
-                      u.last_active,
-                      p.total_children, p.total_working, p.total_elderly
+                      p.avg_productivity, p.province_count
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
@@ -573,10 +580,7 @@ def country(cId):
                           SUM(population) AS total_pop,
                           AVG(happiness) AS avg_happiness,
                           AVG(productivity) AS avg_productivity,
-                          COUNT(id) AS province_count,
-                          SUM(COALESCE(pop_children, 0)) AS total_children,
-                          SUM(COALESCE(pop_working, 0)) AS total_working,
-                          SUM(COALESCE(pop_elderly, 0)) AS total_elderly
+                          COUNT(id) AS province_count
                    FROM provinces
                    WHERE userid = %s
                    GROUP BY userid
@@ -594,7 +598,6 @@ def country(cId):
             description,
             dateCreated,
             flag,
-            join_number,
             coalition_id,
             colRole,
             colName,
@@ -602,13 +605,8 @@ def country(cId):
             happiness,
             productivity,
             provinceCount,
-            last_active,
-            total_children,
-            total_working,
-            total_elderly,
         ) = row
 
-        # Set defaults for None values
         coalition_id = coalition_id or 0
         colName = colName or ""
         colFlag = None
@@ -616,12 +614,34 @@ def country(cId):
         happiness = happiness or 0
         productivity = productivity or 0
         provinceCount = provinceCount or 0
-        total_children = total_children or 0
-        total_working = total_working or 0
-        total_elderly = total_elderly or 0
 
-        # Get policies and influence — pass cursor to avoid extra connections
-        # (~130ms saved per round-trip to Railway Postgres proxy)
+        try:
+            db.execute(
+                "SELECT join_number, last_active FROM users WHERE id=%s",
+                (cId,),
+            )
+            opt = db.fetchone()
+            if opt:
+                join_number, last_active = opt[0], opt[1]
+        except Exception:
+            pass
+
+        try:
+            db.execute(
+                """SELECT COALESCE(SUM(pop_children), 0),
+                          COALESCE(SUM(pop_working), 0),
+                          COALESCE(SUM(pop_elderly), 0)
+                   FROM provinces WHERE userid = %s""",
+                (cId,),
+            )
+            demo = db.fetchone()
+            if demo:
+                total_children = demo[0] or 0
+                total_working = demo[1] or 0
+                total_elderly = demo[2] or 0
+        except Exception:
+            pass
+
         try:
             policies = get_user_policies(cId, db=db)
         except Exception:
@@ -631,63 +651,84 @@ def country(cId):
         except Exception:
             influence = 0
 
-        # Get provinces list with demographics
-        db.execute(
-            "SELECT provinceName, id, population, "
-            "CAST(cityCount AS INTEGER) as cityCount, "
-            "land, happiness, productivity, "
-            "COALESCE(pop_children, 0) as pop_children, "
-            "COALESCE(pop_working, 0) as pop_working, "
-            "COALESCE(pop_elderly, 0) as pop_elderly "
-            "FROM provinces WHERE userid=(%s) "
-            "ORDER BY id ASC",
-            (cId,),
-        )
-        provinces = db.fetchall()
+        provinces = []
+        try:
+            db.execute(
+                "SELECT provinceName, id, population, "
+                "CAST(citycount AS INTEGER) as cityCount, "
+                "land, happiness, productivity, "
+                "COALESCE(pop_children, 0) as pop_children, "
+                "COALESCE(pop_working, 0) as pop_working, "
+                "COALESCE(pop_elderly, 0) as pop_elderly "
+                "FROM provinces WHERE userid=(%s) "
+                "ORDER BY id ASC",
+                (cId,),
+            )
+            provinces = db.fetchall()
+        except Exception:
+            try:
+                db.execute(
+                    "SELECT provinceName, id, population, "
+                    "CAST(citycount AS INTEGER) as cityCount, "
+                    "land, happiness, productivity, "
+                    "0 as pop_children, 0 as pop_working, 0 as pop_elderly "
+                    "FROM provinces WHERE userid=(%s) "
+                    "ORDER BY id ASC",
+                    (cId,),
+                )
+                provinces = db.fetchall()
+            except Exception:
+                provinces = []
 
-        # Normalized resource display
-        db.execute(
-            """
-            SELECT rd.display_name, COALESCE(ue.quantity, 0) AS quantity
-            FROM resource_dictionary rd
-            LEFT JOIN user_economy ue
-              ON ue.resource_id = rd.resource_id
-             AND ue.user_id = %s
-            ORDER BY rd.resource_id
-            """,
-            (cId,),
-        )
-        resource_rows = db.fetchall() or []
+        try:
+            db.execute(
+                """
+                SELECT rd.display_name, COALESCE(ue.quantity, 0) AS quantity
+                FROM resource_dictionary rd
+                LEFT JOIN user_economy ue
+                  ON ue.resource_id = rd.resource_id
+                 AND ue.user_id = %s
+                ORDER BY rd.resource_id
+                """,
+                (cId,),
+            )
+            resource_rows = db.fetchall() or []
+        except Exception:
+            resource_rows = []
 
-        # Normalized buildings display (national totals across all provinces)
-        db.execute(
-            """
-            SELECT bd.display_name, SUM(ub.quantity) AS quantity
-            FROM user_buildings ub
-            JOIN building_dictionary bd ON bd.building_id = ub.building_id
-            WHERE ub.user_id = %s
-              AND ub.quantity > 0
-            GROUP BY bd.display_name
-            HAVING SUM(ub.quantity) > 0
-            ORDER BY bd.display_name
-            """,
-            (cId,),
-        )
-        building_rows = db.fetchall() or []
+        try:
+            db.execute(
+                """
+                SELECT bd.display_name, SUM(ub.quantity) AS quantity
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                  AND ub.quantity > 0
+                GROUP BY bd.display_name
+                HAVING SUM(ub.quantity) > 0
+                ORDER BY bd.display_name
+                """,
+                (cId,),
+            )
+            building_rows = db.fetchall() or []
+        except Exception:
+            building_rows = []
 
-        # Normalized technologies display (unlocked only)
-        db.execute(
-            """
-            SELECT td.display_name
-            FROM user_tech ut
-            JOIN tech_dictionary td ON td.tech_id = ut.tech_id
-            WHERE ut.user_id = %s
-              AND ut.is_unlocked = TRUE
-            ORDER BY td.display_name
-            """,
-            (cId,),
-        )
-        technology_rows = db.fetchall() or []
+        try:
+            db.execute(
+                """
+                SELECT td.display_name
+                FROM user_tech ut
+                JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+                WHERE ut.user_id = %s
+                  AND ut.is_unlocked = TRUE
+                ORDER BY td.display_name
+                """,
+                (cId,),
+            )
+            technology_rows = db.fetchall() or []
+        except Exception:
+            technology_rows = []
 
         # Calculate CG need from already-fetched population
         cg_needed = (
@@ -735,12 +776,15 @@ def country(cId):
             except Exception:
                 revenue = default_revenue_data()
 
-            db.execute(
-                "SELECT name, type, resource, amount, date "
-                "FROM revenue WHERE user_id=%s",
-                (cId,),
-            )
-            expenses = db.fetchall()
+            try:
+                db.execute(
+                    "SELECT name, type, resource, amount, date "
+                    "FROM revenue WHERE user_id=%s",
+                    (cId,),
+                )
+                expenses = db.fetchall()
+            except Exception:
+                expenses = []
 
             try:
                 statistics = get_econ_statistics(cId, db=db)
