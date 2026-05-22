@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
-<link href="{{ url_for('static', filename='tutorial.css') }}?v=7" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=7"></script>
+<link href="{{ url_for('static', filename='tutorial.css') }}?v=8" rel="stylesheet" type="text/css" />
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=8"></script>
 {% endblock %}
 {% block body %}
 <script>document.documentElement.classList.add('page-tutorial');</script>
@@ -14,7 +14,7 @@
             <div class="tutorial-hero-copy">
                 <div class="tutorial-eyebrow"><span class="material-icons-outlined" aria-hidden="true">school</span> Nation Academy</div>
                 <h1 id="tutorial-page-title" class="tutorial-hero-title">Command Your Nation</h1>
-                <p class="tutorial-hero-lead">Guided lessons, live calculators, and quick quizzes — progress saves in your browser.</p>
+                <p class="tutorial-hero-lead">Short lesson videos, guided chapters, live calculators, and quick quizzes — progress saves in your browser.</p>
             </div>
             <div class="tutorial-hud" aria-label="Your tutorial progress">
                 <div class="tutorial-hud-stat">
@@ -97,6 +97,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/administrativebuilding.jpg') }}?v=2"
+                               aria-label="Chapter 1: welcome and game loop">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch01-welcome.mp4') }}?v=1" type="video/mp4">
+                        </video>
+                    </div>
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">AnO runs on <strong>hourly ticks</strong>. Background tasks generate tax income, consume rations and consumer goods, grow population, and produce resources from your buildings. Your job: build infrastructure, balance inputs, and expand before rivals do.</p>
 
@@ -178,6 +186,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/province.jpg') }}?v=2"
+                               aria-label="Chapter 2: provinces and buildings">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch02-provinces.mp4') }}?v=1" type="video/mp4">
+                        </video>
+                    </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -224,6 +240,14 @@
                             <h2 class="tutorial-chapter-title">Resources &amp; Production Chains</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
+                    </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/coalmine.jpg') }}?v=2"
+                               aria-label="Chapter 3: resources and production chains">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch03-resources.mp4') }}?v=1" type="video/mp4">
+                        </video>
                     </div>
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
@@ -285,6 +309,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/bank.jpg') }}?v=2"
+                               aria-label="Chapter 4: economy and tax">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch04-economy.mp4') }}?v=1" type="video/mp4">
+                        </video>
+                    </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
@@ -337,6 +369,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/washington.jpg') }}?v=2"
+                               aria-label="Chapter 5: population and rations">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch05-population.mp4') }}?v=1" type="video/mp4">
+                        </video>
+                    </div>
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness boosts growth (~4% per point); pollution reduces it (~2% per point).</p>
                     <div class="tutorial-callout">
@@ -375,6 +415,14 @@
                             <h2 class="tutorial-chapter-title">Military &amp; Supplies</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
+                    </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/cruiser.jpg') }}?v=2"
+                               aria-label="Chapter 6: military basics">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch06-military.mp4') }}?v=1" type="video/mp4">
+                        </video>
                     </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
@@ -424,6 +472,14 @@
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/market.jpg') }}?v=2"
+                               aria-label="Chapter 7: global market">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch07-market.mp4') }}?v=1" type="video/mp4">
+                        </video>
+                    </div>
                     <div class="tutorial-chapter-body">
                     <p class="tutorial-lead">The market is player-driven. Place buy/sell offers, watch statistics for average prices, and use trade agreements for recurring deals.</p>
                     <div class="tutorial-callout">
@@ -457,6 +513,14 @@
                             <h2 class="tutorial-chapter-title">Upgrades &amp; Technology</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
+                    </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/upgrades.jpg') }}?v=2"
+                               aria-label="Chapter 8: nation upgrades">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch08-upgrades.mp4') }}?v=1" type="video/mp4">
+                        </video>
                     </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
@@ -492,6 +556,14 @@
                             <h2 class="tutorial-chapter-title">War &amp; Combat</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
+                    </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/war.jpg') }}?v=2"
+                               aria-label="Chapter 9: war and combat">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch09-war.mp4') }}?v=1" type="video/mp4">
+                        </video>
                     </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
@@ -533,6 +605,14 @@
                             <h2 class="tutorial-chapter-title">Coalitions &amp; Mastery</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
+                    </div>
+                    <div class="tutorial-lesson-video-wrap">
+                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Watch lesson video <span class="tutorial-lesson-video-dur">~14s</span></p>
+                        <video class="tutorial-lesson-video" controls playsinline preload="metadata"
+                               poster="{{ url_for('static', filename='images/coalition.jpg') }}?v=2"
+                               aria-label="Chapter 10: coalitions and mastery">
+                            <source src="{{ url_for('static', filename='tutorial/videos/ch10-coalitions.mp4') }}?v=1" type="video/mp4">
+                        </video>
                     </div>
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
