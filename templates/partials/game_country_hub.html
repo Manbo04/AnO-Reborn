@@ -1,0 +1,10 @@
+{% if FEATURE_GAME_SHELL and status %}
+<nav class="game-country-hub" aria-label="Quick actions">
+    <a href="/provinces"><span class="material-icons-outlined">account_balance</span>Provinces</a>
+    <a href="/military"><span class="material-icons-outlined">shield</span>Military</a>
+    <a href="/market"><span class="material-icons-outlined">storefront</span>Market</a>
+    <a href="/wars"><span class="material-icons-outlined">military_tech</span>Wars</a>
+    <a href="/upgrades"><span class="material-icons-outlined">engineering</span>Projects</a>
+    <a href="/my_coalition"><span class="material-icons-outlined">group</span>Coalition</a>
+</nav>
+{% endif %}
