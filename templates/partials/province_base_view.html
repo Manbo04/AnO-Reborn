@@ -1,4 +1,13 @@
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+<style>
+.province-base-section{margin:0 0 1.5rem;border:2px solid #00a7e1;border-radius:16px;overflow:hidden;background:#1c2029}
+.province-base-header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;background:#212630;border-bottom:1px solid #3d4450}
+.province-base-slots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;padding:16px}
+.province-base-slot-card{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:110px;padding:8px;border:2px solid #3d4450;border-radius:12px;background:#262b36;cursor:pointer;color:#fff}
+.province-base-slot-img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.province-base-slot-label{font-size:12px;font-weight:600}
+.province-base-toggle{margin-left:auto;padding:8px 14px;border:1px solid #00a7e1;border-radius:12px;background:transparent;color:#00a7e1;cursor:pointer}
+</style>
 <section class="province-base-section" id="province-base-view" aria-label="Province base">
     <div class="province-base-header">
         <h2><span class="material-icons-outlined">castle</span> Base</h2>
