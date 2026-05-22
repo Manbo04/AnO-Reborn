@@ -37,23 +37,15 @@ jobs:
       - name: Install Python tools
         run: |
           python -m pip install --upgrade pip
-          pip install playwright psycopg2-binary bcrypt edge-tts python-dotenv requests
+          pip install playwright psycopg2-binary bcrypt python-dotenv requests
           playwright install chromium
 
-      - name: Generate narration
-        run: python3 scripts/generate_tutorial_narration.py
-
-      - name: Record walkthroughs with narration
+      - name: Record slow labeled walkthroughs (silent)
         env:
           DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
           TUTORIAL_RECORD_BASE_URL: ${{ vars.TUTORIAL_RECORD_BASE_URL || 'https://affairsandorder.com' }}
           TUTORIAL_RECORD_TMP_PASSWORD: ${{ secrets.TUTORIAL_RECORD_TMP_PASSWORD }}
-        run: python3 scripts/record_tutorial_walkthroughs.py --with-narration
-        continue-on-error: true
-
-      - name: Mux narration into existing videos if record failed
-        if: failure()
-        run: python3 scripts/record_tutorial_walkthroughs.py --narration-only --with-narration
+        run: python3 scripts/record_tutorial_walkthroughs.py --no-narration
 
       - name: Upload video artifacts
         uses: actions/upload-artifact@v4
@@ -76,5 +68,4 @@ jobs:
           delete-branch: true
           add-paths: |
             static/tutorial/videos/
-            static/tutorial/audio/
             static/tutorial/captions/
