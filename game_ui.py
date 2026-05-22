@@ -248,12 +248,22 @@ def legacy_image_for_unit(unit_key: str) -> str:
     return "images/soldier.jpg"
 
 
+def _static_file_exists(relative_path: str) -> bool:
+    if not relative_path:
+        return False
+    rel = relative_path.lstrip("/")
+    if rel.startswith("static/"):
+        rel = rel[7:]
+    return (_MANIFEST_PATH.parent / rel).is_file()
+
+
 def game_asset_path(kind: str, key: str) -> str:
     """Return static-relative path; prefers manifest game/ override then legacy."""
     manifest = load_asset_manifest()
     bucket = manifest.get(kind, {}).get(key, {})
-    if bucket.get("path"):
-        return bucket["path"]
+    game_path = bucket.get("path")
+    if game_path and _static_file_exists(game_path):
+        return game_path
     if kind == "buildings":
         return legacy_image_for_building(key)
     if kind == "resources":

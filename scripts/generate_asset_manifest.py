@@ -28,7 +28,14 @@ def main() -> None:
             for k, v in UNIT_LEGACY_IMAGES.items()
         },
         "resources": {
-            k: {"legacy": v, "path": f"images/game/resources/{k}.png"}
+            k: {
+                "legacy": v,
+                "path": (
+                    f"images/game/resources/{k}.svg"
+                    if k in ("gold", "rations", "oil", "steel", "consumer_goods")
+                    else f"images/game/resources/{k}.png"
+                ),
+            }
             for k, v in RESOURCE_LEGACY_IMAGES.items()
         },
         "biomes": {
