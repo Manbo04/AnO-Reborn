@@ -5,12 +5,15 @@ from helpers import login_required, error
 import os
 from dotenv import load_dotenv
 import bcrypt
+import requests
 from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
 from database import get_request_cursor
 
 load_dotenv()
+
+DISCORD_API_BASE = os.environ.get("API_BASE_URL", "https://discord.com/api")
 
 # sendgrid imports are performed lazily inside sendEmail to avoid import-time
 # failures in environments where the package is not installed
@@ -36,6 +39,64 @@ def generateUrlFromCode(code):
     url += f"/reset_password/{code}"
 
     return url
+
+
+def send_discord_password_reset_dm(discord_user_id, reset_url):
+    """Send a password reset link to the user via Discord bot DM."""
+    bot_token = os.getenv("DISCORD_BOT_TOKEN")
+    if not bot_token or not discord_user_id:
+        return False
+
+    import logging
+
+    logger = logging.getLogger(__name__)
+    headers = {
+        "Authorization": f"Bot {bot_token}",
+        "Content-Type": "application/json",
+    }
+    message = (
+        "**Affairs & Order — Password reset**\n\n"
+        "Use this link to set a new password (single use):\n"
+        f"{reset_url}\n\n"
+        "If you did not request this, ignore this message."
+    )
+
+    try:
+        channel_resp = requests.post(
+            f"{DISCORD_API_BASE}/users/@me/channels",
+            headers=headers,
+            json={"recipient_id": str(discord_user_id)},
+            timeout=10,
+        )
+        if not channel_resp.ok:
+            logger.warning(
+                "Discord DM channel create failed: status=%s body=%s",
+                channel_resp.status_code,
+                channel_resp.text[:200],
+            )
+            return False
+
+        channel_id = channel_resp.json().get("id")
+        if not channel_id:
+            return False
+
+        msg_resp = requests.post(
+            f"{DISCORD_API_BASE}/channels/{channel_id}/messages",
+            headers=headers,
+            json={"content": message},
+            timeout=10,
+        )
+        if not msg_resp.ok:
+            logger.warning(
+                "Discord DM send failed: status=%s body=%s",
+                msg_resp.status_code,
+                msg_resp.text[:200],
+            )
+            return False
+        return True
+    except Exception as exc:
+        logger.error("Discord password reset DM failed: %s", exc)
+        return False
 
 
 def sendEmail(recipient, code):
@@ -122,15 +183,37 @@ def request_password_reset():
                 client_ip,
             )
 
-    # Send email with reset link regardless of how request was initiated
+    reset_url = generateUrlFromCode(code)
+
+    # Logged-in account page: prefer Discord DM or immediate reset link (no email)
+    if cId:
+        discord_id = None
+        with get_request_cursor() as db:
+            try:
+                db.execute("SELECT discord_id FROM users WHERE id=%s", (cId,))
+                row = db.fetchone()
+                discord_id = row[0] if row else None
+            except Exception:
+                db.connection.rollback()
+
+        if discord_id and send_discord_password_reset_dm(discord_id, reset_url):
+            flash("A password reset link was sent to your Discord DMs.")
+            return redirect("/account")
+
+        if discord_id:
+            flash(
+                "Could not send a Discord message. "
+                "Open the reset page below or link Discord and try again."
+            )
+        return redirect(f"/reset_password/{code}")
+
+    # Forgot-password page (not logged in): try email, then generic response
     if email:
         try:
             sendEmail(email, code)
         except Exception:
-            # Log failures but don't reveal to user
             pass
 
-    # Inform user and redirect back to forgot password page
     flash("If an account exists with that email, a reset link has been sent.")
     return redirect("/forgot_password")
 
