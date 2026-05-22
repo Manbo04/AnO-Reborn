@@ -2,6 +2,7 @@ import ast
 import sys
 import os
 import json
+import hmac
 import time as time_module
 from flask import (
     Flask,
@@ -455,18 +456,15 @@ def ready():
 def trigger_tasks():
     """Admin endpoint to clear stale Redis locks and trigger Celery tasks.
 
-    Security: Requires ADMIN_DIAG_SECRET (or SECRET_KEY) env var
-    and matching X-DIAG-SECRET header.
+    Security: Requires ADMIN_DIAG_SECRET env var and matching X-DIAG-SECRET header.
     This is used when the Celery beat process died during a deploy and tasks
     aren't being scheduled.
     """
-    secret = (
-        os.getenv("ADMIN_DIAG_SECRET")
-        or os.getenv("SECRET_KEY")
-        or os.getenv("DISCORD_CLIENT_SECRET")
-    )
-    header = request.headers.get("X-DIAG-SECRET")
-    if not secret or header != secret:
+    secret = os.getenv("ADMIN_DIAG_SECRET")
+    if not secret:
+        return "Admin diagnostics not configured", 503
+    header = request.headers.get("X-DIAG-SECRET") or ""
+    if not hmac.compare_digest(header, secret):
         return "Forbidden", 403
 
     results = {}
@@ -520,11 +518,20 @@ def trigger_tasks():
 def admin_ai_agent():
     """Admin endpoint to manually trigger the AI agent.
 
-    Requires AI_AGENT_PASSWORD to be configured.
+    Requires ADMIN_DIAG_SECRET (X-DIAG-SECRET) and AI_AGENT_PASSWORD (X-AI-AGENT-PASSWORD).
     POST body can include JSON {"user_id": 1} to override target user.
     """
-    if not os.getenv("AI_AGENT_PASSWORD"):
-        return {"error": "AI_AGENT_PASSWORD not configured"}, 503
+    diag_secret = os.getenv("ADMIN_DIAG_SECRET")
+    agent_password = os.getenv("AI_AGENT_PASSWORD")
+    if not diag_secret or not agent_password:
+        return {"error": "Admin AI agent not configured"}, 503
+
+    diag_header = request.headers.get("X-DIAG-SECRET") or ""
+    password_header = request.headers.get("X-AI-AGENT-PASSWORD") or ""
+    if not hmac.compare_digest(diag_header, diag_secret):
+        return "Forbidden", 403
+    if not hmac.compare_digest(password_header, agent_password):
+        return "Forbidden", 403
 
     try:
         from ai_agent import run_ai_agent
@@ -543,6 +550,13 @@ def admin_ai_agent():
 def admin_ai_logs():
     """View recent AI agent decision logs."""
     import glob as _glob
+
+    secret = os.getenv("ADMIN_DIAG_SECRET")
+    if not secret:
+        return "Admin diagnostics not configured", 503
+    header = request.headers.get("X-DIAG-SECRET") or ""
+    if not hmac.compare_digest(header, secret):
+        return "Forbidden", 403
 
     log_dir = os.path.join(os.path.dirname(__file__), "ai_logs")
     if not os.path.exists(log_dir):
