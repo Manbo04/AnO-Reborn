@@ -17,6 +17,11 @@
         }
     }
 
+    function slotFromId(id) {
+        if (!layoutData || !layoutData.slots) return null;
+        return layoutData.slots.find(function (s) { return s.id === id; }) || null;
+    }
+
     function openSlotSheet(slot) {
         var sheet = document.getElementById('province-base-slot-sheet');
         if (!sheet) return;
@@ -163,17 +168,40 @@
         });
     }
 
+    function initHtmlSlots() {
+        var grid = document.getElementById('province-base-slots-grid');
+        if (!grid) return;
+        layoutData = getLayout();
+        grid.querySelectorAll('.province-base-slot-card').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var slot = slotFromId(btn.getAttribute('data-slot-id'));
+                if (slot) openSlotSheet(slot);
+            });
+        });
+    }
+
     function init() {
         var baseView = document.getElementById('province-base-view');
         if (!baseView || baseView.hidden) return;
 
+        layoutData = getLayout();
+        initHtmlSlots();
+
         var closeBtn = document.querySelector('[data-slot-sheet-close]');
         if (closeBtn) closeBtn.addEventListener('click', closeSlotSheet);
 
-        if (document.readyState === 'complete') {
+        function tryPhaser() {
+            if (typeof Phaser === 'undefined') return;
+            document.body.classList.add('province-base-phaser-active');
+            var wrap = document.getElementById('province-base-canvas');
+            if (wrap) wrap.setAttribute('aria-hidden', 'false');
             bootPhaser();
+        }
+
+        if (document.readyState === 'complete') {
+            tryPhaser();
         } else {
-            window.addEventListener('load', bootPhaser);
+            window.addEventListener('load', tryPhaser);
         }
     }
 
