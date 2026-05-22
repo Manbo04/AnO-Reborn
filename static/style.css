@@ -5451,6 +5451,535 @@ body.province-base-phaser-active .province-base-slots-grid {
 }
 
 
+/* --- static/css/game-experience.css --- */
+/**
+ * Interactive province base — strategy-game feel (CSS art, no low-res photos).
+ */
+
+.province-base-section {
+    position: relative;
+    margin: 0 0 var(--game-space-lg);
+    border-radius: var(--game-radius-xl);
+    overflow: hidden;
+    border: 2px solid rgba(0, 167, 225, 0.35);
+    box-shadow:
+        0 0 40px rgba(0, 167, 225, 0.12),
+        0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.province-base-arena {
+    position: relative;
+    min-height: 320px;
+    padding: var(--game-space-md);
+    background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
+    overflow: hidden;
+}
+
+.province-base-arena::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% 100%, var(--province-biome-ground, #1e5c38) 0%, transparent 70%),
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 48px,
+            rgba(255, 255, 255, 0.02) 48px,
+            rgba(255, 255, 255, 0.02) 49px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 48px,
+            rgba(255, 255, 255, 0.02) 48px,
+            rgba(255, 255, 255, 0.02) 49px
+        );
+    pointer-events: none;
+}
+
+.province-base-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.province-base-particles span {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    animation: province-float 8s ease-in-out infinite;
+}
+
+.province-base-particles span:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+.province-base-particles span:nth-child(2) { left: 30%; top: 60%; animation-delay: 1.5s; }
+.province-base-particles span:nth-child(3) { left: 70%; top: 30%; animation-delay: 3s; }
+.province-base-particles span:nth-child(4) { left: 85%; top: 70%; animation-delay: 0.8s; }
+.province-base-particles span:nth-child(5) { left: 50%; top: 15%; animation-delay: 2.2s; }
+
+@keyframes province-float {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-12px) scale(1.2); opacity: 0.7; }
+}
+
+.province-base-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--game-space-sm);
+    padding: var(--game-space-md);
+    background: rgba(28, 32, 41, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.province-base-header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.province-base-vitals {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.province-vital {
+    flex: 1;
+    min-width: 72px;
+}
+
+.province-vital-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.province-vital-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.province-vital-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.province-vital-fill--happy {
+    background: linear-gradient(90deg, #2d9f6f, #5cd39a);
+}
+
+.province-vital-fill--pollution {
+    background: linear-gradient(90deg, #8b6914, #d35649);
+}
+
+.province-vital-fill--power {
+    background: linear-gradient(90deg, #00a7e1, #5cd4f0);
+}
+
+.province-base-toggle {
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--accent);
+    background: rgba(0, 167, 225, 0.15);
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: transform 0.15s, background 0.15s;
+}
+
+.province-base-toggle:active {
+    transform: scale(0.96);
+}
+
+/* Isometric-style slot grid */
+.province-base-slots-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 14px;
+    padding: var(--game-space-lg) var(--game-space-md);
+    perspective: 800px;
+}
+
+.province-base-slot-card {
+    --slot-gradient: linear-gradient(145deg, #333, #555);
+    --slot-glow: rgba(0, 167, 225, 0.4);
+    --slot-accent: #00a7e1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 128px;
+    padding: 12px 10px 14px;
+    border: none;
+    border-radius: 16px;
+    background: var(--slot-gradient);
+    cursor: pointer;
+    color: #fff;
+    font: inherit;
+    text-align: center;
+    box-shadow:
+        0 6px 0 rgba(0, 0, 0, 0.25),
+        0 8px 24px rgba(0, 0, 0, 0.35);
+    transform: translateY(0) rotateX(8deg);
+    transition:
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s;
+    animation: slot-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.province-base-slot-card:nth-child(1) { animation-delay: 0.05s; }
+.province-base-slot-card:nth-child(2) { animation-delay: 0.1s; }
+.province-base-slot-card:nth-child(3) { animation-delay: 0.15s; }
+.province-base-slot-card:nth-child(4) { animation-delay: 0.2s; }
+.province-base-slot-card:nth-child(5) { animation-delay: 0.25s; }
+.province-base-slot-card:nth-child(6) { animation-delay: 0.3s; }
+.province-base-slot-card:nth-child(7) { animation-delay: 0.35s; }
+
+@keyframes slot-enter {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.85) rotateX(12deg);
+    }
+}
+
+.province-base-slot-card:hover,
+.province-base-slot-card:focus-visible {
+    transform: translateY(-6px) rotateX(4deg) scale(1.03);
+    box-shadow:
+        0 10px 0 rgba(0, 0, 0, 0.2),
+        0 0 28px var(--slot-glow);
+    outline: none;
+}
+
+.province-base-slot-card:active {
+    transform: translateY(2px) rotateX(10deg);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.province-base-slot-card.has-buildings::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #5cd39a;
+    box-shadow: 0 0 10px #2d9f6f;
+    animation: pulse-dot 2s ease infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+.province-base-slot-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+
+.province-base-slot-icon .material-icons-outlined {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.province-base-slot-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.province-base-slot-qty {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.province-base-slot-card.has-buildings .province-base-slot-qty {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Interactive bottom sheet */
+.province-base-slot-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    max-height: 72vh;
+    pointer-events: none;
+}
+
+.province-base-slot-sheet.is-open {
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    animation: sheet-up 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes sheet-up {
+    from { transform: translateY(100%); opacity: 0; }
+}
+
+.province-base-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: -1;
+}
+
+.province-base-sheet-panel {
+    margin-top: auto;
+    background: var(--foreground);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-md);
+    padding-bottom: calc(var(--game-bottom-nav-height, 64px) + var(--game-safe-bottom) + var(--game-space-lg));
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 65vh;
+}
+
+.province-base-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-md);
+    padding-bottom: var(--game-space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.province-base-sheet-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sheet-gradient, var(--accent));
+    box-shadow: 0 4px 16px var(--sheet-glow, rgba(0, 167, 225, 0.3));
+}
+
+.province-base-sheet-icon .material-icons-outlined {
+    font-size: 1.75rem;
+    color: #fff;
+}
+
+.province-base-sheet-title {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.province-base-sheet-sub {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.province-base-sheet-close {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--foregroundThree);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.province-base-building-list {
+    overflow-y: auto;
+    flex: 1;
+    margin: var(--game-space-md) 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.province-base-building-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.province-base-building-row.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.province-base-building-row.is-success {
+    border-color: var(--success);
+    animation: build-flash 0.5s ease;
+}
+
+@keyframes build-flash {
+    0% { background: rgba(45, 159, 111, 0.35); }
+    100% { background: var(--foregroundThree); }
+}
+
+.province-base-building-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.province-base-building-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.province-base-building-qty {
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 36px;
+    text-align: center;
+    color: var(--accent);
+}
+
+.province-base-build-btn {
+    min-width: 52px;
+    min-height: 44px;
+    border: none;
+    border-radius: var(--game-radius-md);
+    background: linear-gradient(180deg, #00b8f5, #0088bb);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #006a94;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.province-base-build-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #006a94;
+}
+
+.province-base-build-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.province-base-sheet-footer {
+    display: flex;
+    gap: 10px;
+}
+
+.province-base-sheet-footer .templatedivbutton {
+    flex: 1;
+}
+
+.province-base-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--game-bottom-nav-height, 64px) + 80px);
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--success);
+    color: #fff;
+    font-weight: 600;
+    z-index: 1300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+}
+
+.province-base-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Hide legacy phaser canvas */
+.province-base-canvas-wrap {
+    display: none !important;
+}
+
+body.game-reduced-motion .province-base-slot-card,
+body.game-reduced-motion .province-base-particles span {
+    animation: none;
+}
+
+/* HUD polish */
+.game-hud-chip {
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.game-hud-chip:active {
+    transform: scale(0.95);
+}
+
+.game-resource-drawer {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1050;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    padding: var(--game-space-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: drawer-down 0.3s ease;
+}
+
+.game-resource-drawer.is-open {
+    display: block;
+}
+
+@keyframes drawer-down {
+    from { transform: translateY(-100%); }
+}
+
+
 /* --- static/css/game-country.css --- */
 /**
  * Country page — mobile game hub

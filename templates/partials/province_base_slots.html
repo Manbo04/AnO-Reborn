@@ -1,11 +1,18 @@
-{# HTML fallback — always visible; works without Phaser/CDN #}
 {% if province_base_layout and province_base_layout.slots %}
-<div class="province-base-slots-grid" id="province-base-slots-grid" role="list" aria-label="Province building categories">
+<div class="province-base-slots-grid" id="province-base-slots-grid" role="list" aria-label="Building districts">
     {% for slot in province_base_layout.slots %}
-    <button type="button" class="province-base-slot-card{% if slot.quantity > 0 %} has-buildings{% endif %}" data-slot-id="{{ slot.id }}" role="listitem">
-        <img src="{{ url_for('static', filename=slot.image) }}?v=3" alt="" class="province-base-slot-img" loading="lazy" />
+    <button type="button"
+        class="province-base-slot-card{% if slot.quantity > 0 %} has-buildings{% endif %}"
+        data-slot-id="{{ slot.id }}"
+        data-slot-icon="{{ slot.icon }}"
+        style="--slot-gradient: {{ slot.theme.gradient }}; --slot-glow: {{ slot.theme.glow }}; --slot-accent: {{ slot.theme.accent }};"
+        role="listitem"
+        aria-label="{{ slot.label }}, {{ slot.quantity }} structures">
+        <div class="province-base-slot-icon">
+            <span class="material-icons-outlined">{{ slot.icon }}</span>
+        </div>
         <span class="province-base-slot-label">{{ slot.label }}</span>
-        <span class="province-base-slot-qty{% if slot.quantity > 0 %} has-buildings{% endif %}">{{ slot.quantity }} built</span>
+        <span class="province-base-slot-qty">{{ slot.quantity }}</span>
     </button>
     {% endfor %}
 </div>
