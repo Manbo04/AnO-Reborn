@@ -1,31 +1,28 @@
 #!/usr/bin/env python3
 """
-Record Nation Academy chapter videos as real in-game screen captures.
+Record Nation Academy walkthroughs as slow, labeled in-game screen captures.
+
+Each chapter follows recording_steps in static/tutorial/chapters.json:
+  - Visit the correct page (and tab) for that lesson
+  - Show an on-screen step banner
+  - Hold for several seconds (no fast scrolling)
+  - Build MP4 from screenshots (silent by default)
 
 Requirements:
-  pip install playwright psycopg2-binary bcrypt python-dotenv requests
+  pip install playwright psycopg2-binary bcrypt
   playwright install chromium
   ffmpeg on PATH
 
-Environment:
-  DATABASE_PUBLIC_URL or DATABASE_URL — production DB (for ids + temp login password)
-  TUTORIAL_RECORD_BASE_URL — default https://affairsandorder.com
-  TUTORIAL_RECORD_USER_ID — default 16 (Tester of the Game)
-  TUTORIAL_RECORD_TMP_PASSWORD — temp password while recording (restored after)
-  TUTORIAL_RECORD_SKIP_DB — if "1", use env username/password only (no DB password swap)
-
-Run from repo root:
-  python3 scripts/record_tutorial_walkthroughs.py
-  python3 scripts/record_tutorial_walkthroughs.py --chapters 1,2
+Run: python3 scripts/record_tutorial_walkthroughs.py --no-narration
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -33,6 +30,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "static" / "tutorial" / "videos"
 AUDIO_DIR = ROOT / "static" / "tutorial" / "audio"
+CAPTIONS_DIR = ROOT / "static" / "tutorial" / "captions"
 TMP_DIR = OUT_DIR / "_record_tmp"
 CHAPTERS_PATH = ROOT / "static" / "tutorial" / "chapters.json"
 
@@ -40,6 +38,7 @@ VIDEO_W = 1280
 VIDEO_H = 720
 OUT_W = 960
 OUT_H = 540
+FPS = 30
 DEFAULT_TMP_PW = "tutorial-record-2026"
 DEFAULT_BASE = "https://affairsandorder.com"
 TEST_UID = 16
@@ -55,19 +54,6 @@ BLOCKED_POST_FRAGMENTS = (
     "colBanks",
 )
 
-CHAPTER_OUTPUTS = [
-    "ch01-welcome",
-    "ch02-provinces",
-    "ch03-resources",
-    "ch04-economy",
-    "ch05-population",
-    "ch06-military",
-    "ch07-market",
-    "ch08-upgrades",
-    "ch09-war",
-    "ch10-coalitions",
-]
-
 
 def log(msg: str) -> None:
     print(msg, flush=True)
@@ -79,11 +65,15 @@ def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
 
+def load_chapters() -> list[dict]:
+    data = json.loads(CHAPTERS_PATH.read_text(encoding="utf-8"))
+    return data["chapters"]
+
+
 def get_db_url() -> str:
     url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
     if url:
         return url
-    # Dev fallback (public Railway proxy in repo scripts)
     return (
         "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@"
         "interchange.proxy.rlwy.net:41077/railway"
@@ -152,6 +142,7 @@ def fetch_context(uid: int) -> dict[str, Any]:
         "username": "Tester of the Game",
         "province_id": None,
         "coalition_id": None,
+        "user_id": uid,
     }
     with db_connect() as conn:
         cur = conn.cursor()
@@ -176,35 +167,13 @@ def fetch_context(uid: int) -> dict[str, Any]:
     return ctx
 
 
-def ffmpeg_to_mp4(webm: Path, mp4: Path) -> None:
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        str(webm),
-        "-vf",
-        f"scale={OUT_W}:{OUT_H}:force_original_aspect_ratio=decrease,"
-        f"pad={OUT_W}:{OUT_H}:(ow-iw)/2:(oh-ih)/2:color=black",
-        "-c:v",
-        "libx264",
-        "-pix_fmt",
-        "yuv420p",
-        "-crf",
-        "28",
-        "-movflags",
-        "+faststart",
-        "-an",
-        str(mp4),
-    ]
-    subprocess.run(cmd, check=True, capture_output=True)
-
-
-async def slow_scroll(page, steps: int = 8, pause_ms: int = 450) -> None:
-    for _ in range(steps):
-        await page.evaluate(
-            "window.scrollBy(0, Math.max(200, window.innerHeight * 0.35))"
-        )
-        await page.wait_for_timeout(pause_ms)
+def resolve_path(path: str, ctx: dict[str, Any]) -> str:
+    pid = ctx.get("province_id") or ""
+    return (
+        path.replace("{province_id}", str(pid))
+        .replace("{user_id}", str(ctx.get("user_id", "")))
+        .replace("{coalition_id}", str(ctx.get("coalition_id") or ""))
+    )
 
 
 def guard_request(method: str, url: str) -> None:
@@ -218,216 +187,281 @@ def guard_request(method: str, url: str) -> None:
 
 
 async def browser_login(page, base: str, username: str, password: str) -> None:
-    """Log in through the browser (production blocks bare POST /login/ with 403)."""
-    await page.goto(f"{base.rstrip('/')}/login", wait_until="networkidle", timeout=60000)
-    await page.wait_for_timeout(800)
+    await page.goto(f"{base.rstrip('/')}/login", wait_until="domcontentloaded", timeout=90000)
+    await page.wait_for_timeout(1500)
     await page.fill('input[name="username"]', username)
     await page.fill('input[name="password"]', password)
     await page.evaluate("document.getElementById('login-form').submit()")
-    await page.wait_for_load_state("networkidle", timeout=60000)
-    await page.wait_for_timeout(1000)
+    await page.wait_for_load_state("domcontentloaded", timeout=90000)
+    await page.wait_for_timeout(2500)
 
 
-async def record_chapter(
-    playwright,
-    base: str,
-    stem: str,
-    steps_fn,
-    *,
-    username: str,
-    password: str,
-    include_login: bool,
-    with_narration: bool,
-) -> Path:
-    TMP_DIR.mkdir(parents=True, exist_ok=True)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    webm_path = TMP_DIR / f"{stem}.webm"
-    mp4_path = OUT_DIR / f"{stem}.mp4"
-
-    browser = await playwright.chromium.launch(headless=True)
-    context = await browser.new_context(
-        record_video_dir=str(TMP_DIR),
-        record_video_size={"width": VIDEO_W, "height": VIDEO_H},
-        viewport={"width": VIDEO_W, "height": VIDEO_H},
-        locale="en-US",
+async def show_step_banner(page, chapter_title: str, step_label: str) -> None:
+    await page.evaluate(
+        """({ chapterTitle, stepLabel }) => {
+            const id = 'ano-tutorial-rec-banner';
+            let root = document.getElementById(id);
+            if (!root) {
+                root = document.createElement('div');
+                root.id = id;
+                root.style.cssText = [
+                    'position:fixed', 'bottom:28px', 'left:50%', 'transform:translateX(-50%)',
+                    'z-index:2147483647', 'max-width:min(920px,92vw)', 'padding:18px 28px',
+                    'background:linear-gradient(135deg,rgba(8,20,32,0.96),rgba(0,55,75,0.96))',
+                    'color:#fff', 'font-family:system-ui,sans-serif', 'text-align:center',
+                    'border:3px solid #00a7e1', 'border-radius:14px',
+                    'box-shadow:0 12px 40px rgba(0,0,0,0.55)', 'pointer-events:none'
+                ].join(';');
+                document.body.appendChild(root);
+            }
+            root.innerHTML = '<div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#7dd3fc;margin-bottom:8px;">'
+                + chapterTitle + '</div><div style="font-size:22px;font-weight:800;line-height:1.35;">'
+                + stepLabel + '</div>';
+        }""",
+        {"chapterTitle": chapter_title, "stepLabel": step_label},
     )
-    context.on("request", lambda req: guard_request(req.method, req.url))
-    page = await context.new_page()
 
-    try:
-        if not include_login:
-            await browser_login(page, base, username, password)
-        await steps_fn(page, base, username, password)
-    finally:
-        await context.close()
-        await browser.close()
 
-    # Playwright names files arbitrarily in record dir — pick newest webm
-    webms = sorted(TMP_DIR.glob("*.webm"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not webms:
-        raise FileNotFoundError(f"No webm produced for {stem}")
-    latest = webms[0]
-    if latest != webm_path:
-        latest.rename(webm_path)
+async def hide_step_banner(page) -> None:
+    await page.evaluate(
+        "() => { const el = document.getElementById('ano-tutorial-rec-banner'); if (el) el.remove(); }"
+    )
 
-    ffmpeg_to_mp4(webm_path, mp4_path)
-    webm_path.unlink(missing_ok=True)
-    finalize_mp4(mp4_path, stem, with_narration)
-    return mp4_path
+
+async def click_tab(page, tab_id: str) -> None:
+    await page.evaluate(
+        f"""() => {{
+            if (typeof {tab_id} === 'function') {{
+                {tab_id}();
+                return true;
+            }}
+            const el = document.getElementById('{tab_id}');
+            if (el) {{ el.click(); return true; }}
+            return false;
+        }}"""
+    )
+
+
+async def gentle_scroll_to(page, selector: str) -> None:
+    await page.evaluate(
+        """(sel) => {
+            const el = document.querySelector(sel);
+            if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' });
+        }""",
+        selector,
+    )
+
+
+def png_to_segment(png: Path, seconds: float, seg_out: Path) -> None:
+    vf = (
+        f"scale={OUT_W}:{OUT_H}:force_original_aspect_ratio=decrease,"
+        f"pad={OUT_W}:{OUT_H}:(ow-iw)/2:(oh-ih)/2:color=#0a0e14"
+    )
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loop",
+            "1",
+            "-i",
+            str(png),
+            "-vf",
+            vf,
+            "-t",
+            str(seconds),
+            "-r",
+            str(FPS),
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-crf",
+            "23",
+            "-an",
+            str(seg_out),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
+def concat_segments(segments: list[Path], mp4_out: Path) -> None:
+    list_file = TMP_DIR / "concat_list.txt"
+    with list_file.open("w") as f:
+        for p in segments:
+            f.write(f"file '{p.resolve()}'\n")
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(list_file),
+            "-c",
+            "copy",
+            "-movflags",
+            "+faststart",
+            str(mp4_out),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    list_file.unlink(missing_ok=True)
+
+
+def write_step_captions(chapter: dict, step_durations: list[tuple[str, float]]) -> None:
+    CAPTIONS_DIR.mkdir(parents=True, exist_ok=True)
+    path = CAPTIONS_DIR / f"{chapter['stem']}.vtt"
+    lines = ["WEBVTT", ""]
+    t = 0.0
+    for i, (label, dur) in enumerate(step_durations, 1):
+        start = _vtt_time(t)
+        t += dur
+        end = _vtt_time(t)
+        lines.append(f"{i}")
+        lines.append(f"{start} --> {end}")
+        lines.append(label)
+        lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _vtt_time(seconds: float) -> str:
+    ms = int(max(0.0, seconds) * 1000)
+    h, rem = divmod(ms, 3_600_000)
+    m, rem = divmod(rem, 60_000)
+    s, ms_part = divmod(rem, 1000)
+    return f"{h:02d}:{m:02d}:{s:02d}.{ms_part:03d}".replace(".", ",")
 
 
 def mux_narration(mp4_path: Path, stem: str) -> bool:
-    """Mux chapter MP3 into MP4 if audio exists. Returns True if mux ran."""
     mp3 = AUDIO_DIR / f"{stem}.mp3"
     if not mp3.exists():
         return False
     tmp_out = mp4_path.with_suffix(".mux.mp4")
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        str(mp4_path),
-        "-i",
-        str(mp3),
-        "-c:v",
-        "copy",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-shortest",
-        "-movflags",
-        "+faststart",
-        str(tmp_out),
-    ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(mp4_path),
+            "-i",
+            str(mp3),
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+            "-shortest",
+            "-movflags",
+            "+faststart",
+            str(tmp_out),
+        ],
+        check=True,
+        capture_output=True,
+    )
     tmp_out.replace(mp4_path)
     return True
 
 
-def finalize_mp4(mp4_path: Path, stem: str, with_narration: bool) -> None:
-    if with_narration:
-        mux_narration(mp4_path, stem)
-    size_kb = mp4_path.stat().st_size // 1024
-    log(f"  -> {mp4_path.name} ({size_kb} KB)")
+async def record_chapter_steps(
+    page,
+    base: str,
+    chapter: dict,
+    ctx: dict[str, Any],
+    *,
+    username: str,
+    password: str,
+    logged_in: bool,
+) -> tuple[Path, bool]:
+    stem = chapter["stem"]
+    title = chapter["title"]
+    steps = chapter.get("recording_steps") or []
+    if not steps:
+        raise ValueError(f"No recording_steps for {stem}")
 
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    work = TMP_DIR / stem
+    work.mkdir(parents=True, exist_ok=True)
 
-def build_flows(ctx: dict[str, Any], uid: int):
-    pid = ctx.get("province_id")
-    col = ctx.get("coalition_id")
+    segments: list[Path] = []
+    caption_times: list[tuple[str, float]] = []
+    session_logged_in = logged_in
 
-    async def ch01(page, base: str, username: str, password: str) -> None:
-        await browser_login(page, base, username, password)
-        await page.goto(f"{base}/country", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(1500)
-        await slow_scroll(page, 6, 500)
-        await page.goto(f"{base}/mechanics", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 4, 500)
+    for idx, step in enumerate(steps):
+        label = step["label"]
+        hold = float(step.get("hold_sec", 6))
+        path_tpl = resolve_path(step.get("path", "/country"), ctx)
+        action = step.get("action")
 
-    async def ch02(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/provinces", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 3, 450)
-        if pid:
-            await page.goto(f"{base}/province/{pid}", wait_until="networkidle", timeout=60000)
-            await page.wait_for_timeout(2000)
-            await slow_scroll(page, 10, 500)
+        log(f"    step {idx + 1}/{len(steps)}: {label}")
 
-    async def ch03(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/country/id={uid}", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 7, 500)
-        if pid:
-            await page.goto(f"{base}/province/{pid}", wait_until="networkidle", timeout=60000)
-            await page.wait_for_timeout(1500)
-            await slow_scroll(page, 8, 450)
-
-    async def ch04(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/country", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(1500)
-        await slow_scroll(page, 10, 500)
-        await page.goto(f"{base}/mechanics/revenue", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 5, 450)
-
-    async def ch05(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/country", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(1500)
-        await slow_scroll(page, 6, 500)
-        await page.goto(f"{base}/mechanics/rations", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2500)
-        await slow_scroll(page, 4, 450)
-
-    async def ch06(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/military", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 12, 500)
-
-    async def ch07(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/market", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2500)
-        await slow_scroll(page, 5, 450)
-        await page.goto(f"{base}/statistics", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 6, 500)
-
-    async def ch08(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/upgrades", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 12, 500)
-
-    async def ch09(page, base: str, username: str, password: str) -> None:
-        await page.goto(f"{base}/wars", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2500)
-        await slow_scroll(page, 5, 450)
-        await page.goto(f"{base}/mechanics/war", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2000)
-        await slow_scroll(page, 5, 450)
-
-    async def ch10(page, base: str, username: str, password: str) -> None:
-        if col:
+        if action == "login":
             await page.goto(
-                f"{base}/coalition/{col}",
-                wait_until="networkidle",
-                timeout=60000,
+                f"{base.rstrip('/')}/login",
+                wait_until="domcontentloaded",
+                timeout=90000,
             )
-        else:
-            await page.goto(f"{base}/coalitions", wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(2500)
-        await slow_scroll(page, 8, 500)
-
-    return [
-        ("ch01-welcome", ch01, True),
-        ("ch02-provinces", ch02, False),
-        ("ch03-resources", ch03, False),
-        ("ch04-economy", ch04, False),
-        ("ch05-population", ch05, False),
-        ("ch06-military", ch06, False),
-        ("ch07-market", ch07, False),
-        ("ch08-upgrades", ch08, False),
-        ("ch09-war", ch09, False),
-        ("ch10-coalitions", ch10, False),
-    ]
-
-
-def narration_only_mux(stems: list[str] | None, with_narration: bool) -> int:
-    if not which("ffmpeg"):
-        log("ffmpeg not found")
-        return 1
-    targets = stems or CHAPTER_OUTPUTS
-    for stem in targets:
-        mp4 = OUT_DIR / f"{stem}.mp4"
-        if not mp4.exists():
-            log(f"Skip {stem}: no {mp4.name}")
+            await page.wait_for_timeout(2000)
+            await show_step_banner(page, title, label)
+            await page.wait_for_timeout(int(hold * 1000))
+            png = work / f"step_{idx:02d}.png"
+            await page.screenshot(path=str(png), type="png")
+            seg = work / f"seg_{idx:02d}.mp4"
+            png_to_segment(png, hold, seg)
+            segments.append(seg)
+            caption_times.append((label, hold))
+            await hide_step_banner(page)
+            await browser_login(page, base, username, password)
+            session_logged_in = True
             continue
-        log(f"Mux narration into {stem} ...")
-        if with_narration and mux_narration(mp4, stem):
-            size_kb = mp4.stat().st_size // 1024
-            log(f"  -> {mp4.name} ({size_kb} KB)")
-        elif not (AUDIO_DIR / f"{stem}.mp3").exists():
-            log(f"  (no audio for {stem})")
-    return 0
+
+        if not session_logged_in:
+            await browser_login(page, base, username, password)
+            session_logged_in = True
+
+        url = f"{base.rstrip('/')}{path_tpl}"
+        await page.goto(url, wait_until="domcontentloaded", timeout=90000)
+        await page.wait_for_timeout(2500)
+
+        tab = step.get("tab")
+        if tab:
+            await click_tab(page, tab)
+            await page.wait_for_timeout(2000)
+
+        scroll_sel = step.get("scroll")
+        if scroll_sel:
+            try:
+                await gentle_scroll_to(page, scroll_sel)
+                await page.wait_for_timeout(1200)
+            except Exception:
+                pass
+
+        await show_step_banner(page, title, label)
+        await page.wait_for_timeout(int(hold * 1000))
+
+        png = work / f"step_{idx:02d}.png"
+        await page.screenshot(path=str(png), type="png")
+        await hide_step_banner(page)
+
+        seg = work / f"seg_{idx:02d}.mp4"
+        png_to_segment(png, hold, seg)
+        segments.append(seg)
+        caption_times.append((label, hold))
+
+    mp4_out = OUT_DIR / f"{stem}.mp4"
+    concat_segments(segments, mp4_out)
+    write_step_captions(chapter, caption_times)
+
+    for f in work.glob("*"):
+        f.unlink()
+    work.rmdir()
+
+    return mp4_out, session_logged_in
 
 
 async def main_async(
@@ -436,12 +470,21 @@ async def main_async(
     with_narration: bool,
     narration_only: bool,
 ) -> int:
+    chapters = load_chapters()
+    stems = [c["stem"] for c in chapters]
+
     if narration_only:
-        stems = None
-        if chapter_filter is not None:
-            flows_stems = [CHAPTER_OUTPUTS[i] for i in chapter_filter]
-            stems = flows_stems
-        return narration_only_mux(stems, with_narration)
+        for ch in chapters:
+            if chapter_filter is not None:
+                i = chapters.index(ch)
+                if i not in chapter_filter:
+                    continue
+            mp4 = OUT_DIR / f"{ch['stem']}.mp4"
+            if mp4.exists() and with_narration:
+                log(f"Mux narration into {ch['stem']} ...")
+                mux_narration(mp4, ch["stem"])
+        return 0
+
     if not which("ffmpeg"):
         log("ffmpeg not found")
         return 1
@@ -465,76 +508,75 @@ async def main_async(
         log(f"Connecting to DB for user {uid}...")
         ctx = fetch_context(uid)
         username = username or ctx["username"]
-        log(f"Recording as: {username!r} (province={ctx['province_id']}, coalition={ctx['coalition_id']})")
+        log(
+            f"Recording as: {username!r} "
+            f"(province={ctx['province_id']}, coalition={ctx['coalition_id']})"
+        )
         pw_backup = backup_and_set_password(uid, tmp_pw)
         password = tmp_pw
     else:
         if not username:
             log("TUTORIAL_RECORD_SKIP_DB=1 requires TUTORIAL_RECORD_USERNAME")
             return 1
-        ctx = {"province_id": None, "coalition_id": None}
+        ctx = fetch_context(uid)
 
-    flows = build_flows(ctx if not skip_db else fetch_context(uid), uid)
-    indices = chapter_filter if chapter_filter else list(range(len(flows)))
+    indices = chapter_filter if chapter_filter is not None else list(range(len(chapters)))
 
     try:
         async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                viewport={"width": VIDEO_W, "height": VIDEO_H},
+                locale="en-US",
+            )
+            context.on("request", lambda req: guard_request(req.method, req.url))
+            page = await context.new_page()
+            logged_in = False
+
             for i in indices:
-                stem, fn, include_login = flows[i]
-                log(f"Recording {stem} ...")
-                await record_chapter(
-                    p,
+                ch = chapters[i]
+                log(f"Recording {ch['stem']} ({len(ch.get('recording_steps', []))} steps)...")
+                mp4_path, logged_in = await record_chapter_steps(
+                    page,
                     base,
-                    stem,
-                    fn,
+                    ch,
+                    ctx,
                     username=username,
                     password=password,
-                    include_login=include_login,
-                    with_narration=with_narration,
+                    logged_in=logged_in,
                 )
+                if with_narration:
+                    mux_narration(mp4_path, ch["stem"])
+                size_kb = mp4_path.stat().st_size // 1024
+                log(f"  -> {mp4_path.name} ({size_kb} KB)")
+
+            await context.close()
+            await browser.close()
     finally:
         if pw_backup is not None:
             log("Restoring original password...")
             restore_password(uid, pw_backup)
 
-    total = sum((OUT_DIR / f"{s}.mp4").stat().st_size for s in CHAPTER_OUTPUTS if (OUT_DIR / f"{s}.mp4").exists())
+    total = sum(
+        (OUT_DIR / s).stat().st_size for s in stems if (OUT_DIR / s).exists()
+    )
     log(f"Done. Videos in {OUT_DIR} (total ~{total // 1024} KB)")
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--chapters",
-        help="Comma-separated chapter numbers 1-10 (default: all)",
-    )
-    parser.add_argument(
-        "--with-narration",
-        action="store_true",
-        default=None,
-        help="Mux MP3 narration into MP4 (default: on if audio files exist)",
-    )
-    parser.add_argument(
-        "--no-narration",
-        action="store_true",
-        help="Skip narration mux",
-    )
-    parser.add_argument(
-        "--narration-only",
-        action="store_true",
-        help="Only mux existing MP4s with audio (no Playwright)",
-    )
+    parser.add_argument("--chapters", help="Comma-separated chapter numbers 1-10")
+    parser.add_argument("--with-narration", action="store_true", help="Mux TTS audio (off by default)")
+    parser.add_argument("--no-narration", action="store_true", help="Silent videos (default)")
+    parser.add_argument("--narration-only", action="store_true", help="Only mux audio into existing MP4s")
     args = parser.parse_args()
+
     chapter_filter = None
     if args.chapters:
         chapter_filter = [int(x.strip()) - 1 for x in args.chapters.split(",")]
 
-    if args.no_narration:
-        with_narration = False
-    elif args.with_narration:
-        with_narration = True
-    else:
-        with_narration = AUDIO_DIR.exists() and any(AUDIO_DIR.glob("*.mp3"))
+    with_narration = bool(args.with_narration) and not args.no_narration
 
     import asyncio
 
