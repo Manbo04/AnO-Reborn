@@ -1,3 +1,6 @@
+/* Game UI tokens: static/css/tokens.css (loaded from layout.html) */
+/* Game shell: static/css/game-shell.css, province-base.css, game-war.css */
+
 @font-face {
     font-family: 'Material Icons';
     font-style: normal;
@@ -4938,3 +4941,1150 @@ body:has(.loginsignupdiv) .footer {
     margin: 0;
     padding: 0;
 }
+
+/* Tutorial page — escape default white templatediv card */
+html.page-tutorial .tutorial-academy.templatediv {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* === GAME UI BUNDLE (auto-generated) === */
+
+/* --- static/css/tokens.css --- */
+/**
+ * Game UI design tokens — extends theme variables in style.css
+ */
+:root {
+    --game-radius-sm: 8px;
+    --game-radius-md: 12px;
+    --game-radius-lg: 16px;
+    --game-radius-xl: 24px;
+    --game-space-xs: 4px;
+    --game-space-sm: 8px;
+    --game-space-md: 16px;
+    --game-space-lg: 24px;
+    --game-space-xl: 32px;
+    --game-font-display: "Roboto", system-ui, sans-serif;
+    --game-panel-bg: var(--foreground);
+    --game-panel-border: var(--border);
+    --game-hud-height: 52px;
+    --game-bottom-nav-height: 64px;
+    --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
+    --game-card-shadow: var(--shadow-card);
+}
+
+.theme-dark {
+    --game-panel-bg: var(--foregroundTwo);
+}
+
+
+/* --- static/css/game-shell.css --- */
+/**
+ * Mobile game shell: bottom nav, HUD strip, cards, more sheet
+ */
+
+body.game-shell-active {
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+}
+
+body.game-shell-active .templatecontainer {
+    padding-bottom: var(--game-space-md);
+}
+
+/* Compact resource HUD (top, mobile-first) */
+.game-hud {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    background: linear-gradient(180deg, var(--foreground) 0%, rgba(28, 32, 41, 0.92) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: var(--game-space-sm) var(--game-space-md);
+    gap: var(--game-space-sm);
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.game-hud::-webkit-scrollbar {
+    display: none;
+}
+
+body.game-shell-active .game-hud {
+    display: flex;
+}
+
+.game-hud-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 6px 10px;
+    background: var(--foregroundThree);
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--colorOne);
+}
+
+.theme-dark .game-hud-chip {
+    color: var(--colorTwo);
+}
+
+.game-hud-chip img.resource,
+.game-hud-chip .game-hud-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.game-hud-chip .game-hud-value {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.game-hud-expand {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Bottom navigation */
+.game-bottom-nav {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    height: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    padding-bottom: var(--game-safe-bottom);
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+}
+
+body.game-shell-active .game-bottom-nav {
+    display: flex;
+}
+
+.game-bottom-nav-inner {
+    display: flex;
+    width: 100%;
+    height: var(--game-bottom-nav-height);
+    align-items: stretch;
+    justify-content: space-around;
+}
+
+.game-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 2px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.game-nav-item .material-icons-outlined {
+    font-size: 1.35rem;
+}
+
+.game-nav-item.is-active,
+.game-nav-item:hover,
+.game-nav-item:focus-visible {
+    color: var(--accent);
+}
+
+.game-nav-item.is-active {
+    text-shadow: var(--game-glow-accent);
+}
+
+/* Hide desktop dropdown nav on mobile when shell active */
+@media (max-width: 857px) {
+    body.game-shell-active .navbarparentloginsignupdiv {
+        display: none !important;
+    }
+
+    body.game-shell-active .resourcediv {
+        display: none;
+    }
+
+    body.game-shell-active .menubardiv .resourcedivcontent {
+        display: none;
+    }
+}
+
+/* More menu sheet */
+.game-more-sheet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    pointer-events: none;
+}
+
+.game-more-sheet.is-open {
+    display: block;
+    pointer-events: auto;
+}
+
+.game-more-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.game-more-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-lg) var(--game-space-md);
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom) + var(--game-space-md));
+}
+
+.game-more-panel a {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    min-height: 48px;
+    padding: var(--game-space-sm);
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--game-radius-sm);
+}
+
+.game-more-panel a:hover {
+    background: var(--foregroundThree);
+}
+
+/* Province / country cards (mobile) */
+.game-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-md);
+}
+
+.game-province-card {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: var(--game-space-md);
+    padding: var(--game-space-md);
+    background: var(--game-panel-bg);
+    border: 1px solid var(--game-panel-border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--game-card-shadow);
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.game-province-card:active {
+    transform: scale(0.98);
+}
+
+body.game-reduced-motion .game-province-card,
+body.game-reduced-motion .game-nav-item,
+body.game-reduced-motion * {
+    transition: none !important;
+}
+
+.game-province-card-stats {
+    display: grid;
+    gap: 4px;
+    font-size: 0.9rem;
+}
+
+.game-province-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--game-space-sm);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.game-province-card-thumb {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: var(--game-radius-md);
+    border: 2px solid var(--border);
+}
+
+@media (min-width: 858px) {
+    .game-card-list--mobile-only .game-province-card {
+        display: none;
+    }
+}
+
+@media (max-width: 857px) {
+    .game-table-fallback--hide-mobile {
+        display: none !important;
+    }
+}
+
+/* War unit cards enhancement */
+.game-unit-card-grid .warflexparent {
+    border-radius: var(--game-radius-md);
+    overflow: hidden;
+}
+
+/* Timer badge on HUD */
+.game-tick-badge {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+/* Countries list map stub (no world map v1) */
+.game-world-stub {
+    padding: var(--game-space-lg);
+    text-align: center;
+    background: var(--foregroundThree);
+    border-radius: var(--game-radius-lg);
+    border: 1px dashed var(--border);
+    margin-bottom: var(--game-space-md);
+}
+
+.game-world-stub .material-icons-outlined {
+    font-size: 3rem;
+    color: var(--accent);
+    opacity: 0.7;
+}
+
+
+/* --- static/css/province-base.css --- */
+/**
+ * Province home base canvas container (Phaser)
+ */
+.province-base-section {
+    margin-bottom: var(--game-space-lg);
+    border-radius: var(--game-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--foregroundThree);
+}
+
+.province-base-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--game-space-sm) var(--game-space-md);
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: var(--game-space-sm);
+}
+
+.province-base-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.province-base-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.province-base-stats .material-icons-outlined {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
+.province-base-toggle {
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Category grid — primary visual (no Phaser required) */
+.province-base-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--game-space-sm);
+    padding: var(--game-space-md);
+    background: linear-gradient(180deg, var(--foregroundThree) 0%, var(--foreground) 100%);
+}
+
+.province-base-slot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 110px;
+    padding: var(--game-space-sm);
+    border: 2px solid var(--border);
+    border-radius: var(--game-radius-md);
+    background: var(--foreground);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    color: inherit;
+    font: inherit;
+}
+
+.province-base-slot-card:hover,
+.province-base-slot-card:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--game-glow-accent);
+    transform: translateY(-2px);
+}
+
+.province-base-slot-card.has-buildings,
+.province-base-slot-qty.has-buildings {
+    border-color: var(--success);
+}
+
+.province-base-slot-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: var(--game-radius-sm);
+    border: 1px solid var(--border);
+}
+
+.province-base-slot-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.province-base-slot-qty {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--foregroundThree);
+    padding: 2px 10px;
+    border-radius: 999px;
+}
+
+.province-base-slot-qty.has-buildings {
+    color: var(--success);
+    background: rgba(45, 159, 111, 0.15);
+}
+
+.province-base-canvas-wrap {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    display: none;
+    touch-action: none;
+}
+
+body.province-base-phaser-active .province-base-canvas-wrap {
+    display: block;
+    min-height: 220px;
+}
+
+body.province-base-phaser-active .province-base-slots-grid {
+    display: none;
+}
+
+#province-base-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#province-classic-view[hidden],
+#province-base-view[hidden] {
+    display: none !important;
+}
+
+.province-base-slot-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    z-index: 950;
+    max-height: 45vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-md);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.province-base-slot-sheet.is-open {
+    display: block;
+}
+
+.province-base-slot-sheet h3 {
+    margin-top: 0;
+}
+
+.province-base-slot-sheet .templatedivbutton {
+    margin-top: var(--game-space-sm);
+}
+
+
+/* --- static/css/game-experience.css --- */
+/**
+ * Interactive province base — strategy-game feel (CSS art, no low-res photos).
+ */
+
+.province-base-section {
+    position: relative;
+    margin: 0 0 var(--game-space-lg);
+    border-radius: var(--game-radius-xl);
+    overflow: hidden;
+    border: 2px solid rgba(0, 167, 225, 0.35);
+    box-shadow:
+        0 0 40px rgba(0, 167, 225, 0.12),
+        0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.province-base-arena {
+    position: relative;
+    min-height: 320px;
+    padding: var(--game-space-md);
+    background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
+    overflow: hidden;
+}
+
+.province-base-arena::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% 100%, var(--province-biome-ground, #1e5c38) 0%, transparent 70%),
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 48px,
+            rgba(255, 255, 255, 0.02) 48px,
+            rgba(255, 255, 255, 0.02) 49px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 48px,
+            rgba(255, 255, 255, 0.02) 48px,
+            rgba(255, 255, 255, 0.02) 49px
+        );
+    pointer-events: none;
+}
+
+.province-base-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.province-base-particles span {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    animation: province-float 8s ease-in-out infinite;
+}
+
+.province-base-particles span:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+.province-base-particles span:nth-child(2) { left: 30%; top: 60%; animation-delay: 1.5s; }
+.province-base-particles span:nth-child(3) { left: 70%; top: 30%; animation-delay: 3s; }
+.province-base-particles span:nth-child(4) { left: 85%; top: 70%; animation-delay: 0.8s; }
+.province-base-particles span:nth-child(5) { left: 50%; top: 15%; animation-delay: 2.2s; }
+
+@keyframes province-float {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-12px) scale(1.2); opacity: 0.7; }
+}
+
+.province-base-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--game-space-sm);
+    padding: var(--game-space-md);
+    background: rgba(28, 32, 41, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.province-base-header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.province-base-vitals {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.province-vital {
+    flex: 1;
+    min-width: 72px;
+}
+
+.province-vital-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.province-vital-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.province-vital-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.province-vital-fill--happy {
+    background: linear-gradient(90deg, #2d9f6f, #5cd39a);
+}
+
+.province-vital-fill--pollution {
+    background: linear-gradient(90deg, #8b6914, #d35649);
+}
+
+.province-vital-fill--power {
+    background: linear-gradient(90deg, #00a7e1, #5cd4f0);
+}
+
+.province-base-toggle {
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--accent);
+    background: rgba(0, 167, 225, 0.15);
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: transform 0.15s, background 0.15s;
+}
+
+.province-base-toggle:active {
+    transform: scale(0.96);
+}
+
+/* Isometric-style slot grid */
+.province-base-slots-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 14px;
+    padding: var(--game-space-lg) var(--game-space-md);
+    perspective: 800px;
+}
+
+.province-base-slot-card {
+    --slot-gradient: linear-gradient(145deg, #333, #555);
+    --slot-glow: rgba(0, 167, 225, 0.4);
+    --slot-accent: #00a7e1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 128px;
+    padding: 12px 10px 14px;
+    border: none;
+    border-radius: 16px;
+    background: var(--slot-gradient);
+    cursor: pointer;
+    color: #fff;
+    font: inherit;
+    text-align: center;
+    box-shadow:
+        0 6px 0 rgba(0, 0, 0, 0.25),
+        0 8px 24px rgba(0, 0, 0, 0.35);
+    transform: translateY(0) rotateX(8deg);
+    transition:
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s;
+    animation: slot-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.province-base-slot-card:nth-child(1) { animation-delay: 0.05s; }
+.province-base-slot-card:nth-child(2) { animation-delay: 0.1s; }
+.province-base-slot-card:nth-child(3) { animation-delay: 0.15s; }
+.province-base-slot-card:nth-child(4) { animation-delay: 0.2s; }
+.province-base-slot-card:nth-child(5) { animation-delay: 0.25s; }
+.province-base-slot-card:nth-child(6) { animation-delay: 0.3s; }
+.province-base-slot-card:nth-child(7) { animation-delay: 0.35s; }
+
+@keyframes slot-enter {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.85) rotateX(12deg);
+    }
+}
+
+.province-base-slot-card:hover,
+.province-base-slot-card:focus-visible {
+    transform: translateY(-6px) rotateX(4deg) scale(1.03);
+    box-shadow:
+        0 10px 0 rgba(0, 0, 0, 0.2),
+        0 0 28px var(--slot-glow);
+    outline: none;
+}
+
+.province-base-slot-card:active {
+    transform: translateY(2px) rotateX(10deg);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.province-base-slot-card.has-buildings::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #5cd39a;
+    box-shadow: 0 0 10px #2d9f6f;
+    animation: pulse-dot 2s ease infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+.province-base-slot-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+
+.province-base-slot-icon .material-icons-outlined {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.province-base-slot-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.province-base-slot-qty {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.province-base-slot-card.has-buildings .province-base-slot-qty {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Interactive bottom sheet */
+.province-base-slot-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    max-height: 72vh;
+    pointer-events: none;
+}
+
+.province-base-slot-sheet.is-open {
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    animation: sheet-up 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes sheet-up {
+    from { transform: translateY(100%); opacity: 0; }
+}
+
+.province-base-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: -1;
+}
+
+.province-base-sheet-panel {
+    margin-top: auto;
+    background: var(--foreground);
+    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
+    padding: var(--game-space-md);
+    padding-bottom: calc(var(--game-bottom-nav-height, 64px) + var(--game-safe-bottom) + var(--game-space-lg));
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 65vh;
+}
+
+.province-base-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-md);
+    padding-bottom: var(--game-space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.province-base-sheet-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sheet-gradient, var(--accent));
+    box-shadow: 0 4px 16px var(--sheet-glow, rgba(0, 167, 225, 0.3));
+}
+
+.province-base-sheet-icon .material-icons-outlined {
+    font-size: 1.75rem;
+    color: #fff;
+}
+
+.province-base-sheet-title {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.province-base-sheet-sub {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.province-base-sheet-close {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--foregroundThree);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.province-base-building-list {
+    overflow-y: auto;
+    flex: 1;
+    margin: var(--game-space-md) 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.province-base-building-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.province-base-building-row.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.province-base-building-row.is-success {
+    border-color: var(--success);
+    animation: build-flash 0.5s ease;
+}
+
+@keyframes build-flash {
+    0% { background: rgba(45, 159, 111, 0.35); }
+    100% { background: var(--foregroundThree); }
+}
+
+.province-base-building-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.province-base-building-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.province-base-building-qty {
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 36px;
+    text-align: center;
+    color: var(--accent);
+}
+
+.province-base-build-btn {
+    min-width: 52px;
+    min-height: 44px;
+    border: none;
+    border-radius: var(--game-radius-md);
+    background: linear-gradient(180deg, #00b8f5, #0088bb);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #006a94;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.province-base-build-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #006a94;
+}
+
+.province-base-build-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.province-base-sheet-footer {
+    display: flex;
+    gap: 10px;
+}
+
+.province-base-sheet-footer .templatedivbutton {
+    flex: 1;
+}
+
+.province-base-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--game-bottom-nav-height, 64px) + 80px);
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--success);
+    color: #fff;
+    font-weight: 600;
+    z-index: 1300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+}
+
+.province-base-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Hide legacy phaser canvas */
+.province-base-canvas-wrap {
+    display: none !important;
+}
+
+body.game-reduced-motion .province-base-slot-card,
+body.game-reduced-motion .province-base-particles span {
+    animation: none;
+}
+
+/* HUD polish */
+.game-hud-chip {
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.game-hud-chip:active {
+    transform: scale(0.95);
+}
+
+.game-resource-drawer {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1050;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    padding: var(--game-space-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: drawer-down 0.3s ease;
+}
+
+.game-resource-drawer.is-open {
+    display: block;
+}
+
+@keyframes drawer-down {
+    from { transform: translateY(-100%); }
+}
+
+
+/* --- static/css/game-country.css --- */
+/**
+ * Country page — mobile game hub
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .game-country-hub {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--game-space-sm);
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .game-country-hub a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 72px;
+        padding: var(--game-space-sm);
+        background: var(--game-panel-bg);
+        border: 1px solid var(--game-panel-border);
+        border-radius: var(--game-radius-md);
+        text-decoration: none;
+        color: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        gap: 4px;
+    }
+
+    body.game-shell-active .game-country-hub a:active {
+        transform: scale(0.97);
+        border-color: var(--accent);
+    }
+
+    body.game-shell-active .game-country-hub .material-icons-outlined {
+        font-size: 1.5rem;
+        color: var(--accent);
+    }
+
+    body.game-shell-active .countryimagediv {
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .menuflex2 {
+        flex-wrap: wrap;
+        gap: var(--game-space-xs);
+    }
+
+    body.game-shell-active .menuflex2 .templatedivflex2left {
+        flex: 1 1 30%;
+        min-width: 80px;
+    }
+}
+
+@media (min-width: 858px) {
+    .game-country-hub {
+        display: none;
+    }
+}
+
+
+/* --- static/css/game-war.css --- */
+/**
+ * War / military screens — mobile game card polish
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .warflexparent.templatedivflex2 {
+        flex-direction: column;
+    }
+
+    body.game-shell-active .warflexparent .unitimage {
+        max-height: 140px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: var(--game-radius-md);
+    }
+
+    body.game-shell-active .unitcardparent,
+    body.game-shell-active .warchoose-unit-card,
+    body.game-shell-active .warflexparent .templatedivflex2left {
+        min-height: 44px;
+    }
+
+    body.game-shell-active input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+    }
+}
+
+.game-war-result-banner {
+    padding: var(--game-space-md);
+    border-radius: var(--game-radius-lg);
+    background: linear-gradient(135deg, var(--foregroundThree), var(--foreground));
+    border: 1px solid var(--border);
+    margin-bottom: var(--game-space-md);
+    text-align: center;
+}
+
+.game-war-result-banner.victory {
+    border-color: var(--success);
+    box-shadow: 0 0 16px rgba(45, 159, 111, 0.25);
+}
+
+.game-war-result-banner.defeat {
+    border-color: var(--danger);
+}
+

@@ -1,0 +1,58 @@
+/**
+ * Country page — mobile game hub
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .game-country-hub {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--game-space-sm);
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .game-country-hub a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 72px;
+        padding: var(--game-space-sm);
+        background: var(--game-panel-bg);
+        border: 1px solid var(--game-panel-border);
+        border-radius: var(--game-radius-md);
+        text-decoration: none;
+        color: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        gap: 4px;
+    }
+
+    body.game-shell-active .game-country-hub a:active {
+        transform: scale(0.97);
+        border-color: var(--accent);
+    }
+
+    body.game-shell-active .game-country-hub .material-icons-outlined {
+        font-size: 1.5rem;
+        color: var(--accent);
+    }
+
+    body.game-shell-active .countryimagediv {
+        margin-bottom: var(--game-space-md);
+    }
+
+    body.game-shell-active .menuflex2 {
+        flex-wrap: wrap;
+        gap: var(--game-space-xs);
+    }
+
+    body.game-shell-active .menuflex2 .templatedivflex2left {
+        flex: 1 1 30%;
+        min-width: 80px;
+    }
+}
+
+@media (min-width: 858px) {
+    .game-country-hub {
+        display: none;
+    }
+}

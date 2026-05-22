@@ -1,0 +1,26 @@
+/**
+ * Game UI design tokens — extends theme variables in style.css
+ */
+:root {
+    --game-radius-sm: 8px;
+    --game-radius-md: 12px;
+    --game-radius-lg: 16px;
+    --game-radius-xl: 24px;
+    --game-space-xs: 4px;
+    --game-space-sm: 8px;
+    --game-space-md: 16px;
+    --game-space-lg: 24px;
+    --game-space-xl: 32px;
+    --game-font-display: "Roboto", system-ui, sans-serif;
+    --game-panel-bg: var(--foreground);
+    --game-panel-border: var(--border);
+    --game-hud-height: 52px;
+    --game-bottom-nav-height: 64px;
+    --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
+    --game-card-shadow: var(--shadow-card);
+}
+
+.theme-dark {
+    --game-panel-bg: var(--foregroundTwo);
+}

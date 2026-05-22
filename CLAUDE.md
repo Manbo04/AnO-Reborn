@@ -108,6 +108,63 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-22
+
+**Task**: Fix persistent country page 500 (`/country/id=*`, error_id `3f8dq87yxo9nq51s0ayd-1779438499`)
+
+**What Was Done**:
+- Refactored `country()` in `countries.py`: core SQL uses only stable columns; optional `join_number`, `last_active`, demographics, and normalized economy queries each wrapped in try/except with safe defaults
+- Fixed provinces query to use `CAST(citycount AS INTEGER)` with fallback when demographic columns are absent
+- Wrapped revenue `expenses` query in try/except for missing `revenue` table edge cases
+- Gated policies checkbox JS in `templates/country.html` behind `{% if status %}`
+- Added `scripts/diagnose_country_page.py` (schema probe + query replay) and `scripts/apply_country_page_migrations.py` (applies 0011–0013)
+- Added `tests/test_country_page_route.py` (DB-backed smoke for user 16)
+
+**What To Watch**:
+- After deploy: `curl -sI https://affairsandorder.com/country/id=27` should return 200
+- Run on Railway when `DATABASE_PUBLIC_URL` is set: `python3 scripts/apply_country_page_migrations.py` then `python3 scripts/assign_join_ranks.py` for full join_number display
+
+**Commits**: `113e9eb1` (merge hardened country route), `ef59552e` (DB rollback after optional query failures)
+
+**Verified**: Production `curl -sI /country/id=27` and `/country/id=16` return HTTP 200 after deploy.
+
+**Follow-up (same day)**: Global Affairs menu items (`/countries`, `/coalitions`, `/my_coalition`, `/establish_coalition`) returned 500 for logged-in users — same missing-column pattern (`join_number`, `flag_data`, `tax_rate`, `last_active`, `citycount`). Hardened `countries()`, `coalitions()`, `coalition()` with SQL fallbacks and `rollback_db_cursor()` in `database.py`. Commit `5d65e7d1` on master.
+
+---
+
+### Session: 2026-05-21
+
+**Task**: Fix widespread 500 errors across the site (user report + error_id `km6f39sn3ymh13igdxmr-1779394214`)
+
+**What Was Done**:
+- Fixed **swapped `error()` arguments** in `province.py` (3 sites) and `military.py` (1 site) — validation failures were using a string as HTTP status, triggering the global 500 handler instead of 400
+- Fixed broken Jinja in `templates/province.html` line 1348 (silos `prores` line missing `}}`)
+- Added signup password/confirmation null guards before `.encode()` in `signup.py`
+- Hardened `fetchone()[0]` access in `province.py`, `countries.py`, `market.py`, `wars/routes.py`, `coalitions.py`
+- Wrapped coalition bank `int(resource)` parsing in try/except
+- Added `tests/test_error_handler_status.py` regression tests (error status order, template compile, signup encode)
+- Added `.github/workflows/ci.yml` with offline-capable checks; deprecated dummy CI bypass workflow
+
+**Commits**: `64106825`, follow-up hardening on same branch
+
+**Follow-up (same session)**:
+- Additional `fetchone()` guards in wars, signup, market, countries, intelligence, admin_tools
+- Safe `request.form.get("description")` in countries `update_info`
+- `wars/service.py` guard for missing war rows in `update_supply`
+- CI script `scripts/check_error_call_order.py` to prevent swapped `error()` regressions
+- Removed deprecated `tasks_revenue_optimized.py` (legacy proInfra/resources SQL)
+- Fixed unused `CoalitionQueries` in `database.py` to use `coalitions_legacy` schema
+
+**What To Watch**:
+- Province/military buy/sell validation should return 400 pages, not global 500 with `error_code`
+- Production smoke on test account 16 after deploy (province page, market, wars)
+
+**Next Steps**:
+- Monitor Railway logs for `[ERROR! ^^^]` after deploy
+- Run DB-backed integration tests in CI when Postgres service is available
+
+---
+
 ### Session: 2026-03-04
 
 **Task**: Master Game Economy & Architecture Audit - comprehensive documentation of all economic systems

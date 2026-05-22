@@ -17,31 +17,40 @@ def _run_app():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def server():
+def server(pytestconfig):
+    """Start in-process Flask on :5001 for integration tests; offline tests still run if it fails."""
     p = Process(target=_run_app)
     p.daemon = True
     p.start()
 
-    # Wait for the server to be up
     timeout = 10.0
     start = time.time()
+    available = False
     while time.time() - start < timeout:
         try:
             requests.get("http://127.0.0.1:5001/", timeout=1)
+            available = True
             break
         except Exception:
             time.sleep(0.2)
-    else:
-        pytest.skip("Could not start test server on 127.0.0.1:5001")
+
+    pytestconfig._ano_test_server_available = available
 
     yield
 
-    # Teardown
     try:
         p.terminate()
         p.join(timeout=5)
     except Exception:
         pass
+
+
+@pytest.fixture(autouse=True)
+def _require_server_for_integration(request, pytestconfig):
+    if request.node.get_closest_marker("no_server") is not None:
+        return
+    if not getattr(pytestconfig, "_ano_test_server_available", False):
+        pytest.skip("Could not start test server on 127.0.0.1:5001")
 
 
 @pytest.fixture
@@ -63,7 +72,11 @@ def _patch_economy_get_particular_resources():
     import importlib
 
     # Ensure module is loaded then patch the class method directly.
-    m = importlib.import_module("attack_scripts.Nations")
+    try:
+        m = importlib.import_module("attack_scripts.Nations")
+    except ModuleNotFoundError:
+        yield
+        return
 
     def _impl_get_particular_resources(nationID, resources):
         from database import get_db_connection, fetchone_first

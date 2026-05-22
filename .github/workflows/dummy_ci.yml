@@ -1,8 +1,9 @@
-name: CI
-on: [push]
+# Deprecated: real checks run in ci.yml
+name: CI Legacy Bypass
+on:
+  workflow_dispatch:
 jobs:
-  build:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - name: Instant Success
-        run: echo "Bypassing CI to force Railway deployment" && exit 0
+      - run: echo "Use ci.yml workflow for checks"

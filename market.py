@@ -303,7 +303,8 @@ def market():
         # Count total matching offers
         count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
         db.execute(count_query, tuple(params))
-        total_count = db.fetchone()[0] or 0
+        count_row = db.fetchone()
+        total_count = (count_row[0] or 0) if count_row else 0
 
         # Calculate pagination
         total_pages = max(1, (total_count + per_page - 1) // per_page)
@@ -424,7 +425,10 @@ def buy_market_offer(offer_id):
             return error(400, "Requested amount exceeds available amount")
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-        buyers_gold = int(db.fetchone()[0])
+        buyer_gold_row = db.fetchone()
+        if not buyer_gold_row:
+            return error(500, "Your nation data could not be found")
+        buyers_gold = int(buyer_gold_row[0] or 0)
 
         total_price = amount_wanted * price_for_one
         market_fee = int(total_price * 0.05)  # 5% market fee
@@ -697,7 +701,10 @@ def post_offer(offer_type):
 
             money_to_take_away = int(amount) * int(price)
             db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            current_money = db.fetchone()[0]
+            money_row = db.fetchone()
+            if not money_row:
+                return error(500, "Your nation data could not be found")
+            current_money = money_row[0] or 0
 
             if current_money < money_to_take_away:
                 return error(400, "You don't have enough money.")
@@ -879,7 +886,10 @@ def trade_offer(offer_type, offeree_id):
 
                 money_to_take_away = amount * price
                 db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-                current_money = db.fetchone()[0]
+                escrow_money_row = db.fetchone()
+                if not escrow_money_row:
+                    return error(500, "Your nation data could not be found")
+                current_money = escrow_money_row[0] or 0
                 if current_money < money_to_take_away:
                     return error(400, "You don't have enough money.")
 

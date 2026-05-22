@@ -1104,10 +1104,12 @@ def get_resources():
 @app.context_processor
 def inject_user():
     from admin_tools import SUPER_ADMIN_USER_IDS
+    from game_ui import game_ui_context
 
     return dict(
         get_resources=get_resources,
         admin_user_ids=SUPER_ADMIN_USER_IDS,
+        **game_ui_context(),
     )
 
 
@@ -1303,7 +1305,27 @@ def logout():
 
 @app.route("/tutorial", methods=["GET"])
 def tutorial():
-    return render_template("tutorial.html")
+    import json
+    import variables as game_vars
+
+    tutorial_constants = {
+        "tax_per_citizen": game_vars.DEFAULT_TAX_INCOME,
+        "cg_tax_multiplier": game_vars.CONSUMER_GOODS_TAX_MULTIPLIER,
+        "no_energy_tax_multiplier": game_vars.NO_ENERGY_TAX_MULTIPLIER,
+        "no_food_tax_multiplier": game_vars.NO_FOOD_TAX_MULTIPLIER,
+        "land_tax_multiplier": game_vars.DEFAULT_LAND_TAX_MULTIPLIER,
+        "province_base_cost": 8_000_000,
+        "province_cost_scale": 0.16,
+        "min_attack_supplies": 200,
+    }
+    chapters_path = os.path.join(app.root_path, "static", "tutorial", "chapters.json")
+    with open(chapters_path, encoding="utf-8") as f:
+        tutorial_chapters = json.load(f)["chapters"]
+    return render_template(
+        "tutorial.html",
+        tutorial_constants=tutorial_constants,
+        tutorial_chapters=tutorial_chapters,
+    )
 
 
 @app.route("/mechanics", methods=["GET"])

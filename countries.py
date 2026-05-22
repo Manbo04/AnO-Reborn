@@ -9,7 +9,7 @@ from collections import defaultdict
 from policies import get_user_policies
 from wars.service import target_data
 import math
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, rollback_db_cursor
 
 load_dotenv()
 
@@ -66,8 +66,13 @@ def get_econ_statistics(cId, db=None):
         return True
 
     def check_for_monetary_upkeep(unit, amount):
-        operating_costs = int(variables.INFRA[f"{unit}_money"]) * amount
+        try:
+            operating_costs = int(variables.INFRA[f"{unit}_money"]) * amount
+        except KeyError:
+            return
         unit_type = get_unit_type(unit)
+        if not unit_type:
+            return
         expenses[unit_type]["money"] += operating_costs
 
     for unit, amount in total.items():
@@ -474,7 +479,10 @@ def next_turn_rations(cId, prod_rations):
 def delete_news(id):
     with get_request_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
-        destination_id = db.fetchone()[0]
+        news_row = db.fetchone()
+        if not news_row:
+            return "404"
+        destination_id = news_row[0]
         if destination_id == session["user_id"]:
             db.execute("DELETE FROM news WHERE id=(%s)", (id,))
             return "200"
@@ -488,7 +496,8 @@ def delete_news(id):
 def cg_need(user_id):
     with get_request_cursor() as db:
         db.execute("SELECT SUM(population) FROM provinces WHERE userid=%s", (user_id,))
-        population = db.fetchone()[0]
+        pop_row = db.fetchone()
+        population = pop_row[0] if pop_row else None
         if population is None:
             population = 0
 
@@ -544,17 +553,21 @@ def country(cId):
             "processing": 0,
         }
 
-    with get_request_cursor(read_only=True) as db:
-        # OPTIMIZED: Combined user+stats+coalition+province aggregates in ONE query
-        db.execute(
-            """SELECT u.username, s.location, u.description,
-                      u.date, u.flag, u.join_number,
+    join_number = None
+    last_active = None
+    total_children = 0
+    total_working = 0
+    total_elderly = 0
+    resource_rows = []
+    building_rows = []
+    technology_rows = []
+
+    _CORE_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
+                      u.date, u.flag,
                       c.id AS coalition_id, cm.role,
                       c.name as colName,
                       p.total_pop, p.avg_happiness,
-                      p.avg_productivity, p.province_count,
-                      u.last_active,
-                      p.total_children, p.total_working, p.total_elderly
+                      p.avg_productivity, p.province_count
                FROM users u
                INNER JOIN stats s ON u.id=s.id
                LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
@@ -564,18 +577,47 @@ def country(cId):
                           SUM(population) AS total_pop,
                           AVG(happiness) AS avg_happiness,
                           AVG(productivity) AS avg_productivity,
-                          COUNT(id) AS province_count,
-                          SUM(COALESCE(pop_children, 0)) AS total_children,
-                          SUM(COALESCE(pop_working, 0)) AS total_working,
-                          SUM(COALESCE(pop_elderly, 0)) AS total_elderly
+                          COUNT(id) AS province_count
                    FROM provinces
                    WHERE userid = %s
                    GROUP BY userid
                ) p ON u.id = p.userid
-               WHERE u.id=%s""",
-            (cId, cId),
-        )
-        row = db.fetchone()
+               WHERE u.id=%s"""
+
+    _MINIMAL_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
+                      u.date, u.flag,
+                      NULL::integer AS coalition_id, NULL::integer AS role,
+                      NULL::text AS colName,
+                      p.total_pop, p.avg_happiness,
+                      p.avg_productivity, p.province_count
+               FROM users u
+               INNER JOIN stats s ON u.id=s.id
+               LEFT JOIN (
+                   SELECT userid,
+                          SUM(population) AS total_pop,
+                          AVG(happiness) AS avg_happiness,
+                          AVG(productivity) AS avg_productivity,
+                          COUNT(id) AS province_count
+                   FROM provinces
+                   WHERE userid = %s
+                   GROUP BY userid
+               ) p ON u.id = p.userid
+               WHERE u.id=%s"""
+
+    with get_request_cursor(read_only=True) as db:
+        row = None
+        try:
+            db.execute(_CORE_COUNTRY_SQL, (cId, cId))
+            row = db.fetchone()
+        except Exception:
+            rollback_db_cursor(db)
+            try:
+                db.execute(_MINIMAL_COUNTRY_SQL, (cId, cId))
+                row = db.fetchone()
+            except Exception:
+                rollback_db_cursor(db)
+                raise
+
         if not row:
             return error(404, "Country doesn't exist")
 
@@ -585,7 +627,6 @@ def country(cId):
             description,
             dateCreated,
             flag,
-            join_number,
             coalition_id,
             colRole,
             colName,
@@ -593,13 +634,8 @@ def country(cId):
             happiness,
             productivity,
             provinceCount,
-            last_active,
-            total_children,
-            total_working,
-            total_elderly,
         ) = row
 
-        # Set defaults for None values
         coalition_id = coalition_id or 0
         colName = colName or ""
         colFlag = None
@@ -607,72 +643,128 @@ def country(cId):
         happiness = happiness or 0
         productivity = productivity or 0
         provinceCount = provinceCount or 0
-        total_children = total_children or 0
-        total_working = total_working or 0
-        total_elderly = total_elderly or 0
 
-        # Get policies and influence — pass cursor to avoid extra connections
-        # (~130ms saved per round-trip to Railway Postgres proxy)
-        policies = get_user_policies(cId, db=db)
-        influence = get_influence(cId, db=db)
+        try:
+            db.execute(
+                "SELECT join_number, last_active FROM users WHERE id=%s",
+                (cId,),
+            )
+            opt = db.fetchone()
+            if opt:
+                join_number, last_active = opt[0], opt[1]
+        except Exception:
+            rollback_db_cursor(db)
 
-        # Get provinces list with demographics
-        db.execute(
-            "SELECT provinceName, id, population, "
-            "CAST(cityCount AS INTEGER) as cityCount, "
-            "land, happiness, productivity, "
-            "COALESCE(pop_children, 0) as pop_children, "
-            "COALESCE(pop_working, 0) as pop_working, "
-            "COALESCE(pop_elderly, 0) as pop_elderly "
-            "FROM provinces WHERE userid=(%s) "
-            "ORDER BY id ASC",
-            (cId,),
-        )
-        provinces = db.fetchall()
+        try:
+            db.execute(
+                """SELECT COALESCE(SUM(pop_children), 0),
+                          COALESCE(SUM(pop_working), 0),
+                          COALESCE(SUM(pop_elderly), 0)
+                   FROM provinces WHERE userid = %s""",
+                (cId,),
+            )
+            demo = db.fetchone()
+            if demo:
+                total_children = demo[0] or 0
+                total_working = demo[1] or 0
+                total_elderly = demo[2] or 0
+        except Exception:
+            rollback_db_cursor(db)
 
-        # Normalized resource display
-        db.execute(
-            """
-            SELECT rd.display_name, COALESCE(ue.quantity, 0) AS quantity
-            FROM resource_dictionary rd
-            LEFT JOIN user_economy ue
-              ON ue.resource_id = rd.resource_id
-             AND ue.user_id = %s
-            ORDER BY rd.resource_id
-            """,
-            (cId,),
-        )
-        resource_rows = db.fetchall() or []
+        try:
+            policies = get_user_policies(cId, db=db)
+        except Exception:
+            rollback_db_cursor(db)
+            policies = {}
+        try:
+            influence = get_influence(cId, db=db)
+        except Exception:
+            rollback_db_cursor(db)
+            influence = 0
 
-        # Normalized buildings display (national totals across all provinces)
-        db.execute(
-            """
-            SELECT bd.display_name, SUM(ub.quantity) AS quantity
-            FROM user_buildings ub
-            JOIN building_dictionary bd ON bd.building_id = ub.building_id
-            WHERE ub.user_id = %s
-              AND ub.quantity > 0
-            GROUP BY bd.display_name
-            HAVING SUM(ub.quantity) > 0
-            ORDER BY bd.display_name
-            """,
-            (cId,),
-        )
-        building_rows = db.fetchall() or []
+        provinces = []
+        try:
+            db.execute(
+                "SELECT provinceName, id, population, "
+                "CAST(citycount AS INTEGER) as cityCount, "
+                "land, happiness, productivity, "
+                "COALESCE(pop_children, 0) as pop_children, "
+                "COALESCE(pop_working, 0) as pop_working, "
+                "COALESCE(pop_elderly, 0) as pop_elderly "
+                "FROM provinces WHERE userid=(%s) "
+                "ORDER BY id ASC",
+                (cId,),
+            )
+            provinces = db.fetchall()
+        except Exception:
+            rollback_db_cursor(db)
+            try:
+                db.execute(
+                    "SELECT provinceName, id, population, "
+                    "CAST(citycount AS INTEGER) as cityCount, "
+                    "land, happiness, productivity, "
+                    "0 as pop_children, 0 as pop_working, 0 as pop_elderly "
+                    "FROM provinces WHERE userid=(%s) "
+                    "ORDER BY id ASC",
+                    (cId,),
+                )
+                provinces = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+                provinces = []
 
-        # Normalized technologies display (unlocked only)
-        db.execute(
-            """
-            SELECT td.display_name
-            FROM user_tech ut
-            JOIN tech_dictionary td ON td.tech_id = ut.tech_id
-            WHERE ut.user_id = %s
-              AND ut.is_unlocked = TRUE
-            ORDER BY td.display_name
-            """,
-            (cId,),
-        )
-        technology_rows = db.fetchall() or []
+        try:
+            db.execute(
+                """
+                SELECT rd.display_name, COALESCE(ue.quantity, 0) AS quantity
+                FROM resource_dictionary rd
+                LEFT JOIN user_economy ue
+                  ON ue.resource_id = rd.resource_id
+                 AND ue.user_id = %s
+                ORDER BY rd.resource_id
+                """,
+                (cId,),
+            )
+            resource_rows = db.fetchall() or []
+        except Exception:
+            rollback_db_cursor(db)
+            resource_rows = []
+
+        try:
+            db.execute(
+                """
+                SELECT bd.display_name, SUM(ub.quantity) AS quantity
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s
+                  AND ub.quantity > 0
+                GROUP BY bd.display_name
+                HAVING SUM(ub.quantity) > 0
+                ORDER BY bd.display_name
+                """,
+                (cId,),
+            )
+            building_rows = db.fetchall() or []
+        except Exception:
+            rollback_db_cursor(db)
+            building_rows = []
+
+        try:
+            db.execute(
+                """
+                SELECT td.display_name
+                FROM user_tech ut
+                JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+                WHERE ut.user_id = %s
+                  AND ut.is_unlocked = TRUE
+                ORDER BY td.display_name
+                """,
+                (cId,),
+            )
+            technology_rows = db.fetchall() or []
+        except Exception:
+            rollback_db_cursor(db)
+            technology_rows = []
 
         # Calculate CG need from already-fetched population
         cg_needed = (
@@ -680,25 +772,29 @@ def country(cId):
         )
 
         try:
-            status = cId == str(session["user_id"])
-        except (KeyError, TypeError):
+            status = int(cId) == int(session["user_id"])
+        except (KeyError, TypeError, ValueError):
             status = False
 
         spy = {}
         uId = session.get("user_id")
         if uId:
-            db.execute(
-                """
-                SELECT COALESCE(SUM(um.quantity), 0)
-                FROM user_military um
-                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                WHERE um.user_id = %s
-                  AND ud.name = 'spies'
-                """,
-                (uId,),
-            )
-            spy_row = db.fetchone()
-            spy["count"] = spy_row[0] if spy_row else 0
+            try:
+                db.execute(
+                    """
+                    SELECT COALESCE(SUM(um.quantity), 0)
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                    WHERE um.user_id = %s
+                      AND ud.name = 'spies'
+                    """,
+                    (uId,),
+                )
+                spy_row = db.fetchone()
+                spy["count"] = spy_row[0] if spy_row else 0
+            except Exception:
+                rollback_db_cursor(db)
+                spy["count"] = 0
         else:
             spy["count"] = 0
 
@@ -707,30 +803,42 @@ def country(cId):
         news_amount = 0
         current_user_id = session.get("user_id")
         if current_user_id and int(cId) == current_user_id:
-            db.execute(
-                "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
-            )
-            news = db.fetchall()
-            news_amount = len(news)
+            try:
+                db.execute(
+                    "SELECT message,date,id FROM news WHERE destination_id=(%s)",
+                    (cId,),
+                )
+                news = db.fetchall()
+                news_amount = len(news)
+            except Exception:
+                rollback_db_cursor(db)
+                news = []
+                news_amount = 0
 
         # Revenue stuff - expensive, so cached
         if status:
             try:
                 revenue = get_revenue(cId, db=db)
             except Exception:
+                rollback_db_cursor(db)
                 revenue = default_revenue_data()
 
-            db.execute(
-                "SELECT name, type, resource, amount, date "
-                "FROM revenue WHERE user_id=%s",
-                (cId,),
-            )
-            expenses = db.fetchall()
+            try:
+                db.execute(
+                    "SELECT name, type, resource, amount, date "
+                    "FROM revenue WHERE user_id=%s",
+                    (cId,),
+                )
+                expenses = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+                expenses = []
 
             try:
                 statistics = get_econ_statistics(cId, db=db)
                 statistics = format_econ_statistics(statistics)
             except Exception:
+                rollback_db_cursor(db)
                 statistics = default_statistics_data()
 
             for key, value in default_statistics_data().items():
@@ -854,7 +962,7 @@ def countries():
                     cm.colid,
                     c.name,
                     COALESCE(p.provinces_count, 0) AS provinces_count,
-                    u.join_number,
+                    NULL::integer AS join_number,
                     ROUND(
                         COALESCE(p.provinces_count, 0) * 300
                         + COALESCE(m.soldiers, 0) * 0.02
@@ -879,13 +987,13 @@ def countries():
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
                     SELECT
-                        userId AS user_id,
+                        userid AS user_id,
                         COUNT(id) AS provinces_count,
                         COALESCE(SUM(population), 0) AS province_population,
-                        COALESCE(SUM(cityCount), 0) AS city_count,
+                        COALESCE(SUM(citycount), 0) AS city_count,
                         COALESCE(SUM(land), 0) AS total_land
                     FROM provinces
-                    GROUP BY userId
+                    GROUP BY userid
                 ) p ON p.user_id = u.id
                 LEFT JOIN (
                     SELECT
@@ -957,6 +1065,53 @@ def countries():
               AND (%s IS NULL OR influence <= %s)
         """
 
+        filter_sql_simple = f"""
+            WITH country_rows AS (
+                SELECT
+                    u.id,
+                    u.username,
+                    u.date,
+                    u.flag,
+                    COALESCE(p.province_population, 0) AS province_population,
+                    cm.colid,
+                    c.name,
+                    COALESCE(p.provinces_count, 0) AS provinces_count,
+                    NULL::integer AS join_number,
+                    ROUND(
+                        COALESCE(p.provinces_count, 0) * 300
+                        + COALESCE(p.city_count, 0) * 10
+                        + COALESCE(p.total_land, 0) * 10
+                        + COALESCE(s.gold, 0) * 0.00001
+                    )::bigint AS influence,
+                    COALESCE(EXTRACT(EPOCH FROM u.date::timestamp)::bigint, 0) AS unix
+                FROM users u
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN (
+                    SELECT
+                        userid AS user_id,
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(population), 0) AS province_population,
+                        COALESCE(SUM(citycount), 0) AS city_count,
+                        COALESCE(SUM(land), 0) AS total_land
+                    FROM provinces
+                    GROUP BY userid
+                ) p ON p.user_id = u.id
+                LEFT JOIN (
+                    SELECT userid, MIN(colid) AS colid
+                    FROM coalitions_legacy
+                    GROUP BY userid
+                ) cm ON cm.userid = u.id
+                LEFT JOIN colNames c ON c.id = cm.colid
+                WHERE 1=1
+                {search_filter}
+            )
+            SELECT *
+            FROM country_rows
+            WHERE provinces_count >= %s
+              AND (%s IS NULL OR influence >= %s)
+              AND (%s IS NULL OR influence <= %s)
+        """
+
         filter_params = list(params)
         filter_params.extend(
             [
@@ -968,26 +1123,38 @@ def countries():
             ]
         )
 
-        db.execute(
-            f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
-        )
-        total_count = db.fetchone()[0] or 0
+        def _run_count_and_page(active_filter_sql):
+            db.execute(
+                f"SELECT COUNT(*) FROM ({active_filter_sql}) AS filtered",
+                tuple(filter_params),
+            )
+            count_row = db.fetchone()
+            nonlocal total_count, total_pages, page, offset, paginated_results
+            total_count = (count_row[0] or 0) if count_row else 0
+            total_pages = max(1, (total_count + per_page - 1) // per_page)
+            if page < 1:
+                page = 1
+            if page > total_pages:
+                page = total_pages
+            offset = (page - 1) * per_page
+            page_query = (
+                f"{active_filter_sql} ORDER BY {sort_column} {sort_direction}, "
+                "id ASC LIMIT %s OFFSET %s"
+            )
+            page_params = list(filter_params)
+            page_params.extend([per_page, offset])
+            db.execute(page_query, tuple(page_params))
+            paginated_results = db.fetchall()
 
-        total_pages = max(1, (total_count + per_page - 1) // per_page)
-        if page < 1:
-            page = 1
-        if page > total_pages:
-            page = total_pages
-        offset = (page - 1) * per_page
-
-        page_query = (
-            f"{filter_sql} ORDER BY {sort_column} {sort_direction}, "
-            "id ASC LIMIT %s OFFSET %s"
-        )
-        page_params = list(filter_params)
-        page_params.extend([per_page, offset])
-        db.execute(page_query, tuple(page_params))
-        paginated_results = db.fetchall()
+        total_count = 0
+        total_pages = 1
+        offset = 0
+        paginated_results = []
+        try:
+            _run_count_and_page(filter_sql)
+        except Exception:
+            rollback_db_cursor(db)
+            _run_count_and_page(filter_sql_simple)
 
     return render_template(
         "countries.html",
@@ -1011,7 +1178,7 @@ def update_info():
         cId = session["user_id"]
 
         # Description changing
-        description = request.form["description"]
+        description = request.form.get("description", "")
 
         if description not in ["None", ""]:
             db.execute(
@@ -1036,7 +1203,10 @@ def update_info():
 
             try:
                 db.execute("SELECT flag FROM users WHERE id=(%s)", (cId,))
-                current_flag = db.fetchone()[0]
+                flag_row = db.fetchone()
+                current_flag = flag_row[0] if flag_row else None
+                if not current_flag:
+                    raise OSError("No existing flag")
                 from flask import current_app
 
                 os.remove(
@@ -1202,25 +1372,24 @@ def delete_own_account():
             pass
         else:
             db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
-            user_coalition = db.fetchone()[0]
-
-            db.execute(
-                "SELECT COUNT(userid) FROM coalitions_legacy "
-                "WHERE role='leader' AND colid=%s",
-                (user_coalition,),
-            )
-            leader_count = db.fetchone()[0]
-
-            if leader_count != 1:
-                pass
-            else:
+            coalition_row = db.fetchone()
+            if coalition_row:
+                user_coalition = coalition_row[0]
                 db.execute(
-                    "DELETE FROM coalitions_legacy WHERE colid=%s",
+                    "SELECT COUNT(userid) FROM coalitions_legacy "
+                    "WHERE role='leader' AND colid=%s",
                     (user_coalition,),
                 )
-                db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
-                db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+                leader_row = db.fetchone()
+                leader_count = leader_row[0] if leader_row else 0
+                if leader_count == 1:
+                    db.execute(
+                        "DELETE FROM coalitions_legacy WHERE colid=%s",
+                        (user_coalition,),
+                    )
+                    db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
+                    db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
+                    db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
         db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
