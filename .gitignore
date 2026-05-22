@@ -38,3 +38,8 @@ backups/
 /scripts/debug/
 .vscode/mcp.json
 .venv_test/
+
+# Tutorial video recording temp files
+static/tutorial/videos/_record_tmp/
+static/tutorial/videos/_tmp/
+.playwright-mcp/

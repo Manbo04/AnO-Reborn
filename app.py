@@ -1305,6 +1305,7 @@ def logout():
 
 @app.route("/tutorial", methods=["GET"])
 def tutorial():
+    import json
     import variables as game_vars
 
     tutorial_constants = {
@@ -1317,7 +1318,14 @@ def tutorial():
         "province_cost_scale": 0.16,
         "min_attack_supplies": 200,
     }
-    return render_template("tutorial.html", tutorial_constants=tutorial_constants)
+    chapters_path = os.path.join(app.root_path, "static", "tutorial", "chapters.json")
+    with open(chapters_path, encoding="utf-8") as f:
+        tutorial_chapters = json.load(f)["chapters"]
+    return render_template(
+        "tutorial.html",
+        tutorial_constants=tutorial_constants,
+        tutorial_chapters=tutorial_chapters,
+    )
 
 
 @app.route("/mechanics", methods=["GET"])
