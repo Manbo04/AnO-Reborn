@@ -317,25 +317,30 @@ def callback():
             if intent == 'link':
                 if 'user_id' not in session:
                     return error(401, "You must be logged in to link your Discord account.")
-                try:
-                    db.execute("UPDATE users SET discord_id=%s WHERE id=%s", (discord_user_id, session['user_id']))
-                except Exception:
-                    db.connection.rollback()
-                    pass # Silently fail if column doesn't exist yet
+                from database import users_table_has_column, rollback_db_cursor
+
+                if users_table_has_column("discord_id"):
+                    db.execute(
+                        "UPDATE users SET discord_id=%s WHERE id=%s",
+                        (discord_user_id, session["user_id"]),
+                    )
+                else:
+                    rollback_db_cursor(db)
                 session.pop('oauth2_intent', None)
                 return redirect("/account")
                 
             elif intent == 'reset':
-                try:
+                from database import users_table_has_column, rollback_db_cursor
+
+                if users_table_has_column("discord_id"):
                     db.execute(
                         "SELECT id FROM users WHERE discord_id=%s OR (hash=%s AND auth_type='discord') LIMIT 1",
-                        (discord_user_id, discord_user_id)
+                        (discord_user_id, discord_user_id),
                     )
-                except Exception:
-                    db.connection.rollback()
+                else:
                     db.execute(
-                        "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
-                        (discord_user_id,)
+                        "SELECT id FROM users WHERE hash=%s AND auth_type='discord' LIMIT 1",
+                        (discord_user_id,),
                     )
                 user = db.fetchone()
                 if user:
@@ -345,16 +350,17 @@ def callback():
                 else:
                     return error(400, "No account linked to this Discord ID was found.")
 
-            try:
+            from database import users_table_has_column
+
+            if users_table_has_column("discord_id"):
                 db.execute(
                     "SELECT 1 FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
-                    (discord_user_id, discord_user_id)
+                    (discord_user_id, discord_user_id),
                 )
-            except Exception:
-                db.connection.rollback()
+            else:
                 db.execute(
-                    "SELECT 1 FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
-                    (discord_user_id,)
+                    "SELECT 1 FROM users WHERE hash=%s AND auth_type='discord' LIMIT 1",
+                    (discord_user_id,),
                 )
             duplicate = db.fetchone() is not None
 
