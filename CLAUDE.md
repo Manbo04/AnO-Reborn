@@ -108,6 +108,23 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-22 (continued)
+
+**Task**: Security fixes + merge to master (PR #42)
+
+**What Was Done**:
+- Added `_require_coalition_member()` in `coalitions.py` and guarded `withdraw_from_bank`, `accept_bank_request`, `delete_coalition`, `update_col_info`, `adding`, `removing_requests` (coalition IDOR)
+- Province `build_structure_action` ownership check (matches quick-build API)
+- Hardened `/_admin/trigger_tasks`, `/_admin/ai_logs`, `/_admin/ai_agent` in `app.py` (ADMIN_DIAG_SECRET only; dual auth for ai_agent)
+- Added `tests/test_coalition_membership_guard.py`
+- Merged PR #42 into `master` (schema compat + security)
+
+**What To Watch**:
+- Ops using `trigger_tasks` must set `ADMIN_DIAG_SECRET` and send `X-DIAG-SECRET` (no SECRET_KEY fallback)
+- `ai_agent` requires both diag secret and `X-AI-AGENT-PASSWORD`
+
+---
+
 ### Session: 2026-05-22
 
 **Task**: Fix persistent country page 500 (`/country/id=*`, error_id `3f8dq87yxo9nq51s0ayd-1779438499`)
