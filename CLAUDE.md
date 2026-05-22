@@ -124,8 +124,9 @@ At the end of each session or major task, document:
 - After deploy: `curl -sI https://affairsandorder.com/country/id=27` should return 200
 - Run on Railway when `DATABASE_PUBLIC_URL` is set: `python3 scripts/apply_country_page_migrations.py` then `python3 scripts/assign_join_ranks.py` for full join_number display
 
-**Next Steps**:
-- Merge branch `cursor/fix-country-page-500-a503` to master and verify production smoke
+**Commits**: `113e9eb1` (merge hardened country route), `ef59552e` (DB rollback after optional query failures)
+
+**Verified**: Production `curl -sI /country/id=27` and `/country/id=16` return HTTP 200 after deploy.
 
 ---
 
