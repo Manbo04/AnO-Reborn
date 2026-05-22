@@ -16,6 +16,14 @@ load_dotenv()
 # App config will be set when routes are registered
 
 
+def _rollback_cursor(db):
+    """Reset the request connection after a failed statement (Postgres aborted txn)."""
+    try:
+        db.connection.rollback()
+    except Exception:
+        pass
+
+
 # TODO: rewrite this function for fucks sake
 def get_econ_statistics(cId, db=None):
     from database import query_cache
@@ -562,10 +570,7 @@ def country(cId):
     building_rows = []
     technology_rows = []
 
-    with get_request_cursor(read_only=True) as db:
-        # Core query: columns required on every production DB
-        db.execute(
-            """SELECT u.username, s.location, u.description,
+    _CORE_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
                       u.date, u.flag,
                       c.id AS coalition_id, cm.role,
                       c.name as colName,
@@ -585,10 +590,42 @@ def country(cId):
                    WHERE userid = %s
                    GROUP BY userid
                ) p ON u.id = p.userid
-               WHERE u.id=%s""",
-            (cId, cId),
-        )
-        row = db.fetchone()
+               WHERE u.id=%s"""
+
+    _MINIMAL_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
+                      u.date, u.flag,
+                      NULL::integer AS coalition_id, NULL::integer AS role,
+                      NULL::text AS colName,
+                      p.total_pop, p.avg_happiness,
+                      p.avg_productivity, p.province_count
+               FROM users u
+               INNER JOIN stats s ON u.id=s.id
+               LEFT JOIN (
+                   SELECT userid,
+                          SUM(population) AS total_pop,
+                          AVG(happiness) AS avg_happiness,
+                          AVG(productivity) AS avg_productivity,
+                          COUNT(id) AS province_count
+                   FROM provinces
+                   WHERE userid = %s
+                   GROUP BY userid
+               ) p ON u.id = p.userid
+               WHERE u.id=%s"""
+
+    with get_request_cursor(read_only=True) as db:
+        row = None
+        try:
+            db.execute(_CORE_COUNTRY_SQL, (cId, cId))
+            row = db.fetchone()
+        except Exception:
+            _rollback_cursor(db)
+            try:
+                db.execute(_MINIMAL_COUNTRY_SQL, (cId, cId))
+                row = db.fetchone()
+            except Exception:
+                _rollback_cursor(db)
+                raise
+
         if not row:
             return error(404, "Country doesn't exist")
 
@@ -624,7 +661,7 @@ def country(cId):
             if opt:
                 join_number, last_active = opt[0], opt[1]
         except Exception:
-            pass
+            _rollback_cursor(db)
 
         try:
             db.execute(
@@ -640,15 +677,17 @@ def country(cId):
                 total_working = demo[1] or 0
                 total_elderly = demo[2] or 0
         except Exception:
-            pass
+            _rollback_cursor(db)
 
         try:
             policies = get_user_policies(cId, db=db)
         except Exception:
+            _rollback_cursor(db)
             policies = {}
         try:
             influence = get_influence(cId, db=db)
         except Exception:
+            _rollback_cursor(db)
             influence = 0
 
         provinces = []
@@ -666,6 +705,7 @@ def country(cId):
             )
             provinces = db.fetchall()
         except Exception:
+            _rollback_cursor(db)
             try:
                 db.execute(
                     "SELECT provinceName, id, population, "
@@ -678,6 +718,7 @@ def country(cId):
                 )
                 provinces = db.fetchall()
             except Exception:
+                _rollback_cursor(db)
                 provinces = []
 
         try:
@@ -694,6 +735,7 @@ def country(cId):
             )
             resource_rows = db.fetchall() or []
         except Exception:
+            _rollback_cursor(db)
             resource_rows = []
 
         try:
@@ -712,6 +754,7 @@ def country(cId):
             )
             building_rows = db.fetchall() or []
         except Exception:
+            _rollback_cursor(db)
             building_rows = []
 
         try:
@@ -728,6 +771,7 @@ def country(cId):
             )
             technology_rows = db.fetchall() or []
         except Exception:
+            _rollback_cursor(db)
             technology_rows = []
 
         # Calculate CG need from already-fetched population
@@ -743,18 +787,22 @@ def country(cId):
         spy = {}
         uId = session.get("user_id")
         if uId:
-            db.execute(
-                """
-                SELECT COALESCE(SUM(um.quantity), 0)
-                FROM user_military um
-                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                WHERE um.user_id = %s
-                  AND ud.name = 'spies'
-                """,
-                (uId,),
-            )
-            spy_row = db.fetchone()
-            spy["count"] = spy_row[0] if spy_row else 0
+            try:
+                db.execute(
+                    """
+                    SELECT COALESCE(SUM(um.quantity), 0)
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                    WHERE um.user_id = %s
+                      AND ud.name = 'spies'
+                    """,
+                    (uId,),
+                )
+                spy_row = db.fetchone()
+                spy["count"] = spy_row[0] if spy_row else 0
+            except Exception:
+                _rollback_cursor(db)
+                spy["count"] = 0
         else:
             spy["count"] = 0
 
@@ -763,17 +811,24 @@ def country(cId):
         news_amount = 0
         current_user_id = session.get("user_id")
         if current_user_id and int(cId) == current_user_id:
-            db.execute(
-                "SELECT message,date,id FROM news WHERE destination_id=(%s)", (cId,)
-            )
-            news = db.fetchall()
-            news_amount = len(news)
+            try:
+                db.execute(
+                    "SELECT message,date,id FROM news WHERE destination_id=(%s)",
+                    (cId,),
+                )
+                news = db.fetchall()
+                news_amount = len(news)
+            except Exception:
+                _rollback_cursor(db)
+                news = []
+                news_amount = 0
 
         # Revenue stuff - expensive, so cached
         if status:
             try:
                 revenue = get_revenue(cId, db=db)
             except Exception:
+                _rollback_cursor(db)
                 revenue = default_revenue_data()
 
             try:
@@ -784,12 +839,14 @@ def country(cId):
                 )
                 expenses = db.fetchall()
             except Exception:
+                _rollback_cursor(db)
                 expenses = []
 
             try:
                 statistics = get_econ_statistics(cId, db=db)
                 statistics = format_econ_statistics(statistics)
             except Exception:
+                _rollback_cursor(db)
                 statistics = default_statistics_data()
 
             for key, value in default_statistics_data().items():
