@@ -66,8 +66,13 @@ def get_econ_statistics(cId, db=None):
         return True
 
     def check_for_monetary_upkeep(unit, amount):
-        operating_costs = int(variables.INFRA[f"{unit}_money"]) * amount
+        try:
+            operating_costs = int(variables.INFRA[f"{unit}_money"]) * amount
+        except KeyError:
+            return
         unit_type = get_unit_type(unit)
+        if not unit_type:
+            return
         expenses[unit_type]["money"] += operating_costs
 
     for unit, amount in total.items():
@@ -617,8 +622,14 @@ def country(cId):
 
         # Get policies and influence — pass cursor to avoid extra connections
         # (~130ms saved per round-trip to Railway Postgres proxy)
-        policies = get_user_policies(cId, db=db)
-        influence = get_influence(cId, db=db)
+        try:
+            policies = get_user_policies(cId, db=db)
+        except Exception:
+            policies = {}
+        try:
+            influence = get_influence(cId, db=db)
+        except Exception:
+            influence = 0
 
         # Get provinces list with demographics
         db.execute(
@@ -684,8 +695,8 @@ def country(cId):
         )
 
         try:
-            status = cId == str(session["user_id"])
-        except (KeyError, TypeError):
+            status = int(cId) == int(session["user_id"])
+        except (KeyError, TypeError, ValueError):
             status = False
 
         spy = {}
