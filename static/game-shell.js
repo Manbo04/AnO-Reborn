@@ -102,34 +102,6 @@
         setInterval(tick, 1000);
     }
 
-    function initProvinceBaseToggle() {
-        var toggle = qs('[data-province-view-toggle]');
-        var classic = qs('#province-classic-view');
-        var base = qs('#province-base-view');
-        if (!toggle || !classic || !base) return;
-
-        var key = 'ano_province_view';
-        var mode = localStorage.getItem(key) || 'base';
-
-        function apply(m) {
-            var isBase = m === 'base';
-            base.hidden = !isBase;
-            classic.hidden = isBase;
-            toggle.setAttribute('aria-pressed', isBase ? 'true' : 'false');
-            toggle.textContent = isBase ? 'Classic view' : 'Base view';
-        }
-
-        apply(mode);
-        toggle.addEventListener('click', function () {
-            mode = mode === 'base' ? 'classic' : 'base';
-            localStorage.setItem(key, mode);
-            apply(mode);
-            if (mode === 'base' && window.AnoProvinceBase) {
-                window.AnoProvinceBase.resize();
-            }
-        });
-    }
-
     function initReducedMotion() {
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         document.body.classList.add('game-reduced-motion');
@@ -142,6 +114,5 @@
         initMoreSheet();
         initHudExpand();
         initTickBadge();
-        initProvinceBaseToggle();
     });
 })();

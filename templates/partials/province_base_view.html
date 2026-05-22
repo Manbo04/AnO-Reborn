@@ -17,7 +17,8 @@
                 <div class="province-vital-bar"><div class="province-vital-fill province-vital-fill--power" style="width: {{ [province_base_layout.electricity|default(0, true), 100]|min }}%;"></div></div>
             </div>
         </div>
-        <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true">Classic view</button>
+        <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true" title="Switch between district map and classic tabs">Classic view</button>
+        <p class="province-base-hint" id="province-base-hint" hidden>If you only see tabs below, tap <strong>Base view</strong> above or clear site data for this page.</p>
     </div>
 
     <div class="province-base-arena">
