@@ -4969,7 +4969,7 @@ html.page-tutorial .tutorial-academy.templatediv {
     --game-panel-bg: var(--foreground);
     --game-panel-border: var(--border);
     --game-hud-height: 52px;
-    --game-bottom-nav-height: 64px;
+    --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
@@ -4982,11 +4982,15 @@ html.page-tutorial .tutorial-academy.templatediv {
 
 /* --- static/css/game-shell.css --- */
 /**
- * Mobile game shell: bottom nav, HUD strip, cards, more sheet
+ * Mobile game shell: resource HUD strip (no bottom tab bar)
  */
 
 body.game-shell-active {
-    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    padding-bottom: var(--game-safe-bottom);
+}
+
+body.game-shell-active .footer {
+    display: none;
 }
 
 body.game-shell-active .templatecontainer {
@@ -5977,6 +5981,38 @@ body.game-reduced-motion .province-base-particles span {
 
 @keyframes drawer-down {
     from { transform: translateY(-100%); }
+}
+
+.province-view-nudge {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    margin: 0 0 var(--game-space-md);
+    padding: var(--game-space-sm) var(--game-space-md);
+    border-radius: var(--game-radius-md);
+    background: linear-gradient(90deg, rgba(0, 167, 225, 0.2), rgba(45, 159, 111, 0.15));
+    border: 1px solid rgba(0, 167, 225, 0.35);
+    font-size: 0.9rem;
+}
+
+.province-view-nudge[hidden] {
+    display: none !important;
+}
+
+.province-view-nudge-btn {
+    background: var(--accent, #00a7e1);
+    color: #fff;
+    border: none;
+    border-radius: var(--game-radius-sm);
+    padding: 2px 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.province-base-hint {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin: 0;
 }
 
 
