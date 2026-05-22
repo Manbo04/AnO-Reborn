@@ -76,3 +76,36 @@ Offline / no DB:
 ```bash
 python3 scripts/generate_tutorial_videos.py
 ```
+
+## TTS narration
+
+Chapter scripts and follow-along links live in [`static/tutorial/chapters.json`](../static/tutorial/chapters.json).
+
+```bash
+pip install edge-tts
+python3 scripts/generate_tutorial_narration.py
+```
+
+Outputs:
+
+- `static/tutorial/audio/ch01-welcome.mp3` … `ch10-coalitions.mp3`
+- `static/tutorial/captions/ch01-welcome.vtt` … (WebVTT for `<track>`)
+
+Mux narration into existing MP4s without re-recording:
+
+```bash
+python3 scripts/record_tutorial_walkthroughs.py --narration-only --with-narration
+```
+
+Full capture with narration (default when MP3 files exist):
+
+```bash
+python3 scripts/generate_tutorial_narration.py
+python3 scripts/record_tutorial_walkthroughs.py --with-narration
+```
+
+## CI auto re-record
+
+[`.github/workflows/tutorial-videos.yml`](../.github/workflows/tutorial-videos.yml) runs on relevant `master` pushes and `workflow_dispatch`. It opens a PR with updated videos (avoids push loops on `master`).
+
+Required GitHub secret: `DATABASE_PUBLIC_URL`. Optional: `TUTORIAL_RECORD_TMP_PASSWORD`, repo variable `TUTORIAL_RECORD_BASE_URL`.

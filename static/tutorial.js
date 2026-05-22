@@ -151,7 +151,7 @@
                 '<h4 class="tutorial-howto-title"><span class="material-icons-outlined">checklist</span> What to do in this chapter</h4>' +
                 '<ol class="tutorial-howto-list">' +
                 "<li><span>1</span> Read the lesson (use tabs if you see them).</li>" +
-                "<li><span>2</span> Try any <strong>interactive box</strong> (sliders, chain game).</li>" +
+                "<li><span>2</span> Open <strong>Follow along</strong> links (new tab) and try any <strong>interactive box</strong>.</li>" +
                 "<li><span>3</span> Answer the quiz below, then press <strong>Check my answer</strong>.</li>" +
                 "<li><span>4</span> Press <strong>Complete &amp; unlock next chapter</strong>.</li>" +
                 "</ol>";
@@ -603,6 +603,17 @@
     function formatNum(n) {
         return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
+
+    root.querySelectorAll(".tutorial-follow-btn").forEach(function (link) {
+        link.addEventListener("click", function () {
+            try {
+                sessionStorage.setItem(
+                    "tutorialReturn",
+                    window.location.pathname + window.location.search
+                );
+            } catch (e) { /* ignore */ }
+        });
+    });
 
     unlockChapters();
     updateStatsUI();
