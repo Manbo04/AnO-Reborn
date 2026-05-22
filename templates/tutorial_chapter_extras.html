@@ -1,24 +1,35 @@
-{% macro chapter_video_follow(chapter) %}
-                    <div class="tutorial-lesson-video-wrap">
-                        <p class="tutorial-lesson-video-label"><span class="material-icons-outlined" aria-hidden="true">play_circle</span> Guided in-game walkthrough <span class="tutorial-lesson-video-dur">~2 min</span></p>
+{% macro chapter_video_block(chapter) %}
+                    <section class="tutorial-block tutorial-block-video" aria-label="Lesson video">
+                        <div class="tutorial-block-head">
+                            <span class="material-icons-outlined" aria-hidden="true">play_circle</span>
+                            <span>Guided walkthrough</span>
+                            <span class="tutorial-block-meta">~30 sec · silent · step labels on screen</span>
+                        </div>
                         <video class="tutorial-lesson-video" controls playsinline preload="metadata"
                                poster="{{ url_for('static', filename=chapter.poster) }}?v=2"
                                aria-label="{{ chapter.aria_label }}">
                             <source src="{{ url_for('static', filename='tutorial/videos/' ~ chapter.stem ~ '.mp4') }}?v=4" type="video/mp4">
                             <track kind="captions" src="{{ url_for('static', filename='tutorial/captions/' ~ chapter.stem ~ '.vtt') }}?v=4" srclang="en" label="Step labels">
                         </video>
-                        <p class="tutorial-video-hint">Silent video with on-screen step labels. Turn on <strong>Step labels</strong> in the player menu for the same text as captions.</p>
-                    </div>
-                    <nav class="tutorial-follow-along" aria-label="Follow along in the game">
-                        <h4 class="tutorial-follow-along-title"><span class="material-icons-outlined" aria-hidden="true">open_in_new</span> Follow along in the game</h4>
+                    </section>
+{% endmacro %}
+
+{% macro chapter_follow_block(chapter) %}
+                    <section class="tutorial-block tutorial-block-follow" aria-label="Follow along in the game">
+                        <div class="tutorial-block-head">
+                            <span class="material-icons-outlined" aria-hidden="true">open_in_new</span>
+                            <span>Practice on the real site</span>
+                        </div>
+                        <p class="tutorial-block-desc">Opens in a new tab — keep this lesson open so you can come back for the quiz.</p>
                         <ul class="tutorial-follow-along-list">
                             {% for link in chapter.follow_links %}
                             <li>
-                                <a href="{{ link.href }}" class="templatedivbutton tutorial-follow-btn" target="_blank" rel="noopener noreferrer">
-                                    <span class="material-icons-outlined">north_east</span>{{ link.label }}
+                                <a href="{{ link.href }}" class="tutorial-follow-btn" target="_blank" rel="noopener noreferrer">
+                                    <span class="tutorial-follow-btn-label">{{ link.label }}</span>
+                                    <span class="material-icons-outlined" aria-hidden="true">north_east</span>
                                 </a>
                             </li>
                             {% endfor %}
                         </ul>
-                    </nav>
+                    </section>
 {% endmacro %}

@@ -5,14 +5,18 @@ html.page-tutorial .templatecontainer {
 }
 
 html.page-tutorial .tutorial-academy.templatediv {
+    --tutorial-pad-x: 20px;
+    --tutorial-pad-y: 20px;
+    --tutorial-gap: 16px;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    width: min(1120px, 96%) !important;
-    /* Clear fixed navbar (55px) + templatecontainer pull-up (-90px) */
-    margin: 155px auto 40px !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 155px auto 48px !important;
     padding: 0 !important;
     overflow: visible !important;
+    box-sizing: border-box;
 }
 
 html.page-tutorial .tutorial-academy .templatedivcontent {
@@ -184,8 +188,8 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 /* Shell: sidebar + stage */
 .tutorial-shell {
     display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 18px;
+    grid-template-columns: minmax(200px, 232px) minmax(0, 1fr);
+    gap: 20px;
     align-items: start;
 }
 
@@ -262,8 +266,11 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-chapter-btn.is-active {
-    background: var(--accent-subtle);
+    background: var(--foregroundTwo);
     border-color: var(--accent);
+    border-left-width: 3px;
+    padding-left: 8px;
+    box-shadow: none;
 }
 
 .tutorial-chapter-btn.is-complete .tutorial-chapter-icon-wrap {
@@ -300,12 +307,12 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-chapter-btn.is-active .tutorial-chapter-icon-wrap {
-    background: var(--accent);
+    background: var(--accent-subtle);
     border-color: var(--accent);
 }
 
 .tutorial-chapter-btn.is-active .tutorial-chapter-icon-wrap .material-icons-outlined {
-    color: #fff !important;
+    color: var(--accent) !important;
 }
 
 .tutorial-chapter-text {
@@ -340,7 +347,7 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     background: var(--foreground);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: var(--shadow-card);
 }
 
@@ -405,61 +412,67 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     font-weight: 700;
 }
 
-/* Per-chapter lesson video (generated slideshow, ~14s) */
-.tutorial-lesson-video-wrap {
-    padding: 16px 24px 0;
-    background: var(--card-bg, #1a1f2a);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+/* Shared section blocks inside chapter panel */
+.tutorial-block {
+    margin: 0;
+    padding: var(--tutorial-pad-y) var(--tutorial-pad-x);
+    border-bottom: 1px solid var(--border);
 }
 
-.tutorial-lesson-video-label {
+.tutorial-block-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    margin: 0 0 10px;
-    font-size: 0.85rem;
+    gap: 8px 12px;
+    margin: 0 0 12px;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: var(--primary, #00a7e1);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    color: var(--accent);
 }
 
-.tutorial-lesson-video-label .material-icons-outlined {
-    font-size: 1.25rem;
+.tutorial-block-head .material-icons-outlined {
+    font-size: 1.2rem !important;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    margin: 0 !important;
+    color: var(--accent) !important;
 }
 
-.tutorial-lesson-video-dur {
+.tutorial-block-meta {
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
     text-transform: none;
     letter-spacing: 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.tutorial-block-desc {
+    margin: 0 0 12px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.5 !important;
+    color: var(--text-secondary) !important;
+}
+
+.tutorial-block-video {
+    background: var(--foregroundTwo);
 }
 
 .tutorial-lesson-video {
     display: block;
     width: 100%;
-    max-height: 480px;
+    max-height: min(52vh, 400px);
+    aspect-ratio: 16 / 9;
     object-fit: contain;
-    border-radius: 10px;
-    background: #000;
-    border: 1px solid rgba(0, 167, 225, 0.35);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    background: #0a0e14;
+    border: 1px solid var(--border);
 }
 
-.tutorial-follow-along {
-    padding: 14px 24px 18px;
-    background: rgba(0, 167, 225, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.tutorial-follow-along-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 12px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--primary, #00a7e1);
+.tutorial-block-follow {
+    background: var(--foreground);
 }
 
 .tutorial-follow-along-list {
@@ -467,8 +480,8 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     margin: 0;
     padding: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .tutorial-follow-along-list li {
@@ -477,35 +490,55 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-follow-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    padding: 8px 14px;
-    text-decoration: none;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--foregroundTwo);
+    color: var(--colorOne) !important;
+    text-decoration: none !important;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: none !important;
+    animation: none !important;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.tutorial-follow-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    color: var(--accent) !important;
+    transform: none !important;
 }
 
 .tutorial-follow-btn .material-icons-outlined {
-    font-size: 1.1rem;
+    font-size: 1.15rem !important;
+    position: static !important;
+    flex-shrink: 0;
+    color: var(--accent) !important;
 }
 
-.tutorial-video-hint {
-    margin: 8px 0 0;
-    padding: 0 4px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.55);
-    line-height: 1.45;
+.tutorial-follow-btn-label {
+    text-align: left;
+    line-height: 1.35;
 }
 
 .tutorial-chapter-body {
-    padding: 22px 24px 26px;
+    padding: var(--tutorial-pad-y) var(--tutorial-pad-x) 8px;
 }
 
 .tutorial-lead {
-    margin: 0 0 18px;
-    font-size: 1.05rem;
+    margin: 0 0 16px;
+    font-size: 1rem;
     line-height: 1.65;
-    color: var(--text-secondary);
+    color: var(--colorOne);
 }
 
 .tutorial-chapter-body .templatecontentpleft,
@@ -571,13 +604,15 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 
 /* Tabs */
 .tutorial-tabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 16px;
 }
 
 .tutorial-tab {
-    padding: 8px 16px;
+    width: 100%;
+    padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--foregroundTwo);
@@ -586,6 +621,8 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     font-size: 0.88rem;
     cursor: pointer;
     font-family: inherit;
+    text-align: center;
+    box-shadow: none;
 }
 
 .tutorial-tab.is-active {
@@ -723,8 +760,18 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 
 .tutorial-accordion-body {
     display: none;
-    padding: 14px;
+    padding: 14px 16px;
     border-top: 1px solid var(--border);
+}
+
+.tutorial-accordion-body ul {
+    margin: 0 !important;
+    padding-left: 1.25rem !important;
+    list-style: disc;
+}
+
+.tutorial-accordion-body li {
+    margin-bottom: 10px !important;
 }
 
 .tutorial-accordion-body.is-open {
@@ -733,10 +780,10 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 
 /* What to do checklist */
 .tutorial-howto {
-    margin: 0 0 18px;
+    margin: 0 var(--tutorial-pad-x) 16px;
     padding: 14px 16px;
-    background: linear-gradient(135deg, var(--accent-subtle), var(--foregroundTwo));
-    border: 1px solid var(--accent);
+    background: var(--foregroundTwo);
+    border: 1px solid var(--border);
     border-radius: 10px;
 }
 
@@ -790,10 +837,10 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-quiz {
-    margin-top: 8px;
+    margin: 0 var(--tutorial-pad-x) 0;
     padding: 18px;
     background: var(--foregroundTwo);
-    border: 2px solid var(--accent);
+    border: 1px solid var(--border);
     border-radius: 10px;
 }
 
@@ -907,10 +954,10 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 .tutorial-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px 12px;
     align-items: center;
-    margin-top: 20px;
-    padding-top: 18px;
+    margin: 0;
+    padding: var(--tutorial-pad-y) var(--tutorial-pad-x) calc(var(--tutorial-pad-y) + 8px);
     border-top: 1px solid var(--border);
 }
 
@@ -928,10 +975,32 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     cursor: not-allowed;
 }
 
-.tutorial-actions .templatedivbutton {
+html.page-tutorial .tutorial-academy .templatedivbutton {
     animation: none !important;
     opacity: 1 !important;
     color: #fff !important;
+    margin: 0 !important;
+    width: auto !important;
+    max-width: 100%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+    letter-spacing: 0.04em;
+}
+
+html.page-tutorial .tutorial-academy .templatedivbutton:hover {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 167, 225, 0.2) !important;
+}
+
+html.page-tutorial .tutorial-academy .templatedivbutton .material-icons-outlined {
+    position: static !important;
+    font-size: 1.1rem !important;
+    vertical-align: middle;
+}
+
+html.page-tutorial .tutorial-academy .tutorial-btn-check,
+html.page-tutorial .tutorial-academy .tutorial-btn-complete {
+    flex: 1 1 auto;
+    min-width: min(100%, 220px);
 }
 
 .tutorial-btn-skip {
@@ -1041,8 +1110,42 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     display: none !important;
 }
 
-/* Kill global transition jank on tutorial page */
-html.page-tutorial .tutorial-academy * {
-    transition-property: background-color, border-color, color, opacity, transform, box-shadow !important;
-    transition-duration: 0.15s !important;
+/* Global material icon reset inside tutorial */
+html.page-tutorial .tutorial-academy .material-icons-outlined {
+    position: static;
+    top: auto;
+    right: auto;
+    margin: 0;
+}
+
+html.page-tutorial .tutorial-academy .templatedivcontent .material-icons-outlined,
+html.page-tutorial .tutorial-academy .smallheader .material-icons-outlined {
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* Softer insight cards */
+.tutorial-insight-card .material-icons-outlined {
+    display: block;
+}
+
+@media (max-width: 640px) {
+    html.page-tutorial .tutorial-academy.templatediv {
+        --tutorial-pad-x: 14px;
+        --tutorial-pad-y: 14px;
+    }
+
+    .tutorial-chapter-banner-inner {
+        padding: 20px var(--tutorial-pad-x);
+    }
+
+    .tutorial-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    html.page-tutorial .tutorial-academy .tutorial-btn-check,
+    html.page-tutorial .tutorial-academy .tutorial-btn-complete {
+        width: 100% !important;
+    }
 }
