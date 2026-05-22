@@ -2,6 +2,10 @@
 {% block title %}{{ province['name'] }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script defer src="{{ url_for('static', filename='province-base.js') }}?v=1"></script>
+{% endif %}
 {% endblock %}
 {% block body %}
 <div class="templatediv">
@@ -14,6 +18,8 @@
 
     <div class="templatedivcontent">
 
+        {% include 'partials/province_base_view.html' %}
+        <div id="province-classic-view"{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} hidden{% endif %}>
         {% include 'partials/province_status.html' %}
         {% include 'partials/province_settings.html' %}
         {% include 'partials/province_info.html' %}
@@ -2304,6 +2310,7 @@
         </form>
         {% endif %}
         </div>
+        </div><!-- /province-classic-view -->
     </div>
 </div>
 {% endblock %}

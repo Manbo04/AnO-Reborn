@@ -1,0 +1,17 @@
+{% if FEATURE_GAME_SHELL and session.get('user_id') %}
+{% set resources = get_resources() %}
+<div class="game-hud" id="game-hud" role="region" aria-label="Resources">
+    {% for res_key in HUD_STRIP_RESOURCES %}
+    <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}">
+        <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
+        <span class="game-hud-value">
+            {% if res_key == 'gold' %}${{ resources[res_key] | fmt }}{% else %}{{ resources[res_key] | weight_fmt }}{% endif %}
+        </span>
+    </button>
+    {% endfor %}
+    <span class="game-tick-badge" data-game-tick-countdown aria-live="polite"></span>
+    <button type="button" class="game-hud-chip game-hud-expand" data-game-hud-expand aria-label="All resources">
+        <span class="material-icons-outlined">expand_more</span>
+    </button>
+</div>
+{% endif %}
