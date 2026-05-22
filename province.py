@@ -556,6 +556,22 @@ def build_structure_action():
     except (TypeError, ValueError):
         return error(400, "Invalid building selection or quantity.")
 
+    if province_id:
+        try:
+            province_id_int = int(province_id)
+        except (TypeError, ValueError):
+            return error(400, "Invalid province.")
+        with get_request_cursor() as db:
+            db.execute(
+                "SELECT userId FROM provinces WHERE id = %s",
+                (province_id_int,),
+            )
+            row = db.fetchone()
+            if not row:
+                return error(404, "Province not found")
+            if row[0] != cId:
+                return error(403, "You do not own this province")
+
     try:
         build_structure(
             cId,

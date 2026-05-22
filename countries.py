@@ -9,7 +9,12 @@ from collections import defaultdict
 from policies import get_user_policies
 from wars.service import target_data
 import math
-from database import get_request_cursor, cache_response, rollback_db_cursor
+from database import (
+    get_request_cursor,
+    cache_response,
+    rollback_db_cursor,
+    get_coalition_members_table,
+)
 
 load_dotenv()
 
@@ -366,20 +371,22 @@ def get_revenue(cId, db=None):
         # Deduct coalition tax so the displayed net matches what the player
         # actually receives (tax_income task deducts this before crediting).
         coalition_tax_deducted = 0
-        try:
-            db.execute(
-                "SELECT cl.colid, COALESCE(cn.tax_rate, 0) AS tax_rate "
-                "FROM coalitions_legacy cl "
-                "JOIN colNames cn ON cn.id = cl.colid "
-                "WHERE cl.userid = %s AND COALESCE(cn.tax_rate, 0) > 0",
-                (cId,),
-            )
-            ctax_row = db.fetchone()
-            if ctax_row:
-                tax_rate = ctax_row[1]
-                coalition_tax_deducted = int(ti_money * tax_rate / 100)
-        except Exception:
-            pass
+        members_tbl = get_coalition_members_table()
+        if members_tbl:
+            try:
+                db.execute(
+                    f"SELECT cl.colid, COALESCE(cn.tax_rate, 0) AS tax_rate "
+                    f"FROM {members_tbl} cl "
+                    "JOIN colNames cn ON cn.id = cl.colid "
+                    "WHERE cl.userid = %s AND COALESCE(cn.tax_rate, 0) > 0",
+                    (cId,),
+                )
+                ctax_row = db.fetchone()
+                if ctax_row:
+                    tax_rate = ctax_row[1]
+                    coalition_tax_deducted = int(ti_money * tax_rate / 100)
+            except Exception:
+                rollback_db_cursor(db)
 
         # Updates money
         revenue["gross"]["money"] += ti_money
@@ -562,7 +569,9 @@ def country(cId):
     building_rows = []
     technology_rows = []
 
-    _CORE_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
+    members_tbl = get_coalition_members_table()
+    if members_tbl:
+        _CORE_COUNTRY_SQL = f"""SELECT u.username, s.location, u.description,
                       u.date, u.flag,
                       c.id AS coalition_id, cm.role,
                       c.name as colName,
@@ -570,7 +579,7 @@ def country(cId):
                       p.avg_productivity, p.province_count
                FROM users u
                INNER JOIN stats s ON u.id=s.id
-               LEFT JOIN coalitions_legacy cm ON u.id=cm.userid
+               LEFT JOIN {members_tbl} cm ON u.id=cm.userid
                LEFT JOIN colNames c ON cm.colid=c.id
                LEFT JOIN (
                    SELECT userid,
@@ -583,6 +592,8 @@ def country(cId):
                    GROUP BY userid
                ) p ON u.id = p.userid
                WHERE u.id=%s"""
+    else:
+        _CORE_COUNTRY_SQL = None
 
     _MINIMAL_COUNTRY_SQL = """SELECT u.username, s.location, u.description,
                       u.date, u.flag,
@@ -606,11 +617,13 @@ def country(cId):
 
     with get_request_cursor(read_only=True) as db:
         row = None
-        try:
-            db.execute(_CORE_COUNTRY_SQL, (cId, cId))
-            row = db.fetchone()
-        except Exception:
-            rollback_db_cursor(db)
+        if _CORE_COUNTRY_SQL:
+            try:
+                db.execute(_CORE_COUNTRY_SQL, (cId, cId))
+                row = db.fetchone()
+            except Exception:
+                rollback_db_cursor(db)
+        if row is None:
             try:
                 db.execute(_MINIMAL_COUNTRY_SQL, (cId, cId))
                 row = db.fetchone()
@@ -950,6 +963,13 @@ def countries():
     sort_column = sort_map.get(sort, "influence")
     sort_direction = "DESC" if sortway == "desc" else "ASC"
 
+    members_tbl = get_coalition_members_table()
+    coalition_src = (
+        members_tbl
+        if members_tbl
+        else "(SELECT NULL::integer AS userid, NULL::integer AS colid WHERE FALSE)"
+    )
+
     with get_request_cursor(read_only=True) as db:
         filter_sql = f"""
             WITH country_rows AS (
@@ -1051,7 +1071,7 @@ def countries():
                 ) r ON r.user_id = u.id
                 LEFT JOIN (
                     SELECT userid, MIN(colid) AS colid
-                    FROM coalitions_legacy
+                    FROM {coalition_src}
                     GROUP BY userid
                 ) cm ON cm.userid = u.id
                 LEFT JOIN colNames c ON c.id = cm.colid
@@ -1098,7 +1118,7 @@ def countries():
                 ) p ON p.user_id = u.id
                 LEFT JOIN (
                     SELECT userid, MIN(colid) AS colid
-                    FROM coalitions_legacy
+                    FROM {coalition_src}
                     GROUP BY userid
                 ) cm ON cm.userid = u.id
                 LEFT JOIN colNames c ON c.id = cm.colid
@@ -1368,15 +1388,18 @@ def delete_own_account():
             coalition_role = get_user_role(cId)
         except Exception:
             coalition_role = None
+        members_tbl = get_coalition_members_table()
         if coalition_role != "leader":
             pass
-        else:
-            db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
+        elif members_tbl:
+            db.execute(
+                f"SELECT colid FROM {members_tbl} WHERE userid=%s", (cId,)
+            )
             coalition_row = db.fetchone()
             if coalition_row:
                 user_coalition = coalition_row[0]
                 db.execute(
-                    "SELECT COUNT(userid) FROM coalitions_legacy "
+                    f"SELECT COUNT(userid) FROM {members_tbl} "
                     "WHERE role='leader' AND colid=%s",
                     (user_coalition,),
                 )
@@ -1384,14 +1407,15 @@ def delete_own_account():
                 leader_count = leader_row[0] if leader_row else 0
                 if leader_count == 1:
                     db.execute(
-                        "DELETE FROM coalitions_legacy WHERE colid=%s",
+                        f"DELETE FROM {members_tbl} WHERE colid=%s",
                         (user_coalition,),
                     )
                     db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
                     db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
                     db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
-        db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (cId,))
+        if members_tbl:
+            db.execute(f"DELETE FROM {members_tbl} WHERE userid=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         # Clean up Economy 2.0 normalized tables
