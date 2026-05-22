@@ -1,0 +1,153 @@
+{
+  "chapters": [
+    {
+      "stem": "ch01-welcome",
+      "title": "Welcome & The Game Loop",
+      "poster": "images/administrativebuilding.jpg",
+      "aria_label": "Chapter 1: welcome and game loop",
+      "follow_links": [
+        { "label": "Open your country page", "href": "/country" },
+        { "label": "Game mechanics reference", "href": "/mechanics" }
+      ],
+      "recording_steps": [
+        { "label": "1. Log in to your nation", "path": "/login", "action": "login", "hold_sec": 5 },
+        { "label": "2. Country overview (population & stats)", "path": "/country", "tab": "countryview", "hold_sec": 7 },
+        { "label": "3. Revenue tab — hourly tax & net gold", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
+        { "label": "4. Game mechanics reference pages", "path": "/mechanics", "hold_sec": 7 }
+      ]
+    },
+    {
+      "stem": "ch02-provinces",
+      "title": "Provinces & Buildings",
+      "poster": "images/province.jpg",
+      "aria_label": "Chapter 2: provinces and buildings",
+      "follow_links": [
+        { "label": "Your provinces", "href": "/provinces" },
+        { "label": "Create a province", "href": "/createprovince" }
+      ],
+      "recording_steps": [
+        { "label": "1. Your province list", "path": "/provinces", "hold_sec": 7 },
+        { "label": "2. Open one province", "path": "/province/{province_id}", "hold_sec": 6 },
+        { "label": "3. Land tab — mines & industry slots", "path": "/province/{province_id}", "tab": "provinceland", "hold_sec": 7 },
+        { "label": "4. Industry buildings (extractors)", "path": "/province/{province_id}", "tab": "landindustry", "hold_sec": 8 }
+      ]
+    },
+    {
+      "stem": "ch03-resources",
+      "title": "Resources & Production",
+      "poster": "images/coalmine.jpg",
+      "aria_label": "Chapter 3: resources and production chains",
+      "follow_links": [
+        { "label": "View your resources", "href": "/country" },
+        { "label": "Resource mechanics", "href": "/mechanics/resources" }
+      ],
+      "recording_steps": [
+        { "label": "1. Nation buildings summary", "path": "/country", "tab": "countryview", "hold_sec": 7 },
+        { "label": "2. Revenue — resources produced per hour", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
+        { "label": "3. Province land — raw material mines", "path": "/province/{province_id}", "tab": "landindustry", "hold_sec": 8 },
+        { "label": "4. Processing — refineries & factories", "path": "/province/{province_id}", "tab": "landprocessing", "hold_sec": 8 },
+        { "label": "5. Resource mechanics guide", "path": "/mechanics/resources", "hold_sec": 7 }
+      ]
+    },
+    {
+      "stem": "ch04-economy",
+      "title": "Economy & Tax",
+      "poster": "images/bank.jpg",
+      "aria_label": "Chapter 4: economy and tax",
+      "follow_links": [
+        { "label": "Your country page", "href": "/country" },
+        { "label": "Revenue mechanics", "href": "/mechanics/revenue" }
+      ],
+      "recording_steps": [
+        { "label": "1. Country overview", "path": "/country", "tab": "countryview", "hold_sec": 6 },
+        { "label": "2. Revenue — gross production table", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
+        { "label": "3. Revenue — net gold after costs & tax", "path": "/country", "tab": "countryrevenue", "scroll": "#revenue", "hold_sec": 8 },
+        { "label": "4. Revenue mechanics explained", "path": "/mechanics/revenue", "hold_sec": 8 }
+      ]
+    },
+    {
+      "stem": "ch05-population",
+      "title": "Population & Rations",
+      "poster": "images/washington.jpg",
+      "aria_label": "Chapter 5: population and rations",
+      "follow_links": [
+        { "label": "Your country page", "href": "/country" },
+        { "label": "Rations guide", "href": "/mechanics/rations" }
+      ],
+      "recording_steps": [
+        { "label": "1. Population & demographics chart", "path": "/country", "tab": "countryview", "scroll": "#demographicsRadarChart", "hold_sec": 8 },
+        { "label": "2. Revenue — rations consumed", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
+        { "label": "3. Rations & distribution rules", "path": "/mechanics/rations", "hold_sec": 8 }
+      ]
+    },
+    {
+      "stem": "ch06-military",
+      "title": "Military Basics",
+      "poster": "images/cruiser.jpg",
+      "aria_label": "Chapter 6: military basics",
+      "follow_links": [
+        { "label": "Military page", "href": "/military" }
+      ],
+      "recording_steps": [
+        { "label": "1. Military — land units", "path": "/military", "tab": "militaryland", "hold_sec": 8 },
+        { "label": "2. Military — air units", "path": "/military", "tab": "militaryair", "hold_sec": 7 },
+        { "label": "3. Military — naval units", "path": "/military", "tab": "militarywater", "hold_sec": 7 }
+      ]
+    },
+    {
+      "stem": "ch07-market",
+      "title": "Global Market",
+      "poster": "images/market.jpg",
+      "aria_label": "Chapter 7: global market",
+      "follow_links": [
+        { "label": "Visit market", "href": "/market" },
+        { "label": "Market statistics", "href": "/statistics" }
+      ],
+      "recording_steps": [
+        { "label": "1. Market — buy & sell offers", "path": "/market", "hold_sec": 9 },
+        { "label": "2. Statistics — average prices", "path": "/statistics", "hold_sec": 9 }
+      ]
+    },
+    {
+      "stem": "ch08-upgrades",
+      "title": "Nation Upgrades",
+      "poster": "images/upgrades.jpg",
+      "aria_label": "Chapter 8: nation upgrades",
+      "follow_links": [
+        { "label": "View upgrades", "href": "/upgrades" }
+      ],
+      "recording_steps": [
+        { "label": "1. Economic upgrades", "path": "/upgrades", "tab": "upgradeseconomic", "hold_sec": 8 },
+        { "label": "2. Military upgrades", "path": "/upgrades", "tab": "upgradesmilitary", "hold_sec": 8 }
+      ]
+    },
+    {
+      "stem": "ch09-war",
+      "title": "War & Combat",
+      "poster": "images/war.jpg",
+      "aria_label": "Chapter 9: war and combat",
+      "follow_links": [
+        { "label": "War page", "href": "/wars" },
+        { "label": "War mechanics", "href": "/mechanics/war" }
+      ],
+      "recording_steps": [
+        { "label": "1. Active wars & declarations", "path": "/wars", "hold_sec": 9 },
+        { "label": "2. War mechanics — combat rules", "path": "/mechanics/war", "hold_sec": 9 }
+      ]
+    },
+    {
+      "stem": "ch10-coalitions",
+      "title": "Coalitions & Mastery",
+      "poster": "images/coalition.jpg",
+      "aria_label": "Chapter 10: coalitions and mastery",
+      "follow_links": [
+        { "label": "Browse coalitions", "href": "/coalitions" },
+        { "label": "Recruiting coalitions", "href": "/recruitments" }
+      ],
+      "recording_steps": [
+        { "label": "1. Coalition directory", "path": "/coalitions", "hold_sec": 8 },
+        { "label": "2. Coalitions recruiting members", "path": "/recruitments", "hold_sec": 8 }
+      ]
+    }
+  ]
+}

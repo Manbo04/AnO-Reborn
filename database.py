@@ -174,6 +174,15 @@ def cache_response(ttl_seconds=60):
             # Call actual function
             response = f(*args, **kwargs)
 
+            # Do not cache error responses (avoids serving stale 500s after fixes)
+            status_code = 200
+            if isinstance(response, tuple) and len(response) > 1:
+                status_code = response[1]
+            elif hasattr(response, "status_code"):
+                status_code = response.status_code
+            if status_code >= 400:
+                return response
+
             # Cache the response
             cache[cache_key] = (response, time())
             cache.move_to_end(cache_key)
@@ -833,16 +842,16 @@ class ProvinceQueries:
 
 
 class CoalitionQueries:
-    """Optimized queries for coalition-related operations"""
+    """Optimized queries for coalition-related operations (coalitions_legacy schema)."""
 
     @staticmethod
     def get_coalition_members(coalition_id: int) -> List[Dict[str, Any]]:
         """Get all coalition members with their roles in a single query"""
         query = """
-            SELECT c.userId, c.role, u.username
-            FROM coalitions c
-            JOIN users u ON c.userId = u.id
-            WHERE c.colId = %s
+            SELECT c.userid, c.role, u.username
+            FROM coalitions_legacy c
+            JOIN users u ON c.userid = u.id
+            WHERE c.colid = %s
             ORDER BY
                 CASE c.role
                     WHEN 'leader' THEN 1
@@ -864,14 +873,14 @@ class CoalitionQueries:
         # Pre-aggregate core influence metrics (military/resources scoring to be added)
         query = """
             SELECT
-                c.userId,
-                COALESCE(SUM(p.cityCount), 0) * 10 as cities_score,
+                c.userid,
+                COALESCE(SUM(p.citycount), 0) * 10 as cities_score,
                 COALESCE(SUM(p.land), 0) * 10 as land_score,
                 COUNT(p.id) * 300 as provinces_score
-            FROM coalitions c
-            LEFT JOIN provinces p ON c.userId = p.id
-            WHERE c.colId = %s
-            GROUP BY c.userId
+            FROM coalitions_legacy c
+            LEFT JOIN provinces p ON c.userid = p.userid
+            WHERE c.colid = %s
+            GROUP BY c.userid
         """
         results = QueryHelper.fetch_all(query, (coalition_id,), dict_cursor=True)
         # Would need to add military and resource scores
@@ -1053,6 +1062,14 @@ def get_request_cursor(cursor_factory=None, read_only=False):
             cursor.close()
         except Exception:
             pass
+
+
+def rollback_db_cursor(db):
+    """Reset the request connection after a failed SQL statement (aborted txn)."""
+    try:
+        db.connection.rollback()
+    except Exception:
+        pass
 
 
 def teardown_request_connection(exc=None):
