@@ -4707,6 +4707,20 @@ body:has(.loginsignupdiv) .footer {
     letter-spacing: 0.5px;
 }
 
+.empty-state-page .empty-state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px auto;
+    max-width: 520px;
+}
+
+.empty-state-page .empty-state-actions .templatedivbutton {
+    flex: 1 1 200px;
+    max-width: 100%;
+}
+
 /* === UI utilities (phase 2) === */
 .text-center { text-align: center !important; }
 .text-success { color: var(--success) !important; font-weight: 600; }
