@@ -1,18 +1,39 @@
 {% if province_base_layout and province_base_layout.slots %}
-<div class="province-base-slots-grid" id="province-base-slots-grid" role="list" aria-label="Building districts">
+<div class="province-map-nodes" id="province-base-slots-grid" role="list" aria-label="Building districts on map">
     {% for slot in province_base_layout.slots %}
     <button type="button"
-        class="province-base-slot-card{% if slot.quantity > 0 %} has-buildings{% endif %}"
+        class="province-map-node province-map-node--{{ slot.id }}{% if slot.quantity > 0 %} has-buildings{% endif %}{% if slot.quantity == 0 %} is-empty{% endif %}"
         data-slot-id="{{ slot.id }}"
         data-slot-icon="{{ slot.icon }}"
         style="--slot-gradient: {{ slot.theme.gradient }}; --slot-glow: {{ slot.theme.glow }}; --slot-accent: {{ slot.theme.accent }};"
         role="listitem"
         aria-label="{{ slot.label }}, {{ slot.quantity }} structures">
-        <div class="province-base-slot-icon">
-            <span class="material-icons-outlined">{{ slot.icon }}</span>
+        <div class="province-map-node-pin">
+            <div class="province-map-node-icon">
+                <span class="material-icons-outlined">{{ slot.icon }}</span>
+            </div>
+            <span class="province-map-node-qty" data-slot-qty>{{ slot.quantity }}</span>
         </div>
-        <span class="province-base-slot-label">{{ slot.label }}</span>
-        <span class="province-base-slot-qty">{{ slot.quantity }}</span>
+        <span class="province-map-node-label">{{ slot.label }}</span>
+        <div class="province-map-node-skyline" aria-hidden="true">
+            {% for b in slot.breakdown[:3] %}
+            <span class="province-node-block" style="--block-h: {{ [b.quantity * 4, 28]|min }}px;" title="{{ b.display_name }} ×{{ b.quantity }}">
+                <span class="material-icons-outlined">{{ b.icon }}</span>
+            </span>
+            {% endfor %}
+            {% if slot.quantity == 0 %}
+            <span class="province-node-block province-node-block--empty"></span>
+            {% endif %}
+        </div>
+        {% if slot.breakdown %}
+        <div class="province-map-node-chips">
+            {% for b in slot.breakdown[:2] %}
+            <span class="province-chip"><span class="material-icons-outlined">{{ b.icon }}</span>{{ b.quantity }}</span>
+            {% endfor %}
+        </div>
+        {% elif slot.quantity == 0 %}
+        <span class="province-map-node-cta">Build</span>
+        {% endif %}
     </button>
     {% endfor %}
 </div>
