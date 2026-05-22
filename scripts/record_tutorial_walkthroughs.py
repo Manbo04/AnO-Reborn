@@ -32,7 +32,9 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "static" / "tutorial" / "videos"
+AUDIO_DIR = ROOT / "static" / "tutorial" / "audio"
 TMP_DIR = OUT_DIR / "_record_tmp"
+CHAPTERS_PATH = ROOT / "static" / "tutorial" / "chapters.json"
 
 VIDEO_W = 1280
 VIDEO_H = 720
@@ -235,6 +237,7 @@ async def record_chapter(
     username: str,
     password: str,
     include_login: bool,
+    with_narration: bool,
 ) -> Path:
     TMP_DIR.mkdir(parents=True, exist_ok=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -269,9 +272,44 @@ async def record_chapter(
 
     ffmpeg_to_mp4(webm_path, mp4_path)
     webm_path.unlink(missing_ok=True)
+    finalize_mp4(mp4_path, stem, with_narration)
+    return mp4_path
+
+
+def mux_narration(mp4_path: Path, stem: str) -> bool:
+    """Mux chapter MP3 into MP4 if audio exists. Returns True if mux ran."""
+    mp3 = AUDIO_DIR / f"{stem}.mp3"
+    if not mp3.exists():
+        return False
+    tmp_out = mp4_path.with_suffix(".mux.mp4")
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(mp4_path),
+        "-i",
+        str(mp3),
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-shortest",
+        "-movflags",
+        "+faststart",
+        str(tmp_out),
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)
+    tmp_out.replace(mp4_path)
+    return True
+
+
+def finalize_mp4(mp4_path: Path, stem: str, with_narration: bool) -> None:
+    if with_narration:
+        mux_narration(mp4_path, stem)
     size_kb = mp4_path.stat().st_size // 1024
     log(f"  -> {mp4_path.name} ({size_kb} KB)")
-    return mp4_path
 
 
 def build_flows(ctx: dict[str, Any], uid: int):
@@ -373,7 +411,37 @@ def build_flows(ctx: dict[str, Any], uid: int):
     ]
 
 
-async def main_async(chapter_filter: list[int] | None) -> int:
+def narration_only_mux(stems: list[str] | None, with_narration: bool) -> int:
+    if not which("ffmpeg"):
+        log("ffmpeg not found")
+        return 1
+    targets = stems or CHAPTER_OUTPUTS
+    for stem in targets:
+        mp4 = OUT_DIR / f"{stem}.mp4"
+        if not mp4.exists():
+            log(f"Skip {stem}: no {mp4.name}")
+            continue
+        log(f"Mux narration into {stem} ...")
+        if with_narration and mux_narration(mp4, stem):
+            size_kb = mp4.stat().st_size // 1024
+            log(f"  -> {mp4.name} ({size_kb} KB)")
+        elif not (AUDIO_DIR / f"{stem}.mp3").exists():
+            log(f"  (no audio for {stem})")
+    return 0
+
+
+async def main_async(
+    chapter_filter: list[int] | None,
+    *,
+    with_narration: bool,
+    narration_only: bool,
+) -> int:
+    if narration_only:
+        stems = None
+        if chapter_filter is not None:
+            flows_stems = [CHAPTER_OUTPUTS[i] for i in chapter_filter]
+            stems = flows_stems
+        return narration_only_mux(stems, with_narration)
     if not which("ffmpeg"):
         log("ffmpeg not found")
         return 1
@@ -422,6 +490,7 @@ async def main_async(chapter_filter: list[int] | None) -> int:
                     username=username,
                     password=password,
                     include_login=include_login,
+                    with_narration=with_narration,
                 )
     finally:
         if pw_backup is not None:
@@ -439,14 +508,43 @@ def main() -> int:
         "--chapters",
         help="Comma-separated chapter numbers 1-10 (default: all)",
     )
+    parser.add_argument(
+        "--with-narration",
+        action="store_true",
+        default=None,
+        help="Mux MP3 narration into MP4 (default: on if audio files exist)",
+    )
+    parser.add_argument(
+        "--no-narration",
+        action="store_true",
+        help="Skip narration mux",
+    )
+    parser.add_argument(
+        "--narration-only",
+        action="store_true",
+        help="Only mux existing MP4s with audio (no Playwright)",
+    )
     args = parser.parse_args()
     chapter_filter = None
     if args.chapters:
         chapter_filter = [int(x.strip()) - 1 for x in args.chapters.split(",")]
 
+    if args.no_narration:
+        with_narration = False
+    elif args.with_narration:
+        with_narration = True
+    else:
+        with_narration = AUDIO_DIR.exists() and any(AUDIO_DIR.glob("*.mp3"))
+
     import asyncio
 
-    return asyncio.run(main_async(chapter_filter))
+    return asyncio.run(
+        main_async(
+            chapter_filter,
+            with_narration=with_narration,
+            narration_only=args.narration_only,
+        )
+    )
 
 
 if __name__ == "__main__":
