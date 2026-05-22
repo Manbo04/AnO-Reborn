@@ -15,14 +15,28 @@ import variables  # noqa: E402
 import datetime  # noqa: E402
 from database import get_db_cursor, get_request_cursor  # noqa: E402
 from database import cache_response, rollback_db_cursor  # noqa: E402
+from database import get_coalition_members_table  # noqa: E402
 
 # flake8: noqa -- Temporarily disable flake8 for this file to avoid blocking critical fixes; remove when refactoring is complete
 
 
+def _coalition_members_sql(table_alias: str = "cm") -> Optional[str]:
+    """Validated membership table name for dynamic SQL, or None if absent."""
+    tbl = get_coalition_members_table()
+    if not tbl or tbl not in ("coalitions_legacy", "coalitions"):
+        return None
+    return tbl
+
+
 # Function for getting the coalition role of a user
 def get_user_role(user_id):
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return None
     with get_request_cursor() as db:
-        db.execute("SELECT role FROM coalitions_legacy WHERE userid=%s", (user_id,))
+        db.execute(
+            f"SELECT role FROM {members_tbl} WHERE userid=%s", (user_id,)
+        )
         row = db.fetchone()
         if not row:
             return None
@@ -921,10 +935,15 @@ def leave_col(coalition_id):
 
 # Route for redirecting to the user's coalition
 def my_coalition():
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return redirect("/")
     with get_request_cursor() as db:
         cId = session["user_id"]
 
-        db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (cId,))
+        db.execute(
+            f"SELECT colid FROM {members_tbl} WHERE userid=%s", (cId,)
+        )
         row = db.fetchone()
         if not row:
             return redirect("/")  # Redirects to home page instead of an error
