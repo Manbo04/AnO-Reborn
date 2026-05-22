@@ -1,9 +1,13 @@
 /**
- * Mobile game shell: bottom nav, HUD strip, cards, more sheet
+ * Mobile game shell: resource HUD strip (no bottom tab bar)
  */
 
 body.game-shell-active {
-    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
+    padding-bottom: var(--game-safe-bottom);
+}
+
+body.game-shell-active .footer {
+    display: none;
 }
 
 body.game-shell-active .templatecontainer {

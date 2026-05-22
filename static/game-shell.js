@@ -1,62 +1,11 @@
 /**
- * Game shell: bottom nav active state, more sheet, HUD expand, tick timer hint.
+ * Game shell: HUD expand, tick countdown (bottom tab nav removed).
  */
 (function () {
     'use strict';
 
     function qs(sel, root) {
         return (root || document).querySelector(sel);
-    }
-
-    function qsa(sel, root) {
-        return Array.from((root || document).querySelectorAll(sel));
-    }
-
-    function setActiveNav() {
-        var path = window.location.pathname || '/';
-        qsa('.game-bottom-nav .game-nav-item[data-nav-href]').forEach(function (el) {
-            var href = el.getAttribute('data-nav-href') || '';
-            var active = false;
-            if (href === '/provinces' && path.indexOf('/province') === 0) {
-                active = true;
-            } else if (href && (path === href || path.indexOf(href + '/') === 0)) {
-                active = true;
-            }
-            el.classList.toggle('is-active', active);
-        });
-    }
-
-    function initMoreSheet() {
-        var sheet = qs('#game-more-sheet');
-        var openBtn = qs('[data-game-more-open]');
-        if (!sheet || !openBtn) return;
-
-        function close() {
-            sheet.classList.remove('is-open');
-            sheet.setAttribute('aria-hidden', 'true');
-        }
-
-        function open() {
-            sheet.classList.add('is-open');
-            sheet.setAttribute('aria-hidden', 'false');
-        }
-
-        openBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (sheet.classList.contains('is-open')) {
-                close();
-            } else {
-                open();
-            }
-        });
-
-        qsa('[data-game-more-close]', sheet).forEach(function (el) {
-            el.addEventListener('click', close);
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') close();
-        });
     }
 
     function initHudExpand() {
@@ -110,8 +59,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (!document.body.classList.contains('game-shell-active')) return;
         initReducedMotion();
-        setActiveNav();
-        initMoreSheet();
         initHudExpand();
         initTickBadge();
     });
