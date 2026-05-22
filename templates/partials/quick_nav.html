@@ -1,0 +1,66 @@
+{# Logged-in home quick links — mirrors main navbar sections #}
+{% set uid = session['user_id'] %}
+<div class="quick-links-grid" aria-label="Quick navigation">
+    <a class="quick-link-card" href="/country/id={{ uid }}">
+        <span class="material-icons-outlined">flag</span>
+        <span>Country</span>
+    </a>
+    <a class="quick-link-card" href="/upgrades">
+        <span class="material-icons-outlined">engineering</span>
+        <span>Projects</span>
+    </a>
+    <a class="quick-link-card" href="/provinces">
+        <span class="material-icons-outlined">account_balance</span>
+        <span>Provinces</span>
+    </a>
+    <a class="quick-link-card" href="/market">
+        <span class="material-icons-outlined">local_grocery_store</span>
+        <span>Market</span>
+    </a>
+    <a class="quick-link-card" href="/trade-agreements">
+        <span class="material-icons-outlined">handshake</span>
+        <span>Trade Deals</span>
+    </a>
+    <a class="quick-link-card" href="/military">
+        <span class="material-icons-outlined">shield</span>
+        <span>Military</span>
+    </a>
+    <a class="quick-link-card" href="/wars">
+        <span class="material-icons-outlined">military_tech</span>
+        <span>Wars</span>
+    </a>
+    <a class="quick-link-card" href="/my_coalition">
+        <span class="material-icons-outlined">group</span>
+        <span>My Coalition</span>
+    </a>
+    <a class="quick-link-card" href="/coalitions">
+        <span class="material-icons-outlined">public</span>
+        <span>Coalitions</span>
+    </a>
+    <a class="quick-link-card" href="/establish_coalition">
+        <span class="material-icons-outlined">group_add</span>
+        <span>Establish</span>
+    </a>
+    <a class="quick-link-card" href="/countries">
+        <span class="material-icons-outlined">person_pin_circle</span>
+        <span>Countries</span>
+    </a>
+    <a class="quick-link-card" href="/account">
+        <span class="material-icons-outlined">perm_identity</span>
+        <span>Account</span>
+    </a>
+    <a class="quick-link-card" href="/tutorial">
+        <span class="material-icons-outlined">school</span>
+        <span>Tutorial</span>
+    </a>
+    <a class="quick-link-card" href="/mechanics">
+        <span class="material-icons-outlined">build</span>
+        <span>Mechanics</span>
+    </a>
+    {% if session.get('user_id') in admin_user_ids %}
+    <a class="quick-link-card" href="/admin/command-center">
+        <span class="material-icons-outlined">admin_panel_settings</span>
+        <span>Admin</span>
+    </a>
+    {% endif %}
+</div>

@@ -1035,15 +1035,21 @@ def tax_income():
             # Preload coalition membership + tax rates for alliance tax
             coalition_tax_map = {}  # user_id -> (colId, tax_rate)
             try:
-                dbdict.execute(
-                    """
+                from database import get_coalition_members_table
+
+                members_tbl = get_coalition_members_table()
+                if members_tbl:
+                    dbdict.execute(
+                        f"""
                     SELECT cl.userid, cl.colid, COALESCE(cn.tax_rate, 0) AS tax_rate
-                    FROM coalitions_legacy cl
+                    FROM {members_tbl} cl
                     JOIN colNames cn ON cn.id = cl.colid
                     WHERE cl.userid = ANY(%s) AND COALESCE(cn.tax_rate, 0) > 0
                     """,
-                    (all_user_ids,),
-                )
+                        (all_user_ids,),
+                    )
+                else:
+                    raise RuntimeError("no coalition membership table")
                 for row in dbdict.fetchall():
                     if isinstance(row, dict):
                         uid = row.get("userid") or row.get("user_id")
