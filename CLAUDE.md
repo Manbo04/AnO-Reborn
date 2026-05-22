@@ -108,6 +108,27 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-22
+
+**Task**: Fix persistent country page 500 (`/country/id=*`, error_id `3f8dq87yxo9nq51s0ayd-1779438499`)
+
+**What Was Done**:
+- Refactored `country()` in `countries.py`: core SQL uses only stable columns; optional `join_number`, `last_active`, demographics, and normalized economy queries each wrapped in try/except with safe defaults
+- Fixed provinces query to use `CAST(citycount AS INTEGER)` with fallback when demographic columns are absent
+- Wrapped revenue `expenses` query in try/except for missing `revenue` table edge cases
+- Gated policies checkbox JS in `templates/country.html` behind `{% if status %}`
+- Added `scripts/diagnose_country_page.py` (schema probe + query replay) and `scripts/apply_country_page_migrations.py` (applies 0011–0013)
+- Added `tests/test_country_page_route.py` (DB-backed smoke for user 16)
+
+**What To Watch**:
+- After deploy: `curl -sI https://affairsandorder.com/country/id=27` should return 200
+- Run on Railway when `DATABASE_PUBLIC_URL` is set: `python3 scripts/apply_country_page_migrations.py` then `python3 scripts/assign_join_ranks.py` for full join_number display
+
+**Next Steps**:
+- Merge branch `cursor/fix-country-page-500-a503` to master and verify production smoke
+
+---
+
 ### Session: 2026-05-21
 
 **Task**: Fix widespread 500 errors across the site (user report + error_id `km6f39sn3ymh13igdxmr-1779394214`)
