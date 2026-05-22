@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<div class="templatediv noboxshadowtopper loginsignupdiv empty-state-page">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle">
+            <span class="material-icons-outlined iconlarge">{{ icon|default('info') }}</span>
+            {{ title }}
+        </h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft landingpagecontent text-center">{{ message }}</p>
+
+        {% if actions %}
+        <div class="empty-state-actions">
+            {% for action in actions %}
+            <a class="templatedivbutton templatecenteredbutton" href="{{ action.href }}">
+                {% if action.icon %}<span class="material-icons-outlined">{{ action.icon }}</span>{% endif %}
+                {{ action.label }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="templatedivflex2 divflex2center mt-md">
+            <a class="templatedivbutton landingbutton templatecenteredbutton" href="#" onclick="history.go(-1); return false;">
+                <span class="material-icons-outlined landingicon">arrow_back</span>Back
+            </a>
+            {% if session.get('user_id') %}
+            <a class="templatedivbutton landingbutton templatecenteredbutton" href="/country/id={{ session['user_id'] }}">
+                <i class="fas fa-flag landingicon" aria-hidden="true"></i>Country
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
