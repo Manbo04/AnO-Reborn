@@ -1072,6 +1072,108 @@ def rollback_db_cursor(db):
         pass
 
 
+_schema_compat_lock = threading.Lock()
+_schema_compat_applied = False
+_coalition_members_table_cache: Optional[str] = None
+_users_column_cache: Dict[str, bool] = {}
+
+
+def ensure_schema_compat() -> None:
+    """Align production DB with code expectations (idempotent, once per process).
+
+    - Renames legacy ``coalitions`` membership table to ``coalitions_legacy`` when needed.
+    - Ensures ``users.discord_id`` exists for account linking and Discord OAuth.
+    """
+    global _schema_compat_applied, _coalition_members_table_cache
+    if _schema_compat_applied:
+        return
+    with _schema_compat_lock:
+        if _schema_compat_applied:
+            return
+        try:
+            with get_db_cursor() as db:
+                db.execute(
+                    """
+                    DO $$
+                    BEGIN
+                        IF to_regclass('public.coalitions_legacy') IS NULL
+                           AND to_regclass('public.coalitions') IS NOT NULL THEN
+                            ALTER TABLE public.coalitions RENAME TO coalitions_legacy;
+                        END IF;
+                    END $$;
+                    """
+                )
+                db.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
+                    """
+                )
+        except Exception as exc:
+            logger.warning("ensure_schema_compat: %s", exc)
+            try:
+                with get_db_cursor() as db:
+                    db.connection.rollback()
+            except Exception:
+                pass
+        finally:
+            _coalition_members_table_cache = None
+            _schema_compat_applied = True
+
+
+def get_coalition_members_table() -> Optional[str]:
+    """Return the coalition membership table name present in this database."""
+    global _coalition_members_table_cache
+    ensure_schema_compat()
+    if _coalition_members_table_cache is not None:
+        return _coalition_members_table_cache
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT CASE
+                    WHEN to_regclass('public.coalitions_legacy') IS NOT NULL
+                        THEN 'coalitions_legacy'
+                    WHEN to_regclass('public.coalitions') IS NOT NULL
+                        THEN 'coalitions'
+                    ELSE NULL
+                END
+                """
+            )
+            row = db.fetchone()
+            _coalition_members_table_cache = row[0] if row else None
+    except Exception as exc:
+        logger.warning("get_coalition_members_table: %s", exc)
+        _coalition_members_table_cache = None
+    return _coalition_members_table_cache
+
+
+def users_table_has_column(column_name: str) -> bool:
+    """Cached check for optional columns on ``users`` (e.g. discord_id)."""
+    if column_name in _users_column_cache:
+        return _users_column_cache[column_name]
+    ensure_schema_compat()
+    has_col = False
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'users'
+                  AND column_name = %s
+                LIMIT 1
+                """,
+                (column_name,),
+            )
+            has_col = db.fetchone() is not None
+    except Exception as exc:
+        logger.warning("users_table_has_column(%s): %s", column_name, exc)
+    _users_column_cache[column_name] = has_col
+    return has_col
+
+
 def teardown_request_connection(exc=None):
     """Return the request-scoped connection to the pool.
 

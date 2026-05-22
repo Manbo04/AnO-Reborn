@@ -15,8 +15,35 @@ import variables  # noqa: E402
 import datetime  # noqa: E402
 from database import get_db_cursor, get_request_cursor  # noqa: E402
 from database import cache_response, rollback_db_cursor  # noqa: E402
+from database import get_coalition_members_table  # noqa: E402
+from typing import Optional  # noqa: E402
 
 # flake8: noqa -- Temporarily disable flake8 for this file to avoid blocking critical fixes; remove when refactoring is complete
+
+
+def _coalition_members_sql(table_alias: str = "cm") -> Optional[str]:
+    """Validated membership table name for dynamic SQL, or None if absent."""
+    tbl = get_coalition_members_table()
+    if not tbl or tbl not in ("coalitions_legacy", "coalitions"):
+        return None
+    return tbl
+
+
+def _require_coalition_member(db, user_id, coalition_id, roles=None):
+    """Verify user belongs to coalition_id; optionally require role in roles list."""
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return error(500, "Coalition system unavailable")
+    db.execute(
+        f"SELECT role FROM {members_tbl} WHERE userid=%s AND colid=%s",
+        (user_id, coalition_id),
+    )
+    row = db.fetchone()
+    if not row:
+        return error(400, "You are not in this coalition")
+    if roles and row[0] not in roles:
+        return error(400, "Insufficient permissions")
+    return None
 
 
 def _no_coalition_response():
@@ -46,22 +73,30 @@ def _no_coalition_response():
 
 def _coalition_id_for_user(db, user_id):
     """Return coalition id if the user is a valid member, else None (cleans orphans)."""
-    db.execute("SELECT colid FROM coalitions_legacy WHERE userid=%s", (user_id,))
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return None
+    db.execute(f"SELECT colid FROM {members_tbl} WHERE userid=%s", (user_id,))
     row = db.fetchone()
     if not row or not row[0]:
         return None
     coalition_id = row[0]
     db.execute("SELECT id FROM colNames WHERE id=%s", (coalition_id,))
     if not db.fetchone():
-        db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (user_id,))
+        db.execute(f"DELETE FROM {members_tbl} WHERE userid=%s", (user_id,))
         return None
     return coalition_id
 
 
 # Function for getting the coalition role of a user
 def get_user_role(user_id):
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return None
     with get_request_cursor() as db:
-        db.execute("SELECT role FROM coalitions_legacy WHERE userid=%s", (user_id,))
+        db.execute(
+            f"SELECT role FROM {members_tbl} WHERE userid=%s", (user_id,)
+        )
         row = db.fetchone()
         if not row:
             return None
@@ -967,6 +1002,9 @@ def leave_col(coalition_id):
 
 # Route for redirecting to the user's coalition
 def my_coalition():
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return redirect("/")
     with get_request_cursor() as db:
         cId = session["user_id"]
         coalition_id = _coalition_id_for_user(db, cId)
@@ -1070,17 +1108,22 @@ def adding(uId):
         coalition_id = row[0]
 
         cId = session["user_id"]
-        user_role = get_user_role(cId)
+        guard = _require_coalition_member(
+            db,
+            cId,
+            coalition_id,
+            roles=["leader", "deputy_leader", "domestic_minister"],
+        )
+        if guard:
+            return guard
 
-        if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
-            return error(400, "You are not a leader of the coalition")
-
+        members_tbl = _coalition_members_sql() or "coalitions_legacy"
         db.execute(
             "DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)",
             (uId, coalition_id),
         )
         db.execute(
-            "INSERT INTO coalitions_legacy (colid, userid, role) VALUES (%s, %s, %s) "
+            f"INSERT INTO {members_tbl} (colid, userid, role) VALUES (%s, %s, %s) "
             "ON CONFLICT (userid) DO NOTHING",
             (coalition_id, uId, "member"),
         )
@@ -1110,11 +1153,14 @@ def removing_requests(uId):
         coalition_id = row[0]
 
         cId = session["user_id"]
-
-        user_role = get_user_role(cId)
-
-        if user_role not in ["leader", "deputy_leader", "domestic_minister"]:
-            return error(400, "You are not the leader of the coalition")
+        guard = _require_coalition_member(
+            db,
+            cId,
+            coalition_id,
+            roles=["leader", "deputy_leader", "domestic_minister"],
+        )
+        if guard:
+            return guard
 
         db.execute(
             "DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)",
@@ -1139,12 +1185,12 @@ def removing_requests(uId):
 # Route for deleting a coalition
 def delete_coalition(coalition_id):
     cId = session["user_id"]
-    user_role = get_user_role(cId)
-
-    if user_role != "leader":
-        return error(400, "You aren't the leader of this coalition")
 
     with get_request_cursor() as db:
+        guard = _require_coalition_member(db, cId, coalition_id, roles=["leader"])
+        if guard:
+            return guard
+
         db.execute("SELECT name FROM colNames WHERE id=(%s)", (coalition_id,))
         row = db.fetchone()
         if not row:
@@ -1152,7 +1198,8 @@ def delete_coalition(coalition_id):
         coalition_name = row[0]
 
         db.execute("DELETE FROM colNames WHERE id=(%s)", (coalition_id,))
-        db.execute("DELETE FROM coalitions_legacy WHERE colid=%s", (coalition_id,))
+        members_tbl = _coalition_members_sql() or "coalitions_legacy"
+        db.execute(f"DELETE FROM {members_tbl} WHERE colid=%s", (coalition_id,))
 
     flash(f"{coalition_name} coalition was deleted.")
 
@@ -1163,10 +1210,10 @@ def delete_coalition(coalition_id):
 def update_col_info(coalition_id):
     cId = session["user_id"]
 
-    user_role = get_user_role(cId)
-
-    if user_role != "leader":
-        return error(400, "You aren't the leader of this coalition")
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(db, cId, coalition_id, roles=["leader"])
+        if guard:
+            return guard
 
     ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg"]
 
@@ -1535,10 +1582,15 @@ def withdraw(resource, amount, user_id, coalition_id):
 def withdraw_from_bank(coalition_id):
     cId = session["user_id"]
 
-    user_role = get_user_role(cId)
-
-    if user_role not in ["leader", "deputy_leader", "banker"]:
-        return error(400, "You aren't the leader of this coalition")
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(
+            db,
+            cId,
+            coalition_id,
+            roles=["leader", "deputy_leader", "banker"],
+        )
+        if guard:
+            return guard
 
     resources = ["money"] + variables.RESOURCES
 
@@ -1664,10 +1716,14 @@ def accept_bank_request(bankId):
 
         coalition_id, resource, amount, user_id = result
 
-        user_role = get_user_role(cId)
-
-        if user_role not in ["leader", "deputy_leader", "banker"]:
-            return error(400, "You aren't the leader of this coalition")
+        guard = _require_coalition_member(
+            db,
+            cId,
+            coalition_id,
+            roles=["leader", "deputy_leader", "banker"],
+        )
+        if guard:
+            return guard
 
         result = withdraw(resource, amount, user_id, coalition_id)
         if result is not None:

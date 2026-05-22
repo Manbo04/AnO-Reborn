@@ -290,15 +290,16 @@ def discord_login():
 
         discord_auth = str(discord_user_id)
 
-        try:
+        from database import users_table_has_column, rollback_db_cursor
+
+        if users_table_has_column("discord_id"):
             db.execute(
                 "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
                 (discord_auth, discord_auth),
             )
-        except Exception:
-            db.connection.rollback()
+        else:
             db.execute(
-                "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
+                "SELECT id FROM users WHERE hash=%s AND auth_type='discord' LIMIT 1",
                 (discord_auth,),
             )
             
