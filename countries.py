@@ -9,19 +9,11 @@ from collections import defaultdict
 from policies import get_user_policies
 from wars.service import target_data
 import math
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, rollback_db_cursor
 
 load_dotenv()
 
 # App config will be set when routes are registered
-
-
-def _rollback_cursor(db):
-    """Reset the request connection after a failed statement (Postgres aborted txn)."""
-    try:
-        db.connection.rollback()
-    except Exception:
-        pass
 
 
 # TODO: rewrite this function for fucks sake
@@ -618,12 +610,12 @@ def country(cId):
             db.execute(_CORE_COUNTRY_SQL, (cId, cId))
             row = db.fetchone()
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             try:
                 db.execute(_MINIMAL_COUNTRY_SQL, (cId, cId))
                 row = db.fetchone()
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 raise
 
         if not row:
@@ -661,7 +653,7 @@ def country(cId):
             if opt:
                 join_number, last_active = opt[0], opt[1]
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
 
         try:
             db.execute(
@@ -677,17 +669,17 @@ def country(cId):
                 total_working = demo[1] or 0
                 total_elderly = demo[2] or 0
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
 
         try:
             policies = get_user_policies(cId, db=db)
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             policies = {}
         try:
             influence = get_influence(cId, db=db)
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             influence = 0
 
         provinces = []
@@ -705,7 +697,7 @@ def country(cId):
             )
             provinces = db.fetchall()
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             try:
                 db.execute(
                     "SELECT provinceName, id, population, "
@@ -718,7 +710,7 @@ def country(cId):
                 )
                 provinces = db.fetchall()
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 provinces = []
 
         try:
@@ -735,7 +727,7 @@ def country(cId):
             )
             resource_rows = db.fetchall() or []
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             resource_rows = []
 
         try:
@@ -754,7 +746,7 @@ def country(cId):
             )
             building_rows = db.fetchall() or []
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             building_rows = []
 
         try:
@@ -771,7 +763,7 @@ def country(cId):
             )
             technology_rows = db.fetchall() or []
         except Exception:
-            _rollback_cursor(db)
+            rollback_db_cursor(db)
             technology_rows = []
 
         # Calculate CG need from already-fetched population
@@ -801,7 +793,7 @@ def country(cId):
                 spy_row = db.fetchone()
                 spy["count"] = spy_row[0] if spy_row else 0
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 spy["count"] = 0
         else:
             spy["count"] = 0
@@ -819,7 +811,7 @@ def country(cId):
                 news = db.fetchall()
                 news_amount = len(news)
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 news = []
                 news_amount = 0
 
@@ -828,7 +820,7 @@ def country(cId):
             try:
                 revenue = get_revenue(cId, db=db)
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 revenue = default_revenue_data()
 
             try:
@@ -839,14 +831,14 @@ def country(cId):
                 )
                 expenses = db.fetchall()
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 expenses = []
 
             try:
                 statistics = get_econ_statistics(cId, db=db)
                 statistics = format_econ_statistics(statistics)
             except Exception:
-                _rollback_cursor(db)
+                rollback_db_cursor(db)
                 statistics = default_statistics_data()
 
             for key, value in default_statistics_data().items():
@@ -970,7 +962,7 @@ def countries():
                     cm.colid,
                     c.name,
                     COALESCE(p.provinces_count, 0) AS provinces_count,
-                    u.join_number,
+                    NULL::integer AS join_number,
                     ROUND(
                         COALESCE(p.provinces_count, 0) * 300
                         + COALESCE(m.soldiers, 0) * 0.02
@@ -995,13 +987,13 @@ def countries():
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
                     SELECT
-                        userId AS user_id,
+                        userid AS user_id,
                         COUNT(id) AS provinces_count,
                         COALESCE(SUM(population), 0) AS province_population,
-                        COALESCE(SUM(cityCount), 0) AS city_count,
+                        COALESCE(SUM(citycount), 0) AS city_count,
                         COALESCE(SUM(land), 0) AS total_land
                     FROM provinces
-                    GROUP BY userId
+                    GROUP BY userid
                 ) p ON p.user_id = u.id
                 LEFT JOIN (
                     SELECT
@@ -1073,6 +1065,53 @@ def countries():
               AND (%s IS NULL OR influence <= %s)
         """
 
+        filter_sql_simple = f"""
+            WITH country_rows AS (
+                SELECT
+                    u.id,
+                    u.username,
+                    u.date,
+                    u.flag,
+                    COALESCE(p.province_population, 0) AS province_population,
+                    cm.colid,
+                    c.name,
+                    COALESCE(p.provinces_count, 0) AS provinces_count,
+                    NULL::integer AS join_number,
+                    ROUND(
+                        COALESCE(p.provinces_count, 0) * 300
+                        + COALESCE(p.city_count, 0) * 10
+                        + COALESCE(p.total_land, 0) * 10
+                        + COALESCE(s.gold, 0) * 0.00001
+                    )::bigint AS influence,
+                    COALESCE(EXTRACT(EPOCH FROM u.date::timestamp)::bigint, 0) AS unix
+                FROM users u
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN (
+                    SELECT
+                        userid AS user_id,
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(population), 0) AS province_population,
+                        COALESCE(SUM(citycount), 0) AS city_count,
+                        COALESCE(SUM(land), 0) AS total_land
+                    FROM provinces
+                    GROUP BY userid
+                ) p ON p.user_id = u.id
+                LEFT JOIN (
+                    SELECT userid, MIN(colid) AS colid
+                    FROM coalitions_legacy
+                    GROUP BY userid
+                ) cm ON cm.userid = u.id
+                LEFT JOIN colNames c ON c.id = cm.colid
+                WHERE 1=1
+                {search_filter}
+            )
+            SELECT *
+            FROM country_rows
+            WHERE provinces_count >= %s
+              AND (%s IS NULL OR influence >= %s)
+              AND (%s IS NULL OR influence <= %s)
+        """
+
         filter_params = list(params)
         filter_params.extend(
             [
@@ -1084,27 +1123,38 @@ def countries():
             ]
         )
 
-        db.execute(
-            f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
-        )
-        count_row = db.fetchone()
-        total_count = (count_row[0] or 0) if count_row else 0
+        def _run_count_and_page(active_filter_sql):
+            db.execute(
+                f"SELECT COUNT(*) FROM ({active_filter_sql}) AS filtered",
+                tuple(filter_params),
+            )
+            count_row = db.fetchone()
+            nonlocal total_count, total_pages, page, offset, paginated_results
+            total_count = (count_row[0] or 0) if count_row else 0
+            total_pages = max(1, (total_count + per_page - 1) // per_page)
+            if page < 1:
+                page = 1
+            if page > total_pages:
+                page = total_pages
+            offset = (page - 1) * per_page
+            page_query = (
+                f"{active_filter_sql} ORDER BY {sort_column} {sort_direction}, "
+                "id ASC LIMIT %s OFFSET %s"
+            )
+            page_params = list(filter_params)
+            page_params.extend([per_page, offset])
+            db.execute(page_query, tuple(page_params))
+            paginated_results = db.fetchall()
 
-        total_pages = max(1, (total_count + per_page - 1) // per_page)
-        if page < 1:
-            page = 1
-        if page > total_pages:
-            page = total_pages
-        offset = (page - 1) * per_page
-
-        page_query = (
-            f"{filter_sql} ORDER BY {sort_column} {sort_direction}, "
-            "id ASC LIMIT %s OFFSET %s"
-        )
-        page_params = list(filter_params)
-        page_params.extend([per_page, offset])
-        db.execute(page_query, tuple(page_params))
-        paginated_results = db.fetchall()
+        total_count = 0
+        total_pages = 1
+        offset = 0
+        paginated_results = []
+        try:
+            _run_count_and_page(filter_sql)
+        except Exception:
+            rollback_db_cursor(db)
+            _run_count_and_page(filter_sql_simple)
 
     return render_template(
         "countries.html",
