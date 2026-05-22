@@ -438,7 +438,8 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 .tutorial-lesson-video {
     display: block;
     width: 100%;
-    max-height: 340px;
+    max-height: 480px;
+    object-fit: contain;
     border-radius: 10px;
     background: #000;
     border: 1px solid rgba(0, 167, 225, 0.35);
