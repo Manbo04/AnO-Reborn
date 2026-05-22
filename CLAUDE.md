@@ -128,6 +128,8 @@ At the end of each session or major task, document:
 
 **Verified**: Production `curl -sI /country/id=27` and `/country/id=16` return HTTP 200 after deploy.
 
+**Follow-up (same day)**: Global Affairs menu items (`/countries`, `/coalitions`, `/my_coalition`, `/establish_coalition`) returned 500 for logged-in users — same missing-column pattern (`join_number`, `flag_data`, `tax_rate`, `last_active`, `citycount`). Hardened `countries()`, `coalitions()`, `coalition()` with SQL fallbacks and `rollback_db_cursor()` in `database.py`. Commit `5d65e7d1` on master.
+
 ---
 
 ### Session: 2026-05-21

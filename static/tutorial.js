@@ -87,6 +87,10 @@
 
         chapters.forEach(function (panel, i) {
             panel.classList.toggle("is-visible", i === index);
+            var vid = panel.querySelector(".tutorial-lesson-video");
+            if (vid && !vid.paused) {
+                vid.pause();
+            }
         });
         chapterBtns.forEach(function (btn, i) {
             btn.classList.toggle("is-active", i === index);
