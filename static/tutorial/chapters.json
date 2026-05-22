@@ -1,0 +1,112 @@
+{
+  "chapters": [
+    {
+      "stem": "ch01-welcome",
+      "title": "Welcome & The Game Loop",
+      "poster": "images/administrativebuilding.jpg",
+      "aria_label": "Chapter 1: welcome and game loop",
+      "narration": "Welcome to Affairs and Order. Your nation runs on hourly ticks. Tax, production, rations, and population update automatically while you build provinces, balance resources, and compete on the global market.",
+      "follow_links": [
+        { "label": "Open your country page", "href": "/country" },
+        { "label": "Game mechanics reference", "href": "/mechanics" }
+      ]
+    },
+    {
+      "stem": "ch02-provinces",
+      "title": "Provinces & Buildings",
+      "poster": "images/province.jpg",
+      "aria_label": "Chapter 2: provinces and buildings",
+      "narration": "Provinces are your economic base. Each province holds population, land and city slots, and buildings that produce resources or gold. Open your provinces list, then manage infrastructure inside a province.",
+      "follow_links": [
+        { "label": "Your provinces", "href": "/provinces" },
+        { "label": "Create a province", "href": "/createprovince" }
+      ]
+    },
+    {
+      "stem": "ch03-resources",
+      "title": "Resources & Production",
+      "poster": "images/coalmine.jpg",
+      "aria_label": "Chapter 3: resources and production chains",
+      "narration": "Mine raw materials first, then refine them into steel, aluminium, and components. Check your country resources, then inspect province buildings to see mines and factories in action.",
+      "follow_links": [
+        { "label": "View your resources", "href": "/country" },
+        { "label": "Resource mechanics", "href": "/mechanics/resources" }
+      ]
+    },
+    {
+      "stem": "ch04-economy",
+      "title": "Economy & Tax",
+      "poster": "images/bank.jpg",
+      "aria_label": "Chapter 4: economy and tax",
+      "narration": "Tax is your main gold source. Consumer goods boost taxes by fifty percent. Missing rations or power cuts income. Review revenue on your country page, then read the revenue mechanics guide.",
+      "follow_links": [
+        { "label": "Your country page", "href": "/country" },
+        { "label": "Revenue mechanics", "href": "/mechanics/revenue" }
+      ]
+    },
+    {
+      "stem": "ch05-population",
+      "title": "Population & Rations",
+      "poster": "images/washington.jpg",
+      "aria_label": "Chapter 5: population and rations",
+      "narration": "Population needs rations to grow. Happiness and pollution affect growth rates. Distribution buildings move food and consumer goods to citizens. Check your country stats and the rations guide.",
+      "follow_links": [
+        { "label": "Your country page", "href": "/country" },
+        { "label": "Rations guide", "href": "/mechanics/rations" }
+      ]
+    },
+    {
+      "stem": "ch06-military",
+      "title": "Military Basics",
+      "poster": "images/cruiser.jpg",
+      "aria_label": "Chapter 6: military basics",
+      "narration": "Recruit units with manpower and resources. Offensive attacks need at least two hundred supplies. Open your military page to review units, limits, and recruitment costs before declaring war.",
+      "follow_links": [
+        { "label": "Military page", "href": "/military" }
+      ]
+    },
+    {
+      "stem": "ch07-market",
+      "title": "Global Market",
+      "poster": "images/market.jpg",
+      "aria_label": "Chapter 7: global market",
+      "narration": "The market is player-driven. Buy shortages and sell surpluses. Check statistics for average prices before you list offers, so you do not undercut yourself.",
+      "follow_links": [
+        { "label": "Visit market", "href": "/market" },
+        { "label": "Market statistics", "href": "/statistics" }
+      ]
+    },
+    {
+      "stem": "ch08-upgrades",
+      "title": "Nation Upgrades",
+      "poster": "images/upgrades.jpg",
+      "aria_label": "Chapter 8: nation upgrades",
+      "narration": "Permanent upgrades boost military, economy, and supply capacity. Plan upgrades around your strategy and coalition goals. Open the upgrades page to compare costs and bonuses.",
+      "follow_links": [
+        { "label": "View upgrades", "href": "/upgrades" }
+      ]
+    },
+    {
+      "stem": "ch09-war",
+      "title": "War & Combat",
+      "poster": "images/war.jpg",
+      "aria_label": "Chapter 9: war and combat",
+      "narration": "Declare war from the wars page and choose unit counts carefully. Damage scales per unit, not all at once. Read war mechanics for morale, supplies, and coalition coordination.",
+      "follow_links": [
+        { "label": "War page", "href": "/wars" },
+        { "label": "War mechanics", "href": "/mechanics/war" }
+      ]
+    },
+    {
+      "stem": "ch10-coalitions",
+      "title": "Coalitions & Mastery",
+      "poster": "images/coalition.jpg",
+      "aria_label": "Chapter 10: coalitions and mastery",
+      "narration": "Coalitions offer shared banks, optional member tax, and diplomatic strength. Browse coalitions to find allies, then master your economy before wide wars.",
+      "follow_links": [
+        { "label": "Browse coalitions", "href": "/coalitions" },
+        { "label": "Recruiting coalitions", "href": "/recruitments" }
+      ]
+    }
+  ]
+}
