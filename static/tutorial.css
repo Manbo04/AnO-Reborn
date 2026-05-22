@@ -489,6 +489,14 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     font-size: 1.1rem;
 }
 
+.tutorial-video-hint {
+    margin: 8px 0 0;
+    padding: 0 4px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.45;
+}
+
 .tutorial-chapter-body {
     padding: 22px 24px 26px;
 }
