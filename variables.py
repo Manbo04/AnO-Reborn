@@ -158,6 +158,9 @@ BUILDING_EMPLOYMENT_MATRICES = {
 # Feature flag for Phase 3 (workforce/employment system)
 FEATURE_PHASE3_WORKFORCE = True
 
+# Game visuals (hybrid UI) — defaults on; override via env FEATURE_GAME_SHELL=false etc.
+# See game_ui.py for env parsing and layout helpers.
+
 # Debuff thresholds
 UNEMPLOYMENT_THRESHOLD = 0.3  # 30%+ unemployment triggers debuff
 UNEMPLOYMENT_HAPPINESS_PENALTY = 10  # Happiness loss per tick

@@ -14,7 +14,23 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link href="{{ url_for('static', filename='style.css') }}?v=9" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='css/tokens.css') }}?v=1" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=10" rel="stylesheet" type="text/css" />
+    {% if FEATURE_GAME_SHELL and session.get('user_id') %}
+    <link href="{{ url_for('static', filename='css/game-shell.css') }}?v=1" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='css/province-base.css') }}?v=1" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='css/game-war.css') }}?v=1" rel="stylesheet" type="text/css" />
+    {% endif %}
+    {% if FEATURE_GAME_PWA %}
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('{{ url_for("static", filename="sw-game.js") }}').catch(function () {});
+        });
+    }
+    </script>
+    {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -32,6 +48,9 @@
     {# Chart.js & SimpleMDE loaded only on pages that need them via extra_head block #}
 
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    {% if FEATURE_GAME_SHELL and session.get('user_id') %}
+    <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=1"></script>
+    {% endif %}
     {% block extra_head %}{% endblock %}
     <!-- Hide dropdown arrows in navbar -->
     <style>
@@ -60,7 +79,7 @@
     {% block head %} {% endblock %}
 </head>
 
-<body>
+<body class="{% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}">
 
     <!--
     <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
@@ -70,6 +89,7 @@
         })
     </script>
     -->
+    {% include 'partials/game_hud.html' %}
     <div class="navbarparent" id="navbarparent">
 
         {% if session.get('user_id') != None %}
@@ -381,6 +401,7 @@
 
         </div>
         -->
+    {% include 'partials/game_shell.html' %}
     <div class="templatecontainer">{% block body %} {% endblock %}
 
         {% with messages = get_flashed_messages() %}

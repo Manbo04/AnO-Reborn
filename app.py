@@ -1104,10 +1104,12 @@ def get_resources():
 @app.context_processor
 def inject_user():
     from admin_tools import SUPER_ADMIN_USER_IDS
+    from game_ui import game_ui_context
 
     return dict(
         get_resources=get_resources,
         admin_user_ids=SUPER_ADMIN_USER_IDS,
+        **game_ui_context(),
     )
 
 

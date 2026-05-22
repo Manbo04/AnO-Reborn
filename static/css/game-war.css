@@ -1,0 +1,45 @@
+/**
+ * War / military screens — mobile game card polish
+ */
+@media (max-width: 857px) {
+    body.game-shell-active .warflexparent.templatedivflex2 {
+        flex-direction: column;
+    }
+
+    body.game-shell-active .warflexparent .unitimage {
+        max-height: 140px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: var(--game-radius-md);
+    }
+
+    body.game-shell-active .unitcardparent,
+    body.game-shell-active .warchoose-unit-card,
+    body.game-shell-active .warflexparent .templatedivflex2left {
+        min-height: 44px;
+    }
+
+    body.game-shell-active input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+    }
+}
+
+.game-war-result-banner {
+    padding: var(--game-space-md);
+    border-radius: var(--game-radius-lg);
+    background: linear-gradient(135deg, var(--foregroundThree), var(--foreground));
+    border: 1px solid var(--border);
+    margin-bottom: var(--game-space-md);
+    text-align: center;
+}
+
+.game-war-result-banner.victory {
+    border-color: var(--success);
+    box-shadow: 0 0 16px rgba(45, 159, 111, 0.25);
+}
+
+.game-war-result-banner.defeat {
+    border-color: var(--danger);
+}
