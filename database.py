@@ -770,7 +770,7 @@ class ProvinceQueries:
                 COUNT(id) as province_count,
                 COALESCE(SUM(population), 0) as total_population,
                 COALESCE(SUM(land), 0) as total_land,
-                COALESCE(SUM(cityCount), 0) as total_cities,
+                COALESCE(SUM(citycount), 0) as total_cities,
                 COALESCE(AVG(happiness), 0) as avg_happiness,
                 COALESCE(AVG(productivity), 0) as avg_productivity
             FROM provinces
