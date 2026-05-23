@@ -36,7 +36,16 @@ def validate_config() -> None:
     missing = []
     if not DISCORD_BOT_TOKEN:
         missing.append("DISCORD_BOT_TOKEN")
-    if _has_database_url():
+    use_web_embeds = (
+        (os.getenv("DISCORD_BOT_USE_WEB_EMBEDS") or "").strip().lower()
+        in ("1", "true", "yes")
+    )
+    if use_web_embeds:
+        if not BOT_API_BASE_URL:
+            missing.append("BOT_API_BASE_URL")
+        if not BOT_API_SECRET and not (os.getenv("SECRET_KEY") or "").strip():
+            missing.append("BOT_API_SECRET or SECRET_KEY (for web embed API auth)")
+    elif _has_database_url():
         pass  # simplest Railway setup: token + Postgres reference only
     else:
         if not BOT_API_BASE_URL:

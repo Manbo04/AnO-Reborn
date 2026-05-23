@@ -12,6 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Bust build cache when forcing bot service rebuild from GitHub.
+ARG CACHEBUST=20260523-embed-v3
+RUN echo "discord-bot build ${CACHEBUST}"
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
