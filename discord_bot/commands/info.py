@@ -124,3 +124,24 @@ def register_commands(
             )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
+
+    @tree.command(
+        name="bot_version",
+        description="Check which bot build is running (use if embeds look outdated)",
+    )
+    async def bot_version_cmd(interaction: discord.Interaction) -> None:
+        sha = (os.getenv("RAILWAY_GIT_COMMIT_SHA") or os.getenv("GIT_COMMIT") or "").strip()
+        sha_short = sha[:7] if sha else "unknown"
+        embed = discord.Embed(
+            title="🤖 Bot build info",
+            description=(
+                "If `/nation` still shows plain labels like **Influence (score)** "
+                "instead of **💰 Treasury**, the **bot service has not deployed** the latest code."
+            ),
+            color=discord.Color.blurple(),
+        )
+        embed.add_field(name="Embed UI", value=f"**{EMBED_UI_VERSION}**", inline=True)
+        embed.add_field(name="Data mode", value=backend_mode_label(), inline=True)
+        embed.add_field(name="Deploy commit", value=f"`{sha_short}`", inline=True)
+        embed.set_footer(text="Redeploy Railway service «bot» from Dockerfile.discord-bot")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
