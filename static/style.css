@@ -5336,13 +5336,13 @@ body.province-base-view-active .provincetopper {
     display: none;
 }
 
-body.province-base-view-active.game-shell-active .templatediv {
-    margin-top: 120px;
+body.province-base-view-active .templatediv {
+    margin-top: 96px;
 }
 
-@media (max-width: 720px) {
-    body.province-base-view-active.game-shell-active .templatediv {
-        margin-top: 100px;
+@media (min-width: 856px) {
+    body.province-base-view-active .templatediv {
+        margin-top: 80px;
     }
 }
 
@@ -5381,12 +5381,20 @@ body.province-base-view-active.game-shell-active .templatediv {
 .province-stat-chip .material-icons-outlined {
     font-size: 0.95rem;
     color: var(--accent);
+    line-height: 1;
+    display: inline-flex;
 }
 
 .province-base-arena {
     position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 10px 14px;
+    align-items: center;
+    justify-items: center;
     min-height: min(58vh, 520px);
-    padding: 0;
+    padding: 16px 12px 20px;
     background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
     overflow: hidden;
 }
@@ -5524,6 +5532,23 @@ body.province-base-view-active.game-shell-active .templatediv {
     background: linear-gradient(90deg, #00a7e1, #5cd4f0);
 }
 
+@media (min-width: 900px) {
+    .province-base-header {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+        grid-template-areas: "title vitals toggle";
+        align-items: center;
+    }
+
+    .province-base-vitals {
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+
+    .province-vital {
+        max-width: 160px;
+    }
+}
+
 .province-base-header .province-base-toggle {
     min-height: 44px;
     padding: 10px 16px;
@@ -5604,23 +5629,24 @@ body.province-base-view-active.game-shell-active .templatediv {
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Central capital hub (below district nodes) */
+/* Central capital hub — grid cell in center column */
 .province-map-hub {
-    position: absolute;
-    left: 50%;
-    top: 48%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
+    position: relative;
+    grid-column: 2;
+    grid-row: 2 / 4;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: min(160px, 36vw);
+    justify-content: center;
+    width: 100%;
+    max-width: 130px;
     pointer-events: none;
 }
 
 .province-map-hub-platform {
-    width: 88px;
-    height: 88px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.25));
     border: 3px solid rgba(255, 255, 255, 0.35);
@@ -5631,19 +5657,14 @@ body.province-base-view-active.game-shell-active .templatediv {
 }
 
 .province-map-hub-icon {
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: #fff;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+    line-height: 1;
 }
 
 .province-map-hub-skyline {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 3px;
-    min-height: 44px;
-    margin-top: -12px;
-    padding: 0 8px;
+    display: none;
 }
 
 .province-hub-block {
@@ -5663,19 +5684,24 @@ body.province-base-view-active.game-shell-active .templatediv {
 }
 
 .province-map-hub-label {
-    margin-top: 6px;
-    font-size: 0.75rem;
+    margin-top: 8px;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: rgba(255, 255, 255, 0.9);
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    line-height: 1.2;
 }
 
 .province-map-hub-empty {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: rgba(255, 255, 255, 0.75);
     margin-top: 4px;
+    text-align: center;
+    line-height: 1.25;
+    max-width: 120px;
     animation: pulse-hint 2s ease infinite;
 }
 
@@ -5684,21 +5710,21 @@ body.province-base-view-active.game-shell-active .templatediv {
     50% { opacity: 1; }
 }
 
-/* District nodes on map */
+/* District nodes — 3×4 grid (hub occupies center rows) */
 .province-map-nodes {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
+    display: contents;
 }
 
 .province-map-node {
     --slot-gradient: linear-gradient(145deg, #333, #555);
     --slot-glow: rgba(0, 167, 225, 0.4);
-    position: absolute;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: min(118px, 28vw);
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 112px;
     padding: 0;
     border: none;
     background: transparent;
@@ -5708,6 +5734,7 @@ body.province-base-view-active.game-shell-active .templatediv {
     text-align: center;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     animation: node-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    z-index: 2;
 }
 
 .province-map-node:nth-child(1) { animation-delay: 0.05s; }
@@ -5722,40 +5749,21 @@ body.province-base-view-active.game-shell-active .templatediv {
     from { opacity: 0; transform: scale(0.7); }
 }
 
-.province-map-node--power { left: 50%; top: 6%; transform: translate(-50%, 0); }
-.province-map-node--food { left: 14%; top: 22%; }
-.province-map-node--retail { right: 14%; top: 22%; }
-.province-map-node--mines { left: 6%; top: 48%; }
-.province-map-node--industry { right: 6%; top: 48%; }
-.province-map-node--civic { left: 22%; bottom: 10%; }
-.province-map-node--military { right: 22%; bottom: 10%; }
+.province-map-node--power { grid-column: 2; grid-row: 1; }
+.province-map-node--food { grid-column: 1; grid-row: 2; }
+.province-map-node--retail { grid-column: 3; grid-row: 2; }
+.province-map-node--mines { grid-column: 1; grid-row: 3; }
+.province-map-node--industry { grid-column: 3; grid-row: 3; }
+.province-map-node--civic { grid-column: 1; grid-row: 4; }
+.province-map-node--military { grid-column: 3; grid-row: 4; }
 
 .province-map-node:hover,
 .province-map-node:focus-visible,
 .province-map-node.is-selected {
-    transform: translate(-50%, 0) scale(1.08);
+    transform: scale(1.05);
     outline: none;
     z-index: 5;
 }
-
-.province-map-node--food:hover,
-.province-map-node--food:focus-visible,
-.province-map-node--food.is-selected { transform: scale(1.08); }
-.province-map-node--retail:hover,
-.province-map-node--retail:focus-visible,
-.province-map-node--retail.is-selected { transform: scale(1.08); }
-.province-map-node--mines:hover,
-.province-map-node--mines:focus-visible,
-.province-map-node--mines.is-selected { transform: scale(1.08); }
-.province-map-node--industry:hover,
-.province-map-node--industry:focus-visible,
-.province-map-node--industry.is-selected { transform: scale(1.08); }
-.province-map-node--civic:hover,
-.province-map-node--civic:focus-visible,
-.province-map-node--civic.is-selected { transform: scale(1.08); }
-.province-map-node--military:hover,
-.province-map-node--military:focus-visible,
-.province-map-node--military.is-selected { transform: scale(1.08); }
 
 .province-map-node.is-selected .province-map-node-pin {
     box-shadow: 0 0 0 3px #fff, 0 0 24px var(--slot-glow);
@@ -5770,14 +5778,24 @@ body.province-base-view-active.game-shell-active .templatediv {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     box-shadow:
         0 6px 0 rgba(0, 0, 0, 0.3),
         0 10px 28px rgba(0, 0, 0, 0.35);
     transition: box-shadow 0.2s;
 }
 
+.province-map-node-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
 .province-map-node-icon .material-icons-outlined {
-    font-size: 1.85rem;
+    font-size: 1.75rem;
+    line-height: 1;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
 }
 
@@ -5787,13 +5805,16 @@ body.province-base-view-active.game-shell-active .templatediv {
     right: -6px;
     min-width: 22px;
     height: 22px;
-    padding: 0 6px;
+    padding: 0 5px;
     border-radius: 999px;
     background: #1c2029;
     border: 2px solid #fff;
     font-size: 0.7rem;
     font-weight: 800;
-    line-height: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .province-map-node.has-buildings .province-map-node-qty {
@@ -5805,15 +5826,13 @@ body.province-base-view-active.game-shell-active .templatediv {
     font-size: 0.78rem;
     font-weight: 700;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    width: 100%;
+    line-height: 1.2;
 }
 
-.province-map-node-skyline {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 3px;
-    min-height: 32px;
-    margin-top: 4px;
+.province-map-node-skyline,
+.province-map-node-chips {
+    display: none;
 }
 
 .province-node-block {
@@ -5943,15 +5962,15 @@ body.province-base-view-active.game-shell-active .templatediv {
 
 .province-dock-buildings {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
 }
 
 .province-dock-card {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: 10px;
+    padding: 14px 12px;
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
     border: 1px solid var(--border);
@@ -5994,25 +6013,26 @@ body.province-base-view-active.game-shell-active .templatediv {
 
 @media (max-width: 720px) {
     .province-base-arena {
-        min-height: 440px;
+        min-height: 400px;
+        gap: 6px 8px;
+        padding: 10px 8px 14px;
     }
 
     .province-map-hub {
-        top: 52%;
-        width: min(140px, 32vw);
+        max-width: 110px;
     }
 
     .province-map-hub-platform {
-        width: 72px;
-        height: 72px;
+        width: 64px;
+        height: 64px;
     }
 
-    .province-map-hub-skyline {
-        display: none;
+    .province-map-hub-icon {
+        font-size: 1.6rem;
     }
 
     .province-map-node {
-        width: min(92px, 24vw);
+        max-width: 96px;
     }
 
     .province-map-node-pin {
@@ -6020,18 +6040,17 @@ body.province-base-view-active.game-shell-active .templatediv {
         height: 52px;
     }
 
-    .province-map-node--power { top: 4%; }
-    .province-map-node--food { left: 10%; top: 18%; }
-    .province-map-node--retail { right: 10%; top: 18%; }
-    .province-map-node--mines { left: 4%; top: 52%; }
-    .province-map-node--industry { right: 4%; top: 52%; }
-    .province-map-node--civic { left: 18%; bottom: 8%; }
-    .province-map-node--military { right: 18%; bottom: 8%; }
+    .province-map-node-icon .material-icons-outlined {
+        font-size: 1.45rem;
+    }
 
-    .province-map-node-skyline,
-    .province-map-node-chips,
+    .province-map-node-label {
+        font-size: 0.7rem;
+    }
+
     .province-map-node-cta {
-        display: none;
+        font-size: 0.6rem;
+        padding: 2px 8px;
     }
 
     .province-dock {
