@@ -1076,6 +1076,58 @@ _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
 _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
+_users_password_columns_cache: Optional[set] = None
+
+
+def _ensure_discord_bot_tables(db) -> None:
+    """Idempotent Discord bot tables (migration 0022) for production auto-setup."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_link_codes (
+            code VARCHAR(16) PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at TIMESTAMPTZ NOT NULL,
+            used_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_link_codes_user_id
+        ON discord_link_codes (user_id)
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_guild_settings (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            coalition_id INTEGER REFERENCES colNames(id) ON DELETE SET NULL,
+            registered_role_id VARCHAR(32),
+            bank_alert_channel_id VARCHAR(32),
+            war_alert_channel_id VARCHAR(32),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_role_aliases (
+            guild_id VARCHAR(32) NOT NULL,
+            alias VARCHAR(64) NOT NULL,
+            discord_role_id VARCHAR(32) NOT NULL,
+            PRIMARY KEY (guild_id, alias)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id_unique
+        ON users (discord_id)
+        WHERE discord_id IS NOT NULL AND discord_id <> ''
+        """
+    )
 
 
 def ensure_schema_compat() -> None:
@@ -1109,6 +1161,8 @@ def ensure_schema_compat() -> None:
                     ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
                     """
                 )
+                _ensure_discord_bot_tables(db)
+                _ensure_reset_codes_table(db)
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
             try:
@@ -1172,6 +1226,138 @@ def users_table_has_column(column_name: str) -> bool:
         logger.warning("users_table_has_column(%s): %s", column_name, exc)
     _users_column_cache[column_name] = has_col
     return has_col
+
+
+def get_users_password_column_names() -> set:
+    """Return which of ``hash`` / ``password`` exist on ``users`` (cached)."""
+    global _users_password_columns_cache
+    if _users_password_columns_cache is not None:
+        return _users_password_columns_cache
+    cols: set = set()
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'users'
+                  AND column_name IN ('hash', 'password')
+                """
+            )
+            cols = {row[0] for row in db.fetchall()}
+    except Exception as exc:
+        logger.warning("get_users_password_column_names: %s", exc)
+    _users_password_columns_cache = cols
+    return cols
+
+
+def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
+    """Persist bcrypt hash on every password column; allow username/password login."""
+    cols = get_users_password_column_names()
+    if not cols:
+        raise RuntimeError("users table has no hash or password column")
+    if "hash" in cols:
+        db.execute(
+            "UPDATE users SET hash = %s WHERE id = %s",
+            (hashed_bcrypt_utf8, user_id),
+        )
+    if "password" in cols:
+        db.execute(
+            "UPDATE users SET password = %s WHERE id = %s",
+            (hashed_bcrypt_utf8.encode("utf-8"), user_id),
+        )
+    if users_table_has_column("auth_type"):
+        db.execute(
+            """
+            UPDATE users
+            SET auth_type = 'normal'
+            WHERE id = %s
+              AND COALESCE(auth_type, '') <> 'normal'
+            """,
+            (user_id,),
+        )
+
+
+def _ensure_reset_codes_table(db) -> None:
+    """Idempotent password-reset token storage (matches affo/postgres/reset_codes.txt)."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reset_codes (
+            url_code VARCHAR(120) NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL UNIQUE,
+            created_at VARCHAR(60) NOT NULL
+        )
+        """
+    )
+
+
+def resolve_user_id_by_discord(discord_user_id: str) -> Optional[int]:
+    """Resolve AnO user id from Discord snowflake (discord_id or auth_type=discord hash)."""
+    if not discord_user_id:
+        return None
+    discord_user_id = str(discord_user_id).strip()
+    try:
+        with get_db_cursor() as db:
+            if users_table_has_column("discord_id"):
+                db.execute(
+                    """
+                    SELECT id FROM users
+                    WHERE discord_id = %s
+                       OR (hash = %s AND auth_type = 'discord')
+                    ORDER BY CASE WHEN discord_id = %s THEN 0 ELSE 1 END
+                    LIMIT 1
+                    """,
+                    (discord_user_id, discord_user_id, discord_user_id),
+                )
+            else:
+                db.execute(
+                    """
+                    SELECT id FROM users
+                    WHERE hash = %s AND auth_type = 'discord'
+                    LIMIT 1
+                    """,
+                    (discord_user_id,),
+                )
+            row = db.fetchone()
+            return int(row[0]) if row else None
+    except Exception as exc:
+        logger.warning("resolve_user_id_by_discord: %s", exc)
+        return None
+
+
+def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
+    """Set discord_id for a user, clearing the same id from any other account."""
+    if not users_table_has_column("discord_id"):
+        return
+    discord_user_id = str(discord_user_id).strip()
+    if not discord_user_id:
+        raise ValueError("discord_user_id is required")
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            UPDATE users SET discord_id = NULL
+            WHERE discord_id = %s AND id <> %s
+            """,
+            (discord_user_id, user_id),
+        )
+        db.execute(
+            "UPDATE users SET discord_id = %s WHERE id = %s",
+            (discord_user_id, user_id),
+        )
+
+
+def discord_link_codes_table_exists() -> bool:
+    """Whether migration 0022 discord_link_codes table is present."""
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                "SELECT to_regclass('public.discord_link_codes') IS NOT NULL"
+            )
+            row = db.fetchone()
+            return bool(row and row[0])
+    except Exception:
+        return False
 
 
 def teardown_request_connection(exc=None):

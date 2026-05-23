@@ -108,6 +108,41 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-23
+
+**Task**: Password reset HTTP 500 (`/reset_password/<code>`)
+
+**What Was Done**:
+- `set_user_password()` in `database.py` — updates `hash` and/or legacy `password` columns; sets `auth_type='normal'`
+- `_ensure_reset_codes_table()` in `ensure_schema_compat()`
+- `change.py` reset flows use shared helper; `login.py` accepts byte-stored password hashes
+- Tests: `tests/test_password_reset_submit.py`
+- PR **#47** (`cursor/fix-password-reset-500-5a73`)
+
+**What To Watch**:
+- After merge/deploy: full flow Account → reset link → new password → login
+- Users who only used Discord login need `auth_type` flip (now automatic on reset)
+
+---
+
+### Session: 2026-05-22 (Discord bot Phase 1)
+
+**Task**: AnO-native Discord bot (Locutus-style Phase 1)
+
+**What Was Done**:
+- Migration `0022_discord_bot.sql`: `discord_link_codes`, guild settings tables (Phase 2), unique `users.discord_id`
+- `bot_api.py`: `/api/bot/register`, `/me`, `/nation`, `/wars`, `/resources` (BOT_API_SECRET auth)
+- Account page: `/generate_discord_link_code` + UI; OAuth link hardened in `signup.py`
+- `discord_bot/` service: slash `/register`, `/me`, `/nation`, `/wars`, `/resources`
+- `tests/test_bot_api.py`, `scripts/apply_discord_bot_migration.py`, Railway docs
+
+**What To Watch**:
+- Run `python3 scripts/apply_discord_bot_migration.py` on production after web deploy
+- Set `BOT_API_SECRET` on web + discord-bot Railway services; `DISCORD_BOT_TOKEN` on bot service
+- Start command for bot service: `python -m discord_bot.main`
+
+---
+
 ### Session: 2026-05-22 (continued)
 
 **Task**: Security fixes + merge to master (PR #42)
