@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+# Bump when embed layout changes — visible in footer so you can confirm bot deploy.
+EMBED_UI_VERSION = "2.1"
+
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -337,6 +340,6 @@ def build_nation_embed(data: Dict[str, Any], title: str) -> discord.Embed:
         embed.add_field(name="☮️ Wars", value="_No active wars._", inline=False)
 
     embed.set_footer(
-        text="Affairs & Order · /me · /nation · /wars · /resources",
+        text=f"Affairs & Order · embed UI {EMBED_UI_VERSION} · /me · /nation · /wars · /resources",
     )
     return embed

@@ -182,7 +182,21 @@ You do **not** need `SECRET_KEY`, `BOT_API_BASE_URL`, `DISCORD_BOT_URL`, or `POR
 
 ### After deploy
 
-Check **bot → Logs** for `data mode=database` and `Synced 5 global slash command(s)`.
+Check **bot → Logs** for:
+
+- `data mode=database`
+- `embed_ui=2.1` (or newer — confirms nation embed redesign is loaded)
+- `Synced N global slash command(s)` with **N ≥ 13** (includes `/bot_version`)
+
+### Bot embeds still look old?
+
+If `/nation` shows field names like **Influence (score)** and **Resources (top holdings)**, the running container is **not** on current `master` — that layout was removed in commit `5d28c8dc`.
+
+1. Run `/bot_version` — embed UI should be **2.1+**. If the command is missing or UI version is old, redeploy.
+2. Railway → **bot** service → **Deployments** → confirm latest commit is recent `master`.
+3. **Settings → Build**: `Dockerfile.discord-bot` (or config file `railway.discord-bot.json`), **not** the web Nixpacks/gunicorn image.
+4. **Redeploy** manually (⋯ → Redeploy). GitHub Actions workflow **Redeploy Discord Bot** only calls Railway API when `RAILWAY_TOKEN` is set; otherwise it exits without redeploying.
+5. After deploy, check logs for `embed_ui=2.1` and run `/nation` again (embeds are not cached).
 
 Tables are created automatically on web boot. One-time migration (optional):
 
