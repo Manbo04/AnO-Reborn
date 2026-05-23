@@ -1,0 +1,57 @@
+# Redeploy the Railway `bot` service after Discord bot code changes on master.
+# Requires repository secret: RAILWAY_TOKEN (Railway account/workspace token).
+
+name: Redeploy Discord Bot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "discord_bot/**"
+      - "bot_api.py"
+      - "database.py"
+      - "Dockerfile.discord-bot"
+      - "railway.discord-bot.json"
+      - "scripts/run_discord_bot_if_leader.py"
+      - "scripts/railway_discord_bot_setup.py"
+      - ".github/workflows/redeploy-discord-bot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  redeploy-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure and redeploy bot on Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
+        run: |
+          if [ -z "${RAILWAY_TOKEN:-}" ]; then
+            echo "::error::RAILWAY_TOKEN is not set in repository secrets."
+            echo "Add it at: https://github.com/Manbo04/AnO-Reborn/settings/secrets/actions"
+            echo "Then re-run this workflow (Actions → Redeploy Discord Bot → Run workflow)."
+            echo ""
+            echo "If the bot service is linked to GitHub, pushing to master may still auto-deploy;"
+            echo "ensure the bot service uses Dockerfile.discord-bot and start command:"
+            echo "  python scripts/run_discord_bot_if_leader.py"
+            exit 1
+          fi
+          if [ -z "${BOT_API_SECRET:-}" ]; then
+            export BOT_API_SECRET="$(openssl rand -hex 32)"
+            echo "::add-mask::${BOT_API_SECRET}"
+          fi
+          python3 scripts/railway_discord_bot_setup.py
+
+      - name: Verify web bot API is reachable
+        run: |
+          code="$(curl -s -o /dev/null -w '%{http_code}' https://affairsandorder.com/api/bot/health || true)"
+          if [ "$code" = "403" ] || [ "$code" = "200" ]; then
+            echo "Web bot API responded HTTP $code (expected 403 without secret or 200 with secret)."
+          else
+            echo "::warning::Unexpected /api/bot/health status: $code"
+          fi
