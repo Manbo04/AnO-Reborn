@@ -5046,8 +5046,7 @@ body.game-shell-active .templatecontainer {
 }
 
 body.game-shell-active .game-hud {
-    display: flex;
-    margin-top: var(--game-navbar-height, 55px);
+    display: none !important;
 }
 
 .game-hud-chip {
