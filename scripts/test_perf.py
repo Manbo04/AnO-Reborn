@@ -32,12 +32,9 @@ t3 = time.time()
 with get_db_cursor() as db:
     db.execute(
         """
-        SELECT u.username, s.location, u.description, u.date, u.flag,
-               c.colId, c.role, cn.name, cn.flag
+        SELECT u.username, s.location, u.description, u.date, u.flag
         FROM users u
         INNER JOIN stats s ON u.id=s.id
-        LEFT JOIN coalitions c ON u.id=c.userId
-        LEFT JOIN colNames cn ON c.colId=cn.id
         WHERE u.id=%s
     """,
         (TEST_UID,),
