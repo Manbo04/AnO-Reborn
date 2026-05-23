@@ -223,7 +223,7 @@
 </style>
 
 <script>
-const expectedName = "{{ user.username }}";
+const expectedName = {{ user.username | tojson }};
 
 function confirmDeleteAccount() {
     document.getElementById('deleteAccountModal').style.display = 'flex';
