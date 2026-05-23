@@ -16,7 +16,9 @@ on:
       - "Dockerfile.discord-bot"
       - "railway.discord-bot.json"
       - "scripts/run_discord_bot_if_leader.py"
+      - "scripts/start_production.sh"
       - "scripts/railway_discord_bot_setup.py"
+      - "railway.json"
       - ".github/workflows/redeploy-discord-bot.yml"
 
 permissions:

@@ -290,6 +290,16 @@ def main() -> None:
     if bot_id:
         print(f"Configuring {BOT_SERVICE_NAME} service (start command + database mode)...")
         web_vars = _get_service_variables(token, project_id, env_id, web_id)
+        bot_vars = (
+            _get_service_variables(token, project_id, env_id, bot_id)
+            if bot_id
+            else {}
+        )
+        bot_token = (bot_vars.get("DISCORD_BOT_TOKEN") or "").strip()
+        if bot_token:
+            _upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_TOKEN", bot_token)
+            _upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1")
+            print("  copied DISCORD_BOT_TOKEN to web (sidecar + web-rendered embeds)")
         db_url = web_vars.get("DATABASE_PUBLIC_URL") or web_vars.get("DATABASE_URL")
         if db_url:
             _upsert_var(token, project_id, env_id, bot_id, "DATABASE_URL", db_url)

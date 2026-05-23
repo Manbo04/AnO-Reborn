@@ -188,6 +188,22 @@ Check **bot → Logs** for:
 - `embed_ui=2.1` (or newer — confirms nation embed redesign is loaded)
 - `Synced N global slash command(s)` with **N ≥ 13** (includes `/bot_version`)
 
+### Auto-deploy path (no separate bot redeploy required)
+
+The **web** service `startCommand` is `bash scripts/start_production.sh`. On each deploy it can:
+
+1. Start a **Discord bot sidecar** (if `DISCORD_BOT_TOKEN` is set on the **web** service)
+2. Use **`DISCORD_BOT_USE_WEB_EMBEDS=1`** so slash commands render embeds from the **web API** (always latest UI)
+
+**One-time Railway setup:** On the **web** service, add variable `DISCORD_BOT_TOKEN` (same value as the `bot` service). Optional: pause the old `bot` service to avoid duplicate bots.
+
+Verify after web deploy:
+
+```bash
+curl -s https://affairsandorder.com/api/bot/embed_version
+# {"embed_ui":"2.1","ok":true}
+```
+
 ### Bot embeds still look old?
 
 If `/nation` shows field names like **Influence (score)** and **Resources (top holdings)**, the running container is **not** on current `master` — that layout was removed in commit `5d28c8dc`.
