@@ -39,11 +39,12 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime as dt
 import string
 import random
-from helpers import login_required
+from helpers import login_required, error
 from database import (
     cache_response,
     get_db_connection,
     get_request_cursor,
+    rollback_db_cursor,
     teardown_request_connection,
 )
 import province
@@ -1240,16 +1241,34 @@ def serve_flag(flag_type, flag_id):
 @login_required
 @cache_response(ttl_seconds=60)
 def account():
-    with get_request_cursor(cursor_factory=RealDictCursor) as db:
-        cId = session["user_id"]
+    cId = session["user_id"]
+    user = None
 
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
         try:
-            db.execute("SELECT username, email, date, discord_id FROM users WHERE id=%s", (cId,))
+            db.execute(
+                "SELECT username, email, date, discord_id FROM users WHERE id=%s",
+                (cId,),
+            )
+            row = db.fetchone()
+            if row:
+                user = dict(row)
         except Exception:
-            db.connection.rollback()
-            db.execute("SELECT username, email, date FROM users WHERE id=%s", (cId,))
-            
-        user = dict(db.fetchone())
+            rollback_db_cursor(db)
+            try:
+                db.execute(
+                    "SELECT username, email, date FROM users WHERE id=%s",
+                    (cId,),
+                )
+                row = db.fetchone()
+                if row:
+                    user = dict(row)
+                    user.setdefault("discord_id", None)
+            except Exception:
+                rollback_db_cursor(db)
+
+    if not user:
+        return error(404, "Account not found")
 
     return render_template("account.html", user=user)
 
