@@ -2122,17 +2122,8 @@ def generate_province_revenue():  # Runs each hour
                 pass
             return
 
-        db.execute(
-            "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
-            ("generate_province_revenue",),
-        )
-        # Commit the last_run update immediately so it persists even if
-        # later processing crashes.  This prevents the task from appearing
-        # "stuck" at a stale last_run date after transient failures.
-        try:
-            conn.commit()
-        except Exception:
-            pass
+        # Do not commit last_run here — wait until resource/province writes
+        # succeed so task_runs does not advance when economy rows are unchanged.
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         columns = variables.BUILDINGS
@@ -3149,42 +3140,8 @@ def generate_province_revenue():  # Runs each hour
             conn.rollback()
             handle_exception(e)
 
-        # Batch apply education deltas from aging
-        try:
-            if education_deltas:
-                edu_updates = [
-                    (
-                        delta.get("edu_none", 0),
-                        delta.get("edu_highschool", 0),
-                        delta.get("edu_college", 0),
-                        pid,
-                    )
-                    for pid, delta in education_deltas.items()
-                    if (
-                        delta.get("edu_none", 0)
-                        or delta.get("edu_highschool", 0)
-                        or delta.get("edu_college", 0)
-                    )
-                ]
-                if edu_updates:
-                    execute_batch(
-                        db,
-                        """
-                        UPDATE provinces
-                        SET edu_none = COALESCE(edu_none, 0) + %s,
-                            edu_highschool = COALESCE(edu_highschool, 0) + %s,
-                            edu_college = COALESCE(edu_college, 0) + %s
-                        WHERE id = %s
-                        """,
-                        edu_updates,
-                        page_size=100,
-                    )
-        except Exception as e:
-            conn.rollback()
-            handle_exception(e)
-
-        # Write all resource changes atomically using deltas
-        # This prevents race conditions with other tasks (e.g., population_growth)
+        # Resource deltas before education: education failures used to call
+        # conn.rollback() and wipe uncommitted province/gold/resource work.
         try:
             if resource_deltas:
                 # Flatten resource_deltas into (user_id, resource_name, delta) tuples
@@ -3223,12 +3180,15 @@ def generate_province_revenue():  # Runs each hour
                         execute_batch(
                             db,
                             """
-                            INSERT INTO user_economy (user_id, resource_id, quantity)
-                            VALUES (%s, %s, %s)
+                            INSERT INTO user_economy
+                                (user_id, resource_id, quantity, updated_at)
+                            VALUES (%s, %s, %s, now())
                             ON CONFLICT (user_id, resource_id)
-                            DO UPDATE SET quantity = GREATEST(
-                                0, user_economy.quantity + %s
-                            )
+                            DO UPDATE SET
+                                quantity = GREATEST(
+                                    0, user_economy.quantity + %s
+                                ),
+                                updated_at = now()
                             """,
                             batch_values,
                             page_size=200,
@@ -3255,18 +3215,73 @@ def generate_province_revenue():  # Runs each hour
             conn.rollback()
             handle_exception(e)
 
-        # Final commit
+        # Education deltas (savepoint so failure does not roll back resources)
+        try:
+            if education_deltas:
+                edu_updates = []
+                for pid, delta in education_deltas.items():
+                    edu_none = max(
+                        0, min(int(delta.get("edu_none", 0) or 0), MAX_INT_32)
+                    )
+                    edu_hs = max(
+                        0,
+                        min(int(delta.get("edu_highschool", 0) or 0), MAX_INT_32),
+                    )
+                    edu_col = max(
+                        0,
+                        min(int(delta.get("edu_college", 0) or 0), MAX_INT_32),
+                    )
+                    if edu_none or edu_hs or edu_col:
+                        edu_updates.append((edu_none, edu_hs, edu_col, pid))
+                if edu_updates:
+                    db.execute("SAVEPOINT revenue_education_batch")
+                    try:
+                        execute_batch(
+                            db,
+                            """
+                            UPDATE provinces
+                            SET edu_none = COALESCE(edu_none, 0) + %s,
+                                edu_highschool = COALESCE(edu_highschool, 0) + %s,
+                                edu_college = COALESCE(edu_college, 0) + %s
+                            WHERE id = %s
+                            """,
+                            edu_updates,
+                            page_size=100,
+                        )
+                    except Exception as edu_err:
+                        db.execute("ROLLBACK TO SAVEPOINT revenue_education_batch")
+                        handle_exception(edu_err)
+        except Exception as e:
+            handle_exception(e)
+
+        # Final commit (includes resource + province writes; last_run below)
+        committed = False
         try:
             try:
                 conn.commit()
+                committed = True
             except AttributeError:
                 # Fake connection used in tests may not implement commit
+                committed = True
                 pass
-        except Exception:
+        except Exception as commit_err:
             try:
                 conn.rollback()
             except Exception:
                 pass
+            handle_exception(commit_err)
+            committed = False
+
+        if committed:
+            try:
+                db.execute(
+                    "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                    ("generate_province_revenue",),
+                )
+                conn.commit()
+            except Exception as e:
+                handle_exception(e)
+
         duration = time.perf_counter() - start_time
 
         # Emit metric for generate_province_revenue
