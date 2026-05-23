@@ -143,6 +143,23 @@ At the end of each session or major task, document:
 
 ---
 
+### Session: 2026-05-23
+
+**Task**: Complete progression audit follow-up — revenue commit path fix + merge to master
+
+**What Was Done**:
+- Fixed `generate_province_revenue()` in `tasks.py`: defer `last_run` until after commit; resource upserts before education with SAVEPOINT + `MAX_INT_32` clamps; set `user_economy.updated_at = now()` on upsert
+- Added `tests/test_revenue_commit_path.py`; CI includes progression audit + revenue regression tests
+- Updated `PROGRESSION_AUDIT_2026-05-22.md` with post-fix verification (economy `updated_at` 2026-05-23 09:36 UTC)
+- Merged `cursor/progression-audit-fe3b` → `master` (commit `442c41dc`) — Railway auto-deploy
+
+**What To Watch**:
+- After deploy: hourly `user_economy.updated_at` should advance without manual trigger (`scripts/progression_health_check.py`)
+- `global_tick`, `execute_trade_agreements`, `population_growth` still stale on beat — restart Celery beat + workers
+- Do not mount wrong Railway volume `postgres-volume` (use `postgres-2026-05-08` snapshot only)
+
+---
+
 ### Session: 2026-05-22 (continued)
 
 **Task**: Security fixes + merge to master (PR #42)
