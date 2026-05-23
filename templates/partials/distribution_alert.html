@@ -1,0 +1,27 @@
+{% if distribution_status and distribution_status.show_alert %}
+<div class="center fit notificationparent distribution-alert" role="status">
+    <div class="left fit notificationchild">
+        <ul class="right vanilla notificationchildright">
+            <span class="material-icons-outlined">warning</span>
+            Ration stockpile {{ distribution_status.rations_stockpile | weight_fmt }}, but only
+            {{ distribution_status.distribution_cap | commas }} citizens can be fed
+            ({{ distribution_status.coverage_percent }}% of {{ population | commas }} population).
+        </ul>
+        {% if distribution_status.uncovered_population > 0 %}
+        <ul class="right vanilla notificationchild">
+            <span class="material-icons-outlined">local_shipping</span>
+            Build distribution to reach {{ distribution_status.uncovered_population | commas }} more citizens.
+            {% if distribution_status.distribution_centers_suggested > 0 %}
+            About {{ distribution_status.distribution_centers_suggested }} distribution center(s)
+            (1.5M cap each) or more gas stations / general stores / malls.
+            {% endif %}
+        </ul>
+        {% endif %}
+        {% if food_score is not none and food_score < -1 %}
+        <ul class="right vanilla notificationchild">
+            Food supply score {{ "%.2f"|format(food_score) }} (tax and growth penalized until distribution catches up).
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

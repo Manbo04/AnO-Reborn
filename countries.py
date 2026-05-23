@@ -873,6 +873,21 @@ def country(cId):
         if rations_need < 1:
             rations_need = 1
 
+        distribution_status = None
+        food_score = None
+        if variables.FEATURE_RATIONS_DISTRIBUTION and population:
+            try:
+                from tasks import fetch_nation_distribution_status, food_stats
+
+                distribution_status = fetch_nation_distribution_status(
+                    db, cId, population, rations_need
+                )
+                food_score = food_stats(cId)
+            except Exception:
+                rollback_db_cursor(db)
+                distribution_status = None
+                food_score = None
+
     return render_template(
         "country.html",
         username=username,
@@ -900,6 +915,8 @@ def country(cId):
         news_amount=news_amount,
         cg_needed=cg_needed,
         rations_need=rations_need,
+        distribution_status=distribution_status,
+        food_score=food_score,
         expenses=expenses,
         statistics=statistics,
         policies=policies,
