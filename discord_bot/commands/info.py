@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 
-from discord_bot.api import BotApiClient, BotApiError
+from discord_bot.backend import BotBackend, BotBackendError
 from discord_bot.config import GAME_BASE_URL
 
 
@@ -42,13 +42,13 @@ def _embed_nation(data: dict, title: str) -> discord.Embed:
 
 
 def register_commands(
-    tree: app_commands.CommandTree, api: BotApiClient
+    tree: app_commands.CommandTree, backend: BotBackend
 ) -> None:
     @tree.command(name="me", description="Show your linked AnO nation stats")
     async def me_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
-            data = api.me(str(interaction.user.id))
+            data = backend.me(str(interaction.user.id))
             embed = _embed_nation(data, "Your nation")
             wars = data.get("active_wars_list") or []
             if wars:
@@ -62,7 +62,7 @@ def register_commands(
                     inline=False,
                 )
             await interaction.followup.send(embed=embed, ephemeral=True)
-        except BotApiError as exc:
+        except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
 
     @tree.command(
@@ -75,10 +75,10 @@ def register_commands(
     ) -> None:
         await interaction.response.defer()
         try:
-            data = api.nation(identifier.strip())
+            data = backend.nation(identifier.strip())
             embed = _embed_nation(data, "Nation lookup")
             await interaction.followup.send(embed=embed)
-        except BotApiError as exc:
+        except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
 
     @tree.command(
@@ -94,9 +94,9 @@ def register_commands(
         await interaction.response.defer(ephemeral=bool(nation is None))
         try:
             if nation:
-                data = api.wars(nation=nation.strip())
+                data = backend.wars(nation=nation.strip())
             else:
-                data = api.wars(discord_user_id=str(interaction.user.id))
+                data = backend.wars(discord_user_id=str(interaction.user.id))
             wars = data.get("wars") or []
             if not wars:
                 await interaction.followup.send(
@@ -120,7 +120,7 @@ def register_commands(
             await interaction.followup.send(
                 embed=embed, ephemeral=not nation
             )
-        except BotApiError as exc:
+        except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
 
     @tree.command(
@@ -136,9 +136,9 @@ def register_commands(
         await interaction.response.defer(ephemeral=bool(nation is None))
         try:
             if nation:
-                data = api.resources(nation=nation.strip())
+                data = backend.resources(nation=nation.strip())
             else:
-                data = api.resources(discord_user_id=str(interaction.user.id))
+                data = backend.resources(discord_user_id=str(interaction.user.id))
             resources = data.get("resources") or {}
             embed = _embed_nation(
                 data,
@@ -160,5 +160,5 @@ def register_commands(
             await interaction.followup.send(
                 embed=embed, ephemeral=not nation
             )
-        except BotApiError as exc:
+        except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
