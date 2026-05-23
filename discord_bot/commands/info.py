@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -20,7 +21,7 @@ def register_commands(
     async def me_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
-            data = backend.me(str(interaction.user.id))
+            data = await asyncio.to_thread(backend.me, str(interaction.user.id))
             embed = build_nation_embed(data, "Your nation")
             await interaction.followup.send(embed=embed, ephemeral=True)
         except BotBackendError as exc:
@@ -42,7 +43,7 @@ def register_commands(
     ) -> None:
         await interaction.response.defer()
         try:
-            data = backend.nation(identifier.strip())
+            data = await asyncio.to_thread(backend.nation, identifier.strip())
             embed = build_nation_embed(data, "Nation lookup")
             await interaction.followup.send(embed=embed)
         except BotBackendError as exc:
@@ -61,9 +62,13 @@ def register_commands(
         await interaction.response.defer(ephemeral=bool(nation is None))
         try:
             if nation:
-                data = backend.wars(nation=nation.strip())
+                ident = nation.strip()
+                data = await asyncio.to_thread(lambda: backend.wars(nation=ident))
             else:
-                data = backend.wars(discord_user_id=str(interaction.user.id))
+                uid = str(interaction.user.id)
+                data = await asyncio.to_thread(
+                    lambda: backend.wars(discord_user_id=uid)
+                )
             wars = data.get("wars") or []
             if not wars:
                 await interaction.followup.send(
@@ -112,9 +117,15 @@ def register_commands(
         await interaction.response.defer(ephemeral=bool(nation is None))
         try:
             if nation:
-                data = backend.resources(nation=nation.strip())
+                ident = nation.strip()
+                data = await asyncio.to_thread(
+                    lambda: backend.resources(nation=ident)
+                )
             else:
-                data = backend.resources(discord_user_id=str(interaction.user.id))
+                uid = str(interaction.user.id)
+                data = await asyncio.to_thread(
+                    lambda: backend.resources(discord_user_id=uid)
+                )
             embed = build_nation_embed(
                 data,
                 f"Resources — {data.get('username', '?')}",
