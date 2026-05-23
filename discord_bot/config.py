@@ -30,9 +30,14 @@ def validate_config() -> None:
     if not DISCORD_BOT_TOKEN:
         missing.append("DISCORD_BOT_TOKEN")
     if not BOT_API_SECRET and not (os.getenv("SECRET_KEY") or "").strip():
-        missing.append("BOT_API_SECRET or SECRET_KEY")
+        missing.append("BOT_API_SECRET or SECRET_KEY (reference from web service)")
     if not BOT_API_BASE_URL:
         missing.append("BOT_API_BASE_URL")
     if missing:
         print(f"ERROR: Missing required env vars: {', '.join(missing)}", file=sys.stderr)
         sys.exit(1)
+    if os.getenv("DISCORD_BOT_URL"):
+        print(
+            "WARN: DISCORD_BOT_URL is not used by Phase 1 bot; remove it and set BOT_API_BASE_URL instead.",
+            file=sys.stderr,
+        )
