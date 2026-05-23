@@ -32,14 +32,14 @@ jobs:
           BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
         run: |
           if [ -z "${RAILWAY_TOKEN:-}" ]; then
-            echo "::error::RAILWAY_TOKEN is not set in repository secrets."
+            echo "::warning::RAILWAY_TOKEN is not set — skipping Railway API redeploy."
             echo "Add it at: https://github.com/Manbo04/AnO-Reborn/settings/secrets/actions"
-            echo "Then re-run this workflow (Actions → Redeploy Discord Bot → Run workflow)."
+            echo "then re-run: Actions → Redeploy Discord Bot → Run workflow."
             echo ""
-            echo "If the bot service is linked to GitHub, pushing to master may still auto-deploy;"
-            echo "ensure the bot service uses Dockerfile.discord-bot and start command:"
+            echo "If the bot service is linked to GitHub, this push to master should still auto-deploy."
+            echo "Bot service should use Dockerfile.discord-bot and:"
             echo "  python scripts/run_discord_bot_if_leader.py"
-            exit 1
+            exit 0
           fi
           if [ -z "${BOT_API_SECRET:-}" ]; then
             export BOT_API_SECRET="$(openssl rand -hex 32)"
