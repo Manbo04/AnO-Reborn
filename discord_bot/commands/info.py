@@ -1,10 +1,11 @@
 import logging
+import os
 
 import discord
 from discord import app_commands
 
-from discord_bot.backend import BotBackend, BotBackendError
-from discord_bot.embeds import build_nation_embed
+from discord_bot.backend import BotBackend, BotBackendError, backend_mode_label
+from discord_bot.embeds import EMBED_UI_VERSION, build_nation_embed
 
 logger = logging.getLogger(__name__)
 
