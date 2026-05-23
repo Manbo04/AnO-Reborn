@@ -5,12 +5,15 @@ from __future__ import annotations
 import logging
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from discord_bot.backend import backend_mode_label, get_backend
+from discord_bot.commands import admin_cmds
+from discord_bot.commands import guild_setup as guild_setup_cmds
 from discord_bot.commands import info as info_cmds
 from discord_bot.commands import register as register_cmds
 from discord_bot.config import DISCORD_BOT_TOKEN, validate_config
+from discord_bot.panel_service import refresh_all_guild_panels
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,6 +32,8 @@ class AnOBot(commands.Bot):
     async def setup_hook(self) -> None:
         register_cmds.register_commands(self.tree, self.backend)
         info_cmds.register_commands(self.tree, self.backend)
+        guild_setup_cmds.register_commands(self.tree)
+        admin_cmds.register_commands(self.tree, self.backend)
         synced = await self.tree.sync()
         logger.info("Synced %s global slash command(s)", len(synced))
 
@@ -39,6 +44,16 @@ class AnOBot(commands.Bot):
             self.user.id if self.user else "?",
             backend_mode_label(),
         )
+        if not self.panel_refresh_loop.is_running():
+            self.panel_refresh_loop.start()
+
+    @tasks.loop(minutes=15)
+    async def panel_refresh_loop(self) -> None:
+        await refresh_all_guild_panels(self)
+
+    @panel_refresh_loop.before_loop
+    async def before_panel_refresh(self) -> None:
+        await self.wait_until_ready()
 
 
 def main() -> None:
