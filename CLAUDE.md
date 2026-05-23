@@ -108,6 +108,24 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-22 (Discord bot Phase 1)
+
+**Task**: AnO-native Discord bot (Locutus-style Phase 1)
+
+**What Was Done**:
+- Migration `0022_discord_bot.sql`: `discord_link_codes`, guild settings tables (Phase 2), unique `users.discord_id`
+- `bot_api.py`: `/api/bot/register`, `/me`, `/nation`, `/wars`, `/resources` (BOT_API_SECRET auth)
+- Account page: `/generate_discord_link_code` + UI; OAuth link hardened in `signup.py`
+- `discord_bot/` service: slash `/register`, `/me`, `/nation`, `/wars`, `/resources`
+- `tests/test_bot_api.py`, `scripts/apply_discord_bot_migration.py`, Railway docs
+
+**What To Watch**:
+- Run `python3 scripts/apply_discord_bot_migration.py` on production after web deploy
+- Set `BOT_API_SECRET` on web + discord-bot Railway services; `DISCORD_BOT_TOKEN` on bot service
+- Start command for bot service: `python -m discord_bot.main`
+
+---
+
 ### Session: 2026-05-22 (continued)
 
 **Task**: Security fixes + merge to master (PR #42)

@@ -1174,6 +1174,74 @@ def users_table_has_column(column_name: str) -> bool:
     return has_col
 
 
+def resolve_user_id_by_discord(discord_user_id: str) -> Optional[int]:
+    """Resolve AnO user id from Discord snowflake (discord_id or auth_type=discord hash)."""
+    if not discord_user_id:
+        return None
+    discord_user_id = str(discord_user_id).strip()
+    try:
+        with get_db_cursor() as db:
+            if users_table_has_column("discord_id"):
+                db.execute(
+                    """
+                    SELECT id FROM users
+                    WHERE discord_id = %s
+                       OR (hash = %s AND auth_type = 'discord')
+                    ORDER BY CASE WHEN discord_id = %s THEN 0 ELSE 1 END
+                    LIMIT 1
+                    """,
+                    (discord_user_id, discord_user_id, discord_user_id),
+                )
+            else:
+                db.execute(
+                    """
+                    SELECT id FROM users
+                    WHERE hash = %s AND auth_type = 'discord'
+                    LIMIT 1
+                    """,
+                    (discord_user_id,),
+                )
+            row = db.fetchone()
+            return int(row[0]) if row else None
+    except Exception as exc:
+        logger.warning("resolve_user_id_by_discord: %s", exc)
+        return None
+
+
+def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
+    """Set discord_id for a user, clearing the same id from any other account."""
+    if not users_table_has_column("discord_id"):
+        return
+    discord_user_id = str(discord_user_id).strip()
+    if not discord_user_id:
+        raise ValueError("discord_user_id is required")
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            UPDATE users SET discord_id = NULL
+            WHERE discord_id = %s AND id <> %s
+            """,
+            (discord_user_id, user_id),
+        )
+        db.execute(
+            "UPDATE users SET discord_id = %s WHERE id = %s",
+            (discord_user_id, user_id),
+        )
+
+
+def discord_link_codes_table_exists() -> bool:
+    """Whether migration 0022 discord_link_codes table is present."""
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                "SELECT to_regclass('public.discord_link_codes') IS NOT NULL"
+            )
+            row = db.fetchone()
+            return bool(row and row[0])
+    except Exception:
+        return False
+
+
 def teardown_request_connection(exc=None):
     """Return the request-scoped connection to the pool.
 
