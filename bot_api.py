@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import hmac
 import os
 import secrets
@@ -29,7 +30,14 @@ CODE_LENGTH = 8
 
 
 def _bot_secret() -> Optional[str]:
-    return os.getenv("BOT_API_SECRET")
+    explicit = (os.getenv("BOT_API_SECRET") or "").strip()
+    if explicit:
+        return explicit
+    # Bootstrap when BOT_API_SECRET is not set yet (same derivation on web + discord-bot).
+    secret_key = (os.getenv("SECRET_KEY") or "").strip()
+    if secret_key:
+        return hashlib.sha256(f"ano-bot-api-v1:{secret_key}".encode()).hexdigest()
+    return None
 
 
 def _require_bot_secret() -> Optional[Tuple[Any, int]]:
@@ -244,6 +252,29 @@ def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, s
         (code_norm,),
     )
   return True, "Nation linked successfully.", user_id
+
+
+@bp.route("/api/bot/health", methods=["GET"])
+def bot_health():
+    err = _require_bot_secret()
+    if err:
+        return err
+    import subprocess
+
+    sha = os.getenv("RAILWAY_GIT_COMMIT_SHA") or os.getenv("GIT_COMMIT") or "unknown"
+    try:
+        sha = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+            .decode()
+            .strip()
+        )
+    except Exception:
+        pass
+    return jsonify({"ok": True, "commit": sha, "discord_tables": discord_link_codes_table_exists()})
 
 
 @bp.route("/api/bot/register", methods=["POST"])

@@ -106,18 +106,20 @@ Your Railway deployment will consist of:
 2. Set **Service Name**: `discord-bot`
 3. Set **Start Command**:
    ```
-   python -m discord_bot.main
+   python scripts/run_discord_bot_if_leader.py
    ```
+   (Or use the `discord-bot` process from the repo `Procfile` if your Railway service reads it.)
 4. **Variables** (reference Postgres is not required for the bot; it calls the web API):
    ```
    DISCORD_BOT_TOKEN=<Discord Developer Portal bot token>
    BOT_API_SECRET=<same secret as web service>
    BOT_API_BASE_URL=https://affairsandorder.com
    ```
-5. On the **web service**, add:
+5. On the **web service**, add (optional if `SECRET_KEY` is already set — the app derives a matching `BOT_API_SECRET` automatically):
    ```
    BOT_API_SECRET=<same value>
    ```
+   Explicit `BOT_API_SECRET` is recommended for production; override the derived default when you rotate keys.
 6. After deploy, apply migration **0022** once (Railway CLI or one-off shell on web service):
    ```bash
    python3 scripts/apply_discord_bot_migration.py
