@@ -1,8 +1,8 @@
 # Discord Guild Panels — Root AI Setup Playbook
 
-This guide is for a **root AI agent** (or server owner) configuring an **Affairs & Order** Discord server with Locutus-style **channel panels** and **staff-only admin commands**.
+This guide is for a **root AI agent** (or server owner) configuring **any** Affairs & Order Discord community with Locutus-style **channel panels** and **staff-only admin commands**.
 
-The bot lives in `discord_bot/` and reads live data from the same PostgreSQL database as the game.
+The bot lives in `discord_bot/` and reads live data from the same PostgreSQL database as the game. Setup is **not tied to a region or shard** — each Discord server (`guild_id`) has its own channel bindings in `discord_guild_settings`. The same bot can serve multiple guilds at once; configure each server independently.
 
 ---
 
@@ -172,6 +172,12 @@ Player commands remain **unaffected**.
 - [ ] `#🛡️-staff-commands` invisible to `@everyone`.
 
 ---
+
+## Multiple Discord servers
+
+- Run the full setup **once per Discord guild** (official server, coalition server, partner server, etc.).
+- Panel data is **global game data** (leaderboard, wars, inspector) unless you later set `coalition_id` for coalition-scoped alerts.
+- Channel names are suggestions only — bind panels with `/guild_bind_panel` in whatever channels you create.
 
 ## Coalition servers (optional)
 
