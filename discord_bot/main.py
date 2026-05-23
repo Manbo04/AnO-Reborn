@@ -67,6 +67,12 @@ def main() -> None:
             ensure_schema_compat()
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
+        try:
+            from bot_api import warmup_bot_api
+
+            warmup_bot_api()
+        except Exception as exc:
+            logger.warning("warmup_bot_api: %s", exc)
     backend = get_backend()
     logger.info("Starting AnO Discord bot (mode=%s)", backend_mode_label())
     bot = AnOBot(backend)

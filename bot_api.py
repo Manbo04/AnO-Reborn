@@ -7,6 +7,7 @@ import hmac
 import logging
 import os
 import secrets
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -30,6 +31,8 @@ bp = Blueprint("bot_api", __name__)
 
 CODE_TTL_MINUTES = int(os.getenv("DISCORD_LINK_CODE_TTL_MINUTES", "30"))
 CODE_LENGTH = 8
+SNAPSHOT_CACHE_TTL_SECONDS = int(os.getenv("BOT_NATION_SNAPSHOT_CACHE_SECONDS", "90"))
+_snapshot_cache: Dict[int, Tuple[float, Dict[str, Any]]] = {}
 
 
 def _bot_secret() -> Optional[str]:
@@ -113,38 +116,42 @@ def _wars_schema() -> Dict[str, Optional[str]]:
     return _wars_schema_cache
 
 
-def _coalition_summary(user_id: int) -> Dict[str, Any]:
-    members_tbl = get_coalition_members_table()
-    if not members_tbl:
-        return {
-            "coalition_id": None,
-            "coalition_name": None,
-            "role": None,
-            "tax_rate": 0,
-        }
-    row = QueryHelper.fetch_one(
-        f"""
-        SELECT cm.colid, cm.role, c.name, COALESCE(c.tax_rate, 0) AS tax_rate
-        FROM {members_tbl} cm
-        LEFT JOIN colNames c ON c.id = cm.colid
-        WHERE cm.userid = %s
-        """,
-        (user_id,),
-        dict_cursor=True,
-    )
+def _empty_coalition() -> Dict[str, Any]:
+    return {
+        "coalition_id": None,
+        "coalition_name": None,
+        "role": None,
+        "tax_rate": 0,
+    }
+
+
+def _coalition_from_row(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not row:
-        return {
-            "coalition_id": None,
-            "coalition_name": None,
-            "role": None,
-            "tax_rate": 0,
-        }
+        return _empty_coalition()
     return {
         "coalition_id": row.get("colid"),
         "coalition_name": row.get("name"),
         "role": row.get("role"),
         "tax_rate": int(row.get("tax_rate") or 0),
     }
+
+
+def _coalition_summary(user_id: int, db=None) -> Dict[str, Any]:
+    members_tbl = get_coalition_members_table()
+    if not members_tbl:
+        return _empty_coalition()
+    query = f"""
+        SELECT cm.colid, cm.role, c.name, COALESCE(c.tax_rate, 0) AS tax_rate
+        FROM {members_tbl} cm
+        LEFT JOIN colNames c ON c.id = cm.colid
+        WHERE cm.userid = %s
+    """
+    if db is not None:
+        db.execute(query, (user_id,))
+        row = db.fetchone()
+        return _coalition_from_row(dict(row) if row else None)
+    row = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
+    return _coalition_from_row(row)
 
 
 def _active_war_count(user_id: int) -> int:
@@ -163,28 +170,11 @@ def _active_war_count(user_id: int) -> int:
     return int(row[0]) if row else 0
 
 
-def _list_active_wars(user_id: int) -> List[Dict[str, Any]]:
-    schema = _wars_schema()
-    war_pk, atk, dfn = schema.get("war_pk"), schema.get("attacker"), schema.get("defender")
-    if not war_pk or not atk or not dfn:
-        return []
-    rows = QueryHelper.fetch_all(
-        f"""
-        SELECT w.{war_pk} AS war_id, w.{atk} AS attacker_id, w.{dfn} AS defender_id,
-               w.war_type,
-               ua.username AS attacker_name, ud.username AS defender_name
-        FROM wars w
-        JOIN users ua ON ua.id = w.{atk}
-        JOIN users ud ON ud.id = w.{dfn}
-        WHERE w.peace_date IS NULL
-          AND (w.{atk} = %s OR w.{dfn} = %s)
-        ORDER BY w.{war_pk} DESC
-        """,
-        (user_id, user_id),
-        dict_cursor=True,
-    )
+def _rows_to_active_wars(user_id: int, rows: List[Any]) -> List[Dict[str, Any]]:
     wars: List[Dict[str, Any]] = []
     for row in rows or []:
+        if not isinstance(row, dict):
+            continue
         attacker_id = row["attacker_id"]
         defender_id = row["defender_id"]
         if user_id == attacker_id:
@@ -205,6 +195,175 @@ def _list_active_wars(user_id: int) -> List[Dict[str, Any]]:
             }
         )
     return wars
+
+
+def _list_active_wars(user_id: int, db=None) -> List[Dict[str, Any]]:
+    schema = _wars_schema()
+    war_pk, atk, dfn = schema.get("war_pk"), schema.get("attacker"), schema.get("defender")
+    if not war_pk or not atk or not dfn:
+        return []
+    query = f"""
+        SELECT w.{war_pk} AS war_id, w.{atk} AS attacker_id, w.{dfn} AS defender_id,
+               w.war_type,
+               ua.username AS attacker_name, ud.username AS defender_name
+        FROM wars w
+        JOIN users ua ON ua.id = w.{atk}
+        JOIN users ud ON ud.id = w.{dfn}
+        WHERE w.peace_date IS NULL
+          AND (w.{atk} = %s OR w.{dfn} = %s)
+        ORDER BY w.{war_pk} DESC
+        LIMIT 12
+    """
+    if db is not None:
+        db.execute(query, (user_id, user_id))
+        rows = [dict(r) for r in db.fetchall() or []]
+        return _rows_to_active_wars(user_id, rows)
+    rows = QueryHelper.fetch_all(query, (user_id, user_id), dict_cursor=True)
+    return _rows_to_active_wars(user_id, rows or [])
+
+
+def warmup_bot_api() -> None:
+    """Preload schema detection so first slash command is not slow."""
+    _wars_schema()
+
+
+def _snapshot_cache_get(user_id: int) -> Optional[Dict[str, Any]]:
+    entry = _snapshot_cache.get(user_id)
+    if not entry:
+        return None
+    expires_at, data = entry
+    if time.monotonic() > expires_at:
+        _snapshot_cache.pop(user_id, None)
+        return None
+    return data
+
+
+def _snapshot_cache_set(user_id: int, data: Dict[str, Any]) -> None:
+    if len(_snapshot_cache) > 800:
+        _snapshot_cache.clear()
+    _snapshot_cache[user_id] = (
+        time.monotonic() + SNAPSHOT_CACHE_TTL_SECONDS,
+        data,
+    )
+
+
+def _fetch_nation_snapshot_combined(user_id: int) -> Dict[str, Any]:
+    """One DB connection, few queries — avoids 10+ round trips for Discord."""
+    from psycopg2.extras import RealDictCursor
+
+    from database import get_db_cursor, users_table_has_column
+
+    started = time.perf_counter()
+    extra_user_cols: List[str] = []
+    if users_table_has_column("join_number"):
+        extra_user_cols.append("u.join_number")
+    if users_table_has_column("last_active"):
+        extra_user_cols.append("u.last_active")
+    extra_sql = (", " + ", ".join(extra_user_cols)) if extra_user_cols else ""
+
+    with get_db_cursor(cursor_factory=RealDictCursor) as db:
+        db.execute(
+            f"""
+            SELECT u.id, u.username, u.date AS date_joined{extra_sql},
+                   s.location, s.gold, s.manpower, s.default_defense,
+                   prov.province_count, prov.total_population, prov.total_land,
+                   prov.total_cities, prov.avg_happiness, prov.avg_productivity
+            FROM users u
+            LEFT JOIN stats s ON s.id = u.id
+            LEFT JOIN (
+                SELECT userid AS uid,
+                       COUNT(id) AS province_count,
+                       COALESCE(SUM(population), 0) AS total_population,
+                       COALESCE(SUM(land), 0) AS total_land,
+                       COALESCE(SUM(citycount), 0) AS total_cities,
+                       COALESCE(AVG(happiness), 0) AS avg_happiness,
+                       COALESCE(AVG(productivity), 0) AS avg_productivity
+                FROM provinces
+                WHERE userid = %s
+                GROUP BY userid
+            ) prov ON prov.uid = u.id
+            WHERE u.id = %s
+            """,
+            (user_id, user_id),
+        )
+        base = db.fetchone()
+        if not base:
+            return {}
+
+        db.execute(
+            """
+            SELECT rd.name, ue.quantity::bigint AS quantity
+            FROM user_economy ue
+            INNER JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id = %s AND ue.quantity > 0 AND rd.is_active = TRUE
+            ORDER BY ue.quantity DESC
+            LIMIT 24
+            """,
+            (user_id,),
+        )
+        resources = {
+            r["name"]: int(r["quantity"]) for r in db.fetchall() or []
+        }
+
+        db.execute(
+            """
+            SELECT ud.name, um.quantity::bigint AS quantity
+            FROM user_military um
+            INNER JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+            WHERE um.user_id = %s AND um.quantity > 0 AND ud.is_active = TRUE
+            """,
+            (user_id,),
+        )
+        military = {r["name"]: int(r["quantity"]) for r in db.fetchall() or []}
+        military["manpower"] = int(base.get("manpower") or 0)
+        military["default_defense"] = base.get("default_defense") or ""
+
+        coalition = _coalition_summary(user_id, db=db)
+        wars = _list_active_wars(user_id, db=db)
+        influence = int(get_influence(user_id, db=db) or 0)
+
+    province_count = int(base.get("province_count") or 0)
+    snap: Dict[str, Any] = {
+        "id": base["id"],
+        "username": base["username"],
+        "location": base.get("location"),
+        "gold": int(base.get("gold") or 0),
+        "influence": influence,
+        "coalition": coalition,
+        "active_wars": len(wars),
+        "active_wars_list": wars,
+        "province_count": province_count,
+        "provinces": {
+            "province_count": province_count,
+            "total_population": int(base.get("total_population") or 0),
+            "total_land": int(base.get("total_land") or 0),
+            "total_cities": int(base.get("total_cities") or 0),
+            "avg_happiness": float(base.get("avg_happiness") or 0),
+            "avg_productivity": float(base.get("avg_productivity") or 0),
+        },
+        "military": military,
+        "resources": resources,
+    }
+    if base.get("date_joined"):
+        snap["date_joined"] = str(base["date_joined"])
+    if base.get("join_number") is not None:
+        snap["join_number"] = int(base["join_number"])
+    if base.get("last_active") is not None:
+        la = base["last_active"]
+        snap["last_active"] = (
+            la.strftime("%Y-%m-%d %H:%M UTC")
+            if hasattr(la, "strftime")
+            else str(la)
+        )
+
+    elapsed = time.perf_counter() - started
+    if elapsed > 2.0:
+        logger.warning(
+            "nation snapshot slow user_id=%s took %.2fs (combined path)",
+            user_id,
+            elapsed,
+        )
+    return snap
 
 
 def _province_count(user_id: int) -> int:
@@ -362,15 +521,23 @@ def nation_snapshot_for_bot(
 ) -> Dict[str, Any]:
     """Nation stats for Discord / API; never raises — returns partial data on errors."""
     try:
+        if full_detail:
+            cached = _snapshot_cache_get(user_id)
+            if cached is not None:
+                return cached
+            snap = _fetch_nation_snapshot_combined(user_id)
+            if snap:
+                _snapshot_cache_set(user_id, snap)
+            return snap
+
         snap = _nation_snapshot(
-            user_id, include_resources=include_resources or full_detail
+            user_id, include_resources=include_resources
         )
         if not snap:
             return {}
-        if full_detail:
-            _enrich_nation_snapshot(snap, user_id)
         try:
             snap["active_wars_list"] = _list_active_wars(user_id)
+            snap["active_wars"] = len(snap["active_wars_list"])
         except Exception as exc:
             logger.warning("war list failed for user %s: %s", user_id, exc)
             snap["active_wars_list"] = []
