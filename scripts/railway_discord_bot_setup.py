@@ -26,7 +26,7 @@ import urllib.request
 GRAPHQL_URL = "https://backboard.railway.com/graphql/v2"
 DEFAULT_PROJECT_ID = "0165e9df-ef94-41b3-ab57-c596994a3165"
 DEFAULT_GITHUB_REPO = "Manbo04/AnO-Reborn"
-BOT_START_COMMAND = "python -m discord_bot.main"
+BOT_START_COMMAND = "python scripts/run_discord_bot_if_leader.py"
 # Railway service name in production (see natural-gratitude project canvas).
 BOT_SERVICE_NAME = os.getenv("RAILWAY_BOT_SERVICE_NAME", "bot")
 
@@ -166,6 +166,58 @@ def _set_start_command(
     )
 
 
+def _get_service_variables(
+    token: str, project_id: str, environment_id: str, service_id: str
+) -> dict:
+    data = _gql(
+        token,
+        """
+        query($projectId: String!, $environmentId: String!, $serviceId: String!) {
+          variables(
+            projectId: $projectId
+            environmentId: $environmentId
+            serviceId: $serviceId
+          )
+        }
+        """,
+        {
+            "projectId": project_id,
+            "environmentId": environment_id,
+            "serviceId": service_id,
+        },
+    )
+    return data.get("variables") or {}
+
+
+def _delete_var(
+    token: str,
+    project_id: str,
+    environment_id: str,
+    service_id: str,
+    name: str,
+) -> None:
+    try:
+        _gql(
+            token,
+            """
+            mutation($input: VariableDeleteInput!) {
+              variableDelete(input: $input)
+            }
+            """,
+            {
+                "input": {
+                    "projectId": project_id,
+                    "environmentId": environment_id,
+                    "serviceId": service_id,
+                    "name": name,
+                    "skipDeploys": True,
+                }
+            },
+        )
+    except Exception:
+        pass
+
+
 def _redeploy(token: str, service_id: str, environment_id: str) -> None:
     _gql(
         token,
@@ -236,20 +288,27 @@ def main() -> None:
     )
 
     if bot_id:
-        print("Setting discord-bot service variables and start command...")
-        _upsert_var(token, project_id, env_id, bot_id, "BOT_API_SECRET", bot_secret)
-        _upsert_var(
-            token, project_id, env_id, bot_id, "BOT_API_BASE_URL", base_url
-        )
+        print(f"Configuring {BOT_SERVICE_NAME} service (start command + database mode)...")
+        web_vars = _get_service_variables(token, project_id, env_id, web_id)
+        db_url = web_vars.get("DATABASE_PUBLIC_URL") or web_vars.get("DATABASE_URL")
+        if db_url:
+            _upsert_var(token, project_id, env_id, bot_id, "DATABASE_URL", db_url)
+            print("  copied DATABASE_URL from web to bot (direct DB mode)")
+        else:
+            _upsert_var(token, project_id, env_id, bot_id, "BOT_API_SECRET", bot_secret)
+            _upsert_var(token, project_id, env_id, bot_id, "BOT_API_BASE_URL", base_url)
+            print("  set BOT_API_* on bot (no DATABASE_URL on web to copy)")
+        for obsolete in ("DISCORD_BOT_URL", "PORT"):
+            _delete_var(token, project_id, env_id, bot_id, obsolete)
         try:
             _set_start_command(token, bot_id, env_id, BOT_START_COMMAND)
         except Exception as exc:
             print(f"WARN: start command update: {exc}")
         try:
             _redeploy(token, bot_id, env_id)
-            print("Triggered discord-bot deploy")
+            print(f"Triggered {BOT_SERVICE_NAME} deploy")
         except Exception as exc:
-            print(f"WARN: discord-bot redeploy: {exc}")
+            print(f"WARN: bot redeploy: {exc}")
 
     try:
         _redeploy(token, web_id, env_id)
