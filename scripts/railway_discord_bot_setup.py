@@ -300,6 +300,19 @@ def main() -> None:
             print("  set BOT_API_* on bot (no DATABASE_URL on web to copy)")
         for obsolete in ("DISCORD_BOT_URL", "PORT"):
             _delete_var(token, project_id, env_id, bot_id, obsolete)
+        _upsert_var(
+            token,
+            project_id,
+            env_id,
+            bot_id,
+            "RAILWAY_DOCKERFILE_PATH",
+            "Dockerfile.discord-bot",
+        )
+        web_vars = _get_service_variables(token, project_id, env_id, web_id)
+        redis_url = web_vars.get("REDIS_URL")
+        if redis_url:
+            _upsert_var(token, project_id, env_id, bot_id, "REDIS_URL", redis_url)
+            print("  copied REDIS_URL from web to bot")
         try:
             _set_start_command(token, bot_id, env_id, BOT_START_COMMAND)
         except Exception as exc:
