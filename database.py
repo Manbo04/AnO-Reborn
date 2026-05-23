@@ -1106,8 +1106,43 @@ def _ensure_discord_bot_tables(db) -> None:
             registered_role_id VARCHAR(32),
             bank_alert_channel_id VARCHAR(32),
             war_alert_channel_id VARCHAR(32),
+            panel_readme_channel_id VARCHAR(32),
+            panel_leaderboard_channel_id VARCHAR(32),
+            panel_war_feed_channel_id VARCHAR(32),
+            panel_inspector_channel_id VARCHAR(32),
+            panel_world_channel_id VARCHAR(32),
+            panel_alerts_channel_id VARCHAR(32),
+            panels_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            panels_refresh_minutes INTEGER NOT NULL DEFAULT 15,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    for col_def in (
+        "panel_readme_channel_id VARCHAR(32)",
+        "panel_leaderboard_channel_id VARCHAR(32)",
+        "panel_war_feed_channel_id VARCHAR(32)",
+        "panel_inspector_channel_id VARCHAR(32)",
+        "panel_world_channel_id VARCHAR(32)",
+        "panel_alerts_channel_id VARCHAR(32)",
+        "panels_enabled BOOLEAN NOT NULL DEFAULT FALSE",
+        "panels_refresh_minutes INTEGER NOT NULL DEFAULT 15",
+    ):
+        col_name = col_def.split()[0]
+        db.execute(
+            f"ALTER TABLE discord_guild_settings "
+            f"ADD COLUMN IF NOT EXISTS {col_def}"
+        )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_panel_messages (
+            guild_id VARCHAR(32) NOT NULL,
+            panel_key VARCHAR(32) NOT NULL,
+            channel_id VARCHAR(32) NOT NULL,
+            message_id VARCHAR(32) NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (guild_id, panel_key)
         )
         """
     )
