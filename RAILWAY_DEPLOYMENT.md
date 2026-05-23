@@ -17,6 +17,7 @@ Your Railway deployment will consist of:
 3. **Web Service** - Main Flask application (Gunicorn)
 4. **Worker Service** - Celery worker for background tasks
 5. **Beat Service** - Celery beat scheduler for periodic tasks
+6. **Discord Bot Service** (optional) - Slash commands (`/register`, `/me`, etc.)
 
 ---
 
@@ -99,7 +100,35 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 6: Create Celery Beat Service
+## Step 6: Discord bot (optional, Phase 1)
+
+1. Click **"+ New"** → **"GitHub Repo"** → same repository
+2. Set **Service Name**: `discord-bot`
+3. Set **Start Command**:
+   ```
+   python -m discord_bot.main
+   ```
+4. **Variables** (reference Postgres is not required for the bot; it calls the web API):
+   ```
+   DISCORD_BOT_TOKEN=<Discord Developer Portal bot token>
+   BOT_API_SECRET=<same secret as web service>
+   BOT_API_BASE_URL=https://affairsandorder.com
+   ```
+5. On the **web service**, add:
+   ```
+   BOT_API_SECRET=<same value>
+   ```
+6. After deploy, apply migration **0022** once (Railway CLI or one-off shell on web service):
+   ```bash
+   python3 scripts/apply_discord_bot_migration.py
+   ```
+7. Invite the bot with scopes: `bot`, `applications.commands` (permissions: Send Messages, Embed Links; Manage Roles optional for Phase 2).
+
+Players link nations via **Account → Generate Bot Link Code**, then `/register code:XXXXXXXX` in Discord.
+
+---
+
+## Step 7: Create Celery Beat Service
 
 1. Click **"+ New"** → **"GitHub Repo"**
 2. Select the **same AnO repository** again
@@ -114,7 +143,7 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 7: Apply Changes and Deploy
+## Step 8: Apply Changes and Deploy
 
 1. In the Railway dashboard, you should see **"Apply 2 changes"** (or similar)
 2. Click **"Details"** to review changes
@@ -123,7 +152,7 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 8: Initialize Database (First Deployment Only)
+## Step 9: Initialize Database (First Deployment Only)
 
 After the first successful deployment:
 

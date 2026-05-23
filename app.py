@@ -270,6 +270,9 @@ signup.register_signup_routes(app)
 login.register_login_routes(app)
 market.register_market_routes(app)
 change.register_change_routes(app)
+import bot_api  # noqa: E402
+
+bot_api.register_bot_api_routes(app)
 coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
