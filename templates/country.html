@@ -18,6 +18,9 @@
     <div class="templatedivcontent">
 
         {% include 'partials/game_country_hub.html' %}
+        {% if FEATURE_GAME_SHELL and status %}
+        {% include 'partials/quick_nav.html' %}
+        {% endif %}
 
         <div class="templatedivflex2 menuflex2">
             <div class="templatedivflex2left" id="countryview" onclick="countryview()">

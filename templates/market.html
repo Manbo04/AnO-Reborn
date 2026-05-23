@@ -96,7 +96,33 @@
             </div>
         </div>
 
-        <div class="templateoutertablediv">
+        <div class="game-card-list game-card-list--mobile-only">
+            {% for id, type, name, resource, amount, price, offer_id, total_price in offers %}
+            <article class="game-market-card">
+                <header class="game-market-card-head">
+                    <a href="/country/id={{ id }}">{{ name }}</a>
+                    <span class="game-market-card-type">{{ 'Buying' if type == 'buy' else 'Selling' }}</span>
+                </header>
+                <div class="game-market-card-body">
+                    <span class="game-market-resource">{{ resource | replace('_', ' ') | title }}</span>
+                    <span class="game-market-amount">{{ amount }}</span>
+                    <span class="game-market-price">${{ price }} / ${{ total_price }} total</span>
+                </div>
+                <form method="POST" class="game-market-card-form">
+                    <input class="loginsignupinput" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" required/>
+                    {% if type == "sell" %}
+                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton">Buy</button>
+                    {% elif type == "buy" %}
+                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton">Sell</button>
+                    {% endif %}
+                </form>
+            </article>
+            {% else %}
+            <p class="province-base-sheet-sub">No offers match your filters.</p>
+            {% endfor %}
+        </div>
+
+        <div class="templateoutertablediv game-table-fallback--hide-mobile">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>Name</th>
