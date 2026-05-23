@@ -70,18 +70,27 @@ def register_commands(
                     ephemeral=not nation,
                 )
                 return
+            from discord_bot.config import GAME_BASE_URL
+            from discord_bot.embeds import ANO_CRIMSON
+
+            nation_id = data.get("nation_id")
             embed = discord.Embed(
-                title=f"Active wars (nation {data.get('nation_id')})",
-                color=discord.Color.orange(),
+                title=f"⚔️ Active wars · Nation #{nation_id}",
+                description=f"[Open nation]({GAME_BASE_URL}/country/id={nation_id})",
+                color=ANO_CRIMSON,
             )
-            for w in wars[:15]:
+            for w in wars[:12]:
+                opp_id = w.get("opponent_id")
+                opp_name = w.get("opponent_name", "?")
+                opp_link = (
+                    f"[{opp_name}]({GAME_BASE_URL}/country/id={opp_id})"
+                    if opp_id
+                    else f"**{opp_name}**"
+                )
                 embed.add_field(
                     name=f"War #{w['war_id']}",
-                    value=(
-                        f"**{w['opponent_name']}** (id {w['opponent_id']})\n"
-                        f"You are: {w['side']}"
-                    ),
-                    inline=False,
+                    value=f"vs {opp_link}\n**Side:** {w.get('side', '?')}",
+                    inline=True,
                 )
             await interaction.followup.send(
                 embed=embed, ephemeral=not nation
