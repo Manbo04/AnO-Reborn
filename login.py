@@ -125,7 +125,13 @@ def login():
                     return render_template("login.html"), 403
 
                 try:
-                    hashed_pw = user[4].encode("utf-8")
+                    pw_field = user[4]
+                    if isinstance(pw_field, bytes):
+                        hashed_pw = pw_field
+                    elif pw_field is None:
+                        raise ValueError("empty password field")
+                    else:
+                        hashed_pw = pw_field.encode("utf-8")
                     logger.debug("hashed_pw retrieved for user")
                 except Exception as e:
                     logger.debug(f"Exception getting hashed_pw: {e}")

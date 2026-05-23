@@ -270,6 +270,9 @@ signup.register_signup_routes(app)
 login.register_login_routes(app)
 market.register_market_routes(app)
 change.register_change_routes(app)
+import bot_api  # noqa: E402
+
+bot_api.register_bot_api_routes(app)
 coalitions.register_coalitions_routes(app)
 countries.register_countries_routes(app)
 policies.register_policies_routes(app)
@@ -1257,8 +1260,10 @@ def serve_flag(flag_type, flag_id):
 
 @app.route("/account", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=60)
 def account():
+    from bot_api import CODE_TTL_MINUTES, get_active_discord_link_code
+    from datetime import timezone
+
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
@@ -1274,7 +1279,24 @@ def account():
             return error(404, "Account not found")
         user = dict(row)
 
-    return render_template("account.html", user=user)
+    discord_bot_link = get_active_discord_link_code(cId)
+    if discord_bot_link:
+        exp = discord_bot_link["expires_at"]
+        if exp is not None:
+            if getattr(exp, "tzinfo", None) is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            discord_bot_link["expires_display"] = exp.astimezone(
+                timezone.utc
+            ).strftime("%Y-%m-%d %H:%M UTC")
+        else:
+            discord_bot_link["expires_display"] = "soon"
+
+    return render_template(
+        "account.html",
+        user=user,
+        discord_bot_link=discord_bot_link,
+        discord_link_ttl_minutes=CODE_TTL_MINUTES,
+    )
 
 
 @app.route("/recruitments", methods=["GET"])

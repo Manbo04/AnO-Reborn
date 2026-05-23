@@ -15,16 +15,32 @@ from game_ui import (  # noqa: E402
 )
 
 
+def _building_path(key: str) -> str:
+    for ext in (".svg", ".png"):
+        rel = f"images/game/buildings/{key}{ext}"
+        if (ROOT / "static" / rel).is_file():
+            return rel
+    return f"images/game/buildings/{key}.png"
+
+
+def _unit_path(key: str) -> str:
+    for ext in (".svg", ".png"):
+        rel = f"images/game/units/{key}{ext}"
+        if (ROOT / "static" / rel).is_file():
+            return rel
+    return f"images/game/units/{key}.png"
+
+
 def main() -> None:
     manifest = {
         "version": 1,
         "note": "game/ paths are optional illustrated overrides; legacy used when missing",
         "buildings": {
-            k: {"legacy": v, "path": f"images/game/buildings/{k}.png"}
+            k: {"legacy": v, "path": _building_path(k)}
             for k, v in BUILDING_LEGACY_IMAGES.items()
         },
         "units": {
-            k: {"legacy": v, "path": f"images/game/units/{k}.png"}
+            k: {"legacy": v, "path": _unit_path(k)}
             for k, v in UNIT_LEGACY_IMAGES.items()
         },
         "resources": {

@@ -1,0 +1,55 @@
+name: Discord Bot Setup
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - migrations/0022_discord_bot.sql
+      - database.py
+      - scripts/apply_discord_bot_migration.py
+      - scripts/railway_discord_bot_setup.py
+      - .github/workflows/discord-bot-setup.yml
+      - bot_api.py
+      - discord_bot/**
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-and-configure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Apply Discord bot migration
+        env:
+          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+        run: |
+          pip install psycopg2-binary python-dotenv
+          if [ -z "${DATABASE_PUBLIC_URL:-}" ]; then
+            echo "::warning::DATABASE_PUBLIC_URL not set — skipping migration (web deploy will auto-create tables via ensure_schema_compat)."
+            exit 0
+          fi
+          python3 scripts/apply_discord_bot_migration.py
+
+      - name: Configure Railway (BOT_API_SECRET + discord-bot service)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
+        run: |
+          if [ -z "${RAILWAY_TOKEN:-}" ]; then
+            echo "::warning::RAILWAY_TOKEN not set — add it to repo secrets to auto-configure Railway."
+            exit 0
+          fi
+          if [ -z "${BOT_API_SECRET:-}" ]; then
+            BOT_API_SECRET="$(openssl rand -hex 32)"
+          fi
+          echo "::add-mask::${BOT_API_SECRET}"
+          export BOT_API_SECRET
+          python3 scripts/railway_discord_bot_setup.py
