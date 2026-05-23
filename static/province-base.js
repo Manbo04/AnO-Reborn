@@ -331,6 +331,29 @@
                 total + ' structure' + (total === 1 ? '' : 's') + ' in this district';
         }
         renderDockCards(data.buildings || [], data.build_cost_resource);
+        var hint = qs('[data-dock-hint]');
+        if (hint) {
+            if (data.suggest_build) {
+                hint.innerHTML =
+                    'Suggested: <strong>' +
+                    escapeHtml(data.suggest_build.display_name) +
+                    '</strong> · ' +
+                    formatCost(data.suggest_build.base_cost, data.build_cost_resource) +
+                    ' — tap + Build on the card';
+            } else {
+                hint.innerHTML =
+                    'Tap <strong>+</strong> to build instantly · expand for full list';
+            }
+        }
+    }
+
+    function applySuggestHighlight(data) {
+        if (!data || !data.suggest_build) return;
+        var id = String(data.suggest_build.building_id);
+        qsa('[data-build-id="' + id + '"]').forEach(function (btn) {
+            var card = btn.closest('.province-dock-card, .province-base-building-row');
+            if (card) card.classList.add('is-suggested');
+        });
     }
 
     function fetchSlotData(slotId) {
@@ -374,6 +397,7 @@
                     sub.textContent = total + ' structures · tap + to build';
                 }
                 renderBuildingList(data.buildings || [], data.build_cost_resource);
+                applySuggestHighlight(data);
             })
             .catch(function (err) {
                 if (list) {
@@ -398,7 +422,10 @@
                 '<p class="province-base-sheet-sub">Loading…</p>';
         }
         fetchSlotData(slotId)
-            .then(renderDock)
+            .then(function (data) {
+                renderDock(data);
+                applySuggestHighlight(data);
+            })
             .catch(function (err) {
                 showToast(err.message, true);
             });
@@ -536,13 +563,22 @@
         initViewToggle();
 
         if (layoutData && layoutData.slots && layoutData.slots.length) {
-            var first = layoutData.slots.find(function (s) {
-                return s.quantity > 0;
-            }) || layoutData.slots[0];
+            var first =
+                layoutData.slots.find(function (s) {
+                    return s.quantity > 0;
+                }) ||
+                layoutData.slots.find(function (s) {
+                    return s.id === 'food';
+                }) ||
+                layoutData.slots[0];
             if (!isMobileLayout()) {
                 setTimeout(function () {
                     selectSlot(first.id);
                 }, 400);
+            } else if (layoutData.total_structures === 0) {
+                qsa('.province-map-node.is-empty').forEach(function (n) {
+                    n.classList.add('pulse-hint');
+                });
             }
         }
     }

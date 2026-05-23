@@ -36,7 +36,37 @@
         <button type="button" class="province-base-toggle" data-province-view-toggle aria-pressed="true" title="Switch between district map and classic tabs">Classic view</button>
     </div>
 
+    {% if province_base_layout.total_structures == 0 and province_base_layout.own %}
+    <div class="province-onboarding" id="province-onboarding" role="status">
+        <span class="material-icons-outlined">touch_app</span>
+        <span>Your province is empty — tap a <strong>district</strong> on the map below, then press <strong>+ Build</strong> to place your first structure.</span>
+    </div>
+    {% endif %}
+
     <div class="province-base-arena">
+        <svg class="province-map-svg" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+            <defs>
+                <pattern id="province-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                </pattern>
+                <radialGradient id="province-ground-glow" cx="50%" cy="70%" r="55%">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+                    <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                </radialGradient>
+            </defs>
+            <rect width="400" height="400" fill="url(#province-grid)" opacity="0.5"/>
+            <ellipse cx="200" cy="260" rx="150" ry="70" fill="url(#province-ground-glow)"/>
+            <g class="province-map-paths" stroke="rgba(255,255,255,0.2)" stroke-width="3" stroke-linecap="round" fill="none">
+                <path d="M 200 200 L 200 70"/>
+                <path d="M 200 200 L 90 115"/>
+                <path d="M 200 200 L 310 115"/>
+                <path d="M 200 200 L 55 205"/>
+                <path d="M 200 200 L 345 205"/>
+                <path d="M 200 200 L 115 330"/>
+                <path d="M 200 200 L 285 330"/>
+            </g>
+            <circle cx="200" cy="200" r="36" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        </svg>
         <div class="province-map-scenery" aria-hidden="true">
             <div class="province-map-cloud province-map-cloud--1"></div>
             <div class="province-map-cloud province-map-cloud--2"></div>

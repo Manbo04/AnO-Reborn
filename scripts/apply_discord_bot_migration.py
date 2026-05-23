@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""Apply schema compatibility migration 0021 (coalitions + discord_id).
-
-For Discord bot tables (0022), run:
-    python3 scripts/apply_discord_bot_migration.py
+"""Apply migration 0022 (Discord bot tables + discord_id unique index).
 
 Usage:
-    DATABASE_PUBLIC_URL=postgresql://... python3 scripts/apply_schema_compat.py
+    DATABASE_PUBLIC_URL=postgresql://... python3 scripts/apply_discord_bot_migration.py
 """
 
 from __future__ import annotations
@@ -19,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "migrations" / "0021_coalition_members_and_discord_compat.sql"
+MIGRATION = ROOT / "migrations" / "0022_discord_bot.sql"
 
 
 def main() -> None:
@@ -43,17 +40,21 @@ def main() -> None:
             cur.execute(sql)
             cur.execute(
                 """
-                SELECT to_regclass('public.coalitions_legacy') AS legacy,
-                       to_regclass('public.coalitions') AS flat,
+                SELECT to_regclass('public.discord_link_codes') AS link_codes,
+                       to_regclass('public.discord_guild_settings') AS guild_settings,
                        EXISTS (
-                           SELECT 1 FROM information_schema.columns
-                           WHERE table_schema='public' AND table_name='users'
-                             AND column_name='discord_id'
-                       ) AS discord_id
+                           SELECT 1 FROM pg_indexes
+                           WHERE schemaname = 'public'
+                             AND indexname = 'idx_users_discord_id_unique'
+                       ) AS discord_id_unique
                 """
             )
             row = cur.fetchone()
-            print(f"  coalitions_legacy={row[0]}, coalitions={row[1]}, discord_id={row[2]}")
+            print(
+                f"  discord_link_codes={row[0]}, "
+                f"discord_guild_settings={row[1]}, "
+                f"discord_id_unique={row[2]}"
+            )
         print("Done.")
     except Exception as exc:
         print(f"FAILED: {exc}")

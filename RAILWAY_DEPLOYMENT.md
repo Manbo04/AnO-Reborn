@@ -17,6 +17,7 @@ Your Railway deployment will consist of:
 3. **Web Service** - Main Flask application (Gunicorn)
 4. **Worker Service** - Celery worker for background tasks
 5. **Beat Service** - Celery beat scheduler for periodic tasks
+6. **Discord Bot Service** (optional) - Slash commands (`/register`, `/me`, etc.)
 
 ---
 
@@ -99,7 +100,65 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 6: Create Celery Beat Service
+## Step 6: Discord bot (existing `bot` service)
+
+If you already have a Railway service named **`bot`** (invited to Discord, `DISCORD_BOT_TOKEN` set), reconfigure it for Phase 1:
+
+### Start command (required)
+
+Replace any HTTP server / `PORT=5005` setup. The bot is a **Discord gateway client**, not a web app:
+
+```
+python scripts/run_discord_bot_if_leader.py
+```
+
+Remove obsolete variables: `DISCORD_BOT_URL`, `PORT` (not used by this codebase).
+
+### Variables on the `bot` service (easy mode — recommended)
+
+Your `bot` service is already wired to **Postgres** on the canvas. You only need:
+
+| Variable | How to set |
+|----------|------------|
+| `DISCORD_BOT_TOKEN` | Already set |
+| `DATABASE_URL` | **+ Variable → Reference → Postgres → `DATABASE_URL`** |
+
+Optional: `REDIS_URL` (reference from Redis) for leader lock if you run multiple bot replicas.
+
+You do **not** need `SECRET_KEY`, `BOT_API_BASE_URL`, `DISCORD_BOT_URL`, or `PORT` on the bot when using the database (default after latest deploy).
+
+### Alternative: HTTP API mode (no Postgres on bot)
+
+| Variable | Value |
+|----------|--------|
+| `DISCORD_BOT_TOKEN` | Your bot token |
+| `BOT_API_BASE_URL` | `https://affairsandorder.com` |
+| `SECRET_KEY` | Reference from **web** service |
+| `REDIS_URL` | Reference from Redis |
+
+### Web service
+
+`SECRET_KEY` is enough for the bot API (`/api/bot/*`) — auth is derived automatically until you set `BOT_API_SECRET`.
+
+### After deploy
+
+Check **bot → Logs** for `data mode=database` and `Synced 5 global slash command(s)`.
+
+Tables are created automatically on web boot. One-time migration (optional):
+
+```bash
+python3 scripts/apply_discord_bot_migration.py
+```
+
+### Player flow
+
+**Account → Generate Bot Link Code** → Discord `/register code:XXXXXXXX` → `/me`, `/wars`, `/resources`, `/nation`
+
+Slash commands can take up to ~1 hour to appear globally on first deploy; re-invite is not required if the bot is already in your server.
+
+---
+
+## Step 7: Create Celery Beat Service
 
 1. Click **"+ New"** → **"GitHub Repo"**
 2. Select the **same AnO repository** again
@@ -114,7 +173,7 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 7: Apply Changes and Deploy
+## Step 8: Apply Changes and Deploy
 
 1. In the Railway dashboard, you should see **"Apply 2 changes"** (or similar)
 2. Click **"Details"** to review changes
@@ -123,7 +182,7 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 8: Initialize Database (First Deployment Only)
+## Step 9: Initialize Database (First Deployment Only)
 
 After the first successful deployment:
 
