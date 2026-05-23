@@ -116,6 +116,8 @@
 
             {% endif %}
 
+            {% include 'partials/distribution_alert.html' %}
+
             <h2 class="templatecontentheaderleft">Country info</h2>
 
             <div class="templatedivflex2 card-align-row">
@@ -888,6 +890,19 @@
                     <td>Citizens</td>
                     <td>{{ rations_need}} rations, {{ cg_needed }} consumer goods</td>
                 </tr>
+                {% if distribution_status %}
+                <tr>
+                    <td>Ration distribution</td>
+                    <td>
+                        Serves {{ distribution_status.distribution_cap | commas }} /
+                        {{ population | commas }} population
+                        ({{ distribution_status.coverage_percent }}%)
+                        {% if distribution_status.stockpile_bottleneck %}
+                        — stockpile not reaching all citizens
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
                 <tr>
                     <th>Infrastructure</th>
                 </tr>

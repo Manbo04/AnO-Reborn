@@ -26,7 +26,16 @@
         {% endif %}
         {% if distribution_capacity is not none %}
         <ul class="right vanilla notificationchild">
-            Ration distribution serves {{ distribution_capacity | commas }} population
+            National ration distribution serves {{ distribution_capacity | commas }} population
+            {% if nation_distribution and nation_distribution.uncovered_population > 0 %}
+            ({{ nation_distribution.uncovered_population | commas }} citizens unserved)
+            {% endif %}
+        </ul>
+        {% endif %}
+        {% if nation_distribution and nation_distribution.stockpile_bottleneck and not enough_rations %}
+        <ul class="right vanilla notificationchildright">
+            <span class="material-icons-outlined">warning</span>
+            Large national stockpile, but distribution buildings cannot reach all citizens.
         </ul>
         {% endif %}
     </div>
