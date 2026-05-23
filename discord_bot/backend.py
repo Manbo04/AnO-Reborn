@@ -164,11 +164,22 @@ def _has_database_url() -> bool:
     )
 
 
+def _use_web_embed_backend() -> bool:
+    flag = (os.getenv("DISCORD_BOT_USE_WEB_EMBEDS") or "").strip().lower()
+    return flag in ("1", "true", "yes")
+
+
 def get_backend() -> BotBackend:
+    if _use_web_embed_backend():
+        from discord_bot.web_embed_backend import WebEmbedBackend
+
+        return WebEmbedBackend()
     if _has_database_url():
         return DirectDatabaseBackend()
     return HttpApiBackend()
 
 
 def backend_mode_label() -> str:
+    if _use_web_embed_backend():
+        return "web-embeds"
     return "database" if _has_database_url() else "http-api"

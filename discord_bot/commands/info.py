@@ -11,6 +11,25 @@ from discord_bot.embeds import EMBED_UI_VERSION, build_nation_embed
 logger = logging.getLogger(__name__)
 
 
+def _embed_from_payload(payload: dict) -> discord.Embed | None:
+    if isinstance(payload.get("embed"), dict):
+        return discord.Embed.from_dict(payload["embed"])
+    return None
+
+
+async def _send_nation_card(
+    interaction: discord.Interaction,
+    payload: dict,
+    *,
+    fallback_title: str,
+    ephemeral: bool,
+) -> None:
+    embed = _embed_from_payload(payload)
+    if embed is None:
+        embed = build_nation_embed(payload, fallback_title)
+    await interaction.followup.send(embed=embed, ephemeral=ephemeral)
+
+
 def register_commands(
     tree: app_commands.CommandTree, backend: BotBackend
 ) -> None:
@@ -22,8 +41,9 @@ def register_commands(
         await interaction.response.defer(ephemeral=True)
         try:
             data = await asyncio.to_thread(backend.me, str(interaction.user.id))
-            embed = build_nation_embed(data, "Your nation")
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await _send_nation_card(
+                interaction, data, fallback_title="Your nation", ephemeral=True
+            )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
         except Exception as exc:
@@ -44,8 +64,9 @@ def register_commands(
         await interaction.response.defer()
         try:
             data = await asyncio.to_thread(backend.nation, identifier.strip())
-            embed = build_nation_embed(data, "Nation lookup")
-            await interaction.followup.send(embed=embed)
+            await _send_nation_card(
+                interaction, data, fallback_title="Nation lookup", ephemeral=False
+            )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
 
@@ -126,12 +147,9 @@ def register_commands(
                 data = await asyncio.to_thread(
                     lambda: backend.resources(discord_user_id=uid)
                 )
-            embed = build_nation_embed(
-                data,
-                f"Resources — {data.get('username', '?')}",
-            )
-            await interaction.followup.send(
-                embed=embed, ephemeral=not nation
+            title = f"Resources — {data.get('username', '?')}"
+            await _send_nation_card(
+                interaction, data, fallback_title=title, ephemeral=not nation
             )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)

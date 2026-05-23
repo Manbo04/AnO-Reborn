@@ -648,6 +648,69 @@ def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, s
   return True, "Nation linked successfully.", user_id
 
 
+def _embed_to_dict(embed) -> Dict[str, Any]:
+    data = embed.to_dict()
+    color = data.get("color")
+    if color is not None and color < 0:
+        data["color"] = color & 0xFFFFFF
+    return data
+
+
+@bp.route("/api/bot/embed_version", methods=["GET"])
+def bot_embed_version():
+    """Public check that web deploy includes latest Discord embed UI."""
+    from discord_bot.embeds import EMBED_UI_VERSION
+
+    return jsonify(
+        {
+            "embed_ui": EMBED_UI_VERSION,
+            "ok": True,
+        }
+    )
+
+
+@bp.route("/api/bot/me_embed", methods=["GET"])
+def bot_me_embed():
+    err = _require_bot_secret()
+    if err:
+        return err
+    from discord_bot.embeds import EMBED_UI_VERSION, build_nation_embed
+
+    discord_user_id = _discord_user_id_from_request()
+    if not discord_user_id:
+        return jsonify({"error": "X-Discord-User-Id header required"}), 400
+    user_id = resolve_user_id_by_discord(discord_user_id)
+    if user_id is None:
+        return jsonify(
+            {"error": "Not registered. Link your nation with /register on Discord."}
+        ), 404
+    snap = nation_snapshot_for_bot(user_id)
+    if not snap.get("id"):
+        return jsonify({"error": "Could not load nation statistics."}), 500
+    title = (request.args.get("title") or "Your nation").strip() or "Your nation"
+    embed = build_nation_embed(snap, title)
+    return jsonify({"embed": _embed_to_dict(embed), "embed_ui": EMBED_UI_VERSION})
+
+
+@bp.route("/api/bot/nation_embed", methods=["GET"])
+def bot_nation_embed():
+    err = _require_bot_secret()
+    if err:
+        return err
+    from discord_bot.embeds import EMBED_UI_VERSION, build_nation_embed
+
+    identifier = request.args.get("identifier", "").strip()
+    user_id = _resolve_nation_identifier(identifier)
+    if user_id is None:
+        return jsonify({"error": "Nation not found"}), 404
+    snap = nation_snapshot_for_bot(user_id, full_detail=True)
+    if not snap.get("id"):
+        return jsonify({"error": "Could not load nation statistics."}), 500
+    title = (request.args.get("title") or "Nation lookup").strip() or "Nation lookup"
+    embed = build_nation_embed(snap, title)
+    return jsonify({"embed": _embed_to_dict(embed), "embed_ui": EMBED_UI_VERSION})
+
+
 @bp.route("/api/bot/health", methods=["GET"])
 def bot_health():
     err = _require_bot_secret()
