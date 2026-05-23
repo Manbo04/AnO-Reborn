@@ -90,15 +90,15 @@ def generate_master_audit():
     aging = variables.DEMO_AGING_RATES
     print(
         f"    Elderly Death: "
-        f"{aging.get('elderly_death_rate', 0) * 100:.1f}% per tick"
+        f"{aging.get('elderly_death', 0) * 100:.1f}% per tick"
     )
     print(
         f"    Working → Elderly: "
-        f"{aging.get('working_to_elderly_rate', 0) * 100:.1f}% per tick"
+        f"{aging.get('working_to_elderly', 0) * 100:.1f}% per tick"
     )
     print(
         f"    Children → Working: "
-        f"{aging.get('children_to_working_rate', 0) * 100:.1f}% per tick"
+        f"{aging.get('children_to_working', 0) * 100:.1f}% per tick"
     )
 
     print("\n  RATIONS CONSUMPTION (Per Capita Per Tick):")
