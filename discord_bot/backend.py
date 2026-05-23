@@ -165,8 +165,15 @@ def _has_database_url() -> bool:
 
 
 def _use_web_embed_backend() -> bool:
-    flag = (os.getenv("DISCORD_BOT_USE_WEB_EMBEDS") or "").strip().lower()
-    return flag in ("1", "true", "yes")
+    flag = (os.getenv("DISCORD_BOT_USE_WEB_EMBEDS") or "auto").strip().lower()
+    if flag in ("0", "false", "no"):
+        return False
+    if flag in ("1", "true", "yes"):
+        return True
+    # auto: render embeds on web so UI updates when web deploys (bot stays thin client)
+    from discord_bot.config import BOT_API_BASE_URL, BOT_API_SECRET
+
+    return bool(BOT_API_BASE_URL and BOT_API_SECRET)
 
 
 def get_backend() -> BotBackend:
