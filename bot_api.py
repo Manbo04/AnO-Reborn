@@ -116,10 +116,15 @@ def _wars_schema() -> Dict[str, Optional[str]]:
 def _coalition_summary(user_id: int) -> Dict[str, Any]:
     members_tbl = get_coalition_members_table()
     if not members_tbl:
-        return {"coalition_id": None, "coalition_name": None, "role": None}
+        return {
+            "coalition_id": None,
+            "coalition_name": None,
+            "role": None,
+            "tax_rate": 0,
+        }
     row = QueryHelper.fetch_one(
         f"""
-        SELECT cm.colid, cm.role, c.name
+        SELECT cm.colid, cm.role, c.name, COALESCE(c.tax_rate, 0) AS tax_rate
         FROM {members_tbl} cm
         LEFT JOIN colNames c ON c.id = cm.colid
         WHERE cm.userid = %s
@@ -128,11 +133,17 @@ def _coalition_summary(user_id: int) -> Dict[str, Any]:
         dict_cursor=True,
     )
     if not row:
-        return {"coalition_id": None, "coalition_name": None, "role": None}
+        return {
+            "coalition_id": None,
+            "coalition_name": None,
+            "role": None,
+            "tax_rate": 0,
+        }
     return {
         "coalition_id": row.get("colid"),
         "coalition_name": row.get("name"),
         "role": row.get("role"),
+        "tax_rate": int(row.get("tax_rate") or 0),
     }
 
 
@@ -218,6 +229,77 @@ def _province_count(user_id: int) -> int:
         return 0
 
 
+def _user_account_meta(user_id: int) -> Dict[str, Any]:
+    """Optional users columns for Discord display."""
+    from database import users_table_has_column
+
+    cols = ["date"]
+    if users_table_has_column("join_number"):
+        cols.append("join_number")
+    if users_table_has_column("last_active"):
+        cols.append("last_active")
+    row = QueryHelper.fetch_one(
+        f"SELECT {', '.join(cols)} FROM users WHERE id = %s",
+        (user_id,),
+        dict_cursor=True,
+    )
+    meta: Dict[str, Any] = {}
+    if not row:
+        return meta
+    if row.get("date"):
+        meta["date_joined"] = str(row["date"])
+    if row.get("join_number") is not None:
+        meta["join_number"] = int(row["join_number"])
+    if row.get("last_active") is not None:
+        la = row["last_active"]
+        meta["last_active"] = (
+            la.strftime("%Y-%m-%d %H:%M UTC")
+            if hasattr(la, "strftime")
+            else str(la)
+        )
+    return meta
+
+
+def _enrich_nation_snapshot(snap: Dict[str, Any], user_id: int) -> None:
+    """Add Locutus-style detail: provinces, military, resources (mutates snap)."""
+    from database import ProvinceQueries
+
+    try:
+        prov = ProvinceQueries.get_user_provinces_summary(user_id)
+        if prov:
+            snap["provinces"] = {
+                "province_count": int(prov.get("province_count") or snap.get("province_count") or 0),
+                "total_population": int(prov.get("total_population") or 0),
+                "total_land": int(prov.get("total_land") or 0),
+                "total_cities": int(prov.get("total_cities") or 0),
+                "avg_happiness": float(prov.get("avg_happiness") or 0),
+                "avg_productivity": float(prov.get("avg_productivity") or 0),
+            }
+            snap["province_count"] = snap["provinces"]["province_count"]
+    except Exception as exc:
+        logger.warning("province summary failed for user %s: %s", user_id, exc)
+        snap.setdefault("provinces", {})
+
+    try:
+        snap["military"] = UserQueries.get_user_military(user_id) or {}
+    except Exception as exc:
+        logger.warning("military snapshot failed for user %s: %s", user_id, exc)
+        snap.setdefault("military", {})
+
+    try:
+        resources = UserQueries.get_user_resources(user_id)
+        top = sorted(resources.items(), key=lambda x: x[1], reverse=True)
+        snap["resources"] = {k: int(v) for k, v in top if int(v or 0) > 0}
+    except Exception as exc:
+        logger.warning("resources snapshot failed for user %s: %s", user_id, exc)
+        snap.setdefault("resources", {})
+
+    try:
+        snap.update(_user_account_meta(user_id))
+    except Exception as exc:
+        logger.warning("user meta failed for user %s: %s", user_id, exc)
+
+
 def _nation_snapshot(user_id: int, include_resources: bool = False) -> Dict[str, Any]:
     row = QueryHelper.fetch_one(
         "SELECT id, username FROM users WHERE id = %s",
@@ -272,12 +354,21 @@ def _nation_snapshot(user_id: int, include_resources: bool = False) -> Dict[str,
     return snapshot
 
 
-def nation_snapshot_for_bot(user_id: int, include_resources: bool = False) -> Dict[str, Any]:
+def nation_snapshot_for_bot(
+    user_id: int,
+    *,
+    include_resources: bool = False,
+    full_detail: bool = True,
+) -> Dict[str, Any]:
     """Nation stats for Discord / API; never raises — returns partial data on errors."""
     try:
-        snap = _nation_snapshot(user_id, include_resources=include_resources)
+        snap = _nation_snapshot(
+            user_id, include_resources=include_resources or full_detail
+        )
         if not snap:
             return {}
+        if full_detail:
+            _enrich_nation_snapshot(snap, user_id)
         try:
             snap["active_wars_list"] = _list_active_wars(user_id)
         except Exception as exc:
@@ -468,7 +559,10 @@ def bot_nation():
   user_id = _resolve_nation_identifier(identifier)
   if user_id is None:
     return jsonify({"error": "Nation not found"}), 404
-  return jsonify(_nation_snapshot(user_id))
+  snap = nation_snapshot_for_bot(user_id, full_detail=True)
+  if not snap.get("id"):
+    return jsonify({"error": "Could not load nation statistics."}), 500
+  return jsonify(snap)
 
 
 @bp.route("/api/bot/wars", methods=["GET"])

@@ -4,67 +4,23 @@ import discord
 from discord import app_commands
 
 from discord_bot.backend import BotBackend, BotBackendError
-from discord_bot.config import GAME_BASE_URL
+from discord_bot.embeds import build_nation_embed
 
 logger = logging.getLogger(__name__)
-
-
-def _country_url(nation_id: int) -> str:
-    return f"{GAME_BASE_URL}/country/id={nation_id}"
-
-
-def _embed_nation(data: dict, title: str) -> discord.Embed:
-    nation_id = data.get("id")
-    embed = discord.Embed(
-        title=title,
-        description=f"**{data.get('username', '?')}** (id {nation_id})",
-        color=discord.Color.blue(),
-        url=_country_url(nation_id) if nation_id else None,
-    )
-    embed.add_field(name="Gold", value=f"{data.get('gold', 0):,}", inline=True)
-    embed.add_field(name="Influence", value=f"{data.get('influence', 0):,}", inline=True)
-    embed.add_field(
-        name="Provinces",
-        value=str(data.get("province_count", 0)),
-        inline=True,
-    )
-    col = data.get("coalition") or {}
-    if col.get("coalition_name"):
-        embed.add_field(
-            name="Coalition",
-            value=f"{col['coalition_name']} ({col.get('role') or 'member'})",
-            inline=False,
-        )
-    embed.add_field(
-        name="Active wars",
-        value=str(data.get("active_wars", 0)),
-        inline=True,
-    )
-    if data.get("location"):
-        embed.add_field(name="Location", value=data["location"], inline=True)
-    return embed
 
 
 def register_commands(
     tree: app_commands.CommandTree, backend: BotBackend
 ) -> None:
-    @tree.command(name="me", description="Show your linked AnO nation stats")
+    @tree.command(
+        name="me",
+        description="Show your linked nation — economy, military, resources, wars",
+    )
     async def me_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
             data = backend.me(str(interaction.user.id))
-            embed = _embed_nation(data, "Your nation")
-            wars = data.get("active_wars_list") or []
-            if wars:
-                lines = [
-                    f"#{w['war_id']}: vs **{w['opponent_name']}** ({w['side']})"
-                    for w in wars[:10]
-                ]
-                embed.add_field(
-                    name="War list",
-                    value="\n".join(lines) or "None",
-                    inline=False,
-                )
+            embed = build_nation_embed(data, "Your nation")
             await interaction.followup.send(embed=embed, ephemeral=True)
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
@@ -77,7 +33,7 @@ def register_commands(
 
     @tree.command(
         name="nation",
-        description="Look up any nation by username or id",
+        description="Look up any nation by username or id (full stats)",
     )
     @app_commands.describe(identifier="Nation name or numeric id")
     async def nation_cmd(
@@ -86,7 +42,7 @@ def register_commands(
         await interaction.response.defer()
         try:
             data = backend.nation(identifier.strip())
-            embed = _embed_nation(data, "Nation lookup")
+            embed = build_nation_embed(data, "Nation lookup")
             await interaction.followup.send(embed=embed)
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
@@ -149,24 +105,10 @@ def register_commands(
                 data = backend.resources(nation=nation.strip())
             else:
                 data = backend.resources(discord_user_id=str(interaction.user.id))
-            resources = data.get("resources") or {}
-            embed = _embed_nation(
+            embed = build_nation_embed(
                 data,
                 f"Resources — {data.get('username', '?')}",
             )
-            if resources:
-                lines = [f"**{k}**: {v:,}" for k, v in resources.items()]
-                embed.add_field(
-                    name="Top resources",
-                    value="\n".join(lines[:12]),
-                    inline=False,
-                )
-            else:
-                embed.add_field(
-                    name="Top resources",
-                    value="No stored commodities (gold shown above).",
-                    inline=False,
-                )
             await interaction.followup.send(
                 embed=embed, ephemeral=not nation
             )
