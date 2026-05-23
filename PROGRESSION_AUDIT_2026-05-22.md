@@ -135,10 +135,17 @@ See `RAILWAY_DEPLOYMENT.md` and `scripts/railway_mount_postgres_volume.sh`.
 
 ---
 
+## Follow-up (2026-05-23) — distribution UX + retail balance
+
+- **Country page:** `distribution_alert` banner + upkeep row (cap vs population) when stockpile cannot reach all citizens
+- **Province page:** national food score drives rations check (matches tax); warns on stockpile bottleneck
+- **Retail upkeep** (`NEW_INFRA`): farmers_markets $48k, banks $100k, malls $150k (was $80k / $220k / $450k)
+- **Ops:** `python3 scripts/distribution_gap_report.py --user-id 16` → ~5 distribution centers needed for user 16
+
+---
+
 ## Recommended fix order
 
-1. **Merge + deploy** `generate_province_revenue` commit-path fix (`tasks.py`)  
-2. **Restart Celery beat + workers** — restore `global_tick`, `execute_trade_agreements`, `population_growth`  
-3. **User 16 playtest** — buy **distribution_centers** or more retail to cover 24M pop  
-4. Balance pass on retail ROI (P1-1, P1-2)  
-5. UI: show distribution cap vs population when `food_stats < 0`
+1. **Restart Celery beat + workers** — restore `global_tick`, `execute_trade_agreements`, `population_growth`  
+2. **User 16 / large nations** — build **distribution_centers** until cap ≥ population (see country alert)  
+3. Monitor retail ROI feedback after upkeep reduction
