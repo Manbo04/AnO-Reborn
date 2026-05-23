@@ -454,6 +454,16 @@ def province_slot_api(pId, slot_id):
             )
         buildings.sort(key=lambda b: (-b["quantity"], b["display_name"]))
 
+    suggest_build = None
+    if buildings:
+        starter = min(buildings, key=lambda b: (b["base_cost"], b["display_name"]))
+        suggest_build = {
+            "building_id": starter["building_id"],
+            "display_name": starter["display_name"],
+            "base_cost": starter["base_cost"],
+            "icon": starter["icon"],
+        }
+
     theme = SLOT_THEMES.get(slot_id, {})
     return jsonify(
         {
@@ -463,6 +473,7 @@ def province_slot_api(pId, slot_id):
             "theme": theme,
             "buildings": buildings,
             "build_cost_resource": BUILD_COST_RESOURCE,
+            "suggest_build": suggest_build,
         }
     )
 

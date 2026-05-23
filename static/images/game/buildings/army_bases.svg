@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Army base">
+  <rect width="64" height="64" rx="12" fill="#4a1a1a"/>
+  <rect x="12" y="36" width="40" height="14" fill="#8b3030"/>
+  <path d="M32 12 L44 36 H20 Z" fill="#d35649"/>
+  <rect x="28" y="28" width="8" height="8" fill="#1c2029"/>
+</svg>
