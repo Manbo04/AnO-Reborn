@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import discord
 from discord import app_commands
 
@@ -69,7 +71,8 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
-            data = backend.nation(identifier.strip())
+            ident = identifier.strip()
+            data = await asyncio.to_thread(backend.nation, ident)
             embed = build_nation_embed(data, "Staff — nation intel")
             embed.color = discord.Color.gold()
             await interaction.followup.send(embed=embed, ephemeral=True)
