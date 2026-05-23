@@ -35,5 +35,25 @@ def test_wars_schema_legacy_columns():
 
 
 def test_nation_snapshot_for_bot_returns_empty_on_total_failure():
-    with patch("bot_api._nation_snapshot", side_effect=RuntimeError("db down")):
+    with patch(
+        "bot_api._fetch_nation_snapshot_combined",
+        side_effect=RuntimeError("db down"),
+    ):
         assert nation_snapshot_for_bot(1) == {}
+
+
+def test_nation_snapshot_uses_cache():
+    import bot_api
+
+    bot_api._snapshot_cache.clear()
+    payload = {"id": 1, "username": "x", "gold": 0}
+    with patch(
+        "bot_api._fetch_nation_snapshot_combined",
+        return_value=payload.copy(),
+    ) as fetch:
+        first = nation_snapshot_for_bot(1, full_detail=True)
+        second = nation_snapshot_for_bot(1, full_detail=True)
+    assert first["username"] == "x"
+    assert second["username"] == "x"
+    assert fetch.call_count == 1
+    bot_api._snapshot_cache.clear()

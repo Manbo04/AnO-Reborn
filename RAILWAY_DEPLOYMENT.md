@@ -198,6 +198,12 @@ If `/nation` shows field names like **Influence (score)** and **Resources (top h
 4. **Redeploy** manually (⋯ → Redeploy). GitHub Actions workflow **Redeploy Discord Bot** only calls Railway API when `RAILWAY_TOKEN` is set; otherwise it exits without redeploying.
 5. After deploy, check logs for `embed_ui=2.1` and run `/nation` again (embeds are not cached).
 
+### Bot slash commands very slow (>30s)
+
+Older bot builds ran **10+ separate database round trips** per `/nation`. Current `master` uses a **single-connection combined query** plus a **90s in-memory cache** (`BOT_NATION_SNAPSHOT_CACHE_SECONDS`).
+
+If commands still hang for a minute, redeploy the `bot` service — you are likely on an old image. Check logs for `nation snapshot slow` warnings (>2s).
+
 Tables are created automatically on web boot. One-time migration (optional):
 
 ```bash
