@@ -18,6 +18,8 @@ on:
       - "scripts/run_discord_bot_if_leader.py"
       - "scripts/start_production.sh"
       - "scripts/railway_discord_bot_setup.py"
+      - "scripts/railway_production_fix.py"
+      - "docs/RAILWAY_FIX_ONCE.md"
       - "railway.json"
       - ".github/workflows/redeploy-discord-bot.yml"
 
@@ -36,20 +38,13 @@ jobs:
           BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
         run: |
           if [ -z "${RAILWAY_TOKEN:-}" ]; then
-            echo "::warning::RAILWAY_TOKEN is not set — skipping Railway API redeploy."
-            echo "Add it at: https://github.com/Manbo04/AnO-Reborn/settings/secrets/actions"
-            echo "then re-run: Actions → Redeploy Discord Bot → Run workflow."
-            echo ""
-            echo "If the bot service is linked to GitHub, this push to master should still auto-deploy."
-            echo "Bot service should use Dockerfile.discord-bot and:"
-            echo "  python scripts/run_discord_bot_if_leader.py"
-            exit 0
+            echo "::error::RAILWAY_TOKEN is not set — cannot redeploy bot or fix Discord UI."
+            echo "Add RAILWAY_TOKEN at: https://github.com/Manbo04/AnO-Reborn/settings/secrets/actions"
+            echo "Then run: python3 scripts/railway_production_fix.py"
+            echo "If Postgres is Crashed, fix volumes first: docs/RAILWAY_FIX_ONCE.md"
+            exit 1
           fi
-          if [ -z "${BOT_API_SECRET:-}" ]; then
-            export BOT_API_SECRET="$(openssl rand -hex 32)"
-            echo "::add-mask::${BOT_API_SECRET}"
-          fi
-          python3 scripts/railway_discord_bot_setup.py
+          python3 scripts/railway_production_fix.py
 
       - name: Verify web bot API is reachable
         run: |
