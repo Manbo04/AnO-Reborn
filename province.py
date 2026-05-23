@@ -277,15 +277,33 @@ def province(pId):
             enough_consumer_goods = consumer_goods >= max_cg
 
         rations_minus = province["population"] // variables.RATIONS_PER
+        nation_distribution = None
+        dist_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
-            from tasks import rations_distribution_capacity
+            from tasks import fetch_nation_distribution_status, food_stats
 
-            # distribution cap for entire user; we require at least the
-            # province consumption to have rations available here
-            dist_cap = rations_distribution_capacity(cId) or 0
-            enough_rations = (rations - rations_minus > 1) and (
-                dist_cap >= rations_minus
-            )
+            dist_cap = 0
+            try:
+                db.execute(
+                    "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = %s",
+                    (cId,),
+                )
+                nat_pop_row = db.fetchone()
+                national_pop = int(nat_pop_row[0] or 0) if nat_pop_row else 0
+                nat_rations_need = max(1, national_pop // variables.RATIONS_PER)
+                nation_distribution = fetch_nation_distribution_status(
+                    db, cId, national_pop, nat_rations_need
+                )
+                dist_cap = (
+                    nation_distribution["distribution_cap"]
+                    if nation_distribution
+                    else 0
+                )
+            except Exception:
+                nation_distribution = None
+                dist_cap = 0
+            # Match tax/population_growth: national stockpile capped by distribution
+            enough_rations = food_stats(cId) >= -1.0
         else:
             enough_rations = rations - rations_minus > 1
 
@@ -345,6 +363,7 @@ def province(pId):
             distribution_capacity=(
                 dist_cap if variables.FEATURE_RATIONS_DISTRIBUTION else None
             ),
+            nation_distribution=nation_distribution,
             cg_distribution_capacity=(
                 cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
