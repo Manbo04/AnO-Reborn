@@ -1,8 +1,12 @@
+import logging
+
 import discord
 from discord import app_commands
 
 from discord_bot.backend import BotBackend, BotBackendError
 from discord_bot.config import GAME_BASE_URL
+
+logger = logging.getLogger(__name__)
 
 
 def _country_url(nation_id: int) -> str:
@@ -64,6 +68,12 @@ def register_commands(
             await interaction.followup.send(embed=embed, ephemeral=True)
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
+        except Exception as exc:
+            logger.exception("/me failed for discord user %s", interaction.user.id)
+            await interaction.followup.send(
+                "Could not load nation statistics. Please try again later.",
+                ephemeral=True,
+            )
 
     @tree.command(
         name="nation",
