@@ -19,9 +19,13 @@ def register_commands(
             data = backend.register(str(interaction.user.id), code.strip())
             user_id = data.get("user_id")
             url = f"{GAME_BASE_URL}/country/id={user_id}" if user_id else GAME_BASE_URL
+            nation_name = data.get("username") or "your nation"
             embed = discord.Embed(
                 title="Nation linked",
-                description=data.get("message", "Success."),
+                description=(
+                    f"Successfully linked! Welcome back, **{nation_name}**. "
+                    "Your nation is synced with Discord. Try `/me` for stats."
+                ),
                 color=discord.Color.green(),
             )
             if user_id:
