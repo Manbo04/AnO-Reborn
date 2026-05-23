@@ -1,4 +1,5 @@
 {% extends "layout.html"%} {% block title %} Attack Choose {% endblock %} {% block body %}
+{% from 'macros/game_asset.html' import game_picture %}
 
 <div class="templatediv">
 
@@ -20,7 +21,7 @@
 
                 <ul class="bold medium">Soldiers</ul>
                 <ul>{{ units["soldiers"] }}</ul>
-                <img tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/soldier.jpg') }}?v=2" />
+                {{ game_picture('units', 'soldiers', 'Soldiers', 'unitimage') }}
 
                 <input type="checkbox" id="1" class="warcheckbox hidden" value="soldiers">
                 <span class="material-icons-outlined unitcardcheck">
@@ -32,7 +33,7 @@
 
                 <ul class="bold medium">Tanks</ul>
                 <ul>{{ units["tanks"] }}</ul>
-                <img tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/tank.jpg') }}?v=2" />
+                {{ game_picture('units', 'tanks', 'Tanks', 'unitimage') }}
 
                 <input type="checkbox" id="2" class="warcheckbox hidden" value="tanks">
                 <span class="material-icons-outlined unitcardcheck">
@@ -44,7 +45,7 @@
 
                 <ul class="bold medium">Artillery</ul>
                 <ul>{{ units["artillery"] }}</ul>
-                <img tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/artillery.jpg') }}?v=2" />
+                {{ game_picture('units', 'artillery', 'Artillery', 'unitimage') }}
 
                 <input type="checkbox" id="3" class="warcheckbox hidden" value="artillery">
                 <span class="material-icons-outlined unitcardcheck">
