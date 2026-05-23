@@ -27,21 +27,12 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Generate BOT_API_SECRET when not in repo secrets
-        id: bot_secret
-        run: |
-          if [ -n "${{ secrets.BOT_API_SECRET }}" ]; then
-            echo "value=${{ secrets.BOT_API_SECRET }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=$(openssl rand -hex 32)" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Apply Discord bot migration
         env:
           DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
         run: |
           pip install psycopg2-binary python-dotenv
-          if [ -z "$DATABASE_PUBLIC_URL" ]; then
+          if [ -z "${DATABASE_PUBLIC_URL:-}" ]; then
             echo "::warning::DATABASE_PUBLIC_URL not set — skipping migration (web deploy will auto-create tables via ensure_schema_compat)."
             exit 0
           fi
@@ -50,11 +41,15 @@ jobs:
       - name: Configure Railway (BOT_API_SECRET + discord-bot service)
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          BOT_API_SECRET: ${{ steps.bot_secret.outputs.value }}
+          BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
         run: |
-          if [ -z "$RAILWAY_TOKEN" ]; then
+          if [ -z "${RAILWAY_TOKEN:-}" ]; then
             echo "::warning::RAILWAY_TOKEN not set — add it to repo secrets to auto-configure Railway."
             exit 0
           fi
-          echo "::add-mask::$BOT_API_SECRET"
+          if [ -z "${BOT_API_SECRET:-}" ]; then
+            BOT_API_SECRET="$(openssl rand -hex 32)"
+          fi
+          echo "::add-mask::${BOT_API_SECRET}"
+          export BOT_API_SECRET
           python3 scripts/railway_discord_bot_setup.py

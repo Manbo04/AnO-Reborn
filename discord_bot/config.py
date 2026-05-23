@@ -1,3 +1,4 @@
+import hashlib
 import os
 import sys
 
@@ -5,8 +6,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _resolve_bot_api_secret() -> str:
+    explicit = (os.getenv("BOT_API_SECRET") or "").strip()
+    if explicit:
+        return explicit
+    secret_key = (os.getenv("SECRET_KEY") or "").strip()
+    if secret_key:
+        return hashlib.sha256(f"ano-bot-api-v1:{secret_key}".encode()).hexdigest()
+    return ""
+
+
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "").strip()
-BOT_API_SECRET = os.getenv("BOT_API_SECRET", "").strip()
+BOT_API_SECRET = _resolve_bot_api_secret()
 BOT_API_BASE_URL = (
     os.getenv("BOT_API_BASE_URL", "https://affairsandorder.com").strip().rstrip("/")
 )
@@ -17,8 +29,8 @@ def validate_config() -> None:
     missing = []
     if not DISCORD_BOT_TOKEN:
         missing.append("DISCORD_BOT_TOKEN")
-    if not BOT_API_SECRET:
-        missing.append("BOT_API_SECRET")
+    if not BOT_API_SECRET and not (os.getenv("SECRET_KEY") or "").strip():
+        missing.append("BOT_API_SECRET or SECRET_KEY")
     if not BOT_API_BASE_URL:
         missing.append("BOT_API_BASE_URL")
     if missing:
