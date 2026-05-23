@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Blueprint, jsonify, request
+
+logger = logging.getLogger(__name__)
 
 from database import (
     UserQueries,
@@ -70,113 +73,220 @@ def _resolve_nation_identifier(identifier: str) -> Optional[int]:
   return int(row[0]) if row else None
 
 
+_wars_schema_cache: Optional[Dict[str, Optional[str]]] = None
+
+
+def _wars_schema() -> Dict[str, Optional[str]]:
+    """Detect wars table column names (legacy id/attacker/defender vs normalized)."""
+    global _wars_schema_cache
+    if _wars_schema_cache is not None:
+        return _wars_schema_cache
+    cols: set = set()
+    try:
+        rows = QueryHelper.fetch_all(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'wars'
+            """
+        )
+        cols = {(r[0] or "").lower() for r in rows or []}
+    except Exception as exc:
+        logger.warning("wars schema detection failed: %s", exc)
+    _wars_schema_cache = {
+        "war_pk": "war_id" if "war_id" in cols else "id" if "id" in cols else None,
+        "attacker": (
+            "attacker_id"
+            if "attacker_id" in cols
+            else "attacker"
+            if "attacker" in cols
+            else None
+        ),
+        "defender": (
+            "defender_id"
+            if "defender_id" in cols
+            else "defender"
+            if "defender" in cols
+            else None
+        ),
+    }
+    return _wars_schema_cache
+
+
 def _coalition_summary(user_id: int) -> Dict[str, Any]:
-  members_tbl = get_coalition_members_table()
-  if not members_tbl:
-    return {"coalition_id": None, "coalition_name": None, "role": None}
-  row = QueryHelper.fetch_one(
-      f"""
-      SELECT cm.colid, cm.role, c.name
-      FROM {members_tbl} cm
-      LEFT JOIN colNames c ON c.id = cm.colid
-      WHERE cm.userid = %s
-      """,
-      (user_id,),
-      dict_cursor=True,
-  )
-  if not row:
-    return {"coalition_id": None, "coalition_name": None, "role": None}
-  return {
-    "coalition_id": row.get("colid"),
-    "coalition_name": row.get("name"),
-    "role": row.get("role"),
-  }
+    members_tbl = get_coalition_members_table()
+    if not members_tbl:
+        return {"coalition_id": None, "coalition_name": None, "role": None}
+    row = QueryHelper.fetch_one(
+        f"""
+        SELECT cm.colid, cm.role, c.name
+        FROM {members_tbl} cm
+        LEFT JOIN colNames c ON c.id = cm.colid
+        WHERE cm.userid = %s
+        """,
+        (user_id,),
+        dict_cursor=True,
+    )
+    if not row:
+        return {"coalition_id": None, "coalition_name": None, "role": None}
+    return {
+        "coalition_id": row.get("colid"),
+        "coalition_name": row.get("name"),
+        "role": row.get("role"),
+    }
 
 
 def _active_war_count(user_id: int) -> int:
-  row = QueryHelper.fetch_one(
-      """
-      SELECT COUNT(*) FROM wars
-      WHERE peace_date IS NULL
-        AND (attacker_id = %s OR defender_id = %s)
-      """,
-      (user_id, user_id),
-  )
-  return int(row[0]) if row else 0
+    schema = _wars_schema()
+    atk, dfn = schema.get("attacker"), schema.get("defender")
+    if not atk or not dfn:
+        return 0
+    row = QueryHelper.fetch_one(
+        f"""
+        SELECT COUNT(*) FROM wars
+        WHERE peace_date IS NULL
+          AND ({atk} = %s OR {dfn} = %s)
+        """,
+        (user_id, user_id),
+    )
+    return int(row[0]) if row else 0
 
 
 def _list_active_wars(user_id: int) -> List[Dict[str, Any]]:
-  rows = QueryHelper.fetch_all(
-      """
-      SELECT w.war_id, w.attacker_id, w.defender_id, w.war_type,
-             ua.username AS attacker_name, ud.username AS defender_name
-      FROM wars w
-      JOIN users ua ON ua.id = w.attacker_id
-      JOIN users ud ON ud.id = w.defender_id
-      WHERE w.peace_date IS NULL
-        AND (w.attacker_id = %s OR w.defender_id = %s)
-      ORDER BY w.war_id DESC
-      """,
-      (user_id, user_id),
-      dict_cursor=True,
-  )
-  wars: List[Dict[str, Any]] = []
-  for row in rows or []:
-    attacker_id = row["attacker_id"]
-    defender_id = row["defender_id"]
-    if user_id == attacker_id:
-      opponent_id = defender_id
-      opponent_name = row["defender_name"]
-      side = "attacker"
-    else:
-      opponent_id = attacker_id
-      opponent_name = row["attacker_name"]
-      side = "defender"
-    wars.append(
-        {
-          "war_id": row["war_id"],
-          "side": side,
-          "war_type": row.get("war_type"),
-          "opponent_id": opponent_id,
-          "opponent_name": opponent_name,
-        }
+    schema = _wars_schema()
+    war_pk, atk, dfn = schema.get("war_pk"), schema.get("attacker"), schema.get("defender")
+    if not war_pk or not atk or not dfn:
+        return []
+    rows = QueryHelper.fetch_all(
+        f"""
+        SELECT w.{war_pk} AS war_id, w.{atk} AS attacker_id, w.{dfn} AS defender_id,
+               w.war_type,
+               ua.username AS attacker_name, ud.username AS defender_name
+        FROM wars w
+        JOIN users ua ON ua.id = w.{atk}
+        JOIN users ud ON ud.id = w.{dfn}
+        WHERE w.peace_date IS NULL
+          AND (w.{atk} = %s OR w.{dfn} = %s)
+        ORDER BY w.{war_pk} DESC
+        """,
+        (user_id, user_id),
+        dict_cursor=True,
     )
-  return wars
+    wars: List[Dict[str, Any]] = []
+    for row in rows or []:
+        attacker_id = row["attacker_id"]
+        defender_id = row["defender_id"]
+        if user_id == attacker_id:
+            opponent_id = defender_id
+            opponent_name = row["defender_name"]
+            side = "attacker"
+        else:
+            opponent_id = attacker_id
+            opponent_name = row["attacker_name"]
+            side = "defender"
+        wars.append(
+            {
+                "war_id": row["war_id"],
+                "side": side,
+                "war_type": row.get("war_type"),
+                "opponent_id": opponent_id,
+                "opponent_name": opponent_name,
+            }
+        )
+    return wars
+
+
+def _province_count(user_id: int) -> int:
+    try:
+        row = QueryHelper.fetch_one(
+            """
+            SELECT COUNT(id) AS province_count
+            FROM provinces
+            WHERE userid = %s
+            """,
+            (user_id,),
+            dict_cursor=True,
+        )
+        if row and row.get("province_count") is not None:
+            return int(row["province_count"])
+    except Exception as exc:
+        logger.warning("province count query failed for user %s: %s", user_id, exc)
+    try:
+        data = get_user_full_data(user_id)
+        return int((data.get("provinces") or {}).get("province_count") or 0)
+    except Exception:
+        return 0
 
 
 def _nation_snapshot(user_id: int, include_resources: bool = False) -> Dict[str, Any]:
-  row = QueryHelper.fetch_one(
-      """
-      SELECT u.id, u.username, s.location, s.gold
-      FROM users u
-      INNER JOIN stats s ON s.id = u.id
-      WHERE u.id = %s
-      """,
-      (user_id,),
-      dict_cursor=True,
-  )
-  if not row:
-    return {}
-  coalition = _coalition_summary(user_id)
-  data = get_user_full_data(user_id)
-  provinces = data.get("provinces") or {}
-  province_count = int(provinces.get("province_count") or 0)
+    row = QueryHelper.fetch_one(
+        "SELECT id, username FROM users WHERE id = %s",
+        (user_id,),
+        dict_cursor=True,
+    )
+    if not row:
+        return {}
 
-  snapshot: Dict[str, Any] = {
-    "id": row["id"],
-    "username": row["username"],
-    "location": row.get("location"),
-    "gold": int(row.get("gold") or 0),
-    "influence": get_influence(user_id),
-    "coalition": coalition,
-    "active_wars": _active_war_count(user_id),
-    "province_count": province_count,
-  }
-  if include_resources:
-    resources = UserQueries.get_user_resources(user_id)
-    top = sorted(resources.items(), key=lambda x: x[1], reverse=True)[:12]
-    snapshot["resources"] = {k: v for k, v in top if v > 0}
-  return snapshot
+    stats_row = QueryHelper.fetch_one(
+        "SELECT location, gold FROM stats WHERE id = %s",
+        (user_id,),
+        dict_cursor=True,
+    ) or {}
+
+    try:
+        influence = int(get_influence(user_id) or 0)
+    except Exception as exc:
+        logger.warning("get_influence failed for user %s: %s", user_id, exc)
+        influence = 0
+
+    try:
+        coalition = _coalition_summary(user_id)
+    except Exception as exc:
+        logger.warning("coalition summary failed for user %s: %s", user_id, exc)
+        coalition = {"coalition_id": None, "coalition_name": None, "role": None}
+
+    try:
+        active_wars = _active_war_count(user_id)
+    except Exception as exc:
+        logger.warning("active war count failed for user %s: %s", user_id, exc)
+        active_wars = 0
+
+    snapshot: Dict[str, Any] = {
+        "id": row["id"],
+        "username": row["username"],
+        "location": stats_row.get("location"),
+        "gold": int(stats_row.get("gold") or 0),
+        "influence": influence,
+        "coalition": coalition,
+        "active_wars": active_wars,
+        "province_count": _province_count(user_id),
+    }
+    if include_resources:
+        try:
+            resources = UserQueries.get_user_resources(user_id)
+            top = sorted(resources.items(), key=lambda x: x[1], reverse=True)[:12]
+            snapshot["resources"] = {k: v for k, v in top if v > 0}
+        except Exception as exc:
+            logger.warning("resources snapshot failed for user %s: %s", user_id, exc)
+            snapshot["resources"] = {}
+    return snapshot
+
+
+def nation_snapshot_for_bot(user_id: int, include_resources: bool = False) -> Dict[str, Any]:
+    """Nation stats for Discord / API; never raises — returns partial data on errors."""
+    try:
+        snap = _nation_snapshot(user_id, include_resources=include_resources)
+        if not snap:
+            return {}
+        try:
+            snap["active_wars_list"] = _list_active_wars(user_id)
+        except Exception as exc:
+            logger.warning("war list failed for user %s: %s", user_id, exc)
+            snap["active_wars_list"] = []
+        return snap
+    except Exception as exc:
+        logger.exception("nation_snapshot_for_bot failed for user %s: %s", user_id, exc)
+        return {}
 
 
 def create_discord_link_code(user_id: int) -> str:
@@ -316,7 +426,18 @@ def bot_register():
   ok, message, user_id = register_discord_with_code(discord_user_id, code)
   if not ok:
     return jsonify({"error": message}), 400
-  return jsonify({"ok": True, "message": message, "user_id": user_id})
+  username = None
+  if user_id:
+    urow = QueryHelper.fetch_one(
+        "SELECT username FROM users WHERE id = %s",
+        (user_id,),
+        dict_cursor=True,
+    )
+    if urow:
+      username = urow.get("username")
+  return jsonify(
+      {"ok": True, "message": message, "user_id": user_id, "username": username}
+  )
 
 
 @bp.route("/api/bot/me", methods=["GET"])
@@ -332,8 +453,9 @@ def bot_me():
     return jsonify(
         {"error": "Not registered. Link your nation with /register on Discord."}
     ), 404
-  snap = _nation_snapshot(user_id)
-  snap["active_wars_list"] = _list_active_wars(user_id)
+  snap = nation_snapshot_for_bot(user_id)
+  if not snap.get("id"):
+    return jsonify({"error": "Could not load nation statistics."}), 500
   return jsonify(snap)
 
 

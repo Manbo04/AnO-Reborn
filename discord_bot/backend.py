@@ -34,13 +34,29 @@ class DirectDatabaseBackend:
     def register(self, discord_user_id: str, code: str) -> Dict[str, Any]:
         from bot_api import register_discord_with_code
 
+        from database import QueryHelper
+
         ok, message, user_id = register_discord_with_code(discord_user_id, code)
         if not ok:
             raise BotBackendError(message, 400)
-        return {"ok": True, "message": message, "user_id": user_id}
+        username = None
+        if user_id:
+            row = QueryHelper.fetch_one(
+                "SELECT username FROM users WHERE id = %s",
+                (user_id,),
+                dict_cursor=True,
+            )
+            if row:
+                username = row.get("username")
+        return {
+            "ok": True,
+            "message": message,
+            "user_id": user_id,
+            "username": username,
+        }
 
     def me(self, discord_user_id: str) -> Dict[str, Any]:
-        from bot_api import _list_active_wars, _nation_snapshot
+        from bot_api import nation_snapshot_for_bot
         from database import resolve_user_id_by_discord
 
         user_id = resolve_user_id_by_discord(discord_user_id)
@@ -50,8 +66,12 @@ class DirectDatabaseBackend:
                 "/register code:XXXXXXXX",
                 404,
             )
-        snap = _nation_snapshot(user_id)
-        snap["active_wars_list"] = _list_active_wars(user_id)
+        snap = nation_snapshot_for_bot(user_id)
+        if not snap.get("id"):
+            raise BotBackendError(
+                "Could not load nation statistics. Try again in a moment.",
+                500,
+            )
         return snap
 
     def nation(self, identifier: str) -> Dict[str, Any]:
