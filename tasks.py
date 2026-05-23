@@ -454,6 +454,83 @@ def food_stats(user_id):
     return score
 
 
+def compute_rations_distribution_cap(building_qty_by_name):
+    """Sum population served by distribution buildings (pure helper for UI/tests)."""
+    total = 0
+    for bname, qty in (building_qty_by_name or {}).items():
+        if bname not in variables.RATIONS_DISTRIBUTION_BUILDINGS:
+            continue
+        per_building = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
+            bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
+        )
+        total += int(qty or 0) * per_building
+    return total
+
+
+def nation_distribution_status(
+    total_population,
+    rations_stockpile,
+    rations_need,
+    building_qty_by_name,
+):
+    """Build template-friendly distribution summary (no DB)."""
+    if not variables.FEATURE_RATIONS_DISTRIBUTION:
+        return None
+
+    cap = compute_rations_distribution_cap(building_qty_by_name)
+    pop = int(total_population or 0)
+    need = max(int(rations_need or 0), 1)
+    stock = int(rations_stockpile or 0)
+    uncovered = max(0, pop - cap)
+    coverage_pct = min(100, int(100 * cap / pop)) if pop > 0 else 100
+    dc_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING["distribution_centers"]
+    dc_suggested = (uncovered + dc_cap - 1) // dc_cap if uncovered > 0 else 0
+    stockpile_bottleneck = stock >= need and cap < pop
+    return {
+        "distribution_cap": cap,
+        "rations_stockpile": stock,
+        "uncovered_population": uncovered,
+        "coverage_percent": coverage_pct,
+        "distribution_centers_suggested": dc_suggested,
+        "stockpile_bottleneck": stockpile_bottleneck,
+        "show_alert": cap < pop and stock > 0,
+    }
+
+
+def fetch_nation_distribution_status(db, user_id, total_population, rations_need):
+    """Load economy/buildings and return nation_distribution_status dict."""
+    if not variables.FEATURE_RATIONS_DISTRIBUTION:
+        return None
+
+    db.execute(
+        """
+        SELECT COALESCE(ue.quantity, 0)
+        FROM user_economy ue
+        JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+        WHERE ue.user_id = %s AND rd.name = 'rations'
+        """,
+        (user_id,),
+    )
+    row = db.fetchone()
+    rations_stockpile = int(row[0]) if row else 0
+
+    db.execute(
+        """
+        SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
+        FROM user_buildings ub
+        JOIN building_dictionary bd ON bd.building_id = ub.building_id
+        WHERE ub.user_id = %s
+          AND bd.name = ANY(%s)
+        GROUP BY bd.name
+        """,
+        (user_id, list(variables.RATIONS_DISTRIBUTION_BUILDINGS)),
+    )
+    building_qty = {r[0]: int(r[1] or 0) for r in db.fetchall()}
+    return nation_distribution_status(
+        total_population, rations_stockpile, rations_need, building_qty
+    )
+
+
 def consumer_goods_distribution_capacity(user_id):
     """Return the population that can be served by CG distribution buildings."""
     if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
