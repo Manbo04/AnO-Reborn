@@ -366,8 +366,7 @@ def generate_discord_link_code():
         return redirect("/account")
 
     flash(
-        f"Discord link code: {code} (expires in {CODE_TTL_MINUTES} minutes). "
-        "In Discord, run: /register code:" + code
+        "Discord bot link code generated — copy it from the box below before it expires."
     )
     logger.info("Generated Discord link code for user_id=%s", cId)
     return redirect("/account")
