@@ -26,6 +26,21 @@ def main() -> None:
         print("DISCORD_BOT_TOKEN not set; exiting with error so Railway surfaces misconfiguration.")
         sys.exit(1)
 
+    skip_lock = (os.getenv("DISCORD_BOT_SKIP_LEADER_LOCK") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    service = (os.getenv("RAILWAY_SERVICE_NAME") or "").strip().lower()
+    if skip_lock or service == "bot":
+        print(
+            "Skipping Redis leader lock (DISCORD_BOT_SKIP_LEADER_LOCK or RAILWAY_SERVICE_NAME=bot)."
+        )
+        from discord_bot.main import main as run_bot
+
+        run_bot()
+        return
+
     redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
     if not redis_url:
         print("No REDIS_URL; running bot without leader lock (single instance assumed).")
