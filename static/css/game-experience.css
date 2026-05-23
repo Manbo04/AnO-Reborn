@@ -2,6 +2,35 @@
  * Interactive province base — strategy-game feel (CSS art, no low-res photos).
  */
 
+/* Reset global icon nudge inside province UI (style.css sets top/right on all icons) */
+.province-base-section .material-icons-outlined,
+.province-base-slot-sheet .material-icons-outlined,
+.province-view-nudge .material-icons-outlined {
+    position: static;
+    top: auto;
+    right: auto;
+    vertical-align: middle;
+}
+
+#province-classic-view[hidden],
+#province-base-view[hidden] {
+    display: none !important;
+}
+
+body.province-base-view-active .provincetopper {
+    display: none;
+}
+
+body.province-base-view-active.game-shell-active .templatediv {
+    margin-top: 120px;
+}
+
+@media (max-width: 720px) {
+    body.province-base-view-active.game-shell-active .templatediv {
+        margin-top: 100px;
+    }
+}
+
 .province-base-section {
     position: relative;
     margin: 0 0 var(--game-space-lg);
@@ -87,14 +116,22 @@
 .province-base-header {
     position: relative;
     z-index: 2;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--game-space-sm);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "title toggle"
+        "vitals vitals";
+    align-items: start;
+    gap: var(--game-space-sm) var(--game-space-md);
     padding: var(--game-space-md);
     background: rgba(28, 32, 41, 0.85);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.province-base-title-block {
+    grid-area: title;
+    min-width: 0;
 }
 
 .province-base-header h2 {
@@ -107,12 +144,23 @@
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+.province-base-header h2 .material-icons-outlined {
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.province-base-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    align-self: start;
+}
+
 .province-base-vitals {
+    grid-area: vitals;
     display: flex;
-    flex: 1;
     flex-wrap: wrap;
     gap: 10px;
-    min-width: 200px;
+    width: 100%;
 }
 
 .province-vital {
@@ -129,6 +177,11 @@
     letter-spacing: 0.04em;
     color: var(--text-secondary);
     margin-bottom: 4px;
+}
+
+.province-vital-label .material-icons-outlined {
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 .province-vital-bar {
@@ -156,7 +209,7 @@
     background: linear-gradient(90deg, #00a7e1, #5cd4f0);
 }
 
-.province-base-toggle {
+.province-base-header .province-base-toggle {
     min-height: 44px;
     padding: 10px 16px;
     border-radius: var(--game-radius-md);
@@ -236,13 +289,13 @@
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Central capital hub */
+/* Central capital hub (below district nodes) */
 .province-map-hub {
     position: absolute;
     left: 50%;
     top: 48%;
     transform: translate(-50%, -50%);
-    z-index: 3;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -626,20 +679,43 @@
 
 @media (max-width: 720px) {
     .province-base-arena {
-        min-height: 420px;
+        min-height: 440px;
+    }
+
+    .province-map-hub {
+        top: 52%;
+        width: min(140px, 32vw);
+    }
+
+    .province-map-hub-platform {
+        width: 72px;
+        height: 72px;
+    }
+
+    .province-map-hub-skyline {
+        display: none;
     }
 
     .province-map-node {
-        width: min(100px, 26vw);
+        width: min(92px, 24vw);
     }
 
     .province-map-node-pin {
-        width: 54px;
-        height: 54px;
+        width: 52px;
+        height: 52px;
     }
 
+    .province-map-node--power { top: 4%; }
+    .province-map-node--food { left: 10%; top: 18%; }
+    .province-map-node--retail { right: 10%; top: 18%; }
+    .province-map-node--mines { left: 4%; top: 52%; }
+    .province-map-node--industry { right: 4%; top: 52%; }
+    .province-map-node--civic { left: 18%; bottom: 8%; }
+    .province-map-node--military { right: 18%; bottom: 8%; }
+
     .province-map-node-skyline,
-    .province-map-node-chips {
+    .province-map-node-chips,
+    .province-map-node-cta {
         display: none;
     }
 
@@ -684,12 +760,13 @@
     background: var(--foreground);
     border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
     padding: var(--game-space-md);
-    padding-bottom: calc(var(--game-bottom-nav-height, 64px) + var(--game-safe-bottom) + var(--game-space-lg));
+    padding-bottom: calc(var(--game-safe-bottom) + var(--game-space-lg));
     box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.4);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: 65vh;
+    min-height: 0;
+    max-height: min(72vh, calc(100dvh - var(--game-navbar-height, 55px) - 48px));
 }
 
 .province-base-sheet-header {
@@ -742,11 +819,13 @@
 
 .province-base-building-list {
     overflow-y: auto;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     margin: var(--game-space-md) 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .province-base-building-row {
@@ -830,7 +909,7 @@
 .province-base-toast {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--game-bottom-nav-height, 64px) + 80px);
+    bottom: calc(var(--game-safe-bottom) + 24px);
     transform: translateX(-50%) translateY(20px);
     padding: 12px 20px;
     border-radius: 999px;

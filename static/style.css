@@ -1,5 +1,5 @@
 /* Game UI tokens: static/css/tokens.css (loaded from layout.html) */
-/* Game shell: static/css/game-shell.css, province-base.css, game-war.css */
+/* Game shell: static/css/game-shell.css, game-experience.css, game-war.css */
 
 @font-face {
     font-family: 'Material Icons';
@@ -4995,6 +4995,7 @@ html.page-tutorial .resourcedivcontent {
     --game-panel-bg: var(--foreground);
     --game-panel-border: var(--border);
     --game-hud-height: 52px;
+    --game-navbar-height: 55px;
     --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
@@ -5023,11 +5024,11 @@ body.game-shell-active .templatecontainer {
     padding-bottom: var(--game-space-md);
 }
 
-/* Compact resource HUD (top, mobile-first) */
+/* Compact resource HUD (below fixed navbar) */
 .game-hud {
     display: none;
     position: sticky;
-    top: 0;
+    top: var(--game-navbar-height, 55px);
     z-index: 900;
     background: linear-gradient(180deg, var(--foreground) 0%, rgba(28, 32, 41, 0.92) 100%);
     border-bottom: 1px solid var(--border);
@@ -5046,6 +5047,7 @@ body.game-shell-active .templatecontainer {
 
 body.game-shell-active .game-hud {
     display: flex;
+    margin-top: var(--game-navbar-height, 55px);
 }
 
 .game-hud-chip {
@@ -5077,6 +5079,12 @@ body.game-shell-active .game-hud {
 .game-hud-chip .game-hud-value {
     font-weight: 600;
     white-space: nowrap;
+}
+
+.game-hud .material-icons-outlined {
+    position: static;
+    top: auto;
+    right: auto;
 }
 
 .game-hud-expand {
@@ -5304,147 +5312,19 @@ body.game-reduced-motion * {
 }
 
 
-/* --- static/css/province-base.css --- */
+/* --- static/css/game-experience.css --- */
 /**
- * Province home base canvas container (Phaser)
+ * Interactive province base — strategy-game feel (CSS art, no low-res photos).
  */
-.province-base-section {
-    margin-bottom: var(--game-space-lg);
-    border-radius: var(--game-radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--foregroundThree);
-}
 
-.province-base-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--game-space-sm) var(--game-space-md);
-    background: var(--foreground);
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-    gap: var(--game-space-sm);
-}
-
-.province-base-header h2 {
-    margin: 0;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.province-base-stats {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-
-.province-base-stats .material-icons-outlined {
-    font-size: 1rem;
+/* Reset global icon nudge inside province UI (style.css sets top/right on all icons) */
+.province-base-section .material-icons-outlined,
+.province-base-slot-sheet .material-icons-outlined,
+.province-view-nudge .material-icons-outlined {
+    position: static;
+    top: auto;
+    right: auto;
     vertical-align: middle;
-}
-
-.province-base-toggle {
-    min-height: 44px;
-    padding: 8px 14px;
-    border-radius: var(--game-radius-md);
-    border: 1px solid var(--accent);
-    background: transparent;
-    color: var(--accent);
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-
-/* Category grid — primary visual (no Phaser required) */
-.province-base-slots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: var(--game-space-sm);
-    padding: var(--game-space-md);
-    background: linear-gradient(180deg, var(--foregroundThree) 0%, var(--foreground) 100%);
-}
-
-.province-base-slot-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    min-height: 110px;
-    padding: var(--game-space-sm);
-    border: 2px solid var(--border);
-    border-radius: var(--game-radius-md);
-    background: var(--foreground);
-    cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-    color: inherit;
-    font: inherit;
-}
-
-.province-base-slot-card:hover,
-.province-base-slot-card:focus-visible {
-    border-color: var(--accent);
-    box-shadow: var(--game-glow-accent);
-    transform: translateY(-2px);
-}
-
-.province-base-slot-card.has-buildings,
-.province-base-slot-qty.has-buildings {
-    border-color: var(--success);
-}
-
-.province-base-slot-img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    border-radius: var(--game-radius-sm);
-    border: 1px solid var(--border);
-}
-
-.province-base-slot-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-.province-base-slot-qty {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    background: var(--foregroundThree);
-    padding: 2px 10px;
-    border-radius: 999px;
-}
-
-.province-base-slot-qty.has-buildings {
-    color: var(--success);
-    background: rgba(45, 159, 111, 0.15);
-}
-
-.province-base-canvas-wrap {
-    width: 100%;
-    max-width: 100%;
-    aspect-ratio: 4 / 3;
-    min-height: 0;
-    display: none;
-    touch-action: none;
-}
-
-body.province-base-phaser-active .province-base-canvas-wrap {
-    display: block;
-    min-height: 220px;
-}
-
-body.province-base-phaser-active .province-base-slots-grid {
-    display: none;
-}
-
-#province-base-canvas {
-    width: 100%;
-    height: 100%;
 }
 
 #province-classic-view[hidden],
@@ -5452,39 +5332,19 @@ body.province-base-phaser-active .province-base-slots-grid {
     display: none !important;
 }
 
-.province-base-slot-sheet {
+body.province-base-view-active .provincetopper {
     display: none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
-    z-index: 950;
-    max-height: 45vh;
-    overflow-y: auto;
-    background: var(--foreground);
-    border-top: 1px solid var(--border);
-    border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
-    padding: var(--game-space-md);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
 }
 
-.province-base-slot-sheet.is-open {
-    display: block;
+body.province-base-view-active.game-shell-active .templatediv {
+    margin-top: 120px;
 }
 
-.province-base-slot-sheet h3 {
-    margin-top: 0;
+@media (max-width: 720px) {
+    body.province-base-view-active.game-shell-active .templatediv {
+        margin-top: 100px;
+    }
 }
-
-.province-base-slot-sheet .templatedivbutton {
-    margin-top: var(--game-space-sm);
-}
-
-
-/* --- static/css/game-experience.css --- */
-/**
- * Interactive province base — strategy-game feel (CSS art, no low-res photos).
- */
 
 .province-base-section {
     position: relative;
@@ -5571,14 +5431,22 @@ body.province-base-phaser-active .province-base-slots-grid {
 .province-base-header {
     position: relative;
     z-index: 2;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--game-space-sm);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "title toggle"
+        "vitals vitals";
+    align-items: start;
+    gap: var(--game-space-sm) var(--game-space-md);
     padding: var(--game-space-md);
     background: rgba(28, 32, 41, 0.85);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.province-base-title-block {
+    grid-area: title;
+    min-width: 0;
 }
 
 .province-base-header h2 {
@@ -5591,12 +5459,23 @@ body.province-base-phaser-active .province-base-slots-grid {
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+.province-base-header h2 .material-icons-outlined {
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.province-base-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    align-self: start;
+}
+
 .province-base-vitals {
+    grid-area: vitals;
     display: flex;
-    flex: 1;
     flex-wrap: wrap;
     gap: 10px;
-    min-width: 200px;
+    width: 100%;
 }
 
 .province-vital {
@@ -5613,6 +5492,11 @@ body.province-base-phaser-active .province-base-slots-grid {
     letter-spacing: 0.04em;
     color: var(--text-secondary);
     margin-bottom: 4px;
+}
+
+.province-vital-label .material-icons-outlined {
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 .province-vital-bar {
@@ -5640,7 +5524,7 @@ body.province-base-phaser-active .province-base-slots-grid {
     background: linear-gradient(90deg, #00a7e1, #5cd4f0);
 }
 
-.province-base-toggle {
+.province-base-header .province-base-toggle {
     min-height: 44px;
     padding: 10px 16px;
     border-radius: var(--game-radius-md);
@@ -5720,13 +5604,13 @@ body.province-base-phaser-active .province-base-slots-grid {
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Central capital hub */
+/* Central capital hub (below district nodes) */
 .province-map-hub {
     position: absolute;
     left: 50%;
     top: 48%;
     transform: translate(-50%, -50%);
-    z-index: 3;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6110,20 +5994,43 @@ body.province-base-phaser-active .province-base-slots-grid {
 
 @media (max-width: 720px) {
     .province-base-arena {
-        min-height: 420px;
+        min-height: 440px;
+    }
+
+    .province-map-hub {
+        top: 52%;
+        width: min(140px, 32vw);
+    }
+
+    .province-map-hub-platform {
+        width: 72px;
+        height: 72px;
+    }
+
+    .province-map-hub-skyline {
+        display: none;
     }
 
     .province-map-node {
-        width: min(100px, 26vw);
+        width: min(92px, 24vw);
     }
 
     .province-map-node-pin {
-        width: 54px;
-        height: 54px;
+        width: 52px;
+        height: 52px;
     }
 
+    .province-map-node--power { top: 4%; }
+    .province-map-node--food { left: 10%; top: 18%; }
+    .province-map-node--retail { right: 10%; top: 18%; }
+    .province-map-node--mines { left: 4%; top: 52%; }
+    .province-map-node--industry { right: 4%; top: 52%; }
+    .province-map-node--civic { left: 18%; bottom: 8%; }
+    .province-map-node--military { right: 18%; bottom: 8%; }
+
     .province-map-node-skyline,
-    .province-map-node-chips {
+    .province-map-node-chips,
+    .province-map-node-cta {
         display: none;
     }
 
@@ -6168,12 +6075,13 @@ body.province-base-phaser-active .province-base-slots-grid {
     background: var(--foreground);
     border-radius: var(--game-radius-xl) var(--game-radius-xl) 0 0;
     padding: var(--game-space-md);
-    padding-bottom: calc(var(--game-bottom-nav-height, 64px) + var(--game-safe-bottom) + var(--game-space-lg));
+    padding-bottom: calc(var(--game-safe-bottom) + var(--game-space-lg));
     box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.4);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: 65vh;
+    min-height: 0;
+    max-height: min(72vh, calc(100dvh - var(--game-navbar-height, 55px) - 48px));
 }
 
 .province-base-sheet-header {
@@ -6226,11 +6134,13 @@ body.province-base-phaser-active .province-base-slots-grid {
 
 .province-base-building-list {
     overflow-y: auto;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     margin: var(--game-space-md) 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .province-base-building-row {
@@ -6314,7 +6224,7 @@ body.province-base-phaser-active .province-base-slots-grid {
 .province-base-toast {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--game-bottom-nav-height, 64px) + 80px);
+    bottom: calc(var(--game-safe-bottom) + 24px);
     transform: translateX(-50%) translateY(20px);
     padding: 12px 20px;
     border-radius: 999px;
