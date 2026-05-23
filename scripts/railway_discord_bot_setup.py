@@ -27,7 +27,8 @@ GRAPHQL_URL = "https://backboard.railway.com/graphql/v2"
 DEFAULT_PROJECT_ID = "0165e9df-ef94-41b3-ab57-c596994a3165"
 DEFAULT_GITHUB_REPO = "Manbo04/AnO-Reborn"
 BOT_START_COMMAND = "python -m discord_bot.main"
-BOT_SERVICE_NAME = "discord-bot"
+# Railway service name in production (see natural-gratitude project canvas).
+BOT_SERVICE_NAME = os.getenv("RAILWAY_BOT_SERVICE_NAME", "bot")
 
 
 def _gql(token: str, query: str, variables: dict | None = None) -> dict:

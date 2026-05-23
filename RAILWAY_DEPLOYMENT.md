@@ -100,33 +100,52 @@ Your Railway deployment will consist of:
 
 ---
 
-## Step 6: Discord bot (optional, Phase 1)
+## Step 6: Discord bot (existing `bot` service)
 
-1. Click **"+ New"** → **"GitHub Repo"** → same repository
-2. Set **Service Name**: `discord-bot`
-3. Set **Start Command**:
-   ```
-   python scripts/run_discord_bot_if_leader.py
-   ```
-   (Or use the `discord-bot` process from the repo `Procfile` if your Railway service reads it.)
-4. **Variables** (reference Postgres is not required for the bot; it calls the web API):
-   ```
-   DISCORD_BOT_TOKEN=<Discord Developer Portal bot token>
-   BOT_API_SECRET=<same secret as web service>
-   BOT_API_BASE_URL=https://affairsandorder.com
-   ```
-5. On the **web service**, add (optional if `SECRET_KEY` is already set — the app derives a matching `BOT_API_SECRET` automatically):
-   ```
-   BOT_API_SECRET=<same value>
-   ```
-   Explicit `BOT_API_SECRET` is recommended for production; override the derived default when you rotate keys.
-6. After deploy, apply migration **0022** once (Railway CLI or one-off shell on web service):
-   ```bash
-   python3 scripts/apply_discord_bot_migration.py
-   ```
-7. Invite the bot with scopes: `bot`, `applications.commands` (permissions: Send Messages, Embed Links; Manage Roles optional for Phase 2).
+If you already have a Railway service named **`bot`** (invited to Discord, `DISCORD_BOT_TOKEN` set), reconfigure it for Phase 1:
 
-Players link nations via **Account → Generate Bot Link Code**, then `/register code:XXXXXXXX` in Discord.
+### Start command (required)
+
+Replace any HTTP server / `PORT=5005` setup. The bot is a **Discord gateway client**, not a web app:
+
+```
+python scripts/run_discord_bot_if_leader.py
+```
+
+Remove obsolete variables: `DISCORD_BOT_URL`, `PORT` (not used by this codebase).
+
+### Variables on the `bot` service
+
+| Variable | Value |
+|----------|--------|
+| `DISCORD_BOT_TOKEN` | Your bot token (already set) |
+| `BOT_API_BASE_URL` | `https://affairsandorder.com` |
+| `REDIS_URL` | Reference from Redis service (leader lock) |
+| `SECRET_KEY` | Reference from **web** service (derives bot API auth), **or** set explicit `BOT_API_SECRET` on both web and bot |
+
+Optional explicit override (recommended long-term):
+
+```
+BOT_API_SECRET=<same on web and bot>
+```
+
+### Web service
+
+`SECRET_KEY` is enough for the bot API (`/api/bot/*`) — auth is derived automatically until you set `BOT_API_SECRET`.
+
+### After deploy
+
+Tables are created automatically on web boot. One-time migration (optional):
+
+```bash
+python3 scripts/apply_discord_bot_migration.py
+```
+
+### Player flow
+
+**Account → Generate Bot Link Code** → Discord `/register code:XXXXXXXX` → `/me`, `/wars`, `/resources`, `/nation`
+
+Slash commands can take up to ~1 hour to appear globally on first deploy; re-invite is not required if the bot is already in your server.
 
 ---
 

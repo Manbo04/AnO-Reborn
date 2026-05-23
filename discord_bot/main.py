@@ -32,6 +32,14 @@ class AnOBot(commands.Bot):
         synced = await self.tree.sync()
         logger.info("Synced %s global slash command(s)", len(synced))
 
+    async def on_ready(self) -> None:
+        logger.info(
+            "Logged in as %s (%s); API base %s",
+            self.user,
+            self.user.id if self.user else "?",
+            __import__("discord_bot.config", fromlist=["BOT_API_BASE_URL"]).BOT_API_BASE_URL,
+        )
+
 
 def main() -> None:
     validate_config()
