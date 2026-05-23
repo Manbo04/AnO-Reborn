@@ -1076,6 +1076,7 @@ _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
 _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
+_users_password_columns_cache: Optional[set] = None
 
 
 def _ensure_discord_bot_tables(db) -> None:
@@ -1161,6 +1162,7 @@ def ensure_schema_compat() -> None:
                     """
                 )
                 _ensure_discord_bot_tables(db)
+                _ensure_reset_codes_table(db)
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
             try:
@@ -1224,6 +1226,70 @@ def users_table_has_column(column_name: str) -> bool:
         logger.warning("users_table_has_column(%s): %s", column_name, exc)
     _users_column_cache[column_name] = has_col
     return has_col
+
+
+def get_users_password_column_names() -> set:
+    """Return which of ``hash`` / ``password`` exist on ``users`` (cached)."""
+    global _users_password_columns_cache
+    if _users_password_columns_cache is not None:
+        return _users_password_columns_cache
+    cols: set = set()
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'users'
+                  AND column_name IN ('hash', 'password')
+                """
+            )
+            cols = {row[0] for row in db.fetchall()}
+    except Exception as exc:
+        logger.warning("get_users_password_column_names: %s", exc)
+    _users_password_columns_cache = cols
+    return cols
+
+
+def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
+    """Persist bcrypt hash on every password column; allow username/password login."""
+    cols = get_users_password_column_names()
+    if not cols:
+        raise RuntimeError("users table has no hash or password column")
+    if "hash" in cols:
+        db.execute(
+            "UPDATE users SET hash = %s WHERE id = %s",
+            (hashed_bcrypt_utf8, user_id),
+        )
+    if "password" in cols:
+        db.execute(
+            "UPDATE users SET password = %s WHERE id = %s",
+            (hashed_bcrypt_utf8.encode("utf-8"), user_id),
+        )
+    if users_table_has_column("auth_type"):
+        db.execute(
+            """
+            UPDATE users
+            SET auth_type = 'normal'
+            WHERE id = %s
+              AND COALESCE(auth_type, '') <> 'normal'
+            """,
+            (user_id,),
+        )
+
+
+def _ensure_reset_codes_table(db) -> None:
+    """Idempotent password-reset token storage (matches affo/postgres/reset_codes.txt)."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reset_codes (
+            url_code VARCHAR(120) NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL UNIQUE,
+            created_at VARCHAR(60) NOT NULL
+        )
+        """
+    )
 
 
 def resolve_user_id_by_discord(discord_user_id: str) -> Optional[int]:
