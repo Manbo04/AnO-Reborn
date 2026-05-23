@@ -471,6 +471,96 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
     border: 1px solid var(--border);
 }
 
+.tutorial-video-stepper {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 4px 2px 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.tutorial-video-step-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 140px;
+    max-width: 220px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--foreground);
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.tutorial-video-step-btn:hover {
+    border-color: var(--colorOne);
+    color: var(--colorOne);
+}
+
+.tutorial-video-step-btn.is-active {
+    border-color: var(--colorOne);
+    background: rgba(0, 167, 225, 0.12);
+    color: var(--colorOne);
+}
+
+.tutorial-video-step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--foregroundTwo);
+    color: var(--text-secondary);
+}
+
+.tutorial-video-step-btn.is-active .tutorial-video-step-num {
+    background: var(--colorOne);
+    color: #0a0e14;
+}
+
+.tutorial-video-step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.tutorial-video-step-label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: inherit;
+}
+
+.tutorial-video-step-tab {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(0, 167, 225, 0.15);
+    color: var(--colorOne);
+}
+
+.tutorial-video-step-btn:not(.is-active) .tutorial-video-step-tab {
+    background: var(--foregroundTwo);
+    color: var(--text-secondary);
+}
+
 .tutorial-block-follow {
     background: var(--foreground);
 }

@@ -10,10 +10,39 @@
         { "label": "Game mechanics reference", "href": "/mechanics" }
       ],
       "recording_steps": [
-        { "label": "1. Log in to your nation", "path": "/login", "action": "login", "hold_sec": 5 },
-        { "label": "2. Country overview (population & stats)", "path": "/country", "tab": "countryview", "hold_sec": 7 },
-        { "label": "3. Revenue tab — hourly tax & net gold", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
-        { "label": "4. Game mechanics reference pages", "path": "/mechanics", "hold_sec": 7 }
+        {
+          "label": "1. Log in to your nation",
+          "path": "/login",
+          "action": "login",
+          "tab_group": "none",
+          "narration": "Start on the login page. Enter your nation name and password, then sign in.",
+          "hold_sec": 6
+        },
+        {
+          "label": "2. Country overview (population & stats)",
+          "path": "/country",
+          "tab": "countryview",
+          "tab_label": "View",
+          "tab_group": "country",
+          "narration": "Your country page opens on the View tab. Here you see population, happiness, and core nation stats.",
+          "hold_sec": 7
+        },
+        {
+          "label": "3. Revenue tab — hourly tax & net gold",
+          "path": "/country",
+          "tab": "countryrevenue",
+          "tab_label": "Revenue",
+          "tab_group": "country",
+          "narration": "Open the Revenue tab to see hourly production, costs, and net gold income.",
+          "hold_sec": 8
+        },
+        {
+          "label": "4. Game mechanics reference pages",
+          "path": "/mechanics",
+          "tab_group": "none",
+          "narration": "The mechanics pages explain rules in detail whenever you need a reference.",
+          "hold_sec": 7
+        }
       ]
     },
     {
@@ -26,10 +55,38 @@
         { "label": "Create a province", "href": "/createprovince" }
       ],
       "recording_steps": [
-        { "label": "1. Your province list", "path": "/provinces", "hold_sec": 7 },
-        { "label": "2. Open one province", "path": "/province/{province_id}", "hold_sec": 6 },
-        { "label": "3. Land tab — mines & industry slots", "path": "/province/{province_id}", "tab": "provinceland", "hold_sec": 7 },
-        { "label": "4. Industry buildings (extractors)", "path": "/province/{province_id}", "tab": "landindustry", "hold_sec": 8 }
+        {
+          "label": "1. Your province list",
+          "path": "/provinces",
+          "tab_group": "none",
+          "narration": "The provinces page lists every province you own and lets you open each one.",
+          "hold_sec": 7
+        },
+        {
+          "label": "2. Open one province",
+          "path": "/province/{province_id}",
+          "tab_group": "none",
+          "narration": "Open a province to manage its city, land, and buildings.",
+          "hold_sec": 6
+        },
+        {
+          "label": "3. Land tab — mines & industry slots",
+          "path": "/province/{province_id}",
+          "tab": "provinceland",
+          "tab_label": "Land",
+          "tab_group": "province",
+          "narration": "On the Land tab you assign mines and prepare slots for industry buildings.",
+          "hold_sec": 7
+        },
+        {
+          "label": "4. Industry buildings (extractors)",
+          "path": "/province/{province_id}",
+          "tab": "landindustry",
+          "tab_label": "Industry",
+          "tab_group": "province.land",
+          "narration": "The Industry tab shows extractors that pull raw resources from the ground.",
+          "hold_sec": 8
+        }
       ]
     },
     {
@@ -42,11 +99,49 @@
         { "label": "Resource mechanics", "href": "/mechanics/resources" }
       ],
       "recording_steps": [
-        { "label": "1. Nation buildings summary", "path": "/country", "tab": "countryview", "hold_sec": 7 },
-        { "label": "2. Revenue — resources produced per hour", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
-        { "label": "3. Province land — raw material mines", "path": "/province/{province_id}", "tab": "landindustry", "hold_sec": 8 },
-        { "label": "4. Processing — refineries & factories", "path": "/province/{province_id}", "tab": "landprocessing", "hold_sec": 8 },
-        { "label": "5. Resource mechanics guide", "path": "/mechanics/resources", "hold_sec": 7 }
+        {
+          "label": "1. Nation buildings summary",
+          "path": "/country",
+          "tab": "countryview",
+          "tab_label": "View",
+          "tab_group": "country",
+          "narration": "On your country View tab you get a quick picture of national buildings and stockpiles.",
+          "hold_sec": 7
+        },
+        {
+          "label": "2. Revenue — resources produced per hour",
+          "path": "/country",
+          "tab": "countryrevenue",
+          "tab_label": "Revenue",
+          "tab_group": "country",
+          "narration": "Revenue lists how much of each resource your economy produces every hour.",
+          "hold_sec": 8
+        },
+        {
+          "label": "3. Province land — raw material mines",
+          "path": "/province/{province_id}",
+          "tab": "landindustry",
+          "tab_label": "Industry",
+          "tab_group": "province.land",
+          "narration": "Province Industry buildings mine tier-one materials like iron, lumber, and bauxite.",
+          "hold_sec": 8
+        },
+        {
+          "label": "4. Processing — refineries & factories",
+          "path": "/province/{province_id}",
+          "tab": "landprocessing",
+          "tab_label": "Processing",
+          "tab_group": "province.land",
+          "narration": "Processing buildings turn raw materials into steel, fuel, and other advanced goods.",
+          "hold_sec": 8
+        },
+        {
+          "label": "5. Resource mechanics guide",
+          "path": "/mechanics/resources",
+          "tab_group": "none",
+          "narration": "The resource mechanics guide explains production chains and dependencies.",
+          "hold_sec": 7
+        }
       ]
     },
     {
@@ -59,10 +154,41 @@
         { "label": "Revenue mechanics", "href": "/mechanics/revenue" }
       ],
       "recording_steps": [
-        { "label": "1. Country overview", "path": "/country", "tab": "countryview", "hold_sec": 6 },
-        { "label": "2. Revenue — gross production table", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
-        { "label": "3. Revenue — net gold after costs & tax", "path": "/country", "tab": "countryrevenue", "scroll": "#revenue", "hold_sec": 8 },
-        { "label": "4. Revenue mechanics explained", "path": "/mechanics/revenue", "hold_sec": 8 }
+        {
+          "label": "1. Country overview",
+          "path": "/country",
+          "tab": "countryview",
+          "tab_label": "View",
+          "tab_group": "country",
+          "narration": "Start on the country View tab for population and policy context.",
+          "hold_sec": 6
+        },
+        {
+          "label": "2. Revenue — gross production table",
+          "path": "/country",
+          "tab": "countryrevenue",
+          "tab_label": "Revenue",
+          "tab_group": "country",
+          "narration": "Revenue shows gross production before upkeep and taxes are applied.",
+          "hold_sec": 8
+        },
+        {
+          "label": "3. Revenue — net gold after costs & tax",
+          "path": "/country",
+          "tab": "countryrevenue",
+          "tab_label": "Revenue",
+          "tab_group": "country",
+          "scroll": "#revenue",
+          "narration": "Scroll down on Revenue to see net gold after building costs, rations, and coalition tax.",
+          "hold_sec": 8
+        },
+        {
+          "label": "4. Revenue mechanics explained",
+          "path": "/mechanics/revenue",
+          "tab_group": "none",
+          "narration": "The revenue mechanics page breaks down tax rates and income formulas.",
+          "hold_sec": 8
+        }
       ]
     },
     {
@@ -75,9 +201,32 @@
         { "label": "Rations guide", "href": "/mechanics/rations" }
       ],
       "recording_steps": [
-        { "label": "1. Population & demographics chart", "path": "/country", "tab": "countryview", "scroll": "#demographicsRadarChart", "hold_sec": 8 },
-        { "label": "2. Revenue — rations consumed", "path": "/country", "tab": "countryrevenue", "hold_sec": 8 },
-        { "label": "3. Rations & distribution rules", "path": "/mechanics/rations", "hold_sec": 8 }
+        {
+          "label": "1. Population & demographics chart",
+          "path": "/country",
+          "tab": "countryview",
+          "tab_label": "View",
+          "tab_group": "country",
+          "scroll": "#demographicsRadarChart",
+          "narration": "The demographics chart on View shows how your population is distributed by age.",
+          "hold_sec": 8
+        },
+        {
+          "label": "2. Revenue — rations consumed",
+          "path": "/country",
+          "tab": "countryrevenue",
+          "tab_label": "Revenue",
+          "tab_group": "country",
+          "narration": "On Revenue you can see how many rations your people consume each hour.",
+          "hold_sec": 8
+        },
+        {
+          "label": "3. Rations & distribution rules",
+          "path": "/mechanics/rations",
+          "tab_group": "none",
+          "narration": "The rations guide explains distribution capacity and shortages.",
+          "hold_sec": 8
+        }
       ]
     },
     {
@@ -89,9 +238,33 @@
         { "label": "Military page", "href": "/military" }
       ],
       "recording_steps": [
-        { "label": "1. Military — land units", "path": "/military", "tab": "militaryland", "hold_sec": 8 },
-        { "label": "2. Military — air units", "path": "/military", "tab": "militaryair", "hold_sec": 7 },
-        { "label": "3. Military — naval units", "path": "/military", "tab": "militarywater", "hold_sec": 7 }
+        {
+          "label": "1. Military — land units",
+          "path": "/military",
+          "tab": "militaryland",
+          "tab_label": "Land",
+          "tab_group": "military",
+          "narration": "The military Land tab lists ground units you can train and deploy.",
+          "hold_sec": 8
+        },
+        {
+          "label": "2. Military — air units",
+          "path": "/military",
+          "tab": "militaryair",
+          "tab_label": "Air",
+          "tab_group": "military",
+          "narration": "Switch to Air for fighters, bombers, and other aircraft.",
+          "hold_sec": 7
+        },
+        {
+          "label": "3. Military — naval units",
+          "path": "/military",
+          "tab": "militarywater",
+          "tab_label": "Naval",
+          "tab_group": "military",
+          "narration": "The Naval tab covers ships and maritime forces.",
+          "hold_sec": 7
+        }
       ]
     },
     {
@@ -104,8 +277,20 @@
         { "label": "Market statistics", "href": "/statistics" }
       ],
       "recording_steps": [
-        { "label": "1. Market — buy & sell offers", "path": "/market", "hold_sec": 9 },
-        { "label": "2. Statistics — average prices", "path": "/statistics", "hold_sec": 9 }
+        {
+          "label": "1. Market — buy & sell offers",
+          "path": "/market",
+          "tab_group": "none",
+          "narration": "The global market shows live buy and sell offers from every nation.",
+          "hold_sec": 9
+        },
+        {
+          "label": "2. Statistics — average prices",
+          "path": "/statistics",
+          "tab_group": "none",
+          "narration": "Statistics help you compare average, high, and low prices before you trade.",
+          "hold_sec": 9
+        }
       ]
     },
     {
@@ -117,8 +302,24 @@
         { "label": "View upgrades", "href": "/upgrades" }
       ],
       "recording_steps": [
-        { "label": "1. Economic upgrades", "path": "/upgrades", "tab": "upgradeseconomic", "hold_sec": 8 },
-        { "label": "2. Military upgrades", "path": "/upgrades", "tab": "upgradesmilitary", "hold_sec": 8 }
+        {
+          "label": "1. Economic upgrades",
+          "path": "/upgrades",
+          "tab": "upgradeseconomic",
+          "tab_label": "Economic",
+          "tab_group": "upgrades",
+          "narration": "Economic upgrades boost production, tax efficiency, and civilian capacity.",
+          "hold_sec": 8
+        },
+        {
+          "label": "2. Military upgrades",
+          "path": "/upgrades",
+          "tab": "upgradesmilitary",
+          "tab_label": "Military",
+          "tab_group": "upgrades",
+          "narration": "Military upgrades improve unit stats and unlock advanced forces.",
+          "hold_sec": 8
+        }
       ]
     },
     {
@@ -131,8 +332,20 @@
         { "label": "War mechanics", "href": "/mechanics/war" }
       ],
       "recording_steps": [
-        { "label": "1. Active wars & declarations", "path": "/wars", "hold_sec": 9 },
-        { "label": "2. War mechanics — combat rules", "path": "/mechanics/war", "hold_sec": 9 }
+        {
+          "label": "1. Active wars & declarations",
+          "path": "/wars",
+          "tab_group": "none",
+          "narration": "The wars page lists active conflicts and declarations involving your nation.",
+          "hold_sec": 9
+        },
+        {
+          "label": "2. War mechanics — combat rules",
+          "path": "/mechanics/war",
+          "tab_group": "none",
+          "narration": "War mechanics explain how attacks, defenses, and casualties are calculated.",
+          "hold_sec": 9
+        }
       ]
     },
     {
@@ -145,8 +358,20 @@
         { "label": "Recruiting coalitions", "href": "/recruitments" }
       ],
       "recording_steps": [
-        { "label": "1. Coalition directory", "path": "/coalitions", "hold_sec": 8 },
-        { "label": "2. Coalitions recruiting members", "path": "/recruitments", "hold_sec": 8 }
+        {
+          "label": "1. Coalition directory",
+          "path": "/coalitions",
+          "tab_group": "none",
+          "narration": "Browse coalitions to find allies, banks, and shared diplomacy.",
+          "hold_sec": 8
+        },
+        {
+          "label": "2. Coalitions recruiting members",
+          "path": "/recruitments",
+          "tab_group": "none",
+          "narration": "Recruiting coalitions are actively looking for new members to join.",
+          "hold_sec": 8
+        }
       ]
     }
   ]

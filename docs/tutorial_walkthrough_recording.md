@@ -1,6 +1,6 @@
 # Tutorial walkthrough screen recording
 
-Nation Academy chapter videos (`static/tutorial/videos/ch01-*.mp4` … `ch10-*.mp4`) can be regenerated as **real in-game screen captures** using Playwright.
+Nation Academy chapter videos (`static/tutorial/videos/ch01-*.mp4` … `ch10-*.mp4`) are regenerated as **in-game Playwright screen video** with smooth cursor motion, tab chips in the step banner, and optional per-step TTS.
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ Nation Academy chapter videos (`static/tutorial/videos/ch01-*.mp4` … `ch10-*.m
 - Network access to production site and Railway Postgres (public proxy)
 
 ```bash
-pip install playwright psycopg2-binary bcrypt python-dotenv requests
+pip install playwright psycopg2-binary bcrypt python-dotenv requests edge-tts
 playwright install chromium
 ```
 
@@ -23,22 +23,62 @@ playwright install chromium
 | `TUTORIAL_RECORD_TMP_PASSWORD` | `tutorial-record-2026` | Temporary password during run (restored after) |
 | `TUTORIAL_RECORD_SKIP_DB` | unset | Set to `1` to skip DB password swap (supply `TUTORIAL_RECORD_USERNAME` + `TUTORIAL_RECORD_PASSWORD`) |
 
-## Run (all chapters)
+## Run (full pipeline)
 
 From repo root:
 
 ```bash
 export DATABASE_PUBLIC_URL='postgresql://...'   # Railway public URL
-python3 scripts/record_tutorial_walkthroughs.py
+python3 scripts/generate_tutorial_narration.py
+python3 scripts/record_tutorial_walkthroughs.py --with-narration
 ```
 
 Single chapters:
 
 ```bash
-python3 scripts/record_tutorial_walkthroughs.py --chapters 2,7
+python3 scripts/generate_tutorial_narration.py   # all chapters (or split manually)
+python3 scripts/record_tutorial_walkthroughs.py --chapters 2,7 --with-narration
 ```
 
-Output overwrites `static/tutorial/videos/*.mp4`. Commit and deploy to `master` for Railway.
+Silent capture (no audio mux):
+
+```bash
+python3 scripts/record_tutorial_walkthroughs.py --no-narration
+```
+
+Output:
+
+- `static/tutorial/videos/*.mp4` — scaled H.264 (960×540)
+- `static/tutorial/audio/{stem}.mp3` — concatenated per-step narration
+- `static/tutorial/captions/{stem}.vtt` — step-aligned captions
+- `static/tutorial/step_durations.json` — hold times synced to audio (used by recorder)
+
+Commit assets and bump `?v=` on tutorial video/CSS/JS after replace. Deploy `master` for Railway.
+
+## Chapter metadata
+
+Each `recording_steps[]` entry in [`static/tutorial/chapters.json`](../static/tutorial/chapters.json) supports:
+
+| Field | Purpose |
+|-------|---------|
+| `label` | Step title (banner + captions + stepper UI) |
+| `path` | Route (`{province_id}` placeholders resolved from test user) |
+| `tab` | In-game tab id (e.g. `countryrevenue`) — clicked with smooth mouse motion |
+| `tab_label` | Short label for tutorial stepper pill |
+| `tab_group` | Chip row in banner (`country`, `province`, `province.land`, `military`, `upgrades`, `none`) |
+| `narration` | Per-step TTS script |
+| `hold_sec` | Minimum seconds on screen (extended if audio is longer) |
+| `scroll` | Optional selector for smooth scroll before hold |
+| `action` | `login` for chapter 1 sign-in step |
+
+Tab label map: [`scripts/tutorial_chapter_meta.py`](../scripts/tutorial_chapter_meta.py) (mirrors `static/script.js` `TAB_GROUPS`).
+
+## Recording behavior (v3)
+
+- One **Playwright `record_video`** per chapter (1280×720), converted with ffmpeg (CRF 26).
+- **Smooth cursor**: stepped `mouse.move` + visible overlay dot; smooth clicks on tabs and login fields.
+- **Step banner**: chapter title, step label, and **tab chips** when `tab_group` is set.
+- **Hold duration**: `max(hold_sec, audio_duration + 0.8)` when `step_durations.json` exists.
 
 ## Safety rules
 
@@ -48,26 +88,9 @@ The recorder is **read-only** in the browser:
 - Blocks POSTs to war, market offers, account deletion, coalition bank, etc.
 - Restores the test user’s original password hash after the run
 
-Do not click buy/sell/declare buttons during manual OBS recordings either.
-
-## Manual OBS fallback
-
-If automation is unavailable:
-
-1. Log in as **Tester of the Game** on production.
-2. Record 45–75s per chapter at **1280×720**, following the table in `scripts/record_tutorial_walkthroughs.py` (`build_flows`).
-3. Export H.264 MP4, scale to **960×540** if needed:
-
-   ```bash
-   ffmpeg -i raw.mp4 -vf "scale=960:540:force_original_aspect_ratio=decrease,pad=960:540:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -pix_fmt yuv420p -crf 28 -an static/tutorial/videos/ch02-provinces.mp4
-   ```
-
-4. Keep filenames: `ch01-welcome.mp4` … `ch10-coalitions.mp4`.
-5. Bump `?v=` on video sources in `templates/tutorial.html` after replace.
-
 ## Size guardrail
 
-Aim for **&lt; 25 MB** total across 10 files. Increase CRF (e.g. 30) in the script’s `ffmpeg_to_mp4` if needed.
+Aim for **&lt; 40 MB** total across 10 files. Increase `VIDEO_CRF` in `record_tutorial_walkthroughs.py` if needed.
 
 ## Slideshow fallback
 
@@ -77,33 +100,16 @@ Offline / no DB:
 python3 scripts/generate_tutorial_videos.py
 ```
 
-## Step-based capture (recommended)
-
-Each chapter defines `recording_steps` in [`static/tutorial/chapters.json`](../static/tutorial/chapters.json):
-
-- Visits the **correct page and tab** (e.g. `#countryrevenue`, `#landindustry`)
-- Shows an **on-screen step banner** (chapter title + step label)
-- **Holds 6–9 seconds** per step (no fast scrolling)
-- Builds a silent MP4 from screenshots; WebVTT captions use the same step labels
-
-```bash
-python3 scripts/record_tutorial_walkthroughs.py --no-narration
-```
-
-Edit steps or hold times in `chapters.json`, then re-run the script.
-
-## TTS narration (optional, off by default)
-
-TTS is **disabled by default** (players preferred silent labeled video). To experiment:
-
-```bash
-pip install edge-tts
-python3 scripts/generate_tutorial_narration.py
-python3 scripts/record_tutorial_walkthroughs.py --with-narration
-```
-
 ## CI auto re-record
 
-[`.github/workflows/tutorial-videos.yml`](../.github/workflows/tutorial-videos.yml) runs on relevant `master` pushes and `workflow_dispatch`. It opens a PR with updated videos (avoids push loops on `master`).
+[`.github/workflows/tutorial-videos.yml`](../.github/workflows/tutorial-videos.yml) runs narration generation, then recording with `--with-narration`, and opens a PR with videos/audio/captions.
 
 Required GitHub secret: `DATABASE_PUBLIC_URL`. Optional: `TUTORIAL_RECORD_TMP_PASSWORD`, repo variable `TUTORIAL_RECORD_BASE_URL`.
+
+## Verification checklist
+
+1. Cursor moves smoothly to tabs (no instant jumps between steps on the same page).
+2. Active in-game tab matches the step (Revenue, Land, Industry, etc.).
+3. Banner shows tab chip row with the active tab highlighted.
+4. `/tutorial` step strip under the video tracks playback; clicking a step seeks the video.
+5. Narration is audible, not rushed; test user password restored after run.
