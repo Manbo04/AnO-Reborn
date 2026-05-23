@@ -1078,6 +1078,57 @@ _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
 
 
+def _ensure_discord_bot_tables(db) -> None:
+    """Idempotent Discord bot tables (migration 0022) for production auto-setup."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_link_codes (
+            code VARCHAR(16) PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at TIMESTAMPTZ NOT NULL,
+            used_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_link_codes_user_id
+        ON discord_link_codes (user_id)
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_guild_settings (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            coalition_id INTEGER REFERENCES colNames(id) ON DELETE SET NULL,
+            registered_role_id VARCHAR(32),
+            bank_alert_channel_id VARCHAR(32),
+            war_alert_channel_id VARCHAR(32),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_role_aliases (
+            guild_id VARCHAR(32) NOT NULL,
+            alias VARCHAR(64) NOT NULL,
+            discord_role_id VARCHAR(32) NOT NULL,
+            PRIMARY KEY (guild_id, alias)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id_unique
+        ON users (discord_id)
+        WHERE discord_id IS NOT NULL AND discord_id <> ''
+        """
+    )
+
+
 def ensure_schema_compat() -> None:
     """Align production DB with code expectations (idempotent, once per process).
 
@@ -1109,6 +1160,7 @@ def ensure_schema_compat() -> None:
                     ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
                     """
                 )
+                _ensure_discord_bot_tables(db)
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
             try:

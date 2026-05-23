@@ -1,0 +1,48 @@
+name: Discord Bot Setup
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - migrations/0022_discord_bot.sql
+      - database.py
+      - scripts/apply_discord_bot_migration.py
+      - scripts/railway_discord_bot_setup.py
+      - .github/workflows/discord-bot-setup.yml
+      - bot_api.py
+      - discord_bot/**
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-and-configure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Apply Discord bot migration
+        if: ${{ secrets.DATABASE_PUBLIC_URL != '' }}
+        env:
+          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+        run: |
+          pip install psycopg2-binary python-dotenv
+          python3 scripts/apply_discord_bot_migration.py
+
+      - name: Configure Railway (BOT_API_SECRET + discord-bot service)
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
+        run: python3 scripts/railway_discord_bot_setup.py
+
+      - name: Note missing secrets
+        if: ${{ secrets.DATABASE_PUBLIC_URL == '' && secrets.RAILWAY_TOKEN == '' }}
+        run: |
+          echo "::warning::Set DATABASE_PUBLIC_URL and/or RAILWAY_TOKEN repo secrets to fully automate Discord bot setup."
