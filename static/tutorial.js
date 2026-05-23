@@ -615,6 +615,61 @@
         });
     });
 
+    function initVideoSteppers() {
+        root.querySelectorAll(".tutorial-video-stepper").forEach(function (stepper) {
+            var video = stepper.closest(".tutorial-block-video");
+            if (!video) return;
+            var vid = video.querySelector(".tutorial-lesson-video");
+            if (!vid) return;
+
+            var steps = [];
+            try {
+                var raw = stepper.getAttribute("data-steps");
+                if (raw) steps = JSON.parse(raw);
+            } catch (e) {
+                return;
+            }
+            if (!steps.length) return;
+
+            var btns = Array.prototype.slice.call(
+                stepper.querySelectorAll(".tutorial-video-step-btn")
+            );
+
+            function setActiveStep(index) {
+                btns.forEach(function (btn, i) {
+                    var on = i === index;
+                    btn.classList.toggle("is-active", on);
+                    btn.setAttribute("aria-selected", on ? "true" : "false");
+                });
+            }
+
+            function indexForTime(t) {
+                for (var i = 0; i < steps.length; i++) {
+                    if (t >= steps[i].start && t < steps[i].end) return i;
+                }
+                if (t >= steps[steps.length - 1].start) return steps.length - 1;
+                return 0;
+            }
+
+            vid.addEventListener("timeupdate", function () {
+                setActiveStep(indexForTime(vid.currentTime));
+            });
+
+            btns.forEach(function (btn, i) {
+                btn.addEventListener("click", function () {
+                    if (!steps[i]) return;
+                    vid.currentTime = steps[i].start + 0.05;
+                    if (vid.paused) vid.play();
+                    setActiveStep(i);
+                });
+            });
+
+            setActiveStep(0);
+        });
+    }
+
+    initVideoSteppers();
+
     unlockChapters();
     updateStatsUI();
     setChapter(progress.current || 0, false);

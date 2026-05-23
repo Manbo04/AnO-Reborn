@@ -3,14 +3,41 @@
                         <div class="tutorial-block-head">
                             <span class="material-icons-outlined" aria-hidden="true">play_circle</span>
                             <span>Guided walkthrough</span>
-                            <span class="tutorial-block-meta">~30 sec · silent · step labels on screen</span>
+                            <span class="tutorial-block-meta">In-game capture · step labels · narrated</span>
                         </div>
                         <video class="tutorial-lesson-video" controls playsinline preload="metadata"
-                               poster="{{ url_for('static', filename=chapter.poster) }}?v=2"
+                               poster="{{ url_for('static', filename=chapter.poster) }}?v=5"
                                aria-label="{{ chapter.aria_label }}">
-                            <source src="{{ url_for('static', filename='tutorial/videos/' ~ chapter.stem ~ '.mp4') }}?v=4" type="video/mp4">
-                            <track kind="captions" src="{{ url_for('static', filename='tutorial/captions/' ~ chapter.stem ~ '.vtt') }}?v=4" srclang="en" label="Step labels">
+                            <source src="{{ url_for('static', filename='tutorial/videos/' ~ chapter.stem ~ '.mp4') }}?v=5" type="video/mp4">
+                            <track kind="captions" src="{{ url_for('static', filename='tutorial/captions/' ~ chapter.stem ~ '.vtt') }}?v=5" srclang="en" label="Step labels" default>
                         </video>
+                        {% if chapter.recording_steps %}
+                        {% set timeline = namespace(t=0) %}
+                        <div class="tutorial-video-stepper" role="tablist" aria-label="Video steps for {{ chapter.title }}"
+                             data-steps="[
+                        {%- for step in chapter.recording_steps -%}
+                        {%- set hold = (step.hold_sec | default(6)) | float -%}
+                        {%- if not loop.first %},{% endif -%}
+                        {"label":{{ step.label | tojson }},"tab_label":{{ step.tab_label | default(none) | tojson }},"start":{{ timeline.t }},"end":{{ timeline.t + hold }}}
+                        {%- set timeline.t = timeline.t + hold -%}
+                        {%- endfor -%}
+                        ]">
+                            {% for step in chapter.recording_steps %}
+                            <button type="button" class="tutorial-video-step-btn"
+                                    data-step-index="{{ loop.index0 }}"
+                                    role="tab"
+                                    aria-selected="false">
+                                <span class="tutorial-video-step-num">{{ loop.index }}</span>
+                                <span class="tutorial-video-step-text">
+                                    <span class="tutorial-video-step-label">{{ step.label }}</span>
+                                    {% if step.tab_label %}
+                                    <span class="tutorial-video-step-tab">{{ step.tab_label }}</span>
+                                    {% endif %}
+                                </span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </section>
 {% endmacro %}
 
