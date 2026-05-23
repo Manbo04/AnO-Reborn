@@ -4,22 +4,32 @@ Executed against production Railway DB (`interchange.proxy.rlwy.net`) and `https
 
 ---
 
-## Critical: economy writes frozen (P0)
+## Critical: economy writes (P0) — partial recovery (2026-05-23)
 
-**Resource rows have not been updated since 2026-05-08 ~20:00 UTC** (`user_economy.updated_at` max).
+**Root cause (revenue):** `generate_province_revenue()` committed `task_runs.last_run` before resource writes; education batch `integer out of range` called `conn.rollback()`, wiping uncommitted upserts; upserts omitted `updated_at`.
 
-| Signal | Last activity | Status |
-|--------|---------------|--------|
-| `user_economy.updated_at` | 2026-05-08 20:00 UTC | **STALE — no resource commits** |
-| `game_tick_logs` | 2026-05-08 20:00 UTC | **STALE** |
+**Fix (branch `cursor/progression-audit-fe3b`, `tasks.py`):**
+- Resource upserts **before** education; education uses **SAVEPOINT** + clamp to `MAX_INT_32`
+- Upsert sets **`updated_at = now()`**
+- **`last_run` only after successful commit** of province/resource work
+
+| Signal | Last activity (2026-05-23 ~09:36 UTC) | Status |
+|--------|----------------------------------------|--------|
+| `user_economy.updated_at` | 2026-05-23 09:36 UTC | **OK** (after fix / manual revenue run) |
+| `task_runs.generate_province_revenue` | 2026-05-23 09:36 UTC | **OK** |
+| `task_runs.tax_income` | 2026-05-23 09:33 UTC | **OK** |
+| `task_runs.population_growth` | 2026-05-21 07:40 UTC | **STALE** (~50h) |
 | `task_runs.global_tick` | 2026-05-08 20:00 UTC | **STALE** |
 | `task_runs.execute_trade_agreements` | 2026-05-08 20:00 UTC | **STALE** |
-| `task_runs.population_growth` | 2026-05-21 07:35 UTC | Stale ~48h |
-| `task_runs.tax_income` / `generate_province_revenue` | May update when manually triggered | **`task_runs` can advance without `user_economy` changing** |
+| `game_tick_logs` | 2026-05-08 20:00 UTC | **STALE** (0 ticks in last 24h) |
 
-**Player impact:** Stockpiles and gold do not move from hourly play. Manual/admin task triggers may bump `task_runs` timestamps without applying deltas — investigate task completion vs commit path.
+**Still broken:** Celery beat is not reliably firing `global_tick` (*/10), `execute_trade_agreements` (*/15), or hourly `population_growth`. Restart beat + workers on Railway; confirm schedules in `tasks.celery_beat_schedule`.
 
-**Ops action:** Restart Celery beat + workers; run one revenue cycle; confirm `user_economy.updated_at` moves within 75 minutes.
+**Ops:** Merge revenue fix to `master`, deploy, then `python3 scripts/progression_health_check.py` until all rows are under 90 minutes stale.
+
+```bash
+DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
+```
 
 ```bash
 DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
@@ -116,9 +126,19 @@ DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
 
 ---
 
+## Railway volume incident (ops)
+
+- **Wrong volume `postgres-volume`:** PascalCase schema, 1 user — do **not** mount on production Postgres.
+- **Correct volume `postgres-2026-05-08 20:08 UTC`:** Flask schema, 168 users — keep at `/var/lib/postgresql/data`.
+
+See `RAILWAY_DEPLOYMENT.md` and `scripts/railway_mount_postgres_volume.sh`.
+
+---
+
 ## Recommended fix order
 
-1. **Restart economy workers** (P0-1) — verify `task_runs` within 1 hour  
-2. **User 16 playtest** after tick restore — buy **distribution_centers** or more retail to cover 24M pop  
-3. Balance pass on retail ROI (P1-1, P1-2) once economy moves again  
-4. UI: show distribution cap vs population when `food_stats < 0`
+1. **Merge + deploy** `generate_province_revenue` commit-path fix (`tasks.py`)  
+2. **Restart Celery beat + workers** — restore `global_tick`, `execute_trade_agreements`, `population_growth`  
+3. **User 16 playtest** — buy **distribution_centers** or more retail to cover 24M pop  
+4. Balance pass on retail ROI (P1-1, P1-2)  
+5. UI: show distribution cap vs population when `food_stats < 0`
