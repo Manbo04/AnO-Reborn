@@ -1,55 +1,61 @@
-# Progression & Smoothness Audit — 2026-05-22
+# Progression & Smoothness Audit — LIVE RESULTS (2026-05-22)
 
-Automated static audit + production HTTP smoke + test harness for account 16.
-DB-backed scenarios require `DATABASE_PUBLIC_URL` (skipped in CI without Postgres).
-
-## Executive summary
-
-| Area | Status | Notes |
-|------|--------|-------|
-| Static balance | 9 findings | 0 blockers; 3 confusing retail ROI; 6 minor distribution/energy |
-| Production HTTP | OK | `/country/id=16` → 200; global list routes → 302 (login) |
-| Hourly tasks | Verify on prod DB | Use `scripts/progression_health_check.py` |
-| Page perf | Verify on prod DB | Use `scripts/test_perf.py` (budgets in plan) |
-| Test account 16 | Harness ready | `tests/test_progression_milestones.py` snapshot/restore |
+Executed against production Railway DB (`interchange.proxy.rlwy.net`) and `https://affairsandorder.com`.
 
 ---
 
-## P0 — Blocks progression
+## Critical: economy writes frozen (P0)
 
-_None confirmed in static audit._ Previously fixed: coal/oil/solar tier-1 build costs (no steel/aluminium gate on first power).
+**Resource rows have not been updated since 2026-05-08 ~20:00 UTC** (`user_economy.updated_at` max).
 
-**Verify on production DB:**
+| Signal | Last activity | Status |
+|--------|---------------|--------|
+| `user_economy.updated_at` | 2026-05-08 20:00 UTC | **STALE — no resource commits** |
+| `game_tick_logs` | 2026-05-08 20:00 UTC | **STALE** |
+| `task_runs.global_tick` | 2026-05-08 20:00 UTC | **STALE** |
+| `task_runs.execute_trade_agreements` | 2026-05-08 20:00 UTC | **STALE** |
+| `task_runs.population_growth` | 2026-05-21 07:35 UTC | Stale ~48h |
+| `task_runs.tax_income` / `generate_province_revenue` | May update when manually triggered | **`task_runs` can advance without `user_economy` changing** |
+
+**Player impact:** Stockpiles and gold do not move from hourly play. Manual/admin task triggers may bump `task_runs` timestamps without applying deltas — investigate task completion vs commit path.
+
+**Ops action:** Restart Celery beat + workers; run one revenue cycle; confirm `user_economy.updated_at` moves within 75 minutes.
 
 ```bash
 DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
 ```
 
-If `generate_province_revenue`, `tax_income`, or `population_growth` are stale >90 minutes → resources feel frozen (P0).
-
 ---
 
-## P1 — Misleading balance / display
+## P0 — Blocks progression
 
 | ID | Issue | Evidence |
 |----|-------|----------|
-| P1-1 | **Malls / banks weak gold ROI** | `progression_balance_audit.py`: malls $15,000/CG upkeep; banks $11,000/CG vs gas $1,667/CG |
-| P1-2 | **Farmers markets expensive vs gas** | $80k upkeep / 16 CG vs gas $20k / 12 CG — confusing mid-game retail choice |
-| P1-3 | **Dual build-cost systems** | [`province.py`](province.py) `PROVINCE_UNIT_PRICES` vs [`action_loop.py`](action_loop.py) `building_dictionary.base_cost` (steel-only quick-build) — costs can diverge |
-| P1-4 | **Stale MASTER_ECONOMY_AUDIT.txt** | March snapshot shows wrong tax ($0.025), old build costs, 50k distribution caps — do not use for balance review |
-| P1-5 | **Revenue display vs tasks** | Coalition tax + demographic CG in `get_revenue()` (fixed 2026-03-18); re-verify after deploy for coalition nations |
+| P0-1 | **Celery / hourly tasks dead** | See table above |
+| P0-2 | **Tester account food deadlock** | User 16: **12.2M rations** stockpile, `food_stats = -1.0`, distribution cap **17M** vs pop **24.2M** (70% covered) — population cannot eat despite huge stockpile |
+| P0-3 | **No steel production path on test nation** | User 16: **0 steel_mills**, **0 lumber_mills**, **0 distribution_centers** — cannot fix distribution/energy chain without rebuilding |
 
 ---
 
-## P2 — Pacing / “game slows down”
+## P1 — Misleading balance / dual systems
 
 | ID | Issue | Evidence |
 |----|-------|----------|
-| P2-1 | **Province revenue chunking** | `PROVINCE_REVENUE_CHUNK_SIZE=200` → full cycle hours = `ceil(province_count / 200)` per hour. Large empires wait 24h+ for one full pass → feels frozen |
-| P2-2 | **Tax income chunking** | `TAX_INCOME_CHUNK_SIZE=250` users/hour — very large player counts may lag tax ticks |
-| P2-3 | **Distribution bottleneck** | `FEATURE_RATIONS_DISTRIBUTION` on: stockpiled rations/CG useless without retail/distribution buildings |
-| P2-4 | **New province demographic shock** | `pop_children = 1_000_000` on create → CG/rations demand spike until demographics rebalance |
-| P2-5 | **Workforce education not enforced** | `BUILDING_EMPLOYMENT_MATRICES` education reqs marked “Future”; Chernobyl 20% floor uses total `pop_working` only |
+| P1-1 | **Malls / banks weak gold ROI** | Static audit: malls **$15,000/CG** upkeep; gas **$1,667/CG** |
+| P1-2 | **Farmers markets vs gas** | $80k/16 CG vs $20k/12 CG |
+| P1-3 | **Dual build costs** | `building_dictionary.base_cost` ≈ **0.7 × gold price** in steel units (e.g. gas $7M gold → 4.9M steel quick-build) **plus** separate resource costs on province buy |
+| P1-4 | **Stale MASTER_ECONOMY_AUDIT.txt** | Wrong tax, costs, distribution caps — use `variables.py` only |
+
+---
+
+## P2 — Pacing & gates (when tasks run again)
+
+| ID | Issue | Evidence |
+|----|-------|----------|
+| P2-1 | **Distribution bottleneck** | User 16: 7.2M pop over cap; `FEATURE_RATIONS_DISTRIBUTION` on |
+| P2-2 | **Chunk lag (when live)** | Top nations: 116 provinces → **~1h** full revenue cycle at 200/chunk (not the bottleneck today) |
+| P2-3 | **New province demographic shock** | `pop_children = 1_000_000` on create |
+| P2-4 | **Workforce education not enforced** | Employment matrices unused in task code |
 
 ---
 
@@ -57,69 +63,62 @@ If `generate_province_revenue`, `tax_income`, or `population_growth` are stale >
 
 | ID | Issue |
 |----|-------|
-| P3-1 | `NEW_INFRA` comment typos (e.g. coal_mines “Costs $10k” vs `money: 4200`) |
-| P3-2 | `bauxite_mines` strongerExplosives upgrade TODO in `tasks.py` |
-| P3-3 | Global routes `/countries`, `/coalitions`, `/market` return 302 when anonymous (expected; ensure logged-in users get 200) |
+| P3-1 | `NEW_INFRA` comment typos |
+| P3-2 | `bauxite_mines` upgrade TODO in `tasks.py` |
+| P3-3 | Anonymous `/countries`, `/coalitions`, `/market` → **302** (login required) |
 
 ---
 
-## Early progression model (static)
+## Production HTTP (2026-05-22)
 
-From `scripts/progression_balance_audit.py`:
-
-- Starter: **$80M gold** + 15k steel, 10k components, 10k aluminium
-- Canonical early path gold total: **$37.5M** (farms → distribution → coal → mills → mines → steel → gas)
-- **$42.5M** remaining for 2nd–5th provinces / military
-- 1st extra province: **$8M**; 2nd: **$9.28M**
-- Rough tax @ 1M pop/tick: **$500k** (before CG multiplier / coalition tax)
-
-Early path steps still **NEED MINING** for lumber/iron/coal until extractors are built — intentional gate.
+| URL | Status |
+|-----|--------|
+| `/country/id=16` | **200** |
+| `/tutorial` | **200** |
+| `/signup` | **200** (intermittent 500 observed earlier — recheck if reports continue) |
+| `/countries`, `/coalitions`, `/market` | **302** logged out |
 
 ---
 
-## Production UX smoke (2026-05-22)
+## User 16 snapshot (Tester of the Game)
 
-| URL | HTTP |
-|-----|------|
-| https://affairsandorder.com/country/id=16 | 200 |
-| https://affairsandorder.com/countries | 302 |
-| https://affairsandorder.com/coalitions | 302 |
-| https://affairsandorder.com/market | 302 |
+| Metric | Value |
+|--------|-------|
+| Gold | $19,375,604,468 |
+| Provinces | 4 |
+| Population | 24,196,763 |
+| Rations stockpile | 12,210,704 |
+| Distribution cap | 17,000,000 (gas×2, general_stores×2, malls×2) |
+| Food score | **-1.0** (shortage) |
+| Key buildings | 46 farms, 6 coal_burners, 5 coal_mines, 2 malls, 2 gas, **0 distribution_centers** |
 
-**Friction notes (Monopoly Go checklist):**
-
-- Anonymous users hitting Global Affairs menus get redirects — OK if login is obvious; verify logged-in test account sees 200 on all four routes.
-- Hourly tick is not real-time; UI should set expectations (next revenue ~:25 UTC) to avoid “nothing changed” reports.
-- After buy/sell, confirm resource panel updates without hard refresh (`invalidate_user_cache`).
-
----
-
-## Tools added
-
-| Script / test | Purpose |
-|---------------|---------|
-| `scripts/progression_balance_audit.py` | Static ROI, tier order, milestones (`--json`) |
-| `scripts/progression_health_check.py` | `task_runs` freshness + province chunk lag |
-| `scripts/test_perf.py` | Page/query timing for user 16 |
-| `tests/test_progression_milestones.py` | Snapshot/restore user 16; route smoke; task delta |
-| Fixed `extract_balance_report.py`, `master_economy_audit.py` | Correct `DEMO_AGING_RATES` keys |
+**Progression smell:** Huge rations pile but **cannot feed ~30% of pop** → growth/tax penalized; with tasks frozen, player sees no feedback loop at all.
 
 ---
 
-## Recommended next actions (for your play session)
+## Static early-game model
 
-1. Log in as **Tester of the Game** (id 16) on production.
-2. Play early path: farms → distribution → coal_burners — confirm energy unlocks processors.
-3. After `:25` UTC, confirm resources/gold changed on country page.
-4. Run on Railway: `python3 scripts/progression_health_check.py` and `python3 scripts/test_perf.py`.
-5. For balance tuning: prioritize P1-1/P1-2 retail upkeep or bump CG output; consider raising `PROVINCE_REVENUE_CHUNK_SIZE` for top nations if P2-1 confirmed.
+- Starter **$80M** gold; canonical early path **$37.5M** gold
+- No static **blockers** on tier-1 power (coal/oil/solar)
+- Early path needs mining before steel/gas (intentional)
 
 ---
 
-## Demographics (fixed reporting)
+## Tools
 
-Per tick (now reported correctly):
+| Command | Purpose |
+|---------|---------|
+| `python3 scripts/progression_balance_audit.py` | Static ROI / milestones |
+| `python3 scripts/progression_health_check.py` | Task + economy freshness |
+| `python3 scripts/run_live_progression_audit.py --http` | Full live pass |
+| `python3 scripts/test_perf.py` | Query timing (user 16) |
+| `pytest tests/test_progression_milestones.py` | Snapshot tests (needs DB) |
 
-- Elderly death: **0.2%**
-- Working → elderly: **0.1%**
-- Children → working: **2.0%**
+---
+
+## Recommended fix order
+
+1. **Restart economy workers** (P0-1) — verify `task_runs` within 1 hour  
+2. **User 16 playtest** after tick restore — buy **distribution_centers** or more retail to cover 24M pop  
+3. Balance pass on retail ROI (P1-1, P1-2) once economy moves again  
+4. UI: show distribution cap vs population when `food_stats < 0`
