@@ -13,6 +13,7 @@ from discord_bot.commands import guild_setup as guild_setup_cmds
 from discord_bot.commands import info as info_cmds
 from discord_bot.commands import register as register_cmds
 from discord_bot.config import DISCORD_BOT_TOKEN, validate_config
+from discord_bot.embeds import EMBED_UI_VERSION
 from discord_bot.panel_service import refresh_all_guild_panels
 
 logging.basicConfig(
@@ -39,10 +40,11 @@ class AnOBot(commands.Bot):
 
     async def on_ready(self) -> None:
         logger.info(
-            "Logged in as %s (%s); data mode=%s",
+            "Logged in as %s (%s); data mode=%s; embed_ui=%s",
             self.user,
             self.user.id if self.user else "?",
             backend_mode_label(),
+            EMBED_UI_VERSION,
         )
         if not self.panel_refresh_loop.is_running():
             self.panel_refresh_loop.start()
