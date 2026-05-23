@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "python scripts/run_discord_bot_if_leader.py",
-    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyType": "ALWAYS",
     "restartPolicyMaxRetries": 10
   }
 }

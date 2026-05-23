@@ -301,6 +301,29 @@ def main() -> None:
             _upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1")
             print("  copied DISCORD_BOT_TOKEN to web (sidecar + web-rendered embeds)")
         db_url = web_vars.get("DATABASE_PUBLIC_URL") or web_vars.get("DATABASE_URL")
+        _upsert_var(
+            token, project_id, env_id, bot_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1"
+        )
+        _upsert_var(
+            token,
+            project_id,
+            env_id,
+            bot_id,
+            "BOT_API_BASE_URL",
+            base_url,
+        )
+        web_secret = web_vars.get("SECRET_KEY") or web_vars.get("BOT_API_SECRET")
+        if web_secret:
+            _upsert_var(token, project_id, env_id, bot_id, "SECRET_KEY", web_secret)
+        _upsert_var(
+            token,
+            project_id,
+            env_id,
+            bot_id,
+            "DISCORD_BOT_LEADER_LOCK_KEY",
+            "discord_bot:leader:v3",
+        )
+        print("  bot will render embeds from web API (UI updates on web deploy)")
         if db_url:
             _upsert_var(token, project_id, env_id, bot_id, "DATABASE_URL", db_url)
             print("  copied DATABASE_URL from web to bot (direct DB mode)")
