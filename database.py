@@ -774,7 +774,7 @@ class ProvinceQueries:
                 COALESCE(AVG(happiness), 0) as avg_happiness,
                 COALESCE(AVG(productivity), 0) as avg_productivity
             FROM provinces
-            WHERE userId = %s
+            WHERE userid = %s
         """
         result = QueryHelper.fetch_one(query, (user_id,), dict_cursor=True)
         return dict(result) if result else {}

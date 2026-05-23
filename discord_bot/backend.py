@@ -75,12 +75,15 @@ class DirectDatabaseBackend:
         return snap
 
     def nation(self, identifier: str) -> Dict[str, Any]:
-        from bot_api import _nation_snapshot, _resolve_nation_identifier
+        from bot_api import _resolve_nation_identifier, nation_snapshot_for_bot
 
         user_id = _resolve_nation_identifier(identifier)
         if user_id is None:
             raise BotBackendError("Nation not found", 404)
-        return _nation_snapshot(user_id)
+        snap = nation_snapshot_for_bot(user_id, full_detail=True)
+        if not snap.get("id"):
+            raise BotBackendError("Could not load nation statistics.", 500)
+        return snap
 
     def wars(
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
@@ -101,7 +104,7 @@ class DirectDatabaseBackend:
     def resources(
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
     ) -> Dict[str, Any]:
-        from bot_api import _nation_snapshot, _resolve_nation_identifier
+        from bot_api import _resolve_nation_identifier, nation_snapshot_for_bot
         from database import resolve_user_id_by_discord
 
         if nation:
@@ -112,7 +115,10 @@ class DirectDatabaseBackend:
             user_id = resolve_user_id_by_discord(discord_user_id)
         if user_id is None:
             raise BotBackendError("Nation not found or not registered", 404)
-        return _nation_snapshot(user_id, include_resources=True)
+        snap = nation_snapshot_for_bot(user_id, full_detail=True)
+        if not snap.get("id"):
+            raise BotBackendError("Could not load nation statistics.", 500)
+        return snap
 
 
 class HttpApiBackend:
