@@ -499,6 +499,7 @@
             var isBase = m === 'base';
             base.hidden = !isBase;
             classic.hidden = isBase;
+            document.body.classList.toggle('province-base-view-active', isBase);
             toggle.setAttribute('aria-pressed', isBase ? 'true' : 'false');
             toggle.textContent = isBase ? 'Classic view' : 'Base view';
             var nudge = document.getElementById('province-view-nudge');
