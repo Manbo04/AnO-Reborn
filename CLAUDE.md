@@ -108,6 +108,23 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-23
+
+**Task**: Password reset HTTP 500 (`/reset_password/<code>`)
+
+**What Was Done**:
+- `set_user_password()` in `database.py` — updates `hash` and/or legacy `password` columns; sets `auth_type='normal'`
+- `_ensure_reset_codes_table()` in `ensure_schema_compat()`
+- `change.py` reset flows use shared helper; `login.py` accepts byte-stored password hashes
+- Tests: `tests/test_password_reset_submit.py`
+- PR **#47** (`cursor/fix-password-reset-500-5a73`)
+
+**What To Watch**:
+- After merge/deploy: full flow Account → reset link → new password → login
+- Users who only used Discord login need `auth_type` flip (now automatic on reset)
+
+---
+
 ### Session: 2026-05-22 (Discord bot Phase 1)
 
 **Task**: AnO-native Discord bot (Locutus-style Phase 1)
