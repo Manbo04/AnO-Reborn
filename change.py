@@ -9,7 +9,12 @@ import requests
 from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
-from database import get_request_cursor
+from database import (
+    ensure_schema_compat,
+    fetchone_first,
+    get_request_cursor,
+    set_user_password,
+)
 
 load_dotenv()
 
@@ -134,6 +139,7 @@ def request_password_reset():
     import logging
 
     logger = logging.getLogger(__name__)
+    ensure_schema_compat()
 
     code = generateResetCode()
 
@@ -239,19 +245,21 @@ def reset_password(code):
         new_password = new_password_raw.encode("utf-8")
 
         try:
+            ensure_schema_compat()
             with get_request_cursor() as db:
-                logger.debug(f"Received URL code: {code}")
-                db.execute("SELECT user_id FROM reset_codes WHERE url_code=%s", (code,))
-                result = db.fetchone()
-                if not result:
-                    return error(400, "Invalid or expired reset code.")
-                user_id = result[0]
-
-                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
+                logger.debug("Received URL code: %s", code)
                 db.execute(
-                    "UPDATE users SET hash=%s WHERE id=%s",
-                    (hashed, user_id),
+                    "SELECT user_id FROM reset_codes WHERE url_code=%s",
+                    (code,),
                 )
+                user_id = fetchone_first(db)
+                if user_id is None:
+                    return error(400, "Invalid or expired reset code.")
+
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode(
+                    "utf-8"
+                )
+                set_user_password(db, int(user_id), hashed)
                 db.execute(
                     "DELETE FROM reset_codes WHERE url_code=%s",
                     (code,),
@@ -457,12 +465,26 @@ def discord_reset_password_page():
         user_id = session.pop('reset_user_id')
 
         try:
+            ensure_schema_compat()
             with get_request_cursor() as db:
-                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode("utf-8")
-                db.execute("UPDATE users SET hash=%s WHERE id=%s", (hashed, user_id))
-                logger.info("Password reset successful via Discord for user_id=%s", user_id)
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode(
+                    "utf-8"
+                )
+                set_user_password(db, int(user_id), hashed)
+                logger.info(
+                    "Password reset successful via Discord for user_id=%s",
+                    user_id,
+                )
         except Exception as exc:
-            return error(500, "An error occurred while resetting your password.")
+            logger.exception(
+                "discord_reset_password_page failed for user_id=%s: %s",
+                user_id,
+                exc,
+            )
+            return error(
+                500,
+                "An error occurred while resetting your password. Please try again later.",
+            )
 
         flash("Password successfully reset. You can now log in.")
         return redirect("/")
