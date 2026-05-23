@@ -97,7 +97,7 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
-            data = backend.me(str(member.id))
+            data = await asyncio.to_thread(backend.me, str(member.id))
             embed = build_nation_embed(
                 data, f"Linked nation — {member.display_name}"
             )
