@@ -35,6 +35,11 @@ Until game/ assets exist, manifest falls back to legacy `static/images/*.jpg`.
 - Bottom nav height: 64px + safe area
 - Touch targets: minimum 44×44px
 
+## Navigation (v1)
+
+- **Top navbar** + **home quick-link grid** (`quick_nav.html`) + **resource HUD** on mobile
+- Bottom tab bar was removed (PR #41); do not re-add without product sign-off
+
 ## Non-goals (v1)
 
 - Full world territory map

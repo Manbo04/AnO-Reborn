@@ -5084,6 +5084,51 @@ body.game-shell-active .game-hud {
     flex-shrink: 0;
 }
 
+/* Market mobile offer cards */
+.game-market-card {
+    padding: var(--game-space-md);
+    border-radius: var(--game-radius-lg);
+    background: var(--foregroundThree);
+    border: 1px solid var(--border);
+    margin-bottom: var(--game-space-sm);
+}
+
+.game-market-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--game-space-sm);
+    font-weight: 600;
+}
+
+.game-market-card-type {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0, 167, 225, 0.15);
+    color: var(--accent);
+}
+
+.game-market-card-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.85rem;
+    margin-bottom: var(--game-space-sm);
+    color: var(--text-secondary);
+}
+
+.game-market-card-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.game-market-card-form .loginsignupinput {
+    flex: 1;
+    min-height: 44px;
+}
+
 /* Bottom navigation */
 .game-bottom-nav {
     display: none;
@@ -5485,6 +5530,41 @@ body.province-base-phaser-active .province-base-slots-grid {
 /**
  * Interactive province base — strategy-game feel (CSS art, no low-res photos).
  */
+
+.province-onboarding {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(0, 167, 225, 0.25), rgba(45, 159, 111, 0.15));
+    border-bottom: 1px solid rgba(0, 167, 225, 0.35);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.province-onboarding .material-icons-outlined {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.province-map-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.province-map-paths {
+    animation: path-pulse 4s ease-in-out infinite;
+}
+
+@keyframes path-pulse {
+    0%, 100% { stroke-opacity: 0.15; }
+    50% { stroke-opacity: 0.35; }
+}
 
 .province-base-section {
     position: relative;
@@ -5997,6 +6077,21 @@ body.province-base-phaser-active .province-base-slots-grid {
 
 .province-map-node.is-empty .province-map-node-pin {
     opacity: 0.92;
+}
+
+.province-map-node.pulse-hint .province-map-node-pin {
+    animation: node-hint-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes node-hint-pulse {
+    0%, 100% { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    50% { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(255, 255, 255, 0); }
+}
+
+.province-dock-card.is-suggested,
+.province-base-building-row.is-suggested {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 167, 225, 0.35);
 }
 
 /* Inline dock (desktop / tablet) */
@@ -6516,5 +6611,22 @@ body.game-reduced-motion .province-base-particles span {
 
 .game-war-result-banner.defeat {
     border-color: var(--danger);
+}
+
+.game-unit-card-grid .unitcard {
+    border-radius: var(--game-radius-lg);
+    border: 2px solid var(--border);
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.game-unit-card-grid .unitcard:has(input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0, 167, 225, 0.25);
+    transform: translateY(-2px);
+}
+
+.game-unit-card-grid .unitimage {
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
 }
 

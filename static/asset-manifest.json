@@ -4,7 +4,7 @@
   "buildings": {
     "coal_burners": {
       "legacy": "coalburner.jpg",
-      "path": "images/game/buildings/coal_burners.png"
+      "path": "images/game/buildings/coal_burners.svg"
     },
     "oil_burners": {
       "legacy": "oilburner.jpg",
@@ -24,7 +24,7 @@
     },
     "gas_stations": {
       "legacy": "gasstation.jpg",
-      "path": "images/game/buildings/gas_stations.png"
+      "path": "images/game/buildings/gas_stations.svg"
     },
     "general_stores": {
       "legacy": "generalstore.jpg",
@@ -80,7 +80,7 @@
     },
     "army_bases": {
       "legacy": "armybase.png",
-      "path": "images/game/buildings/army_bases.png"
+      "path": "images/game/buildings/army_bases.svg"
     },
     "aerodomes": {
       "legacy": "aerodrome.png",
@@ -100,7 +100,7 @@
     },
     "farms": {
       "legacy": "farm.jpg",
-      "path": "images/game/buildings/farms.png"
+      "path": "images/game/buildings/farms.svg"
     },
     "pumpjacks": {
       "legacy": "pumpjack.jpg",
@@ -108,7 +108,7 @@
     },
     "coal_mines": {
       "legacy": "coalmine.jpg",
-      "path": "images/game/buildings/coal_mines.png"
+      "path": "images/game/buildings/coal_mines.svg"
     },
     "bauxite_mines": {
       "legacy": "bauxitemine.jpg",
@@ -158,15 +158,15 @@
   "units": {
     "soldiers": {
       "legacy": "soldier.jpg",
-      "path": "images/game/units/soldiers.png"
+      "path": "images/game/units/soldiers.svg"
     },
     "tanks": {
       "legacy": "tank.jpg",
-      "path": "images/game/units/tanks.png"
+      "path": "images/game/units/tanks.svg"
     },
     "artillery": {
       "legacy": "artillery.jpg",
-      "path": "images/game/units/artillery.png"
+      "path": "images/game/units/artillery.svg"
     },
     "fighter_jets": {
       "legacy": "fighterjet.jpg",

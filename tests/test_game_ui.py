@@ -1,7 +1,11 @@
 """Tests for hybrid game UI module and templates."""
+from pathlib import Path
+
 import pytest
 
 pytestmark = pytest.mark.no_server
+
+ROOT = Path(__file__).resolve().parents[1]
 
 from game_ui import (
     FEATURE_GAME_SHELL,
@@ -25,7 +29,8 @@ def test_legacy_building_image():
 
 def test_game_asset_path_fallback():
     path = game_asset_path("buildings", "coal_burners")
-    assert "coal" in path
+    assert path.endswith(".svg")
+    assert "game/buildings" in path
 
 
 def test_game_asset_path_uses_pilot_svg_when_present():
@@ -53,6 +58,13 @@ def test_province_layout_payload():
     assert payload["total_structures"] == 3
     assert food_slot["breakdown"][0]["icon"] == "agriculture"
     assert payload["biome_icon"] == "grass"
+
+
+def test_pilot_building_svg_assets_exist():
+    for key in ("coal_burners", "farms", "gas_stations"):
+        path = game_asset_path("buildings", key)
+        assert path.endswith(".svg")
+        assert (ROOT / "static" / path).is_file()
 
 
 def test_jinja_game_macros_compile():

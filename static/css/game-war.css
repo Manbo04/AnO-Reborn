@@ -43,3 +43,20 @@
 .game-war-result-banner.defeat {
     border-color: var(--danger);
 }
+
+.game-unit-card-grid .unitcard {
+    border-radius: var(--game-radius-lg);
+    border: 2px solid var(--border);
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.game-unit-card-grid .unitcard:has(input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0, 167, 225, 0.25);
+    transform: translateY(-2px);
+}
+
+.game-unit-card-grid .unitimage {
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+}

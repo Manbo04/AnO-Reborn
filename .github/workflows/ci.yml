@@ -23,6 +23,12 @@ jobs:
       - name: Check error() argument order in routes
         run: python scripts/check_error_call_order.py
 
+      - name: Bundle game UI CSS and verify
+        run: |
+          python3 scripts/bundle_game_css.py
+          python3 scripts/check_game_css_bundle.py
+          python3 scripts/generate_asset_manifest.py
+
       - name: Run targeted pytest (no DB required)
         run: |
           python -m pytest \
@@ -34,4 +40,5 @@ jobs:
             tests/test_import_app.py::test_import_app \
             tests/test_country_policies.py \
             tests/test_game_ui.py \
+            tests/test_game_css_bundle.py \
             -q --tb=short

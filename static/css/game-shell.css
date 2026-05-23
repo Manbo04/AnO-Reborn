@@ -75,6 +75,51 @@ body.game-shell-active .game-hud {
     flex-shrink: 0;
 }
 
+/* Market mobile offer cards */
+.game-market-card {
+    padding: var(--game-space-md);
+    border-radius: var(--game-radius-lg);
+    background: var(--foregroundThree);
+    border: 1px solid var(--border);
+    margin-bottom: var(--game-space-sm);
+}
+
+.game-market-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--game-space-sm);
+    font-weight: 600;
+}
+
+.game-market-card-type {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0, 167, 225, 0.15);
+    color: var(--accent);
+}
+
+.game-market-card-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.85rem;
+    margin-bottom: var(--game-space-sm);
+    color: var(--text-secondary);
+}
+
+.game-market-card-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.game-market-card-form .loginsignupinput {
+    flex: 1;
+    min-height: 44px;
+}
+
 /* Bottom navigation */
 .game-bottom-nav {
     display: none;

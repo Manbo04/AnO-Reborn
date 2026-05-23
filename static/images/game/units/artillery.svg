@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Artillery">
+  <rect width="64" height="64" rx="12" fill="#4a1a1a"/>
+  <rect x="8" y="40" width="20" height="10" fill="#6b6b6b"/>
+  <path d="M24 40 L52 28" stroke="#d35649" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="52" cy="28" r="6" fill="#1c2029"/>
+</svg>
