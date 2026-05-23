@@ -23,6 +23,9 @@ jobs:
       - name: Check error() argument order in routes
         run: python scripts/check_error_call_order.py
 
+      - name: Progression balance audit (static)
+        run: python scripts/progression_balance_audit.py
+
       - name: Run targeted pytest (no DB required)
         run: |
           python -m pytest \
