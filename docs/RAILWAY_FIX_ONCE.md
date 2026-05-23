@@ -2,6 +2,8 @@
 
 Use this when Railway shows **Postgres Crashed**, **bot Completed**, Discord UI old, or `/nation` hangs.
 
+**Schema mismatch (`users` vs `User`)?** → read **`docs/DATABASE_SCHEMA_DECISION.md`** first.
+
 ---
 
 ## Root cause (your screenshot)
