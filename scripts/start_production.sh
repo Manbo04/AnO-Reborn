@@ -7,7 +7,8 @@ cd "$(dirname "$0")/.."
 
 PORT="${PORT:-8080}"
 
-if [[ -n "${DISCORD_BOT_TOKEN:-}" ]]; then
+# Dedicated Railway "bot" service should run the bot. Web sidecar is opt-in only.
+if [[ -n "${DISCORD_BOT_TOKEN:-}" && "${DISCORD_BOT_SIDECAR:-0}" == "1" ]]; then
   echo "[start] Discord bot sidecar: clearing stale leader locks..."
   python3 - <<'PY' || true
 import os

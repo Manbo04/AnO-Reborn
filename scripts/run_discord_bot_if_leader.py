@@ -23,8 +23,8 @@ LOCK_TTL = int(os.getenv("DISCORD_BOT_LEADER_LOCK_TTL", "120"))
 def main() -> None:
     token = (os.getenv("DISCORD_BOT_TOKEN") or "").strip()
     if not token:
-        print("DISCORD_BOT_TOKEN not set; exiting.")
-        sys.exit(0)
+        print("DISCORD_BOT_TOKEN not set; exiting with error so Railway surfaces misconfiguration.")
+        sys.exit(1)
 
     redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
     if not redis_url:
@@ -56,8 +56,19 @@ def main() -> None:
         time.sleep(5)
 
     if not acquired:
-        print("Could not acquire discord bot leader lock; another replica is running.")
-        sys.exit(0)
+        print(
+            "Leader lock held elsewhere; retrying every 15s "
+            f"(key={LOCK_KEY}). Service stays up until acquired."
+        )
+        while not acquired:
+            time.sleep(15)
+            if client.set(LOCK_KEY, os.getpid(), nx=True, ex=LOCK_TTL):
+                acquired = True
+                break
+            try:
+                client.expire(LOCK_KEY, LOCK_TTL)
+            except Exception:
+                pass
 
     print("Discord bot leader lock acquired; starting bot.")
     try:

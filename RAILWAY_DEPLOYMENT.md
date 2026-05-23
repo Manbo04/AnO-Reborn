@@ -195,7 +195,22 @@ The **web** service `startCommand` is `bash scripts/start_production.sh`. On eac
 1. Start a **Discord bot sidecar** (if `DISCORD_BOT_TOKEN` is set on the **web** service)
 2. Use **`DISCORD_BOT_USE_WEB_EMBEDS=1`** so slash commands render embeds from the **web API** (always latest UI)
 
-**One-time Railway setup:** On the **web** service, add variable `DISCORD_BOT_TOKEN` (same value as the `bot` service). Optional: pause the old `bot` service to avoid duplicate bots.
+**Recommended (dedicated `bot` service):** On the **`bot`** service variables, set:
+
+| Variable | Value |
+|----------|--------|
+| `DISCORD_BOT_USE_WEB_EMBEDS` | `1` |
+| `BOT_API_BASE_URL` | `https://affairsandorder.com` |
+| `SECRET_KEY` | Reference from **web** service |
+| `DISCORD_BOT_LEADER_LOCK_KEY` | `discord_bot:leader:v3` |
+
+Then **Redeploy** the `bot` service. It should show **Online**, not **Completed**.
+
+**Why "Completed"?** The bot exited 0 when Redis leader lock was busy; Railway did not restart it (`ON_FAILURE`). Latest code retries until the lock is free and uses `restartPolicy: ALWAYS`.
+
+**Web sidecar (optional):** Only if you set `DISCORD_BOT_SIDECAR=1` on **web** — do **not** use both web sidecar and a dedicated `bot` unless one is stopped.
+
+Wait for **Postgres** to finish deploying before testing `/nation` (DB must be up).
 
 Verify after web deploy:
 
