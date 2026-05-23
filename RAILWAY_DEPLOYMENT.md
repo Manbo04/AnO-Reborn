@@ -37,6 +37,46 @@ Your Railway deployment will consist of:
 3. Railway automatically creates a `DATABASE_URL` environment variable
 4. **No additional configuration needed** - the code will parse it automatically
 
+### Floating `postgres-volume` (must be mounted)
+
+If the architecture graph shows **`postgres-volume` disconnected** from the **Postgres** service, the database is running on the wrong disk (often a new empty volume). Game data will look frozen (no `user_economy` updates).
+
+**Postgres must have exactly one volume at:**
+
+```text
+/var/lib/postgresql/data
+```
+
+**Dashboard (recommended):**
+
+1. Open the **Postgres** service (not web/celery).
+2. Go to **Settings** → **Volumes** (or click the volume on the canvas).
+3. If a volume like `postgres-2026-05-08-...` is attached but `postgres-volume` is floating:
+   - **Detach** the empty/wrong volume from Postgres (only if you confirmed it has no player data).
+   - Click the floating **`postgres-volume`** → **Connect to service** → choose **Postgres**.
+   - Set mount path: `/var/lib/postgresql/data`.
+4. **Deploy** Postgres first, wait until healthy.
+5. Redeploy **beat**, **celery-worker**, and **web**.
+
+**CLI (after `railway login` && `railway link`):**
+
+```bash
+railway volume list
+railway volume list --service Postgres
+./scripts/railway_mount_postgres_volume.sh --dry-run
+./scripts/railway_mount_postgres_volume.sh
+```
+
+**Verify after mount:**
+
+```bash
+DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
+```
+
+`user_economy.updated_at` should advance within ~75 minutes once Celery runs.
+
+**Do not** attach two volumes to the same mount path on Postgres.
+
 ---
 
 ## Step 3: Add Redis
