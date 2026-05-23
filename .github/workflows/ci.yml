@@ -29,6 +29,9 @@ jobs:
           python3 scripts/check_game_css_bundle.py
           python3 scripts/generate_asset_manifest.py
 
+      - name: Progression balance audit (static)
+        run: python scripts/progression_balance_audit.py
+
       - name: Run targeted pytest (no DB required)
         run: |
           python -m pytest \
@@ -41,4 +44,7 @@ jobs:
             tests/test_country_policies.py \
             tests/test_game_ui.py \
             tests/test_game_css_bundle.py \
+            tests/test_progression_milestones.py::test_progression_balance_audit_script_exits_zero \
+            tests/test_progression_milestones.py::test_gas_station_price_matches_variables \
+            tests/test_revenue_commit_path.py \
             -q --tb=short
