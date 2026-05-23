@@ -9,6 +9,8 @@ on:
     branches: [master]
     paths:
       - "discord_bot/**"
+      - "migrations/0023_discord_guild_panels.sql"
+      - "docs/DISCORD_GUILD_ROOT_AI_SETUP.md"
       - "bot_api.py"
       - "database.py"
       - "Dockerfile.discord-bot"
