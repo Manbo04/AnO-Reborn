@@ -321,6 +321,51 @@ def change():
 
 
 @login_required
+def generate_discord_link_code():
+    import logging
+
+    logger = logging.getLogger(__name__)
+    from bot_api import CODE_TTL_MINUTES, create_discord_link_code
+    from database import discord_link_codes_table_exists
+
+    if not discord_link_codes_table_exists():
+        flash(
+            "Discord bot linking is not available yet (database migration pending)."
+        )
+        return redirect("/account")
+
+    with get_request_cursor() as db:
+        cId = session["user_id"]
+        password_raw = request.form.get("password")
+        if not password_raw:
+            flash("You must provide your password to generate a Discord link code.")
+            return redirect("/account")
+
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+        if not row or not row[0]:
+            return error(500, "Account data is missing.")
+
+        if not bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8")):
+            flash("Incorrect password.")
+            return redirect("/account")
+
+    try:
+        code = create_discord_link_code(cId)
+    except Exception as exc:
+        logger.warning("generate_discord_link_code failed: %s", exc)
+        flash("Could not generate link code. Please try again later.")
+        return redirect("/account")
+
+    flash(
+        f"Discord link code: {code} (expires in {CODE_TTL_MINUTES} minutes). "
+        "In Discord, run: /register code:" + code
+    )
+    logger.info("Generated Discord link code for user_id=%s", cId)
+    return redirect("/account")
+
+
+@login_required
 def generate_recovery_key():
     import secrets
     import logging
@@ -448,6 +493,12 @@ def register_change_routes(app_instance):
         "/generate_recovery_key",
         "generate_recovery_key",
         generate_recovery_key,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/generate_discord_link_code",
+        "generate_discord_link_code",
+        generate_discord_link_code,
         methods=["POST"],
     )
     app_instance.add_url_rule(

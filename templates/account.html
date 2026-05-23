@@ -63,6 +63,15 @@
             </div>
         </form>
 
+        <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
+        <div class="infodiv">
+            <p style="color: #ccc; margin-bottom: 10px;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. In Discord, run <strong>/register code:YOURCODE</strong>. Codes expire in 10 minutes.</p>
+            <form action="/generate_discord_link_code" method="POST" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input class="loginsignupinput" type="password" name="password" placeholder="Enter current password" required />
+                <button type="submit" class="templatedivbutton"><span class="material-icons-outlined">smart_toy</span>Generate Bot Link Code</button>
+            </form>
+        </div>
+
         <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
         <div class="infodiv">
             <p style="color: #ccc; margin-bottom: 10px;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
