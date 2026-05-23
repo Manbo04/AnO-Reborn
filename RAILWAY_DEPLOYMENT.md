@@ -114,26 +114,35 @@ python scripts/run_discord_bot_if_leader.py
 
 Remove obsolete variables: `DISCORD_BOT_URL`, `PORT` (not used by this codebase).
 
-### Variables on the `bot` service
+### Variables on the `bot` service (easy mode — recommended)
+
+Your `bot` service is already wired to **Postgres** on the canvas. You only need:
+
+| Variable | How to set |
+|----------|------------|
+| `DISCORD_BOT_TOKEN` | Already set |
+| `DATABASE_URL` | **+ Variable → Reference → Postgres → `DATABASE_URL`** |
+
+Optional: `REDIS_URL` (reference from Redis) for leader lock if you run multiple bot replicas.
+
+You do **not** need `SECRET_KEY`, `BOT_API_BASE_URL`, `DISCORD_BOT_URL`, or `PORT` on the bot when using the database (default after latest deploy).
+
+### Alternative: HTTP API mode (no Postgres on bot)
 
 | Variable | Value |
 |----------|--------|
-| `DISCORD_BOT_TOKEN` | Your bot token (already set) |
+| `DISCORD_BOT_TOKEN` | Your bot token |
 | `BOT_API_BASE_URL` | `https://affairsandorder.com` |
-| `REDIS_URL` | Reference from Redis service (leader lock) |
-| `SECRET_KEY` | Reference from **web** service (derives bot API auth), **or** set explicit `BOT_API_SECRET` on both web and bot |
-
-Optional explicit override (recommended long-term):
-
-```
-BOT_API_SECRET=<same on web and bot>
-```
+| `SECRET_KEY` | Reference from **web** service |
+| `REDIS_URL` | Reference from Redis |
 
 ### Web service
 
 `SECRET_KEY` is enough for the bot API (`/api/bot/*`) — auth is derived automatically until you set `BOT_API_SECRET`.
 
 ### After deploy
+
+Check **bot → Logs** for `data mode=database` and `Synced 5 global slash command(s)`.
 
 Tables are created automatically on web boot. One-time migration (optional):
 

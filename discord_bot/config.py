@@ -25,19 +25,31 @@ BOT_API_BASE_URL = (
 GAME_BASE_URL = os.getenv("GAME_BASE_URL", BOT_API_BASE_URL).strip().rstrip("/")
 
 
+def _has_database_url() -> bool:
+    return bool(
+        (os.getenv("DATABASE_PUBLIC_URL") or "").strip()
+        or (os.getenv("DATABASE_URL") or "").strip()
+    )
+
+
 def validate_config() -> None:
     missing = []
     if not DISCORD_BOT_TOKEN:
         missing.append("DISCORD_BOT_TOKEN")
-    if not BOT_API_SECRET and not (os.getenv("SECRET_KEY") or "").strip():
-        missing.append("BOT_API_SECRET or SECRET_KEY (reference from web service)")
-    if not BOT_API_BASE_URL:
-        missing.append("BOT_API_BASE_URL")
+    if _has_database_url():
+        pass  # simplest Railway setup: token + Postgres reference only
+    else:
+        if not BOT_API_BASE_URL:
+            missing.append("BOT_API_BASE_URL")
+        if not BOT_API_SECRET and not (os.getenv("SECRET_KEY") or "").strip():
+            missing.append(
+                "DATABASE_URL (reference Postgres) OR BOT_API_BASE_URL + SECRET_KEY"
+            )
     if missing:
         print(f"ERROR: Missing required env vars: {', '.join(missing)}", file=sys.stderr)
         sys.exit(1)
     if os.getenv("DISCORD_BOT_URL"):
         print(
-            "WARN: DISCORD_BOT_URL is not used by Phase 1 bot; remove it and set BOT_API_BASE_URL instead.",
+            "WARN: DISCORD_BOT_URL is not used; remove it. Use DATABASE_URL from Postgres instead.",
             file=sys.stderr,
         )
