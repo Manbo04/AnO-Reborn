@@ -1,5 +1,14 @@
 """Discord nation embed formatting."""
-from discord_bot.embeds import _format_military, _format_resources, build_nation_embed
+from discord_bot.embeds import (
+    _format_military,
+    _format_resources_grid,
+    _fmt_compact,
+    build_nation_embed,
+)
+
+
+def test_fmt_compact_billions():
+    assert _fmt_compact(19_397_876_921) == "19.40B"
 
 
 def test_format_military_includes_units():
@@ -9,15 +18,16 @@ def test_format_military_includes_units():
     assert "Manpower" in text
     assert "Soldiers" in text
     assert "Tanks" in text
-    assert "Defense mode" in text
+    assert "Defense" in text
 
 
-def test_format_resources_sorted():
-    text = _format_resources({"steel": 100, "gold_commodity": 1, "oil": 5000})
-    assert "Oil" in text or "oil" in text.lower()
+def test_format_resources_grid_sorted():
+    text = _format_resources_grid({"steel": 100, "gold_commodity": 1, "oil": 5000})
+    assert "oil" in text.lower()
+    assert "```" in text
 
 
-def test_build_nation_embed_has_military_and_resources_fields():
+def test_build_nation_embed_has_grouped_fields():
     embed = build_nation_embed(
         {
             "id": 27,
@@ -42,6 +52,7 @@ def test_build_nation_embed_has_military_and_resources_fields():
         "Your nation",
     )
     names = {f.name for f in embed.fields}
-    assert "Military" in names
-    assert "Resources (top holdings)" in names
-    assert "Population" in names
+    assert "⚔️ Military" in names
+    assert "📦 Commodities" in names
+    assert "👥 Population" in names
+    assert embed.title == "🏛️ Testland"
