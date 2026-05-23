@@ -320,10 +320,23 @@ def callback():
                 from database import users_table_has_column, rollback_db_cursor
 
                 if users_table_has_column("discord_id"):
+                    from database import assign_discord_id_to_user
+
+                    existing = None
                     db.execute(
-                        "UPDATE users SET discord_id=%s WHERE id=%s",
-                        (discord_user_id, session["user_id"]),
+                        "SELECT id FROM users WHERE discord_id=%s LIMIT 1",
+                        (discord_user_id,),
                     )
+                    row = db.fetchone()
+                    if row:
+                        existing = row[0]
+                    if existing is not None and existing != session["user_id"]:
+                        rollback_db_cursor(db)
+                        return error(
+                            400,
+                            "This Discord account is already linked to another nation.",
+                        )
+                    assign_discord_id_to_user(session["user_id"], discord_user_id)
                 else:
                     rollback_db_cursor(db)
                 session.pop('oauth2_intent', None)
