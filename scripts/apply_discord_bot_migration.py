@@ -19,6 +19,17 @@ ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "migrations" / "0022_discord_bot.sql"
 
 
+def _require_legacy_schema() -> None:
+    r = __import__("subprocess").run(
+        [sys.executable, str(ROOT / "scripts" / "diagnose_database_schema.py")],
+        cwd=str(ROOT),
+    )
+    if r.returncode != 0:
+        sys.exit(
+            "Database is not legacy AnO schema. See docs/DATABASE_SCHEMA_DECISION.md"
+        )
+
+
 def main() -> None:
     import psycopg2
 
@@ -26,6 +37,8 @@ def main() -> None:
     if not url:
         print("ERROR: Set DATABASE_PUBLIC_URL or DATABASE_URL")
         sys.exit(1)
+
+    _require_legacy_schema()
 
     if not MIGRATION.exists():
         print(f"ERROR: Missing {MIGRATION}")

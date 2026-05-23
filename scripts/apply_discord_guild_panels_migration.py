@@ -14,6 +14,18 @@ def main() -> None:
     url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
     if not url:
         raise SystemExit("DATABASE_PUBLIC_URL or DATABASE_URL required")
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[1]
+    r = subprocess.run(
+        [sys.executable, str(root / "scripts" / "diagnose_database_schema.py")],
+        cwd=str(root),
+    )
+    if r.returncode != 0:
+        raise SystemExit(
+            "Database is not legacy AnO schema. See docs/DATABASE_SCHEMA_DECISION.md"
+        )
     sql = (
         Path(__file__).resolve().parents[1]
         / "migrations"
