@@ -65,8 +65,34 @@
 
         <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
         <div class="infodiv">
-            <p style="color: #ccc; margin-bottom: 10px;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. In Discord, run <strong>/register code:YOURCODE</strong>. Codes expire in 10 minutes.</p>
-            <form action="/generate_discord_link_code" method="POST" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <p style="color: #ccc; margin-bottom: 10px;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
+
+            {% if discord_bot_link %}
+            <div class="discord-bot-link-panel" id="discord-bot-link-panel" role="region" aria-label="Active Discord bot link code">
+                <p class="discord-bot-link-label">Your active link code <span class="discord-bot-link-expiry">(expires {{ discord_bot_link.expires_display }})</span></p>
+                <div class="discord-bot-link-row">
+                    <input
+                        type="text"
+                        class="loginsignupinput discord-bot-link-input"
+                        id="discord-link-code-input"
+                        readonly
+                        value="{{ discord_bot_link.code }}"
+                        aria-label="Discord bot link code"
+                        onclick="this.select()"
+                    />
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordLinkCode()">
+                        <span class="material-icons-outlined">content_copy</span>Copy code
+                    </button>
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordRegisterCommand()">
+                        <span class="material-icons-outlined">terminal</span>Copy command
+                    </button>
+                </div>
+                <p class="discord-bot-link-command">Discord: <code id="discord-register-command">/register code:{{ discord_bot_link.code }}</code></p>
+                <p class="discord-bot-link-copied" id="discord-link-copied-msg" hidden aria-live="polite">Copied to clipboard.</p>
+            </div>
+            {% endif %}
+
+            <form action="/generate_discord_link_code" method="POST" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px;">
                 <input class="loginsignupinput" type="password" name="password" placeholder="Enter current password" required />
                 <button type="submit" class="templatedivbutton"><span class="material-icons-outlined">smart_toy</span>Generate Bot Link Code</button>
             </form>
@@ -229,9 +255,113 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.discord-bot-link-panel {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #3d5a80;
+    background: rgba(61, 90, 128, 0.15);
+}
+
+.discord-bot-link-label {
+    margin: 0 0 10px;
+    color: #e8eef5;
+    font-weight: 600;
+}
+
+.discord-bot-link-expiry {
+    font-weight: 400;
+    color: #9ab;
+    font-size: 0.92em;
+}
+
+.discord-bot-link-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.discord-bot-link-input {
+    flex: 1 1 12rem;
+    min-width: 10rem;
+    font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    font-size: 1.15rem;
+    letter-spacing: 0.12em;
+    text-align: center;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.discord-copy-btn {
+    width: auto;
+    padding: 8px 14px;
+    white-space: nowrap;
+}
+
+.discord-bot-link-command {
+    margin: 12px 0 0;
+    color: #aab;
+    font-size: 0.95rem;
+}
+
+.discord-bot-link-command code {
+    color: #7ec8ff;
+    font-size: 1em;
+}
+
+.discord-bot-link-copied {
+    margin: 8px 0 0;
+    color: #6fdc8c;
+    font-size: 0.9rem;
+}
 </style>
 
 <script>
+function showDiscordCopied() {
+    var el = document.getElementById("discord-link-copied-msg");
+    if (!el) return;
+    el.hidden = false;
+    clearTimeout(window._discordCopyHideTimer);
+    window._discordCopyHideTimer = setTimeout(function() { el.hidden = true; }, 4000);
+}
+
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+    }
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand("copy");
+        return Promise.resolve();
+    } finally {
+        document.body.removeChild(ta);
+    }
+}
+
+function copyDiscordLinkCode() {
+    var input = document.getElementById("discord-link-code-input");
+    if (!input) return;
+    copyTextToClipboard(input.value).then(showDiscordCopied).catch(function() {
+        input.select();
+        showDiscordCopied();
+    });
+}
+
+function copyDiscordRegisterCommand() {
+    var cmd = document.getElementById("discord-register-command");
+    var text = cmd ? cmd.textContent : "";
+    if (!text) return;
+    copyTextToClipboard(text).then(showDiscordCopied).catch(showDiscordCopied);
+}
+
 const expectedName = "{{ user.username }}";
 
 function confirmDeleteAccount() {

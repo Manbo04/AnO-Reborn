@@ -1260,8 +1260,10 @@ def serve_flag(flag_type, flag_id):
 
 @app.route("/account", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=60)
 def account():
+    from bot_api import CODE_TTL_MINUTES, get_active_discord_link_code
+    from datetime import timezone
+
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         cId = session["user_id"]
 
@@ -1277,7 +1279,24 @@ def account():
             return error(404, "Account not found")
         user = dict(row)
 
-    return render_template("account.html", user=user)
+    discord_bot_link = get_active_discord_link_code(cId)
+    if discord_bot_link:
+        exp = discord_bot_link["expires_at"]
+        if exp is not None:
+            if getattr(exp, "tzinfo", None) is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            discord_bot_link["expires_display"] = exp.astimezone(
+                timezone.utc
+            ).strftime("%Y-%m-%d %H:%M UTC")
+        else:
+            discord_bot_link["expires_display"] = "soon"
+
+    return render_template(
+        "account.html",
+        user=user,
+        discord_bot_link=discord_bot_link,
+        discord_link_ttl_minutes=CODE_TTL_MINUTES,
+    )
 
 
 @app.route("/recruitments", methods=["GET"])

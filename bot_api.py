@@ -25,7 +25,7 @@ from helpers import get_influence
 
 bp = Blueprint("bot_api", __name__)
 
-CODE_TTL_MINUTES = 10
+CODE_TTL_MINUTES = int(os.getenv("DISCORD_LINK_CODE_TTL_MINUTES", "30"))
 CODE_LENGTH = 8
 
 
@@ -202,6 +202,32 @@ def create_discord_link_code(user_id: int) -> str:
         (code, user_id, expires),
     )
   return code
+
+
+def get_active_discord_link_code(user_id: int) -> Optional[Dict[str, Any]]:
+    """Return the newest unused, unexpired link code for this user, if any."""
+    if not discord_link_codes_table_exists():
+        return None
+    from database import get_db_cursor
+
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            SELECT code, expires_at
+            FROM discord_link_codes
+            WHERE user_id = %s
+              AND used_at IS NULL
+              AND expires_at > NOW()
+            ORDER BY expires_at DESC
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+    if not row:
+        return None
+    code, expires_at = row[0], row[1]
+    return {"code": str(code), "expires_at": expires_at}
 
 
 def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, str, Optional[int]]:
