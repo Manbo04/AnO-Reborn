@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, rollback_db_cursor
 from dotenv import load_dotenv
 from helpers import get_date
 from upgrades import get_upgrades
@@ -397,10 +397,12 @@ def military_sell_buy(way, units):  # WARNING: function used only for military
             currentUnits = int(current_row[0] or 0) if current_row else 0
 
             db.execute("SELECT COALESCE(manpower, 0) FROM stats WHERE id=%s", (cId,))
-            manpower_available = int(db.fetchone()[0] or 0)
+            mp_row = db.fetchone()
+            manpower_available = int(mp_row[0] or 0) if mp_row else 0
 
             db.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id=%s", (cId,))
-            gold = int(db.fetchone()[0] or 0)
+            gold_row = db.fetchone()
+            gold = int(gold_row[0] or 0) if gold_row else 0
 
             totalPrice = wantedUnits * price
 

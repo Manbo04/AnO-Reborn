@@ -4,6 +4,8 @@ from database import (
     get_request_cursor,
     get_db_connection,
     invalidate_user_cache,
+    rollback_db_cursor,
+    try_db_optional,
 )
 from flask import request, render_template, session, redirect, flash
 import variables
@@ -938,15 +940,13 @@ def decline_trade(trade_id):
             try:
                 give_resource("bank", offerer, resource, amount, cursor=db)
             except Exception:
-                # Best-effort: do not raise here
-                pass
+                rollback_db_cursor(db)
         elif type == "buy":
             # Refund buyer funds from escrow
             try:
                 give_resource("bank", offerer, "money", amount * price, cursor=db)
             except Exception:
-                # Best-effort: do not raise here
-                pass
+                rollback_db_cursor(db)
 
     return redirect("/my_offers")
 
@@ -969,8 +969,7 @@ def accept_trade(trade_id):
             else:
                 lock_acquired = True
         except Exception:
-            # If the DB does not support advisory locks or the call fails,
-            # proceed without locking (best-effort).
+            rollback_db_cursor(db)
             lock_acquired = False
 
         # Return error OUTSIDE the try/except to avoid catching template errors
