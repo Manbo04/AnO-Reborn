@@ -162,7 +162,7 @@ def login():
                             pass
 
                     logger.debug("Password matches, logging in user.")
-                    # sets session's user_id to current user's id
+                    session.clear()
                     session["user_id"] = user[0]
                     logger.debug(f"Session after set: {dict(session)}")
                     # Mark session permanent so cookie persists
@@ -332,7 +332,8 @@ def discord_login():
     except Exception:
         pass  # best-effort; don't block login
 
-    session["user_id"] = user_id  # clears session variables from oauth
+    session.clear()
+    session["user_id"] = user_id
     session.permanent = True
     session.modified = True
     try:

@@ -110,17 +110,24 @@ At the end of each session or major task, document:
 
 ### Session: 2026-05-24
 
-**Task**: Comprehensive plan and fix for recurring random HTTP 500s.
+**Task**: Deep fix plan — 500s, economy reliability, security (full implementation).
 
 **What Was Done**:
-- Auto-rollback on `psycopg2.Error` in `get_request_cursor` (aborted transaction cascade fix)
-- `_ensure_core_game_columns` in `ensure_schema_compat` (last_active, join_number, flag_data, tax_rate, demographics)
-- `table_has_column`, `provinces_has_demographics` helpers
-- Province routes: citycount casing, demographics SQL fallback, safer policies read
-- `serve_flag`: flag_data + legacy filename fallback
-- `scripts/diagnose_all_routes.py`; tests + CI
+- **Phase 0**: `schema_compat_succeeded()`, `/ready` checks (DB, resource_dictionary, revenue task age), `scripts/diagnose_schema.py`
+- **Phase 1**: PR #49 base + market `give_resource` pool fix, wars peace IDOR fix, `citycount` normalization, template JSON CI script, integration-smoke workflow
+- **Phase 2**: `tax_income`/`population_growth` last_run after commit; revenue fail-fast on batch errors; trade agreements xact advisory lock; `task_tax_income` deadlock retries; Sentry on `handle_exception`
+- **Phase 3**: Flask-WTF CSRF + SameSite=Lax, reset code 24h TTL, OAuth state fail-closed, `BOT_API_SECRET` required on Railway, session regeneration on login
+- **Phase 4**: `scripts/apply_all_pending_migrations.py`, `init_db_railway` migration note, deprecated `add_database_indexes.py`
+- **Phase 5**: `test_war_peace_authorization.py`, `check_legacy_schema_refs.py`, CI wiring, conftest `WTF_CSRF_ENABLED=False` for tests
 
-**Next Steps**: logged-in smoke as user 16; run diagnose script on production after deploy.
+**Deploy**: merge to `master` and push — Railway auto-deploys (GitHub PR optional).
+
+**Ops after deploy**:
+```bash
+DATABASE_PUBLIC_URL=... python3 scripts/diagnose_schema.py
+DATABASE_PUBLIC_URL=... python3 scripts/diagnose_all_routes.py 16
+DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
+```
 
 ---
 
