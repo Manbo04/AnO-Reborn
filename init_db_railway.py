@@ -73,8 +73,12 @@ def create_database():
             print(f"✗ Failed to create table {table_name}: {e}")
             connection.rollback()
 
-    print("\n✓ Database initialization complete!")
+    print("\n✓ Legacy table bootstrap complete!")
     print(f"Created {success_count} out of {len(tables)} tables")
+    print(
+        "IMPORTANT: Run scripts/apply_all_pending_migrations.py for "
+        "resource_dictionary, user_economy, user_buildings, and related indexes."
+    )
 
     # Fix existing provinces with better defaults
     try:
