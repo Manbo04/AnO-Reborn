@@ -6,7 +6,7 @@ from helpers import (
     check_required,
     get_influence,
 )
-from database import get_db_connection, get_request_cursor
+from database import get_db_connection, get_request_cursor, rollback_db_cursor
 from attack_scripts.Nations import (
     Economy as AttackEconomy,
     Economy,
@@ -216,6 +216,7 @@ def peace_offers():
                 try:
                     resource_dict = eco.get_particular_resources(resources)
                 except Exception:
+                    rollback_db_cursor(db)
                     return error(400, "Invalid resource requested in peace offer")
 
                 # If function returned a non-dict (e.g. empty or invalid result),
@@ -746,6 +747,7 @@ def warResult():
                     attacker, defender
                 )
             except Exception:
+                rollback_db_cursor(db)
                 logger.exception(
                     "Military.fight() crashed for attacker=%s defender=%s",
                     attacker.user_id,
@@ -1083,6 +1085,7 @@ def wars():
 
                         war_info[war_id] = {"att": attacker_info, "def": defender_info}
             except Exception:
+                rollback_db_cursor(db)
                 war_attacker_defender_ids = []
                 war_info = {}
             try:
@@ -1096,6 +1099,7 @@ def wars():
                 wars_row = db.fetchone()
                 warsCount = wars_row[0] if wars_row else 0
             except Exception:
+                rollback_db_cursor(db)
                 warsCount = 0
         return render_template(
             "wars.html",
