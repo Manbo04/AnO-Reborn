@@ -441,14 +441,22 @@ def health():
 @app.route("/deploy-info")
 def deploy_info():
     """Public deploy fingerprint (no secrets). Use to verify Railway picked up a commit."""
-    from database import schema_compat_succeeded
+    from database import schema_compat_failed_steps, schema_compat_succeeded
 
-    return {
+    payload = {
         "git_commit": os.getenv("RAILWAY_GIT_COMMIT_SHA")
         or os.getenv("GIT_COMMIT")
         or "unknown",
         "schema_compat": "ok" if schema_compat_succeeded() else "failed",
-    }, 200
+        "boot_marker": os.getenv("ANO_BOOT_MARKER", "unknown"),
+        "start_command": "start_production.sh"
+        if os.getenv("ANO_USE_START_SCRIPT", "1") == "1"
+        else "procfile/gunicorn",
+    }
+    failures = schema_compat_failed_steps()
+    if failures:
+        payload["schema_compat_errors"] = failures[:8]
+    return payload, 200
 
 
 @app.route("/ready")
