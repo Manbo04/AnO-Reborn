@@ -1092,6 +1092,37 @@ _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
 _table_column_cache: Dict[Tuple[str, str], bool] = {}
 _users_password_columns_cache: Optional[set] = None
+_users_is_compat_view_cache: Optional[bool] = None
+
+
+def _public_relation_kind(relation_name: str) -> Optional[str]:
+    """Return pg_class relkind for a public relation (r=table, v=view, …) or None."""
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT c.relkind
+                FROM pg_class c
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = 'public' AND c.relname = %s
+                """,
+                (relation_name,),
+            )
+            row = db.fetchone()
+            return row[0] if row else None
+    except Exception as exc:
+        logger.warning("_public_relation_kind(%s): %s", relation_name, exc)
+        return None
+
+
+def users_is_compat_view() -> bool:
+    """True when ``users`` is a view bridging Next.js Prisma tables (not a physical table)."""
+    global _users_is_compat_view_cache
+    if _users_is_compat_view_cache is not None:
+        return _users_is_compat_view_cache
+    kind = _public_relation_kind("users")
+    _users_is_compat_view_cache = kind == "v"
+    return _users_is_compat_view_cache
 
 
 def _ensure_discord_bot_tables(db) -> None:
@@ -1256,34 +1287,44 @@ def ensure_schema_compat() -> None:
                 """
             ),
         )
-        core_ok &= _run_schema_step(
-            "users_core_columns",
-            lambda db: db.execute(
-                """
-                ALTER TABLE users
-                ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
-                """
-            ),
-        )
-        core_ok &= _run_schema_step(
-            "users_join_number",
-            lambda db: db.execute(
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS join_number INTEGER"
-            ),
-        )
-        _run_schema_step("users_join_number_index", _ensure_users_join_number_index)
-        core_ok &= _run_schema_step(
-            "users_flag_data",
-            lambda db: db.execute(
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS flag_data TEXT"
-            ),
-        )
+        if not users_is_compat_view():
+            core_ok &= _run_schema_step(
+                "users_core_columns",
+                lambda db: db.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
+                    """
+                ),
+            )
+            core_ok &= _run_schema_step(
+                "users_join_number",
+                lambda db: db.execute(
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS join_number INTEGER"
+                ),
+            )
+            _run_schema_step("users_join_number_index", _ensure_users_join_number_index)
+            core_ok &= _run_schema_step(
+                "users_flag_data",
+                lambda db: db.execute(
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS flag_data TEXT"
+                ),
+            )
+        else:
+            logger.info(
+                "users is a compatibility view — skipping ALTER TABLE users steps"
+            )
         core_ok &= _run_schema_step(
             "colnames_columns", _ensure_colnames_optional_columns
         )
-        core_ok &= _run_schema_step(
-            "provinces_demographics", _ensure_provinces_demographic_columns
-        )
+        if _public_relation_kind("provinces") != "v":
+            core_ok &= _run_schema_step(
+                "provinces_demographics", _ensure_provinces_demographic_columns
+            )
+        else:
+            logger.info(
+                "provinces is a compatibility view — skipping demographic ALTERs"
+            )
         core_ok &= _run_schema_step(
             "reset_codes", lambda db: _ensure_reset_codes_table(db)
         )
