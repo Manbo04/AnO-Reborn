@@ -286,7 +286,16 @@ def send_peace_offer(war_id, enemy_id):
             return error(400, "Invalid offer!")
         with get_request_cursor() as db:
             if not war_id:
-                raise Exception("War id is invalid")
+                return error(400, "War id is invalid")
+            db.execute(
+                "SELECT attacker_id, defender_id FROM wars WHERE war_id=%s",
+                (war_id,),
+            )
+            war_row = db.fetchone()
+            if not war_row:
+                return error(404, "War not found")
+            if cId not in (war_row[0], war_row[1]):
+                return error(403, "You are not a participant in this war")
             resources_string = ""
             amount_string = ""
             validResources = list(Economy.resources)

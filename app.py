@@ -122,7 +122,8 @@ app.config["ALLOWED_HOSTS"] = [
 # Ensure session cookie behavior is permissive for local dev/testing
 # Keep default None in production but set explicit None to be safe
 app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["SESSION_COOKIE_SAMESITE"] = None
+# Lax reduces CSRF risk while allowing OAuth return navigations
+app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
 # In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
 # For local development or test environments where HTTPS is not used, keep cookies
 # insecure so `requests` and `curl` clients can receive them.
@@ -439,21 +440,45 @@ def health():
 
 @app.route("/ready")
 def ready():
-    """Readiness probe that verifies DB connectivity. Returns 200 when the app
-    is fully ready to accept traffic, otherwise 503.
-    """
+    """Readiness probe: DB, normalized economy tables, schema compat, revenue task."""
+    checks = {}
     try:
-        from database import get_db_connection
+        from database import get_db_connection, schema_compat_succeeded
 
+        if not schema_compat_succeeded():
+            checks["schema_compat"] = "failed"
+            return {"status": "not ready", "checks": checks}, 503
+
+        max_revenue_age = int(os.getenv("READY_MAX_REVENUE_AGE_SECONDS", "7200"))
         with get_db_connection() as conn:
             db = conn.cursor()
             db.execute("SELECT 1")
             db.fetchone()
-        return "ok", 200
+            db.execute("SELECT to_regclass('public.resource_dictionary')")
+            if db.fetchone()[0] is None:
+                checks["resource_dictionary"] = "missing"
+                return {"status": "not ready", "checks": checks}, 503
+            db.execute(
+                """
+                SELECT EXTRACT(EPOCH FROM (now() - last_run))
+                FROM task_runs
+                WHERE task_name = 'generate_province_revenue'
+                """
+            )
+            row = db.fetchone()
+            if not row or row[0] is None:
+                checks["generate_province_revenue"] = "no last_run"
+            elif float(row[0]) > max_revenue_age:
+                checks["generate_province_revenue"] = f"stale>{max_revenue_age}s"
+            else:
+                checks["generate_province_revenue"] = "ok"
+        if checks.get("generate_province_revenue", "ok") != "ok":
+            app.logger.warning("Readiness: %s", checks)
+            return {"status": "not ready", "checks": checks}, 503
+        return {"status": "ok", "checks": checks}, 200
     except Exception as e:
-        # Log at warning level so the platform logs show the reason for unready state
         app.logger.warning("Readiness check failed: %s", e)
-        return "not ready", 503
+        return {"status": "not ready", "error": str(e)}, 503
 
 
 @app.route("/_admin/trigger_tasks")
@@ -596,8 +621,8 @@ def db_diagnostics():
     introspection and will be removed when diagnostics are complete.
     """
     secret = os.getenv("ADMIN_DIAG_SECRET")
-    header = request.headers.get("X-DIAG-SECRET")
-    if not secret or header != secret:
+    header = request.headers.get("X-DIAG-SECRET") or ""
+    if not secret or not hmac.compare_digest(header, secret):
         return "Forbidden", 403
 
     try:
@@ -782,6 +807,31 @@ if environment == "PROD":
     logger.addHandler(handler)
 else:
     app.secret_key = config.get_secret_key()
+
+# CSRF protection for browser POST forms (bot API and diag endpoints exempt)
+try:
+    from flask_wtf.csrf import CSRFProtect
+
+    _csrf = CSRFProtect(app)
+    app.config.setdefault("WTF_CSRF_TIME_LIMIT", None)
+
+    for _endpoint in (
+        "health",
+        "ready",
+        "trigger_tasks",
+        "db_diagnostics",
+        "ai_logs",
+        "robots",
+        "serve_flag",
+    ):
+        _view = app.view_functions.get(_endpoint)
+        if _view is not None:
+            _csrf.exempt(_view)
+
+    if getattr(bot_api, "bp", None) is not None:
+        _csrf.exempt(bot_api.bp)
+except ImportError:
+    app.logger.warning("Flask-WTF not installed; CSRF protection disabled")
 
 # Import written packages
 # Don't put these above app = Flask(__name__)
