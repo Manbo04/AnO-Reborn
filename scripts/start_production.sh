@@ -47,6 +47,8 @@ ensure_schema_compat()
 ok = schema_compat_succeeded()
 print('[start] schema_compat', 'ok' if ok else 'failed', schema_compat_failed_steps()[:5])
 " || echo "[start] WARN: schema compat check failed"
+  echo "[start] Nudge stale economy tasks if beat missed schedules..."
+  python3 scripts/nudge_stale_economy_tasks.py || echo "[start] WARN: economy nudge exited non-zero"
 else
   echo "[start] No DATABASE_URL — skip migrations"
 fi

@@ -12,6 +12,7 @@ Expect:
 - `schema_compat`: `ok` (not `failed`)
 - `start_command`: `start_production.sh`
 - No `schema_compat_errors` array
+- `economy_tasks.generate_province_revenue.stale`: `false` (or `age_seconds` under 7200)
 
 ## 2. Economy code is live (Celery)
 

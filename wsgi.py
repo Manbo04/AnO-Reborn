@@ -19,9 +19,10 @@ def _boot_once() -> None:
         import subprocess
         import sys
 
+        root = os.path.dirname(os.path.abspath(__file__))
         r = subprocess.run(
             [sys.executable, "scripts/apply_all_pending_migrations.py"],
-            cwd=os.path.dirname(os.path.abspath(__file__)),
+            cwd=root,
             capture_output=True,
             text=True,
             timeout=300,
@@ -32,6 +33,19 @@ def _boot_once() -> None:
             print(f"[wsgi] WARN migrations exit {r.returncode}: {(r.stderr or '')[:500]}")
     except Exception as exc:
         print(f"[wsgi] WARN apply_all_pending_migrations: {exc}")
+    try:
+        root = os.path.dirname(os.path.abspath(__file__))
+        r2 = subprocess.run(
+            [sys.executable, "scripts/apply_nextjs_compat_views.py"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if r2.returncode != 0 and r2.stderr:
+            print(f"[wsgi] WARN compat views: {r2.stderr[:300]}")
+    except Exception as exc:
+        print(f"[wsgi] WARN apply_nextjs_compat_views: {exc}")
     try:
         from database import ensure_schema_compat, schema_compat_succeeded
 
