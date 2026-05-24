@@ -1,5 +1,8 @@
 # FULLY MIGRATED
 
+import os
+from urllib.parse import urlparse
+
 from flask import redirect, render_template, session, request
 from functools import wraps
 from dotenv import load_dotenv
@@ -85,6 +88,49 @@ def get_flagname(user_id):
         # Cache the result
         query_cache.set(cache_key, flag_name)
         return flag_name
+
+
+def _production_origin_check_enabled():
+    return (
+        os.getenv("ENVIRONMENT") == "PROD"
+        and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
+    )
+
+
+def validate_post_origin():
+    """Reject cross-site POSTs in production when Origin/Referer do not match the host."""
+    if request.method != "POST" or not _production_origin_check_enabled():
+        return None
+
+    allowed_hosts = {
+        (request.host or "").split(":")[0].lower(),
+        "affairsandorder.com",
+        "www.affairsandorder.com",
+        "web-production-55d7b.up.railway.app",
+    }
+    origin = request.headers.get("Origin") or request.headers.get("Referer")
+    if not origin:
+        return None
+    try:
+        host = (urlparse(origin).hostname or "").lower()
+    except Exception:
+        return error(403, "Invalid request origin")
+    if host not in allowed_hosts:
+        return error(403, "Invalid request origin")
+    return None
+
+
+def require_post_origin(f):
+    """Decorator: validate Origin/Referer on POST in production."""
+
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        blocked = validate_post_origin()
+        if blocked is not None:
+            return blocked
+        return f(*args, **kwargs)
+
+    return wrapped
 
 
 def login_required(f):

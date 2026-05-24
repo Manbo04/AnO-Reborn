@@ -118,10 +118,12 @@ app.config["ALLOWED_HOSTS"] = [
     "web-production-55d7b.up.railway.app",
 ]
 
-# Ensure session cookie behavior is permissive for local dev/testing
-# Keep default None in production but set explicit None to be safe
+# Session cookies: Lax in production reduces cross-site POST cookie sending
 app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["SESSION_COOKIE_SAMESITE"] = None
+if os.getenv("ENVIRONMENT") == "PROD" and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+else:
+    app.config["SESSION_COOKIE_SAMESITE"] = None
 # In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
 # For local development or test environments where HTTPS is not used, keep cookies
 # insecure so `requests` and `curl` clients can receive them.
@@ -521,6 +523,12 @@ def admin_ai_agent():
     Requires ADMIN_DIAG_SECRET (X-DIAG-SECRET) and AI_AGENT_PASSWORD (X-AI-AGENT-PASSWORD).
     POST body can include JSON {"user_id": 1} to override target user.
     """
+    from helpers import validate_post_origin
+
+    blocked = validate_post_origin()
+    if blocked is not None:
+        return blocked
+
     diag_secret = os.getenv("ADMIN_DIAG_SECRET")
     agent_password = os.getenv("AI_AGENT_PASSWORD")
     if not diag_secret or not agent_password:
