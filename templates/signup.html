@@ -59,6 +59,9 @@
                 {% elif way == "discord" %}
                 <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
                 {% endif %}
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% endif %}
                     <input class="loginsignupinput w-full" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
                     {% if way != "discord" %}
                     <input class="loginsignupinput w-full" autocomplete="off" name="email" type="email" placeholder="Email" required />
