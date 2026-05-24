@@ -133,3 +133,83 @@ def test_leader_cannot_withdraw_from_other_coalition_bank():
         _cleanup_user(db, leader_id, members_tbl)
         _cleanup_user(db, other_leader_id, members_tbl)
         conn.commit()
+
+
+def test_leader_cannot_remove_other_coalition_bank_request():
+    """Leader in coalition A must not delete bank requests for coalition B."""
+    members_tbl = _members_table()
+    col_a = col_b = leader_id = other_leader_id = member_b_id = None
+    bank_request_id = None
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        leader_id, _ = _create_user(db, "ra")
+        other_leader_id, _ = _create_user(db, "rb")
+        member_b_id, _ = _create_user(db, "mb")
+        conn.commit()
+
+    client = app.test_client()
+
+    for uid, suffix in (
+        (leader_id, f"guard_rm_a_{uuid.uuid4().hex[:8]}"),
+        (other_leader_id, f"guard_rm_b_{uuid.uuid4().hex[:8]}"),
+    ):
+        with client.session_transaction() as sess:
+            sess["user_id"] = uid
+        r = client.post(
+            "/establish_coalition",
+            data={"type": "Open", "name": suffix, "description": "test"},
+            follow_redirects=False,
+        )
+        assert r.status_code in (302, 303)
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute(
+            f"SELECT colid FROM {members_tbl} WHERE userid = %s",
+            (other_leader_id,),
+        )
+        col_b = db.fetchone()[0]
+        db.execute(
+            f"INSERT INTO {members_tbl} (colid, userid, role) VALUES (%s, %s, %s) "
+            "ON CONFLICT (userid) DO NOTHING",
+            (col_b, member_b_id, "member"),
+        )
+        db.execute(
+            "INSERT INTO colBanksRequests (reqId, colId, amount, resource) "
+            "VALUES (%s, %s, %s, %s) RETURNING id",
+            (member_b_id, col_b, 5, "money"),
+        )
+        bank_request_id = db.fetchone()[0]
+        db.execute(
+            f"SELECT colid FROM {members_tbl} WHERE userid = %s",
+            (leader_id,),
+        )
+        col_a = db.fetchone()[0]
+        conn.commit()
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = leader_id
+
+    r = client.post(
+        f"/remove_bank_request/{bank_request_id}",
+        follow_redirects=False,
+    )
+    assert r.status_code == 400, (
+        f"Expected 400 for cross-coalition remove_bank_request, got {r.status_code}"
+    )
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute(
+            "SELECT id FROM colBanksRequests WHERE id = %s",
+            (bank_request_id,),
+        )
+        assert db.fetchone() is not None, "Request must still exist after blocked delete"
+
+        _cleanup_coalition(db, col_a, members_tbl)
+        _cleanup_coalition(db, col_b, members_tbl)
+        _cleanup_user(db, leader_id, members_tbl)
+        _cleanup_user(db, other_leader_id, members_tbl)
+        _cleanup_user(db, member_b_id, members_tbl)
+        conn.commit()
