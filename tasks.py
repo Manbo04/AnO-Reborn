@@ -2257,7 +2257,7 @@ def generate_province_revenue():  # Runs each hour
             last_row = db.fetchone()
             last_proc = last_row[0] if last_row and last_row[0] is not None else 0
             # Smaller chunks lower transaction time and reduce player-facing lock waits.
-            chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "200"))
+            chunk = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "400"))
             db.execute(
                 "SELECT p.id, p.userId, p.land, p.productivity "
                 "FROM provinces p "
