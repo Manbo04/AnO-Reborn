@@ -1187,15 +1187,42 @@ def serve_flag(flag_type, flag_id):
         else:
             del serve_flag._cache[cache_key]
 
-    with get_request_cursor() as cur:
-        if flag_type == "country":
-            cur.execute("SELECT flag_data FROM users WHERE id = %s", (flag_id,))
-        elif flag_type == "coalition":
-            cur.execute("SELECT flag_data FROM colNames WHERE id = %s", (flag_id,))
-        else:
-            return send_from_directory("static/flags", "default_flag.jpg")
+    from database import table_has_column
 
-        row = cur.fetchone()
+    with get_request_cursor() as cur:
+        row = None
+        try:
+            if flag_type == "country":
+                if table_has_column("users", "flag_data"):
+                    cur.execute(
+                        "SELECT flag_data FROM users WHERE id = %s", (flag_id,)
+                    )
+                    row = cur.fetchone()
+                if not (row and row[0]):
+                    cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
+                    fname = cur.fetchone()
+                    if fname and fname[0]:
+                        return send_from_directory(
+                            "static/flags", fname[0]
+                        )
+            elif flag_type == "coalition":
+                if table_has_column("colnames", "flag_data"):
+                    cur.execute(
+                        "SELECT flag_data FROM colNames WHERE id = %s", (flag_id,)
+                    )
+                    row = cur.fetchone()
+                if not (row and row[0]):
+                    cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
+                    fname = cur.fetchone()
+                    if fname and fname[0]:
+                        return send_from_directory(
+                            "static/flags", fname[0]
+                        )
+            else:
+                return send_from_directory("static/flags", "default_flag.jpg")
+        except Exception:
+            rollback_db_cursor(cur)
+            return send_from_directory("static/flags", "default_flag.jpg")
 
         if row and row[0]:
             try:
@@ -1467,7 +1494,7 @@ def mass_purchase():
         db.execute(
             (
                 "SELECT id, provinceName as name, "
-                "CAST(cityCount AS INTEGER) as cityCount, "
+                "CAST(citycount AS INTEGER) as citycount, "
                 "land FROM provinces WHERE userId=%s ORDER BY provinceName"
             ),
             (cId,),

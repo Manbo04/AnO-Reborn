@@ -469,7 +469,7 @@ def get_influence(country_id, db=None):
             LEFT JOIN stats s ON u.id = s.id
             LEFT JOIN (
                 SELECT userId,
-                       SUM(cityCount) as city_count,
+                       SUM(citycount) as city_count,
                        COUNT(id) as province_count,
                        SUM(land) as total_land
                 FROM provinces
@@ -666,7 +666,7 @@ def get_bulk_influence(user_ids):
             LEFT JOIN stats s ON u.id = s.id
             LEFT JOIN (
                 SELECT userId,
-                       SUM(cityCount) as city_count,
+                       SUM(citycount) as city_count,
                        COUNT(id) as province_count,
                        SUM(land) as total_land
                 FROM provinces
