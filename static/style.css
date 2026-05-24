@@ -2750,35 +2750,64 @@ button {
 
 .landingpagediv {
     width: 100%;
+    max-width: none;
     box-shadow: none;
     border-radius: 0;
+    border: none;
     padding-top: 0;
     margin: 0;
     padding: 0;
+    background: transparent;
+    overflow: visible;
+}
+
+body.page-landing .templatecontainer,
+body:has(.landingpagediv) .templatecontainer {
+    margin-top: 0;
+    padding-top: 0;
+    width: 100%;
+    max-width: none;
+    background: transparent;
+}
+
+body.page-landing .landingpagediv.templatediv,
+body:has(.landingpagediv) .landingpagediv.templatediv {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    background: transparent;
 }
 
 .landingtopper {
-    min-height: calc(100vh - 110px);
+    min-height: 100vh;
     align-items: center;
-    background: var(--background);
+    background: transparent;
+    margin: 0;
+    padding: 0;
 }
 
 .landingparent {
     display: flex;
     flex-direction: row;
     width: 100%;
+    max-width: 100vw;
     overflow: hidden;
-    margin: auto;
-    background: var(--foregroundSeven);
+    margin: 0;
+    background-color: transparent;
     height: max-content;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 16px 26px 0px;
+    box-shadow: none;
     position: relative;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url("images/coalition.jpg?v=2");
+    background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("images/coalition.jpg?v=2");
     min-height: 100vh;
     background-size: cover;
-    object-fit: cover;
-    background-position: center;
+    background-position: center center;
+    background-repeat: no-repeat;
     transition: none;
+    padding-top: 55px;
+    box-sizing: border-box;
 }
 
 @media all and (max-width: 800px) {
@@ -2808,12 +2837,21 @@ button {
     position: relative;
 }
 
+body.page-landing .templatedivcontent {
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+}
+
+body.page-landing .footer {
+    margin-top: 0;
+}
+
 .landingheader {
     font-size: 48px;
     color: white;
     border-radius: 45px;
     margin-bottom: 40px;
-    margin-top: 75px;
+    margin-top: 40px;
     font-weight: 700;
     text-align: center;
 }
