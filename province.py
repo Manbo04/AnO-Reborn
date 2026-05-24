@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, jsonify
-from helpers import login_required, error
+from helpers import login_required, error, require_post_origin
 from dotenv import load_dotenv
 import variables
 from helpers import get_date
@@ -546,6 +546,7 @@ def province_quick_build_api(pId):
 
 @bp.route("/build_structure", methods=["POST"])
 @login_required
+@require_post_origin
 def build_structure_action():
     cId = session["user_id"]
     province_id = request.form.get("province_id")
