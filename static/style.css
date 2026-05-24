@@ -2754,14 +2754,12 @@ button {
     box-shadow: none;
     border-radius: 0;
     border: none;
-    padding-top: 0;
-    margin: 0;
     padding: 0;
+    margin: 0 !important;
     background: transparent;
     overflow: visible;
 }
 
-body.page-landing .templatecontainer,
 body:has(.landingpagediv) .templatecontainer {
     margin-top: 0;
     padding-top: 0;
@@ -2770,19 +2768,19 @@ body:has(.landingpagediv) .templatecontainer {
     background: transparent;
 }
 
-body.page-landing .landingpagediv.templatediv,
 body:has(.landingpagediv) .landingpagediv.templatediv {
     width: 100%;
     max-width: none;
-    margin: 0;
+    margin: 0 !important;
     border: none;
     box-shadow: none;
     border-radius: 0;
     background: transparent;
+    overflow: visible;
 }
 
 .landingtopper {
-    min-height: 100vh;
+    min-height: calc(100vh - 110px);
     align-items: center;
     background: transparent;
     margin: 0;
@@ -2793,15 +2791,14 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     display: flex;
     flex-direction: row;
     width: 100%;
-    max-width: 100vw;
-    overflow: hidden;
+    overflow: visible;
     margin: 0;
     background-color: transparent;
     height: max-content;
     box-shadow: none;
     position: relative;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("images/coalition.jpg?v=2");
-    min-height: 100vh;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url("images/coalition.jpg?v=2");
+    min-height: calc(100vh - 55px);
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
@@ -2837,21 +2834,12 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     position: relative;
 }
 
-body.page-landing .templatedivcontent {
-    background: var(--foreground);
-    border-top: 1px solid var(--border);
-}
-
-body.page-landing .footer {
-    margin-top: 0;
-}
-
 .landingheader {
     font-size: 48px;
     color: white;
     border-radius: 45px;
     margin-bottom: 40px;
-    margin-top: 40px;
+    margin-top: 75px;
     font-weight: 700;
     text-align: center;
 }
@@ -4576,13 +4564,11 @@ ul.flashes {
     margin: 5px 0;
 }
 
-/* Login/signup pages: full-bleed hero, hidden footer */
-body:has(.loginsignupdiv) .templatecontainer,
-body.page-auth .templatecontainer {
+/* Login/signup pages: transparent container, hidden footer */
+body:has(.loginsignupdiv) .templatecontainer {
     background: transparent !important;
 }
-body:has(.loginsignupdiv) .footer,
-body.page-auth .footer {
+body:has(.loginsignupdiv) .footer {
     display: none;
 }
 
@@ -4870,164 +4856,6 @@ body.page-auth .footer {
 }
 
 /* === UI hotfix: auth pages & forms === */
-body.page-auth {
-    overflow-x: hidden;
-}
-
-body.page-auth::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -4;
-    pointer-events: none;
-    background:
-        linear-gradient(180deg, rgba(19, 23, 30, 0.78) 0%, rgba(19, 23, 30, 0.42) 42%, rgba(19, 23, 30, 0.68) 100%);
-}
-
-body.page-auth .menubardiv,
-body.page-auth .resourcediv,
-body.page-auth .resourcedivcontent {
-    display: none !important;
-}
-
-body.page-auth .templatecontainer {
-    margin-top: 0;
-    width: 100%;
-    min-height: 100vh;
-    padding: calc(55px + 24px) 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-}
-
-body.page-auth .navbarparent {
-    background: rgba(28, 32, 41, 0.97) !important;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
-    border-bottom: 2px solid rgba(0, 167, 225, 0.85);
-}
-
-body.page-auth .loginsignup {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-}
-
-body.page-auth .loginsignup.borderbutton {
-    background: var(--accent);
-    border-color: transparent;
-    font-weight: 600;
-}
-
-body.page-auth .loginsignup:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
-}
-
-body.page-auth .loginsignup.borderbutton:hover {
-    opacity: 0.92;
-    color: #fff;
-}
-
-body.page-auth .loginsignupdiv.templatediv,
-body.page-auth .auth-page-card.templatediv {
-    margin: 0 auto;
-    width: min(920px, 100%);
-    max-width: 100%;
-    background: rgba(28, 32, 41, 0.55);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
-    border-radius: 16px;
-    overflow: hidden;
-}
-
-body.page-auth .loginsignupdiv .templatedivtopper {
-    background: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 20px 24px 16px;
-    margin-bottom: 0;
-}
-
-body.page-auth .auth-page-content {
-    padding: 24px 24px 28px;
-}
-
-body.page-auth .auth-page-intro {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
-body.page-auth .auth-page-title {
-    margin: 0 0 8px;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-}
-
-body.page-auth .auth-page-title .material-icons-outlined {
-    top: 0;
-    right: 0;
-    font-size: 1.75rem;
-}
-
-body.page-auth .auth-page-subtitle {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.95rem;
-}
-
-body.page-auth .auth-panel-hint {
-    margin: 0 0 16px;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.65);
-    text-align: center;
-    line-height: 1.4;
-}
-
-body.page-auth .auth-panel {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-}
-
-body.page-auth .auth-panel .templatecontentheadercenter,
-body.page-auth .auth-panel h2.templatecontentheadercenter {
-    color: rgba(255, 255, 255, 0.95);
-}
-
-body.page-auth .loginsignupinput {
-    background: rgba(0, 0, 0, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: #fff;
-}
-
-body.page-auth .loginsignupinput:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(0, 167, 225, 0.25);
-}
-
-body.page-auth .loginsignupinput::placeholder {
-    color: rgba(255, 255, 255, 0.45);
-}
-
-body.page-auth label,
-body.page-auth .loginsignupforgot,
-body.page-auth .templatelink {
-    color: rgba(255, 255, 255, 0.78);
-}
-
-body.page-auth .templatelink:hover {
-    color: var(--accent);
-}
-
 .loginsignupdiv.templatediv {
     background: rgba(28, 32, 41, 0.96);
     border: 1px solid var(--border);
