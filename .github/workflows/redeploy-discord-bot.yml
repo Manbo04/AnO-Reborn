@@ -38,11 +38,8 @@ jobs:
           BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
         run: |
           if [ -z "${RAILWAY_TOKEN:-}" ]; then
-            echo "::error::RAILWAY_TOKEN is not set — cannot redeploy bot or fix Discord UI."
-            echo "Add RAILWAY_TOKEN at: https://github.com/Manbo04/AnO-Reborn/settings/secrets/actions"
-            echo "Then run: python3 scripts/railway_production_fix.py"
-            echo "If Postgres is Crashed, fix volumes first: docs/RAILWAY_FIX_ONCE.md"
-            exit 1
+            echo "::warning::RAILWAY_TOKEN is not set — skipping bot redeploy (non-blocking for web deploy)."
+            exit 0
           fi
           python3 scripts/railway_production_fix.py
 
