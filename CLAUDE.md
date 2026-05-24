@@ -108,6 +108,25 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-22 (follow-up verification)
+
+**Task**: Follow-up verification and remaining security items
+
+**What Was Done**:
+- `action_loop.build_structure`: province ownership check (defense-in-depth)
+- `coalitions.py`: `_members_tbl()` dynamic SQL; `remove_bank_request` + `set_tax_rate` IDOR fixes; bank routes use `_require_coalition_member`
+- `helpers.validate_post_origin` + `require_post_origin` on coalition bank POSTs and `build_structure`
+- Production `SESSION_COOKIE_SAMESITE=Lax` when `ENVIRONMENT=PROD`
+- `scripts/verify_post_deploy.py`; CI `integration-db` job with Postgres + coalition/schema tests
+- `tests/test_coalition_membership_guard.py`: cross-coalition `remove_bank_request` test
+
+**What To Watch**:
+- Run `DATABASE_PUBLIC_URL=... python3 scripts/apply_schema_compat.py` on Railway if not already applied
+- Ops: confirm Railway logs clean for `coalitions_legacy` / `discord_id` errors
+- `verify_post_deploy.py` may WARN (403) from Cloudflare on automated clients; fails only on HTTP 500
+
+---
+
 ### Session: 2026-05-22 (continued)
 
 **Task**: Security fixes + merge to master (PR #42)
