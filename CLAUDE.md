@@ -216,6 +216,11 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - Re-run `apply_nextjs_compat_views.py` if Prisma column names differ from defaults
 - Full player restore from `postgres-active-data` still needs an explicit migration plan
 
+**Debug follow-up (same day)** — why fixes never reached players:
+- **Mistake**: PR #51 left on branch; production stayed on `d7015adc` until `3113e769` pushed to **master**.
+- **Verified after push**: `deploy-info` → `schema_compat: ok`, commit `3113e769`; `/country/id=16` → **404** (not 500); `/ready` still **503** (`generate_province_revenue` stale >2h) — restart **celery-worker** + **beat** on Railway.
+- Boot now runs `apply_nextjs_compat_views.py`; provinces view exposes both `userId` and `userid`.
+
 ---
 
 ### Session: 2026-05-22 (continued)
