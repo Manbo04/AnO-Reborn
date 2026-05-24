@@ -1352,13 +1352,16 @@ def _ensure_core_game_columns(db) -> None:
         ADD COLUMN IF NOT EXISTS join_number INTEGER
         """
     )
-    db.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_join_number
-        ON users (join_number)
-        WHERE join_number IS NOT NULL
-        """
-    )
+    try:
+        db.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_join_number
+            ON users (join_number)
+            WHERE join_number IS NOT NULL
+            """
+        )
+    except Exception as exc:
+        logger.warning("idx_users_join_number: %s", exc)
     db.execute(
         """
         ALTER TABLE users
