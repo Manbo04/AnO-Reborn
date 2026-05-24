@@ -307,6 +307,7 @@ def _build_provinces_view(
             f"CREATE OR REPLACE VIEW {LEGACY_PROVINCES} AS",
             "SELECT",
             f"  {userid_expr} AS \"userId\"",
+            f"  {userid_expr} AS userid",
             f"  p.{_qident(prov_pk)} AS id",
             f"  {c(name, 'NULL::varchar')} AS \"provinceName\"",
             f"  COALESCE({c(city, '1')}, 1)::integer AS \"cityCount\"",
