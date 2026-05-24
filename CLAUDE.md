@@ -108,6 +108,23 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-24 (backend pristine + login fix)
+
+**Task**: Backend log plan implementation; fix login 500 (not homepage).
+
+**What Was Done**:
+- **Login P0**: `_ensure_policies_row()` — old code did `SELECT education,soldiers` then `INSERT` on any error → duplicate key 500; bcrypt failures no longer 500
+- **CSRF**: explicit `csrf_token` on login, signup, forgot/reset password forms; `scripts/check_csrf_forms.py` in CI
+- **Logs**: `docs/logs/README.md`, `scripts/analyze_railway_logs.py`, `docs/BACKEND_LOG_TRIAGE.md`
+- **Migrations**: `apply_all_pending_migrations.py` adds 0019/0020 + `schema_migrations` tracking
+- **Schema**: split `ensure_schema_compat` per-table steps; province demographic alters tolerate failures
+- **Ops**: `docs/CELERY_BEAT_RUNBOOK.md`; CI progression health strict when DB secret set; integration-smoke + `test_login_post.py`
+- **diagnose_all_routes**: login user/policies SQL probes
+
+**Commits**: (push to master for Railway deploy)
+
+---
+
 ### Session: 2026-05-24
 
 **Task**: Deep fix plan — 500s, economy reliability, security (full implementation).
