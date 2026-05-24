@@ -15,7 +15,7 @@
 
 
     {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
-    <link href="{{ url_for('static', filename='style.css') }}?v=20" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v=21" rel="stylesheet" type="text/css" />
     {% if FEATURE_GAME_PWA %}
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <script>
@@ -74,7 +74,7 @@
     {% block head %} {% endblock %}
 </head>
 
-<body class="{% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}">
+<body class="{% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% block body_class %}{% endblock %}">
 
     <!--
     <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
