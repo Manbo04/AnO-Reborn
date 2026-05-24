@@ -1076,6 +1076,15 @@ def rollback_db_cursor(db):
         pass
 
 
+def try_db_optional(db, callback, default=None):
+    """Run a DB callback; on failure roll back the request txn and return default."""
+    try:
+        return callback()
+    except Exception:
+        rollback_db_cursor(db)
+        return default
+
+
 _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
 _schema_compat_succeeded = False
