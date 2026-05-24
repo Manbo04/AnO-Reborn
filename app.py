@@ -438,6 +438,19 @@ def health():
     return "ok", 200
 
 
+@app.route("/deploy-info")
+def deploy_info():
+    """Public deploy fingerprint (no secrets). Use to verify Railway picked up a commit."""
+    from database import schema_compat_succeeded
+
+    return {
+        "git_commit": os.getenv("RAILWAY_GIT_COMMIT_SHA")
+        or os.getenv("GIT_COMMIT")
+        or "unknown",
+        "schema_compat": "ok" if schema_compat_succeeded() else "failed",
+    }, 200
+
+
 @app.route("/ready")
 def ready():
     """Readiness probe: DB, normalized economy tables, schema compat, revenue task."""

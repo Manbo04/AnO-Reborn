@@ -33,6 +33,13 @@ else
   echo "[start] Add DISCORD_BOT_TOKEN to the web service (or use a dedicated bot service)."
 fi
 
+if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
+  echo "[start] Applying pending SQL migrations (best-effort)..."
+  python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
+else
+  echo "[start] No DATABASE_URL — skip migrations"
+fi
+
 echo "[start] Starting gunicorn on :${PORT}..."
 exec gunicorn \
   --bind "0.0.0.0:${PORT}" \
