@@ -1,6 +1,4 @@
-{% extends "layout.html" %} {% block title %} Verify Your Email {% endblock %}
-{% block body_class %} page-auth{% endblock %}
-{% block body %}
+{% extends "layout.html" %} {% block title %} Verify Your Email {% endblock %} {% block body %}
 <style>
     .templatecontainer {
         background: rgba(255, 255, 255, 0);
@@ -12,7 +10,7 @@
 </style>
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
-<div class="templatediv noboxshadowtopper loginsignupdiv auth-page-card">
+<div class="templatediv noboxshadowtopper loginsignupdiv">
 
     <div class="templatedivtopper noboxshadowtopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">

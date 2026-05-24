@@ -1,17 +1,17 @@
 {% extends "layout.html" %}
 {% block title %}Login{% endblock %}
-{% block body_class %} page-auth{% endblock %}
 {% block body %}
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
-<div class="templatediv noboxshadowtopper loginsignupdiv auth-page-card">
+<div class="templatediv noboxshadowtopper loginsignupdiv">
 
-    <div class="templatedivcontent auth-page-content">
-        <div class="auth-page-intro">
-            <h1 class="auth-page-title"><span class="material-icons-outlined">login</span> Login</h1>
-            <p class="auth-page-subtitle">Sign in to manage your nation</p>
-        </div>
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle">
+            <span class="material-icons-outlined iconlarge">login</span>Login
+        </h1>
+    </div>
 
+    <div class="templatedivcontent">
         {% if verification_message %}
         <div class="verification-success">{{ verification_message }}</div>
         {% endif %}
@@ -20,7 +20,6 @@
             <div class="auth-panel">
                 <form action="/discord" method="GET">
                     <h2 class="templatecontentheadercenter">Discord Login</h2>
-                    <p class="auth-panel-hint">Use your linked Discord account for one-click access.</p>
                     <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton">
                         <span class="material-icons-outlined">login</span>Discord
                     </button>
