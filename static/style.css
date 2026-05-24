@@ -425,7 +425,8 @@ body {
     margin: 0;
     animation: textload 0.5s;
     transition: background-color 0.2s ease;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: auto;
 }
 
 /* Full-width strip under navbar so Safari never samples light hero gaps at the top edge */
@@ -497,6 +498,68 @@ label {
 /* No background change on hover — Safari samples the top edge for toolbar tinting */
 .navbarparent:hover {
     background-color: #1c2029;
+}
+
+/*
+ * Scroll recovery: legacy layout nested .templatecontainer inside fixed
+ * .navbarparent (logged-out pages). Fixed ancestors do not expand document
+ * scrollHeight — players cannot scroll. Until template fix deploys, restore
+ * normal document flow and pin only the nav chrome.
+ */
+.navbarparent:has(.templatecontainer) {
+    position: relative;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border-bottom: none;
+}
+
+.navbarparent:has(.templatecontainer)::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 55px;
+    background: #1c2029;
+    z-index: 999;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid var(--accent);
+}
+
+.navbarparent:has(.templatecontainer) > .navbarparenttitle,
+.navbarparent:has(.templatecontainer) > .navbarparentloginsignupdiv,
+.navbarparent:has(.templatecontainer) > .menubar,
+.navbarparent:has(.templatecontainer) > .navbar-theme-toggle {
+    position: fixed;
+    z-index: 1001;
+    top: 0;
+}
+
+.navbarparent:has(.templatecontainer) > .navbarparentloginsignupdiv {
+    right: 5%;
+    left: auto;
+}
+
+.navbarparent:has(.templatecontainer) > .templatecontainer {
+    margin-top: 55px;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: none;
+    background: var(--background);
+}
+
+html:has(.navbarparent .templatecontainer),
+body:has(.navbarparent .templatecontainer) {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
 }
 
 .navbarparenttitle {

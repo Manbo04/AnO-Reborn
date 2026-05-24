@@ -5,7 +5,7 @@ import re
 def _parent_of_templatecontainer(html: str) -> str | None:
     stack: list[str] = []
     parent = None
-    for m in re.finditer(r"<div\s+([^>]*class=\"([^\"]*)\"[^>]*)>|</motion>", html):
+    for m in re.finditer(r"<div\s+([^>]*class=\"([^\"]*)\"[^>]*)>|</div>", html):
         token = m.group(0)
         if token.startswith("</"):
             if stack:
