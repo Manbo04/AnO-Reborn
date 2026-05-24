@@ -5,6 +5,7 @@ from database import invalidate_view_cache, reuse_or_new_cursor
 import os
 import variables
 from dotenv import load_dotenv
+import logging
 from collections import defaultdict
 from policies import get_user_policies
 from wars.service import target_data
@@ -627,9 +628,12 @@ def country(cId):
             try:
                 db.execute(_MINIMAL_COUNTRY_SQL, (cId, cId))
                 row = db.fetchone()
-            except Exception:
+            except Exception as exc:
                 rollback_db_cursor(db)
-                raise
+                logging.getLogger(__name__).warning(
+                    "country(%s) minimal query failed: %s", cId, exc
+                )
+                row = None
 
         if not row:
             return error(404, "Country doesn't exist")

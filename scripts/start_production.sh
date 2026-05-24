@@ -36,6 +36,8 @@ fi
 if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
   echo "[start] Applying pending SQL migrations (best-effort)..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
+  echo "[start] Next.js compatibility views (best-effort)..."
+  python3 scripts/apply_nextjs_compat_views.py || echo "[start] WARN: compat views script exited non-zero"
 else
   echo "[start] No DATABASE_URL — skip migrations"
 fi
