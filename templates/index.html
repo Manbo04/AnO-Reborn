@@ -6,6 +6,33 @@
     .templatecontainer {
         margin-top: 0;
     }
+
+    .landing-community-panel {
+        width: 85%;
+        margin: 10px auto;
+        padding: 0 8px;
+    }
+
+    .landing-community-list {
+        margin: 12px 0 16px;
+        padding-left: 1.25rem;
+        line-height: 1.55;
+    }
+
+    .landing-community-list li {
+        margin-bottom: 8px;
+    }
+
+    .landing-community-links {
+        margin-top: 20px;
+    }
+
+    @media all and (max-width: 900px) {
+        .landing-community-panel {
+            width: 90%;
+            margin-bottom: 24px;
+        }
+    }
 </style>
 <script>
     window.onscroll = function() {
@@ -164,17 +191,33 @@
                 Head over to our Discord server to chat with our community, and check out our Reddit and Twitter as well! You can find a coalition to join in our Discord, and you can stay up to date on changes through our Twitter.
             </p>
 
-            <div class="templatedivflex2 menuflex">
-                <div class="templatedivflex2left  animate floatUp">
-
-                    <a class="twitter-timeline" data-height="450px" data-width="85%" data-theme="dark" href="https://x.com/Manbo04040404?ref_src=twsrc%5Etfw">Tweets by Manbo04040404</a>
-                    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-
+            <div class="templatedivflex2 menuflex landing-community-row">
+                <div class="templatedivflex2left landing-community-panel animate floatUp">
+                    <h4 class="templatecontentheaderleft">Why join?</h4>
+                    <p class="templatecontentpleft">
+                        Affairs and Order is built around players helping each other grow. Our Discord is the best place to
+                        meet coalition leaders, trade partners, and veterans who remember when “just one more province”
+                        turned into an all-nighter.
+                    </p>
+                    <ul class="templatecontentpleft landing-community-list">
+                        <li>Ask questions and get help when you are stuck on economy or war</li>
+                        <li>Find coalitions recruiting new members or post your own recruitment</li>
+                        <li>Stay ahead of balance changes, events, and downtime notices</li>
+                    </ul>
+                    <p class="templatecontentpleft landing-community-links">
+                        <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer" class="templatelink">Discord</a>
+                        ·
+                        <a href="https://www.reddit.com/r/AffairsandOrderReborn/?feed=home" target="_blank" rel="noopener noreferrer" class="templatelink">Reddit</a>
+                        ·
+                        <a href="https://x.com/Manbo04040404" target="_blank" rel="noopener noreferrer" class="templatelink">X / Twitter</a>
+                    </p>
                 </div>
                 <div class="templatedivflex2left">
-
-                    <iframe src="https://discordapp.com/widget?id=1447067404369920063&theme=dark" title="discord link" class="discordlink  animate floatUp"></iframe>
-
+                    <iframe src="https://discord.com/widget?id=708006319658893385&amp;theme=dark"
+                        title="Affairs and Order Discord server"
+                        class="discordlink animate floatUp"
+                        allowtransparency="true"
+                        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
                 </div>
             </div>
         </div>
