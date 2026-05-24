@@ -492,25 +492,44 @@ def get_influence(country_id, db=None):
             query_cache.set(cache_key, 0)
             return 0
 
-        (
-            soldiers,
-            artillery,
-            tanks,
-            fighters,
-            bombers,
-            apaches,
-            submarines,
-            destroyers,
-            cruisers,
-            icbms,
-            nukes,
-            spies,
-            gold,
-            city_count,
-            province_count,
-            total_land,
-            total_resources,
-        ) = result
+        if isinstance(result, dict):
+            soldiers = result.get("soldiers", 0)
+            artillery = result.get("artillery", 0)
+            tanks = result.get("tanks", 0)
+            fighters = result.get("fighters", 0)
+            bombers = result.get("bombers", 0)
+            apaches = result.get("apaches", 0)
+            submarines = result.get("submarines", 0)
+            destroyers = result.get("destroyers", 0)
+            cruisers = result.get("cruisers", 0)
+            icbms = result.get("icbms", 0)
+            nukes = result.get("nukes", 0)
+            spies = result.get("spies", 0)
+            gold = result.get("gold", 0)
+            city_count = result.get("city_count", 0)
+            province_count = result.get("province_count", 0)
+            total_land = result.get("total_land", 0)
+            total_resources = result.get("total_resources", 0)
+        else:
+            (
+                soldiers,
+                artillery,
+                tanks,
+                fighters,
+                bombers,
+                apaches,
+                submarines,
+                destroyers,
+                cruisers,
+                icbms,
+                nukes,
+                spies,
+                gold,
+                city_count,
+                province_count,
+                total_land,
+                total_resources,
+            ) = result
 
         soldiers = float(soldiers or 0)
         artillery = float(artillery or 0)
