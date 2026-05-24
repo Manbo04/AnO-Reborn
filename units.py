@@ -541,15 +541,20 @@ class Units(Military):
             db = connection.cursor()
 
             # Determine whether this user is attacker or defender in the war
-            db.execute("SELECT attacker_id FROM wars WHERE war_id = %s", (self.war_id,))
+            db.execute(
+                "SELECT attacker_id, defender_id FROM wars WHERE war_id = %s",
+                (self.war_id,),
+            )
             row = db.fetchone()
             if not row:
                 return
-
-            if row[0] == self.user_id:
+            attacker_id, defender_id = row[0], row[1]
+            if self.user_id == attacker_id:
                 supply_col = "attacker_supplies"
-            else:
+            elif self.user_id == defender_id:
                 supply_col = "defender_supplies"
+            else:
+                return
 
             db.execute(
                 f"UPDATE wars SET {supply_col} = "

@@ -12,6 +12,24 @@
     and wage war on adversaries.">
     <meta name="theme-color" content="#1c2029" id="meta-theme-color">
     <meta name="format-detection" content="telephone=no">
+    {% if csrf_token is defined %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (!meta) return;
+        var token = meta.getAttribute('content');
+        document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (form) {
+            if (form.querySelector('input[name="csrf_token"]')) return;
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrf_token';
+            input.value = token;
+            form.appendChild(input);
+        });
+    });
+    </script>
+    {% endif %}
 
 
     {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}

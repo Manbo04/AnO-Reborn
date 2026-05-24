@@ -1078,6 +1078,7 @@ def rollback_db_cursor(db):
 
 _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
+_schema_compat_succeeded = False
 _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
 _table_column_cache: Dict[Tuple[str, str], bool] = {}
@@ -1176,7 +1177,7 @@ def ensure_schema_compat() -> None:
     - Renames legacy ``coalitions`` membership table to ``coalitions_legacy`` when needed.
     - Ensures ``users.discord_id`` exists for account linking and Discord OAuth.
     """
-    global _schema_compat_applied, _coalition_members_table_cache
+    global _schema_compat_applied, _coalition_members_table_cache, _schema_compat_succeeded
     if _schema_compat_applied:
         return
     with _schema_compat_lock:
@@ -1204,6 +1205,7 @@ def ensure_schema_compat() -> None:
                 _ensure_discord_bot_tables(db)
                 _ensure_reset_codes_table(db)
                 _ensure_core_game_columns(db)
+            _schema_compat_succeeded = True
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
             try:
@@ -1215,6 +1217,12 @@ def ensure_schema_compat() -> None:
             _coalition_members_table_cache = None
             _table_column_cache.clear()
             _schema_compat_applied = True
+
+
+def schema_compat_succeeded() -> bool:
+    """True when boot-time schema alignment completed without error."""
+    ensure_schema_compat()
+    return _schema_compat_succeeded
 
 
 def get_coalition_members_table() -> Optional[str]:
