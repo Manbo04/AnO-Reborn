@@ -14,6 +14,7 @@ on:
       - "Procfile"
       - "railway.json"
       - "scripts/start_production.sh"
+      - "scripts/nudge_stale_economy_tasks.py"
       - "scripts/run_beat_if_leader.py"
       - "wsgi.py"
       - "database.py"
