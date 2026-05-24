@@ -7,6 +7,8 @@ from database import (
     get_request_cursor,
     cache_response,
     invalidate_user_cache,
+    provinces_has_demographics,
+    rollback_db_cursor,
 )
 import os
 import math
@@ -32,7 +34,7 @@ def provinces():
 
         db.execute(
             (
-                "SELECT CAST(cityCount AS INTEGER) as cityCount, population, "
+                "SELECT CAST(citycount AS INTEGER) AS citycount, population, "
                 "provinceName, id, land, happiness, "
                 "productivity, energy FROM provinces WHERE userId=(%s) ORDER BY id ASC"
             ),
@@ -56,8 +58,8 @@ def province(pId):
     # + upgrades - all in ONE database connection
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         # Combined query for province + stats (legacy resources/proInfra tables removed)
-        db.execute(
-            """
+        if provinces_has_demographics():
+            province_sql = """
             SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
                    p.pollution, p.happiness, p.productivity, p.consumer_spending,
                    CAST(p.citycount AS INTEGER) as citycount,
@@ -69,10 +71,39 @@ def province(pId):
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
             WHERE p.id = %s
-            """,
-            (pId,),
-        )
-        result = db.fetchone()
+            """
+        else:
+            province_sql = """
+            SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
+                   p.pollution, p.happiness, p.productivity, p.consumer_spending,
+                   CAST(p.citycount AS INTEGER) as citycount,
+                   p.land, p.energy AS electricity,
+                   s.location,
+                   0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly
+            FROM provinces p
+            LEFT JOIN stats s ON p.userId = s.id
+            WHERE p.id = %s
+            """
+        try:
+            db.execute(province_sql, (pId,))
+            result = db.fetchone()
+        except Exception:
+            rollback_db_cursor(db)
+            db.execute(
+                """
+                SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
+                       p.pollution, p.happiness, p.productivity, p.consumer_spending,
+                       CAST(p.citycount AS INTEGER) as citycount,
+                       p.land, p.energy AS electricity,
+                       s.location,
+                       0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly
+                FROM provinces p
+                LEFT JOIN stats s ON p.userId = s.id
+                WHERE p.id = %s
+                """,
+                (pId,),
+            )
+            result = db.fetchone()
 
         if not result:
             return error(404, "Province doesn't exist")
@@ -715,7 +746,7 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
         if slot_type == "city":
             cursor.execute(
                 """
-                SELECT COALESCE(SUM(ub.quantity), 0), p.cityCount
+                SELECT COALESCE(SUM(ub.quantity), 0), CAST(p.citycount AS INTEGER)
                 FROM provinces p
                 LEFT JOIN (
                     user_buildings ub
@@ -911,10 +942,13 @@ def province_sell_buy(way, units, province_id):
             return round(total_cost)
 
         # Fetch cityCount and land in one query (reused later for currentUnits)
-        db.execute("SELECT cityCount, land FROM provinces WHERE id=%s", (province_id,))
+        db.execute(
+            "SELECT CAST(citycount AS INTEGER), land FROM provinces WHERE id=%s",
+            (province_id,),
+        )
         _prov_row = db.fetchone()
-        current_cityCount = _prov_row[0] if _prov_row else 0
-        current_land = _prov_row[1] if _prov_row else 0
+        current_cityCount = int(_prov_row[0] or 0) if _prov_row else 0
+        current_land = int(_prov_row[1] or 0) if _prov_row else 0
 
         if units == "cityCount":
             cityCount_price = sum_cost_linear(
@@ -944,10 +978,14 @@ def province_sell_buy(way, units, province_id):
 
         price = unit_prices[f"{units}_price"]
 
+        policies = []
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
-            policies = db.fetchone()[0]
-        except (TypeError, IndexError):
+            pol_row = db.fetchone()
+            if pol_row and pol_row[0] is not None:
+                policies = pol_row[0]
+        except Exception:
+            rollback_db_cursor(db)
             policies = []
 
         if 2 in policies:

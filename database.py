@@ -1055,6 +1055,10 @@ def get_request_cursor(cursor_factory=None, read_only=False):
 
         g._db_conn_broken = True
         raise
+    except psycopg2.Error:
+        # Failed statement aborts the transaction; roll back so later queries work
+        rollback_db_cursor(cursor)
+        raise
     except Exception:
         raise
     finally:
@@ -1076,6 +1080,7 @@ _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
 _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
+_table_column_cache: Dict[Tuple[str, str], bool] = {}
 _users_password_columns_cache: Optional[set] = None
 
 
@@ -1198,6 +1203,7 @@ def ensure_schema_compat() -> None:
                 )
                 _ensure_discord_bot_tables(db)
                 _ensure_reset_codes_table(db)
+                _ensure_core_game_columns(db)
         except Exception as exc:
             logger.warning("ensure_schema_compat: %s", exc)
             try:
@@ -1207,6 +1213,7 @@ def ensure_schema_compat() -> None:
                 pass
         finally:
             _coalition_members_table_cache = None
+            _table_column_cache.clear()
             _schema_compat_applied = True
 
 
@@ -1312,6 +1319,90 @@ def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
             """,
             (user_id,),
         )
+
+
+def _ensure_core_game_columns(db) -> None:
+    """Idempotent columns referenced by hot paths (avoids UndefinedColumn 500s)."""
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
+        """
+    )
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS join_number INTEGER
+        """
+    )
+    db.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_join_number
+        ON users (join_number)
+        WHERE join_number IS NOT NULL
+        """
+    )
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS flag_data TEXT
+        """
+    )
+    db.execute(
+        """
+        ALTER TABLE colNames
+        ADD COLUMN IF NOT EXISTS flag_data TEXT
+        """
+    )
+    db.execute(
+        """
+        ALTER TABLE colNames
+        ADD COLUMN IF NOT EXISTS tax_rate INTEGER NOT NULL DEFAULT 0
+        """
+    )
+    for col_def in (
+        "pop_children INTEGER NOT NULL DEFAULT 0",
+        "pop_working INTEGER NOT NULL DEFAULT 0",
+        "pop_elderly INTEGER NOT NULL DEFAULT 0",
+        "edu_none INTEGER NOT NULL DEFAULT 0",
+        "edu_highschool INTEGER NOT NULL DEFAULT 0",
+        "edu_college INTEGER NOT NULL DEFAULT 0",
+    ):
+        db.execute(
+            f"ALTER TABLE provinces ADD COLUMN IF NOT EXISTS {col_def}"
+        )
+
+
+def table_has_column(table_name: str, column_name: str) -> bool:
+    """Cached check for optional columns on any public table."""
+    key = (table_name, column_name)
+    if key in _table_column_cache:
+        return _table_column_cache[key]
+    ensure_schema_compat()
+    has_col = False
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = %s
+                  AND column_name = %s
+                LIMIT 1
+                """,
+                (table_name, column_name),
+            )
+            has_col = db.fetchone() is not None
+    except Exception as exc:
+        logger.warning("table_has_column(%s.%s): %s", table_name, column_name, exc)
+    _table_column_cache[key] = has_col
+    return has_col
+
+
+def provinces_has_demographics() -> bool:
+    """True when province age-bracket columns exist (migration 0013)."""
+    return table_has_column("provinces", "pop_children")
 
 
 def _ensure_reset_codes_table(db) -> None:

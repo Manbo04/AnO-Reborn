@@ -48,4 +48,6 @@ jobs:
             tests/test_progression_milestones.py::test_gas_station_price_matches_variables \
             tests/test_revenue_commit_path.py \
             tests/test_distribution_status.py \
+            tests/test_database_auto_rollback.py \
+            tests/test_province_demographics_fallback.py \
             -q --tb=short
