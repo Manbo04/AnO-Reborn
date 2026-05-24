@@ -108,6 +108,22 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-05-24
+
+**Task**: Comprehensive plan and fix for recurring random HTTP 500s.
+
+**What Was Done**:
+- Auto-rollback on `psycopg2.Error` in `get_request_cursor` (aborted transaction cascade fix)
+- `_ensure_core_game_columns` in `ensure_schema_compat` (last_active, join_number, flag_data, tax_rate, demographics)
+- `table_has_column`, `provinces_has_demographics` helpers
+- Province routes: citycount casing, demographics SQL fallback, safer policies read
+- `serve_flag`: flag_data + legacy filename fallback
+- `scripts/diagnose_all_routes.py`; tests + CI
+
+**Next Steps**: logged-in smoke as user 16; run diagnose script on production after deploy.
+
+---
+
 ### Session: 2026-05-23
 
 **Task**: Password reset HTTP 500 (`/reset_password/<code>`)
