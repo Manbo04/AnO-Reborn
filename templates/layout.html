@@ -11,6 +11,7 @@
     <meta name="description" content="Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries,
     and wage war on adversaries.">
     <meta name="theme-color" content="#1c2029" id="meta-theme-color">
+    <meta name="deploy-commit" content="{{ asset_version }}">
     <meta name="format-detection" content="telephone=no">
     {% if csrf_token is defined %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -33,7 +34,7 @@
 
 
     {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
-    <link href="{{ url_for('static', filename='style.css') }}?v=23" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='style.css') }}?v={{ asset_version }}" rel="stylesheet" type="text/css" />
     {% if FEATURE_GAME_PWA %}
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <script>
