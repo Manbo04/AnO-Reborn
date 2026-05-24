@@ -412,7 +412,7 @@ def province_layout_api(pId):
     with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
         db.execute(
             """
-            SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
+            SELECT p.id, p.userId, p.provinceName AS name, p.happiness, p.pollution,
                    p.population, p.energy AS electricity, s.location
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
@@ -423,6 +423,9 @@ def province_layout_api(pId):
         row = db.fetchone()
         if not row:
             return jsonify({"error": "Province not found"}), 404
+        owner_id = row.get("userid") or row.get("userId")
+        if owner_id is None or int(owner_id) != int(cId):
+            return jsonify({"error": "Forbidden"}), 403
 
         province = dict(row)
         province["location"] = province.get("location") or "Grassland"
