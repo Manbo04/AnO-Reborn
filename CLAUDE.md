@@ -200,6 +200,24 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 ---
 
+### Session: 2026-05-24
+
+**Task**: Document and harden Next.js ↔ legacy schema bridge (post live DB repair)
+
+**What Was Done**:
+- `ensure_schema_compat()` skips `ALTER TABLE users` / provinces demographics when those names are **views** (`users_is_compat_view()`)
+- Added `scripts/apply_nextjs_compat_views.py` (introspective `CREATE OR REPLACE VIEW` for User/Nation/Province → users/stats/provinces)
+- Updated `scripts/diagnose_database_schema.py` to exit 0 for **BRIDGED** (Prisma + legacy views)
+- `migrations/0024_nextjs_compat_views.sql` + `docs/DATABASE_SCHEMA_DECISION.md` bridge section
+- Tests: `tests/test_schema_compat_helpers.py` for view detection
+
+**What To Watch**:
+- Production `/deploy-info` `schema_compat` should flip to `ok` after redeploy (was `failed` when ALTER hit views)
+- Re-run `apply_nextjs_compat_views.py` if Prisma column names differ from defaults
+- Full player restore from `postgres-active-data` still needs an explicit migration plan
+
+---
+
 ### Session: 2026-05-22 (continued)
 
 **Task**: Security fixes + merge to master (PR #42)

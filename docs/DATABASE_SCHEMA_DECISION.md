@@ -2,15 +2,17 @@
 
 ## Summary
 
-**This repository (AnO-Reborn / affairsandorder.com) requires the legacy PostgreSQL schema:**
+**This repository (AnO-Reborn / affairsandorder.com) expects the legacy PostgreSQL names** (`users`, `stats`, `provinces`, …). They can be **physical tables** (classic volume) or **compatibility views** over Prisma tables (`User`, `Nation`, `Province`).
 
-| Legacy (correct) | Next.js overhaul (wrong volume) |
-|------------------|-----------------------------------|
-| `users` (integer `id`) | `User` (string ids) |
-| `stats`, `provinces`, `wars` | `Nation`, `Province`, … |
-| `user_economy`, `resource_dictionary` | different economy model |
+| Mode | What you see | Action |
+|------|----------------|--------|
+| **Legacy** | `users` table, no `User` | Normal migrations + `ensure_schema_compat` |
+| **Bridged** | `User` + `Nation` **and** `users` **view** | `scripts/apply_nextjs_compat_views.py` (once); do not `ALTER TABLE users` manually |
+| **Wrong** | Only `User`/`Nation`, no `users` | Run bridge script or attach `postgres-volume` / `postgres-active-data` |
 
-If migrations fail with `relation "users" does not exist`, Postgres is on the **wrong volume** — not a code bug.
+**Critical:** In bridged mode, `users.id` and all `userid` columns must map to **`User.id`** (account UUID), **not** `Nation.id`.
+
+If migrations fail with `relation "users" does not exist`, Postgres is missing the legacy layer — run the bridge script or fix the volume.
 
 ---
 
@@ -28,8 +30,22 @@ export DATABASE_PUBLIC_URL='postgresql://...'   # from Railway Postgres
 python3 scripts/diagnose_database_schema.py
 ```
 
-- **Exit 0** → correct legacy DB → continue below.
-- **Exit 1** → wrong volume → fix Railway volumes before anything else.
+- **Exit 0 (legacy)** → classic tables → continue below.
+- **Exit 0 (bridged)** → Prisma + views → run Discord migrations if needed; redeploy web/bot/celery.
+- **Exit 1** → fix volume or run `python3 scripts/apply_nextjs_compat_views.py`.
+
+### Bridge Next.js → legacy (live Prisma DB)
+
+```bash
+export DATABASE_PUBLIC_URL='postgresql://...'
+python3 scripts/apply_nextjs_compat_views.py --dry-run   # inspect SQL
+python3 scripts/apply_nextjs_compat_views.py             # apply
+python3 scripts/diagnose_database_schema.py                # should print BRIDGED
+```
+
+Redeploy **web**, **bot**, **celery-worker**, **beat** after bridging. `/deploy-info` should show `"schema_compat": "ok"`.
+
+**Player data on old volume:** `postgres-active-data` (formerly snapshot `postgres-2026-05-08`) may hold full legacy tables. Do **not** wipe volumes without explicit approval; plan a dedicated migration script if you need to merge old players into the Prisma DB.
 
 ---
 
