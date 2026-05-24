@@ -61,20 +61,21 @@ def _discord_user_id_from_request() -> Optional[str]:
   return (request.headers.get("X-Discord-User-Id") or "").strip() or None
 
 
-def _resolve_nation_identifier(identifier: str) -> Optional[int]:
+def _resolve_nation_identifier(identifier: str) -> Optional[str]:
   if not identifier or not str(identifier).strip():
     return None
   raw = str(identifier).strip()
   if raw.isdigit():
     row = QueryHelper.fetch_one(
-      "SELECT id FROM users WHERE id = %s", (int(raw),)
+      "SELECT id FROM users WHERE id::text = %s", (raw,)
     )
-    return int(row[0]) if row else None
+    if row:
+        return str(row[0])
   row = QueryHelper.fetch_one(
       "SELECT id FROM users WHERE LOWER(username) = LOWER(%s) LIMIT 1",
       (raw,),
   )
-  return int(row[0]) if row else None
+  return str(row[0]) if row else None
 
 
 _wars_schema_cache: Optional[Dict[str, Optional[str]]] = None

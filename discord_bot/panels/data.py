@@ -10,11 +10,11 @@ from database import QueryHelper, get_coalition_members_table
 def fetch_leaderboard(limit: int = 10) -> List[Dict[str, Any]]:
     rows = QueryHelper.fetch_all(
         """
-        SELECT u.id, u.username, s.gold, s.location
+        SELECT u.id, u.username, s.influence, s.location
         FROM users u
         INNER JOIN stats s ON s.id = u.id
         WHERE COALESCE(u.auth_type, 'normal') = 'normal'
-        ORDER BY s.gold DESC NULLS LAST
+        ORDER BY s.influence DESC NULLS LAST
         LIMIT %s
         """,
         (limit,),
