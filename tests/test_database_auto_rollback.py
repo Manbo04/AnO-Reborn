@@ -24,3 +24,17 @@ def test_get_request_cursor_rolls_back_after_sql_error():
             pass
 
     mock_conn.rollback.assert_called()
+
+
+def test_try_db_optional_rolls_back_on_failure():
+    from database import try_db_optional
+
+    mock_db = MagicMock()
+    mock_db.connection = MagicMock()
+
+    def _boom():
+        raise RuntimeError("sql failed")
+
+    result = try_db_optional(mock_db, _boom, default="fallback")
+    assert result == "fallback"
+    mock_db.connection.rollback.assert_called()
