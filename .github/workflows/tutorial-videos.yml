@@ -40,7 +40,21 @@ jobs:
           pip install playwright psycopg2-binary bcrypt python-dotenv requests
           playwright install chromium
 
+      - name: Skip when tutorial recording secrets are missing
+        id: tutorial
+        env:
+          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+          TUTORIAL_RECORD_TMP_PASSWORD: ${{ secrets.TUTORIAL_RECORD_TMP_PASSWORD }}
+        run: |
+          if [ -z "${DATABASE_PUBLIC_URL:-}" ] || [ -z "${TUTORIAL_RECORD_TMP_PASSWORD:-}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Tutorial secrets not configured — skipping video refresh"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Record slow labeled walkthroughs (silent)
+        if: steps.tutorial.outputs.ready == 'true'
         env:
           DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
           TUTORIAL_RECORD_BASE_URL: ${{ vars.TUTORIAL_RECORD_BASE_URL || 'https://affairsandorder.com' }}
@@ -48,6 +62,7 @@ jobs:
         run: python3 scripts/record_tutorial_walkthroughs.py --no-narration
 
       - name: Upload video artifacts
+        if: steps.tutorial.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tutorial-videos
@@ -55,6 +70,7 @@ jobs:
           retention-days: 14
 
       - name: Create pull request with updated videos
+        if: steps.tutorial.outputs.ready == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore: refresh Nation Academy tutorial walkthrough videos"
