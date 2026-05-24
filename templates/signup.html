@@ -1,4 +1,6 @@
-{% extends "layout.html" %} {% block title %} Sign up {% endblock %} {% block head %}
+{% extends "layout.html" %} {% block title %} Sign up {% endblock %}
+{% block body_class %} page-auth{% endblock %}
+{% block head %}
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %} {% block body%}
 <!-- START------------------------------------------------------------------------->
@@ -29,7 +31,7 @@
     }
 </script>
 <img alt="Aircraft carrier" class="background" id="background" src="{{ url_for('static', filename='images/2.jpg') }}?v=2" />
-<div class="templatediv noboxshadowtopper loginsignupdiv">
+<div class="templatediv noboxshadowtopper loginsignupdiv auth-page-card">
 
     <div class="templatedivtopper noboxshadowtopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
