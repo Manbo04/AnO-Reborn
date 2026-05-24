@@ -110,15 +110,16 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
 
     # Track whether we own the connection (need to commit) or reusing caller's
     owns_connection = cursor is None
+    conn_ctx = None
+    conn = None
 
     if owns_connection:
-        # Open our own connection - caller didn't provide one
-        conn = get_db_connection().__enter__()
+        conn_ctx = get_db_connection()
+        conn = conn_ctx.__enter__()
         db = conn.cursor()
     else:
         # Reuse caller's cursor for better performance
         db = cursor
-        conn = None
 
     if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
         return "No such active resource"
@@ -227,9 +228,9 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
         return True
 
     finally:
-        if owns_connection and conn is not None:
+        if owns_connection and conn_ctx is not None:
             try:
-                conn.close()
+                conn_ctx.__exit__(None, None, None)
             except Exception:
                 pass
 
