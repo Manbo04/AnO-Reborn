@@ -61,6 +61,11 @@ def build_structure(
         # Acquire advisory lock for deadlock safety (always by ascending user_id)
         db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
+        db.execute("SELECT userId FROM provinces WHERE id = %s", (province_id,))
+        owner_row = db.fetchone()
+        if not owner_row or owner_row[0] != user_id:
+            raise ActionLoopError("You do not own this province.")
+
         db.execute(
             """
             SELECT building_id, display_name, base_cost, required_tech_id, is_active
