@@ -1088,6 +1088,7 @@ def try_db_optional(db, callback, default=None):
 _schema_compat_lock = threading.Lock()
 _schema_compat_applied = False
 _schema_compat_succeeded = False
+_schema_compat_failed_steps: list[str] = []
 _coalition_members_table_cache: Optional[str] = None
 _users_column_cache: Dict[str, bool] = {}
 _table_column_cache: Dict[Tuple[str, str], bool] = {}
@@ -1225,18 +1226,26 @@ def _ensure_discord_bot_tables(db) -> None:
 
 def _run_schema_step(label: str, fn) -> bool:
     """Run one schema DDL step in its own connection; never abort later steps."""
+    global _schema_compat_failed_steps
     try:
         with get_db_cursor() as db:
             fn(db)
         return True
     except Exception as exc:
         logger.warning("ensure_schema_compat (%s): %s", label, exc)
+        _schema_compat_failed_steps.append(f"{label}: {exc}")
         try:
             with get_db_cursor() as db:
                 db.connection.rollback()
         except Exception:
             pass
         return False
+
+
+def schema_compat_failed_steps() -> list[str]:
+    """Labels/errors for steps that failed during last ensure_schema_compat (diagnostics)."""
+    ensure_schema_compat()
+    return list(_schema_compat_failed_steps)
 
 
 def ensure_schema_compat() -> None:
@@ -1246,11 +1255,13 @@ def ensure_schema_compat() -> None:
     - Ensures ``users.discord_id`` exists for account linking and Discord OAuth.
     """
     global _schema_compat_applied, _coalition_members_table_cache, _schema_compat_succeeded
+    global _schema_compat_failed_steps
     if _schema_compat_applied:
         return
     with _schema_compat_lock:
         if _schema_compat_applied:
             return
+        _schema_compat_failed_steps = []
         core_ok = True
         core_ok &= _run_schema_step(
             "coalitions_rename",
@@ -1447,6 +1458,8 @@ def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
 
 
 def _ensure_users_join_number_index(db) -> None:
+    if users_is_compat_view():
+        return
     try:
         db.execute(
             """

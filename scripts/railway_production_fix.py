@@ -104,17 +104,7 @@ def _redeploy_chain(token: str, env_id: str, services: list) -> None:
             print(f"  WARN {label}: {exc}")
 
 
-def main() -> None:
-    token = os.getenv("RAILWAY_TOKEN", "").strip()
-    if not token:
-        print("ERROR: export RAILWAY_TOKEN=...")
-        print(POSTGRES_VOLUME_HELP)
-        print("See docs/RAILWAY_FIX_ONCE.md")
-        sys.exit(1)
-
-    project_id = os.getenv("RAILWAY_PROJECT_ID", rds.DEFAULT_PROJECT_ID)
-    base_url = os.getenv("BOT_API_BASE_URL", "https://affairsandorder.com").rstrip("/")
-
+def _resolve_env_id(token: str, project_id: str) -> str:
     envs = rds._project_environments(token, project_id)
     env_id = os.getenv("RAILWAY_ENVIRONMENT_ID", "").strip()
     if not env_id:
@@ -124,20 +114,46 @@ def main() -> None:
                 break
         if not env_id and envs:
             env_id = envs[0]["id"]
+    if not env_id:
+        raise RuntimeError("Could not resolve Railway environment id")
+    return env_id
 
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--redeploy-only",
+        action="store_true",
+        help="Only redeploy web/worker/beat/bot — skip variable changes",
+    )
+    args = parser.parse_args()
+
+    token = os.getenv("RAILWAY_TOKEN", "").strip()
+    if not token:
+        print("ERROR: export RAILWAY_TOKEN=...")
+        print(POSTGRES_VOLUME_HELP)
+        print("See docs/RAILWAY_FIX_ONCE.md")
+        sys.exit(1)
+
+    project_id = os.getenv("RAILWAY_PROJECT_ID", rds.DEFAULT_PROJECT_ID)
+    base_url = os.getenv("BOT_API_BASE_URL", "https://affairsandorder.com").rstrip("/")
+    env_id = _resolve_env_id(token, project_id)
     services = rds._project_services(token, project_id)
     print("Services:", ", ".join(s["name"] for s in services))
-    print(POSTGRES_VOLUME_HELP)
 
-    print("\nConfiguring variables...")
-    _configure_all(token, project_id, env_id, services, base_url)
+    if not args.redeploy_only:
+        print(POSTGRES_VOLUME_HELP)
+        print("\nConfiguring variables...")
+        _configure_all(token, project_id, env_id, services, base_url)
 
-    print("\nRedeploying (Postgres first)...")
+    print("\nRedeploying game stack...")
     _redeploy_chain(token, env_id, services)
 
-    print("\nAfter deploy (~10 min):")
-    print("  curl -s https://affairsandorder.com/api/bot/embed_version")
-    print("  Discord: /bot_version  then  /nation")
+    print("\nAfter deploy (~5 min):")
+    print("  curl -s https://affairsandorder.com/deploy-info")
+    print("  expect schema_compat=ok and git_commit matching master")
 
 
 if __name__ == "__main__":

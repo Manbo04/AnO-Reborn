@@ -5,6 +5,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+export ANO_USE_START_SCRIPT=1
+export ANO_BOOT_MARKER="${RAILWAY_GIT_COMMIT_SHA:-unknown}"
+
 PORT="${PORT:-8080}"
 
 # Dedicated Railway "bot" service should run the bot. Web sidecar is opt-in only.
@@ -38,9 +41,17 @@ if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
   echo "[start] Next.js compatibility views (best-effort)..."
   python3 scripts/apply_nextjs_compat_views.py || echo "[start] WARN: compat views script exited non-zero"
+  python3 -c "
+from database import ensure_schema_compat, schema_compat_succeeded, schema_compat_failed_steps
+ensure_schema_compat()
+ok = schema_compat_succeeded()
+print('[start] schema_compat', 'ok' if ok else 'failed', schema_compat_failed_steps()[:5])
+" || echo "[start] WARN: schema compat check failed"
 else
   echo "[start] No DATABASE_URL — skip migrations"
 fi
+
+export ANO_BOOT_DONE=1
 
 echo "[start] Starting gunicorn on :${PORT}..."
 exec gunicorn \

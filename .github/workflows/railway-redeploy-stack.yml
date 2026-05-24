@@ -1,0 +1,37 @@
+# Redeploy web + celery worker + beat after master push so economy fixes reach players.
+# Requires repository secret: RAILWAY_TOKEN
+
+name: Redeploy game stack
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**.py"
+      - "tasks.py"
+      - "Procfile"
+      - "railway.json"
+      - "scripts/start_production.sh"
+      - "scripts/run_beat_if_leader.py"
+      - "wsgi.py"
+      - "database.py"
+      - ".github/workflows/railway-redeploy-stack.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Redeploy web, worker, and beat on Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "${RAILWAY_TOKEN:-}" ]; then
+            echo "::warning::RAILWAY_TOKEN not set — only GitHub-linked service may deploy"
+            exit 0
+          fi
+          python3 scripts/railway_production_fix.py --redeploy-only
