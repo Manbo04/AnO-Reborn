@@ -78,6 +78,23 @@ def main() -> None:
         print(f"\n=== Route SQL replay (user_id={user_id}) ===")
 
         run_step(
+            "login policies row",
+            cur,
+            "SELECT 1 FROM policies WHERE user_id = %s LIMIT 1",
+            (user_id,),
+        )
+
+        run_step(
+            "login user lookup",
+            cur,
+            """
+            SELECT id, username, email, description, hash, auth_type
+            FROM users WHERE id = %s AND auth_type = 'normal'
+            """,
+            (user_id,),
+        )
+
+        run_step(
             "resources layout",
             cur,
             """

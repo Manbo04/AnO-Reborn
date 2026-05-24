@@ -127,6 +127,27 @@ def main() -> None:
     for path in MIGRATIONS[-5:]:
         print(f"  {path.name}")
 
+    print("\n=== schema_migrations table ===")
+    cur.execute(
+        """
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'schema_migrations'
+        """
+    )
+    if not cur.fetchone():
+        print("  MISSING schema_migrations (run apply_all_pending_migrations.py)")
+        failed = True
+    else:
+        cur.execute(
+            "SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 8"
+        )
+        rows = cur.fetchall()
+        if rows:
+            for (name,) in rows:
+                print(f"  applied {name}")
+        else:
+            print("  (empty — pending migrations may not be tracked yet)")
+
     cur.close()
     conn.close()
     if failed:

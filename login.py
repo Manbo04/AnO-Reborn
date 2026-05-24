@@ -19,6 +19,19 @@ load_dotenv()
 _schema_cache = {}
 
 
+def _ensure_policies_row(db, user_id: int) -> None:
+    """Ensure a policies row exists without failing login on schema edge cases."""
+    try:
+        db.execute("SELECT 1 FROM policies WHERE user_id = %s LIMIT 1", (user_id,))
+        if db.fetchone():
+            return
+        db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+    except Exception as exc:
+        logging.getLogger(__name__).warning(
+            "ensure policies row for user %s: %s", user_id, exc
+        )
+
+
 def _detect_users_schema(db):
     """Detect which columns exist in users table. Cached after first call."""
     if _schema_cache:
@@ -137,8 +150,13 @@ def login():
                     logger.debug(f"Exception getting hashed_pw: {e}")
                     return error(403, "Wrong password or user doesn't exist")
 
-                # checks if user exists and if the password is correct
-                if bcrypt.checkpw(password, hashed_pw):
+                try:
+                    password_ok = bcrypt.checkpw(password, hashed_pw)
+                except (ValueError, TypeError) as exc:
+                    logger.debug("bcrypt.checkpw failed: %s", exc)
+                    password_ok = False
+
+                if password_ok:
                     # Check if email is verified (only if verification is enabled)
                     # Only enforce email verification if email sending is configured
                     if has_verification:
@@ -170,16 +188,7 @@ def login():
                     # Ensure Flask sees the session as modified and writes cookie
                     session.modified = True
 
-                    # TODO: remove later, this is for old users
-                    try:
-                        db.execute(
-                            "SELECT education, soldiers FROM policies WHERE user_id=%s",
-                            (user[0],),
-                        )
-                    except Exception:
-                        db.execute(
-                            "INSERT INTO policies (user_id) VALUES (%s)", (user[0],)
-                        )
+                    _ensure_policies_row(db, user[0])
 
                     # Update last_active timestamp on login
                     try:
@@ -314,13 +323,7 @@ def discord_login():
             return error(404, "No account linked to this Discord. Please sign up.")
         user_id = row[0]
 
-        # TODO: remove later, this is for old users
-        try:
-            db.execute(
-                "SELECT education, soldiers FROM policies WHERE user_id=%s", (user_id,)
-            )
-        except Exception:
-            db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+        _ensure_policies_row(db, user_id)
 
     # Update last_active timestamp on Discord login
     try:
