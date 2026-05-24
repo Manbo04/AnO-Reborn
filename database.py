@@ -1171,13 +1171,32 @@ def _ensure_discord_bot_tables(db) -> None:
         )
         """
     )
-    db.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id_unique
-        ON users (discord_id)
-        WHERE discord_id IS NOT NULL AND discord_id <> ''
-        """
-    )
+    try:
+        db.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id_unique
+            ON users (discord_id)
+            WHERE discord_id IS NOT NULL AND discord_id <> ''
+            """
+        )
+    except Exception as exc:
+        logger.warning("idx_users_discord_id_unique: %s", exc)
+
+
+def _run_schema_step(label: str, fn) -> bool:
+    """Run one schema DDL step in its own connection; never abort later steps."""
+    try:
+        with get_db_cursor() as db:
+            fn(db)
+        return True
+    except Exception as exc:
+        logger.warning("ensure_schema_compat (%s): %s", label, exc)
+        try:
+            with get_db_cursor() as db:
+                db.connection.rollback()
+        except Exception:
+            pass
+        return False
 
 
 def ensure_schema_compat() -> None:
@@ -1192,40 +1211,42 @@ def ensure_schema_compat() -> None:
     with _schema_compat_lock:
         if _schema_compat_applied:
             return
-        try:
-            with get_db_cursor() as db:
-                db.execute(
-                    """
-                    DO $$
-                    BEGIN
-                        IF to_regclass('public.coalitions_legacy') IS NULL
-                           AND to_regclass('public.coalitions') IS NOT NULL THEN
-                            ALTER TABLE public.coalitions RENAME TO coalitions_legacy;
-                        END IF;
-                    END $$;
-                    """
-                )
-                db.execute(
-                    """
-                    ALTER TABLE users
-                    ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
-                    """
-                )
-                _ensure_discord_bot_tables(db)
-                _ensure_reset_codes_table(db)
-                _ensure_core_game_columns(db)
-            _schema_compat_succeeded = True
-        except Exception as exc:
-            logger.warning("ensure_schema_compat: %s", exc)
-            try:
-                with get_db_cursor() as db:
-                    db.connection.rollback()
-            except Exception:
-                pass
-        finally:
-            _coalition_members_table_cache = None
-            _table_column_cache.clear()
-            _schema_compat_applied = True
+        core_ok = True
+        core_ok &= _run_schema_step(
+            "coalitions_rename",
+            lambda db: db.execute(
+                """
+                DO $$
+                BEGIN
+                    IF to_regclass('public.coalitions_legacy') IS NULL
+                       AND to_regclass('public.coalitions') IS NOT NULL THEN
+                        ALTER TABLE public.coalitions RENAME TO coalitions_legacy;
+                    END IF;
+                END $$;
+                """
+            ),
+        )
+        core_ok &= _run_schema_step(
+            "users_discord_id",
+            lambda db: db.execute(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
+                """
+            ),
+        )
+        core_ok &= _run_schema_step(
+            "core_game_columns", lambda db: _ensure_core_game_columns(db)
+        )
+        core_ok &= _run_schema_step(
+            "reset_codes", lambda db: _ensure_reset_codes_table(db)
+        )
+        # Discord bot tables are optional; do not fail readiness if they cannot be created.
+        _run_schema_step("discord_bot_tables", _ensure_discord_bot_tables)
+        _schema_compat_succeeded = core_ok
+        _coalition_members_table_cache = None
+        _table_column_cache.clear()
+        _schema_compat_applied = True
 
 
 def schema_compat_succeeded() -> bool:
@@ -1368,18 +1389,24 @@ def _ensure_core_game_columns(db) -> None:
         ADD COLUMN IF NOT EXISTS flag_data TEXT
         """
     )
-    db.execute(
-        """
-        ALTER TABLE colNames
-        ADD COLUMN IF NOT EXISTS flag_data TEXT
-        """
-    )
-    db.execute(
-        """
-        ALTER TABLE colNames
-        ADD COLUMN IF NOT EXISTS tax_rate INTEGER NOT NULL DEFAULT 0
-        """
-    )
+    for stmt, label in (
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS flag_data TEXT",
+            "colNames.flag_data",
+        ),
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT 0",
+            "colNames.tax_rate",
+        ),
+    ):
+        try:
+            db.execute(stmt)
+        except Exception as exc:
+            logger.warning("%s: %s", label, exc)
+    try:
+        db.execute("UPDATE colNames SET tax_rate = 0 WHERE tax_rate IS NULL")
+    except Exception as exc:
+        logger.warning("colNames.tax_rate backfill: %s", exc)
     for col_def in (
         "pop_children INTEGER NOT NULL DEFAULT 0",
         "pop_working INTEGER NOT NULL DEFAULT 0",

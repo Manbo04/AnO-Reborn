@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ code }} | Affairs and Order</title>
+    <link href="{{ url_for('static', filename='style.css') }}?v=22" rel="stylesheet" type="text/css" />
+</head>
+<body class="page-landing">
+    <div class="templatediv noboxshadowtopper loginsignupdiv errordiv">
+        <div class="templatedivtopper noboxshadowtopper">
+            <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">highlight_off</span>Error</h1>
+        </div>
+        <div class="templatedivcontent">
+            <p class="landingpagecontent center">{{ code }}</p>
+            <p class="landingpagecontent center">{{ message }}</p>
+            {% if error_code %}
+            <p class="landingpagecontent center">Please report this bug and send the following id:</p>
+            <p class="landingpagecontent center">{{ error_code }}</p>
+            {% endif %}
+            <div class="templatedivflex2 divflex2center">
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="#" onclick="history.go(-1);return false;">Back</a>
+                <a class="templatedivbutton landingbutton templatecenteredbutton" href="/">Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -878,12 +878,18 @@ def invalid_server_error(error):
     error_code = generate_error_code()
     logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
-    return (
-        render_template(
+    try:
+        body = render_template(
             "error.html", code=500, message=error_message, error_code=error_code
-        ),
-        500,
-    )
+        )
+    except Exception:
+        body = render_template(
+            "error_standalone.html",
+            code=500,
+            message=error_message,
+            error_code=error_code,
+        )
+    return body, 500
 
 
 # Jinja2 filter to add commas to numbers
@@ -1148,9 +1154,10 @@ def get_resources():
     if cached is not None:
         return cached
 
-    with get_request_cursor(cursor_factory=RealDictCursor) as db:
-        try:
-            # Single query: gold from stats + all resources via LEFT JOIN
+    try:
+        from database import get_request_cursor
+
+        with get_request_cursor(cursor_factory=RealDictCursor) as db:
             db.execute(
                 """
                 SELECT s.gold,
@@ -1181,8 +1188,8 @@ def get_resources():
 
             query_cache.set(cache_key, resources, ttl_seconds=15)
             return resources
-        except Exception:
-            return default_resources
+    except Exception:
+        return default_resources
 
 
 @app.context_processor
