@@ -1235,24 +1235,27 @@ def ensure_schema_compat() -> None:
                 """
             ),
         )
-                db.execute(
-                    """
-                    DO $$
-                    BEGIN
-                        -- Skip if 'users' is a view (compatibility layer)
-                        IF (SELECT relkind FROM pg_class WHERE relname = 'users') = 'v' THEN
-                            RETURN;
-                        END IF;
-                        
-                        IF NOT EXISTS (
-                            SELECT 1 FROM information_schema.columns 
-                            WHERE table_name = 'users' AND column_name = 'discord_id'
-                        ) THEN
-                            ALTER TABLE users ADD COLUMN discord_id VARCHAR(255);
-                        END IF;
-                    END $$;
-                    """
-                )
+        core_ok &= _run_schema_step(
+            "users_discord_id",
+            lambda db: db.execute(
+                """
+                DO $$
+                BEGIN
+                    -- Skip if 'users' is a view (compatibility layer)
+                    IF (SELECT relkind FROM pg_class WHERE relname = 'users') = 'v' THEN
+                        RETURN;
+                    END IF;
+                    
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'users' AND column_name = 'discord_id'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN discord_id VARCHAR(255);
+                    END IF;
+                END $$;
+                """
+            ),
+        )
         core_ok &= _run_schema_step(
             "users_core_columns",
             lambda db: db.execute(
