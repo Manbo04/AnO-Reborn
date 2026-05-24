@@ -14,4 +14,7 @@ def test_ready_endpoint():
     if res.status_code != 200:
         pytest.skip("DB not available for readiness probe")
     assert res.status_code == 200
-    assert res.data == b"ok"
+    if res.is_json:
+        assert res.get_json().get("status") == "ok"
+    else:
+        assert res.data == b"ok"
