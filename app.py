@@ -313,12 +313,13 @@ def add_cache_headers(response):
                 ua[:200],
             )
 
-    # Cache static assets for 1 month (2592000 seconds)
+    # Static assets: allow CDN/browser cache but revalidate so deploys propagate.
+    # Do NOT use immutable — players were stuck on month-old CSS when ?v= wasn't bumped.
     if request.path.startswith("/static/"):
-        response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
-    # Cache images for 1 month
-    elif request.path.endswith((".jpg", ".png", ".gif", ".ico")):
-        response.headers["Cache-Control"] = "public, max-age=2592000"
+        if request.path.endswith((".css", ".js")):
+            response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=604800, must-revalidate"
     # Allow short browser cache for HTML pages so back/forward navigation is instant
     # and repeated visits within a few seconds don't re-fetch
     else:
