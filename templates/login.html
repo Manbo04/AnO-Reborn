@@ -30,6 +30,9 @@
             <div class="auth-panel">
                 <form action="/login/" id="login-form" class="loginsignupform" method="POST">
                     <h2 class="templatecontentheadercenter">Default Login</h2>
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% endif %}
 
                     <input class="loginsignupinput w-full" name="username" placeholder="Country Name" type="text" autocomplete="username" />
                     <input class="loginsignupinput w-full" name="password" placeholder="Password" type="password" autocomplete="current-password" />

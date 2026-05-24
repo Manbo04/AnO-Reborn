@@ -1254,7 +1254,32 @@ def ensure_schema_compat() -> None:
                     """
                 )
         core_ok &= _run_schema_step(
-            "core_game_columns", lambda db: _ensure_core_game_columns(db)
+            "users_core_columns",
+            lambda db: db.execute(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
+                """
+            ),
+        )
+        core_ok &= _run_schema_step(
+            "users_join_number",
+            lambda db: db.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS join_number INTEGER"
+            ),
+        )
+        _run_schema_step("users_join_number_index", _ensure_users_join_number_index)
+        core_ok &= _run_schema_step(
+            "users_flag_data",
+            lambda db: db.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS flag_data TEXT"
+            ),
+        )
+        core_ok &= _run_schema_step(
+            "colnames_columns", _ensure_colnames_optional_columns
+        )
+        core_ok &= _run_schema_step(
+            "provinces_demographics", _ensure_provinces_demographic_columns
         )
         core_ok &= _run_schema_step(
             "reset_codes", lambda db: _ensure_reset_codes_table(db)
@@ -1377,20 +1402,7 @@ def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
         )
 
 
-def _ensure_core_game_columns(db) -> None:
-    """Idempotent columns referenced by hot paths (avoids UndefinedColumn 500s)."""
-    db.execute(
-        """
-        ALTER TABLE users
-        ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
-        """
-    )
-    db.execute(
-        """
-        ALTER TABLE users
-        ADD COLUMN IF NOT EXISTS join_number INTEGER
-        """
-    )
+def _ensure_users_join_number_index(db) -> None:
     try:
         db.execute(
             """
@@ -1401,12 +1413,9 @@ def _ensure_core_game_columns(db) -> None:
         )
     except Exception as exc:
         logger.warning("idx_users_join_number: %s", exc)
-    db.execute(
-        """
-        ALTER TABLE users
-        ADD COLUMN IF NOT EXISTS flag_data TEXT
-        """
-    )
+
+
+def _ensure_colnames_optional_columns(db) -> None:
     for stmt, label in (
         (
             "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS flag_data TEXT",
@@ -1425,6 +1434,9 @@ def _ensure_core_game_columns(db) -> None:
         db.execute("UPDATE colNames SET tax_rate = 0 WHERE tax_rate IS NULL")
     except Exception as exc:
         logger.warning("colNames.tax_rate backfill: %s", exc)
+
+
+def _ensure_provinces_demographic_columns(db) -> None:
     for col_def in (
         "pop_children INTEGER NOT NULL DEFAULT 0",
         "pop_working INTEGER NOT NULL DEFAULT 0",
@@ -1433,9 +1445,37 @@ def _ensure_core_game_columns(db) -> None:
         "edu_highschool INTEGER NOT NULL DEFAULT 0",
         "edu_college INTEGER NOT NULL DEFAULT 0",
     ):
-        db.execute(
-            f"ALTER TABLE provinces ADD COLUMN IF NOT EXISTS {col_def}"
-        )
+        try:
+            db.execute(
+                f"ALTER TABLE provinces ADD COLUMN IF NOT EXISTS {col_def}"
+            )
+        except Exception as exc:
+            logger.warning("provinces.%s: %s", col_def.split()[0], exc)
+
+
+def _ensure_core_game_columns(db) -> None:
+    """Idempotent columns referenced by hot paths (avoids UndefinedColumn 500s)."""
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS last_active TIMESTAMP WITH TIME ZONE DEFAULT NULL
+        """
+    )
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS join_number INTEGER
+        """
+    )
+    _ensure_users_join_number_index(db)
+    db.execute(
+        """
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS flag_data TEXT
+        """
+    )
+    _ensure_colnames_optional_columns(db)
+    _ensure_provinces_demographic_columns(db)
 
 
 def table_has_column(table_name: str, column_name: str) -> bool:

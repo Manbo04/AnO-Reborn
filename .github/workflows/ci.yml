@@ -29,8 +29,19 @@ jobs:
       - name: Check legacy schema references in app code
         run: python3 scripts/check_legacy_schema_refs.py
 
-      - name: Progression health script (static)
-        run: python3 scripts/progression_health_check.py || true
+      - name: Check auth forms include CSRF token
+        run: python3 scripts/check_csrf_forms.py
+
+      - name: Progression health (strict when DB secret present)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}
+          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "SKIP progression_health_check (no DATABASE_URL secret)"
+            exit 0
+          fi
+          python3 scripts/progression_health_check.py
 
       - name: Bundle game UI CSS and verify
         run: |
@@ -59,4 +70,5 @@ jobs:
             tests/test_distribution_status.py \
             tests/test_database_auto_rollback.py \
             tests/test_province_demographics_fallback.py \
+            tests/test_login_post.py \
             -q --tb=short

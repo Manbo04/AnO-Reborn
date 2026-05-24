@@ -58,4 +58,5 @@ jobs:
             tests/test_coalitions_bank_flow.py \
             tests/test_statistics_components.py \
             tests/test_war_peace_authorization.py \
+            tests/test_login_post.py \
             -q --tb=short
