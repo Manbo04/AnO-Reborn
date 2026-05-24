@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Add missing database indexes to improve query performance.
-Run this once to optimize the database for the AnO application.
+DEPRECATED: Prefer scripts/apply_all_pending_migrations.py (migrations 0015-0017).
+
+This script targets legacy tables (proInfra, resources, upgrades) removed in
+Economy 2.0. Running it against a normalized DB may error or create useless indexes.
 """
 
 import psycopg2

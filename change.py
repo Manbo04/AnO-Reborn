@@ -248,9 +248,15 @@ def reset_password(code):
             ensure_schema_compat()
             with get_request_cursor() as db:
                 logger.debug("Received URL code: %s", code)
+                import time as _time
+
+                cutoff = str(int(_time.time()) - 86400)
                 db.execute(
-                    "SELECT user_id FROM reset_codes WHERE url_code=%s",
-                    (code,),
+                    """
+                    SELECT user_id FROM reset_codes
+                    WHERE url_code=%s AND created_at::bigint > %s
+                    """,
+                    (code, cutoff),
                 )
                 user_id = fetchone_first(db)
                 if user_id is None:

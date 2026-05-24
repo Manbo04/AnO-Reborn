@@ -111,7 +111,9 @@ def verify_recaptcha(response):
 
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
-        return True  # Skip verification if no secret key
+        if os.getenv("ENVIRONMENT") == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+            return False
+        return True
 
     # If no response token was supplied, treat this as a failed verification
     # in production, but allow tests to pass if they explicitly skip recaptcha.
@@ -393,25 +395,8 @@ def callback():
         )
 
         if is_state_error:
-            try:
-                incoming_state = request.args.get("state") or request.values.get(
-                    "state"
-                )
-                logger.info(
-                    "OAuth state mismatch — fallback with state: %s",
-                    incoming_state,
-                )
-                discord_state = make_session(state=incoming_state)
-                token = discord_state.fetch_token(
-                    TOKEN_URL,
-                    client_secret=OAUTH2_CLIENT_SECRET,
-                    authorization_response=request.url,
-                )
-            except Exception as e2:
-                logger.error(f"OAuth fallback failed: {type(e2).__name__}: {e2}")
-                raise
-        else:
-            raise
+            logger.warning("OAuth state mismatch — rejecting login (no fallback)")
+        raise
 
 
 def discord_register():

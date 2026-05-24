@@ -39,7 +39,8 @@ def _bot_secret() -> Optional[str]:
     explicit = (os.getenv("BOT_API_SECRET") or "").strip()
     if explicit:
         return explicit
-    # Bootstrap when BOT_API_SECRET is not set yet (same derivation on web + discord-bot).
+    if os.getenv("RAILWAY_ENVIRONMENT_NAME") or os.getenv("ENVIRONMENT") == "PROD":
+        return None
     secret_key = (os.getenv("SECRET_KEY") or "").strip()
     if secret_key:
         return hashlib.sha256(f"ano-bot-api-v1:{secret_key}".encode()).hexdigest()
