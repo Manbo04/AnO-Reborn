@@ -1100,7 +1100,7 @@ def _ensure_discord_bot_tables(db) -> None:
         """
         CREATE TABLE IF NOT EXISTS discord_link_codes (
             code VARCHAR(16) PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id TEXT NOT NULL,
             expires_at TIMESTAMPTZ NOT NULL,
             used_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -1117,7 +1117,7 @@ def _ensure_discord_bot_tables(db) -> None:
         """
         CREATE TABLE IF NOT EXISTS discord_guild_settings (
             guild_id VARCHAR(32) PRIMARY KEY,
-            coalition_id INTEGER REFERENCES colNames(id) ON DELETE SET NULL,
+            coalition_id INTEGER,
             registered_role_id VARCHAR(32),
             bank_alert_channel_id VARCHAR(32),
             war_alert_channel_id VARCHAR(32),
@@ -1145,6 +1145,15 @@ def _ensure_discord_bot_tables(db) -> None:
         "panels_refresh_minutes INTEGER NOT NULL DEFAULT 15",
     ):
         col_name = col_def.split()[0]
+        # Skip ALTER if it's a view (compatibility layer)
+        db.execute(
+            "SELECT relkind FROM pg_class WHERE relname = 'discord_guild_settings'"
+        )
+        row = db.fetchone()
+        if row and row[0] == 'v':
+            logger.info("Skipping ALTER on view %s", "discord_guild_settings")
+            continue
+
         db.execute(
             f"ALTER TABLE discord_guild_settings "
             f"ADD COLUMN IF NOT EXISTS {col_def}"
@@ -1226,15 +1235,24 @@ def ensure_schema_compat() -> None:
                 """
             ),
         )
-        core_ok &= _run_schema_step(
-            "users_discord_id",
-            lambda db: db.execute(
-                """
-                ALTER TABLE users
-                ADD COLUMN IF NOT EXISTS discord_id VARCHAR(255)
-                """
-            ),
-        )
+                db.execute(
+                    """
+                    DO $$
+                    BEGIN
+                        -- Skip if 'users' is a view (compatibility layer)
+                        IF (SELECT relkind FROM pg_class WHERE relname = 'users') = 'v' THEN
+                            RETURN;
+                        END IF;
+                        
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'users' AND column_name = 'discord_id'
+                        ) THEN
+                            ALTER TABLE users ADD COLUMN discord_id VARCHAR(255);
+                        END IF;
+                    END $$;
+                    """
+                )
         core_ok &= _run_schema_step(
             "core_game_columns", lambda db: _ensure_core_game_columns(db)
         )

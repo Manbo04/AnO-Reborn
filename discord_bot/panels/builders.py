@@ -52,8 +52,8 @@ def build_readme_embed() -> discord.Embed:
 def build_leaderboard_embed(rows: Optional[List[Dict[str, Any]]] = None) -> discord.Embed:
     rows = rows if rows is not None else data.fetch_leaderboard(10)
     embed = discord.Embed(
-        title="🏆 Influence Board — Richest Nations",
-        description="Ranked by **gold** in treasury (updates on panel refresh).",
+        title="🏆 Influence Board — Top Nations",
+        description="Ranked by **influence** (updates on panel refresh).",
         color=ANO_GOLD,
     )
     if not rows:
@@ -64,7 +64,7 @@ def build_leaderboard_embed(rows: Optional[List[Dict[str, Any]]] = None) -> disc
             loc = row.get("location") or "?"
             lines.append(
                 f"**{i}.** [{row['username']}]({GAME_BASE_URL}/country/id={row['id']}) "
-                f"— **{int(row.get('gold') or 0):,}** gold · {loc}"
+                f"— **{int(row.get('influence') or 0):,}** influence · {loc}"
             )
         embed.add_field(name="Top 10", value="\n".join(lines)[:1020], inline=False)
     embed.set_footer(text=_footer())
