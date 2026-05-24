@@ -23,6 +23,15 @@ jobs:
       - name: Check error() argument order in routes
         run: python scripts/check_error_call_order.py
 
+      - name: Check template JSON.parse safety
+        run: python3 scripts/check_template_json_blocks.py
+
+      - name: Check legacy schema references in app code
+        run: python3 scripts/check_legacy_schema_refs.py
+
+      - name: Progression health script (static)
+        run: python3 scripts/progression_health_check.py || true
+
       - name: Bundle game UI CSS and verify
         run: |
           python3 scripts/bundle_game_css.py
@@ -48,4 +57,6 @@ jobs:
             tests/test_progression_milestones.py::test_gas_station_price_matches_variables \
             tests/test_revenue_commit_path.py \
             tests/test_distribution_status.py \
+            tests/test_database_auto_rollback.py \
+            tests/test_province_demographics_fallback.py \
             -q --tb=short

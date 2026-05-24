@@ -1,0 +1,46 @@
+name: Integration smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "**.py"
+      - "templates/**"
+      - ".github/workflows/integration-smoke.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}
+      DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}
+      PG_DATABASE: ano
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Schema diagnose
+        run: python3 scripts/diagnose_schema.py
+
+      - name: Route SQL diagnose (test user 16)
+        run: python3 scripts/diagnose_all_routes.py 16
+
+      - name: DB integration tests
+        run: |
+          python -m pytest \
+            tests/test_country_page_route.py \
+            tests/test_account_page.py \
+            tests/test_countries_page.py \
+            tests/test_coalitions_bank_flow.py \
+            tests/test_statistics_components.py \
+            tests/test_war_peace_authorization.py \
+            -q --tb=short

@@ -172,14 +172,27 @@ def is_task_stale(task_name: str, stale_seconds: int) -> bool:
 
 
 # Handles exception for an error
-def handle_exception(e):
+def handle_exception(e, task_name=None):
     filename = __file__
-    line = e.__traceback__.tb_lineno
+    line = e.__traceback__.tb_lineno if e.__traceback__ else "?"
     print("\n-----------------START OF EXCEPTION-------------------")
     print(f"Filename: {filename}")
     print(f"Error: {e}")
     print(f"Line: {line}")
     print("-----------------END OF EXCEPTION---------------------\n")
+    try:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(e)
+    except Exception:
+        pass
+    if task_name:
+        try:
+            from helpers import record_task_metric
+
+            record_task_metric(f"{task_name}_error", 1.0)
+        except Exception:
+            pass
 
 
 def log_verbose(message: str):
@@ -885,6 +898,7 @@ def tax_income():
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
 
+    conn = None
     try:
         with get_db_connection() as conn:
             if not try_pg_advisory_lock(conn, 9001, "tax_income"):
@@ -922,16 +936,6 @@ def tax_income():
                     pass
                 return
 
-            db.execute(
-                ("UPDATE task_runs SET last_run = now() WHERE task_name = %s"),
-                ("tax_income",),
-            )
-            # Commit last_run immediately so the timestamp persists even if
-            # later processing crashes (prevents "stuck" last_run).
-            try:
-                conn.commit()
-            except Exception:
-                pass
             start = time.perf_counter()
             dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -1323,18 +1327,31 @@ def tax_income():
                 except Exception:
                     pass
 
+            committed = False
             try:
                 try:
                     conn.commit()
+                    committed = True
                 except AttributeError:
-                    # Fake connection used in tests may not implement commit
+                    committed = True
                     pass
             except Exception as e:
                 try:
                     conn.rollback()
                 except Exception:
                     pass
-                handle_exception(e)
+                handle_exception(e, "tax_income")
+                committed = False
+
+            if committed:
+                try:
+                    db.execute(
+                        "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                        ("tax_income",),
+                    )
+                    conn.commit()
+                except Exception as e:
+                    handle_exception(e, "tax_income")
 
             # Best-effort: invalidate user cache for all processed users so any
             # caller reading resources/revenue doesn't hit stale values in cache.
@@ -1509,17 +1526,6 @@ def population_growth():  # Function for growing population
                 pass
             return
 
-        db.execute(
-            "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
-            ("population_growth",),
-        )
-        # Commit last_run immediately so the timestamp persists even if
-        # later processing crashes (prevents "stuck" last_run).
-        try:
-            conn.commit()
-        except Exception:
-            pass
-
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
 
         CHUNK_SIZE = 200
@@ -1527,7 +1533,7 @@ def population_growth():  # Function for growing population
         # Preload province IDs only (lightweight) to chunk the work
         dbdict.execute(
             """
-             SELECT p.id, p.userId, p.population, p.cityCount, p.land,
+             SELECT p.id, p.userId, p.population, p.citycount, p.land,
                  p.happiness, p.pollution, p.productivity,
                  COALESCE(p.pop_children, 0) AS pop_children,
                  COALESCE(p.pop_working, 0) AS pop_working,
@@ -1780,6 +1786,15 @@ def population_growth():  # Function for growing population
             f"across {len(all_user_ids)} users, "
             f"consumed rations from {total_rations_deducted} users"
         )
+
+        try:
+            db.execute(
+                "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                ("population_growth",),
+            )
+            conn.commit()
+        except Exception as e:
+            handle_exception(e, "population_growth")
 
         try:
             release_pg_advisory_lock(conn, 9003)
@@ -3089,6 +3104,7 @@ def generate_province_revenue():  # Runs each hour
                         provinces_data[province_id]["happiness"] = new_hap
 
         # ============ BATCH WRITE ALL ACCUMULATED CHANGES ============
+        revenue_write_failed = False
         # PHASE 3: Apply pension crisis gold penalties
         pension_penalties = {}  # user_id -> penalty_amount
         if variables.FEATURE_PHASE3_WORKFORCE:
@@ -3123,7 +3139,8 @@ def generate_province_revenue():  # Runs each hour
                         )
         except Exception as e:
             conn.rollback()
-            handle_exception(e)
+            revenue_write_failed = True
+            handle_exception(e, "generate_province_revenue")
 
         # Write all province changes in batch
         # (happiness, productivity, pollution, consumer_spending, energy, rations)
@@ -3215,82 +3232,84 @@ def generate_province_revenue():  # Runs each hour
                     log_verbose(f"Batch updated {len(province_updates)} provinces")
         except Exception as e:
             conn.rollback()
-            handle_exception(e)
+            revenue_write_failed = True
+            handle_exception(e, "generate_province_revenue")
 
         # Resource deltas before education: education failures used to call
         # conn.rollback() and wipe uncommitted province/gold/resource work.
-        try:
-            if resource_deltas:
-                # Flatten resource_deltas into (user_id, resource_name, delta) tuples
-                resource_updates = []
-                for user_id, deltas in resource_deltas.items():
-                    if not deltas:
-                        continue
-                    for resource_name, delta in deltas.items():
-                        if delta != 0:
-                            resource_updates.append((user_id, resource_name, delta))
+        if revenue_write_failed:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        else:
+            try:
+                if resource_deltas:
+                    resource_updates = []
+                    for user_id, deltas in resource_deltas.items():
+                        if not deltas:
+                            continue
+                        for resource_name, delta in deltas.items():
+                            if delta != 0:
+                                resource_updates.append(
+                                    (user_id, resource_name, delta)
+                                )
 
-                if resource_updates:
-                    # Get all resource_ids
-                    resource_names = list(set(r[1] for r in resource_updates))
-                    dbdict.execute(
-                        "SELECT name, resource_id FROM resource_dictionary "
-                        "WHERE name = ANY(%s)",
-                        (resource_names,),
-                    )
-                    resource_id_map = {
-                        row["name"]: row["resource_id"] for row in dbdict.fetchall()
-                    }
-
-                    # Build final batch: (user_id, resource_id, insert_qty, raw_delta)
-                    # We pass the delta TWICE: once clamped for INSERT (new rows
-                    # start at >= 0) and once raw for the UPDATE (so negative
-                    # deltas actually subtract from the existing quantity).
-                    batch_values = [
-                        (uid, resource_id_map[rname], max(0, delta), delta)
-                        for uid, rname, delta in resource_updates
-                        if rname in resource_id_map
-                    ]
-
-                    if batch_values:
-                        # Upsert into user_economy (insert if missing, else += delta)
-                        execute_batch(
-                            db,
-                            """
-                            INSERT INTO user_economy
-                                (user_id, resource_id, quantity, updated_at)
-                            VALUES (%s, %s, %s, now())
-                            ON CONFLICT (user_id, resource_id)
-                            DO UPDATE SET
-                                quantity = GREATEST(
-                                    0, user_economy.quantity + %s
-                                ),
-                                updated_at = now()
-                            """,
-                            batch_values,
-                            page_size=200,
+                    if resource_updates:
+                        resource_names = list(set(r[1] for r in resource_updates))
+                        dbdict.execute(
+                            "SELECT name, resource_id FROM resource_dictionary "
+                            "WHERE name = ANY(%s)",
+                            (resource_names,),
                         )
-                        log_verbose(
-                            f"Upserted resources for {len(batch_values)} "
-                            "user+resource pairs"
-                        )
+                        resource_id_map = {
+                            row["name"]: row["resource_id"]
+                            for row in dbdict.fetchall()
+                        }
 
-                        # Invalidate resource cache for affected users
-                        # so UI reflects updated values immediately (best-effort)
-                        try:
-                            from database import invalidate_user_cache
+                        batch_values = [
+                            (uid, resource_id_map[rname], max(0, delta), delta)
+                            for uid, rname, delta in resource_updates
+                            if rname in resource_id_map
+                        ]
 
-                            unique_users = set(bv[0] for bv in batch_values)
-                            for user_id in unique_users:
-                                try:
-                                    invalidate_user_cache(user_id)
-                                except Exception:
-                                    pass
-                        except Exception:
-                            pass
-        except Exception as e:
-            conn.rollback()
-            handle_exception(e)
+                        if batch_values:
+                            execute_batch(
+                                db,
+                                """
+                                INSERT INTO user_economy
+                                    (user_id, resource_id, quantity, updated_at)
+                                VALUES (%s, %s, %s, now())
+                                ON CONFLICT (user_id, resource_id)
+                                DO UPDATE SET
+                                    quantity = GREATEST(
+                                        0, user_economy.quantity + %s
+                                    ),
+                                    updated_at = now()
+                                """,
+                                batch_values,
+                                page_size=200,
+                            )
+                            log_verbose(
+                                f"Upserted resources for {len(batch_values)} "
+                                "user+resource pairs"
+                            )
+
+                            try:
+                                from database import invalidate_user_cache
+
+                                unique_users = set(bv[0] for bv in batch_values)
+                                for user_id in unique_users:
+                                    try:
+                                        invalidate_user_cache(user_id)
+                                    except Exception:
+                                        pass
+                            except Exception:
+                                pass
+            except Exception as e:
+                conn.rollback()
+                revenue_write_failed = True
+                handle_exception(e, "generate_province_revenue")
 
         # Education deltas (savepoint so failure does not roll back resources)
         try:
@@ -3333,20 +3352,25 @@ def generate_province_revenue():  # Runs each hour
 
         # Final commit (includes resource + province writes; last_run below)
         committed = False
-        try:
+        if revenue_write_failed:
             try:
-                conn.commit()
-                committed = True
-            except AttributeError:
-                # Fake connection used in tests may not implement commit
-                committed = True
+                conn.rollback()
+            except Exception:
                 pass
+        try:
+            if not revenue_write_failed:
+                try:
+                    conn.commit()
+                    committed = True
+                except AttributeError:
+                    committed = True
+                    pass
         except Exception as commit_err:
             try:
                 conn.rollback()
             except Exception:
                 pass
-            handle_exception(commit_err)
+            handle_exception(commit_err, "generate_province_revenue")
             committed = False
 
         if committed:
@@ -3604,7 +3628,7 @@ def task_population_growth():
 @celery.task()
 @leader_only(ttl_seconds=300)
 def task_tax_income():
-    tax_income()
+    _run_with_deadlock_retries(tax_income, "tax_income")
 
 
 @celery.task()
@@ -3933,16 +3957,9 @@ def execute_due_trade_agreements():
     start_time = time.perf_counter()
 
     with get_db_connection() as conn:
-        db = conn.cursor()
-
-        # Advisory lock to prevent concurrent execution (lock ID 9004)
-        db.execute("SELECT pg_try_advisory_lock(9004)")
-        got_lock = db.fetchone()[0]
-        if not got_lock:
-            print(
-                "execute_trade_agreements: another run is already in progress, skipping"
-            )
+        if not try_pg_advisory_lock(conn, 9004, "execute_trade_agreements"):
             return
+        db = conn.cursor()
 
         try:
             # Check last run time to prevent duplicate runs
@@ -4024,9 +4041,10 @@ def execute_due_trade_agreements():
         except Exception as e:
             print(f"execute_trade_agreements: error - {e}")
             traceback.print_exc()
-        finally:
-            db.execute("SELECT pg_advisory_unlock(9004)")
-            conn.commit()
+            try:
+                conn.rollback()
+            except Exception:
+                pass
 
 
 def _create_game_tick_log(db):

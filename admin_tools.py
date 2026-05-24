@@ -1,4 +1,5 @@
 import ast
+import os
 
 from flask import jsonify, render_template, request, session, redirect, flash
 
@@ -7,7 +8,14 @@ from helpers import error, login_required
 from variables import RESOURCES
 
 
-SUPER_ADMIN_USER_IDS = {1, 16, 1215, 69696969}
+def _load_super_admin_ids():
+    raw = (os.getenv("SUPER_ADMIN_USER_IDS") or "").strip()
+    if raw:
+        return {int(x.strip()) for x in raw.split(",") if x.strip().isdigit()}
+    return {1, 16, 1215, 69696969}
+
+
+SUPER_ADMIN_USER_IDS = _load_super_admin_ids()
 
 
 def _admin_only_guard():
