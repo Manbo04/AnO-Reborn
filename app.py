@@ -1576,7 +1576,13 @@ def mechanics_war():
 
 @app.route("/forgot_password", methods=["GET"])
 def forget_password():
-    return render_template("forgot_password.html")
+    try:
+        from email_utils import is_email_configured
+
+        email_enabled = is_email_configured()
+    except Exception:
+        email_enabled = False
+    return render_template("forgot_password.html", email_enabled=email_enabled)
 
 
 """
