@@ -1,7 +1,7 @@
 # FULLY MIGRATED
 # flake8: max-line-length=200
 
-from flask import request, render_template, session, redirect
+from flask import request, render_template, session, redirect, flash
 import datetime
 from helpers import error
 import logging
@@ -363,7 +363,12 @@ def callback():
                     session.pop('oauth2_intent', None)
                     return redirect("/discord_reset_password_page")
                 else:
-                    return error(400, "No account linked to this Discord ID was found.")
+                    flash(
+                        "No account linked to this Discord ID was found. "
+                        "Use your backup recovery key or contact support to relink Discord."
+                    )
+                    session.pop('oauth2_intent', None)
+                    return redirect("/forgot_password")
 
             from database import users_table_has_column
 
