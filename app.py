@@ -162,11 +162,12 @@ def before_request():
     user_id = session.get("user_id")
 
     # Enforce admin ban / kick controls with session-level caching.
-    # Only query the DB every 60 seconds per user to avoid a round-trip
-    # on literally every request.
+    # Keep this interval configurable so busy deployments can reduce
+    # per-request DB pressure without code changes.
+    admin_ctrl_refresh_seconds = int(os.getenv("ADMIN_CTRL_REFRESH_SECONDS", "300"))
     if user_id:
         _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
-        _ctrl_stale = (time() - _ctrl_cache_ts) > 60  # refresh every 60s
+        _ctrl_stale = (time() - _ctrl_cache_ts) > admin_ctrl_refresh_seconds
         if _ctrl_stale:
             try:
                 with get_request_cursor() as _db:
