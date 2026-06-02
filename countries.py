@@ -992,7 +992,7 @@ def countries():
     )
 
     with get_request_cursor(read_only=True) as db:
-        filter_sql = f"""
+        base_cte_sql = f"""
             WITH country_rows AS (
                 SELECT
                     u.id,
@@ -1146,11 +1146,6 @@ def countries():
                 WHERE 1=1
                 {search_filter}
             )
-            SELECT *
-            FROM country_rows
-            WHERE provinces_count >= %s
-              AND (%s IS NULL OR influence >= %s)
-              AND (%s IS NULL OR influence <= %s)
         """
 
         filter_params = list(params)
@@ -1163,7 +1158,6 @@ def countries():
                 upperinf,
             ]
         )
-
         def _run_count_and_page(active_filter_sql):
             db.execute(
                 f"SELECT COUNT(*) FROM ({active_filter_sql}) AS filtered",

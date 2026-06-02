@@ -110,23 +110,12 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
         taker_id = int(taker_id)
     amount = int(amount)
 
-    # Track whether we own the connection (need to commit) or reusing caller's
+    # Track whether we own the transaction/connection.
     owns_connection = cursor is None
-    conn_ctx = None
-    conn = None
+    def _transfer(db):
+        if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
+            return "No such active resource"
 
-    if owns_connection:
-        conn_ctx = get_db_connection()
-        conn = conn_ctx.__enter__()
-        db = conn.cursor()
-    else:
-        # Reuse caller's cursor for better performance
-        db = cursor
-
-    if resource not in ["gold", "money"] and not _is_active_resource(db, resource):
-        return "No such active resource"
-
-    try:
         if resource in ["gold", "money"]:
             if giver_id != "bank":
                 # Atomically decrement gold only when sufficient balance exists
@@ -210,31 +199,27 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
                 )
                 db.fetchone()
 
-        # Only commit if we own the connection
-        if owns_connection:
-            conn.commit()
+        return True
 
-        # Invalidate caches affected by this resource transfer so the UI shows
-        # fresh data immediately (resources/influence caches are per-user).
-        # Only do this if we own the connection (caller will handle otherwise)
-        if owns_connection:
+    if owns_connection:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            result = _transfer(db)
+
+        # Invalidate caches after successful commit when we own the transaction.
+        if result is True:
             try:
                 if giver_id != "bank":
                     invalidate_user_cache(giver_id)
                 if taker_id != "bank":
                     invalidate_user_cache(taker_id)
             except Exception:
-                # Cache invalidation failures should not affect the transaction itself
+                # Cache invalidation failures should not affect the transaction itself.
                 pass
+        return result
 
-        return True
-
-    finally:
-        if owns_connection and conn_ctx is not None:
-            try:
-                conn_ctx.__exit__(None, None, None)
-            except Exception:
-                pass
+    # Reuse caller's cursor for better performance.
+    return _transfer(cursor)
 
 
 @login_required
