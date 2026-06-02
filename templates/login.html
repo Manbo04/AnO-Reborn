@@ -1,6 +1,9 @@
 {% extends "layout.html" %}
 {% block title %}Login{% endblock %}
 {% block body %}
+{% if recaptcha_site_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
 <img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
 
 <div class="templatediv noboxshadowtopper loginsignupdiv">
@@ -14,6 +17,9 @@
     <div class="templatedivcontent">
         {% if verification_message %}
         <div class="verification-success">{{ verification_message }}</div>
+        {% endif %}
+        {% if discord_message %}
+        <div class="templatecontentheadercenter login-error-msg">{{ discord_message }}</div>
         {% endif %}
 
         <div class="auth-columns">
@@ -41,15 +47,7 @@
                         </label>
                     </div>
 
-                    <script>
-                        function onSubmit(token) {
-                            document.getElementById("login-form").submit();
-                        }
-                    </script>
-
-                    <button type="button" class="g-recaptcha templatedivbutton templatecenteredbutton w-full"
-                        data-sitekey="6LdIi_4ZAAAAAL479XXAbPpVAK1rUHmw7iTMdtIC"
-                        data-callback="onSubmit" data-action="submit">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
                         <span class="material-icons-outlined">login</span>Login
                     </button>
 

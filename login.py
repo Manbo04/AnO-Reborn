@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect, current_app
+from flask import request, render_template, session, redirect, current_app, flash
 from helpers import error
 
 # Game.ping() # temporarily removed this line because it might make celery not work
@@ -43,6 +43,7 @@ def login():
     if request.method == "POST":
         logger = logging.getLogger(__name__)
         logger.debug("POST /login/ called")
+        recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
 
         # Wrap POST handler to catch unexpected exceptions and return friendly error
         try:
@@ -63,10 +64,8 @@ def login():
 
             if not username or not password:  # checks if inputs are blank
                 logger.debug("Missing username or password")
-                from flask import flash
-
                 flash("Please provide both username and password.")
-                return render_template("login.html"), 400
+                return render_template("login.html", recaptcha_site_key=recaptcha_site_key), 400
 
             password = password.encode("utf-8")
 
@@ -119,10 +118,10 @@ def login():
 
                 if not user:
                     logger.debug("User not found")
-                    from flask import flash
-
                     flash("Wrong username or password")
-                    return render_template("login.html"), 403
+                    return render_template(
+                        "login.html", recaptcha_site_key=recaptcha_site_key
+                    ), 403
 
                 try:
                     hashed_pw = user[4].encode("utf-8")
@@ -191,10 +190,10 @@ def login():
                     return response  # redirects user to homepage
                 else:
                     logger.debug("Password does not match.")
-                    from flask import flash
-
                     flash("Wrong username or password")
-                    return render_template("login.html"), 400
+                    return render_template(
+                        "login.html", recaptcha_site_key=recaptcha_site_key
+                    ), 400
 
         except Exception as e:
             # Try to send exception to Sentry and use its event id for tracking
@@ -212,9 +211,13 @@ def login():
                     e,
                 )
 
-            return error(
+            flash(
+                "Login failed due to a server error. "
+                f"Please report this id: {event_id}"
+            )
+            return (
+                render_template("login.html", recaptcha_site_key=recaptcha_site_key),
                 500,
-                f"An internal server error occurred. Please report this id: {event_id}",
             )
 
     else:
@@ -225,8 +228,31 @@ def login():
             verification_message = "Email verified successfully! You can now login."
         elif message == "already_verified":
             verification_message = "Your email is already verified. Please login."
+        discord_error = request.args.get("discord_error", "")
+        discord_message = None
+        if discord_error == "session":
+            discord_message = (
+                "Discord login session expired or failed. Please click Discord login again."
+            )
+        elif discord_error == "unlinked":
+            discord_message = (
+                "No account is linked to that Discord user. "
+                "Use Get Started to create or link your nation account."
+            )
+        elif discord_error == "api":
+            discord_message = "Discord API temporarily unavailable. Please try again."
+        elif discord_error == "unexpected":
+            discord_message = (
+                "Discord login failed unexpectedly. Please try again or use normal login."
+            )
+        recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         # renders login.html when "/login" is acessed via get
-        return render_template("login.html", verification_message=verification_message)
+        return render_template(
+            "login.html",
+            verification_message=verification_message,
+            discord_message=discord_message,
+            recaptcha_site_key=recaptcha_site_key,
+        )
 
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
@@ -277,43 +303,55 @@ def discord_login():
     current_app.config["SESSION_PERMANENT"] = True
     current_app.permanent_session_lifetime = datetime.timedelta(days=365)
 
-    with get_request_cursor() as db:
-        discord = make_session(token=session.get("oauth2_token"))
-        # Fetch Discord user, guard against missing/invalid token
-        me_resp = discord.get(API_BASE_URL + "/users/@me")
-        if me_resp.status_code != 200:
-            return error(401, "Discord authentication failed. Please try again.")
-        payload = me_resp.json()
-        discord_user_id = payload.get("id")
-        if not discord_user_id:
-            return error(401, "Discord authentication failed. Missing user id.")
+    try:
+        with get_request_cursor() as db:
+            oauth_token = session.get("oauth2_token")
+            if not oauth_token:
+                flash("Discord login session expired. Please click Discord login again.")
+                return redirect("/login?discord_error=session")
+            discord = make_session(token=oauth_token)
+            # Fetch Discord user, guard against missing/invalid token
+            me_resp = discord.get(API_BASE_URL + "/users/@me")
+            if me_resp.status_code != 200:
+                flash("Discord authentication failed. Please try again.")
+                return redirect("/login?discord_error=session")
+            payload = me_resp.json()
+            discord_user_id = payload.get("id")
+            if not discord_user_id:
+                flash("Discord authentication failed. Missing user id.")
+                return redirect("/login?discord_error=session")
 
-        discord_auth = str(discord_user_id)
+            discord_auth = str(discord_user_id)
 
-        try:
-            db.execute(
-                "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
-                (discord_auth, discord_auth),
-            )
-        except Exception:
-            db.connection.rollback()
-            db.execute(
-                "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
-                (discord_auth,),
-            )
-            
-        row = db.fetchone()
-        if not row:
-            return error(404, "No account linked to this Discord. Please sign up.")
-        user_id = row[0]
+            try:
+                db.execute(
+                    "SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1",
+                    (discord_auth, discord_auth),
+                )
+            except Exception:
+                db.connection.rollback()
+                db.execute(
+                    "SELECT id FROM users WHERE hash=(%s) AND auth_type='discord' LIMIT 1",
+                    (discord_auth,),
+                )
 
-        # TODO: remove later, this is for old users
-        try:
-            db.execute(
-                "SELECT education, soldiers FROM policies WHERE user_id=%s", (user_id,)
-            )
-        except Exception:
-            db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+            row = db.fetchone()
+            if not row:
+                flash("No account linked to this Discord. Please sign up or link your account.")
+                return redirect("/login?discord_error=unlinked")
+            user_id = row[0]
+
+            # TODO: remove later, this is for old users
+            try:
+                db.execute(
+                    "SELECT education, soldiers FROM policies WHERE user_id=%s",
+                    (user_id,),
+                )
+            except Exception:
+                db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
+    except Exception:
+        flash("Discord login failed unexpectedly. Please try again.")
+        return redirect("/login?discord_error=unexpected")
 
     # Update last_active timestamp on Discord login
     try:
