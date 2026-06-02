@@ -847,7 +847,7 @@ def countries():
     sort_direction = "DESC" if sortway == "desc" else "ASC"
 
     with get_request_cursor(read_only=True) as db:
-        filter_sql = f"""
+        base_cte_sql = f"""
             WITH country_rows AS (
                 SELECT
                     u.id,
@@ -954,11 +954,6 @@ def countries():
                 WHERE 1=1
                 {search_filter}
             )
-            SELECT *
-            FROM country_rows
-            WHERE provinces_count >= %s
-              AND (%s IS NULL OR influence >= %s)
-              AND (%s IS NULL OR influence <= %s)
         """
 
         filter_params = list(params)
@@ -971,28 +966,51 @@ def countries():
                 upperinf,
             ]
         )
-
-        db.execute(
-            f"SELECT COUNT(*) FROM ({filter_sql}) AS filtered", tuple(filter_params)
-        )
-        count_row = db.fetchone()
-        total_count = (count_row[0] or 0) if count_row else 0
-
-        total_pages = max(1, (total_count + per_page - 1) // per_page)
-        if page < 1:
-            page = 1
-        if page > total_pages:
-            page = total_pages
+        page = max(1, page)
         offset = (page - 1) * per_page
 
-        page_query = (
-            f"{filter_sql} ORDER BY {sort_column} {sort_direction}, "
-            "id ASC LIMIT %s OFFSET %s"
-        )
+        # Fetch one page and carry total_count in the same result-set to avoid
+        # re-executing the heavy country_rows CTE solely for pagination metadata.
+        paged_query = f"""
+            {base_cte_sql}
+            , filtered AS (
+                SELECT *
+                FROM country_rows
+                WHERE provinces_count >= %s
+                  AND (%s IS NULL OR influence >= %s)
+                  AND (%s IS NULL OR influence <= %s)
+            )
+            , paged AS (
+                SELECT *
+                FROM filtered
+                ORDER BY {sort_column} {sort_direction}, id ASC
+                LIMIT %s OFFSET %s
+            )
+            SELECT
+                p.id, p.username, p.date, p.flag, p.province_population, p.colid,
+                p.name, p.provinces_count, p.join_number, p.influence, p.unix,
+                (SELECT COUNT(*) FROM filtered) AS total_count
+            FROM paged p
+        """
         page_params = list(filter_params)
         page_params.extend([per_page, offset])
-        db.execute(page_query, tuple(page_params))
-        paginated_results = db.fetchall()
+        db.execute(paged_query, tuple(page_params))
+        rows = db.fetchall()
+        paginated_results = [row[:-1] for row in rows]
+        total_count = (rows[0][-1] or 0) if rows else 0
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+
+        # If page is out of range (e.g., after filter changes), retry once on last page.
+        if page > 1 and not rows and total_count > 0:
+            page = total_pages
+            offset = (page - 1) * per_page
+            page_params = list(filter_params)
+            page_params.extend([per_page, offset])
+            db.execute(paged_query, tuple(page_params))
+            rows = db.fetchall()
+            paginated_results = [row[:-1] for row in rows]
+            if rows:
+                total_count = rows[0][-1] or total_count
 
     return render_template(
         "countries.html",
