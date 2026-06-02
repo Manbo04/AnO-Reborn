@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit Railway environments vs live domain, then redeploy the correct production stack.
+r"""Audit Railway environments vs live domain, then redeploy the correct production stack.
 
 Requires:
   export RAILWAY_TOKEN='...'   # Railway account token (Settings → Tokens)
