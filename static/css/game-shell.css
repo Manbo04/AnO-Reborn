@@ -56,6 +56,8 @@ body.game-shell-active .game-hud {
     cursor: pointer;
     font-size: 0.85rem;
     color: var(--colorOne);
+    position: relative;
+    overflow: hidden;
 }
 
 .theme-dark .game-hud-chip {
@@ -72,6 +74,16 @@ body.game-shell-active .game-hud {
 .game-hud-chip .game-hud-value {
     font-weight: 600;
     white-space: nowrap;
+}
+
+.game-hud-chip::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(125deg, transparent 10%, rgba(255, 255, 255, 0.16) 45%, transparent 70%);
+    transform: translateX(-120%);
+    animation: hud-chip-glint 7.5s ease-in-out infinite;
 }
 
 .game-hud .material-icons-outlined {
@@ -92,6 +104,8 @@ body.game-shell-active .game-hud {
     background: var(--foregroundThree);
     border: 1px solid var(--border);
     margin-bottom: var(--game-space-sm);
+    position: relative;
+    overflow: hidden;
 }
 
 .game-market-card-head {
@@ -272,16 +286,35 @@ body.game-shell-active .game-bottom-nav {
     text-decoration: none;
     color: inherit;
     transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
 }
 
 .game-province-card:active {
     transform: scale(0.98);
 }
 
+.game-province-card::after,
+.game-market-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 86% 14%, rgba(0, 167, 225, 0.16), transparent 44%);
+    opacity: 0.85;
+}
+
 body.game-reduced-motion .game-province-card,
 body.game-reduced-motion .game-nav-item,
 body.game-reduced-motion * {
     transition: none !important;
+}
+
+body.game-reduced-motion .game-hud-chip::after,
+body.game-reduced-motion .game-province-card::after,
+body.game-reduced-motion .game-market-card::after {
+    animation: none !important;
+    opacity: 0.45;
 }
 
 .game-province-card-stats {
@@ -323,6 +356,19 @@ body.game-reduced-motion * {
 .game-unit-card-grid .warflexparent {
     border-radius: var(--game-radius-md);
     overflow: hidden;
+}
+
+@keyframes hud-chip-glint {
+    0%,
+    70% {
+        transform: translateX(-130%);
+    }
+    90% {
+        transform: translateX(120%);
+    }
+    100% {
+        transform: translateX(120%);
+    }
 }
 
 /* Timer badge on HUD */

@@ -1590,6 +1590,115 @@ body:has(.navbarparent .templatecontainer) {
     background-position: center;
 }
 
+/* Atmosphere pass: vivid but readable topper overlays (no layout changes) */
+.countrytopper,
+.provincestopper,
+.provincetopper,
+.markettopper,
+.peaceTopper,
+.wartopper,
+.militarytopper,
+.establishcoalitiontopper,
+.coalitionstopper,
+.coalitiontopper,
+.countriestopper,
+.marketoffertopper,
+.recruitmentdivtopper,
+.businessestopper,
+.assemblytopper,
+.upgradestopper {
+    position: relative;
+    isolation: isolate;
+}
+
+.countrytopper::before,
+.provincestopper::before,
+.provincetopper::before,
+.markettopper::before,
+.peaceTopper::before,
+.wartopper::before,
+.militarytopper::before,
+.establishcoalitiontopper::before,
+.coalitionstopper::before,
+.coalitiontopper::before,
+.countriestopper::before,
+.marketoffertopper::before,
+.recruitmentdivtopper::before,
+.businessestopper::before,
+.assemblytopper::before,
+.upgradestopper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 22%, rgba(0, 167, 225, 0.34), transparent 46%),
+        radial-gradient(circle at 82% 76%, rgba(212, 168, 67, 0.26), transparent 44%),
+        linear-gradient(180deg, rgba(8, 12, 22, 0.36), rgba(8, 12, 22, 0.62));
+    mix-blend-mode: screen;
+    opacity: 0.95;
+    z-index: 0;
+}
+
+.countrytopper::after,
+.provincestopper::after,
+.provincetopper::after,
+.markettopper::after,
+.peaceTopper::after,
+.wartopper::after,
+.militarytopper::after,
+.establishcoalitiontopper::after,
+.coalitionstopper::after,
+.coalitiontopper::after,
+.countriestopper::after,
+.marketoffertopper::after,
+.recruitmentdivtopper::after,
+.businessestopper::after,
+.assemblytopper::after,
+.upgradestopper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.08) 40%, transparent 60%);
+    background-size: 240% 100%;
+    animation: toppershimmer 12s ease-in-out infinite;
+    z-index: 0;
+}
+
+.countrytopper .templatedivtitle,
+.provincestopper .templatedivtitle,
+.provincetopper .templatedivtitle,
+.markettopper .templatedivtitle,
+.peaceTopper .templatedivtitle,
+.wartopper .templatedivtitle,
+.militarytopper .templatedivtitle,
+.establishcoalitiontopper .templatedivtitle,
+.coalitionstopper .templatedivtitle,
+.coalitiontopper .templatedivtitle,
+.countriestopper .templatedivtitle,
+.marketoffertopper .templatedivtitle,
+.recruitmentdivtopper .templatedivtitle,
+.businessestopper .templatedivtitle,
+.assemblytopper .templatedivtitle,
+.upgradestopper .templatedivtitle {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes toppershimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
 .templatedivtitle {
     text-align: center;
     color: rgb(255, 255, 255);
@@ -5161,6 +5270,8 @@ body.game-shell-active .game-hud {
     cursor: pointer;
     font-size: 0.85rem;
     color: var(--colorOne);
+    position: relative;
+    overflow: hidden;
 }
 
 .theme-dark .game-hud-chip {
@@ -5177,6 +5288,16 @@ body.game-shell-active .game-hud {
 .game-hud-chip .game-hud-value {
     font-weight: 600;
     white-space: nowrap;
+}
+
+.game-hud-chip::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(125deg, transparent 10%, rgba(255, 255, 255, 0.16) 45%, transparent 70%);
+    transform: translateX(-120%);
+    animation: hud-chip-glint 7.5s ease-in-out infinite;
 }
 
 .game-hud .material-icons-outlined {
@@ -5197,6 +5318,8 @@ body.game-shell-active .game-hud {
     background: var(--foregroundThree);
     border: 1px solid var(--border);
     margin-bottom: var(--game-space-sm);
+    position: relative;
+    overflow: hidden;
 }
 
 .game-market-card-head {
@@ -5377,16 +5500,35 @@ body.game-shell-active .game-bottom-nav {
     text-decoration: none;
     color: inherit;
     transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
 }
 
 .game-province-card:active {
     transform: scale(0.98);
 }
 
+.game-province-card::after,
+.game-market-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 86% 14%, rgba(0, 167, 225, 0.16), transparent 44%);
+    opacity: 0.85;
+}
+
 body.game-reduced-motion .game-province-card,
 body.game-reduced-motion .game-nav-item,
 body.game-reduced-motion * {
     transition: none !important;
+}
+
+body.game-reduced-motion .game-hud-chip::after,
+body.game-reduced-motion .game-province-card::after,
+body.game-reduced-motion .game-market-card::after {
+    animation: none !important;
+    opacity: 0.45;
 }
 
 .game-province-card-stats {
@@ -5428,6 +5570,19 @@ body.game-reduced-motion * {
 .game-unit-card-grid .warflexparent {
     border-radius: var(--game-radius-md);
     overflow: hidden;
+}
+
+@keyframes hud-chip-glint {
+    0%,
+    70% {
+        transform: translateX(-130%);
+    }
+    90% {
+        transform: translateX(120%);
+    }
+    100% {
+        transform: translateX(120%);
+    }
 }
 
 /* Timer badge on HUD */
@@ -5971,6 +6126,18 @@ body.game-shell-active.province-base-view-active .templatediv {
         0 6px 0 rgba(0, 0, 0, 0.3),
         0 10px 28px rgba(0, 0, 0, 0.35);
     transition: box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.province-map-node-pin::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.22) 46%, transparent 70%);
+    transform: translateX(-130%);
+    animation: province-node-glint 9s ease-in-out infinite;
 }
 
 .province-map-node-icon {
@@ -6178,6 +6345,17 @@ body.game-shell-active.province-base-view-active .templatediv {
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
     border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.province-dock-card::after,
+.province-base-building-row::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 82% 18%, rgba(92, 212, 240, 0.18), transparent 45%);
 }
 
 .province-dock-card-top {
@@ -6386,6 +6564,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     background: var(--foregroundThree);
     border: 1px solid var(--border);
     transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
 }
 
 .province-base-building-row.is-busy {
@@ -6506,6 +6686,10 @@ body.game-reduced-motion .province-base-particles span {
     animation: none;
 }
 
+body.game-reduced-motion .province-map-node-pin::after {
+    animation: none !important;
+}
+
 /* HUD polish */
 .game-hud-chip {
     transition: transform 0.15s, box-shadow 0.15s;
@@ -6569,6 +6753,17 @@ body.game-reduced-motion .province-base-particles span {
     font-size: 0.8rem;
     opacity: 0.85;
     margin: 0;
+}
+
+@keyframes province-node-glint {
+    0%,
+    74% {
+        transform: translateX(-130%);
+    }
+    90%,
+    100% {
+        transform: translateX(130%);
+    }
 }
 
 
