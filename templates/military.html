@@ -50,7 +50,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["soldiers"]["quantity"] }} Soldiers</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["soldiers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["soldiers"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["soldiers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["soldiers"]["defense"] }} DEF</p>
                             {% if units["soldiers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["soldiers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -109,7 +109,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["artillery"]["quantity"] }} Artillery</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["artillery"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["artillery"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["artillery"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["artillery"]["defense"] }} DEF</p>
                             {% if units["artillery"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["artillery"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["artillery"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -161,7 +161,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["tanks"]["quantity"] }} Tanks</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["tanks"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["tanks"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["tanks"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["tanks"]["defense"] }} DEF</p>
                             {% if units["tanks"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["tanks"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["tanks"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -219,7 +219,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["fighters"]["quantity"] }} Fighter Jets</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["fighters"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["fighters"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["fighters"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["fighters"]["defense"] }} DEF</p>
                             {% if units["fighters"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["fighters"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["fighters"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -275,7 +275,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["bombers"]["quantity"] }} Bombers</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["bombers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["bombers"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["bombers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["bombers"]["defense"] }} DEF</p>
                             {% if units["bombers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["bombers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["bombers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -331,7 +331,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["apaches"]["quantity"] }} Attack Helicopters</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["apaches"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["apaches"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["apaches"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["apaches"]["defense"] }} DEF</p>
                             {% if units["apaches"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["apaches"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["apaches"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -391,7 +391,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["submarines"]["quantity"] }} Submarines</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["submarines"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["submarines"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["submarines"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["submarines"]["defense"] }} DEF</p>
                             {% if units["submarines"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["submarines"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["submarines"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -444,7 +444,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["cruisers"]["quantity"] }} Cruisers</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["cruisers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["cruisers"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["cruisers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["cruisers"]["defense"] }} DEF</p>
                             {% if units["cruisers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["cruisers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -498,7 +498,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["destroyers"]["quantity"] }} Destroyers</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["destroyers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["destroyers"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["destroyers"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["destroyers"]["defense"] }} DEF</p>
                             {% if units["destroyers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["destroyers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -557,7 +557,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["spies"]["quantity"] }} Spies</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["spies"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["spies"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["spies"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["spies"]["defense"] }} DEF</p>
                             {% if units["spies"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["spies"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["spies"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -612,7 +612,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["icbms"]["quantity"] }} Ballistic Missiles</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["icbms"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["icbms"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["icbms"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["icbms"]["defense"] }} DEF</p>
                             {% if units["icbms"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["icbms"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["icbms"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
@@ -667,7 +667,7 @@
                         <h3 class="templatecontentheadercenter">You have {{ units["nukes"]["quantity"] }} Nukes</h3>
 
                         <div class="combat-stats-box">
-                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">bolt</span> {{ units["nukes"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">shield</span> {{ units["nukes"]["defense"] }} DEF</p>
+                            <p><strong>Combat Stats:</strong> <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--danger);">adjust</span> {{ units["nukes"]["attack"] }} ATK / <span class="material-icons-outlined" style="vertical-align: middle; font-size: 16px; color: var(--secondary);">security</span> {{ units["nukes"]["defense"] }} DEF</p>
                             {% if units["nukes"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} <img src="{{ url_for('static', filename=game_asset_path('resources', units["nukes"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["nukes"]["maintenance_resource"] }} per tick</p>
                             {% endif %}
