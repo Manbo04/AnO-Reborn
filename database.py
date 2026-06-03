@@ -1244,7 +1244,6 @@ def _run_schema_step(label: str, fn) -> bool:
 
 def schema_compat_failed_steps() -> list[str]:
     """Labels/errors for steps that failed during last ensure_schema_compat (diagnostics)."""
-    ensure_schema_compat()
     return list(_schema_compat_failed_steps)
 
 
@@ -1349,14 +1348,12 @@ def ensure_schema_compat() -> None:
 
 def schema_compat_succeeded() -> bool:
     """True when boot-time schema alignment completed without error."""
-    ensure_schema_compat()
     return _schema_compat_succeeded
 
 
 def get_coalition_members_table() -> Optional[str]:
     """Return the coalition membership table name present in this database."""
     global _coalition_members_table_cache
-    ensure_schema_compat()
     if _coalition_members_table_cache is not None:
         return _coalition_members_table_cache
     try:
@@ -1384,7 +1381,6 @@ def users_table_has_column(column_name: str) -> bool:
     """Cached check for optional columns on ``users`` (e.g. discord_id)."""
     if column_name in _users_column_cache:
         return _users_column_cache[column_name]
-    ensure_schema_compat()
     has_col = False
     try:
         with get_db_cursor() as db:
@@ -1540,7 +1536,6 @@ def table_has_column(table_name: str, column_name: str) -> bool:
     key = (table_name, column_name)
     if key in _table_column_cache:
         return _table_column_cache[key]
-    ensure_schema_compat()
     has_col = False
     try:
         with get_db_cursor() as db:
