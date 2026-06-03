@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}{{ province['name'] }}{% endblock %}
+{% block body_class %}{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
@@ -9,11 +10,13 @@
 {% block body %}
 <div class="templatediv">
 
+    {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
     <div class="templatedivtopper provincetopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
                 account_balance
             </span>{{ province['name'] }}</h1>
     </div>
+    {% endif %}
 
     <div class="templatedivcontent">
 

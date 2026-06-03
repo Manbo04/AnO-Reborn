@@ -102,3 +102,32 @@ def test_layout_includes_game_shell_compile():
 
 def test_feature_flags_default_on():
     assert FEATURE_GAME_SHELL is True
+
+
+def test_province_base_view_renders_meta_and_vitals():
+    from jinja2 import Environment, FileSystemLoader
+
+    env = Environment(loader=FileSystemLoader("templates"))
+    payload = build_province_layout_payload(
+        {
+            "id": 1,
+            "name": "Kaunas",
+            "location": "Grassland",
+            "happiness": 62,
+            "pollution": 18,
+            "population": 250000,
+            "electricity": 40,
+        },
+        {"farms": 2},
+    )
+    html = env.get_template("partials/province_base_view.html").render(
+        FEATURE_PROVINCE_BASE_VIEW=True,
+        province={"id": 1, "name": "Kaunas"},
+        province_base_layout=payload,
+        url_for=lambda endpoint, **kw: "/static/" + kw.get("filename", ""),
+    )
+    assert "province-base-meta" in html
+    assert "Grassland" in html
+    assert "province-base-vitals" in html
+    assert "62%" in html
+    assert "Classic view" in html
