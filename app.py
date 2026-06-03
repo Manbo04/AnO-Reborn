@@ -140,9 +140,6 @@ app.config["SESSION_COOKIE_SECURE"] = (
 def before_request():
     # Track request start time for performance monitoring
     from time import time
-    from database import ensure_schema_compat
-
-    ensure_schema_compat()
 
     request.start_time = time()
 
@@ -1257,27 +1254,21 @@ def inject_user():
     )
 
 
-@app.route("/debug-slow-queries-99")
-def debug_slow_queries():
+@app.route("/debug-discord-99")
+def debug_discord():
     from database import get_db_cursor
     try:
         with get_db_cursor(read_only=True) as db:
-            db.execute("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")
-            db.execute("""
-            SELECT query, calls, total_exec_time, mean_exec_time, rows
-            FROM pg_stat_statements
-            ORDER BY total_exec_time DESC
-            LIMIT 15;
-            """)
+            db.execute("SELECT id, username, discord_id FROM users WHERE username ILIKE '%%dede%%' OR username ILIKE '%%manbo04%%' LIMIT 10;")
             rows = db.fetchall()
+            if not rows:
+                return "No users found."
             output = ""
             for row in rows:
-                query = row[0][:200].replace('\n', ' ')
-                output += f"Calls: {row[1]:>5} | Mean: {row[3]:>8.2f}ms | Total: {row[2]:>8.2f}ms | Rows: {row[4]:>6} | Query: {query}\n"
+                output += f"ID: {row[0]}, Username: {row[1]}, Discord: {row[2]}\\n"
             return "<pre>" + output + "</pre>"
     except Exception as e:
         return str(e)
-
 
 @app.route("/", methods=["GET", "POST"])
 def index():
