@@ -1270,9 +1270,25 @@ def debug_discord():
     except Exception as e:
         return str(e)
 
+@app.route("/debug-discord-99")
+def debug_discord():
+    from database import get_db_cursor, users_table_has_column
+    try:
+        has_col = users_table_has_column("discord_id")
+        with get_db_cursor(read_only=True) as db:
+            db.execute("SELECT id, username, discord_id, auth_type FROM users WHERE username ILIKE '%%dede%%' OR username ILIKE '%%manbo04%%' LIMIT 10;")
+            rows = db.fetchall()
+            output = f"users_table_has_column('discord_id') = {has_col}\\n"
+            if not rows:
+                return output + "No users found."
+            for row in rows:
+                output += f"ID: {row[0]}, Username: {row[1]}, Discord: {row[2]}, AuthType: {row[3]}\\n"
+            return "<pre>" + output + "</pre>"
+    except Exception as e:
+        return str(e)
+
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # In local development/testing, ensure a visible debug cookie is set on the
     # home page when a session exists or to help test clients detect cookie
     # behavior when following redirects (requests may follow redirects and
     # observe cookies set on the final response).
