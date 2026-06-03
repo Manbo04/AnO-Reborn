@@ -6578,9 +6578,29 @@ body.game-reduced-motion .province-base-particles span {
  */
 .country-overview-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: minmax(300px, 1.15fr) minmax(260px, 0.95fr) minmax(320px, 1fr);
+    align-items: start;
+    gap: 16px;
     width: 100%;
+}
+
+.country-overview-grid > .templatedivflex2left,
+.country-overview-grid > .templatedivflex2right {
+    margin: 0;
+    padding: 0;
+    width: auto;
+    flex: none;
+    min-width: 0;
+}
+
+.country-overview-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.country-overview-column > .templatetable {
+    margin: 0;
 }
 
 .country-overview-grid .material-icons-outlined {
@@ -6593,11 +6613,15 @@ body.game-reduced-motion .province-base-particles span {
     border: 1px solid var(--border);
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
-    padding: 10px 12px 12px;
+    padding: 12px;
+}
+
+.country-demographics-panel .templatecontentheaderleft {
+    margin: 0;
 }
 
 .country-demographics-subtitle {
-    margin: -2px 0 8px;
+    margin: 0 0 4px;
     font-size: 0.8rem;
     color: var(--text-secondary);
 }
@@ -6619,7 +6643,7 @@ body.game-reduced-motion .province-base-particles span {
 }
 
 .country-demographics-fallback {
-    margin-top: 10px;
+    margin-top: 8px;
     display: grid;
     gap: 8px;
 }
@@ -6674,11 +6698,20 @@ body.game-reduced-motion .province-base-particles span {
     .country-overview-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .country-overview-column--demographics {
+        grid-column: 1 / -1;
+    }
 }
 
 @media (max-width: 900px) {
     .country-overview-grid {
         grid-template-columns: 1fr;
+    }
+
+    .country-demographics-fallback-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
     }
 }
 
