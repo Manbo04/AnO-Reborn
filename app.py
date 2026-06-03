@@ -1254,20 +1254,6 @@ def inject_user():
     )
 
 
-@app.route("/debug-discord-99")
-def debug_discord():
-    from database import get_db_cursor
-    try:
-        discord_id = "710359818329915443"
-        with get_db_cursor(read_only=True) as db:
-            db.execute("SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1", (discord_id, discord_id))
-            row = db.fetchone()
-            if row:
-                return f"Duplicate found: ID {row[0]}"
-            else:
-                return "No duplicate found!"
-    except Exception as e:
-        return str(e)
 
 
 @app.route("/", methods=["GET", "POST"])
