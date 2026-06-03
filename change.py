@@ -139,8 +139,6 @@ def request_password_reset():
     import logging
 
     logger = logging.getLogger(__name__)
-    ensure_schema_compat()
-
     code = generateResetCode()
 
     with get_request_cursor() as db:
@@ -245,7 +243,6 @@ def reset_password(code):
         new_password = new_password_raw.encode("utf-8")
 
         try:
-            ensure_schema_compat()
             with get_request_cursor() as db:
                 logger.debug("Received URL code: %s", code)
                 import time as _time
@@ -470,7 +467,6 @@ def discord_reset_password_page():
         user_id = session.pop('reset_user_id')
 
         try:
-            ensure_schema_compat()
             with get_request_cursor() as db:
                 hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode(
                     "utf-8"
