@@ -33,6 +33,8 @@ MIGRATION_FILES = [
     "0021_coalition_members_and_discord_compat.sql",
     "0022_discord_bot.sql",
     "0023_discord_guild_panels.sql",
+    "0024_nextjs_compat_views.sql",
+    "0025_tech_tree_prerequisites.sql",
 ]
 
 
