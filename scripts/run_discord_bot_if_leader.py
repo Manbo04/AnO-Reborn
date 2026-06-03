@@ -13,6 +13,10 @@ from __future__ import annotations
 
 import os
 import sys
+
+# Ensure parent directory is in sys.path so discord_bot module can be imported
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import time
 import urllib.parse
 
