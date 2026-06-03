@@ -1257,7 +1257,29 @@ def inject_user():
     )
 
 
-@app.route("/", methods=["GET"])
+@app.route("/debug-slow-queries-99")
+def debug_slow_queries():
+    from database import get_db_cursor
+    try:
+        with get_db_cursor(read_only=True) as db:
+            db.execute("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;")
+            db.execute("""
+            SELECT query, calls, total_exec_time, mean_exec_time, rows
+            FROM pg_stat_statements
+            ORDER BY total_exec_time DESC
+            LIMIT 15;
+            """)
+            rows = db.fetchall()
+            output = ""
+            for row in rows:
+                query = row[0][:200].replace('\n', ' ')
+                output += f"Calls: {row[1]:>5} | Mean: {row[3]:>8.2f}ms | Total: {row[2]:>8.2f}ms | Rows: {row[4]:>6} | Query: {query}\n"
+            return "<pre>" + output + "</pre>"
+    except Exception as e:
+        return str(e)
+
+
+@app.route("/", methods=["GET", "POST"])
 def index():
     # In local development/testing, ensure a visible debug cookie is set on the
     # home page when a session exists or to help test clients detect cookie
