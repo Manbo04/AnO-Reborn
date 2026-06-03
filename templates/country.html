@@ -395,12 +395,12 @@
                 const canvasEl = document.getElementById('demographicsRadarChart');
                 const fallback = document.getElementById('demographicsFallback');
                 if (!canvasEl || typeof Chart === 'undefined') {
-                    if (fallback) fallback.hidden = false;
+                    if (fallback) fallback.style.display = 'grid';
                     return;
                 }
                 const ctx = canvasEl.getContext('2d');
                 if (!ctx) {
-                    if (fallback) fallback.hidden = false;
+                    if (fallback) fallback.style.display = 'grid';
                     return;
                 }
 
@@ -553,7 +553,7 @@
                 });
 
                 if (fallback) {
-                    fallback.hidden = true;
+                    fallback.style.display = 'none';
                 }
             }
             </script>
