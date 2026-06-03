@@ -5230,7 +5230,8 @@ body.game-shell-active .templatecontainer {
 }
 
 body.game-shell-active .templatediv {
-    margin-top: var(--game-space-md);
+    /* Clear the 55px fixed navbar plus some spacing */
+    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 24px));
 }
 
 /* Compact resource HUD (below fixed navbar) */
