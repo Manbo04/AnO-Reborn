@@ -49,3 +49,54 @@ Until game/ assets exist, manifest falls back to legacy `static/images/*.jpg`.
 ## File naming
 
 Use normalized DB keys: `coal_burners`, `fighter_jets`, `consumer_goods` — see `static/asset-manifest.json`.
+
+## Vivid/Fun extension pack (non-structural visuals only)
+
+### Visual mood targets
+
+- Keep gameplay readable first, then add theatrical flair.
+- Preferred mood mix:
+  - **60% grounded strategy** (steel, earth, paper-map textures)
+  - **30% bright arcade pop** (accent glows, candy highlights, faction color bursts)
+  - **10% atmospheric fantasy** (fog, sparkles, dust, skyline haze)
+
+### Color intensity and contrast guardrails
+
+- Saturation: keep primary art accents in `65%–90%` saturation range.
+- Background luminance: keep panel-adjacent imagery in `10%–35%` lightness in dark mode.
+- Text readability floor:
+  - body text contrast: `>= 4.5:1`
+  - large headings contrast: `>= 3:1`
+- Avoid full-white glow blocks under table text and tab labels.
+
+### Quality targets (per asset class)
+
+| Asset class | Preferred format | Minimum quality bar |
+|-------------|------------------|---------------------|
+| HUD/resource icons | SVG first | Clean silhouette at 20px and 28px |
+| Building/unit card art | SVG or WebP | No compression artifacts at 140px height |
+| Topper/hero backgrounds | WebP/JPG | Detail preserved at 1920×320 crop |
+| Ambient overlays | PNG/SVG w/ alpha | Must not obstruct actionable controls |
+
+### Fallback policy (must never break gameplay)
+
+1. Add override in `static/images/game/**` using normalized key.
+2. Regenerate `static/asset-manifest.json`.
+3. Verify `game_asset_path()` resolves override if file exists.
+4. If override missing/broken, legacy path from `game_ui.py` remains authoritative.
+5. Never delete legacy files in the same release where new overrides ship.
+
+### “No layout shift” compliance checklist
+
+- Do not edit container widths/heights for existing cards, tabs, rows, or nav.
+- Do not change grid column counts.
+- Decorative effects must use pseudo-elements or backgrounds only.
+- Any motion must gracefully disable under `body.game-reduced-motion`.
+
+### Release acceptance for vividness batches
+
+- Before/after screenshots for desktop + mobile on core pages:
+  - landing, country, province, military, market
+- `bundle_game_css.py` + `check_game_css_bundle.py` pass
+- asset inventory regenerated (`docs/visual_asset_inventory.json`)
+- deploy fingerprint verified (`scripts/verify_deploy_live.py`)
