@@ -31,6 +31,23 @@ def _unit_path(key: str) -> str:
     return f"images/game/units/{key}.png"
 
 
+def _resource_path(key: str) -> str:
+    for ext in (".svg", ".png"):
+        rel = f"images/game/resources/{key}{ext}"
+        if (ROOT / "static" / rel).is_file():
+            return rel
+    return f"images/game/resources/{key}.png"
+
+
+def _biome_path(key: str) -> str:
+    slug = key.replace(" ", "_")
+    for ext in (".svg", ".jpg", ".png"):
+        rel = f"images/game/biomes/{slug}{ext}"
+        if (ROOT / "static" / rel).is_file():
+            return rel
+    return f"images/game/biomes/{slug}.jpg"
+
+
 def main() -> None:
     manifest = {
         "version": 1,
@@ -46,16 +63,12 @@ def main() -> None:
         "resources": {
             k: {
                 "legacy": v,
-                "path": (
-                    f"images/game/resources/{k}.svg"
-                    if k in ("gold", "rations", "oil", "steel", "consumer_goods")
-                    else f"images/game/resources/{k}.png"
-                ),
+                "path": _resource_path(k),
             }
             for k, v in RESOURCE_LEGACY_IMAGES.items()
         },
         "biomes": {
-            k: {"legacy": v, "path": f"images/game/biomes/{k.replace(' ', '_')}.jpg"}
+            k: {"legacy": v, "path": _biome_path(k)}
             for k, v in BIOME_LEGACY_IMAGES.items()
         },
     }

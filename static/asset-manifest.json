@@ -8,19 +8,19 @@
     },
     "oil_burners": {
       "legacy": "oilburner.jpg",
-      "path": "images/game/buildings/oil_burners.png"
+      "path": "images/game/buildings/oil_burners.svg"
     },
     "solar_fields": {
       "legacy": "solarfield.jpg",
-      "path": "images/game/buildings/solar_fields.png"
+      "path": "images/game/buildings/solar_fields.svg"
     },
     "hydro_dams": {
       "legacy": "hydrodam.jpg",
-      "path": "images/game/buildings/hydro_dams.png"
+      "path": "images/game/buildings/hydro_dams.svg"
     },
     "nuclear_reactors": {
       "legacy": "nuclearreactor.jpg",
-      "path": "images/game/buildings/nuclear_reactors.png"
+      "path": "images/game/buildings/nuclear_reactors.svg"
     },
     "gas_stations": {
       "legacy": "gasstation.jpg",
@@ -28,55 +28,55 @@
     },
     "general_stores": {
       "legacy": "generalstore.jpg",
-      "path": "images/game/buildings/general_stores.png"
+      "path": "images/game/buildings/general_stores.svg"
     },
     "farmers_markets": {
       "legacy": "farmersmarket.jpg",
-      "path": "images/game/buildings/farmers_markets.png"
+      "path": "images/game/buildings/farmers_markets.svg"
     },
     "banks": {
       "legacy": "bank.jpg",
-      "path": "images/game/buildings/banks.png"
+      "path": "images/game/buildings/banks.svg"
     },
     "malls": {
       "legacy": "mall.jpg",
-      "path": "images/game/buildings/malls.png"
+      "path": "images/game/buildings/malls.svg"
     },
     "distribution_centers": {
       "legacy": "fulfillmentcenters.jpg",
-      "path": "images/game/buildings/distribution_centers.png"
+      "path": "images/game/buildings/distribution_centers.svg"
     },
     "industrial_district": {
       "legacy": "mall.jpg",
-      "path": "images/game/buildings/industrial_district.png"
+      "path": "images/game/buildings/industrial_district.svg"
     },
     "city_parks": {
       "legacy": "citypark.png",
-      "path": "images/game/buildings/city_parks.png"
+      "path": "images/game/buildings/city_parks.svg"
     },
     "libraries": {
       "legacy": "library.jpg",
-      "path": "images/game/buildings/libraries.png"
+      "path": "images/game/buildings/libraries.svg"
     },
     "hospitals": {
       "legacy": "hospital.jpg",
-      "path": "images/game/buildings/hospitals.png"
+      "path": "images/game/buildings/hospitals.svg"
     },
     "universities": {
       "legacy": "university.jpg",
-      "path": "images/game/buildings/universities.png"
+      "path": "images/game/buildings/universities.svg"
     },
     "monorails": {
       "legacy": "skytrain.jpg",
-      "path": "images/game/buildings/monorails.png"
+      "path": "images/game/buildings/monorails.svg"
     },
     "primary_school": {
       "legacy": "library.jpg",
-      "path": "images/game/buildings/primary_school.png"
+      "path": "images/game/buildings/primary_school.svg"
     },
     "high_school": {
       "legacy": "library.jpg",
-      "path": "images/game/buildings/high_school.png"
+      "path": "images/game/buildings/high_school.svg"
     },
     "army_bases": {
       "legacy": "armybase.png",
@@ -84,19 +84,19 @@
     },
     "aerodomes": {
       "legacy": "aerodrome.png",
-      "path": "images/game/buildings/aerodomes.png"
+      "path": "images/game/buildings/aerodomes.svg"
     },
     "harbours": {
       "legacy": "harbour.jpg",
-      "path": "images/game/buildings/harbours.png"
+      "path": "images/game/buildings/harbours.svg"
     },
     "admin_buildings": {
       "legacy": "administrativebuilding.jpg",
-      "path": "images/game/buildings/admin_buildings.png"
+      "path": "images/game/buildings/admin_buildings.svg"
     },
     "silos": {
       "legacy": "silo.jpg",
-      "path": "images/game/buildings/silos.png"
+      "path": "images/game/buildings/silos.svg"
     },
     "farms": {
       "legacy": "farm.jpg",
@@ -104,7 +104,7 @@
     },
     "pumpjacks": {
       "legacy": "pumpjack.jpg",
-      "path": "images/game/buildings/pumpjacks.png"
+      "path": "images/game/buildings/pumpjacks.svg"
     },
     "coal_mines": {
       "legacy": "coalmine.jpg",
@@ -112,47 +112,47 @@
     },
     "bauxite_mines": {
       "legacy": "bauxitemine.jpg",
-      "path": "images/game/buildings/bauxite_mines.png"
+      "path": "images/game/buildings/bauxite_mines.svg"
     },
     "copper_mines": {
       "legacy": "coppermine.jpg",
-      "path": "images/game/buildings/copper_mines.png"
+      "path": "images/game/buildings/copper_mines.svg"
     },
     "uranium_mines": {
       "legacy": "uraniummine.jpg",
-      "path": "images/game/buildings/uranium_mines.png"
+      "path": "images/game/buildings/uranium_mines.svg"
     },
     "lead_mines": {
       "legacy": "leadmine.jpg",
-      "path": "images/game/buildings/lead_mines.png"
+      "path": "images/game/buildings/lead_mines.svg"
     },
     "iron_mines": {
       "legacy": "ironmine.jpg",
-      "path": "images/game/buildings/iron_mines.png"
+      "path": "images/game/buildings/iron_mines.svg"
     },
     "lumber_mills": {
       "legacy": "lumbermill.jpg",
-      "path": "images/game/buildings/lumber_mills.png"
+      "path": "images/game/buildings/lumber_mills.svg"
     },
     "component_factories": {
       "legacy": "componentfactory.jpg",
-      "path": "images/game/buildings/component_factories.png"
+      "path": "images/game/buildings/component_factories.svg"
     },
     "steel_mills": {
       "legacy": "steelmill.jpg",
-      "path": "images/game/buildings/steel_mills.png"
+      "path": "images/game/buildings/steel_mills.svg"
     },
     "ammunition_factories": {
       "legacy": "ammunitionfactory.jpg",
-      "path": "images/game/buildings/ammunition_factories.png"
+      "path": "images/game/buildings/ammunition_factories.svg"
     },
     "aluminium_refineries": {
       "legacy": "aluminiumrefinery.jpg",
-      "path": "images/game/buildings/aluminium_refineries.png"
+      "path": "images/game/buildings/aluminium_refineries.svg"
     },
     "oil_refineries": {
       "legacy": "oilrefinery.jpg",
-      "path": "images/game/buildings/oil_refineries.png"
+      "path": "images/game/buildings/oil_refineries.svg"
     }
   },
   "units": {
@@ -170,39 +170,39 @@
     },
     "fighter_jets": {
       "legacy": "fighterjet.jpg",
-      "path": "images/game/units/fighter_jets.png"
+      "path": "images/game/units/fighter_jets.svg"
     },
     "bombers": {
       "legacy": "bomber.jpg",
-      "path": "images/game/units/bombers.png"
+      "path": "images/game/units/bombers.svg"
     },
     "attack_helicopters": {
       "legacy": "apache.jpg",
-      "path": "images/game/units/attack_helicopters.png"
+      "path": "images/game/units/attack_helicopters.svg"
     },
     "submarines": {
       "legacy": "submarine.jpg",
-      "path": "images/game/units/submarines.png"
+      "path": "images/game/units/submarines.svg"
     },
     "cruisers": {
       "legacy": "cruiser.jpg",
-      "path": "images/game/units/cruisers.png"
+      "path": "images/game/units/cruisers.svg"
     },
     "destroyers": {
       "legacy": "destroyer.jpg",
-      "path": "images/game/units/destroyers.png"
+      "path": "images/game/units/destroyers.svg"
     },
     "spies": {
       "legacy": "spy.jpg",
-      "path": "images/game/units/spies.png"
+      "path": "images/game/units/spies.svg"
     },
     "icbms": {
       "legacy": "icbm.jpg",
-      "path": "images/game/units/icbms.png"
+      "path": "images/game/units/icbms.svg"
     },
     "nukes": {
       "legacy": "nuke.jpg",
-      "path": "images/game/units/nukes.png"
+      "path": "images/game/units/nukes.svg"
     }
   },
   "resources": {
@@ -212,7 +212,7 @@
     },
     "money": {
       "legacy": "resmoney.png",
-      "path": "images/game/resources/money.png"
+      "path": "images/game/resources/money.svg"
     },
     "rations": {
       "legacy": "resrations.png",
@@ -224,35 +224,35 @@
     },
     "coal": {
       "legacy": "rescoal.png",
-      "path": "images/game/resources/coal.png"
+      "path": "images/game/resources/coal.svg"
     },
     "uranium": {
       "legacy": "resuranium.png",
-      "path": "images/game/resources/uranium.png"
+      "path": "images/game/resources/uranium.svg"
     },
     "bauxite": {
       "legacy": "resbauxite.png",
-      "path": "images/game/resources/bauxite.png"
+      "path": "images/game/resources/bauxite.svg"
     },
     "iron": {
       "legacy": "resiron.png",
-      "path": "images/game/resources/iron.png"
+      "path": "images/game/resources/iron.svg"
     },
     "lead": {
       "legacy": "reslead.png",
-      "path": "images/game/resources/lead.png"
+      "path": "images/game/resources/lead.svg"
     },
     "copper": {
       "legacy": "rescopper.png",
-      "path": "images/game/resources/copper.png"
+      "path": "images/game/resources/copper.svg"
     },
     "lumber": {
       "legacy": "reslumber.png",
-      "path": "images/game/resources/lumber.png"
+      "path": "images/game/resources/lumber.svg"
     },
     "components": {
       "legacy": "rescomponents.png",
-      "path": "images/game/resources/components.png"
+      "path": "images/game/resources/components.svg"
     },
     "steel": {
       "legacy": "ressteel.png",
@@ -264,53 +264,53 @@
     },
     "aluminium": {
       "legacy": "resaluminium.png",
-      "path": "images/game/resources/aluminium.png"
+      "path": "images/game/resources/aluminium.svg"
     },
     "gasoline": {
       "legacy": "resgasoline.png",
-      "path": "images/game/resources/gasoline.png"
+      "path": "images/game/resources/gasoline.svg"
     },
     "ammunition": {
       "legacy": "resammunition.png",
-      "path": "images/game/resources/ammunition.png"
+      "path": "images/game/resources/ammunition.svg"
     }
   },
   "biomes": {
     "tundra": {
       "legacy": "tundra.jpg",
-      "path": "images/game/biomes/tundra.jpg"
+      "path": "images/game/biomes/tundra.svg"
     },
     "savanna": {
       "legacy": "savanna.jpg",
-      "path": "images/game/biomes/savanna.jpg"
+      "path": "images/game/biomes/savanna.svg"
     },
     "desert": {
       "legacy": "desert.jpg",
-      "path": "images/game/biomes/desert.jpg"
+      "path": "images/game/biomes/desert.svg"
     },
     "jungle": {
       "legacy": "jungle.jpg",
-      "path": "images/game/biomes/jungle.jpg"
+      "path": "images/game/biomes/jungle.svg"
     },
     "boreal forest": {
       "legacy": "borealforest.jpg",
-      "path": "images/game/biomes/boreal_forest.jpg"
+      "path": "images/game/biomes/boreal_forest.svg"
     },
     "borealforest": {
       "legacy": "borealforest.jpg",
-      "path": "images/game/biomes/borealforest.jpg"
+      "path": "images/game/biomes/borealforest.svg"
     },
     "grassland": {
       "legacy": "grassland.jpg",
-      "path": "images/game/biomes/grassland.jpg"
+      "path": "images/game/biomes/grassland.svg"
     },
     "mountain range": {
       "legacy": "mountainrange.jpg",
-      "path": "images/game/biomes/mountain_range.jpg"
+      "path": "images/game/biomes/mountain_range.svg"
     },
     "mountainrange": {
       "legacy": "mountainrange.jpg",
-      "path": "images/game/biomes/mountainrange.jpg"
+      "path": "images/game/biomes/mountainrange.svg"
     }
   }
 }
