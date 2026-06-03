@@ -109,6 +109,9 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
     if taker_id != "bank":
         taker_id = int(taker_id)
     amount = int(amount)
+    
+    if amount < 0:
+        return "Amount cannot be negative"
 
     # Track whether we own the transaction/connection.
     owns_connection = cursor is None
@@ -432,6 +435,8 @@ def buy_market_offer(offer_id):
             "bank", cId, resource, amount_wanted, cursor=db
         )  # Gives the resource
         if res is not True:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
             _report_trade_error(
                 f"buy_market_offer: give_resource(bank -> buyer) failed: {res}",
                 extra={
@@ -449,6 +454,8 @@ def buy_market_offer(offer_id):
             cId, seller_id, "money", total_price, cursor=db
         )  # Gives the money
         if res is not True:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
             _report_trade_error(
                 f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}",
                 extra={
@@ -466,6 +473,8 @@ def buy_market_offer(offer_id):
         if market_fee > 0:
             res = give_resource(cId, "bank", "money", market_fee, cursor=db)
             if res is not True:
+                from database import rollback_db_cursor
+                rollback_db_cursor(db)
                 _report_trade_error(
                     f"buy_market_offer: give_resource(buyer -> bank fee) failed: {res}",
                     extra={
@@ -540,10 +549,21 @@ def sell_market_offer(offer_id):
         if sellers_resource < amount_wanted:
             return error(400, "You don't have enough of that resource")
 
+        # Check if buyer has enough money before doing anything
+        db.execute("SELECT gold FROM stats WHERE id=%s", (buyer_id,))
+        buyer_gold_row = db.fetchone()
+        buyers_gold = int(buyer_gold_row[0] or 0) if buyer_gold_row else 0
+        total_price = price_for_one * amount_wanted
+
+        if buyers_gold < total_price:
+            return error(400, "The buyer does not have enough money to fulfill this offer.")
+
         # Removes the resource from the seller and gives it to the buyer
         # Pass cursor to reuse connection (avoids opening new connection)
         res = give_resource(seller_id, buyer_id, resource, amount_wanted, cursor=db)
         if res is not True:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
             _report_trade_error(
                 f"sell_market_offer: give_resource(seller -> buyer) failed: {res}",
                 extra={
@@ -563,10 +583,12 @@ def sell_market_offer(offer_id):
             buyer_id,
             seller_id,
             "money",
-            price_for_one * amount_wanted,
+            total_price,
             cursor=db,
         )
         if res is not True:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
             msg = (
                 "sell_market_offer: give_resource(buyer -> seller money) failed: "
                 + str(res)
@@ -644,6 +666,9 @@ def post_offer(offer_type):
 
         if amount < 1:  # Checks if the amount is negative
             return error(400, "Amount must be greater than 0")
+
+        if price < 1:
+            return error(400, "Price must be greater than 0")
 
         if offer_type == "sell":
             realAmount = _get_user_resource_quantity(db, cId, resource)
