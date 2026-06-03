@@ -66,6 +66,8 @@ if not hasattr(ast, "Ellipsis"):
     ast.Ellipsis = ast.Constant
 
 app = Flask(__name__)
+
+
 # Disable strict slash redirects globally so tests can POST to endpoints both with
 # and without trailing slashes without automatic 308/301 redirects.
 app.url_map.strict_slashes = False
