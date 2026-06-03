@@ -1256,18 +1256,16 @@ def inject_user():
 
 @app.route("/debug-discord-99")
 def debug_discord():
-    from database import get_db_cursor, users_table_has_column
+    from database import get_db_cursor
     try:
-        has_col = users_table_has_column("discord_id")
+        discord_id = "710359818329915443"
         with get_db_cursor(read_only=True) as db:
-            db.execute("SELECT id, username, discord_id, auth_type FROM users WHERE username ILIKE '%%dede%%' OR username ILIKE '%%manbo04%%' LIMIT 10;")
-            rows = db.fetchall()
-            output = f"users_table_has_column('discord_id') = {has_col}\\n"
-            if not rows:
-                return output + "No users found."
-            for row in rows:
-                output += f"ID: {row[0]}, Username: {row[1]}, Discord: {row[2]}, AuthType: {row[3]}\\n"
-            return "<pre>" + output + "</pre>"
+            db.execute("SELECT id FROM users WHERE (hash=%s AND auth_type='discord') OR discord_id=%s LIMIT 1", (discord_id, discord_id))
+            row = db.fetchone()
+            if row:
+                return f"Duplicate found: ID {row[0]}"
+            else:
+                return "No duplicate found!"
     except Exception as e:
         return str(e)
 
