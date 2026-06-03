@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 768" role="img" aria-label="Mountainrange">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="hsl(27 82% 66%)"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="hsl(62 68% 35%)"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="768" fill="url(#sky)"/>
+  <ellipse cx="512" cy="620" rx="620" ry="210" fill="url(#land)" opacity="0.88"/>
+  <ellipse cx="220" cy="170" rx="150" ry="48" fill="rgba(255,255,255,0.25)"/>
+  <ellipse cx="760" cy="230" rx="190" ry="58" fill="rgba(255,255,255,0.18)"/>
+  <rect x="48" y="46" width="360" height="64" rx="20" fill="rgba(15,23,42,0.35)"/>
+  <text x="228" y="88" text-anchor="middle" font-size="34" font-family="Roboto,sans-serif" fill="#f8fafc" font-weight="700">Mountainrange</text>
+</svg>
