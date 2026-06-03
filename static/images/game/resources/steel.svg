@@ -1,15 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="steel">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#c2d4e6"/>
-      <stop offset="100%" stop-color="#5f748a"/>
-    </linearGradient>
-    <radialGradient id="r" cx="30%" cy="25%" r="60%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)" stroke="rgba(15,23,42,0.55)" stroke-width="2.8"/>
-  <rect x="8" y="8" width="48" height="48" rx="11" fill="url(#r)"/>
-  <text x="32" y="39" text-anchor="middle" font-size="20" font-family="Roboto,sans-serif" fill="#f8fafc" font-weight="700">St</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Steel">
+  <polygon points="32,6 54,22 54,48 32,58 10,48 10,22" fill="#8b9cb3" stroke="#5c6b7f" stroke-width="2"/>
+  <polygon points="32,18 44,26 44,42 32,48 20,42 20,26" fill="#c5d0e0"/>
 </svg>
