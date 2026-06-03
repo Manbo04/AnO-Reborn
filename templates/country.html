@@ -115,7 +115,7 @@
 
             <h2 class="templatecontentheaderleft">Country info</h2>
 
-            <div class="templatedivflex2 card-align-row">
+            <div class="templatedivflex2 card-align-row country-overview-grid">
                 <div class="templatedivflex2left">
 
 
@@ -329,9 +329,12 @@
                     </table>
 
                 </div>
-                <div class="templatedivflex2right">
-                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics by Province</h3>
-                    <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
+                <div class="templatedivflex2right country-demographics-panel">
+                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span>Demographics by Province</h3>
+                    <p class="country-demographics-subtitle">Stacked population by province</p>
+                    <div class="country-demographics-chart-wrap">
+                        <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
+                    </div>
                     <table class="templatetable table-mt">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
@@ -361,13 +364,10 @@
             }
 
             function initCountryCharts() {
-                const ctx = document.getElementById('demographicsRadarChart');
+                const canvasEl = document.getElementById('demographicsRadarChart');
+                if (!canvasEl || typeof Chart === 'undefined') return;
+                const ctx = canvasEl.getContext('2d');
                 if (!ctx) return;
-
-                const canvas = ctx.closest('.chart-wrapper');
-                if (canvas) {
-                    canvas.style.display = 'block';
-                }
 
                 // Weight formatter: kg -> t -> kt -> Mt
                 function formatWeight(value) {
@@ -393,6 +393,7 @@
                 const childrenData = provinces.map(p => p.children);
                 const workingData = provinces.map(p => p.working);
                 const elderlyData = provinces.map(p => p.elderly);
+                const hasProvinceData = provinceNames.length > 0;
 
                 // Gradient for children bars (blue)
                 const childrenGradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -412,11 +413,11 @@
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: provinceNames.length > 0 ? provinceNames : ['No Provinces'],
+                        labels: hasProvinceData ? provinceNames : ['No Provinces'],
                         datasets: [
                             {
                                 label: 'Children',
-                                data: childrenData,
+                                data: hasProvinceData ? childrenData : [0],
                                 backgroundColor: childrenGradient,
                                 borderColor: 'rgba(54, 162, 235, 1)',
                                 borderWidth: 2,
@@ -424,7 +425,7 @@
                             },
                             {
                                 label: 'Working Age',
-                                data: workingData,
+                                data: hasProvinceData ? workingData : [0],
                                 backgroundColor: workingGradient,
                                 borderColor: 'rgba(75, 192, 92, 1)',
                                 borderWidth: 2,
@@ -432,7 +433,7 @@
                             },
                             {
                                 label: 'Elderly',
-                                data: elderlyData,
+                                data: hasProvinceData ? elderlyData : [0],
                                 backgroundColor: elderlyGradient,
                                 borderColor: 'rgba(159, 168, 174, 1)',
                                 borderWidth: 2,
@@ -442,7 +443,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         animation: {
                             duration: 1500,
                             easing: 'easeInOutQuart'
