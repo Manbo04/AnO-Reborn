@@ -5557,8 +5557,8 @@ body.game-reduced-motion .game-market-card::after {
 }
 
 @media (min-width: 858px) {
-    .game-card-list--mobile-only .game-province-card {
-        display: none;
+    .game-card-list--mobile-only {
+        display: none !important;
     }
 }
 
