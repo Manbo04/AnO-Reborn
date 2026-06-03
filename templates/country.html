@@ -335,6 +335,34 @@
                     <div class="country-demographics-chart-wrap">
                         <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
                     </div>
+                    <div class="country-demographics-fallback" id="demographicsFallback">
+                        {% if provinces and provinces|length > 0 %}
+                        {% set ns = namespace(max_total=1) %}
+                        {% for province in provinces %}
+                            {% set total = (province[7] if province[7] else 0) + (province[8] if province[8] else 0) + (province[9] if province[9] else 0) %}
+                            {% if total > ns.max_total %}
+                                {% set ns.max_total = total %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for province in provinces %}
+                            {% set children = province[7] if province[7] else 0 %}
+                            {% set working = province[8] if province[8] else 0 %}
+                            {% set elderly = province[9] if province[9] else 0 %}
+                            {% set total = children + working + elderly %}
+                            <div class="country-demographics-fallback-row">
+                                <div class="country-demographics-fallback-name">{{ province[0] }}</div>
+                                <div class="country-demographics-fallback-stack" role="img" aria-label="{{ province[0] }} demographics">
+                                    <span class="segment-children" style="width: {{ ((children / ns.max_total) * 100) | round(2) }}%;"></span>
+                                    <span class="segment-working" style="width: {{ ((working / ns.max_total) * 100) | round(2) }}%;"></span>
+                                    <span class="segment-elderly" style="width: {{ ((elderly / ns.max_total) * 100) | round(2) }}%;"></span>
+                                </div>
+                                <div class="country-demographics-fallback-total">{{ total | fmt }}</div>
+                            </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="country-demographics-empty">No province demographics available.</p>
+                        {% endif %}
+                    </div>
                     <table class="templatetable table-mt">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
@@ -365,9 +393,16 @@
 
             function initCountryCharts() {
                 const canvasEl = document.getElementById('demographicsRadarChart');
-                if (!canvasEl || typeof Chart === 'undefined') return;
+                const fallback = document.getElementById('demographicsFallback');
+                if (!canvasEl || typeof Chart === 'undefined') {
+                    if (fallback) fallback.hidden = false;
+                    return;
+                }
                 const ctx = canvasEl.getContext('2d');
-                if (!ctx) return;
+                if (!ctx) {
+                    if (fallback) fallback.hidden = false;
+                    return;
+                }
 
                 // Weight formatter: kg -> t -> kt -> Mt
                 function formatWeight(value) {
@@ -516,6 +551,10 @@
                         }
                     }
                 });
+
+                if (fallback) {
+                    fallback.hidden = true;
+                }
             }
             </script>
 
