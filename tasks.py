@@ -1000,29 +1000,32 @@ def tax_income():
                     gold_val = row[1] if len(row) > 1 else 0
                     stats_map[uid] = gold_val
 
-            # Load all consumer_goods from normalized user_economy
+            # Load all consumer_goods and rations from normalized user_economy
             cg_map = {}
+            rations_map = {}
             dbdict.execute(
                 """
-                SELECT ue.user_id, COALESCE(ue.quantity, 0) AS consumer_goods
+                SELECT ue.user_id, rd.name, COALESCE(ue.quantity, 0) AS quantity
                 FROM user_economy ue
                 JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-                WHERE ue.user_id = ANY(%s) AND rd.name = 'consumer_goods'
+                WHERE ue.user_id = ANY(%s) AND rd.name IN ('consumer_goods', 'rations')
                 """,
                 (all_user_ids,),
             )
             for row in dbdict.fetchall():
                 if isinstance(row, dict):
-                    cg_map[
-                        row.get("user_id")
-                        or row.get("id")
-                        or row.get("Id")
-                        or row.get("ID")
-                    ] = (row.get("consumer_goods") or 0)
+                    uid = row.get("user_id") or row.get("id") or row.get("Id") or row.get("ID")
+                    rname = row.get("name")
+                    qty = row.get("quantity") or 0
                 else:
                     uid = row[0]
-                    cg_val = row[1] if len(row) > 1 else 0
-                    cg_map[uid] = cg_val
+                    rname = row[1]
+                    qty = row[2] if len(row) > 2 else 0
+
+                if rname == "consumer_goods":
+                    cg_map[uid] = qty
+                elif rname == "rations":
+                    rations_map[uid] = qty
 
             # Load all policies
             policies_map = {}
@@ -1082,7 +1085,8 @@ def tax_income():
             # Preload consumer-goods distribution capacity (user-level)
             # to avoid per-user DB queries via consumer_goods_distribution_capacity().
             cg_dist_cap_map = {}
-            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+            rations_dist_cap_map = {}
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION or variables.FEATURE_RATIONS_DISTRIBUTION:
                 dbdict.execute(
                     """
                     SELECT ub.user_id, bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
@@ -1092,7 +1096,7 @@ def tax_income():
                     WHERE ub.user_id = ANY(%s)
                       AND bd.name IN (
                           'distribution_centers', 'malls',
-                          'general_stores', 'gas_stations'
+                          'general_stores', 'gas_stations', 'farmers_markets'
                       )
                     GROUP BY ub.user_id, bd.name
                     """,
@@ -1107,11 +1111,22 @@ def tax_income():
                         uid = row[0]
                         bname = row[1]
                         qty = row[2] if len(row) > 2 else 0
-                    cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
-                        bname,
-                        variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT,
-                    )
-                    cg_dist_cap_map[uid] = cg_dist_cap_map.get(uid, 0) + qty * cap
+                    
+                    if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+                        cap_cg = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
+                            bname,
+                            0,
+                        )
+                        if cap_cg > 0:
+                            cg_dist_cap_map[uid] = cg_dist_cap_map.get(uid, 0) + qty * cap_cg
+
+                    if variables.FEATURE_RATIONS_DISTRIBUTION:
+                        cap_rations = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
+                            bname,
+                            0,
+                        )
+                        if cap_rations > 0:
+                            rations_dist_cap_map[uid] = rations_dist_cap_map.get(uid, 0) + qty * cap_rations
 
             # Preload coalition membership + tax rates for alliance tax
             coalition_tax_map = {}  # user_id -> (colId, tax_rate)
@@ -1227,6 +1242,21 @@ def tax_income():
                             cg_multiplier = consumer_goods / max_cg
                             income *= 1 + (0.5 * cg_multiplier)
                             removed_consumer_goods = int(consumer_goods)
+
+                # APPLY RATIONS (FOOD) TAX PENALTY
+                current_rations = rations_map.get(user_id, 0)
+                total_population = sum(p[0] for p in provinces)
+                needed_rations = max(int(total_population // variables.RATIONS_PER), 1)
+                
+                if variables.FEATURE_RATIONS_DISTRIBUTION:
+                    r_dist_cap = rations_dist_cap_map.get(user_id, 0)
+                    effective_rations = min(current_rations, r_dist_cap)
+                else:
+                    effective_rations = current_rations
+                
+                rcp = min(0.0, (effective_rations / needed_rations) - 1.0)
+                food_tax_multiplier = 1.0 + (rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER))
+                income *= food_tax_multiplier
 
                 money = int(math.floor(income))
 
@@ -1673,7 +1703,13 @@ def population_growth():  # Function for growing population
 
             newPop = int(round((maxPop / 100) * growth_rate))
 
-            fullPop = int(curPop + newPop)
+            starvation_deaths = 0
+            if rations_ratio < 1.0:
+                # Up to 1% of the current population dies per hour at 0 rations
+                starvation_rate = (1.0 - rations_ratio) * 0.01
+                starvation_deaths = int(round(curPop * starvation_rate))
+
+            fullPop = int(curPop + newPop - starvation_deaths)
             if fullPop < 0:
                 fullPop = 0
 
