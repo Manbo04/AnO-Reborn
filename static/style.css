@@ -5119,6 +5119,10 @@ body.game-shell-active .templatecontainer {
     padding-bottom: var(--game-space-md);
 }
 
+body.game-shell-active .templatediv {
+    margin-top: var(--game-space-md);
+}
+
 /* Compact resource HUD (below fixed navbar) */
 .game-hud {
     display: none;
@@ -5141,7 +5145,7 @@ body.game-shell-active .templatecontainer {
 }
 
 body.game-shell-active .game-hud {
-    display: none !important;
+    display: flex;
 }
 
 .game-hud-chip {
@@ -5477,12 +5481,20 @@ body.province-base-view-active .provincetopper {
 }
 
 body.province-base-view-active .templatediv {
-    margin-top: 96px;
+    margin-top: var(--game-space-md);
+}
+
+body.game-shell-active.province-base-view-active .templatediv {
+    margin-top: var(--game-space-sm);
 }
 
 @media (min-width: 856px) {
     body.province-base-view-active .templatediv {
-        margin-top: 80px;
+        margin-top: var(--game-space-md);
+    }
+
+    body.game-shell-active.province-base-view-active .templatediv {
+        margin-top: var(--game-space-sm);
     }
 }
 
@@ -5533,13 +5545,19 @@ body.province-base-view-active .templatediv {
 }
 
 .province-base-title-block h2 {
-    margin: 0 0 6px;
+    margin: 0;
 }
 
 .province-base-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    display: contents;
+}
+
+.province-base-vitals {
+    grid-area: vitals;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
 }
 
 .province-stat-chip {
@@ -5618,6 +5636,7 @@ body.province-base-view-active .templatediv {
     grid-template-columns: 1fr auto;
     grid-template-areas:
         "title toggle"
+        "meta meta"
         "vitals vitals";
     align-items: start;
     gap: var(--game-space-sm) var(--game-space-md);
@@ -5630,6 +5649,14 @@ body.province-base-view-active .templatediv {
 .province-base-title-block {
     grid-area: title;
     min-width: 0;
+}
+
+.province-base-meta {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
 }
 
 .province-base-header h2 {
@@ -5653,17 +5680,8 @@ body.province-base-view-active .templatediv {
     align-self: start;
 }
 
-.province-base-vitals {
-    grid-area: vitals;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    width: 100%;
-}
-
 .province-vital {
-    flex: 1;
-    min-width: 72px;
+    min-width: 0;
 }
 
 .province-vital-label {
@@ -5709,18 +5727,13 @@ body.province-base-view-active .templatediv {
 
 @media (min-width: 900px) {
     .province-base-header {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
-        grid-template-areas: "title vitals toggle";
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 2fr) auto;
+        grid-template-areas: "title meta vitals toggle";
         align-items: center;
     }
 
     .province-base-vitals {
-        flex-wrap: nowrap;
-        justify-content: center;
-    }
-
-    .province-vital {
-        max-width: 160px;
+        grid-template-columns: repeat(3, minmax(72px, 1fr));
     }
 }
 
@@ -5935,7 +5948,7 @@ body.province-base-view-active .templatediv {
 .province-map-node:hover,
 .province-map-node:focus-visible,
 .province-map-node.is-selected {
-    transform: scale(1.05);
+    transform: translateY(-2px);
     outline: none;
     z-index: 5;
 }
@@ -6299,6 +6312,7 @@ body.province-base-view-active .templatediv {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     min-height: 0;
     max-height: min(72vh, calc(100dvh - var(--game-navbar-height, 55px) - 48px));
 }
@@ -6461,9 +6475,28 @@ body.province-base-view-active .templatediv {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Hide legacy phaser canvas */
+/* Hide legacy phaser canvas (optional phaser mode) */
 .province-base-canvas-wrap {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
     display: none !important;
+    touch-action: none;
+}
+
+body.province-base-phaser-active .province-base-canvas-wrap {
+    display: block !important;
+    min-height: 220px;
+}
+
+body.province-base-phaser-active .province-map-nodes {
+    display: none;
+}
+
+#province-base-canvas {
+    width: 100%;
+    height: 100%;
 }
 
 body.game-reduced-motion .province-map-node,

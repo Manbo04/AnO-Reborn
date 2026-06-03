@@ -12,6 +12,10 @@ REQUIRED_SELECTORS = (
     ".quick-link-card",
     "--game-space-md",
 )
+FORBIDDEN_IN_BUNDLE = (
+    "province-base.css",
+    "static/css/province-base.css",
+)
 
 
 def main() -> int:
@@ -25,6 +29,10 @@ def main() -> int:
     missing = [s for s in REQUIRED_SELECTORS if s not in text]
     if missing:
         print(f"style.css missing bundled selectors: {missing}", file=sys.stderr)
+        return 1
+    dupes = [s for s in FORBIDDEN_IN_BUNDLE if s in text.split(MARKER)[1]]
+    if dupes:
+        print(f"style.css must not bundle deprecated files: {dupes}", file=sys.stderr)
         return 1
     print(f"OK: game UI bundle present ({len(text)} bytes)")
     return 0
