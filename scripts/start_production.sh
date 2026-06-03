@@ -55,19 +55,32 @@ fi
 
 export ANO_BOOT_DONE=1
 
-echo "[start] Starting gunicorn on :${PORT}..."
-exec gunicorn \
-  --bind "0.0.0.0:${PORT}" \
-  --preload \
-  --workers 4 \
-  --threads 4 \
-  --worker-class gthread \
-  --timeout 120 \
-  --graceful-timeout 15 \
-  --access-logfile - \
-  --error-logfile - \
-  --log-level info \
-  --keep-alive 30 \
-  --max-requests 1000 \
-  --max-requests-jitter 100 \
-  wsgi:app
+SERVICE_NAME="${RAILWAY_SERVICE_NAME:-web}"
+
+if [[ "$SERVICE_NAME" == *"worker"* ]] || [[ "$SERVICE_NAME" == *"celery"* ]]; then
+  echo "[start] Starting Celery worker for service $SERVICE_NAME..."
+  exec celery -A tasks worker --loglevel=INFO
+elif [[ "$SERVICE_NAME" == *"beat"* ]]; then
+  echo "[start] Starting Celery beat for service $SERVICE_NAME..."
+  exec python3 scripts/run_beat_if_leader.py
+elif [[ "$SERVICE_NAME" == *"bot"* ]] || [[ "$SERVICE_NAME" == *"discord"* ]]; then
+  echo "[start] Starting Discord bot for service $SERVICE_NAME..."
+  exec python3 scripts/run_discord_bot_if_leader.py
+else
+  echo "[start] Starting gunicorn on :${PORT} for service $SERVICE_NAME..."
+  exec gunicorn \
+    --bind "0.0.0.0:${PORT}" \
+    --preload \
+    --workers 4 \
+    --threads 4 \
+    --worker-class gthread \
+    --timeout 120 \
+    --graceful-timeout 15 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    --keep-alive 30 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    wsgi:app
+fi
