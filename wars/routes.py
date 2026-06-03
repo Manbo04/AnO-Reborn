@@ -1221,5 +1221,251 @@ def find_targets():
     return redirect(f"/country/id={defender_id}")
 
 
-# ...existing code for peace_offers and send_peace_offer will be moved here next...
-# War-related Flask routes will be moved here during refactor
+@wars_bp.route("/nuclear_strike", methods=["POST"])
+@login_required
+def nuclear_strike():
+    attacker_id = session["user_id"]
+    try:
+        target_id = int(request.form.get("target_id"))
+        weapon_type = request.form.get("weapon_type")
+    except (TypeError, ValueError):
+        return error(400, "Invalid payload")
+
+    if attacker_id == target_id:
+        return error(400, "You cannot nuke yourself!")
+
+    if weapon_type not in ["nuke", "icbm"]:
+        return error(400, "Invalid weapon type")
+
+    weapon_name = "nukes" if weapon_type == "nuke" else "icbms"
+
+    with get_request_cursor() as db:
+        # Check weapon quantity
+        db.execute(
+            """
+            SELECT um.quantity, ud.unit_id 
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = %s
+            """,
+            (attacker_id, weapon_name)
+        )
+        row = db.fetchone()
+        if not row or row[0] <= 0:
+            return error(400, f"You don't have any {weapon_name}!")
+            
+        qty = row[0]
+        unit_id = row[1]
+
+        # Use 1 weapon
+        db.execute(
+            "UPDATE user_military SET quantity = quantity - 1 WHERE user_id = %s AND unit_id = %s",
+            (attacker_id, unit_id)
+        )
+
+        # Apply massive damage to target
+        db.execute(
+            """
+            UPDATE provinces
+            SET population = GREATEST(1000, population * 0.5),
+                happiness = 0,
+                consumer_spending = GREATEST(0, consumer_spending - 50)
+            WHERE userId = %s
+            """,
+            (target_id,)
+        )
+        
+        # Destroy target user_buildings
+        db.execute(
+            """
+            UPDATE user_buildings
+            SET quantity = GREATEST(0, quantity - CEIL(quantity * 0.4))
+            WHERE user_id = %s
+            """,
+            (target_id,)
+        )
+
+        # Attacker global diplomatic penalty
+        db.execute(
+            "UPDATE provinces SET happiness = 0 WHERE userId = %s",
+            (attacker_id,)
+        )
+
+        # Log to news
+        weapon_display = "Nuclear Weapon" if weapon_type == "nuke" else "ICBM"
+        db.execute("SELECT username FROM users WHERE id=%s", (attacker_id,))
+        attacker_row = db.fetchone()
+        attacker_name = attacker_row[0] if attacker_row else "Unknown"
+        
+        db.execute("SELECT username FROM users WHERE id=%s", (target_id,))
+        target_row = db.fetchone()
+        target_name = target_row[0] if target_row else "Unknown"
+
+        news_text = f"🚨 {attacker_name} has launched a {weapon_display} at {target_name}! Millions have perished and cities are in ruins."
+        db.execute(
+            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'NUCLEAR STRIKE', %s)",
+            (0, news_text) # Global news (userId = 0)
+        )
+
+        # Personal news to target
+        personal_news = f"Your country was struck by a {weapon_display} launched by {attacker_name}! Your population has been decimated and happiness is 0."
+        db.execute(
+            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'NUCLEAR STRIKE', %s)",
+            (target_id, personal_news)
+        )
+
+    return redirect(f"/country/id={target_id}")
+
+@wars_bp.route("/strategic_airstrike", methods=["POST"])
+@login_required
+def strategic_airstrike():
+    attacker_id = session["user_id"]
+    try:
+        target_id = int(request.form.get("target_id"))
+        strike_target = request.form.get("strike_target")
+        bombers_count = int(request.form.get("bombers_count"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid payload")
+
+    if attacker_id == target_id:
+        return error(400, "You cannot bomb yourself!")
+
+    if strike_target not in ["silo", "nuclear_testing_facility"]:
+        return error(400, "Invalid target")
+
+    if bombers_count <= 0:
+        return error(400, "Must send at least 1 bomber.")
+
+    with get_request_cursor() as db:
+        # Check attacker bombers
+        db.execute(
+            """
+            SELECT um.quantity, ud.unit_id 
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = 'bombers'
+            """,
+            (attacker_id,)
+        )
+        row = db.fetchone()
+        if not row or row[0] < bombers_count:
+            return error(400, "You don't have enough bombers!")
+        bombers_unit_id = row[1]
+
+        # Get defender fighters
+        db.execute(
+            """
+            SELECT um.quantity, ud.unit_id 
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = 'fighters'
+            """,
+            (target_id,)
+        )
+        def_row = db.fetchone()
+        defender_fighters = def_row[0] if def_row else 0
+        fighters_unit_id = def_row[1] if def_row else None
+
+        import random
+        # Interception Logic with RNG
+        # Fighters have a random effectiveness multiplier (0.5x to 1.5x)
+        fighter_effectiveness = random.uniform(0.5, 1.5)
+        intercept_capacity = int(defender_fighters * fighter_effectiveness)
+        
+        lost_bombers = min(bombers_count, intercept_capacity)
+        surviving_bombers = bombers_count - lost_bombers
+        
+        # Defenders lose some fighters in the dogfight (10% to 40% of engaged fighters)
+        engaged_fighters = min(defender_fighters, bombers_count)
+        casualty_rate = random.uniform(0.1, 0.4)
+        lost_fighters = int(engaged_fighters * casualty_rate)
+
+        # Update attacker bombers
+        # The attacker sends `bombers_count`. The surviving ones return. We only deduct `lost_bombers`.
+        db.execute(
+            "UPDATE user_military SET quantity = quantity - %s WHERE user_id = %s AND unit_id = %s",
+            (lost_bombers, attacker_id, bombers_unit_id)
+        )
+
+        # Update defender fighters
+        if lost_fighters > 0 and fighters_unit_id:
+            db.execute(
+                "UPDATE user_military SET quantity = quantity - %s WHERE user_id = %s AND unit_id = %s",
+                (lost_fighters, target_id, fighters_unit_id)
+            )
+
+        success = False
+        damage_report = ""
+
+        if surviving_bombers > 0:
+            # Bombing payload damage is randomized (0.7x to 1.3x)
+            bombing_power = surviving_bombers * random.uniform(0.7, 1.3)
+            
+            if strike_target == "silo":
+                # 15 damage points needed to destroy 1 silo
+                db.execute(
+                    "SELECT ub.quantity, ub.building_id FROM user_buildings ub JOIN building_dictionary bd ON ub.building_id = bd.building_id WHERE ub.user_id = %s AND bd.name = 'silos'",
+                    (target_id,)
+                )
+                s_row = db.fetchone()
+                if s_row and s_row[0] > 0:
+                    silos_count = s_row[0]
+                    silo_building_id = s_row[1]
+                    destroyed_silos = min(silos_count, int(bombing_power // 15))
+                    if destroyed_silos > 0:
+                        db.execute(
+                            "UPDATE user_buildings SET quantity = quantity - %s WHERE user_id = %s AND building_id = %s",
+                            (destroyed_silos, target_id, silo_building_id)
+                        )
+                        success = True
+                        damage_report = f"destroyed {destroyed_silos} Missile Silo(s)"
+                    else:
+                        damage_report = "dropped their payload but failed to penetrate the silo's reinforced armor due to poor accuracy or glancing hits"
+                else:
+                    damage_report = "found no silos to destroy"
+            
+            elif strike_target == "nuclear_testing_facility":
+                # 50 damage points needed to destroy the tech
+                db.execute(
+                    "SELECT ut.tech_id FROM user_tech ut JOIN tech_dictionary td ON ut.tech_id = td.tech_id WHERE ut.user_id = %s AND td.name = 'nuclear_testing_facility' AND ut.is_unlocked = TRUE",
+                    (target_id,)
+                )
+                t_row = db.fetchone()
+                if t_row:
+                    if bombing_power >= 50:
+                        tech_id = t_row[0]
+                        db.execute(
+                            "UPDATE user_tech SET is_unlocked = FALSE WHERE user_id = %s AND tech_id = %s",
+                            (target_id, tech_id)
+                        )
+                        success = True
+                        damage_report = "landed direct hits and completely destroyed their Nuclear Testing Facility!"
+                    else:
+                        damage_report = "dropped their payloads but failed to deal enough concentrated damage to destroy the massive Nuclear Testing Facility"
+                else:
+                    damage_report = "found no operational facility"
+        else:
+            damage_report = "were completely wiped out by defending fighters before reaching the target"
+
+        # News
+        db.execute("SELECT username FROM users WHERE id=%s", (attacker_id,))
+        attacker_row = db.fetchone()
+        attacker_name = attacker_row[0] if attacker_row else "Unknown"
+        
+        db.execute("SELECT username FROM users WHERE id=%s", (target_id,))
+        target_row = db.fetchone()
+        target_name = target_row[0] if target_row else "Unknown"
+
+        attacker_news = f"Your strategic airstrike on {target_name} ({strike_target.replace('_', ' ').title()}) had {surviving_bombers} bombers penetrate the airspace. You lost {lost_bombers} bombers. Result: {damage_report}."
+        defender_news = f"{attacker_name} launched an airstrike against your {strike_target.replace('_', ' ').title()}! Your fighters shot down {lost_bombers} bombers (losing {lost_fighters} fighters). Result: The enemy {damage_report}."
+
+        db.execute(
+            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'flight', 'AIRSTRIKE RESULT', %s)",
+            (attacker_id, attacker_news)
+        )
+        db.execute(
+            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'UNDER ATTACK', %s)",
+            (target_id, defender_news)
+        )
+
+    return redirect(f"/country/id={target_id}")

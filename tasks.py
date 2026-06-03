@@ -3101,6 +3101,11 @@ def generate_province_revenue():  # Runs each hour
                 # (to apply after batch writes)
                 debuff_info = workforce_debuffs.get(user_id, {"happiness_penalty": 0})
                 unemployment_penalty = debuff_info.get("happiness_penalty", 0)
+                
+                # Apply Widespread Propaganda: completely nullify unemployment happiness penalty
+                if upgrades.get("widespreadpropaganda"):
+                    unemployment_penalty = 0
+                    
                 if unemployment_penalty > 0 and province_id in provinces_data:
                     # Reduce happiness by unemployment penalty
                     current_hap = provinces_data[province_id].get("happiness", 50)
