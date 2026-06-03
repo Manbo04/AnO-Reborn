@@ -933,17 +933,29 @@ def province_sell_buy(way, units, province_id):
         if wantedUnits < 1:
             return error(400, "Units cannot be less than 1")
 
-        def sum_cost_linear(
-            base_price, increment_per_item, current_owned, num_purchased
+        def sum_cost_capped_linear(
+            base_price, increment_per_item, current_owned, num_purchased, cap_threshold
         ):
-            """Linear pricing: O(1) closed-form for arithmetic sum.
-            Sum over i=0..n-1 of (basePrice + (currentOwned + i) * increment).
-            Uses closed-form to avoid O(n) loops.
+            """Linear pricing with a hard cap: O(1) closed-form calculation.
+            Sum over i=0..n-1 of min(basePrice + (currentOwned + i) * increment, MaxPrice).
             """
-            total_cost = num_purchased * base_price + increment_per_item * (
-                num_purchased * current_owned + num_purchased * (num_purchased - 1) / 2
-            )
-            return round(total_cost)
+            max_price = base_price + (cap_threshold * increment_per_item)
+            total_cost = 0
+
+            # Calculate how many units we are buying BEFORE hitting the cap
+            uncapped_purchases = 0
+            if current_owned < cap_threshold:
+                uncapped_purchases = min(num_purchased, cap_threshold - current_owned)
+                total_cost += uncapped_purchases * base_price + increment_per_item * (
+                    uncapped_purchases * current_owned + (uncapped_purchases * (uncapped_purchases - 1)) // 2
+                )
+            
+            # Calculate how many units we are buying AFTER hitting the cap
+            capped_purchases = num_purchased - uncapped_purchases
+            if capped_purchases > 0:
+                total_cost += capped_purchases * max_price
+
+            return int(total_cost)
 
         # Fetch cityCount and land in one query (reused later for currentUnits)
         db.execute(
@@ -955,14 +967,16 @@ def province_sell_buy(way, units, province_id):
         current_land = int(_prov_row[1] or 0) if _prov_row else 0
 
         if units == "cityCount":
-            cityCount_price = sum_cost_linear(
-                750000, 50000, current_cityCount, wantedUnits
+            cityCount_price = sum_cost_capped_linear(
+                750000, 50000, current_cityCount, wantedUnits, cap_threshold=200
             )
         else:
             cityCount_price = 0
 
         if units == "land":
-            land_price = sum_cost_linear(520000, 25000, current_land, wantedUnits)
+            land_price = sum_cost_capped_linear(
+                520000, 25000, current_land, wantedUnits, cap_threshold=100
+            )
         else:
             land_price = 0
 
