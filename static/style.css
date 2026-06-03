@@ -6618,6 +6618,58 @@ body.game-reduced-motion .province-base-particles span {
     margin: 0;
 }
 
+.country-demographics-fallback {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+}
+
+.country-demographics-fallback-row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.country-demographics-fallback-name {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.country-demographics-fallback-stack {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.country-demographics-fallback-stack .segment-children {
+    background: rgba(54, 162, 235, 0.9);
+}
+
+.country-demographics-fallback-stack .segment-working {
+    background: rgba(75, 192, 92, 0.9);
+}
+
+.country-demographics-fallback-stack .segment-elderly {
+    background: rgba(220, 88, 88, 0.9);
+}
+
+.country-demographics-fallback-total {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.country-demographics-empty {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
 @media (max-width: 1200px) {
     .country-overview-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
