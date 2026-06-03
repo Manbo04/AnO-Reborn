@@ -1,6 +1,60 @@
 /**
  * Country page — mobile game hub
  */
+.country-overview-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+}
+
+.country-overview-grid .material-icons-outlined {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+}
+
+.country-demographics-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+    padding: 10px 12px 12px;
+}
+
+.country-demographics-subtitle {
+    margin: -2px 0 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.country-demographics-chart-wrap {
+    position: relative;
+    min-height: 240px;
+    height: 260px;
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    background: rgba(0, 0, 0, 0.12);
+    padding: 8px;
+}
+
+.country-demographics-chart-wrap .chart-canvas-responsive {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0;
+}
+
+@media (max-width: 1200px) {
+    .country-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .country-overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 857px) {
     body.game-shell-active .game-country-hub {
         display: grid;
