@@ -212,7 +212,7 @@
     },
     "money": {
       "legacy": "resmoney.png",
-      "path": "images/game/resources/money.svg"
+      "path": "images/game/resources/money.png"
     },
     "rations": {
       "legacy": "resrations.png",
@@ -224,35 +224,35 @@
     },
     "coal": {
       "legacy": "rescoal.png",
-      "path": "images/game/resources/coal.svg"
+      "path": "images/game/resources/coal.png"
     },
     "uranium": {
       "legacy": "resuranium.png",
-      "path": "images/game/resources/uranium.svg"
+      "path": "images/game/resources/uranium.png"
     },
     "bauxite": {
       "legacy": "resbauxite.png",
-      "path": "images/game/resources/bauxite.svg"
+      "path": "images/game/resources/bauxite.png"
     },
     "iron": {
       "legacy": "resiron.png",
-      "path": "images/game/resources/iron.svg"
+      "path": "images/game/resources/iron.png"
     },
     "lead": {
       "legacy": "reslead.png",
-      "path": "images/game/resources/lead.svg"
+      "path": "images/game/resources/lead.png"
     },
     "copper": {
       "legacy": "rescopper.png",
-      "path": "images/game/resources/copper.svg"
+      "path": "images/game/resources/copper.png"
     },
     "lumber": {
       "legacy": "reslumber.png",
-      "path": "images/game/resources/lumber.svg"
+      "path": "images/game/resources/lumber.png"
     },
     "components": {
       "legacy": "rescomponents.png",
-      "path": "images/game/resources/components.svg"
+      "path": "images/game/resources/components.png"
     },
     "steel": {
       "legacy": "ressteel.png",
@@ -264,15 +264,15 @@
     },
     "aluminium": {
       "legacy": "resaluminium.png",
-      "path": "images/game/resources/aluminium.svg"
+      "path": "images/game/resources/aluminium.png"
     },
     "gasoline": {
       "legacy": "resgasoline.png",
-      "path": "images/game/resources/gasoline.svg"
+      "path": "images/game/resources/gasoline.png"
     },
     "ammunition": {
       "legacy": "resammunition.png",
-      "path": "images/game/resources/ammunition.svg"
+      "path": "images/game/resources/ammunition.png"
     }
   },
   "biomes": {
