@@ -1256,6 +1256,19 @@ def inject_user():
 
 
 
+@app.route("/debug-migrate-population")
+def debug_migrate_population():
+    from database import get_db_cursor
+    try:
+        with get_db_cursor() as db:
+            db.execute("ALTER TABLE provinces ALTER COLUMN population TYPE BIGINT;")
+            db.execute("ALTER TABLE provinces ALTER COLUMN pop_children TYPE BIGINT;")
+            db.execute("ALTER TABLE provinces ALTER COLUMN pop_working TYPE BIGINT;")
+            db.execute("ALTER TABLE provinces ALTER COLUMN pop_elderly TYPE BIGINT;")
+            return "Migration to BIGINT successful!"
+    except Exception as e:
+        return f"Error: {e}"
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     # home page when a session exists or to help test clients detect cookie
