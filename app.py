@@ -1256,22 +1256,6 @@ def inject_user():
 
 @app.route("/debug-discord-99")
 def debug_discord():
-    from database import get_db_cursor
-    try:
-        with get_db_cursor(read_only=True) as db:
-            db.execute("SELECT id, username, discord_id FROM users WHERE username ILIKE '%%dede%%' OR username ILIKE '%%manbo04%%' LIMIT 10;")
-            rows = db.fetchall()
-            if not rows:
-                return "No users found."
-            output = ""
-            for row in rows:
-                output += f"ID: {row[0]}, Username: {row[1]}, Discord: {row[2]}\\n"
-            return "<pre>" + output + "</pre>"
-    except Exception as e:
-        return str(e)
-
-@app.route("/debug-discord-99")
-def debug_discord():
     from database import get_db_cursor, users_table_has_column
     try:
         has_col = users_table_has_column("discord_id")
@@ -1286,6 +1270,7 @@ def debug_discord():
             return "<pre>" + output + "</pre>"
     except Exception as e:
         return str(e)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
