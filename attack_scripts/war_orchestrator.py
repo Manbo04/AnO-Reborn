@@ -166,7 +166,12 @@ def persist_fight_results(
                 from attack_scripts.Nations import Nation, Economy
 
                 Nation.set_peace(db, connection, war_id)
-                # Transfer 20% of every resource from loser to winner
+                # Check for Looting Teams upgrade
+                from upgrades import get_upgrades
+                winner_upgrades = get_upgrades(winner.user_id, db=connection)
+                loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
+
+                # Transfer resources from loser to winner
                 for resource in Economy.resources:
                     db.execute(
                         """
@@ -179,7 +184,7 @@ def persist_fight_results(
                         (loser.user_id, resource),
                     )
                     resource_amount = fetchone_first(db, 0) or 0
-                    transfer_amount = int(resource_amount * 0.2)
+                    transfer_amount = int(resource_amount * loot_multiplier)
 
                     db.execute(
                         """

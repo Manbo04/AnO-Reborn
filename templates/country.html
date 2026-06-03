@@ -2027,6 +2027,66 @@
                 <input class="templatedivbutton templatecenteredbutton" type="submit" value="Declare">
                 -->
         </form>
+        
+        {% if (nuke_count and nuke_count > 0) or (icbm_count and icbm_count > 0) %}
+        <form action="/nuclear_strike" method="POST" onsubmit="return confirm('WARNING: Launching a nuclear strike will wipe out a massive portion of the target\'s population and infrastructure, but will reduce your own happiness to 0 and incur a massive diplomatic penalty. Are you absolutely sure?');">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ff4444;">Nuclear Strike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="weapon_type">Weapon</label>
+                        <select class="templateselect" name="weapon_type">
+                            {% if icbm_count and icbm_count > 0 %}
+                            <option value="icbm" class="templateoption">ICBM ({{ icbm_count }} available) - Ignore Distance</option>
+                            {% endif %}
+                            {% if nuke_count and nuke_count > 0 %}
+                            <option value="nuke" class="templateoption">Nuke ({{ nuke_count }} available) - Requires War</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ff4444; border-color: #cc0000; color: white;">
+                            <span class="material-icons-outlined">warning</span> LAUNCH
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+        
+        {% if attacker_bombers > 0 and (target_silos > 0 or target_has_nuclear_facility) %}
+        <form action="/strategic_airstrike" method="POST">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ffaa00;">Strategic Airstrike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="strike_target">Target Facility</label>
+                        <select class="templateselect" name="strike_target">
+                            {% if target_has_nuclear_facility %}
+                            <option value="nuclear_testing_facility" class="templateoption">Nuclear Testing Facility</option>
+                            {% endif %}
+                            {% if target_silos > 0 %}
+                            <option value="silo" class="templateoption">Missile Silos ({{ target_silos }} targets)</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left">
+                        <label for="bombers_count">Bombers (Max: {{ attacker_bombers }})</label>
+                        <input class="loginsignupinput" type="number" name="bombers_count" min="1" max="{{ attacker_bombers }}" required placeholder="e.g. 50" />
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ffaa00; color: #333;">
+                            <span class="material-icons-outlined">flight_takeoff</span> ATTACK
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #888;">Note: Defender fighters may intercept your bombers. Facilities are highly reinforced and require many surviving bombers to destroy.</p>
+            </div>
+        </form>
+        {% endif %}
+
         <form action="/spyResult" method="POST">
             <input type="hidden" name="country" value="{{ cId }}">
             <h2 class="templatecontentheaderleft ">Espionage</h2>

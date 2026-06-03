@@ -311,6 +311,12 @@ def compute_display_limits(cId, units_row=None, db=None):
     upgrades = get_upgrades(cId, db=db)
     if upgrades.get("increasedfunding"):
         spies = int(spies * 1.4)
+        
+    if not upgrades.get("icbmsilo"):
+        icbms = 0
+        
+    if not upgrades.get("nucleartestingfacility"):
+        nukes = 0
 
     return {
         "soldiers": soldiers,
