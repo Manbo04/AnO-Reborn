@@ -1,12 +1,13 @@
-# Stylesheet layout
+# Game UI CSS
 
-| File | Role |
-|------|------|
-| `tokens.css` | Game UI design tokens (spacing, radii, HUD heights) |
-| `game-shell.css` | Mobile bottom nav, resource HUD, cards |
-| `province-base.css` | Phaser canvas container |
-| `game-war.css` | War / unit selection mobile polish |
-| `game-country.css` | Country home hub (mobile) |
-| `../style.css` | Legacy monolith (navbar, tables, province tabs) |
+| File | Purpose |
+|------|---------|
+| `tokens.css` | Design tokens (--game-space-*, radii, HUD heights) |
+| `game-shell.css` | Resource HUD, mobile shell, bottom nav |
+| `game-experience.css` | Province base view, district map, build sheet |
+| `game-country.css` | Country hub cards |
+| `game-war.css` | War unit cards |
 
-New game UI should go in dedicated files above; avoid growing `style.css` further.
+Run `python3 scripts/bundle_game_css.py` after editing any file above (appends into `static/style.css`).
+
+`province-base.css` is deprecated — rules live in `game-experience.css`.
