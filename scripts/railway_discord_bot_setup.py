@@ -41,6 +41,7 @@ def _gql(token: str, query: str, variables: dict | None = None) -> dict:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
+            "User-Agent": "python-urllib/railway-setup-helper",
         },
         method="POST",
     )
