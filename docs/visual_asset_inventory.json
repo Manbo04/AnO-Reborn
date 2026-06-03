@@ -1,0 +1,1559 @@
+{
+  "generated_from_commit": null,
+  "known_assets": {
+    "mapping_keys": {
+      "buildings": [
+        "admin_buildings",
+        "aerodomes",
+        "aluminium_refineries",
+        "ammunition_factories",
+        "army_bases",
+        "banks",
+        "bauxite_mines",
+        "city_parks",
+        "coal_burners",
+        "coal_mines",
+        "component_factories",
+        "copper_mines",
+        "distribution_centers",
+        "farmers_markets",
+        "farms",
+        "gas_stations",
+        "general_stores",
+        "harbours",
+        "high_school",
+        "hospitals",
+        "hydro_dams",
+        "industrial_district",
+        "iron_mines",
+        "lead_mines",
+        "libraries",
+        "lumber_mills",
+        "malls",
+        "monorails",
+        "nuclear_reactors",
+        "oil_burners",
+        "oil_refineries",
+        "primary_school",
+        "pumpjacks",
+        "silos",
+        "solar_fields",
+        "steel_mills",
+        "universities",
+        "uranium_mines"
+      ],
+      "units": [
+        "artillery",
+        "attack_helicopters",
+        "bombers",
+        "cruisers",
+        "destroyers",
+        "fighter_jets",
+        "icbms",
+        "nukes",
+        "soldiers",
+        "spies",
+        "submarines",
+        "tanks"
+      ],
+      "resources": [
+        "aluminium",
+        "ammunition",
+        "bauxite",
+        "coal",
+        "components",
+        "consumer_goods",
+        "copper",
+        "gasoline",
+        "gold",
+        "iron",
+        "lead",
+        "lumber",
+        "money",
+        "oil",
+        "rations",
+        "steel",
+        "uranium"
+      ],
+      "biomes": [
+        "boreal forest",
+        "borealforest",
+        "desert",
+        "grassland",
+        "jungle",
+        "mountain range",
+        "mountainrange",
+        "savanna",
+        "tundra"
+      ]
+    },
+    "manifest_paths": {
+      "buildings": {
+        "coal_burners": "images/game/buildings/coal_burners.svg",
+        "oil_burners": "images/game/buildings/oil_burners.svg",
+        "solar_fields": "images/game/buildings/solar_fields.svg",
+        "hydro_dams": "images/game/buildings/hydro_dams.svg",
+        "nuclear_reactors": "images/game/buildings/nuclear_reactors.svg",
+        "gas_stations": "images/game/buildings/gas_stations.svg",
+        "general_stores": "images/game/buildings/general_stores.svg",
+        "farmers_markets": "images/game/buildings/farmers_markets.svg",
+        "banks": "images/game/buildings/banks.svg",
+        "malls": "images/game/buildings/malls.svg",
+        "distribution_centers": "images/game/buildings/distribution_centers.svg",
+        "industrial_district": "images/game/buildings/industrial_district.svg",
+        "city_parks": "images/game/buildings/city_parks.svg",
+        "libraries": "images/game/buildings/libraries.svg",
+        "hospitals": "images/game/buildings/hospitals.svg",
+        "universities": "images/game/buildings/universities.svg",
+        "monorails": "images/game/buildings/monorails.svg",
+        "primary_school": "images/game/buildings/primary_school.svg",
+        "high_school": "images/game/buildings/high_school.svg",
+        "army_bases": "images/game/buildings/army_bases.svg",
+        "aerodomes": "images/game/buildings/aerodomes.svg",
+        "harbours": "images/game/buildings/harbours.svg",
+        "admin_buildings": "images/game/buildings/admin_buildings.svg",
+        "silos": "images/game/buildings/silos.svg",
+        "farms": "images/game/buildings/farms.svg",
+        "pumpjacks": "images/game/buildings/pumpjacks.svg",
+        "coal_mines": "images/game/buildings/coal_mines.svg",
+        "bauxite_mines": "images/game/buildings/bauxite_mines.svg",
+        "copper_mines": "images/game/buildings/copper_mines.svg",
+        "uranium_mines": "images/game/buildings/uranium_mines.svg",
+        "lead_mines": "images/game/buildings/lead_mines.svg",
+        "iron_mines": "images/game/buildings/iron_mines.svg",
+        "lumber_mills": "images/game/buildings/lumber_mills.svg",
+        "component_factories": "images/game/buildings/component_factories.svg",
+        "steel_mills": "images/game/buildings/steel_mills.svg",
+        "ammunition_factories": "images/game/buildings/ammunition_factories.svg",
+        "aluminium_refineries": "images/game/buildings/aluminium_refineries.svg",
+        "oil_refineries": "images/game/buildings/oil_refineries.svg"
+      },
+      "units": {
+        "soldiers": "images/game/units/soldiers.svg",
+        "tanks": "images/game/units/tanks.svg",
+        "artillery": "images/game/units/artillery.svg",
+        "fighter_jets": "images/game/units/fighter_jets.svg",
+        "bombers": "images/game/units/bombers.svg",
+        "attack_helicopters": "images/game/units/attack_helicopters.svg",
+        "submarines": "images/game/units/submarines.svg",
+        "cruisers": "images/game/units/cruisers.svg",
+        "destroyers": "images/game/units/destroyers.svg",
+        "spies": "images/game/units/spies.svg",
+        "icbms": "images/game/units/icbms.svg",
+        "nukes": "images/game/units/nukes.svg"
+      },
+      "resources": {
+        "gold": "images/game/resources/gold.svg",
+        "money": "images/game/resources/money.svg",
+        "rations": "images/game/resources/rations.svg",
+        "oil": "images/game/resources/oil.svg",
+        "coal": "images/game/resources/coal.svg",
+        "uranium": "images/game/resources/uranium.svg",
+        "bauxite": "images/game/resources/bauxite.svg",
+        "iron": "images/game/resources/iron.svg",
+        "lead": "images/game/resources/lead.svg",
+        "copper": "images/game/resources/copper.svg",
+        "lumber": "images/game/resources/lumber.svg",
+        "components": "images/game/resources/components.svg",
+        "steel": "images/game/resources/steel.svg",
+        "consumer_goods": "images/game/resources/consumer_goods.svg",
+        "aluminium": "images/game/resources/aluminium.svg",
+        "gasoline": "images/game/resources/gasoline.svg",
+        "ammunition": "images/game/resources/ammunition.svg"
+      },
+      "biomes": {
+        "tundra": "images/game/biomes/tundra.svg",
+        "savanna": "images/game/biomes/savanna.svg",
+        "desert": "images/game/biomes/desert.svg",
+        "jungle": "images/game/biomes/jungle.svg",
+        "boreal forest": "images/game/biomes/boreal_forest.svg",
+        "borealforest": "images/game/biomes/borealforest.svg",
+        "grassland": "images/game/biomes/grassland.svg",
+        "mountain range": "images/game/biomes/mountain_range.svg",
+        "mountainrange": "images/game/biomes/mountainrange.svg"
+      }
+    }
+  },
+  "discovered_usage": {
+    "top_references": [
+      [
+        "images/res",
+        10
+      ],
+      [
+        "images/province.jpg",
+        9
+      ],
+      [
+        "/flag/country/{{",
+        6
+      ],
+      [
+        "images/titleimage.png",
+        5
+      ],
+      [
+        "images/coalition.jpg",
+        4
+      ],
+      [
+        "images/country.jpg",
+        4
+      ],
+      [
+        "images/rescopper_plates.png",
+        4
+      ],
+      [
+        "images/market.jpg",
+        3
+      ],
+      [
+        "images/military.jpg",
+        3
+      ],
+      [
+        "images/upgrades.jpg",
+        3
+      ],
+      [
+        "images/war.jpg",
+        3
+      ],
+      [
+        "/flag/coalition/{{",
+        2
+      ],
+      [
+        "images/4.jpg",
+        2
+      ],
+      [
+        "images/assembly.jpg",
+        2
+      ],
+      [
+        "images/businesses.jpg",
+        2
+      ],
+      [
+        "images/coalitions.jpg",
+        2
+      ],
+      [
+        "images/countries.jpg",
+        2
+      ],
+      [
+        "images/establishcoalition.jpg",
+        2
+      ],
+      [
+        "images/marketoffer.jpg",
+        2
+      ],
+      [
+        "images/peaceTopper.jpg",
+        2
+      ],
+      [
+        "images/provinces.jpg",
+        2
+      ],
+      [
+        "images/recruitment.jpg",
+        2
+      ],
+      [
+        "images/tajmahal.jpg",
+        2
+      ],
+      [
+        "images/tundra.jpg",
+        2
+      ],
+      [
+        "images/washington.jpg",
+        2
+      ],
+      [
+        "/flag/country/{{att",
+        1
+      ],
+      [
+        "/flag/country/{{def",
+        1
+      ],
+      [
+        "images/2.jpg",
+        1
+      ],
+      [
+        "images/advancedmachinery.jpg",
+        1
+      ],
+      [
+        "images/automationintegration.jpg",
+        1
+      ],
+      [
+        "images/ballisticmissilesilo.jpg",
+        1
+      ],
+      [
+        "images/betterengineering.jpg",
+        1
+      ],
+      [
+        "images/bullettrains.jpg",
+        1
+      ],
+      [
+        "images/cheapermaterials.jpg",
+        1
+      ],
+      [
+        "images/file.svg",
+        1
+      ],
+      [
+        "images/governmentregulation.jpg",
+        1
+      ],
+      [
+        "images/highspeedrail.jpg",
+        1
+      ],
+      [
+        "images/increasedfunding.jpg",
+        1
+      ],
+      [
+        "images/intercontinentalballisticmissilesilo.jpg",
+        1
+      ],
+      [
+        "images/largerforges.jpg",
+        1
+      ],
+      [
+        "images/largestorehouses.jpg",
+        1
+      ],
+      [
+        "images/lootingteams.jpg",
+        1
+      ],
+      [
+        "images/nationalhealthinstitution.jpg",
+        1
+      ],
+      [
+        "images/nucleartestingfacility.jpg",
+        1
+      ],
+      [
+        "images/onlineshopping.jpg",
+        1
+      ],
+      [
+        "images/organizedsupplylines.jpg",
+        1
+      ],
+      [
+        "images/strongerexplosives.jpg",
+        1
+      ],
+      [
+        "images/widespreadpropaganda.jpg",
+        1
+      ]
+    ],
+    "per_file_references": {
+      "static/style.css": [
+        [
+          "images/coalition.jpg",
+          3
+        ],
+        [
+          "images/assembly.jpg",
+          2
+        ],
+        [
+          "images/businesses.jpg",
+          2
+        ],
+        [
+          "images/coalitions.jpg",
+          2
+        ],
+        [
+          "images/countries.jpg",
+          2
+        ],
+        [
+          "images/country.jpg",
+          2
+        ],
+        [
+          "images/establishcoalition.jpg",
+          2
+        ],
+        [
+          "images/market.jpg",
+          2
+        ],
+        [
+          "images/marketoffer.jpg",
+          2
+        ],
+        [
+          "images/military.jpg",
+          2
+        ],
+        [
+          "images/peaceTopper.jpg",
+          2
+        ],
+        [
+          "images/province.jpg",
+          2
+        ],
+        [
+          "images/provinces.jpg",
+          2
+        ],
+        [
+          "images/recruitment.jpg",
+          2
+        ],
+        [
+          "images/tundra.jpg",
+          2
+        ],
+        [
+          "images/upgrades.jpg",
+          2
+        ],
+        [
+          "images/war.jpg",
+          2
+        ]
+      ],
+      "templates/coalition.html": [
+        [
+          "/flag/coalition/{{",
+          1
+        ],
+        [
+          "images/file.svg",
+          1
+        ],
+        [
+          "images/tajmahal.jpg",
+          1
+        ]
+      ],
+      "templates/country.html": [
+        [
+          "/flag/country/{{",
+          2
+        ],
+        [
+          "images/province.jpg",
+          2
+        ],
+        [
+          "/flag/coalition/{{",
+          1
+        ],
+        [
+          "images/country.jpg",
+          1
+        ],
+        [
+          "images/tajmahal.jpg",
+          1
+        ]
+      ],
+      "templates/createprovince.html": [
+        [
+          "images/province.jpg",
+          1
+        ]
+      ],
+      "templates/index.html": [
+        [
+          "images/washington.jpg",
+          1
+        ]
+      ],
+      "templates/layout.html": [
+        [
+          "images/titleimage.png",
+          5
+        ]
+      ],
+      "templates/login.html": [
+        [
+          "images/4.jpg",
+          1
+        ]
+      ],
+      "templates/market.html": [
+        [
+          "images/rescopper_plates.png",
+          1
+        ]
+      ],
+      "templates/my_offers.html": [
+        [
+          "images/rescopper_plates.png",
+          3
+        ]
+      ],
+      "templates/peace/peace_offers.html": [
+        [
+          "images/res",
+          2
+        ]
+      ],
+      "templates/province.html": [
+        [
+          "images/bullettrains.jpg",
+          1
+        ]
+      ],
+      "templates/provinces.html": [
+        [
+          "images/province.jpg",
+          2
+        ]
+      ],
+      "templates/signup.html": [
+        [
+          "images/2.jpg",
+          1
+        ]
+      ],
+      "templates/trade_agreements.html": [
+        [
+          "images/res",
+          8
+        ]
+      ],
+      "templates/tutorial.html": [
+        [
+          "images/province.jpg",
+          2
+        ],
+        [
+          "images/coalition.jpg",
+          1
+        ],
+        [
+          "images/country.jpg",
+          1
+        ],
+        [
+          "images/market.jpg",
+          1
+        ],
+        [
+          "images/military.jpg",
+          1
+        ],
+        [
+          "images/upgrades.jpg",
+          1
+        ],
+        [
+          "images/war.jpg",
+          1
+        ],
+        [
+          "images/washington.jpg",
+          1
+        ]
+      ],
+      "templates/upgrades.html": [
+        [
+          "images/advancedmachinery.jpg",
+          1
+        ],
+        [
+          "images/automationintegration.jpg",
+          1
+        ],
+        [
+          "images/ballisticmissilesilo.jpg",
+          1
+        ],
+        [
+          "images/betterengineering.jpg",
+          1
+        ],
+        [
+          "images/cheapermaterials.jpg",
+          1
+        ],
+        [
+          "images/governmentregulation.jpg",
+          1
+        ],
+        [
+          "images/highspeedrail.jpg",
+          1
+        ],
+        [
+          "images/increasedfunding.jpg",
+          1
+        ],
+        [
+          "images/intercontinentalballisticmissilesilo.jpg",
+          1
+        ],
+        [
+          "images/largerforges.jpg",
+          1
+        ],
+        [
+          "images/largestorehouses.jpg",
+          1
+        ],
+        [
+          "images/lootingteams.jpg",
+          1
+        ],
+        [
+          "images/nationalhealthinstitution.jpg",
+          1
+        ],
+        [
+          "images/nucleartestingfacility.jpg",
+          1
+        ],
+        [
+          "images/onlineshopping.jpg",
+          1
+        ],
+        [
+          "images/organizedsupplylines.jpg",
+          1
+        ],
+        [
+          "images/strongerexplosives.jpg",
+          1
+        ],
+        [
+          "images/widespreadpropaganda.jpg",
+          1
+        ]
+      ],
+      "templates/verification_pending.html": [
+        [
+          "images/4.jpg",
+          1
+        ]
+      ],
+      "templates/war.html": [
+        [
+          "/flag/country/{{",
+          4
+        ]
+      ],
+      "templates/wars.html": [
+        [
+          "/flag/country/{{att",
+          1
+        ],
+        [
+          "/flag/country/{{def",
+          1
+        ]
+      ]
+    },
+    "dynamic_game_asset_calls": {
+      "templates/createprovince.html": [
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        }
+      ],
+      "templates/index.html": [
+        {
+          "kind": "buildings",
+          "key_expr": "'admin_buildings'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'coal_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'banks'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'cruisers'"
+        }
+      ],
+      "templates/layout.html": [
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'components'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'steel'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'consumer_goods'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'aluminium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gasoline'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'ammunition'"
+        }
+      ],
+      "templates/market.html": [
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'components'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'steel'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'consumer_goods'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'aluminium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gasoline'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'ammunition'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        }
+      ],
+      "templates/military.html": [
+        {
+          "kind": "units",
+          "key_expr": "'soldiers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'artillery'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'tanks'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'fighter_jets'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'bombers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'attack_helicopters'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'submarines'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'cruisers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'destroyers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'spies'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'icbms'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'nukes'"
+        }
+      ],
+      "templates/my_offers.html": [
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'components'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'steel'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'consumer_goods'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'aluminium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gasoline'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'ammunition'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'components'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'steel'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'consumer_goods'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'aluminium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gasoline'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'ammunition'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'components'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'steel'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'consumer_goods'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'aluminium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gasoline'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'ammunition'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        }
+      ],
+      "templates/partials/game_hud.html": [
+        {
+          "kind": "resources",
+          "key_expr": "res_key"
+        }
+      ],
+      "templates/province.html": [
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'gold'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'coal_burners'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'oil_burners'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'solar_fields'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'hydro_dams'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'nuclear_reactors'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'gas_stations'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'general_stores'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'farmers_markets'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'banks'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'distribution_centers'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'malls'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'malls'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'city_parks'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'libraries'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'hospitals'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'universities'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'monorails'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'army_bases'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'aerodomes'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'harbours'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'admin_buildings'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'silos'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'farms'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'iron_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'coal_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'copper_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'pumpjacks'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'lumber_mills'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'lead_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'bauxite_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'lumber_mills'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'pumpjacks'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'lumber_mills'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'uranium_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'bauxite_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'coal_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'component_factories'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'steel_mills'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'ammunition_factories'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'aluminium_refineries'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'oil_refineries'"
+        }
+      ],
+      "templates/signup.html": [
+        {
+          "kind": "biomes",
+          "key_expr": "'tundra'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'savanna'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'desert'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'uranium'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'jungle'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'boreal forest'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lead'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'grassland'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'iron'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'copper'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "biomes",
+          "key_expr": "'mountain range'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'rations'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'lumber'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'coal'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'bauxite'"
+        },
+        {
+          "kind": "resources",
+          "key_expr": "'oil'"
+        }
+      ],
+      "templates/tutorial.html": [
+        {
+          "kind": "buildings",
+          "key_expr": "'admin_buildings'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'coal_mines'"
+        },
+        {
+          "kind": "buildings",
+          "key_expr": "'banks'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'cruisers'"
+        }
+      ],
+      "templates/warchoose.html": [
+        {
+          "kind": "units",
+          "key_expr": "'fighter_jets'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'bombers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'attack_helicopters'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'submarines'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'cruisers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'destroyers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'icbms'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'nukes'"
+        }
+      ],
+      "templates/wartarget.html": [
+        {
+          "kind": "units",
+          "key_expr": "'soldiers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'tanks'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'artillery'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'fighter_jets'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'bombers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'attack_helicopters'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'submarines'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'cruisers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'destroyers'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'icbms'"
+        },
+        {
+          "kind": "units",
+          "key_expr": "'nukes'"
+        }
+      ]
+    }
+  }
+}

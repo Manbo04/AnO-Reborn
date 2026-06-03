@@ -1,0 +1,57 @@
+name: Visual Screenshot QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_url:
+        description: "Target URL to snapshot"
+        required: false
+        default: "https://affairsandorder.com"
+  push:
+    branches: [master]
+    paths:
+      - "templates/**"
+      - "static/css/**"
+      - "static/images/**"
+      - "static/style.css"
+      - "scripts/capture_visual_snapshots.py"
+      - "scripts/verify_visual_batch_live.py"
+      - ".github/workflows/visual-screenshot-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install screenshot tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install playwright
+          python -m playwright install chromium
+
+      - name: Capture screenshots
+        env:
+          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.com' }}
+          SNAPSHOT_OUT: artifacts/visual-snapshots
+        run: python scripts/capture_visual_snapshots.py
+
+      - name: Verify deploy visual markers
+        env:
+          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.com' }}
+        run: python scripts/verify_visual_batch_live.py
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: artifacts/visual-snapshots
+          retention-days: 7
