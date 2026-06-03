@@ -190,7 +190,7 @@ def coalition(coalition_id):
         stats_result = None
         try:
             db.execute(
-                """
+                f"""
                 SELECT
                     COALESCE(COUNT(p.id), 0) AS total_provinces,
                     COALESCE(SUM(p.citycount), 0) AS total_cities,
@@ -243,7 +243,7 @@ def coalition(coalition_id):
             # Only aggregates provinces for THIS coalition's members
             try:
                 db.execute(
-                    """
+                    f"""
                     SELECT {_members_tbl()}.userid,
                            users.username,
                            {_members_tbl()}.role,
@@ -269,7 +269,7 @@ def coalition(coalition_id):
             except Exception:
                 rollback_db_cursor(db)
                 db.execute(
-                    """
+                    f"""
                     SELECT {_members_tbl()}.userid,
                            users.username,
                            {_members_tbl()}.role,
