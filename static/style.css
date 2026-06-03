@@ -5642,7 +5642,7 @@ body.province-base-view-active .templatediv {
 }
 
 body.game-shell-active.province-base-view-active .templatediv {
-    margin-top: var(--game-space-sm);
+    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-sm, 12px));
 }
 
 @media (min-width: 856px) {
@@ -5651,7 +5651,7 @@ body.game-shell-active.province-base-view-active .templatediv {
     }
 
     body.game-shell-active.province-base-view-active .templatediv {
-        margin-top: var(--game-space-sm);
+        margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-sm, 12px));
     }
 }
 
