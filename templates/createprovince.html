@@ -20,7 +20,7 @@
                 <div class="templatedivflex2left">
                     <form action="/createprovince" method="POST" id="createProvinceForm" onsubmit="return handleSubmit(this)">
                         <div class="infodiv">
-                            <ul class="resourceparent middle">Your next province costs <img src="{{ url_for( 'static', filename='images/resmoney.png' ) }}?v=2" class="resource" />{{ price | commas }}</ul>
+                            <ul class="resourceparent middle">Your next province costs <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />{{ price | commas }}</ul>
                             <div class="templatedivflex2 divflex2center">
                                 <div class="templatedivflex2left">
 
