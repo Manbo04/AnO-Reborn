@@ -513,6 +513,18 @@ body.game-shell-active.province-base-view-active .templatediv {
         0 6px 0 rgba(0, 0, 0, 0.3),
         0 10px 28px rgba(0, 0, 0, 0.35);
     transition: box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.province-map-node-pin::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.22) 46%, transparent 70%);
+    transform: translateX(-130%);
+    animation: province-node-glint 9s ease-in-out infinite;
 }
 
 .province-map-node-icon {
@@ -720,6 +732,17 @@ body.game-shell-active.province-base-view-active .templatediv {
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
     border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.province-dock-card::after,
+.province-base-building-row::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 82% 18%, rgba(92, 212, 240, 0.18), transparent 45%);
 }
 
 .province-dock-card-top {
@@ -928,6 +951,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     background: var(--foregroundThree);
     border: 1px solid var(--border);
     transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
 }
 
 .province-base-building-row.is-busy {
@@ -1048,6 +1073,10 @@ body.game-reduced-motion .province-base-particles span {
     animation: none;
 }
 
+body.game-reduced-motion .province-map-node-pin::after {
+    animation: none !important;
+}
+
 /* HUD polish */
 .game-hud-chip {
     transition: transform 0.15s, box-shadow 0.15s;
@@ -1111,4 +1140,15 @@ body.game-reduced-motion .province-base-particles span {
     font-size: 0.8rem;
     opacity: 0.85;
     margin: 0;
+}
+
+@keyframes province-node-glint {
+    0%,
+    74% {
+        transform: translateX(-130%);
+    }
+    90%,
+    100% {
+        transform: translateX(130%);
+    }
 }
