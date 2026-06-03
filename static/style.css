@@ -6578,7 +6578,7 @@ body.game-reduced-motion .province-base-particles span {
  */
 body.game-shell-active.page-country .templatediv {
     /* Keep country tabs clear of fixed navbar + shell chrome */
-    margin-top: 96px;
+    margin-top: 190px;
 }
 
 body.page-country .menuflex2 {
@@ -6745,7 +6745,7 @@ body.page-country .menuflex2 a h3 {
 
 @media (max-width: 857px) {
     body.game-shell-active.page-country .templatediv {
-        margin-top: 88px;
+        margin-top: 180px;
     }
 
     body.page-country .menuflex2 {
