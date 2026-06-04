@@ -6823,10 +6823,7 @@ body.page-country .menuflex2 a h3 {
 }
 
 .country-demographics-panel {
-    border: 1px solid var(--border);
-    border-radius: var(--game-radius-md);
-    background: var(--foregroundThree);
-    padding: 12px;
+    padding: 12px 0 0 0;
 }
 
 .country-demographics-panel .templatecontentheaderleft {
@@ -6845,7 +6842,6 @@ body.page-country .menuflex2 a h3 {
     height: 260px;
     border: 1px solid var(--border);
     border-radius: var(--game-radius-md);
-    background: rgba(0, 0, 0, 0.12);
     padding: 8px;
 }
 
