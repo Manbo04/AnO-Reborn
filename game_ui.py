@@ -443,6 +443,8 @@ def game_asset_path(kind: str, key: str) -> str:
         return legacy_image_for_resource(key)
     if kind == "units":
         return legacy_image_for_unit(key)
+    if kind == "biomes":
+        return biome_background(key)
     return "images/province.jpg"
 
 
