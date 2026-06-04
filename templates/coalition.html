@@ -464,12 +464,17 @@
                             <option value="general" class="templateoption">General</option>
                             <option value="domestic_minister" class="templateoption">Domestic Minister</option>
                             <option value="member" class="templateoption">Member</option>
-
+                            <option value="kick" class="templateoption" style="color: #ff4d4d; font-weight: bold;">Kick Member</option>
                         </select>
 
                         </div>
                         <div class="templatedivflex2left">
-                            <input class="loginsignupinput" autocomplete="off" name="username" placeholder="Enter country name" />
+                            <select class="templateselect" name="username" required>
+                                <option class="templateoption" selected disabled value="">Choose Member</option>
+                                {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=1) %}
+                                <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
