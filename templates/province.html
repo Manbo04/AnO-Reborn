@@ -566,9 +566,9 @@
                                 <p class="templatecontentpleft">Gas stations allow your citizens to fuel their cars and to grab some groceries. They contribute a small amount of consumer goods to the economy.</p>
 
                                 {% if upgrades["governmentregulation"] %}
-                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ (infra["gas_stations_effect"][0]["pollution"] * 0.75) | int }}% pollution</ul>
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ (infra["gas_stations_effect"][0]["pollution"] * 0.75) | int }}% pollution. <strong>They provide 1,000,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
                                 {% else %}
-                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["gas_stations_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} per hour and contribute +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["gas_stations_effect"][0]["pollution"] }}% pollution. <strong>They provide 1,000,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
                                 {% endif %}
                                 <p class="templatecontentpleft small">Note: Retail buildings (gas stations, stores, malls) increase consumer goods but add ongoing operating costs which reduce net income each hour (see listed "cost per hour"). If you see an immediate gold drop after buying, it's usually the purchase cost and the first upkeep being accounted for.</p>
                                 <ul>{{ "gas_stations" | prores }}</ul>
@@ -616,8 +616,8 @@
                                 <p class="templatecontentpleft">General stores allow your citizens to pick up everyday items necessary for your economy to function.</p>
 
                                 <ul>General stores cost {{ infra["general_stores_money"] | fmt }} per hour and contribute +{{ infra["general_stores_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as {% if upgrades["governmentregulation"] %}
-                                    +{{ (infra["general_stores_effect"][0]["pollution"] * 0.75) | int }}% pollution</ul>
-                                {% else %} +{{ infra["general_stores_effect"][0]["pollution"] }}% pollution</ul>
+                                    +{{ (infra["general_stores_effect"][0]["pollution"] * 0.75) | int }}% pollution. <strong>They provide 2,500,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
+                                {% else %} +{{ infra["general_stores_effect"][0]["pollution"] }}% pollution. <strong>They provide 2,500,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
                                 {% endif %}
                                 <ul>{{ "general_stores" | prores }}</ul>
 
@@ -664,8 +664,8 @@
                                 <p class="templatecontentpleft">Farmers markets provide fresh produce to your population without any middle man. They are perfect for producing consumer goods with little pollution.</p>
 
                                 <ul>Farmers markets cost {{ infra["farmers_markets_money"] | fmt }} per hour and contribute {{ infra["farmers_markets_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% if upgrades["governmentregulation"]
-                                    %} +{{ (infra["farmers_markets_effect"][0]["pollution"] * 0.75) | int }}% pollution</ul>
-                                {% else %} +{{ infra["farmers_markets_effect"][0]["pollution"] }}% pollution</ul>
+                                    %} +{{ (infra["farmers_markets_effect"][0]["pollution"] * 0.75) | int }}% pollution. <strong>They provide 2,000,000 capacity for Rations distribution.</strong></ul>
+                                {% else %} +{{ infra["farmers_markets_effect"][0]["pollution"] }}% pollution. <strong>They provide 2,000,000 capacity for Rations distribution.</strong></ul>
                                 {% endif %}
                                 <ul>{{ "farmers_markets" | prores }}</ul>
 
@@ -756,8 +756,8 @@
                                 {% if upgrades["onlineshopping"] %}
                                 <ul>{{ malls_name }} cost {{ (infra["malls_money"] * 0.7) | fmt }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% else %}
                                     <ul>{{ malls_name }} cost {{ infra["malls_money"] | fmt }} per hour and contribute +{{ infra["malls_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% endif %} {% if upgrades["governmentregulation"] %}
-                                        +{{ (infra["malls_effect"][0]["pollution"] * 0.75) }}% pollution</ul>
-                                    {% else %} +{{ infra["malls_effect"][0]["pollution"] }}% pollution</ul>
+                                        +{{ (infra["malls_effect"][0]["pollution"] * 0.75) }}% pollution. <strong>They provide 5,000,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
+                                    {% else %} +{{ infra["malls_effect"][0]["pollution"] }}% pollution. <strong>They provide 5,000,000 capacity for Rations and Consumer Goods distribution.</strong></ul>
                                 {% endif %}
 
                                 <ul>{{ malls_name | prores }}</ul>
@@ -805,7 +805,7 @@
 
                                 <p class="templatecontentpleft">Large-scale logistics hubs that distribute rations and consumer goods to your population. Each serves up to 1,500,000 citizens.</p>
 
-                                <ul>Distribution Centers cost {{ infra["distribution_centers_money"] | fmt }} per hour and contribute +{{ infra["distribution_centers_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour</ul>
+                                <ul>Distribution Centers cost {{ infra["distribution_centers_money"] | fmt }} per hour and <strong>provide 1,500,000 capacity for Rations and Consumer Goods distribution</strong> per building.</ul>
                                 <ul>{{ "distribution_centers" | prores }}</ul>
 
                                 <div class="purchasemilitarydiv">
