@@ -83,7 +83,7 @@
     }
 
     function formatCost(n, res) {
-        return '$' + Number(n).toLocaleString() + ' · ' + (res || 'gold');
+        return '$' + Number(n).toLocaleString() + ' · ' + Number(n).toLocaleString() + ' ' + (res || 'gold');
     }
 
     function closeSheet() {

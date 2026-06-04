@@ -5721,8 +5721,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     gap: 10px 14px;
     align-items: center;
     justify-items: center;
-    min-height: min(58vh, 520px);
-    padding: 16px 12px 20px;
+    min-height: 520px;
+    padding: 32px 12px 20px;
     background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
     overflow: hidden;
 }
