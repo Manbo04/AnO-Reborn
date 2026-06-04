@@ -20,9 +20,31 @@ from game_ui import (
     building_visual_icon,
     get_slot_config,
 )
+import logging
+
 bp = Blueprint("province", __name__)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+
+def _province_row_owner_id(row):
+    """Resolve province owner user id from a row (RealDict or tuple-backed)."""
+    if not row:
+        return None
+    if hasattr(row, "get"):
+        for key in ("owner_id", "userid", "userId", "user_id"):
+            val = row.get(key)
+            if val is not None:
+                return int(val)
+        return None
+    # tuple: layout query uses userId at index — prefer named access only
+    return None
+
+
+def _province_owned_by(row, user_id):
+    owner = _province_row_owner_id(row)
+    return owner is not None and owner == int(user_id)
 
 
 @bp.route("/provinces", methods=["GET"])
@@ -423,8 +445,7 @@ def province_layout_api(pId):
         row = db.fetchone()
         if not row:
             return jsonify({"error": "Province not found"}), 404
-        owner_id = row.get("userid") or row.get("userId")
-        if owner_id is None or int(owner_id) != int(cId):
+        if not _province_owned_by(row, cId):
             return jsonify({"error": "Forbidden"}), 403
 
         province = dict(row)
@@ -484,7 +505,7 @@ def province_slot_api(pId, slot_id):
         prow = db.fetchone()
         if not prow:
             return jsonify({"error": "Province not found"}), 404
-        if prow["owner_id"] != cId:
+        if not _province_owned_by(prow, cId):
             return jsonify({"error": "Forbidden"}), 403
 
         rows = _province_units_for_user(db, cId, pId)
@@ -548,66 +569,78 @@ def province_quick_build_api(pId):
     if quantity < 1 or quantity > 50:
         return jsonify({"ok": False, "error": "Quantity must be 1–50"}), 400
 
-    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
-        db.execute(
-            "SELECT userId AS owner_id FROM provinces WHERE id = %s",
-            (pId,),
+    try:
+        with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+            db.execute(
+                "SELECT userId AS owner_id FROM provinces WHERE id = %s",
+                (pId,),
+            )
+            row = db.fetchone()
+            if not row:
+                return jsonify({"ok": False, "error": "Province not found"}), 404
+            if not _province_owned_by(row, cId):
+                return jsonify({"ok": False, "error": "Forbidden"}), 403
+
+        try:
+            build_structure(cId, building_id, quantity, province_id=pId)
+        except ActionLoopError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+
+        try:
+            invalidate_user_cache(cId)
+        except Exception:
+            pass
+
+        with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
+            db.execute(
+                """
+                SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
+                       p.population, p.energy AS electricity, s.location,
+                       p.userId AS owner_id
+                FROM provinces p
+                LEFT JOIN stats s ON p.userId = s.id
+                WHERE p.id = %s
+                """,
+                (pId,),
+            )
+            province_row = db.fetchone()
+            province = dict(province_row) if province_row else {}
+            province["location"] = province.get("location") or "Grassland"
+            province["own"] = _province_owned_by(province_row, cId)
+
+            db.execute(
+                """
+                SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
+                FROM building_dictionary bd
+                LEFT JOIN user_buildings ub
+                    ON ub.building_id = bd.building_id
+                    AND ub.user_id = %s
+                    AND ub.province_id = %s
+                WHERE bd.is_active = TRUE
+                """,
+                (cId, pId),
+            )
+            units = {r["name"]: r["quantity"] for r in db.fetchall()}
+
+        return jsonify(
+            {
+                "ok": True,
+                "message": "Structure built!",
+                "layout": build_province_layout_payload(province, units),
+                "building_id": building_id,
+            }
         )
-        row = db.fetchone()
-        if not row:
-            return jsonify({"ok": False, "error": "Province not found"}), 404
-        if row["owner_id"] != cId:
-            return jsonify({"ok": False, "error": "Forbidden"}), 403
-
-    try:
-        build_structure(cId, building_id, quantity, province_id=pId)
-    except ActionLoopError as e:
-        return jsonify({"ok": False, "error": str(e)}), 400
-
-    try:
-        invalidate_user_cache(cId)
     except Exception:
-        pass
-
-    with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
-        db.execute(
-            """
-            SELECT p.id, p.provinceName AS name, p.happiness, p.pollution,
-                   p.population, p.energy AS electricity, s.location,
-                   p.userId AS owner_id
-            FROM provinces p
-            LEFT JOIN stats s ON p.userId = s.id
-            WHERE p.id = %s
-            """,
-            (pId,),
+        logger.exception("province quick_build failed pId=%s user=%s", pId, cId)
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": "Build failed due to a server error. Please try again.",
+                }
+            ),
+            500,
         )
-        province_row = db.fetchone()
-        province = dict(province_row) if province_row else {}
-        province["location"] = province.get("location") or "Grassland"
-        province["own"] = province.get("owner_id") == cId
-
-        db.execute(
-            """
-            SELECT bd.name, COALESCE(ub.quantity, 0) AS quantity
-            FROM building_dictionary bd
-            LEFT JOIN user_buildings ub
-                ON ub.building_id = bd.building_id
-                AND ub.user_id = %s
-                AND ub.province_id = %s
-            WHERE bd.is_active = TRUE
-            """,
-            (cId, pId),
-        )
-        units = {r["name"]: r["quantity"] for r in db.fetchall()}
-
-    return jsonify(
-        {
-            "ok": True,
-            "message": "Structure built!",
-            "layout": build_province_layout_payload(province, units),
-            "building_id": building_id,
-        }
-    )
 
 
 @bp.route("/build_structure", methods=["POST"])

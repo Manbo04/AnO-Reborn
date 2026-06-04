@@ -43,6 +43,26 @@
         }, 2200);
     }
 
+    function parseJsonResponse(r) {
+        var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+        if (ct.indexOf('application/json') === -1) {
+            if (r.status === 401) {
+                throw new Error('Session expired — refresh the page and log in again.');
+            }
+            throw new Error(
+                'Server returned an unexpected response. Refresh the page and try again.'
+            );
+        }
+        return r.json().then(function (data) {
+            if (!r.ok) {
+                throw new Error(
+                    (data && (data.error || data.message)) || 'Request failed'
+                );
+            }
+            return data;
+        });
+    }
+
     function playClick() {
         try {
             var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -359,9 +379,9 @@
     function fetchSlotData(slotId) {
         return fetch('/api/province/' + meta.provinceId + '/slot/' + slotId, {
             credentials: 'same-origin',
+            headers: { Accept: 'application/json' },
         }).then(function (r) {
-            return r.json().then(function (data) {
-                if (!r.ok) throw new Error(data.error || 'Failed to load');
+            return parseJsonResponse(r).then(function (data) {
                 slotCache[slotId] = data;
                 return data;
             });
@@ -444,8 +464,8 @@
             body: JSON.stringify({ building_id: buildingId, quantity: 1 }),
         })
             .then(function (r) {
-                return r.json().then(function (data) {
-                    if (!r.ok || !data.ok) throw new Error(data.error || 'Build failed');
+                return parseJsonResponse(r).then(function (data) {
+                    if (!data.ok) throw new Error(data.error || 'Build failed');
                     return data;
                 });
             })

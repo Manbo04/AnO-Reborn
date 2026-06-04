@@ -3,7 +3,7 @@
 import os
 from urllib.parse import urlparse
 
-from flask import redirect, render_template, session, request
+from flask import redirect, render_template, session, request, jsonify
 from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
@@ -133,6 +133,19 @@ def require_post_origin(f):
     return wrapped
 
 
+def _wants_json_response():
+    """True when the client expects JSON (API routes or fetch/XHR)."""
+    path = getattr(request, "path", "") or ""
+    if path.startswith("/api/"):
+        return True
+    accept = (request.headers.get("Accept") or "").lower()
+    if "application/json" in accept:
+        return True
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return True
+    return False
+
+
 def login_required(f):
     """
     Decorate routes to require login.
@@ -151,6 +164,8 @@ def login_required(f):
             logger.debug(f"login_required: session user_id={uid}")
             logger.debug(f"login_required: path={path}")
             logger.debug("login_required: user_id missing, redirecting to /login")
+            if _wants_json_response():
+                return jsonify({"ok": False, "error": "Login required"}), 401
             return redirect("/login")
         return f(*args, **kwargs)
 

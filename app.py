@@ -11,6 +11,7 @@ from flask import (
     session,
     redirect,
     send_from_directory,
+    jsonify,
 )
 from flask_compress import Compress
 import traceback
@@ -928,6 +929,19 @@ def invalid_server_error(error):
     error_code = generate_error_code()
     logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
+    path = getattr(request, "path", "") or ""
+    accept = (request.headers.get("Accept") or "").lower()
+    if path.startswith("/api/") or "application/json" in accept:
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": error_message,
+                    "error_code": error_code,
+                }
+            ),
+            500,
+        )
     try:
         body = render_template(
             "error.html", code=500, message=error_message, error_code=error_code
