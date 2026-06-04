@@ -4986,6 +4986,36 @@ body:has(.loginsignupdiv) .footer {
 .researched-badge .material-icons-outlined {
     vertical-align: middle;
 }
+
+/* Projects / upgrades cards: center description and researched status */
+.page-upgrades .warflexparentcolors .templatecontentpleft {
+    text-align: center;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.page-upgrades .warflexparentcolors .researched-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    width: 100%;
+    margin: 8px auto 0;
+}
+
+.page-upgrades .warflexparentcolors ul {
+    text-align: center;
+    padding-left: 0;
+    list-style: none;
+}
+
+.page-upgrades .warflexparentcolors .purchasemilitarydiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 .navbar-theme-toggle {
     float: right;
     margin: 10px 12px 0 0;
