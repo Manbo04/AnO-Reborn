@@ -403,19 +403,7 @@
     --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-body::-webkit-scrollbar {
-    width: 10px;
-    background: transparent;
-}
 
-body::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 5px;
-}
-
-body::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
-}
 
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
