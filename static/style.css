@@ -4815,13 +4815,10 @@ body:has(.loginsignupdiv) .footer {
 
 .theme-toggle-btn {
     float: right;
-    margin: 10px 8px 0 0;
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    margin: 16px 16px 0 0;
+    border: none;
+    background: transparent;
+    color: var(--colorOne);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -4829,8 +4826,8 @@ body:has(.loginsignupdiv) .footer {
 }
 
 .theme-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: var(--accent);
+    background: transparent;
+    opacity: 0.8;
 }
 
 .theme-toggle-btn .material-icons-outlined {
