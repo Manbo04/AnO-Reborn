@@ -1,37 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}Trade Agreements{% endblock %}
-{% block extra_head %}
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <style>
-    /* Custom Tom Select styling to match the game's theme */
-    .ts-control {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: var(--game-radius-sm) !important;
-        color: var(--text-main) !important;
-        padding: 10px 14px !important;
-        font-family: 'Roboto', sans-serif !important;
-        font-size: 1rem !important;
-    }
-    .ts-dropdown {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        color: var(--text-main) !important;
-        border-radius: var(--game-radius-sm) !important;
-    }
-    .ts-dropdown .option {
-        padding: 8px 14px !important;
-    }
-    .ts-dropdown .option:hover, .ts-dropdown .active {
-        background-color: var(--bg-color-alt) !important;
-        color: var(--text-main) !important;
-    }
-    .ts-control input {
-        color: var(--text-main) !important;
-    }
-</style>
-{% endblock %}
 {% block body %}
 
 <div class="templatediv">
@@ -137,13 +106,22 @@
                 
                 <div class="trade-form-row">
                     <div class="trade-input-group">
-                        <label><span class="material-icons-outlined">person</span> Trade Partner</label>
-                        <select id="trade-partner-select" name="receiver_id" required class="templateselect w-full" placeholder="Type to search for a player...">
-                            <option value="">Select a player...</option>
-                            {% for uid, uname in users %}
-                            <option value="{{ uid }}" class="templateoption">{{ uname }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="trade-partner-search"><span class="material-icons-outlined">person</span> Trade Partner</label>
+                        <input
+                            type="text"
+                            id="trade-partner-search"
+                            name="receiver"
+                            class="loginsignupinput w-full"
+                            placeholder="Type country name or nation ID…"
+                            autocomplete="off"
+                            required
+                            list="trade-partner-suggestions"
+                        />
+                        <datalist id="trade-partner-suggestions"></datalist>
+                        <input type="hidden" name="receiver_id" id="trade-receiver-id" value="" />
+                        <p class="templatecontentpleft" style="margin: 6px 0 0; font-size: 0.85rem; opacity: 0.85;">
+                            Start typing to search; pick a match or enter the exact nation ID.
+                        </p>
                     </div>
                     <div class="trade-input-group">
                         <label><span class="material-icons-outlined">schedule</span> Interval</label>
@@ -172,7 +150,7 @@
                             <label>Resource</label>
                             <select name="proposer_resource" required class="templateselect w-full">
                                 {% for res in resources %}
-                                <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
+                                <option value="{{ res }}" class="templateoption">{{ resource_labels.get(res, res | replace('_', ' ') | title) }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -194,7 +172,7 @@
                             <label>Resource</label>
                             <select name="receiver_resource" required class="templateselect w-full">
                                 {% for res in resources %}
-                                <option value="{{ res }}" class="templateoption">{{ res | replace('_', ' ') | title }}</option>
+                                <option value="{{ res }}" class="templateoption">{{ resource_labels.get(res, res | replace('_', ' ') | title) }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -220,6 +198,63 @@
                 </div>
             </form>
         </div>
+
+        <script>
+        (function () {
+            var input = document.getElementById('trade-partner-search');
+            var hidden = document.getElementById('trade-receiver-id');
+            var list = document.getElementById('trade-partner-suggestions');
+            if (!input || !hidden || !list) return;
+
+            var debounce = null;
+            var partnerIds = {};
+
+            function clearSuggestions() {
+                list.innerHTML = '';
+                partnerIds = {};
+            }
+
+            input.addEventListener('input', function () {
+                hidden.value = '';
+                var q = input.value.trim();
+                if (q.length < 2) {
+                    clearSuggestions();
+                    return;
+                }
+                clearTimeout(debounce);
+                debounce = setTimeout(function () {
+                    fetch('/trade-agreements/partners?q=' + encodeURIComponent(q), {
+                        credentials: 'same-origin'
+                    })
+                        .then(function (r) { return r.json(); })
+                        .then(function (rows) {
+                            clearSuggestions();
+                            rows.forEach(function (p) {
+                                partnerIds[p.username.toLowerCase()] = String(p.id);
+                                var opt = document.createElement('option');
+                                opt.value = p.username;
+                                list.appendChild(opt);
+                            });
+                        })
+                        .catch(function () { clearSuggestions(); });
+                }, 200);
+            });
+
+            input.addEventListener('change', function () {
+                var q = input.value.trim();
+                if (/^\d+$/.test(q)) {
+                    hidden.value = q;
+                    return;
+                }
+                var id = partnerIds[q.toLowerCase()];
+                if (id) {
+                    hidden.value = id;
+                } else {
+                    hidden.value = '';
+                }
+            });
+        })();
+        </script>
 
         <!-- Pending Agreements (Incoming) -->
         {% set pending_incoming = agreements | selectattr('12', 'equalto', 'pending') | selectattr('4', 'equalto', user_id) | list %}
@@ -528,19 +563,6 @@
 </div>
 
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('trade-partner-select')) {
-            new TomSelect('#trade-partner-select', {
-                create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                },
-                maxOptions: 50
-            });
-        }
-    });
-</script>
+
 
 {% endblock %}
