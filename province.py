@@ -556,7 +556,7 @@ def province_quick_build_api(pId):
         row = db.fetchone()
         if not row:
             return jsonify({"ok": False, "error": "Province not found"}), 404
-        if row["owner_id"] != cId:
+        if int(row["owner_id"]) != int(cId):
             return jsonify({"ok": False, "error": "Forbidden"}), 403
 
     try:

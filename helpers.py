@@ -151,6 +151,8 @@ def login_required(f):
             logger.debug(f"login_required: session user_id={uid}")
             logger.debug(f"login_required: path={path}")
             logger.debug("login_required: user_id missing, redirecting to /login")
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "error": "Session expired — refresh the page and log in"}), 401
             return redirect("/login")
         return f(*args, **kwargs)
 
