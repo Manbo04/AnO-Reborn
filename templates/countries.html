@@ -100,7 +100,7 @@
                         <td>{{ loop.index }})</td>
                         <td><a href="/country/id={{ id }}">{{ username }}</a></td>
                         <td>{% if join_number %}#{{ join_number }}{% else %}—{% endif %}</td>
-                        <td>{{ influence }}</td>
+                        <td>{{ influence | fmt }}</td>
                         <td>{{ date }}</td>
                         {% if colName == None %}
                         <td>No coalition</td>

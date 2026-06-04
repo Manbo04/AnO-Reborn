@@ -136,11 +136,11 @@
                         </tr>
                         <tr>
                             <td>Influence:</td>
-                            <td>{{ total_influence }}</td>
+                            <td>{{ total_influence | fmt }}</td>
                         </tr>
                         <tr>
                             <td>Average Influence:</td>
-                            <td>{{ average_influence }}</td>
+                            <td>{{ average_influence | fmt }}</td>
                         </tr>
                         <tr>
                             <td>Coalition type:</td>
@@ -286,7 +286,7 @@
                         <td>{{ role.capitalize() }}</td>
                         <td><span class="material-icons-outlined">
                             people_alt
-                            </span>{{ influence if influence else 0 }}</td>
+                            </span>{{ (influence if influence else 0) | fmt }}</td>
                         <td><span class="material-icons-outlined">
                             account_balance
                             </span>{{ provinces if provinces else 0 }}</td>
