@@ -4687,7 +4687,7 @@ canvas {
     position: relative;
     width: 100%;
     max-width: 360px;
-    max-height: 320px;
+    height: 280px;
     background: var(--foreground);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -4696,12 +4696,6 @@ canvas {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
 }
-
-.chart-wrapper canvas {
-    max-width: 100% !important;
-    max-height: 280px !important;
-}
-
 
 /* Flash message container */
 ul.flashes {
