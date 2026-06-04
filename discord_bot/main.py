@@ -49,7 +49,7 @@ class AnOBot(commands.Bot):
         if not self.panel_refresh_loop.is_running():
             self.panel_refresh_loop.start()
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=1)
     async def panel_refresh_loop(self) -> None:
         await refresh_all_guild_panels(self)
 
