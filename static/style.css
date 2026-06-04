@@ -2611,8 +2611,6 @@ button {
     width: 33.33%;
     max-width: none;
     padding: 8px;
-    font-size: inherit;
-    line-height: inherit;
 }
 
 /* Narrow width for ranking number column */
