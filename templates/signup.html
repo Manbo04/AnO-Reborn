@@ -53,6 +53,9 @@
             <div class="auth-panel auth-panel-wide">
                 <h2 class="templatecontentheadercenter">Default Sign Up</h2>
                 {% if way != "discord" %}
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">
+                    <em>Note: Email verification does not exist yet. Only Discord accounts are verified for now.</em>
+                </p>
                 <form id="signup-form" class="loginsignupform" action="/signup" method="POST">
                 {% elif way == "discord" %}
                 <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
