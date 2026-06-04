@@ -6,7 +6,7 @@ from flask import (
     flash,
     current_app,
 )
-from helpers import login_required, error, empty_state, require_post_origin
+from helpers import login_required, error, empty_state, require_post_origin, get_influence
 import os
 from dotenv import load_dotenv
 
@@ -266,6 +266,12 @@ def coalition(coalition_id):
                     (coalition_id, coalition_id),
                 )
                 members = db.fetchall()
+                members = [
+                    (m[0], m[1], m[2], get_influence(m[0], db=db), m[4], m[5])
+                    for m in members
+                ]
+                total_influence = sum(m[3] for m in members)
+                average_influence = total_influence // members_count if members_count > 0 else 0
             except Exception:
                 rollback_db_cursor(db)
                 db.execute(
@@ -292,6 +298,12 @@ def coalition(coalition_id):
                     (coalition_id, coalition_id),
                 )
                 members = db.fetchall()
+                members = [
+                    (m[0], m[1], m[2], get_influence(m[0], db=db), m[4], m[5])
+                    for m in members
+                ]
+                total_influence = sum(m[3] for m in members)
+                average_influence = total_influence // members_count if members_count > 0 else 0
         except Exception:
             members = []
 
