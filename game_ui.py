@@ -351,6 +351,63 @@ BIOME_THEMES: dict[str, dict[str, str]] = {
     },
 }
 
+# Nation EDIT tab: visual biome picker (value matches stats.location / form POST)
+NATION_BIOME_CHOICES: list[dict[str, str]] = [
+    {
+        "value": "Tundra",
+        "label": "Tundra",
+        "asset_key": "tundra",
+        "tagline": "Frozen frontiers rich in metals",
+        "icon": "ac_unit",
+    },
+    {
+        "value": "Savanna",
+        "label": "Savanna",
+        "asset_key": "savanna",
+        "tagline": "Open grasslands and deep deposits",
+        "icon": "nature",
+    },
+    {
+        "value": "Desert",
+        "label": "Desert",
+        "asset_key": "desert",
+        "tagline": "Harsh sands, rare treasures",
+        "icon": "wb_sunny",
+    },
+    {
+        "value": "Jungle",
+        "label": "Jungle",
+        "asset_key": "jungle",
+        "tagline": "Dense canopy, lumber and oil",
+        "icon": "forest",
+    },
+    {
+        "value": "Boreal Forest",
+        "label": "Boreal Forest",
+        "asset_key": "boreal forest",
+        "tagline": "Cold woods and mineral wealth",
+        "icon": "park",
+    },
+    {
+        "value": "Grassland",
+        "label": "Grassland",
+        "asset_key": "grassland",
+        "tagline": "Fertile fields and balanced resources",
+        "icon": "grass",
+    },
+    {
+        "value": "Mountain Range",
+        "label": "Mountain Range",
+        "asset_key": "mountain range",
+        "tagline": "Rugged peaks, export-grade ore",
+        "icon": "landscape",
+    },
+]
+
+
+def nation_biome_choices() -> list[dict[str, str]]:
+    return NATION_BIOME_CHOICES
+
 
 def get_slot_config(slot_id: str) -> dict[str, Any] | None:
     for slot in PROVINCE_BASE_SLOTS:
@@ -526,6 +583,9 @@ def game_ui_context() -> dict[str, Any]:
         "FEATURE_GAME_PWA": FEATURE_GAME_PWA,
         "asset_version": get_asset_version(),
         "game_asset_path": game_asset_path,
+        "nation_biome_choices": nation_biome_choices,
+        "biome_theme": biome_theme,
+        "biome_icon": biome_icon,
         "legacy_image_for_building": legacy_image_for_building,
         "legacy_image_for_resource": legacy_image_for_resource,
         "HUD_STRIP_RESOURCES": HUD_STRIP_RESOURCES,
