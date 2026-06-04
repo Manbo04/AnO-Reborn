@@ -405,7 +405,7 @@
 
 body::-webkit-scrollbar {
     width: 10px;
-    background: var(--foregroundThree);
+    background: transparent;
 }
 
 body::-webkit-scrollbar-thumb {

@@ -1478,6 +1478,10 @@ def _ensure_colnames_optional_columns(db) -> None:
             "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS tax_rate INTEGER DEFAULT 0",
             "colNames.tax_rate",
         ),
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS name_changes_used INTEGER DEFAULT 0",
+            "colNames.name_changes_used",
+        ),
     ):
         try:
             db.execute(stmt)
