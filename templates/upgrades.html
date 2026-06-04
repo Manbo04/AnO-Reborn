@@ -1,4 +1,40 @@
-{% extends "layout.html"%} {% block title %} Projects {% endblock %} {% block body %}
+{% extends "layout.html"%} 
+{% block title %} Projects {% endblock %} 
+{% block body_class %}page-upgrades{% endblock %}
+{% block extra_head %}
+<style>
+/* Center everything inside project cards */
+.page-upgrades .warflexparentcolors .templatedivflex2left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.page-upgrades .warflexparentcolors .templatecontentpleft {
+    text-align: center;
+}
+.page-upgrades .warflexparentcolors ul {
+    text-align: center;
+    padding: 0;
+    margin: 10px 0;
+}
+.page-upgrades .warflexparentcolors .purchasemilitarydiv {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.page-upgrades .warflexparentcolors .researched-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 auto;
+}
+</style>
+{% endblock %}
+{% block body %}
 
 <div class="templatediv">
 
