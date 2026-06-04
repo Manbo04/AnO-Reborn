@@ -65,7 +65,7 @@
 
         <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
         <div class="infodiv">
-            <p style="color: #ccc; margin-bottom: 10px;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
 
             {% if discord_bot_link %}
             <div class="discord-bot-link-panel" id="discord-bot-link-panel" role="region" aria-label="Active Discord bot link code">
@@ -100,7 +100,7 @@
 
         <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
         <div class="infodiv">
-            <p style="color: #ccc; margin-bottom: 10px;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
             <form action="/generate_recovery_key" method="POST" class="account-action-form">
                 <input class="loginsignupinput" type="password" name="password" placeholder="Enter current password to generate" required />
                 <button type="submit" class="templatedivbutton"><span class="material-icons-outlined">key</span>Generate Key</button>
