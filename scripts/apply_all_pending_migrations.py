@@ -35,6 +35,8 @@ MIGRATION_FILES = [
     "0023_discord_guild_panels.sql",
     "0024_nextjs_compat_views.sql",
     "0025_tech_tree_prerequisites.sql",
+    "0026_fix_building_costs.sql",
+    "0027_deprecate_distribution_centers.sql",
 ]
 
 
