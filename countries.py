@@ -1461,22 +1461,25 @@ def delete_own_account():
         if coalition_role != "leader":
             pass
         elif members_tbl:
+            col_colid = "coalition_id" if members_tbl == "coalition_members" else "colid"
+            col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
+            
             db.execute(
-                f"SELECT colid FROM {members_tbl} WHERE userid=%s", (cId,)
+                f"SELECT {col_colid} FROM {members_tbl} WHERE {col_userid}=%s", (cId,)
             )
             coalition_row = db.fetchone()
             if coalition_row:
                 user_coalition = coalition_row[0]
                 db.execute(
-                    f"SELECT COUNT(userid) FROM {members_tbl} "
-                    "WHERE role='leader' AND colid=%s",
+                    f"SELECT COUNT({col_userid}) FROM {members_tbl} "
+                    f"WHERE role='leader' AND {col_colid}=%s",
                     (user_coalition,),
                 )
                 leader_row = db.fetchone()
                 leader_count = leader_row[0] if leader_row else 0
                 if leader_count == 1:
                     db.execute(
-                        f"DELETE FROM {members_tbl} WHERE colid=%s",
+                        f"DELETE FROM {members_tbl} WHERE {col_colid}=%s",
                         (user_coalition,),
                     )
                     db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
@@ -1484,7 +1487,8 @@ def delete_own_account():
                     db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
 
         if members_tbl:
-            db.execute(f"DELETE FROM {members_tbl} WHERE userid=%s", (cId,))
+            col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
+            db.execute(f"DELETE FROM {members_tbl} WHERE {col_userid}=%s", (cId,))
         db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
 
         # Clean up Economy 2.0 normalized tables
