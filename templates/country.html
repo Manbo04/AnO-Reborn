@@ -330,7 +330,10 @@
 
                 </div>
                 <div class="templatedivflex2right country-overview-column country-overview-column--demographics country-demographics-panel">
-                    <h3 class="templatecontentheaderleft">Demographics by Province</h3>
+                    <h3 class="templatecontentheaderleft" style="display: flex; align-items: center; gap: 8px;">
+                        Demographics by Province
+                        <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help;" data-tippy-content="Population is divided into age groups with different needs and behaviors.<br><br><a href='/mechanics#demographics' style='color: #4da8da; text-decoration: underline;'>📖 View Mechanics</a>">info</span>
+                    </h3>
                     <p class="country-demographics-subtitle">Stacked population by province</p>
                     <div class="country-demographics-chart-wrap">
                         <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
