@@ -51,7 +51,7 @@ def _cleanup_user(db, uid, members_tbl):
     db.execute("DELETE FROM users WHERE id = %s", (uid,))
 
 
-def test_leader_cannot_withdraw_from_other_coalition_bank():
+def test_leader_cannot_withdraw_from_other_coalition_bank(client):
     """Leader in coalition A must not withdraw from coalition B's bank."""
     members_tbl = _members_table()
     col_a = col_b = leader_id = other_leader_id = None
@@ -61,8 +61,6 @@ def test_leader_cannot_withdraw_from_other_coalition_bank():
         leader_id, _ = _create_user(db, "a")
         other_leader_id, _ = _create_user(db, "b")
         conn.commit()
-
-    client = app.test_client()
 
     with client.session_transaction() as sess:
         sess["user_id"] = leader_id
@@ -135,7 +133,7 @@ def test_leader_cannot_withdraw_from_other_coalition_bank():
         conn.commit()
 
 
-def test_leader_cannot_remove_other_coalition_bank_request():
+def test_leader_cannot_remove_other_coalition_bank_request(client):
     """Leader in coalition A must not delete bank requests for coalition B."""
     members_tbl = _members_table()
     col_a = col_b = leader_id = other_leader_id = member_b_id = None
@@ -147,8 +145,6 @@ def test_leader_cannot_remove_other_coalition_bank_request():
         other_leader_id, _ = _create_user(db, "rb")
         member_b_id, _ = _create_user(db, "mb")
         conn.commit()
-
-    client = app.test_client()
 
     for uid, suffix in (
         (leader_id, f"guard_rm_a_{uuid.uuid4().hex[:8]}"),
