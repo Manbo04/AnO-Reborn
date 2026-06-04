@@ -288,11 +288,6 @@
                             <td>{{ units["monorails"] }} Monorails</td>
                             {% endif %}
                         </tr>
-                        <tr>
-                            <td></td>
-                            <td>{{ units["distribution_centers"] }} Distribution Centers</td>
-                            <td></td>
-                        </tr>
                     </table>
                 </div>
                 <!--Electricity-->
@@ -796,7 +791,8 @@
                     </div>
                     <div class="menudiv">
 
-                        <h2 class="templatecontentheaderleft">Distribution Centers</h2>
+                        {% if units["distribution_centers"] > 0 %}
+                        <h2 class="templatecontentheaderleft">Distribution Centers (Deprecated)</h2>
 
                         <div class="templatedivflex2 menuflex warflexparentcolors">
                             <div class="templatedivflex2left">
@@ -835,6 +831,7 @@
                                 <img tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'malls')) }}?v=2" />
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 <!--Public Works-->
