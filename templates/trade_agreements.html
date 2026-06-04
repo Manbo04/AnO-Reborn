@@ -1,5 +1,37 @@
 {% extends "layout.html" %}
 {% block title %}Trade Agreements{% endblock %}
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<style>
+    /* Custom Tom Select styling to match the game's theme */
+    .ts-control {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--game-radius-sm) !important;
+        color: var(--text-main) !important;
+        padding: 10px 14px !important;
+        font-family: 'Roboto', sans-serif !important;
+        font-size: 1rem !important;
+    }
+    .ts-dropdown {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text-main) !important;
+        border-radius: var(--game-radius-sm) !important;
+    }
+    .ts-dropdown .option {
+        padding: 8px 14px !important;
+    }
+    .ts-dropdown .option:hover, .ts-dropdown .active {
+        background-color: var(--bg-color-alt) !important;
+        color: var(--text-main) !important;
+    }
+    .ts-control input {
+        color: var(--text-main) !important;
+    }
+</style>
+{% endblock %}
 {% block body %}
 
 <div class="templatediv">
@@ -106,8 +138,8 @@
                 <div class="trade-form-row">
                     <div class="trade-input-group">
                         <label><span class="material-icons-outlined">person</span> Trade Partner</label>
-                        <select name="receiver_id" required class="templateselect w-full">
-                            <option value="" disabled selected>Select a player...</option>
+                        <select id="trade-partner-select" name="receiver_id" required class="templateselect w-full" placeholder="Type to search for a player...">
+                            <option value="">Select a player...</option>
                             {% for uid, uname in users %}
                             <option value="{{ uid }}" class="templateoption">{{ uname }}</option>
                             {% endfor %}
@@ -494,5 +526,21 @@
 
     </div>
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('trade-partner-select')) {
+            new TomSelect('#trade-partner-select', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                maxOptions: 50
+            });
+        }
+    });
+</script>
 
 {% endblock %}
