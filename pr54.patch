@@ -1,0 +1,226 @@
+diff --git a/static/css/game-country.css b/static/css/game-country.css
+index 457cf527..65a74aed 100644
+--- a/static/css/game-country.css
++++ b/static/css/game-country.css
+@@ -1,6 +1,60 @@
+ /**
+  * Country page — mobile game hub
+  */
++.country-overview-grid {
++    display: grid !important;
++    grid-template-columns: repeat(3, minmax(0, 1fr));
++    gap: 14px;
++    width: 100%;
++}
++
++.country-overview-grid .material-icons-outlined {
++    top: 0;
++    right: 0;
++    vertical-align: middle;
++}
++
++.country-demographics-panel {
++    border: 1px solid var(--border);
++    border-radius: var(--game-radius-md);
++    background: var(--foregroundThree);
++    padding: 10px 12px 12px;
++}
++
++.country-demographics-subtitle {
++    margin: -2px 0 8px;
++    font-size: 0.8rem;
++    color: var(--text-secondary);
++}
++
++.country-demographics-chart-wrap {
++    position: relative;
++    min-height: 240px;
++    height: 260px;
++    border: 1px solid var(--border);
++    border-radius: var(--game-radius-md);
++    background: rgba(0, 0, 0, 0.12);
++    padding: 8px;
++}
++
++.country-demographics-chart-wrap .chart-canvas-responsive {
++    width: 100% !important;
++    height: 100% !important;
++    margin: 0;
++}
++
++@media (max-width: 1200px) {
++    .country-overview-grid {
++        grid-template-columns: repeat(2, minmax(0, 1fr));
++    }
++}
++
++@media (max-width: 900px) {
++    .country-overview-grid {
++        grid-template-columns: 1fr;
++    }
++}
++
+ @media (max-width: 857px) {
+     body.game-shell-active .game-country-hub {
+         display: grid;
+diff --git a/static/style.css b/static/style.css
+index 708db3ee..5280a58d 100644
+--- a/static/style.css
++++ b/static/style.css
+@@ -6576,6 +6576,60 @@ body.game-reduced-motion .province-base-particles span {
+ /**
+  * Country page — mobile game hub
+  */
++.country-overview-grid {
++    display: grid !important;
++    grid-template-columns: repeat(3, minmax(0, 1fr));
++    gap: 14px;
++    width: 100%;
++}
++
++.country-overview-grid .material-icons-outlined {
++    top: 0;
++    right: 0;
++    vertical-align: middle;
++}
++
++.country-demographics-panel {
++    border: 1px solid var(--border);
++    border-radius: var(--game-radius-md);
++    background: var(--foregroundThree);
++    padding: 10px 12px 12px;
++}
++
++.country-demographics-subtitle {
++    margin: -2px 0 8px;
++    font-size: 0.8rem;
++    color: var(--text-secondary);
++}
++
++.country-demographics-chart-wrap {
++    position: relative;
++    min-height: 240px;
++    height: 260px;
++    border: 1px solid var(--border);
++    border-radius: var(--game-radius-md);
++    background: rgba(0, 0, 0, 0.12);
++    padding: 8px;
++}
++
++.country-demographics-chart-wrap .chart-canvas-responsive {
++    width: 100% !important;
++    height: 100% !important;
++    margin: 0;
++}
++
++@media (max-width: 1200px) {
++    .country-overview-grid {
++        grid-template-columns: repeat(2, minmax(0, 1fr));
++    }
++}
++
++@media (max-width: 900px) {
++    .country-overview-grid {
++        grid-template-columns: 1fr;
++    }
++}
++
+ @media (max-width: 857px) {
+     body.game-shell-active .game-country-hub {
+         display: grid;
+diff --git a/templates/country.html b/templates/country.html
+index 60a8243d..387d0f9b 100644
+--- a/templates/country.html
++++ b/templates/country.html
+@@ -115,7 +115,7 @@ <h2 class="templatecontentheaderleft">About</h2>
+ 
+             <h2 class="templatecontentheaderleft">Country info</h2>
+ 
+-            <div class="templatedivflex2 card-align-row">
++            <div class="templatedivflex2 card-align-row country-overview-grid">
+                 <div class="templatedivflex2left">
+ 
+ 
+@@ -329,9 +329,12 @@ <h2 class="templatecontentheaderleft">Country info</h2>
+                     </table>
+ 
+                 </div>
+-                <div class="templatedivflex2right">
+-                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographics by Province</h3>
+-                    <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
++                <div class="templatedivflex2right country-demographics-panel">
++                    <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span>Demographics by Province</h3>
++                    <p class="country-demographics-subtitle">Stacked population by province</p>
++                    <div class="country-demographics-chart-wrap">
++                        <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
++                    </div>
+                     <table class="templatetable table-mt">
+                         <tr>
+                             <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
+@@ -361,14 +364,11 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+             }
+ 
+             function initCountryCharts() {
+-                const ctx = document.getElementById('demographicsRadarChart');
++                const canvasEl = document.getElementById('demographicsRadarChart');
++                if (!canvasEl || typeof Chart === 'undefined') return;
++                const ctx = canvasEl.getContext('2d');
+                 if (!ctx) return;
+ 
+-                const canvas = ctx.closest('.chart-wrapper');
+-                if (canvas) {
+-                    canvas.style.display = 'block';
+-                }
+-
+                 // Weight formatter: kg -> t -> kt -> Mt
+                 function formatWeight(value) {
+                     if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
+@@ -393,6 +393,7 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+                 const childrenData = provinces.map(p => p.children);
+                 const workingData = provinces.map(p => p.working);
+                 const elderlyData = provinces.map(p => p.elderly);
++                const hasProvinceData = provinceNames.length > 0;
+ 
+                 // Gradient for children bars (blue)
+                 const childrenGradient = ctx.createLinearGradient(0, 0, 0, 200);
+@@ -412,11 +413,11 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+                 new Chart(ctx, {
+                     type: 'bar',
+                     data: {
+-                        labels: provinceNames.length > 0 ? provinceNames : ['No Provinces'],
++                        labels: hasProvinceData ? provinceNames : ['No Provinces'],
+                         datasets: [
+                             {
+                                 label: 'Children',
+-                                data: childrenData,
++                                data: hasProvinceData ? childrenData : [0],
+                                 backgroundColor: childrenGradient,
+                                 borderColor: 'rgba(54, 162, 235, 1)',
+                                 borderWidth: 2,
+@@ -424,7 +425,7 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+                             },
+                             {
+                                 label: 'Working Age',
+-                                data: workingData,
++                                data: hasProvinceData ? workingData : [0],
+                                 backgroundColor: workingGradient,
+                                 borderColor: 'rgba(75, 192, 92, 1)',
+                                 borderWidth: 2,
+@@ -432,7 +433,7 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+                             },
+                             {
+                                 label: 'Elderly',
+-                                data: elderlyData,
++                                data: hasProvinceData ? elderlyData : [0],
+                                 backgroundColor: elderlyGradient,
+                                 borderColor: 'rgba(159, 168, 174, 1)',
+                                 borderWidth: 2,
+@@ -442,7 +443,7 @@ <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">grou
+                     },
+                     options: {
+                         responsive: true,
+-                        maintainAspectRatio: true,
++                        maintainAspectRatio: false,
+                         animation: {
+                             duration: 1500,
+                             easing: 'easeInOutQuart'
