@@ -432,7 +432,7 @@ body::before {
 
 * {
     scroll-behavior: smooth;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Roboto', system-ui, sans-serif;
 }
 
 a {
@@ -3534,6 +3534,8 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 
 .notificationparent {
     display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 @media all and (max-width: 600px) {
@@ -4680,7 +4682,6 @@ footer {
 /* Canvas chart styling */
 canvas {
     max-width: 100% !important;
-    height: auto !important;
     display: block !important;
 }
 
