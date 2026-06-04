@@ -253,7 +253,7 @@
                             <td><span class="material-icons-outlined">
                                 notes
                                 </span>Coalition role:</td>
-                            <td>{{ colRole|capitalize }}</td>
+                            <td>{{ colRole.replace('_', ' ').title() }}</td>
                         </tr>
                         {% endif %}
                         <!--
