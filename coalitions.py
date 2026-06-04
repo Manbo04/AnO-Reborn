@@ -815,15 +815,71 @@ def coalitions():
                 cn.flag,
                 COUNT(DISTINCT cm.userid) AS members,
                 cn.date AS date,
-                COALESCE(SUM(prov.total_pop), 0) AS total_influence,
+                COALESCE(SUM(prov.influence), 0) AS total_influence,
                 cn.flag_data
             FROM colNames cn
             LEFT JOIN {_members_tbl()} cm ON cn.id = cm.colid
             LEFT JOIN (
-                SELECT userid, COALESCE(SUM(population), 0) AS total_pop
-                FROM provinces
-                WHERE userid IN (SELECT userid FROM {_members_tbl()})
-                GROUP BY userid
+                SELECT
+                    u.id AS userid,
+                    ROUND(
+                        COALESCE(p.provinces_count, 0) * 300
+                        + COALESCE(m.soldiers, 0) * 0.02
+                        + COALESCE(m.artillery, 0) * 1.6
+                        + COALESCE(m.tanks, 0) * 0.8
+                        + COALESCE(m.fighters, 0) * 3.5
+                        + COALESCE(m.bombers, 0) * 2.5
+                        + COALESCE(m.apaches, 0) * 3.2
+                        + COALESCE(m.submarines, 0) * 4.5
+                        + COALESCE(m.destroyers, 0) * 3
+                        + COALESCE(m.cruisers, 0) * 5.5
+                        + COALESCE(m.icbms, 0) * 250
+                        + COALESCE(m.nukes, 0) * 500
+                        + COALESCE(m.spies, 0) * 25
+                        + COALESCE(p.city_count, 0) * 10
+                        + COALESCE(p.total_land, 0) * 10
+                        + COALESCE(r.total_resources, 0) * 0.001
+                        + COALESCE(s.gold, 0) * 0.00001
+                    )::bigint AS influence
+                FROM users u
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN (
+                    SELECT
+                        userid AS user_id,
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(citycount), 0) AS city_count,
+                        COALESCE(SUM(land), 0) AS total_land
+                    FROM provinces
+                    WHERE userid IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY userid
+                ) p ON p.user_id = u.id
+                LEFT JOIN (
+                    SELECT
+                        um.user_id,
+                        SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
+                        SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
+                        SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
+                        SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
+                        SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
+                        SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
+                        SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
+                        SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
+                        SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
+                        SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
+                        SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
+                        SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                    WHERE um.user_id IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY um.user_id
+                ) m ON m.user_id = u.id
+                LEFT JOIN (
+                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
+                    FROM user_economy
+                    WHERE user_id IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY user_id
+                ) r ON r.user_id = u.id
+                WHERE u.id IN (SELECT userid FROM {_members_tbl()})
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date, cn.flag_data
@@ -838,15 +894,71 @@ def coalitions():
                 cn.flag,
                 COUNT(DISTINCT cm.userid) AS members,
                 cn.date AS date,
-                COALESCE(SUM(prov.total_pop), 0) AS total_influence,
+                COALESCE(SUM(prov.influence), 0) AS total_influence,
                 NULL::text AS flag_data
             FROM colNames cn
             LEFT JOIN {_members_tbl()} cm ON cn.id = cm.colid
             LEFT JOIN (
-                SELECT userid, COALESCE(SUM(population), 0) AS total_pop
-                FROM provinces
-                WHERE userid IN (SELECT userid FROM {_members_tbl()})
-                GROUP BY userid
+                SELECT
+                    u.id AS userid,
+                    ROUND(
+                        COALESCE(p.provinces_count, 0) * 300
+                        + COALESCE(m.soldiers, 0) * 0.02
+                        + COALESCE(m.artillery, 0) * 1.6
+                        + COALESCE(m.tanks, 0) * 0.8
+                        + COALESCE(m.fighters, 0) * 3.5
+                        + COALESCE(m.bombers, 0) * 2.5
+                        + COALESCE(m.apaches, 0) * 3.2
+                        + COALESCE(m.submarines, 0) * 4.5
+                        + COALESCE(m.destroyers, 0) * 3
+                        + COALESCE(m.cruisers, 0) * 5.5
+                        + COALESCE(m.icbms, 0) * 250
+                        + COALESCE(m.nukes, 0) * 500
+                        + COALESCE(m.spies, 0) * 25
+                        + COALESCE(p.city_count, 0) * 10
+                        + COALESCE(p.total_land, 0) * 10
+                        + COALESCE(r.total_resources, 0) * 0.001
+                        + COALESCE(s.gold, 0) * 0.00001
+                    )::bigint AS influence
+                FROM users u
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN (
+                    SELECT
+                        userid AS user_id,
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(citycount), 0) AS city_count,
+                        COALESCE(SUM(land), 0) AS total_land
+                    FROM provinces
+                    WHERE userid IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY userid
+                ) p ON p.user_id = u.id
+                LEFT JOIN (
+                    SELECT
+                        um.user_id,
+                        SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
+                        SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
+                        SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
+                        SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
+                        SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
+                        SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
+                        SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
+                        SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
+                        SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
+                        SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
+                        SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
+                        SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                    WHERE um.user_id IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY um.user_id
+                ) m ON m.user_id = u.id
+                LEFT JOIN (
+                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
+                    FROM user_economy
+                    WHERE user_id IN (SELECT userid FROM {_members_tbl()})
+                    GROUP BY user_id
+                ) r ON r.user_id = u.id
+                WHERE u.id IN (SELECT userid FROM {_members_tbl()})
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date
