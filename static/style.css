@@ -5948,15 +5948,7 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-map-tree--3 { left: 22%; bottom: 22%; transform: scale(0.85); opacity: 0.7; }
 
 .province-map-road {
-    position: absolute;
-    left: 15%;
-    right: 15%;
-    bottom: 28%;
-    height: 8px;
-    background: rgba(60, 50, 40, 0.45);
-    border-radius: 4px;
-    transform: perspective(200px) rotateX(55deg);
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+    display: none !important;
 }
 
 /* Central capital hub — grid cell in center column */
@@ -6228,21 +6220,25 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-node-cta {
-    margin-top: 4px;
+    margin-top: 8px;
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: rgba(255, 255, 255, 0.85);
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 999px;
-    background: rgba(0, 167, 225, 0.45);
+    background: rgba(0, 167, 225, 0.7);
     animation: pulse-hint 2s ease infinite;
     white-space: nowrap;
 }
 
 .province-map-node.is-empty .province-map-node-pin {
     opacity: 0.92;
+}
+
+.province-map-node.is-empty .province-map-node-qty {
+    display: none;
 }
 
 .province-map-node.pulse-hint .province-map-node-pin {
