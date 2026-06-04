@@ -1115,136 +1115,180 @@
 
         </div>
         <!--Edit-->
-        <div class="edit" id="edit">
+        <div class="edit country-customize" id="edit">
 
-            <h2 class="templatecontentheaderleft">General</h2>
+            <p class="country-customize-intro">Shape how the world sees {{ username }} — flag, homeland, and lore all show on your nation page.</p>
 
-            <div class="infodiv">
+            <h2 class="templatecontentheaderleft">Identity</h2>
 
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="templatedivflex2 menuflex">
-                        <div class="templatedivflex2left">
+            <div class="infodiv country-customize-panel">
 
-                            <!--
+                <form method="POST" enctype="multipart/form-data" class="country-customize-form">
 
-                            <div class="coalitionimagepreview">
-                                <img id="imageBackground2" />
+                    <section class="country-customize-section country-flag-studio" aria-labelledby="country-flag-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">flag</span>
+                            <div>
+                                <h3 id="country-flag-heading" class="country-customize-section-title">National flag</h3>
+                                <p class="country-customize-section-hint">Square or wide images work best. Shown on your banner, coalitions, and when others browse nations.</p>
                             </div>
-
-                            <label for="bgimage">Upload flag background</label>
-
-                            <label class="imageinput fit center"><span class="material-icons-outlined">
-                                    wallpaper
-                                        </span>Choose Image
-                                        <input type="file" name="bg_flag_input" id="imageinput" accept="image/*" onchange="flagBackgroundUpload(event)">
-                                      </label>
-
-                            -->
                         </div>
-                        <div class="templatedivflex2left">
-
-                            <div class="coalitionimagepreview">
-                                <img id="imageBackground" />
+                        <div class="country-flag-studio-body">
+                            <div class="country-flag-preview-frame" aria-live="polite">
+                                {% if flag != None %}
+                                <img class="country-flag-preview-img" id="countryFlagPreview" src="/flag/country/{{ cId }}" alt="Current flag for {{ username }}">
+                                {% else %}
+                                <img class="country-flag-preview-img country-flag-preview-img--empty" id="countryFlagPreview" alt="" hidden>
+                                <div class="country-flag-preview-placeholder" id="countryFlagPlaceholder">
+                                    <span class="material-icons-outlined" aria-hidden="true">outlined_flag</span>
+                                    <span>No flag yet — upload one!</span>
+                                </div>
+                                {% endif %}
                             </div>
-
-                            <label for="bgimage">Upload country flag</label>
-                            <script>
-                                const flagItselfUpload = function(event) {
-                                    var output = document.getElementById('imageBackground');
-                                    output.src = URL.createObjectURL(event.target.files[0]);
-                                    output.style.width = "20vw";
-                                    output.style.height = "11.25vw";
-                                    output.onload = function() {
-                                        URL.revokeObjectURL(output.src) //free memory
-                                    }
-                                };
-                                var flagBackgroundUpload = function(event) {
-                                    var output = document.getElementById('imageBackground2');
-                                    output.src = URL.createObjectURL(event.target.files[0]);
-                                    output.style.width = "20vw";
-                                    output.style.height = "11.25vw";
-                                    output.onload = function() {
-                                        URL.revokeObjectURL(output.src) // free memory
-                                    }
-                                };
-                            </script>
-                            <label class="imageinput fit center"><span class="material-icons-outlined">
-                                wallpaper
-                                    </span>Choose Image
-                                    <input type="file" name="flag_input" id="imageinput" accept="image/*" onchange="flagItselfUpload(event)">
-                                  </label>
+                            <label class="country-flag-upload imageinput fit center" for="countryFlagInput">
+                                <span class="material-icons-outlined" aria-hidden="true">upload</span>
+                                Choose flag image
+                                <input type="file" name="flag_input" id="countryFlagInput" accept="image/*">
+                            </label>
                         </div>
-                        <div class="templatedivflex2left">
+                    </section>
 
-                            <!--
-
-                            <div class="coalitionimagepreview">
-                                <video class="video">
-                                <source id="imageBackground3" type="video/ogg"/>
-                            </video>
+                    <section class="country-customize-section country-biome-studio" aria-labelledby="country-biome-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">public</span>
+                            <div>
+                                <h3 id="country-biome-heading" class="country-customize-section-title">Homeland biome</h3>
+                                <p class="country-customize-section-hint country-biome-warning">
+                                    <span class="material-icons-outlined" aria-hidden="true">warning</span>
+                                    Changing biome removes all industry buildings in every province.
+                                </p>
                             </div>
-
-                            <label for="bgimage">Upload country anthem</label>
-                            <script>
-                                var videoUpload = function(event) {
-                                    var output = document.getElementById('imageBackground3');
-                                    output.src = URL.createObjectURL(event.target.files[0]);
-                                    output.style.width = "20vw";
-                                    output.style.height = "11.25vw";
-                                    output.onload = function() {
-                                        URL.revokeObjectURL(output.src) // free memory
-                                    }
-                                };
-                            </script>
-                            <label class="imageinput fit center"><span class="material-icons-outlined">
-                                slideshow
-                                    </span>Choose Video
-                                    <input type="file" name="flag_input" id="imageinput" accept="video/*" onchange="videoUpload(event)">
-                                  </label>
-
-                                -->
                         </div>
-                    </div>
-                    <div class="templatedivflex2 menuflex">
-                        <div class="templatedivflex2left">
-
-
-                            <label for="countryLocation">Change biome (WARNING: changing location will remove all industry buildings)</label>
-                            <select class="templateselect" name="countryLocation">
-
-                                            <option value="none" class="templateoption" selected="selected">Biomes</option>
-                                            <option value="Tundra" class="templateoption">Tundra</option>
-                                            <option value="Savanna" class="templateoption">Savanna</option>
-                                            <option value="Desert" class="templateoption">Desert</option>
-                                            <option value="Jungle" class="templateoption">Jungle</option>
-                                            <option value="Boreal Forest" class="templateoption">Boreal Forest</option>
-                                            <option value="Grassland" class="templateoption">Grassland</option>
-                                            <option value="Mountain Range" class="templateoption">Mountain Range</option>
-
-                                        </select>
-
+                        {% if location %}
+                        <p class="country-biome-current">Current homeland: <strong>{{ location }}</strong></p>
+                        {% endif %}
+                        <div class="country-biome-gallery" role="listbox" aria-label="Choose a biome" id="countryBiomeGallery">
+                            {% for biome in nation_biome_choices() %}
+                            <button type="button" class="country-biome-card{% if location and location == biome.value %} is-current{% endif %}"
+                                role="option"
+                                data-biome-value="{{ biome.value }}"
+                                aria-selected="{% if location and location == biome.value %}true{% else %}false{% endif %}">
+                                <span class="country-biome-card-art">
+                                    <img loading="lazy" alt="" src="{{ url_for('static', filename=game_asset_path('biomes', biome.asset_key)) }}?v={{ asset_version }}">
+                                </span>
+                                <span class="country-biome-card-body">
+                                    <span class="material-icons-outlined country-biome-card-icon" aria-hidden="true">{{ biome.icon }}</span>
+                                    <span class="country-biome-card-label">{{ biome.label }}</span>
+                                    <span class="country-biome-card-tagline">{{ biome.tagline }}</span>
+                                </span>
+                                {% if location and location == biome.value %}
+                                <span class="country-biome-card-badge">Current</span>
+                                {% endif %}
+                            </button>
+                            {% endfor %}
                         </div>
-                    </div>
+                        <label class="visually-hidden" for="countryLocationSelect">Biome for form submission</label>
+                        <select class="templateselect country-biome-select-hidden" name="countryLocation" id="countryLocationSelect" tabindex="-1" aria-hidden="true">
+                            <option value="none" class="templateoption" selected="selected">Keep current biome</option>
+                            {% for biome in nation_biome_choices() %}
+                            <option value="{{ biome.value }}" class="templateoption">{{ biome.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="country-biome-pick-hint" id="countryBiomePickHint" hidden>Selected: <strong id="countryBiomePickLabel"></strong> — save to apply.</p>
+                    </section>
 
-                    <label for="description">Describe your country</label>
-                    <div class="center">
-                        <textarea id="countryDescription" class="templatetextarea" name="description" placeholder="Country description">{{ description|e }}</textarea>
-                        <script>
-                            var simplemde = new SimpleMDE({
-                                element: document.getElementById("countryDescription"),
-                                hideIcons: ['side-by-side', 'fullscreen'],
-                                showIcons: ['table', 'italic', 'strikethrough', 'horizontal-rule'],
-                                autosave: true,
-                            })
-                        </script>
-                    </div>
+                    <section class="country-customize-section country-lore-studio" aria-labelledby="country-lore-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">auto_stories</span>
+                            <div>
+                                <h3 id="country-lore-heading" class="country-customize-section-title">National lore</h3>
+                                <p class="country-customize-section-hint">Tell visitors your origin story, values, rivals, or roleplay rules. Markdown supported.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-prompts" role="group" aria-label="Writing prompts">
+                            <span class="country-lore-prompts-label">Quick prompts:</span>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Founding\n\nOur nation was born when…">Founding</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Government\n\nWe are ruled by…">Government</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Foreign policy\n\nAllies: …\n\nRivals: …">Diplomacy</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Culture\n\nTraditions, holidays, and national symbols include…">Culture</button>
+                        </div>
+                        <div class="country-lore-editor-wrap">
+                            <textarea id="countryDescription" class="templatetextarea" name="description" placeholder="Write your nation's story — history, leaders, ambitions, or in-character voice.">{{ description|e }}</textarea>
+                        </div>
+                    </section>
 
-                    <button class="templatedivbutton templatecenteredbutton" formaction="/update_country_info" type="submit"><span class="material-icons-outlined">
-                    check
-                    </span>Update</button>
+                    <button class="templatedivbutton templatecenteredbutton country-customize-save" formaction="/update_country_info" type="submit">
+                        <span class="material-icons-outlined" aria-hidden="true">save</span>
+                        Save nation identity
+                    </button>
 
                 </form>
             </div>
+
+            <script>
+            (function () {
+                var flagInput = document.getElementById('countryFlagInput');
+                var preview = document.getElementById('countryFlagPreview');
+                var placeholder = document.getElementById('countryFlagPlaceholder');
+                if (flagInput && preview) {
+                    flagInput.addEventListener('change', function (event) {
+                        var file = event.target.files && event.target.files[0];
+                        if (!file) return;
+                        var url = URL.createObjectURL(file);
+                        preview.src = url;
+                        preview.hidden = false;
+                        preview.classList.remove('country-flag-preview-img--empty');
+                        if (placeholder) placeholder.hidden = true;
+                        preview.onload = function () { URL.revokeObjectURL(url); };
+                    });
+                }
+
+                var gallery = document.getElementById('countryBiomeGallery');
+                var select = document.getElementById('countryLocationSelect');
+                var pickHint = document.getElementById('countryBiomePickHint');
+                var pickLabel = document.getElementById('countryBiomePickLabel');
+                if (gallery && select) {
+                    gallery.addEventListener('click', function (event) {
+                        var card = event.target.closest('.country-biome-card');
+                        if (!card) return;
+                        var value = card.getAttribute('data-biome-value');
+                        select.value = value;
+                        gallery.querySelectorAll('.country-biome-card').forEach(function (el) {
+                            var on = el === card;
+                            el.classList.toggle('is-selected', on);
+                            el.setAttribute('aria-selected', on ? 'true' : 'false');
+                        });
+                        if (pickHint && pickLabel) {
+                            pickLabel.textContent = card.querySelector('.country-biome-card-label').textContent;
+                            pickHint.hidden = false;
+                        }
+                    });
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    var textarea = document.getElementById('countryDescription');
+                    if (!textarea || typeof SimpleMDE === 'undefined') return;
+                    window.countryLoreEditor = new SimpleMDE({
+                        element: textarea,
+                        hideIcons: ['side-by-side', 'fullscreen'],
+                        showIcons: ['table', 'italic', 'strikethrough', 'horizontal-rule'],
+                        autosave: { enabled: true, uniqueId: 'country-lore-{{ cId }}', delay: 2000 },
+                        placeholder: 'Write your nation\'s story…',
+                        status: ['lines', 'words', 'cursor'],
+                    });
+                    document.querySelectorAll('.country-lore-prompt-chip').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var text = btn.getAttribute('data-prompt') || '';
+                            var editor = window.countryLoreEditor;
+                            if (!editor) return;
+                            var current = editor.value();
+                            editor.value(current ? (current.trimEnd() + '\n\n' + text) : text);
+                            editor.codemirror.focus();
+                        });
+                    });
+                });
+            })();
+            </script>
 
             <h2 class="templatecontentheaderleft">Policies</h2>
             <form method="POST" action="/policies/update">
