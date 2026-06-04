@@ -4730,6 +4730,59 @@ ul.flashes {
     margin: 5px 0;
 }
 
+.combat-stats-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 5px 0;
+}
+
+.combat-stats-line strong {
+    margin-right: 2px;
+}
+
+.combat-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.combat-stat-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.combat-stat-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 1;
+}
+
+.combat-stat-icon {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    width: 18px;
+    height: 18px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.combat-stat--atk .combat-stat-icon {
+    color: var(--danger);
+}
+
+.combat-stat--def .combat-stat-icon {
+    color: var(--secondary);
+}
+
+.combat-stat-sep {
+    opacity: 0.65;
+    margin: 0 2px;
+}
+
 /* Login/signup pages: transparent container, hidden footer */
 body:has(.loginsignupdiv) .templatecontainer {
     background: transparent !important;
