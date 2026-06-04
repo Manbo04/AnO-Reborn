@@ -252,7 +252,13 @@
                 </div>
             </div>
 
-            <h2 class="templatecontentheaderleft" id="members">Members</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="templatecontentheaderleft" id="members" style="margin-bottom: 0;">Members</h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="membersFilterInput" placeholder="Filter members..." class="templateinput" style="width: 150px; padding: 4px 8px; font-size: 0.9em; height: 32px; box-sizing: border-box;" onkeyup="filterMembersTable()">
+                    <button class="templatebutton" onclick="toggleMembersList()" id="toggleMembersBtn" style="padding: 4px 12px; font-size: 0.9em; height: 32px; box-sizing: border-box;">Minimize</button>
+                </div>
+            </div>
 
             {% if user_role in ["leader", "deputy_leader"] %}
             <div class="infodiv" style="margin-bottom: 15px;">
@@ -263,38 +269,117 @@
             </div>
             {% endif %}
 
-            <div class="templateoutertablediv inverttable">
-                <table class="templatetable templatetable2">
-                    <th>#</th>
-                    <th><i class="fas fa-flag" aria-hidden="true"></i>Name</th>
-                    <th>Role</th>
-                    <th><span class="material-icons-outlined">
-                        people_alt
-                        </span>Influence</th>
-                    <th><span class="material-icons-outlined">
-                        account_balance
-                        </span>Provinces</th>
-                    <th><span class="material-icons-outlined">
-                        schedule
-                        </span>Last Active</th>
+            <div class="templateoutertablediv inverttable" id="membersTableContainer">
+                <table class="templatetable templatetable2" id="membersTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortMembersTable(0, false)" style="cursor: pointer; user-select: none;"># <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;">▼</span></th>
+                            <th onclick="sortMembersTable(1, false)" style="cursor: pointer; user-select: none;"><i class="fas fa-flag" aria-hidden="true"></i>Name <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                            <th onclick="sortMembersTable(2, false)" style="cursor: pointer; user-select: none;">Role <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                            <th onclick="sortMembersTable(3, true)" style="cursor: pointer; user-select: none;"><span class="material-icons-outlined">
+                                people_alt
+                                </span>Influence <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                            <th onclick="sortMembersTable(4, true)" style="cursor: pointer; user-select: none;"><span class="material-icons-outlined">
+                                account_balance
+                                </span>Provinces <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                            <th onclick="sortMembersTable(5, true)" style="cursor: pointer; user-select: none;"><span class="material-icons-outlined">
+                                schedule
+                                </span>Last Active <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTableBody">
                     {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=3, reverse=True) %}
-                    <tr>
-                        <td>{{ loop.index }})</td>
-                        <td>
+                    <tr class="member-row">
+                        <td data-sort="{{ loop.index }}">{{ loop.index }})</td>
+                        <td data-sort="{{ username.lower() }}">
                             <a href="/country/id={{ member_id }}">{{ username }}</a>
                         </td>
-                        <td>{{ role.capitalize() }}</td>
-                        <td><span class="material-icons-outlined">
+                        <td data-sort="{{ role }}">{{ role.replace('_', ' ').title() }}</td>
+                        <td data-sort="{{ influence if influence else 0 }}"><span class="material-icons-outlined">
                             people_alt
                             </span>{{ (influence if influence else 0) | fmt }}</td>
-                        <td><span class="material-icons-outlined">
+                        <td data-sort="{{ provinces if provinces else 0 }}"><span class="material-icons-outlined">
                             account_balance
                             </span>{{ provinces if provinces else 0 }}</td>
-                        <td>{{ last_active | timeago }}</td>
+                        <td data-sort="{{ (last_active.timestamp() if last_active else 0) }}">{{ last_active | timeago }}</td>
                     </tr>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
+
+            <script>
+                function toggleMembersList() {
+                    const container = document.getElementById('membersTableContainer');
+                    const btn = document.getElementById('toggleMembersBtn');
+                    if (container.style.display === 'none') {
+                        container.style.display = 'block';
+                        btn.innerText = 'Minimize';
+                    } else {
+                        container.style.display = 'none';
+                        btn.innerText = 'Expand';
+                    }
+                }
+
+                function filterMembersTable() {
+                    const input = document.getElementById('membersFilterInput');
+                    const filter = input.value.toLowerCase();
+                    const rows = document.getElementsByClassName('member-row');
+                    
+                    for (let i = 0; i < rows.length; i++) {
+                        const nameCell = rows[i].getElementsByTagName('td')[1];
+                        const roleCell = rows[i].getElementsByTagName('td')[2];
+                        if (nameCell && roleCell) {
+                            const nameText = nameCell.textContent || nameCell.innerText;
+                            const roleText = roleCell.textContent || roleCell.innerText;
+                            if (nameText.toLowerCase().indexOf(filter) > -1 || roleText.toLowerCase().indexOf(filter) > -1) {
+                                rows[i].style.display = "";
+                            } else {
+                                rows[i].style.display = "none";
+                            }
+                        }
+                    }
+                }
+
+                let currentSortCol = 0;
+                let currentSortAsc = true;
+
+                function sortMembersTable(colIndex, isNumeric) {
+                    const tableBody = document.getElementById('membersTableBody');
+                    const rows = Array.from(tableBody.getElementsByClassName('member-row'));
+                    const headers = document.getElementById('membersTable').getElementsByTagName('th');
+                    
+                    if (currentSortCol === colIndex) {
+                        currentSortAsc = !currentSortAsc;
+                    } else {
+                        currentSortCol = colIndex;
+                        currentSortAsc = !isNumeric; // Default to desc for numeric, asc for text
+                    }
+                    
+                    // Reset icons
+                    for(let i=0; i<headers.length; i++) {
+                        const icon = headers[i].querySelector('.sort-icon');
+                        if(icon) icon.innerText = '';
+                    }
+                    headers[colIndex].querySelector('.sort-icon').innerText = currentSortAsc ? '▲' : '▼';
+
+                    rows.sort((a, b) => {
+                        let valA = a.getElementsByTagName('td')[colIndex].getAttribute('data-sort');
+                        let valB = b.getElementsByTagName('td')[colIndex].getAttribute('data-sort');
+                        
+                        if (isNumeric) {
+                            valA = parseFloat(valA) || 0;
+                            valB = parseFloat(valB) || 0;
+                            return currentSortAsc ? valA - valB : valB - valA;
+                        } else {
+                            return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                        }
+                    });
+
+                    // Re-append rows in sorted order
+                    rows.forEach(row => tableBody.appendChild(row));
+                }
+            </script>
 
         </div>
         <!--JOIN-->
