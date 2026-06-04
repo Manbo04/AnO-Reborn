@@ -6,7 +6,7 @@ from database import (
     invalidate_user_cache,
     cache_response,
 )
-from flask import request, render_template, session, redirect, flash
+from flask import request, render_template, session, redirect, flash, jsonify
 import variables
 import logging
 from datetime import datetime, timedelta
@@ -15,6 +15,57 @@ logger = logging.getLogger(__name__)
 
 # Valid interval options (in hours)
 VALID_INTERVALS = [1, 6, 12, 24, 48, 72, 168]  # 1h, 6h, 12h, 1d, 2d, 3d, 1 week
+
+# Canonical trade resources (stored in DB); aliases normalized on input
+VALID_TRADE_RESOURCES = ["money"] + variables.RESOURCES
+RESOURCE_ALIASES = {
+    "gold": "money",
+    "money": "money",
+    "consumer goods": "consumer_goods",
+    "consumergoods": "consumer_goods",
+}
+TRADE_RESOURCE_LABELS = {"money": "Gold"}
+
+
+def normalize_trade_resource(resource):
+    """Map UI aliases (e.g. gold) to canonical resource names."""
+    if not resource:
+        return None
+    key = str(resource).strip().lower().replace(" ", "_")
+    key = RESOURCE_ALIASES.get(key, key)
+    if key in VALID_TRADE_RESOURCES:
+        return key
+    return None
+
+
+def resolve_trade_partner_id(db, current_user_id, receiver_id_raw, receiver_query):
+    """Resolve partner from hidden id and/or search text (username or nation ID)."""
+    if receiver_id_raw:
+        try:
+            partner_id = int(receiver_id_raw)
+        except (TypeError, ValueError):
+            return None
+        if partner_id == current_user_id:
+            return None
+        db.execute("SELECT id FROM users WHERE id = %s", (partner_id,))
+        return partner_id if db.fetchone() else None
+
+    query = (receiver_query or "").strip()
+    if not query:
+        return None
+    if query.isdigit():
+        partner_id = int(query)
+        if partner_id == current_user_id:
+            return None
+        db.execute("SELECT id FROM users WHERE id = %s", (partner_id,))
+        return partner_id if db.fetchone() else None
+
+    db.execute(
+        "SELECT id FROM users WHERE LOWER(username) = LOWER(%s)",
+        (query,),
+    )
+    row = db.fetchone()
+    return row[0] if row else None
 
 
 def get_resource_column(resource):
@@ -258,28 +309,47 @@ def trade_agreements():
 
         agreements = db.fetchall()
 
-        # Get list of all users for the proposal dropdown
-        db.execute(
-            """
-            SELECT id, username FROM users
-            WHERE id != %s
-            ORDER BY username
-        """,
-            (user_id,),
-        )
-        users = db.fetchall()
-
-    # Resources that can be traded
-    tradeable_resources = ["money"] + variables.RESOURCES
-
     return render_template(
         "trade_agreements.html",
         agreements=agreements,
-        users=users,
-        resources=tradeable_resources,
+        resources=VALID_TRADE_RESOURCES,
+        resource_labels=TRADE_RESOURCE_LABELS,
         intervals=VALID_INTERVALS,
         user_id=user_id,
     )
+
+
+@login_required
+def search_trade_partners():
+    """JSON autocomplete for trade partner search (prefix match on name or exact ID)."""
+    user_id = session["user_id"]
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify([])
+
+    with get_request_cursor(read_only=True) as db:
+        if q.isdigit():
+            db.execute(
+                """
+                SELECT id, username FROM users
+                WHERE id != %s AND id = %s
+                LIMIT 1
+                """,
+                (user_id, int(q)),
+            )
+        else:
+            db.execute(
+                """
+                SELECT id, username FROM users
+                WHERE id != %s AND LOWER(username) LIKE LOWER(%s)
+                ORDER BY username
+                LIMIT 25
+                """,
+                (user_id, f"{q}%"),
+            )
+        rows = db.fetchall()
+
+    return jsonify([{"id": r[0], "username": r[1]} for r in rows])
 
 
 @login_required
@@ -288,19 +358,19 @@ def create_trade_agreement():
     user_id = session["user_id"]
 
     # Get form data
-    receiver_id = request.form.get("receiver_id")
-    proposer_resource = request.form.get("proposer_resource")
+    receiver_id_raw = request.form.get("receiver_id")
+    receiver_query = request.form.get("receiver", "")
+    proposer_resource = normalize_trade_resource(request.form.get("proposer_resource"))
     proposer_amount = request.form.get("proposer_amount")
-    receiver_resource = request.form.get("receiver_resource")
+    receiver_resource = normalize_trade_resource(request.form.get("receiver_resource"))
     receiver_amount = request.form.get("receiver_amount")
     interval_hours = request.form.get("interval_hours")
     max_executions = request.form.get("max_executions")
-    message = request.form.get("message", "")
+    message = (request.form.get("message") or "").strip()
 
-    # Validation
     if not all(
         [
-            receiver_id,
+            receiver_id_raw or receiver_query,
             proposer_resource,
             proposer_amount,
             receiver_resource,
@@ -308,21 +378,16 @@ def create_trade_agreement():
             interval_hours,
         ]
     ):
-        flash("All fields are required", "error")
+        flash("All required fields must be filled in", "error")
         return redirect("/trade-agreements")
 
     try:
-        receiver_id = int(receiver_id)
         proposer_amount = int(proposer_amount)
         receiver_amount = int(receiver_amount)
         interval_hours = int(interval_hours)
         max_executions = int(max_executions) if max_executions else None
     except ValueError:
         flash("Invalid numeric values", "error")
-        return redirect("/trade-agreements")
-
-    if receiver_id == user_id:
-        flash("You cannot create a trade agreement with yourself", "error")
         return redirect("/trade-agreements")
 
     if proposer_amount < 1 or receiver_amount < 1:
@@ -337,20 +402,19 @@ def create_trade_agreement():
         flash("Max executions must be at least 1", "error")
         return redirect("/trade-agreements")
 
-    # Validate resources
-    valid_resources = ["money"] + variables.RESOURCES
-    if (
-        proposer_resource not in valid_resources
-        or receiver_resource not in valid_resources
-    ):
+    if not proposer_resource or not receiver_resource:
         flash("Invalid resource selected", "error")
         return redirect("/trade-agreements")
 
     with get_request_cursor() as db:
-        # Verify receiver exists
-        db.execute("SELECT id FROM users WHERE id = %s", (receiver_id,))
-        if not db.fetchone():
-            flash("Receiver not found", "error")
+        receiver_id = resolve_trade_partner_id(
+            db, user_id, receiver_id_raw, receiver_query
+        )
+        if not receiver_id:
+            flash(
+                "Trade partner not found. Enter an exact country name or nation ID.",
+                "error",
+            )
             return redirect("/trade-agreements")
 
         # Check proposer has enough resources for at least one execution
@@ -358,8 +422,11 @@ def create_trade_agreement():
             db, user_id, proposer_resource, proposer_amount
         )
         if not has_enough:
+            res_label = TRADE_RESOURCE_LABELS.get(
+                proposer_resource, proposer_resource.replace("_", " ")
+            )
             msg = (
-                f"You don't have enough {proposer_resource} "
+                f"You don't have enough {res_label} "
                 f"(have {balance:,}, need {proposer_amount:,})"
             )
             flash(msg, "error")
@@ -616,6 +683,12 @@ def resume_trade_agreement(agreement_id):
 def register_trade_agreement_routes(app):
     """Register trade agreement routes with the Flask app."""
     app.add_url_rule("/trade-agreements", "trade_agreements", trade_agreements)
+    app.add_url_rule(
+        "/trade-agreements/partners",
+        "search_trade_partners",
+        search_trade_partners,
+        methods=["GET"],
+    )
     app.add_url_rule(
         "/trade-agreements/create",
         "create_trade_agreement",
