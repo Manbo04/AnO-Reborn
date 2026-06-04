@@ -95,6 +95,15 @@ def build_structure(
 
         db.execute(
             """
+            INSERT INTO user_economy (user_id, resource_id, quantity)
+            VALUES (%s, %s, 0)
+            ON CONFLICT (user_id, resource_id) DO NOTHING
+            """,
+            (user_id, resource_id),
+        )
+
+        db.execute(
+            """
             UPDATE user_economy
             SET quantity = quantity - %s,
                 updated_at = now()
@@ -110,18 +119,33 @@ def build_structure(
                 f"Not enough {BUILD_COST_RESOURCE} to build {display_name}."
             )
 
-        db.execute(
-            """
-            INSERT INTO user_buildings
-                (user_id, building_id, province_id, quantity, last_upgraded)
-            VALUES (%s, %s, %s, %s, now())
-            ON CONFLICT (user_id, building_id, province_id)
-            DO UPDATE SET
-                quantity = user_buildings.quantity + EXCLUDED.quantity,
-                last_upgraded = now()
-            """,
-            (user_id, building_id, province_id, quantity),
-        )
+        if province_id is not None:
+            db.execute(
+                """
+                INSERT INTO user_buildings
+                    (user_id, building_id, province_id, quantity, last_upgraded)
+                VALUES (%s, %s, %s, %s, now())
+                ON CONFLICT (user_id, building_id, province_id)
+                DO UPDATE SET
+                    quantity = user_buildings.quantity + EXCLUDED.quantity,
+                    last_upgraded = now()
+                """,
+                (user_id, building_id, province_id, quantity),
+            )
+        else:
+            # Fallback for global buildings: where province_id is NULL
+            db.execute(
+                """
+                INSERT INTO user_buildings
+                    (user_id, building_id, quantity, last_upgraded)
+                VALUES (%s, %s, %s, now())
+                ON CONFLICT (user_id, building_id) WHERE province_id IS NULL
+                DO UPDATE SET
+                    quantity = user_buildings.quantity + EXCLUDED.quantity,
+                    last_upgraded = now()
+                """,
+                (user_id, building_id, quantity),
+            )
 
         conn.commit()
 

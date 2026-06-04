@@ -928,6 +928,8 @@ def invalid_server_error(error):
     error_code = generate_error_code()
     logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
     traceback.print_exc()
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": f"Internal Server Error (Code: {error_code})"}), 500
     try:
         body = render_template(
             "error.html", code=500, message=error_message, error_code=error_code
