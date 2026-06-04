@@ -7118,14 +7118,13 @@ body.page-country .menuflex2 a h3 {
 
 .country-biome-warning {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 6px;
     color: #e8a87c;
 }
 
 .country-biome-warning .material-icons-outlined {
-    font-size: 1rem;
-    margin-top: 2px;
+    font-size: 1.1rem;
 }
 
 .country-biome-current {
