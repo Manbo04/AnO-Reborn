@@ -252,13 +252,13 @@
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="templatecontentheaderleft" id="members" style="margin-bottom: 0;">Members</h2>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="membersFilterInput" placeholder="Filter members..." class="templateinput" style="width: 150px; padding: 4px 8px; font-size: 0.9em; height: 32px; box-sizing: border-box;" onkeyup="filterMembersTable()">
-                    <button class="templatebutton" onclick="toggleMembersList()" id="toggleMembersBtn" style="padding: 4px 12px; font-size: 0.9em; height: 32px; box-sizing: border-box;">Minimize</button>
+            <h2 class="templatecontentheaderleft" id="members" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span>Members</span>
+                <div style="display: flex; gap: 10px; font-weight: normal;">
+                    <input type="text" id="membersFilterInput" placeholder="Filter members..." class="templateinput" style="width: 150px; padding: 4px 8px; font-size: 0.7em; height: 32px; box-sizing: border-box;" onkeyup="filterMembersTable()">
+                    <button class="templatebutton" onclick="toggleMembersList()" id="toggleMembersBtn" style="padding: 4px 12px; font-size: 0.7em; height: 32px; box-sizing: border-box;">Minimize</button>
                 </div>
-            </div>
+            </h2>
 
             {% if user_role in ["leader", "deputy_leader"] %}
             <div class="infodiv" style="margin-bottom: 15px;">
