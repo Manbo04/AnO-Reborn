@@ -16,8 +16,8 @@ import sys
 DEPLOY_URL = os.getenv("DEPLOY_URL", "https://affairsandorder.com").rstrip("/")
 
 PAGES_AND_MARKERS = {
-    "/": ("images/game/resources/gold.svg", "templatediv"),
-    "/signup": ("images/game/biomes/tundra.svg", "Choose a Biome"),
+    "/": ("images/bank.jpg", "templatediv"),
+    "/signup": ("images/tundra.jpg", "Choose a Biome"),
     "/country/id=1": ("country-overview-grid", "demographicsRadarChart"),
 }
 
