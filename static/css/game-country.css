@@ -85,7 +85,7 @@ body.page-country .menuflex2 a h3 {
     height: 260px;
     border: 1px solid var(--border);
     border-radius: var(--game-radius-md);
-    background: rgba(0, 0, 0, 0.12);
+    background: transparent;
     padding: 8px;
 }
 

@@ -74,6 +74,13 @@
     {% if FEATURE_GAME_SHELL and session.get('user_id') %}
     <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=8"></script>
     {% endif %}
+    
+    <!-- Interactive Tooltips -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
+    <script defer src="{{ url_for('static', filename='tooltips.js') }}?v=1"></script>
+
     {% block extra_head %}{% endblock %}
     <!-- Hide dropdown arrows in navbar -->
     <style>
