@@ -497,6 +497,14 @@ def province_slot_api(pId, slot_id):
         return jsonify({"error": "Unknown category"}), 404
 
     cId = session["user_id"]
+    try:
+        return _province_slot_api_impl(pId, slot_id, slot, cId, RealDictCursor)
+    except Exception:
+        logger.exception("province slot api failed pId=%s slot=%s", pId, slot_id)
+        return jsonify({"error": "Could not load district data."}), 500
+
+
+def _province_slot_api_impl(pId, slot_id, slot, cId, RealDictCursor):
     with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
         db.execute(
             "SELECT id, userId AS owner_id FROM provinces WHERE id = %s",

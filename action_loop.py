@@ -29,6 +29,80 @@ def _get_resource_id(db, resource_name: str):
     return row[0] if row else None
 
 
+def _ensure_user_economy_row(db, user_id: int, resource_id: int) -> None:
+    """Ensure a user_economy row exists so cost deduction can run."""
+    db.execute(
+        """
+        INSERT INTO user_economy (user_id, resource_id, quantity)
+        VALUES (%s, %s, 0)
+        ON CONFLICT (user_id, resource_id) DO NOTHING
+        """,
+        (user_id, resource_id),
+    )
+
+
+def _province_owner_id(db, province_id: int):
+    """Return province owner id (supports legacy userId / userid columns)."""
+    try:
+        db.execute(
+            """
+            SELECT COALESCE("userId", userid) AS owner_id
+            FROM provinces WHERE id = %s
+            """,
+            (province_id,),
+        )
+    except Exception:
+        db.execute("SELECT userid FROM provinces WHERE id = %s", (province_id,))
+    row = db.fetchone()
+    return row[0] if row else None
+
+
+def _upsert_user_building(db, user_id, building_id, province_id, quantity: int) -> None:
+    """Insert or increment building count; works even if PK migration differs."""
+    try:
+        db.execute(
+            """
+            INSERT INTO user_buildings
+                (user_id, building_id, province_id, quantity, last_upgraded)
+            VALUES (%s, %s, %s, %s, now())
+            ON CONFLICT (user_id, building_id, province_id)
+            DO UPDATE SET
+                quantity = user_buildings.quantity + EXCLUDED.quantity,
+                last_upgraded = now()
+            """,
+            (user_id, building_id, province_id, quantity),
+        )
+        return
+    except Exception:
+        pass
+    db.execute(
+        """
+        SELECT quantity FROM user_buildings
+        WHERE user_id=%s AND building_id=%s AND province_id=%s
+        """,
+        (user_id, building_id, province_id),
+    )
+    existing = db.fetchone()
+    if existing:
+        db.execute(
+            """
+            UPDATE user_buildings
+            SET quantity = quantity + %s, last_upgraded = now()
+            WHERE user_id=%s AND building_id=%s AND province_id=%s
+            """,
+            (quantity, user_id, building_id, province_id),
+        )
+    else:
+        db.execute(
+            """
+            INSERT INTO user_buildings
+                (user_id, building_id, province_id, quantity, last_upgraded)
+            VALUES (%s, %s, %s, %s, now())
+            """,
+            (user_id, building_id, province_id, quantity),
+        )
+
+
 def _is_tech_unlocked(db, user_id: int, tech_id: int) -> bool:
     db.execute(
         """
@@ -61,9 +135,8 @@ def build_structure(
         # Acquire advisory lock for deadlock safety (always by ascending user_id)
         db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
-        db.execute("SELECT userId FROM provinces WHERE id = %s", (province_id,))
-        owner_row = db.fetchone()
-        if not owner_row or owner_row[0] != user_id:
+        owner_id = _province_owner_id(db, province_id)
+        if owner_id is None or str(owner_id) != str(user_id):
             raise ActionLoopError("You do not own this province.")
 
         db.execute(
@@ -93,6 +166,8 @@ def build_structure(
 
         total_cost = int(base_cost) * int(quantity)
 
+        _ensure_user_economy_row(db, user_id, resource_id)
+
         db.execute(
             """
             UPDATE user_economy
@@ -110,18 +185,7 @@ def build_structure(
                 f"Not enough {BUILD_COST_RESOURCE} to build {display_name}."
             )
 
-        db.execute(
-            """
-            INSERT INTO user_buildings
-                (user_id, building_id, province_id, quantity, last_upgraded)
-            VALUES (%s, %s, %s, %s, now())
-            ON CONFLICT (user_id, building_id, province_id)
-            DO UPDATE SET
-                quantity = user_buildings.quantity + EXCLUDED.quantity,
-                last_upgraded = now()
-            """,
-            (user_id, building_id, province_id, quantity),
-        )
+        _upsert_user_building(db, user_id, building_id, province_id, quantity)
 
         conn.commit()
 
