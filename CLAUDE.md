@@ -108,6 +108,26 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-06-03
+
+**Task**: My Coalition tab 500 (`/my_coalition` → `/coalition/{id}`, error id `a6z4rc2miwgvtwbv2jkw-1780517862`)
+
+**What Was Done**:
+- Fixed `coalition()` in `coalitions.py`: stats + member-list `db.execute` blocks used plain `"""` with `{_members_tbl()}` — Postgres got invalid SQL; member fallback could still 500
+- Converted those queries to `f"""`, broadened member-fetch failure handling to empty list
+- Fixed `adding()` / `delete_coalition()` mistaken `or "{_members_tbl()}"` table name string
+- Added `tests/test_coalition_sql_fstrings.py` offline regression
+- Branch `cursor/fix-my-coalition-500-a503`, commit `a0c34ead`, PR #55
+
+**What To Watch**:
+- Merge PR #55 and redeploy; verify logged-in coalition members see coalition page (not global 500)
+- Players without membership should still see “No coalition yet” (`tests/test_my_coalition_empty.py`)
+
+**Next Steps**:
+- Production smoke on test account 16 after deploy
+
+---
+
 ### Session: 2026-05-22 (follow-up verification)
 
 **Task**: Follow-up verification and remaining security items

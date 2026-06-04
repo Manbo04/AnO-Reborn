@@ -292,7 +292,7 @@ def coalition(coalition_id):
                     (coalition_id, coalition_id),
                 )
                 members = db.fetchall()
-        except (TypeError, AttributeError, IndexError):
+        except Exception:
             members = []
 
         try:
@@ -1122,7 +1122,7 @@ def adding(uId):
         if guard:
             return guard
 
-        members_tbl = _coalition_members_sql() or "{_members_tbl()}"
+        members_tbl = _members_tbl()
         db.execute(
             "DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)",
             (uId, coalition_id),
@@ -1203,7 +1203,7 @@ def delete_coalition(coalition_id):
         coalition_name = row[0]
 
         db.execute("DELETE FROM colNames WHERE id=(%s)", (coalition_id,))
-        members_tbl = _coalition_members_sql() or "{_members_tbl()}"
+        members_tbl = _members_tbl()
         db.execute(f"DELETE FROM {members_tbl} WHERE colid=%s", (coalition_id,))
 
     flash(f"{coalition_name} coalition was deleted.")
