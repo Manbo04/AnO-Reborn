@@ -15,7 +15,8 @@ ANO_GOLD = discord.Color.from_rgb(201, 162, 39)
 
 
 def _footer() -> str:
-    return f"Affairs & Order · {GAME_BASE_URL}"
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return f"Affairs & Order · {GAME_BASE_URL} · Refreshed: {now_str}"
 
 
 def build_readme_embed() -> discord.Embed:
