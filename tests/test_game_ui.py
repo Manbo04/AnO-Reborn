@@ -13,6 +13,7 @@ from game_ui import (
     game_asset_path,
     legacy_image_for_building,
     load_asset_manifest,
+    nation_biome_choices,
 )
 
 
@@ -31,6 +32,22 @@ def test_game_asset_path_fallback():
     path = game_asset_path("buildings", "coal_burners")
     assert path.endswith(".svg")
     assert "game/buildings" in path
+
+
+def test_nation_biome_choices_match_form_values():
+    values = {b["value"] for b in nation_biome_choices()}
+    assert values == {
+        "Tundra",
+        "Savanna",
+        "Desert",
+        "Jungle",
+        "Boreal Forest",
+        "Grassland",
+        "Mountain Range",
+    }
+    for biome in nation_biome_choices():
+        path = game_asset_path("biomes", biome["asset_key"])
+        assert path
 
 
 def test_game_asset_path_uses_pilot_svg_when_present():
