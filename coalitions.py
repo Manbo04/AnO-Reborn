@@ -1167,6 +1167,7 @@ def give_position():
             "foreign_ambassador",
             "general",
             "member",
+            "kick",
         ]
 
         role = request.form.get("role")
@@ -1202,12 +1203,18 @@ def give_position():
         ) < roles.index(user_role):
             return error(400, "Can't edit role for a person higher rank than you.")
 
-        db.execute(
-            f"UPDATE {_members_tbl()} SET role=%s WHERE userid=%s AND colid=%s",
-            (role, roleer, coalition_id),
-        )
-        # Diagnostic: confirm role update in test logs
-        print(f"give_position: set role={role} for user_id={roleer}", flush=True)
+        if role == "kick":
+            db.execute(
+                f"DELETE FROM {_members_tbl()} WHERE userid=%s AND colid=%s",
+                (roleer, coalition_id),
+            )
+            print(f"give_position: kicked user_id={roleer} from coalition_id={coalition_id}", flush=True)
+        else:
+            db.execute(
+                f"UPDATE {_members_tbl()} SET role=%s WHERE userid=%s AND colid=%s",
+                (role, roleer, coalition_id),
+            )
+            print(f"give_position: set role={role} for user_id={roleer}", flush=True)
 
         # Invalidate cached coalition page(s) so the promoted user (and
         # other viewers) see the updated role / applicants immediately.
