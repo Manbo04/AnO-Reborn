@@ -157,33 +157,8 @@ def spyAmount():
             if eSpies < 1:
                 eSpies = 1
 
-        # calculate revealed values based on prep, amount, edefcon, and espies
-        resources = variables.RESOURCES
-
-        # Prevent division by zero - use max(1, ...) to ensure positive denominator
-        revealChance = (prep * spies) / max(1, eDefcon * eSpies)
-        spyEntry = {}
-        for unit in Military.allUnits:
-            if random() * revealChance > 0.5:
-                spyEntry[unit] = "true"
-            else:
-                spyEntry[unit] = "false"
-        for resource in resources:
-            if random() * revealChance > 0.5:
-                spyEntry[resource] = "true"
-            else:
-                spyEntry[resource] = "false"
-        if random() * revealChance > 0.5:
-            spyEntry["defaultdefense"] = "true"
-        else:
-            spyEntry["defaultdefense"] = "false"
-
-        # insert spyEntry into spytable (timestamp will be written later)
-
-        # sessionize spyResult jinja
-        session["eId"] = eId
-        session["spyEntry"] = spyEntry
-        return redirect("/spyResult")
+        # Removed spoofing and leaking functionality
+        return redirect("/intelligence")
 
 
 # TODO: add notifications
@@ -230,7 +205,7 @@ def spyResult():
                 spyee, date = None, 0
 
             current_time = time.time()
-            if spyee != eId and current_time - date < 3600 * 12:
+            if str(spyee) != str(eId) and current_time - date < 3600 * 12:
                 secs_left = int(current_time - date)
                 return error(
                     400,
@@ -238,6 +213,9 @@ def spyResult():
                     f"{secs_left} seconds left.",
                 )
             actual_spies = _get_unit_quantity(db, cId, "spies")
+
+            if spies <= 0:
+                return error(400, "Must send at least 1 spy.")
 
             if spies > actual_spies:
                 missing = actual_spies - spies
