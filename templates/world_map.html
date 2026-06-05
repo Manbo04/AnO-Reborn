@@ -1,0 +1,340 @@
+{% extends "layout.html" %}
+{% block title %} World Map {% endblock %}
+{% block body_class %}page-world-map{% endblock %}
+
+{% block head %}
+<!-- Load PixiJS for high-performance WebGL rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+<style>
+    /* Full-screen map layout */
+    .map-container {
+        position: relative;
+        width: 100%;
+        height: calc(100vh - 90px);
+        background: #0a0a12; /* Deep dark background */
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 20px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5) inset;
+    }
+
+    #map-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* Glassmorphic UI Overlays */
+    .map-overlay {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+    }
+
+    .node-tooltip {
+        position: absolute;
+        background: rgba(15, 15, 25, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9em;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.1s ease;
+        transform: translate(-50%, -120%);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .node-tooltip.visible {
+        opacity: 1;
+    }
+
+    .tooltip-title {
+        font-weight: bold;
+        color: #4fc3f7;
+        margin-bottom: 4px;
+        font-size: 1.1em;
+    }
+
+    .tooltip-meta {
+        color: #aaa;
+        font-size: 0.85em;
+    }
+
+    .map-sidebar {
+        position: absolute;
+        right: -320px; /* Hidden initially */
+        top: 20px;
+        bottom: 20px;
+        width: 300px;
+        background: rgba(10, 10, 18, 0.9);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(79, 195, 247, 0.3);
+        border-right: none;
+        border-radius: 12px 0 0 12px;
+        padding: 20px;
+        color: #eee;
+        transition: right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        pointer-events: auto;
+        box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    }
+
+    .map-sidebar.open {
+        right: 0;
+    }
+
+    .sidebar-close {
+        float: right;
+        cursor: pointer;
+        color: #888;
+    }
+    .sidebar-close:hover {
+        color: #fff;
+    }
+
+    /* Animated Dot Grid Background via CSS just in case canvas is transparent */
+    .map-container::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        pointer-events: none;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="templatedivtopper noboxshadowtopper" style="margin-top: 20px;">
+    <h1 class="templatedivtitle">
+        <span class="material-icons-outlined iconlarge">public</span>
+        Coalition Node Network
+    </h1>
+</div>
+
+<div class="map-container">
+    <canvas id="map-canvas"></canvas>
+    
+    <div class="map-overlay">
+        <!-- Floating Tooltip -->
+        <div id="node-tooltip" class="node-tooltip">
+            <div class="tooltip-title" id="tt-name">Node Name</div>
+            <div class="tooltip-meta">Type: <span id="tt-type">Strategic</span></div>
+            <div class="tooltip-meta">Controlled by: <span id="tt-owner">Neutral</span></div>
+        </div>
+
+        <!-- Sidebar for selected node -->
+        <div id="map-sidebar" class="map-sidebar">
+            <span class="material-icons-outlined sidebar-close" onclick="closeSidebar()">close</span>
+            <h2 id="sb-name" style="color: #4fc3f7; margin-top: 0;">Node Details</h2>
+            <p><strong>Type:</strong> <span id="sb-type"></span></p>
+            <p><strong>Owner:</strong> <span id="sb-owner"></span></p>
+            <p><strong>Health:</strong> <span id="sb-health"></span> / 1000</p>
+            
+            <div style="margin-top: 30px;">
+                <button class="templatedivbutton" style="width: 100%; margin-bottom: 10px;" onclick="declareSiege()">Declare Siege (100 Intel)</button>
+                <button class="templatedivbutton" style="width: 100%; background: #2a2a35;" onclick="closeSidebar()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- PixiJS App Setup ---
+    const canvas = document.getElementById('map-canvas');
+    const container = document.querySelector('.map-container');
+    
+    const app = new PIXI.Application({
+        view: canvas,
+        resizeTo: container,
+        autoDensity: true,
+        resolution: window.devicePixelRatio || 1,
+        backgroundColor: 0x0a0a12,
+        backgroundAlpha: 0 // transparent so css dot grid shows behind
+    });
+
+    // A viewport container we can pan/zoom
+    const viewport = new PIXI.Container();
+    app.stage.addChild(viewport);
+
+    // Basic drag-to-pan logic
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let viewportStart = { x: 0, y: 0 };
+
+    app.renderer.events.cursorStyles.default = 'grab';
+
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = new PIXI.Rectangle(-10000, -10000, 20000, 20000);
+    
+    app.stage.on('pointerdown', (e) => {
+        isDragging = true;
+        dragStart.x = e.global.x;
+        dragStart.y = e.global.y;
+        viewportStart.x = viewport.x;
+        viewportStart.y = viewport.y;
+        app.renderer.events.cursorStyles.default = 'grabbing';
+    });
+
+    app.stage.on('pointerup', () => { isDragging = false; app.renderer.events.cursorStyles.default = 'grab'; });
+    app.stage.on('pointerupoutside', () => { isDragging = false; app.renderer.events.cursorStyles.default = 'grab'; });
+    
+    app.stage.on('pointermove', (e) => {
+        if (isDragging) {
+            viewport.x = viewportStart.x + (e.global.x - dragStart.x);
+            viewport.y = viewportStart.y + (e.global.y - dragStart.y);
+        }
+    });
+
+    // Zoom via scroll
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        
+        // Zoom relative to center (simplified)
+        viewport.scale.x *= zoomFactor;
+        viewport.scale.y *= zoomFactor;
+        
+        // Clamp scale
+        viewport.scale.x = Math.max(0.2, Math.min(viewport.scale.x, 3));
+        viewport.scale.y = Math.max(0.2, Math.min(viewport.scale.y, 3));
+    });
+
+    // --- UI Logic ---
+    const tooltip = document.getElementById('node-tooltip');
+    const sidebar = document.getElementById('map-sidebar');
+    let selectedNodeId = null;
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        selectedNodeId = null;
+    }
+
+    function declareSiege() {
+        alert("Siege mechanics not yet fully implemented on the backend! Come back soon.");
+    }
+
+    // --- Fetch and Render Nodes ---
+    async function initMap() {
+        try {
+            const response = await fetch('/api/world_map/nodes');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                renderNodes(data.nodes);
+            }
+        } catch (err) {
+            console.error("Failed to load map nodes:", err);
+        }
+    }
+
+    function renderNodes(nodes) {
+        // Draw some fake energy connections just for aesthetic
+        const graphics = new PIXI.Graphics();
+        graphics.lineStyle(1, 0x4fc3f7, 0.15); // faint cyan lines
+        
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < Math.min(i + 3, nodes.length); j++) {
+                // connect to next 2 nodes randomly to create a web
+                graphics.moveTo(nodes[i].x, nodes[i].y);
+                graphics.lineTo(nodes[j].x, nodes[j].y);
+            }
+        }
+        viewport.addChild(graphics);
+
+        // Draw Nodes
+        nodes.forEach(node => {
+            const nodeGfx = new PIXI.Graphics();
+            
+            // Determine color based on ownership (neutral = gray, owned = colored)
+            const color = node.controlling_coalition_id ? 0xff3366 : 0x888888;
+            
+            nodeGfx.lineStyle(2, color, 1);
+            nodeGfx.beginFill(color, 0.2);
+            nodeGfx.drawCircle(0, 0, 15);
+            nodeGfx.endFill();
+            
+            nodeGfx.x = node.x;
+            nodeGfx.y = node.y;
+            nodeGfx.eventMode = 'static';
+            nodeGfx.cursor = 'pointer';
+
+            // Glow filter effect
+            const blurFilter = new PIXI.BlurFilter();
+            blurFilter.blur = 2;
+            const glowGfx = new PIXI.Graphics();
+            glowGfx.beginFill(color, 0.5);
+            glowGfx.drawCircle(0, 0, 20);
+            glowGfx.endFill();
+            glowGfx.filters = [blurFilter];
+            nodeGfx.addChildAt(glowGfx, 0);
+
+            // Interactions
+            nodeGfx.on('pointerover', (e) => {
+                nodeGfx.scale.set(1.2);
+                tooltip.classList.add('visible');
+                document.getElementById('tt-name').innerText = node.name;
+                document.getElementById('tt-type').innerText = node.type;
+                document.getElementById('tt-owner').innerText = node.coalition_name || 'Neutral';
+            });
+
+            nodeGfx.on('pointermove', (e) => {
+                const canvasBounds = canvas.getBoundingClientRect();
+                tooltip.style.left = (e.global.x + canvasBounds.left) + 'px';
+                tooltip.style.top = (e.global.y + canvasBounds.top) + 'px';
+            });
+
+            nodeGfx.on('pointerout', () => {
+                nodeGfx.scale.set(1.0);
+                tooltip.classList.remove('visible');
+            });
+
+            nodeGfx.on('pointerdown', (e) => {
+                // Stop dragging propagation
+                e.stopPropagation();
+                
+                selectedNodeId = node.id;
+                sidebar.classList.add('open');
+                document.getElementById('sb-name').innerText = node.name;
+                document.getElementById('sb-type').innerText = node.type;
+                document.getElementById('sb-owner').innerText = node.coalition_name || 'Neutral';
+                document.getElementById('sb-health').innerText = node.health;
+                
+                // Pan map to center on node
+                viewport.x = (container.clientWidth / 2) - (node.x * viewport.scale.x);
+                viewport.y = (container.clientHeight / 2) - (node.y * viewport.scale.y);
+            });
+
+            viewport.addChild(nodeGfx);
+        });
+        
+        // Center viewport initially if nodes exist
+        if (nodes.length > 0) {
+            viewport.x = (container.clientWidth / 2) - nodes[0].x;
+            viewport.y = (container.clientHeight / 2) - nodes[0].y;
+        } else {
+            // Fake nodes if DB is empty just so it's not a blank screen!
+            console.log("No nodes in DB, drawing fake map for preview");
+            renderNodes([
+                {id: 1, name: "Alpha Sector", type: "strategic", x: 0, y: 0, coalition_name: "Red Faction", controlling_coalition_id: 1, health: 1000},
+                {id: 2, name: "Resource Hub B", type: "resource", x: 200, y: 150, coalition_name: null, controlling_coalition_id: null, health: 1000},
+                {id: 3, name: "Command Center", type: "fortress", x: -150, y: 250, coalition_name: "Blue Faction", controlling_coalition_id: 2, health: 1000},
+                {id: 4, name: "Outpost X", type: "strategic", x: 300, y: -100, coalition_name: null, controlling_coalition_id: null, health: 1000}
+            ]);
+        }
+    }
+
+    // Start
+    initMap();
+</script>
+{% endblock %}
