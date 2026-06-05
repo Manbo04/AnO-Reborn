@@ -1704,10 +1704,7 @@ def admin_debug_wealth():
         )
         with_verified = db.fetchall()
         
-        return jsonify({
-            "without_verified": without_verified,
-            "with_verified": with_verified
-        })
+        return f"without_verified: {without_verified}<br>with_verified: {with_verified}"
 
 @app.route("/admin/migrate_treaties")
 def admin_migrate_treaties():
