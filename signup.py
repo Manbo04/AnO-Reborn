@@ -442,7 +442,7 @@ def discord_register():
                 )
                 attempt_row = db.fetchone()
                 attempt_count = attempt_row[0] if attempt_row else 0
-                if attempt_count >= 3:
+                if attempt_count >= 10:
                     return error(
                         429,
                         "Too many signup attempts from this IP."
@@ -667,7 +667,7 @@ def signup():
             if is_local:
                 max_attempts = None
             else:
-                max_attempts = 3
+                max_attempts = 10
             logger.debug(f"ENVIRONMENT={os.getenv('ENVIRONMENT', 'DEV')}")
             logger.debug(
                 "signup rate check: ip=%s attempt_count=%s max_attempts=%s is_local=%s",
