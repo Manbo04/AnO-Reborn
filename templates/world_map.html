@@ -31,9 +31,6 @@
         pointer-events: none;
         top: 0; left: 0; width: 100%; height: 100%;
         z-index: 10;
-        /* Cyberpunk scanline overlay */
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-        background-size: 100% 4px, 3px 100%;
     }
 
     .node-tooltip {
@@ -230,6 +227,13 @@
     }
     drawGrid();
 
+    // Create layers for lines and nodes to easily clear them
+    const linesLayer = new PIXI.Graphics();
+    viewport.addChild(linesLayer);
+    
+    const nodesLayer = new PIXI.Container();
+    viewport.addChild(nodesLayer);
+
     // Arrays to store animated objects
     const animatedNodes = [];
 
@@ -267,13 +271,27 @@
         e.preventDefault();
         const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
         
-        // Zoom relative to center (simplified)
-        viewport.scale.x *= zoomFactor;
-        viewport.scale.y *= zoomFactor;
+        const oldScale = viewport.scale.x;
+        let newScale = oldScale * zoomFactor;
+        newScale = Math.max(0.2, Math.min(newScale, 3));
         
-        // Clamp scale
-        viewport.scale.x = Math.max(0.2, Math.min(viewport.scale.x, 3));
-        viewport.scale.y = Math.max(0.2, Math.min(viewport.scale.y, 3));
+        if (newScale === oldScale) return;
+
+        // Get mouse position relative to canvas
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Convert to viewport coordinates
+        const worldX = (mouseX - viewport.x) / oldScale;
+        const worldY = (mouseY - viewport.y) / oldScale;
+
+        // Apply new scale
+        viewport.scale.set(newScale);
+
+        // Adjust viewport position to keep mouse over the same world coordinate
+        viewport.x = mouseX - worldX * newScale;
+        viewport.y = mouseY - worldY * newScale;
     });
 
     // --- UI Logic ---
@@ -330,18 +348,23 @@
         gfx.endFill();
     }
 
+    let initialRender = true;
+
     function renderNodes(nodes) {
+        // Clear layers to prevent memory leak / duplicate nodes on re-render
+        linesLayer.clear();
+        nodesLayer.removeChildren();
+        animatedNodes.length = 0;
+
         // Draw energy connections
-        const graphics = new PIXI.Graphics();
-        graphics.lineStyle(2, 0x4fc3f7, 0.2); 
+        linesLayer.lineStyle(2, 0x4fc3f7, 0.2); 
         
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < Math.min(i + 3, nodes.length); j++) {
-                graphics.moveTo(nodes[i].x, nodes[i].y);
-                graphics.lineTo(nodes[j].x, nodes[j].y);
+                linesLayer.moveTo(nodes[i].x, nodes[i].y);
+                linesLayer.lineTo(nodes[j].x, nodes[j].y);
             }
         }
-        viewport.addChild(graphics);
 
         // Draw Nodes
         nodes.forEach(node => {
@@ -362,14 +385,11 @@
             innerCore.drawCircle(0, 0, 8);
             innerCore.endFill();
             
-            // Extreme Glow Filter
-            const blurFilter = new PIXI.BlurFilter();
-            blurFilter.blur = 10;
+            // Simple Glow without costly BlurFilter
             const glow = new PIXI.Graphics();
-            glow.beginFill(color, 0.4);
+            glow.beginFill(color, 0.15);
             glow.drawCircle(0, 0, 30);
             glow.endFill();
-            glow.filters = [blurFilter];
             
             nodeContainer.addChild(glow);
             nodeContainer.addChild(innerCore);
@@ -412,12 +432,13 @@
                 viewport.y = (container.clientHeight / 2) - (node.y * viewport.scale.y);
             });
 
-            viewport.addChild(nodeContainer);
+            nodesLayer.addChild(nodeContainer);
         });
         
-        if (nodes.length > 0) {
+        if (nodes.length > 0 && initialRender) {
             viewport.x = (container.clientWidth / 2) - nodes[0].x;
             viewport.y = (container.clientHeight / 2) - nodes[0].y;
+            initialRender = false;
         }
     }
 
