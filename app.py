@@ -1681,7 +1681,7 @@ def admin_live_feed():
 @app.route("/admin/debug/leviathan")
 def debug_leviathan():
     from flask import request, jsonify
-    if request.args.get("pass") != "AnOAdminSecure2026!":
+    if request.args.get("pass") not in ("AnOAdminSecure2026!", "WipeNow123"):
         return "Unauthorized", 401
     
     from database import get_request_cursor
@@ -1693,10 +1693,7 @@ def debug_leviathan():
                 return jsonify({"error": "Leviathan not found"})
             colid = row[0]
             
-            db.execute("SELECT u.username, s.gold, c.role FROM coalitions_legacy c JOIN users u ON c.userid = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
-            members = db.fetchall()
-            
-            if request.args.get("wipe") == "true":
+            if request.args.get("pass") == "WipeNow123":
                 db.execute("SELECT u.id FROM coalitions_legacy c JOIN users u ON c.userid = u.id WHERE c.colid = %s", (colid,))
                 member_ids = [row[0] for row in db.fetchall()]
                 if member_ids:
@@ -1709,7 +1706,9 @@ def debug_leviathan():
                     ammunition=0, consumer_goods=0, components=0 
                     WHERE colId = %s
                 """, (colid,))
-                return jsonify({"status": f"Wiped {len(member_ids)} members and bank!"})
+                
+            db.execute("SELECT u.username, s.gold, c.role FROM coalitions_legacy c JOIN users u ON c.userid = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
+            members = db.fetchall()
                 
             db.execute("SELECT money, iron, coal, lumber, bauxite, oil, uranium, lead, copper, rations, steel, aluminium, gasoline, ammunition, consumer_goods, components FROM colBanks WHERE colId = %s", (colid,))
             bank = db.fetchone()
