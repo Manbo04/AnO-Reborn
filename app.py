@@ -16,7 +16,8 @@ from flask_compress import Compress
 import traceback
 import upgrades
 import intelligence
-import world_map_bp
+import user_coalition_settings_bp
+from app_core.world_map import world_map_bp
 
 import market
 import change
@@ -555,7 +556,7 @@ def _init_province_defaults():
 _init_province_defaults()
 
 # register blueprints
-import military  # noqa: E402
+import app_core.military.routes as military  # noqa: E402
 
 app.register_blueprint(military.bp)
 app.register_blueprint(province.bp)
@@ -566,8 +567,8 @@ app.register_blueprint(wars_bp)
 app.register_blueprint(treaties_bp)
 app.register_blueprint(world_map_bp.bp)
 
-import ads_bp  # noqa: E402
-app.register_blueprint(ads_bp.bp)
+from app_core.ads import bp as ads_bp
+app.register_blueprint(ads_bp)
 
 import admin_bp
 app.register_blueprint(admin_bp.admin_bp)
