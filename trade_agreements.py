@@ -189,7 +189,7 @@ def execute_trade_agreement(agreement_id, cursor=None):
 
         # Execute the trade - transfer resources
         # Proposer gives their resource to receiver
-        from market import give_resource
+        from app_core.market import give_resource
 
         result = give_resource(
             proposer_id, receiver_id, proposer_resource, proposer_amount, cursor=db

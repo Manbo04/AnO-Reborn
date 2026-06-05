@@ -1,6 +1,6 @@
 from flask import Flask
 from tests.test_integration_market_edgecases import fake_get_db_connection_factory
-import market
+from app_core import market
 
 
 def test_accept_sell_trade_where_seller_already_had_resource_removed(monkeypatch):
