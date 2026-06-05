@@ -788,6 +788,9 @@ def country(cId):
             math.ceil(population / variables.CONSUMER_GOODS_PER) if population else 0
         )
 
+        total_cities = sum(prov[3] if prov[3] else 0 for prov in provinces)
+        total_land = sum(prov[4] if prov[4] else 0 for prov in provinces)
+
         try:
             status = int(cId) == int(session["user_id"])
         except (KeyError, TypeError, ValueError):
@@ -955,6 +958,8 @@ def country(cId):
         colName=colName,
         dateCreated=dateCreated,
         influence=influence,
+        total_cities=total_cities,
+        total_land=total_land,
         provinces=provinces,
         colId=coalition_id,
         coalition_id=coalition_id,
