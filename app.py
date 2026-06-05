@@ -1682,12 +1682,19 @@ def admin_debug_wealth():
             """
             SELECT table_name, column_name, data_type 
             FROM information_schema.columns 
-            WHERE table_name IN ('users', 'stats', 'user_economy')
+            WHERE table_name ILIKE '%user%' OR table_name ILIKE '%stat%' OR table_name ILIKE '%econ%'
             ORDER BY table_name, ordinal_position;
             """
         )
         columns = db.fetchall()
-        return f"{columns}"
+        
+        # Format the output for HTML readability
+        html = "<h3>Database Schema</h3><table border='1'><tr><th>Table</th><th>Column</th><th>Type</th></tr>"
+        for col in columns:
+            html += f"<tr><td>{col[0]}</td><td>{col[1]}</td><td>{col[2]}</td></tr>"
+        html += "</table>"
+        
+        return html
 
 @app.route("/admin/migrate_treaties")
 def admin_migrate_treaties():
