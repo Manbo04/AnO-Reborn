@@ -1732,6 +1732,66 @@ def debug_leviathan():
     except Exception as e:
         return f"Database Error: {e}", 500
 
+@app.route("/admin/debug/exploits")
+def debug_exploits():
+    from flask import request, jsonify
+    if request.args.get("pass") != "AnOAdminSecure2026!":
+        return "Unauthorized", 401
+    
+    from database import get_request_cursor
+    try:
+        with get_request_cursor() as db:
+            # Find users with suspicious gold (> 1 billion)
+            db.execute("SELECT u.username, s.gold FROM users u JOIN stats s ON u.id = s.id WHERE s.gold > 1000000000 ORDER BY s.gold DESC LIMIT 50")
+            suspicious_gold = db.fetchall()
+            
+            # Find users with suspicious resources (> 100 million of any resource)
+            db.execute("""
+                SELECT u.username, rd.name, ue.quantity 
+                FROM user_economy ue 
+                JOIN users u ON ue.user_id = u.id 
+                JOIN resource_dictionary rd ON ue.resource_id = rd.id
+                WHERE ue.quantity > 100000000 
+                ORDER BY ue.quantity DESC LIMIT 50
+            """)
+            suspicious_resources = db.fetchall()
+            
+            # Find all self-trades across the entire game
+            db.execute("SELECT t.offer_id, t.type, u.username, t.resource, t.amount, t.price FROM trades t JOIN users u ON t.offerer = u.id WHERE t.offerer = t.offeree LIMIT 100")
+            all_self_trades = db.fetchall()
+            
+            # Find suspicious coalition banks (> 1 billion money or > 100M resources)
+            db.execute("""
+                SELECT cn.name, cb.money, cb.iron, cb.steel, cb.aluminium, cb.gasoline 
+                FROM colBanks cb 
+                JOIN colNames cn ON cb.colId = cn.id 
+                WHERE cb.money > 1000000000 OR cb.steel > 100000000 OR cb.aluminium > 100000000
+                ORDER BY cb.money DESC LIMIT 50
+            """)
+            suspicious_banks = db.fetchall()
+
+            # Wipe if requested
+            if request.args.get("wipe") == "true":
+                # Wipe all suspicious users' gold back to 100k
+                if suspicious_gold:
+                    db.execute("UPDATE stats SET gold = 100000 WHERE gold > 1000000000")
+                # Wipe all suspicious users' resources
+                if suspicious_resources:
+                    db.execute("UPDATE user_economy SET quantity = 0 WHERE quantity > 100000000")
+                # Wipe suspicious banks
+                if suspicious_banks:
+                    db.execute("UPDATE colBanks SET money=0, iron=0, coal=0, lumber=0, bauxite=0, oil=0, uranium=0, lead=0, copper=0, rations=0, steel=0, aluminium=0, gasoline=0, ammunition=0, consumer_goods=0, components=0 WHERE money > 1000000000 OR steel > 100000000")
+                return jsonify({"status": "Wiped all suspicious users and banks across the entire server!"})
+            
+        return jsonify({
+            "suspicious_gold": suspicious_gold,
+            "suspicious_resources": suspicious_resources,
+            "suspicious_banks": suspicious_banks,
+            "all_self_trades": all_self_trades
+        })
+    except Exception as e:
+        return f"Database Error: {e}", 500
+
 # Emit an explicit startup message so we can detect successful initialisation
 # in the platform logs
 app.logger.info("App fully initialized and ready to serve requests")
