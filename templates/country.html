@@ -249,6 +249,25 @@
                                 public
                                 </span>Affairs</th>
                         </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                handshake
+                                </span>Active Treaties:</td>
+                            <td>
+                                {% if active_treaties %}
+                                    <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                                    {% for t in active_treaties %}
+                                        <li>
+                                            {% if t[0] == 'non_aggression' %}<span style="color: lightgreen;">NAP</span>{% else %}<span style="color: orange;">MDP</span>{% endif %}
+                                            with <a href="/country/{{ t[2] }}" style="color: white;">{{ t[1] }}</a>
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                        </tr>
                         {% if colName == "" %}
                         <tr>
                             <td class="center">Not in a coalition</td>
