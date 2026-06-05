@@ -146,7 +146,7 @@ def rankings():
             WHERE u.is_verified = TRUE
             GROUP BY u.id, u.username, u.flag
             ORDER BY total_pop DESC
-            LIMIT 15
+            LIMIT 10
             """
         )
         top_population = db.fetchall()
@@ -160,7 +160,7 @@ def rankings():
             WHERE u.is_verified = TRUE
             GROUP BY u.id, u.username, u.flag
             ORDER BY army_size DESC
-            LIMIT 15
+            LIMIT 10
             """
         )
         top_military = db.fetchall()
@@ -173,7 +173,7 @@ def rankings():
             JOIN stats s ON u.id = s.id
             WHERE u.is_verified = TRUE
             ORDER BY total_money DESC
-            LIMIT 15
+            LIMIT 10
             """
         )
         top_wealth = db.fetchall()
@@ -188,7 +188,7 @@ def rankings():
             JOIN provinces p ON m.userid = p.userid
             GROUP BY c.id, c.name
             ORDER BY total_pop DESC
-            LIMIT 15
+            LIMIT 10
             """
         )
         top_alliances = db.fetchall()
