@@ -773,41 +773,23 @@ def delete_offer(offer_id):
     cId = session["user_id"]
 
     with get_request_cursor() as db:
-        db.execute("SELECT user_id FROM offers WHERE offer_id=(%s)", (offer_id,))
-        result = db.fetchone()
-        if not result:
-            return error(400, "Offer not found")
-        offer_owner = result[0]
+        # Atomic delete to prevent race conditions
+        db.execute(
+            "DELETE FROM offers WHERE offer_id=(%s) AND user_id=(%s) RETURNING type, amount, price, resource",
+            (offer_id, cId)
+        )
+        deleted_row = db.fetchone()
+        if not deleted_row:
+            return error(400, "Offer not found or already processed")
 
-        # Checks if user owns the offer
-        if cId != offer_owner:
-            return error(400, "You didn't post that offer")
-
-        db.execute("SELECT type FROM offers WHERE offer_id=(%s)", (offer_id,))
-        row = db.fetchone()
-        if not row:
-            return error(400, "Offer not found")
-        offer_type = row[0]
+        offer_type, amount, price, resource = deleted_row
 
         if offer_type == "buy":
-            db.execute(
-                "SELECT amount, price FROM offers WHERE offer_id=(%s)", (offer_id,)
-            )
-            amount, price = db.fetchone()
             # Pass cursor to reuse connection
             give_resource("bank", cId, "money", price * amount, cursor=db)
-
         elif offer_type == "sell":
-            db.execute(
-                "SELECT amount, resource FROM offers WHERE offer_id=(%s)", (offer_id,)
-            )
-            amount, resource = db.fetchone()
             # Pass cursor to reuse connection
             give_resource("bank", cId, resource, amount, cursor=db)
-
-        db.execute(
-            "DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)
-        )  # Deletes the offer
 
     return redirect("/my_offers")
 
@@ -931,22 +913,16 @@ def decline_trade(trade_id):
     cId = session["user_id"]
 
     with get_request_cursor() as db:
+        # Atomic delete to prevent race conditions and duplicate refunds
         db.execute(
-            (
-                "SELECT offeree, offerer, type, resource, amount, price "
-                "FROM trades WHERE offer_id=(%s)",
-            ),
-            (trade_id,),
+            "DELETE FROM trades WHERE offer_id=(%s) AND (offeree=(%s) OR offerer=(%s)) RETURNING type, resource, amount, price, offerer",
+            (trade_id, cId, cId)
         )
-        row = db.fetchone()
-        if not row:
-            return error(400, "Trade not found")
-        offeree, offerer, type, resource, amount, price = row
-
-        if cId not in [offeree, offerer]:
-            return error(400, "You haven't been sent that offer")
-
-        db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+        deleted_row = db.fetchone()
+        if not deleted_row:
+            return error(400, "Trade not found or already processed")
+            
+        type, resource, amount, price, offerer = deleted_row
 
         if type == "sell":  # Give back resources, not money
             # Return resource from escrow (bank) to the offerer

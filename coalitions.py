@@ -1538,16 +1538,10 @@ def deposit_into_bank(coalition_id):
 
         # If the resource is money, removes the money from the seller
         if resource == "money":
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s) AND gold>=%s RETURNING gold", (amount, cId, amount))
             row = db.fetchone()
-            current_money = int(row[0]) if row and row[0] is not None else 0
-
-            if current_money < amount:
+            if not row:
                 return error(400, "You don't have enough money")
-
-            new_money = current_money - amount
-
-            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, cId))
 
         # If it isn't, removes the resource from the giver
         else:
@@ -1561,46 +1555,24 @@ def deposit_into_bank(coalition_id):
                 return error(400, f"Invalid resource: {resource}")
             resource_id = resource_row[0]
 
-            # Query user_economy for current quantity
-            db.execute(
-                "SELECT COALESCE(quantity, 0) FROM user_economy "
-                "WHERE user_id = %s AND resource_id = %s",
-                (cId, resource_id),
-            )
-            row = db.fetchone()
-            current_resource = int(row[0]) if row else 0
-
             if amount < 1:
                 return error(400, "Amount cannot be less than 1")
 
-            if current_resource < amount:
-                return error(400, f"You don't have enough {resource}")
-
-            new_resource = current_resource - amount
-
-            # Update user_economy using UPSERT
             db.execute(
                 """
-                INSERT INTO user_economy (user_id, resource_id, quantity)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, resource_id)
-                DO UPDATE SET quantity = %s
+                UPDATE user_economy SET quantity=quantity-%s
+                WHERE user_id=%s AND resource_id=%s AND quantity>=%s
+                RETURNING quantity
                 """,
-                (cId, resource_id, new_resource, new_resource),
+                (amount, cId, resource_id, amount)
             )
+            row = db.fetchone()
+            if not row:
+                return error(400, f"You don't have enough {resource}")
 
         # Gives the coalition the resource
-        current_resource_statement = (
-            f"SELECT {resource} FROM colBanks" + " WHERE colId=%s"
-        )
-        db.execute(current_resource_statement, (coalition_id,))
-        row = db.fetchone()
-        current_resource = int(row[0]) if row and row[0] is not None else 0
-
-        new_resource = current_resource + amount
-
-        update_statement = f"UPDATE colBanks SET {resource}" + "=%s WHERE colId=%s"
-        db.execute(update_statement, (new_resource, coalition_id))
+        update_statement = f"UPDATE colBanks SET {resource}={resource}+%s WHERE colId=%s"
+        db.execute(update_statement, (amount, coalition_id))
 
     with get_request_cursor() as db:
         for resource in deposited_resources:
@@ -1619,34 +1591,20 @@ def withdraw(resource, amount, user_id, coalition_id):
         return error(400, f"Invalid resource: {resource}")
 
     with get_request_cursor() as db:
-        # Removes the resource from the coalition bank
-
-        current_resource_statement = f"SELECT {resource} FROM colBanks WHERE colId=%s"
-        db.execute(current_resource_statement, (coalition_id,))
-        row = db.fetchone()
-        current_resource = row[0] if row and row[0] is not None else 0
-
-        # Normalize types
-        try:
-            current_resource = int(current_resource)
-        except Exception:
-            current_resource = 0
-
         if amount < 1:
             return error(400, "Amount cannot be less than 1")
 
-        if current_resource < amount:
+        # Removes the resource from the coalition bank atomically
+        update_statement = f"UPDATE colBanks SET {resource}={resource}-%s WHERE colId=%s AND {resource}>=%s RETURNING {resource}"
+        db.execute(update_statement, (amount, coalition_id, amount))
+        row = db.fetchone()
+        if not row:
             return error(400, f"Your coalition doesn't have enough {resource}")
-
-        new_resource = current_resource - amount
-
-        update_statement = f"UPDATE colBanks SET {resource}=%s WHERE colId=%s"
-        db.execute(update_statement, (new_resource, coalition_id))
+        new_resource = row[0]
 
         current_app.logger.info(
             (
                 f"withdraw: coalition_id={coalition_id} resource={resource} amount={amount} "
-                f"bank_before={current_resource} "
                 f"bank_after={new_resource}"
             )
         )
@@ -1654,16 +1612,12 @@ def withdraw(resource, amount, user_id, coalition_id):
         # Gives the leader his resource
         # If the resource is money, gives him money
         if resource == "money":
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (user_id,))
+            db.execute("UPDATE stats SET gold=gold+%s WHERE id=(%s) RETURNING gold", (amount, user_id))
             row = db.fetchone()
-            current_money = int(row[0]) if row and row[0] is not None else 0
-
-            new_money = current_money + amount
-
-            db.execute("UPDATE stats SET gold=(%s) WHERE id=(%s)", (new_money, user_id))
+            new_money = row[0] if row else 0
             current_app.logger.info(
                 (
-                    f"withdraw: user_id={user_id} gold_before={current_money} "
+                    f"withdraw: user_id={user_id} "
                     f"gold_after={new_money}"
                 )
             )
@@ -1681,31 +1635,20 @@ def withdraw(resource, amount, user_id, coalition_id):
                 return error(400, f"Invalid resource: {resource}")
             resource_id = resource_row[0]
 
-            # Query user_economy for current quantity
-            db.execute(
-                "SELECT COALESCE(quantity, 0) FROM user_economy "
-                "WHERE user_id = %s AND resource_id = %s",
-                (user_id, resource_id),
-            )
-            row = db.fetchone()
-            user_current = int(row[0]) if row else 0
-
-            new_resource = user_current + amount
-
-            # Update user_economy using UPSERT
+            # Update user_economy using UPSERT atomically
             db.execute(
                 """
                 INSERT INTO user_economy (user_id, resource_id, quantity)
                 VALUES (%s, %s, %s)
                 ON CONFLICT (user_id, resource_id)
-                DO UPDATE SET quantity = %s
+                DO UPDATE SET quantity = user_economy.quantity + %s
                 """,
-                (user_id, resource_id, new_resource, new_resource),
+                (user_id, resource_id, amount, amount),
             )
             current_app.logger.info(
                 (
-                    f"withdraw: user_id={user_id} {resource}_before={user_current} "
-                    f"{resource}_after={new_resource}"
+                    f"withdraw: user_id={user_id} "
+                    f"{resource}_after=updated"
                 )
             )
 
