@@ -43,14 +43,14 @@
             <div class="auth-panel">
                 <form action="/discord" method="GET">
                     <h2 class="templatecontentheadercenter">Discord Sign Up</h2>
-                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton">
+                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton w-full">
                         <span class="material-icons-outlined">add_circle_outline</span>Discord Sign Up
                     </button>
                 </form>
                 <form action="/login/google" method="GET" style="margin-top: 15px;">
                     <input type="hidden" name="intent" value="login" />
                     <h2 class="templatecontentheadercenter">Google Sign Up</h2>
-                    <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #db4437; color: white;">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full" style="background-color: #db4437; color: white;">
                         <span class="material-icons-outlined">add_circle_outline</span>Google Sign Up
                     </button>
                 </form>
@@ -85,7 +85,7 @@
             <div class="slide1 slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'tundra') ) }}?v=2">
+                    <img alt="Tundra biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'tundra') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -106,18 +106,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'savanna') ) }}?v=2">
+                    <img alt="Savanna biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'savanna') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -137,18 +137,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'desert') ) }}?v=2">
+                    <img alt="Desert biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'desert') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -168,18 +168,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'jungle') ) }}?v=2">
+                    <img alt="Jungle biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'jungle') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -199,18 +199,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'boreal forest') ) }}?v=2">
+                    <img alt="Boreal Forest biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'boreal forest') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -230,18 +230,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'grassland') ) }}?v=2">
+                    <img alt="Grassland biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'grassland') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -261,18 +261,18 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
                     </div>
                 </div>
             </div>
             <div class="slideparent">
                 <div class="slidechild slidetop">
 
-                    <img alt="Image" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'mountain range') ) }}?v=2">
+                    <img alt="Mountain Range biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'mountain range') ) }}?v=2">
 
                     <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
                         <span class="arrowchild">&#10094;</span>
@@ -292,11 +292,11 @@
                     <ul class="medium">Available Resources</ul>
 
                     <div class="listcontainer">
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img alt="Image" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
+                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
                     </div>
                 </div>
             </div>
@@ -308,7 +308,7 @@
         <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
 
         <div class="form-actions">
-            <button type="submit" class="templatedivbutton templatecenteredbutton">
+            <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
                 <span class="material-icons-outlined">add_circle_outline</span>Sign Up
             </button>
         </div>
