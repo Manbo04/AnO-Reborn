@@ -27,7 +27,7 @@
                                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 5px;">
                                     <input type="radio" name="vote_option" value="{{ opt }}" {% if user_vote == opt %}checked{% endif %} required>
                                     <span>{{ opt }}</span>
-                                    {% if user_vote == opt %}<span style="color: lightgreen; font-size: 0.8em;">(Your Current Vote)</span>{% endif %}
+                                    {% if user_vote == opt %}<span style="color: #4CAF50; font-weight: bold; font-size: 0.8em;">(Your Current Vote)</span>{% endif %}
                                 </label>
                                 {% endfor %}
                                 <button type="submit" class="templatebutton" style="margin-top: 10px;">Submit Vote</button>

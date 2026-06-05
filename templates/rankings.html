@@ -29,7 +29,7 @@
                     {% set nation = top_population[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
                         <td>{{ nation[2] | fmt }}</td>
                     </tr>
                     {% endfor %}
@@ -55,7 +55,7 @@
                     {% set nation = top_military[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
                         <td>{{ nation[2] | fmt }} units</td>
                     </tr>
                     {% endfor %}
@@ -83,7 +83,7 @@
                     {% set nation = top_wealth[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
                         <td>${{ nation[2] | fmt }}</td>
                     </tr>
                     {% endfor %}
@@ -109,7 +109,7 @@
                     {% set col = top_alliances[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/coalitions/{{ col[0] }}" style="color: white;">{{ col[1] }}</a></td>
+                        <td><a href="/coalitions/{{ col[0] }}">{{ col[1] }}</a></td>
                         <td>{{ col[2] | fmt }}</td>
                     </tr>
                     {% endfor %}

@@ -258,8 +258,8 @@
                                     <ul style="list-style-type: none; padding-left: 0; margin: 0;">
                                     {% for t in active_treaties %}
                                         <li>
-                                            {% if t[0] == 'non_aggression' %}<span style="color: lightgreen;">NAP</span>{% else %}<span style="color: orange;">MDP</span>{% endif %}
-                                            with <a href="/country/{{ t[2] }}" style="color: white;">{{ t[1] }}</a>
+                                            {% if t[0] == 'non_aggression' %}<span style="color: #4CAF50; font-weight: bold;">NAP</span>{% else %}<span style="color: #FF9800; font-weight: bold;">MDP</span>{% endif %}
+                                            with <a href="/country/{{ t[2] }}">{{ t[1] }}</a>
                                         </li>
                                     {% endfor %}
                                     </ul>
