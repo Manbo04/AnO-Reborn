@@ -67,8 +67,18 @@ def _apply_casualties(db, user_id: int, pairs: Iterable[Tuple[str, float]]) -> N
         )
         row = db.fetchone()
         available = row[0] if row and row[0] is not None else 0
+        
+        # Defensive: ensure integer amounts (legacy code used floor/int)
+        try:
+            loss = int(amount)
+        except Exception:
+            loss = int(float(amount))
+            
+        loss = max(0, loss)
+            
         if loss > available:
             loss = available
+
         db.execute(
             "UPDATE user_military SET quantity=%s WHERE user_id=%s AND unit_id=%s",
             (available - loss, user_id, unit_id),

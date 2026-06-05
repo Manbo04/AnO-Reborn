@@ -221,7 +221,7 @@ def _adjust_resources_batch(db, cId, resource_deltas):
         db,
         """
         UPDATE user_economy ue
-        SET quantity = ue.quantity + %s
+        SET quantity = GREATEST(0, ue.quantity + %s)
         FROM resource_dictionary rd
         WHERE ue.user_id=%s
           AND ue.resource_id = rd.resource_id
