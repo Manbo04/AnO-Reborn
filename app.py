@@ -1693,7 +1693,7 @@ def debug_leviathan():
                 return jsonify({"error": "Leviathan not found"})
             colid = row[0]
             
-            db.execute("SELECT u.username, s.gold, c.rank FROM coalitions_legacy c JOIN users u ON c.id = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
+            db.execute("SELECT u.username, s.gold, c.role FROM coalitions c JOIN users u ON c.userId = u.id JOIN stats s ON u.id = s.id WHERE c.colId = %s ORDER BY s.gold DESC", (colid,))
             members = db.fetchall()
             
             db.execute("SELECT gold, iron, coal, lumber, bauxite, oil, uranium, lead, copper, rations, steel, aluminium, gasoline, ammunition, consumer_goods, components FROM colBanks WHERE id = %s", (colid,))
