@@ -7,12 +7,11 @@ import time as time_module
 from flask import Flask, request, render_template, session, redirect, send_from_directory
 from flask_compress import Compress
 import traceback
+
+# Root modules
 import upgrades
 import intelligence
-import app_core.world_map.routes as world_map_bp
-from app_core.market.routes import market_bp
 import change
-from app_core.coalitions import register_coalitions_routes
 import countries
 import signup
 import login
@@ -22,7 +21,6 @@ import policies
 import statistics
 import requests
 import trade_agreements
-
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
@@ -33,6 +31,7 @@ import random
 from helpers import login_required, error
 from database import get_db_connection, get_request_cursor, rollback_db_cursor, teardown_request_connection
 import province
+import bot_api
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -46,7 +45,6 @@ if not hasattr(ast, "Ellipsis"): ast.Ellipsis = ast.Constant
 app = Flask(__name__)
 
 def create_app():
-    # We use the globally defined `app` object so that existing imports don't break
     global app
     app.url_map.strict_slashes = False
 
@@ -84,10 +82,8 @@ def create_app():
         try:
             import sentry_sdk
             user_id = session.get("user_id") if hasattr(session, "get") else None
-            if user_id:
-                sentry_sdk.set_user({"id": str(user_id)})
-            else:
-                sentry_sdk.set_user(None)
+            if user_id: sentry_sdk.set_user({"id": str(user_id)})
+            else: sentry_sdk.set_user(None)
         except Exception:
             pass
 
@@ -122,8 +118,7 @@ def create_app():
                     try:
                         with get_request_cursor() as _db:
                             _db.execute("UPDATE admin_user_controls SET kick_pending=FALSE, updated_at=NOW() WHERE user_id=%s", (user_id,))
-                    except Exception:
-                        pass
+                    except Exception: pass
                     session.clear()
                     return redirect("/login")
         if user_id:
@@ -134,24 +129,11 @@ def create_app():
                     with get_request_cursor() as _db:
                         _db.execute("UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
                     session["_last_active_ping"] = now
-                except Exception:
-                    pass
+                except Exception: pass
         return None
 
     Compress(app)
     app.teardown_request(teardown_request_connection)
-
-    signup.register_signup_routes(app)
-    login.register_login_routes(app)
-    app.register_blueprint(market_bp)
-    change.register_change_routes(app)
-    bot_api.register_bot_api_routes(app)
-    register_coalitions_routes(app)
-    countries.register_countries_routes(app)
-    policies.register_policies_routes(app)
-    statistics.register_statistics_routes(app)
-    trade_agreements.register_trade_agreement_routes(app)
-    
 
     @app.after_request
     def after_request(response):
@@ -243,29 +225,43 @@ def create_app():
     except Exception as e:
         pass
 
-    import military
-    app.register_blueprint(military.bp)
+    # Root route registrations
+    signup.register_signup_routes(app)
+    login.register_login_routes(app)
+    change.register_change_routes(app)
+    bot_api.register_bot_api_routes(app)
+    countries.register_countries_routes(app)
+    policies.register_policies_routes(app)
+    statistics.register_statistics_routes(app)
+    trade_agreements.register_trade_agreement_routes(app)
     app.register_blueprint(province.bp)
-    if upgrades.bp:
-        app.register_blueprint(upgrades.bp)
+    if upgrades.bp: app.register_blueprint(upgrades.bp)
     app.register_blueprint(intelligence.bp)
     app.register_blueprint(wars_bp)
     app.register_blueprint(treaties_bp)
-    app.register_blueprint(world_map_bp.bp)
-    import ads_bp
-    app.register_blueprint(ads_bp.bp)
-    from app_core.admin.routes import admin_bp
-    app.register_blueprint(admin_bp)
 
+    # App Core DDD Registrations
     from app_core.main.routes import bp as main_bp
     from app_core.auth.routes import bp as auth_bp
     from app_core.game_engine.routes import bp as game_engine_bp
     from app_core.system.routes import bp as system_bp
+    from app_core.admin.routes import admin_bp
+    from app_core.ads.routes import bp as ads_bp
+    from app_core.world_map.routes import bp as world_map_bp
+    from app_core.market.routes import market_bp
+    from app_core.military.routes import bp as military_bp
+    from app_core.coalitions.routes import register_coalitions_routes
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(game_engine_bp)
     app.register_blueprint(system_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(ads_bp)
+    app.register_blueprint(world_map_bp)
+    app.register_blueprint(market_bp)
+    app.register_blueprint(military_bp)
+    register_coalitions_routes(app)
 
     import config
     try:
@@ -286,9 +282,9 @@ def create_app():
             if value is None: return "0"
             try: return f"{int(value):,}"
             except (ValueError, TypeError): return str(value)
-        def determine_color(change):
-            if change > 0: return "green"
-            elif change < 0: return "red"
+        def determine_color(change_val):
+            if change_val > 0: return "green"
+            elif change_val < 0: return "red"
             else: return "white"
         def format_resources(value):
             if value is None: return "0"
@@ -369,8 +365,6 @@ def create_app():
         except Exception:
             pass
 
-        # Since we use `game_ui_context` inside the template but previously it was here,
-        # we'll just merge it or return the ads
         return dict(
             top_ad=top_ad,
             side_ad_left=side_ad_left,
