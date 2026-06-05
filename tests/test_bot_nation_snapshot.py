@@ -1,5 +1,5 @@
 """Bot nation snapshot resilience (wars schema + partial failures)."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from bot_api import _wars_schema, nation_snapshot_for_bot
 

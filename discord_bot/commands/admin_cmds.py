@@ -7,7 +7,6 @@ import asyncio
 import discord
 from discord import app_commands
 
-from discord_bot.config import GAME_BASE_URL
 from discord_bot.guild_store import get_guild_settings
 from discord_bot.panel_service import refresh_guild_panels
 from discord_bot.permissions import require_guild_admin

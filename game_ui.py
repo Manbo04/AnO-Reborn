@@ -9,7 +9,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-import variables
 
 _MANIFEST_PATH = Path(__file__).resolve().parent / "static" / "asset-manifest.json"
 _STYLE_CSS_PATH = Path(__file__).resolve().parent / "static" / "style.css"

@@ -1,6 +1,5 @@
 import psycopg2
 import os
-import config
 
 def migrate():
     try:
