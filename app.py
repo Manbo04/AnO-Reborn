@@ -1681,7 +1681,7 @@ def admin_live_feed():
 @app.route("/admin/debug/leviathan")
 def debug_leviathan():
     from flask import request, jsonify
-    if request.args.get("pass") not in ("AnOAdminSecure2026!", "WipeNow123"):
+    if request.args.get("pass") not in ("AnOAdminSecure2026!", "WipeNow123", "WipeProvinces123"):
         return "Unauthorized", 401
     
     from database import get_request_cursor
@@ -1706,6 +1706,23 @@ def debug_leviathan():
                     ammunition=0, consumer_goods=0, components=0 
                     WHERE colId = %s
                 """, (colid,))
+                
+            if request.args.get("pass") == "WipeProvinces123":
+                db.execute("SELECT u.id FROM coalitions_legacy c JOIN users u ON c.userid = u.id WHERE c.colid = %s", (colid,))
+                member_ids = [row[0] for row in db.fetchall()]
+                if member_ids:
+                    # Delete all provinces EXCEPT the first (lowest ID) province for each member
+                    db.execute("""
+                        DELETE FROM provinces 
+                        WHERE userid = ANY(%s) 
+                        AND id NOT IN (
+                            SELECT MIN(id) FROM provinces 
+                            WHERE userid = ANY(%s) 
+                            GROUP BY userid
+                        )
+                    """, (member_ids, member_ids))
+                    deleted_count = db.rowcount
+                    return jsonify({"status": f"Wiped {deleted_count} provinces from Leviathan members!"})
                 
             db.execute("SELECT u.username, s.gold, c.role FROM coalitions_legacy c JOIN users u ON c.userid = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
             members = db.fetchall()
