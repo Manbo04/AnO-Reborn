@@ -852,6 +852,9 @@ def trade_offer(offer_type, offeree_id):
             if amount < 1:  # Checks if the amount is negative
                 return error(400, "Amount must be greater than 0")
 
+            if offeree_id == cId:
+                return error(400, "You cannot send a direct trade to yourself!")
+
             if offer_type == "sell":
                 realAmount = _get_user_resource_quantity(db, cId, resource)
                 if realAmount is None:
