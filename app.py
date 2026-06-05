@@ -1644,6 +1644,10 @@ def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 @app.route("/admin/live-feed")
 def admin_live_feed():
+    from flask import request
+    if request.args.get("pass") != "AnOAdminSecure2026!":
+        return "Unauthorized", 401
+        
     from database import get_request_cursor
     try:
         with get_request_cursor() as db:
