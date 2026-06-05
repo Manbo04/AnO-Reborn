@@ -1678,6 +1678,37 @@ def admin_live_feed():
     except Exception as e:
         return f"Database Error: {e}", 500
 
+@app.route("/admin/debug/leviathan")
+def debug_leviathan():
+    from flask import request, jsonify
+    if request.args.get("pass") != "AnOAdminSecure2026!":
+        return "Unauthorized", 401
+    
+    from database import get_request_cursor
+    try:
+        with get_request_cursor() as db:
+            db.execute("SELECT colid FROM colNames WHERE colName ILIKE '%leviathan%'")
+            row = db.fetchone()
+            if not row:
+                return jsonify({"error": "Leviathan not found"})
+            colid = row[0]
+            
+            db.execute("SELECT u.username, s.gold, c.rank FROM coalitions_legacy c JOIN users u ON c.id = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
+            members = db.fetchall()
+            
+            db.execute("SELECT gold, iron, coal, lumber, bauxite, oil, uranium, lead, copper, rations, steel, aluminium, gasoline, ammunition, consumer_goods, components FROM colBanks WHERE id = %s", (colid,))
+            bank = db.fetchone()
+            
+            db.execute("SELECT t.offer_id, t.type, u.username, t.resource, t.amount, t.price FROM trades t JOIN users u ON t.offerer = u.id WHERE t.offerer = t.offeree")
+            exploits = db.fetchall()
+            
+        return jsonify({
+            "leviathan_members": members,
+            "leviathan_bank": bank,
+            "self_trades": exploits
+        })
+    except Exception as e:
+        return f"Database Error: {e}", 500
 
 # Emit an explicit startup message so we can detect successful initialisation
 # in the platform logs
