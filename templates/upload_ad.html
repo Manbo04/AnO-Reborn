@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Advertisement{% endblock %}
+
+{% block body %}
+<div class="templatecontainer">
+    <div class="templatediv">
+        <div class="templatedivtopper">
+            <h1 class="templatedivtitle">
+                <span class="material-icons-outlined">campaign</span>Upload Ad
+            </h1>
+        </div>
+        <div class="templatedivcontent">
+            <p style="text-align: center; color: #cfd8dc; margin-bottom: 20px;">Upload a new advertisement image and link.</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="templatecontentheadercenter" style="color: {{ '#a5d6a7' if category == 'success' else '#ef9a9a' }}; margin-bottom: 15px;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('ads_bp.upload_ad') if 'ads_bp.upload_ad' else '/ads/upload' }}" method="POST" enctype="multipart/form-data" style="max-width: 500px; margin: 0 auto;">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% endif %}
+                
+                <div style="margin-bottom: 15px;">
+                    <label for="ad_image" style="color: #90caf9; font-weight: 600; display: block; margin-bottom: 5px;">Advertisement Image</label>
+                    <input class="loginsignupinput w-full" type="file" id="ad_image" name="ad_image" accept="image/*" required style="padding: 10px; background: rgba(0,0,0,0.2);">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="target_url" style="color: #90caf9; font-weight: 600; display: block; margin-bottom: 5px;">Target URL</label>
+                    <input class="loginsignupinput w-full" type="url" id="target_url" name="target_url" placeholder="https://example.com" required>
+                </div>
+                
+                <button type="submit" class="templatedivbutton templatecenteredbutton w-full" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <span class="material-icons-outlined">upload</span>Upload
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
