@@ -1,6 +1,5 @@
 """Discord bot backend that renders nation cards on the web service (auto-deploy path)."""
 
-from __future__ import annotations
 
 from typing import Any, Dict, Optional
 

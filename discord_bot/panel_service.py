@@ -1,6 +1,5 @@
 """Post and refresh pinned-style panel messages in configured guild channels."""
 
-from __future__ import annotations
 
 import logging
 from typing import Optional

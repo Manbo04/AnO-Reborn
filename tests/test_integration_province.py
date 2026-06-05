@@ -12,7 +12,6 @@ class FakeCursor:
         sql_lower = sql.lower()
         # ownership check
         if "select id from provinces where id=%s and userid=%s" in sql_lower:
-            # return id to indicate ownership
             self._last = (params[0],)
         elif "select gold from stats" in sql_lower:
             uid = params[0]

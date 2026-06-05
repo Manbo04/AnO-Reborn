@@ -4,7 +4,6 @@
 These assets preserve existing UI geometry while replacing visuals only.
 """
 
-from __future__ import annotations
 
 import hashlib
 import sys

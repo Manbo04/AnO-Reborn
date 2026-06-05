@@ -4,7 +4,7 @@ import os
 from flask import jsonify, render_template, request, session, redirect, flash
 
 from database import get_request_cursor, invalidate_user_cache
-from helpers import error, login_required
+from helpers import error, login_required, get_valid_int
 from variables import RESOURCES
 
 
@@ -180,18 +180,12 @@ def admin_add_resource():
 
     actor = session["user_id"]
 
-    try:
-        target_user_id = int(request.form.get("target_user_id", "0"))
-        amount = int(request.form.get("amount", "0"))
-    except ValueError:
-        return error(400, "Invalid user ID or amount")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID or amount", error_min="Target user ID must be positive")
+    if err: return err
+    amount, err = get_valid_int("amount", error_invalid="Invalid user ID or amount", error_min="Amount must be positive")
+    if err: return err
 
     resource = (request.form.get("resource") or "").strip().lower()
-
-    if target_user_id <= 0:
-        return error(400, "Target user ID must be positive")
-    if amount <= 0:
-        return error(400, "Amount must be positive")
     if not resource:
         return error(400, "Resource is required")
 
@@ -278,14 +272,10 @@ def admin_add_provinces():
 
     actor = session["user_id"]
 
-    try:
-        target_user_id = int(request.form.get("target_user_id", "0"))
-        amount = int(request.form.get("amount", "0"))
-    except ValueError:
-        return error(400, "Invalid user ID or amount")
-
-    if target_user_id <= 0:
-        return error(400, "Target user ID must be positive")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID or amount", error_min="Target user ID must be positive")
+    if err: return err
+    amount, err = get_valid_int("amount", error_invalid="Invalid user ID or amount")
+    if err: return err
     if amount <= 0 or amount > 50:
         return error(400, "Province amount must be between 1 and 50")
 
@@ -334,13 +324,8 @@ def admin_ban_user():
 
     actor = session["user_id"]
 
-    try:
-        target_user_id = int(request.form.get("target_user_id", "0"))
-    except ValueError:
-        return error(400, "Invalid user ID")
-
-    if target_user_id <= 0:
-        return error(400, "Target user ID must be positive")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID", error_min="Target user ID must be positive")
+    if err: return err
     if target_user_id in SUPER_ADMIN_USER_IDS:
         return error(400, "Cannot ban a privileged admin nation")
 
@@ -387,13 +372,8 @@ def admin_unban_user():
 
     actor = session["user_id"]
 
-    try:
-        target_user_id = int(request.form.get("target_user_id", "0"))
-    except ValueError:
-        return error(400, "Invalid user ID")
-
-    if target_user_id <= 0:
-        return error(400, "Target user ID must be positive")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID", error_min="Target user ID must be positive")
+    if err: return err
 
     with get_request_cursor() as db:
         _ensure_admin_tables(db)
@@ -436,13 +416,8 @@ def admin_kick_user():
 
     actor = session["user_id"]
 
-    try:
-        target_user_id = int(request.form.get("target_user_id", "0"))
-    except ValueError:
-        return error(400, "Invalid user ID")
-
-    if target_user_id <= 0:
-        return error(400, "Target user ID must be positive")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID", error_min="Target user ID must be positive")
+    if err: return err
     if target_user_id in SUPER_ADMIN_USER_IDS:
         return error(400, "Cannot kick a privileged admin nation")
 

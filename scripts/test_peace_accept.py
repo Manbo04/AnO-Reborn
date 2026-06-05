@@ -11,8 +11,6 @@ with app.test_client() as client:
     from dotenv import load_dotenv
 
     load_dotenv()
-    import bcrypt  # noqa: F401
-    from tests.credentials import username as u1_name  # noqa: F401
 
     # Insert two test users (or use existing debug users)
     # and create war and peace offers

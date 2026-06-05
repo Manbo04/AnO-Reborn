@@ -1,5 +1,5 @@
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
-from helpers import login_required, error
+from helpers import login_required, error, get_valid_int
 from database import (
     get_request_cursor,
     get_db_connection,
@@ -640,21 +640,11 @@ def post_offer(offer_type):
     with get_request_cursor() as db:
         resource = request.form.get("resource")
 
-        amount_str = request.form.get("amount")
-        if not amount_str:
-            return error(400, "Amount is required")
-        try:
-            amount = int(amount_str)
-        except (ValueError, TypeError):
-            return error(400, "Amount must be a valid number")
+        amount, err = get_valid_int("amount", error_invalid="Amount must be a valid number")
+        if err: return err
 
-        price_str = request.form.get("price")
-        if not price_str:
-            return error(400, "Price is required")
-        try:
-            price = int(price_str)
-        except (ValueError, TypeError):
-            return error(400, "Price must be a valid number")
+        price, err = get_valid_int("price", error_invalid="Price must be a valid number")
+        if err: return err
 
         offer_types = ["buy", "sell"]
         if offer_type not in offer_types:
@@ -809,21 +799,11 @@ def trade_offer(offer_type, offeree_id):
         with get_request_cursor() as db:
             resource = request.form.get("resource")
 
-            amount_str = request.form.get("amount")
-            if not amount_str:
-                return error(400, "Amount is required")
-            try:
-                amount = int(amount_str)
-            except (ValueError, TypeError):
-                return error(400, "Amount must be a valid number")
+            amount, err = get_valid_int("amount", error_invalid="Amount must be a valid number")
+            if err: return err
 
-            price_str = request.form.get("price")
-            if not price_str:
-                return error(400, "Price is required")
-            try:
-                price = int(price_str)
-            except (ValueError, TypeError):
-                return error(400, "Price must be a valid number")
+            price, err = get_valid_int("price", error_invalid="Price must be a valid number")
+            if err: return err
 
             if price < 1:
                 return error(400, "Price cannot be less than 1")
@@ -1013,7 +993,6 @@ def accept_trade(trade_id):
                     return error(400, "Buyer doesn't have enough money")
 
                 # Perform resource transfer (seller -> buyer). give_resource may
-                # return a string error or raise an exception; handle both cases.
                 # Pass cursor to reuse connection (avoids opening new connection)
                 # Prefer transferring directly from seller -> buyer if seller still
                 # has the resource (backwards compatible with older trades). If

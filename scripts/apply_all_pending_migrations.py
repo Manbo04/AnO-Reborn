@@ -6,7 +6,6 @@ Usage:
     DATABASE_PUBLIC_URL=postgresql://... python3 scripts/apply_all_pending_migrations.py --dry-run
 """
 
-from __future__ import annotations
 
 import argparse
 import os

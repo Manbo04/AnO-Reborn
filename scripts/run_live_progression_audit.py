@@ -7,7 +7,6 @@ Usage:
   DATABASE_PUBLIC_URL=... python3 scripts/run_live_progression_audit.py --http
 """
 
-from __future__ import annotations
 
 import argparse
 import os
@@ -86,7 +85,6 @@ def _audit_user16():
 
 
 def _http_smoke():
-    import urllib.request
 
     paths = [
         f"/country/id={TEST_UID}",

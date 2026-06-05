@@ -17,7 +17,6 @@ Usage:
   curl -sS https://affairsandorder.com/ | rg 'discord(app)?\.com/widget\?id=[0-9]+' -o
 """
 
-from __future__ import annotations
 
 import json
 import os

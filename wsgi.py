@@ -1,6 +1,5 @@
 """WSGI entry — run migrations before workers serve traffic (Procfile-safe)."""
 
-from __future__ import annotations
 
 import os
 

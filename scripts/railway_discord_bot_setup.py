@@ -14,14 +14,11 @@ Usage:
   RAILWAY_TOKEN=... python3 scripts/railway_discord_bot_setup.py
 """
 
-from __future__ import annotations
 
 import json
 import os
 import secrets
 import sys
-import urllib.error
-import urllib.request
 
 GRAPHQL_URL = "https://backboard.railway.com/graphql/v2"
 DEFAULT_PROJECT_ID = "0165e9df-ef94-41b3-ab57-c596994a3165"

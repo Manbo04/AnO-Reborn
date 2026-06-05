@@ -6,7 +6,6 @@ Usage:
     python3 scripts/analyze_railway_logs.py docs/logs/*.log
 """
 
-from __future__ import annotations
 
 import argparse
 import re

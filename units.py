@@ -513,8 +513,6 @@ class Units(Military):
                     # supply = self.attack_cost(
                     #     interface.supply_cost * self.selected_units[attacker_unit]
                     # )
-                    # if supply:
-                    #     return supply
 
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)

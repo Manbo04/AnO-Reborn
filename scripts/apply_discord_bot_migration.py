@@ -5,7 +5,6 @@ Usage:
     DATABASE_PUBLIC_URL=postgresql://... python3 scripts/apply_discord_bot_migration.py
 """
 
-from __future__ import annotations
 
 import os
 import sys

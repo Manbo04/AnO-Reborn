@@ -1,6 +1,5 @@
 """Login POST must not 500 on policies edge cases or invalid bcrypt hashes."""
 
-from __future__ import annotations
 
 import bcrypt
 from unittest.mock import MagicMock, patch
