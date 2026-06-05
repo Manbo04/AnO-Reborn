@@ -1676,35 +1676,18 @@ def admin_init_database():
 
 @app.route("/admin/debug_wealth")
 def admin_debug_wealth():
-    """Temporary route to debug the top wealth query in production."""
+    """Temporary route to debug the database schema in production."""
     with get_request_cursor(read_only=True) as db:
         db.execute(
             """
-            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
-            FROM users u
-            JOIN user_economy ue ON u.id = ue.user_id
-            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
-            WHERE rd.name = 'money'
-            ORDER BY total_money DESC
-            LIMIT 5
+            SELECT table_name, column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name IN ('users', 'stats', 'user_economy')
+            ORDER BY table_name, ordinal_position;
             """
         )
-        without_verified = db.fetchall()
-
-        db.execute(
-            """
-            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
-            FROM users u
-            JOIN user_economy ue ON u.id = ue.user_id
-            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
-            WHERE u.is_verified = TRUE AND rd.name = 'money'
-            ORDER BY total_money DESC
-            LIMIT 5
-            """
-        )
-        with_verified = db.fetchall()
-        
-        return f"without_verified: {without_verified}<br>with_verified: {with_verified}"
+        columns = db.fetchall()
+        return f"{columns}"
 
 @app.route("/admin/migrate_treaties")
 def admin_migrate_treaties():
