@@ -1541,6 +1541,16 @@ def assembly():
     poll_name = "world_name"
 
     with get_request_cursor() as db:
+        # Guarantee the table exists without relying on the migration script
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS poll_votes (
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                poll_name TEXT NOT NULL,
+                vote_option TEXT NOT NULL,
+                PRIMARY KEY (user_id, poll_name)
+            )
+        """)
+        
         if request.method == "POST":
             vote_option = request.form.get("vote_option")
             if vote_option in ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"]:
@@ -1559,12 +1569,21 @@ def assembly():
             return redirect("/assembly")
 
         # GET: Fetch current votes
-        db.execute("SELECT vote_option, COUNT(*) FROM poll_votes WHERE poll_name = %s GROUP BY vote_option", (poll_name,))
-        results = dict(db.fetchall())
+        db.execute("SELECT vote_option, COUNT(*) as vote_count FROM poll_votes WHERE poll_name = %s GROUP BY vote_option", (poll_name,))
+        rows = db.fetchall()
+        results = {}
+        for r in rows:
+            if isinstance(r, dict) or hasattr(r, 'keys'):
+                results[r['vote_option']] = r['vote_count']
+            else:
+                results[r[0]] = r[1]
 
         db.execute("SELECT vote_option FROM poll_votes WHERE user_id = %s AND poll_name = %s", (user_id, poll_name))
         row = db.fetchone()
-        user_vote = row[0] if row else None
+        if row:
+            user_vote = row['vote_option'] if (isinstance(row, dict) or hasattr(row, 'keys')) else row[0]
+        else:
+            user_vote = None
 
     return render_template("assembly.html", results=results, user_vote=user_vote)
 
