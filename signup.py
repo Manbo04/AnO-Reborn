@@ -111,8 +111,6 @@ def verify_recaptcha(response):
 
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
-        if os.getenv("ENVIRONMENT") == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
-            return False
         return True
 
     # If no response token was supplied, treat this as a failed verification
