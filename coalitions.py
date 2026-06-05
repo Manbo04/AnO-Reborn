@@ -1073,6 +1073,10 @@ def join_col(coalition_id):
         colType = row[0]
 
         if colType == "Open":
+            db.execute(f"SELECT COUNT(*) FROM {_members_tbl()} WHERE colid=%s", (coalition_id,))
+            if db.fetchone()[0] >= 15:
+                return error(400, "This coalition has reached the maximum limit of 15 members")
+
             db.execute(
                 f"INSERT INTO {_members_tbl()} (colid, userid, role) VALUES (%s, %s, %s)",
                 (coalition_id, cId, "member"),
@@ -1196,12 +1200,18 @@ def give_position():
         except TypeError:
             return error(400, "No such user found")
 
-        # If the user role is lower up the hierarchy than the giving role
-        # Or if the current role of the person being given the role is higher up the hierarchy than the user giving the role
-        if roles.index(role) < roles.index(user_role) or roles.index(
-            current_roleer_role
-        ) < roles.index(user_role):
-            return error(400, "Can't edit role for a person higher rank than you.")
+        # A user cannot assign a role equal to or higher than their own, UNLESS they are a leader
+        # A user cannot edit the role of someone equal to or higher than them, UNLESS they are a leader
+        if user_role != "leader":
+            if roles.index(role) <= roles.index(user_role) or roles.index(
+                current_roleer_role
+            ) <= roles.index(user_role):
+                return error(400, "Can't grant or edit roles equal to or higher than your own.")
+        else:
+            if roles.index(role) < roles.index(user_role) or roles.index(
+                current_roleer_role
+            ) < roles.index(user_role):
+                return error(400, "Can't edit role for a person higher rank than you.")
 
         if role == "kick":
             db.execute(
@@ -1254,6 +1264,11 @@ def adding(uId):
             return guard
 
         members_tbl = _members_tbl()
+
+        db.execute(f"SELECT COUNT(*) FROM {members_tbl} WHERE colid=%s", (coalition_id,))
+        if db.fetchone()[0] >= 15:
+            return error(400, "This coalition has reached the maximum limit of 15 members")
+
         db.execute(
             "DELETE FROM requests WHERE reqId=(%s) AND colId=(%s)",
             (uId, coalition_id),
@@ -1809,6 +1824,12 @@ def accept_bank_request(bankId):
         if guard:
             return guard
 
+        # Verify the requester is still in the coalition
+        db.execute(f"SELECT role FROM {_members_tbl()} WHERE userid=%s AND colid=%s", (user_id, coalition_id))
+        if not db.fetchone():
+            db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
+            return error(400, "The user who requested this is no longer in the coalition.")
+
         result = withdraw(resource, amount, user_id, coalition_id)
         if result is not None:
             return result
@@ -2056,6 +2077,11 @@ def accept_coalition_invite(invite_id):
         )
         if db.fetchone():
             return error(400, "You are already in a coalition")
+
+        # Check member limit
+        db.execute(f"SELECT COUNT(*) FROM {_members_tbl()} WHERE colid=%s", (coalition_id,))
+        if db.fetchone()[0] >= 15:
+            return error(400, "This coalition has reached the maximum limit of 15 members")
 
         # Add user to coalition
         db.execute(
