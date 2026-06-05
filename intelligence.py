@@ -2,7 +2,6 @@
 
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from attack_scripts import Military
 import time
 from random import random
 from dotenv import load_dotenv
@@ -139,7 +138,7 @@ def spyAmount():
     # make the spy entry here
     if request.method == "POST":
         try:
-            prep = int(request.form.get("prep", 1) or 1)
+            int(request.form.get("prep", 1) or 1)
             spies = int(request.form.get("amount", 1) or 1)
             eId = int(request.form.get("enemy", 0))
         except (ValueError, TypeError):
@@ -151,7 +150,7 @@ def spyAmount():
         with get_request_cursor() as db:
             db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
             defcon_result = db.fetchone()
-            eDefcon = defcon_result[0] if defcon_result and defcon_result[0] else 1
+            defcon_result[0] if defcon_result and defcon_result[0] else 1
 
             eSpies = _get_unit_quantity(db, eId, "spies")
             if eSpies < 1:

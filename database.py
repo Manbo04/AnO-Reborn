@@ -1176,7 +1176,7 @@ def _ensure_discord_bot_tables(db) -> None:
         "panels_enabled BOOLEAN NOT NULL DEFAULT FALSE",
         "panels_refresh_minutes INTEGER NOT NULL DEFAULT 15",
     ):
-        col_name = col_def.split()[0]
+        col_def.split()[0]
         # Skip ALTER if it's a view (compatibility layer)
         db.execute(
             "SELECT relkind FROM pg_class WHERE relname = 'discord_guild_settings'"

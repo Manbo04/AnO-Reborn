@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from database import get_request_cursor, cache_response, rollback_db_cursor
+from database import get_request_cursor, cache_response
 from dotenv import load_dotenv
 from helpers import get_date
 from upgrades import get_upgrades

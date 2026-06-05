@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, jsonify
+from flask import Blueprint, render_template, session, jsonify
 from helpers import login_required
 from database import get_request_cursor
 

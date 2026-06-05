@@ -5,7 +5,6 @@ from database import (
     get_db_connection,
     invalidate_user_cache,
     rollback_db_cursor,
-    try_db_optional,
 )
 from flask import request, render_template, session, redirect, flash
 import variables

@@ -510,7 +510,7 @@ class Military(Nation):
 
                 # NOTE: possible feature, when a building not destroyed but could be unusable (the reparation cost lower than rebuying it)
                 else:
-                    _max_damage = abs(damage - health)
+                    abs(damage - health)
 
                 damage -= health
 
@@ -834,9 +834,9 @@ class Military(Nation):
         defender_strength = compute_strength(defender.selected_units)
         advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
         if winner is defender:
-            advantage_factor = 1.0 - advantage
+            1.0 - advantage
         else:
-            advantage_factor = advantage
+            pass
 
         # Compute per-unit casualties via helper (inject RNG if needed for tests)
         from attack_scripts.combat_helpers import compute_unit_casualties
@@ -999,7 +999,7 @@ class Military(Nation):
 
     @staticmethod
     def get_limits(cId: int) -> dict:  # int -> dict
-        from database import get_db_cursor
+        pass
 
         # Aggregate proInfra using the infra helper so `Nations.py` can be
         # progressively simplified and the SQL is easier to test in isolation.

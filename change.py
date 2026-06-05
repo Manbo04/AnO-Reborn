@@ -10,7 +10,6 @@ from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
 from random import SystemRandom
 from database import (
-    ensure_schema_compat,
     fetchone_first,
     get_request_cursor,
     set_user_password,
@@ -336,7 +335,7 @@ def generate_discord_link_code():
     import logging
 
     logger = logging.getLogger(__name__)
-    from bot_api import CODE_TTL_MINUTES, create_discord_link_code
+    from bot_api import create_discord_link_code
     from database import discord_link_codes_table_exists
 
     if not discord_link_codes_table_exists():
@@ -362,7 +361,7 @@ def generate_discord_link_code():
             return redirect("/account")
 
     try:
-        code = create_discord_link_code(cId)
+        create_discord_link_code(cId)
     except Exception as exc:
         logger.warning("generate_discord_link_code failed: %s", exc)
         flash("Could not generate link code. Please try again later.")
@@ -412,7 +411,7 @@ def generate_recovery_key():
 
 def reset_password_recovery_key():
     import logging
-    logger = logging.getLogger(__name__)
+    logging.getLogger(__name__)
 
     if request.method == "POST":
         username = request.form.get("username")

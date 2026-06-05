@@ -40,7 +40,6 @@ import string
 import random
 from helpers import login_required, error
 from database import (
-    cache_response,
     get_db_connection,
     get_request_cursor,
     rollback_db_cursor,
@@ -845,6 +844,9 @@ app.register_blueprint(wars_bp)
 app.register_blueprint(treaties_bp)
 app.register_blueprint(world_map_bp.bp)
 
+import ads_bp  # noqa: E402
+app.register_blueprint(ads_bp.bp)
+
 import config  # Parse Railway environment variables  # noqa: E402
 
 # Attempt to ensure critical tables exist at startup. This helps avoid
@@ -1249,9 +1251,37 @@ def inject_user():
     from admin_tools import SUPER_ADMIN_USER_IDS
     from game_ui import game_ui_context
 
+    top_ad = None
+    side_ad_left = None
+    side_ad_right = None
+    
+    try:
+        from database import get_request_cursor
+        with get_request_cursor(read_only=True) as db:
+            db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'top' ORDER BY RANDOM() LIMIT 1")
+            top_ad_row = db.fetchone()
+            if top_ad_row:
+                # Use column indices since connection might not use DictCursor
+                top_ad = {"image_url": top_ad_row[0], "target_url": top_ad_row[1]}
+                
+            db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'side' ORDER BY RANDOM() LIMIT 2")
+            side_ads = db.fetchall()
+            if side_ads:
+                side_ad_left = {"image_url": side_ads[0][0], "target_url": side_ads[0][1]}
+                if len(side_ads) > 1:
+                    side_ad_right = {"image_url": side_ads[1][0], "target_url": side_ads[1][1]}
+                else:
+                    side_ad_right = side_ad_left
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Error fetching ads: {e}")
+
     return dict(
         get_resources=get_resources,
         admin_user_ids=SUPER_ADMIN_USER_IDS,
+        top_ad=top_ad,
+        side_ad_left=side_ad_left,
+        side_ad_right=side_ad_right,
         **game_ui_context(),
     )
 
@@ -1523,7 +1553,7 @@ def assembly():
                         ON CONFLICT (user_id, poll_name) DO UPDATE SET vote_option = EXCLUDED.vote_option
                     """, (user_id, poll_name, vote_option))
                     flash("Your vote has been cast!", "success")
-                except Exception as e:
+                except Exception:
                     db.execute("ROLLBACK")
                     flash("Failed to cast vote.", "danger")
             else:
