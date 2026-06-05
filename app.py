@@ -1674,6 +1674,41 @@ def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 
 
+@app.route("/admin/debug_wealth")
+def admin_debug_wealth():
+    """Temporary route to debug the top wealth query in production."""
+    with get_request_cursor(read_only=True) as db:
+        db.execute(
+            """
+            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
+            FROM users u
+            JOIN user_economy ue ON u.id = ue.user_id
+            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
+            WHERE rd.name = 'money'
+            ORDER BY total_money DESC
+            LIMIT 5
+            """
+        )
+        without_verified = db.fetchall()
+
+        db.execute(
+            """
+            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
+            FROM users u
+            JOIN user_economy ue ON u.id = ue.user_id
+            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
+            WHERE u.is_verified = TRUE AND rd.name = 'money'
+            ORDER BY total_money DESC
+            LIMIT 5
+            """
+        )
+        with_verified = db.fetchall()
+        
+        return jsonify({
+            "without_verified": without_verified,
+            "with_verified": with_verified
+        })
+
 @app.route("/admin/migrate_treaties")
 def admin_migrate_treaties():
     from database import get_db_connection
