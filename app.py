@@ -1642,6 +1642,30 @@ def mass_purchase():
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
+@app.route("/admin/live-feed")
+def admin_live_feed():
+    from database import get_request_cursor
+    try:
+        with get_request_cursor() as db:
+            db.execute("SELECT id, username, email, date FROM users ORDER BY id DESC LIMIT 20")
+            users = db.fetchall()
+            db.execute("SELECT ip_address, attempt_time, successful FROM signup_attempts ORDER BY attempt_time DESC LIMIT 20")
+            attempts = db.fetchall()
+        
+        html = "<html><body style='font-family:sans-serif; background:#1e1e1e; color:#eee; padding:20px;'>"
+        html += "<h1>Live Admin Feed</h1>"
+        html += "<h2>Recent Registered Nations</h2><table border='1' style='border-collapse: collapse; width:100%; text-align:left;' cellpadding='5'><tr><th>ID</th><th>Username</th><th>Email</th><th>Date</th></tr>"
+        for u in users:
+            html += f"<tr><td>{u[0]}</td><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td></tr>"
+        html += "</table>"
+        
+        html += "<h2 style='margin-top:40px;'>Recent Signup Attempts</h2><table border='1' style='border-collapse: collapse; width:100%; text-align:left;' cellpadding='5'><tr><th>IP Address</th><th>Time</th><th>Successful</th></tr>"
+        for a in attempts:
+            html += f"<tr><td>{a[0]}</td><td>{a[1]}</td><td>{a[2]}</td></tr>"
+        html += "</table></body></html>"
+        return html
+    except Exception as e:
+        return f"Database Error: {e}", 500
 
 
 # Emit an explicit startup message so we can detect successful initialisation
