@@ -1705,7 +1705,7 @@ def debug_leviathan():
             db.execute("SELECT actor, action, user_id, details FROM admin_actions ORDER BY created_at DESC LIMIT 20")
             admin_logs = db.fetchall()
             
-            db.execute("SELECT trigger_name, event_manipulation, event_object_table, action_statement FROM information_schema.triggers")
+            db.execute("SELECT pg_get_functiondef('audit_province_delete'::regproc)")
             triggers = db.fetchall()
             
         return jsonify({
