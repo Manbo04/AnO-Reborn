@@ -12,7 +12,7 @@
 
         <!--<div class="coalitionimagediv">
 
-            <img class="coalitionimage" src="files/images/file.svg" /> // currently turned this off because it looks broken
+            <img alt="Image" class="coalitionimage" src="files/images/file.svg" /> // currently turned this off because it looks broken
 
         </div> -->
 
@@ -78,7 +78,7 @@
                 <!--coalition flag-->
                 {% if flag != None %}
                 <img class="countryimage" src="/flag/coalition/{{ colId }}" alt="{{ flag }}"> {% else %}
-                <img class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
+                <img alt="Image" class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
             </div>
 
             {% if description != None %}
@@ -151,7 +151,7 @@
                                 library_music
                                 </span>Anthem:</td>
                             <td>
-                                <img src="{{ countryAnthem }}" class="countryanthem" />
+                                <img alt="Image" src="{{ countryAnthem }}" class="countryanthem" />
                             </td>
                         </tr>
                     </table>
@@ -1080,7 +1080,7 @@
 
                     <div>
                         <div class="coalitionimagepreview" style="margin: 0 auto 10px auto;">
-                            <img id="imageBackground" />
+                            <img alt="Image" id="imageBackground" />
                         </div>
                         <label for="bgimage" style="display: block; margin-bottom: 10px;">Upload coalition flag</label>
                         <label class="imageinput fit center" style="margin: 0 auto;"><span class="material-icons-outlined">
@@ -1092,7 +1092,7 @@
 
                     <div style="display: none;">
                         <div class="coalitionimagepreview">
-                            <img id="imageBackground2" />
+                            <img alt="Image" id="imageBackground2" />
                         </div>
                     </div>
 

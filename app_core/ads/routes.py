@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for, flash
 from helpers import login_required
-from admin_tools import SUPER_ADMIN_USER_IDS
+from app_core.admin.services import SUPER_ADMIN_USER_IDS
 from app_core.ads.services import AdService
 
 bp = Blueprint("ads", __name__)

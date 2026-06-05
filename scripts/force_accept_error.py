@@ -31,7 +31,7 @@ with get_db_connection() as conn:
 print("Created trade id", trade_id, "offerer", offerer, "offeree", offeree)
 
 # Now perform the accept under a monkeypatched give_resource that raises
-import market
+from app_core import market
 
 orig_give = market.give_resource
 

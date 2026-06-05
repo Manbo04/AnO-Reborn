@@ -1,6 +1,6 @@
 from flask import Flask
 from database import query_cache
-import market
+from app_core import market
 import sys
 import threading
 import copy
@@ -742,7 +742,7 @@ def test_report_trade_error_with_sentry(monkeypatch):
     dummy = DummySentry()
     monkeypatch.setitem(sys.modules, "sentry_sdk", dummy)
 
-    import market as mkt
+    from app_core import market as mkt
 
     mkt._report_trade_error("boom", extra={"user_id": 999, "offer_id": 13})
     assert called["msg"] == "boom"
