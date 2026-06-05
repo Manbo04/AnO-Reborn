@@ -168,11 +168,10 @@ def rankings():
         # Top 15 by Wealth (Money)
         db.execute(
             """
-            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
+            SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money
             FROM users u
-            JOIN user_economy ue ON u.id = ue.user_id
-            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
-            WHERE u.is_verified = TRUE AND rd.name = 'money'
+            JOIN stats s ON u.id = s.id
+            WHERE u.is_verified = TRUE
             ORDER BY total_money DESC
             LIMIT 15
             """
