@@ -680,7 +680,11 @@ def post_offer(offer_type):
 
             # Calculates the resource amount the seller should have
             # Pass cursor to reuse connection
-            give_resource(cId, "bank", resource, amount, cursor=db)
+            res = give_resource(cId, "bank", resource, amount, cursor=db)
+            if res is not True:
+                from database import rollback_db_cursor
+                rollback_db_cursor(db)
+                return error(400, str(res))
 
             # Creates a new offer
             db.execute(
@@ -698,6 +702,23 @@ def post_offer(offer_type):
             )
 
         elif offer_type == "buy":
+            money_to_take_away = int(amount) * int(price)
+            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            money_row = db.fetchone()
+            if not money_row:
+                return error(500, "Your nation data could not be found")
+            current_money = money_row[0] or 0
+
+            if current_money < money_to_take_away:
+                return error(400, "You don't have enough money.")
+
+            # Pass cursor to reuse connection
+            res = give_resource(cId, "bank", "money", money_to_take_away, cursor=db)
+            if res is not True:
+                from database import rollback_db_cursor
+                rollback_db_cursor(db)
+                return error(400, str(res))
+
             db.execute(
                 (
                     "INSERT INTO offers (user_id, type, resource, amount, price) "
@@ -711,19 +732,6 @@ def post_offer(offer_type):
                     int(price),
                 ),
             )
-
-            money_to_take_away = int(amount) * int(price)
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
-            money_row = db.fetchone()
-            if not money_row:
-                return error(500, "Your nation data could not be found")
-            current_money = money_row[0] or 0
-
-            if current_money < money_to_take_away:
-                return error(400, "You don't have enough money.")
-
-            # Pass cursor to reuse connection
-            give_resource(cId, "bank", "money", money_to_take_away, cursor=db)
 
         flash("You just posted a market offer")
     return redirect("/market")
