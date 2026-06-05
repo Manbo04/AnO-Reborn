@@ -565,7 +565,7 @@ if upgrades.bp:
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
 app.register_blueprint(treaties_bp)
-app.register_blueprint(world_map_bp.bp)
+app.register_blueprint(world_map_bp)
 
 from app_core.ads import bp as ads_bp
 app.register_blueprint(ads_bp)
