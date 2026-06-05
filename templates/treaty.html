@@ -32,12 +32,12 @@
             </tr>
             {% for t in active_treaties %}
             <tr>
-                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td><a href="/country/{{ t[4] }}">{{ t[3] }}</a></td>
                 <td>
                     {% if t[1] == 'non_aggression' %}
-                    <span style="color: lightgreen;">Non-Aggression</span>
+                    <span style="color: #4CAF50; font-weight: bold;">Non-Aggression</span>
                     {% elif t[1] == 'mutual_defense' %}
-                    <span style="color: orange;">Mutual Defense</span>
+                    <span style="color: #FF9800; font-weight: bold;">Mutual Defense</span>
                     {% endif %}
                 </td>
                 <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
@@ -65,7 +65,7 @@
             </tr>
             {% for t in incoming_treaties %}
             <tr>
-                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td><a href="/country/{{ t[4] }}">{{ t[3] }}</a></td>
                 <td>
                     {% if t[1] == 'non_aggression' %}Non-Aggression
                     {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
@@ -98,7 +98,7 @@
             </tr>
             {% for t in outgoing_treaties %}
             <tr>
-                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td><a href="/country/{{ t[4] }}">{{ t[3] }}</a></td>
                 <td>
                     {% if t[1] == 'non_aggression' %}Non-Aggression
                     {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
