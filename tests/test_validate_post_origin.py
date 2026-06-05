@@ -1,6 +1,5 @@
 """Origin validation helper (no DB)."""
 
-import pytest
 
 from helpers import validate_post_origin
 

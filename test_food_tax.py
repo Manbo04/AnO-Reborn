@@ -1,4 +1,3 @@
-import math
 
 class variables:
     RATIONS_PER = 100

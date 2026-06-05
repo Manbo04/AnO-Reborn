@@ -1982,7 +1982,6 @@ def decline_treaty(offer_id):
 
 def send_coalition_invite(nation_id):
     """Send an invitation to a player to join the user's coalition"""
-    from flask import request
 
     user_id = session["user_id"]
 

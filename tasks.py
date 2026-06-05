@@ -260,7 +260,6 @@ def release_pg_advisory_lock(conn, lock_id: int):
     are no longer needed.  Callers that still invoke this function
     will simply succeed harmlessly.
     """
-    pass
 
 
 # Returns how many rations a player needs
@@ -1364,7 +1363,6 @@ def tax_income():
                     committed = True
                 except AttributeError:
                     committed = True
-                    pass
             except Exception as e:
                 try:
                     conn.rollback()
@@ -3423,7 +3421,6 @@ def generate_province_revenue():  # Runs each hour
                         committed = True
                     except AttributeError:
                         committed = True
-                        pass
             except Exception as commit_err:
                 try:
                     conn.rollback()

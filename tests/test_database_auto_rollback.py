@@ -6,7 +6,7 @@ import psycopg2
 
 
 def test_get_request_cursor_rolls_back_after_sql_error():
-    from database import get_request_cursor, rollback_db_cursor
+    from database import get_request_cursor
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()

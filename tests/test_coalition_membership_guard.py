@@ -5,7 +5,6 @@ import uuid
 
 import pytest
 
-from app import app
 from database import get_coalition_members_table, get_db_connection
 
 pytestmark = pytest.mark.skipif(

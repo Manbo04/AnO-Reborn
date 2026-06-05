@@ -1,4 +1,3 @@
-import os
 import psycopg2
 
 def run_test():
@@ -7,7 +6,6 @@ def run_test():
     
     attacker_id = 1001
     target_id = 1002
-    strike_target = "silo"
     bombers_count = 50
 
     # SETUP

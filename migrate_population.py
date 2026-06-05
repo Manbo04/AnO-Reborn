@@ -1,4 +1,3 @@
-import os
 from database import get_db_connection
 
 def migrate_population_to_bigint():

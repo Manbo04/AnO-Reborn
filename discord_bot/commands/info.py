@@ -46,7 +46,7 @@ def register_commands(
             )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
-        except Exception as exc:
+        except Exception:
             logger.exception("/me failed for discord user %s", interaction.user.id)
             await interaction.followup.send(
                 "Could not load nation statistics. Please try again later.",
