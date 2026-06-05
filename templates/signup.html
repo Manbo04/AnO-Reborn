@@ -39,7 +39,7 @@
 
     <div class="templatedivcontent">
         <div class="auth-columns">
-            {% if way != "discord" %}
+            {% if way != "discord" and way != "google" %}
             <div class="auth-panel">
                 <form action="/discord" method="GET">
                     <h2 class="templatecontentheadercenter">Discord Sign Up</h2>
@@ -47,24 +47,33 @@
                         <span class="material-icons-outlined">add_circle_outline</span>Discord Sign Up
                     </button>
                 </form>
+                <form action="/login/google" method="GET" style="margin-top: 15px;">
+                    <input type="hidden" name="intent" value="login" />
+                    <h2 class="templatecontentheadercenter">Google Sign Up</h2>
+                    <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #db4437; color: white;">
+                        <span class="material-icons-outlined">add_circle_outline</span>Google Sign Up
+                    </button>
+                </form>
             </div>
             {% endif %}
 
             <div class="auth-panel auth-panel-wide">
                 <h2 class="templatecontentheadercenter">Default Sign Up</h2>
-                {% if way != "discord" %}
+                {% if way != "discord" and way != "google" %}
                 <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">
                     <em>Note: Email verification does not exist yet. Only Discord accounts are verified for now.</em>
                 </p>
-                <form id="signup-form" class="loginsignupform" action="/signup" method="POST">
+                <form id="signup-form" class="loginsignupform" action="/register/email" method="POST">
                 {% elif way == "discord" %}
                 <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
+                {% elif way == "google" %}
+                <form id="signup-form" class="loginsignupform" action="/google_signup" method="POST">
                 {% endif %}
                     {% if csrf_token is defined %}
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     {% endif %}
                     <input class="loginsignupinput w-full" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
-                    {% if way != "discord" %}
+                    {% if way != "discord" and way != "google" %}
                     <input class="loginsignupinput w-full" autocomplete="off" name="email" type="email" placeholder="Email" required />
                     <input class="loginsignupinput w-full" autocomplete="off" type="password" name="password" placeholder="Password" required/>
                     <input class="loginsignupinput w-full" autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password" required/>
