@@ -25,7 +25,6 @@ def test_generate_province_revenue_persists_coal_and_lumber(monkeypatch):
 
     # Minimal mogrify so psycopg2.extras.execute_batch can call it
     def db_mogrify(sql, args):
-        # return bytes similar to real mogrify
         try:
             return sql.encode()
         except Exception:

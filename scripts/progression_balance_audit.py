@@ -9,7 +9,6 @@ Usage:
   PYTHONPATH=. python3 scripts/progression_balance_audit.py --json
 """
 
-from __future__ import annotations
 
 import argparse
 import json

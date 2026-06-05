@@ -6,7 +6,6 @@ Usage:
   DEPLOY_URL=https://affairsandorder.com python3 scripts/verify_deploy_live.py
 """
 
-from __future__ import annotations
 
 import json
 import subprocess

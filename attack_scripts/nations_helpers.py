@@ -4,7 +4,6 @@ Goal: start a progressive refactor by moving small, well-contained functions
 out of the big legacy file so they can be tested and maintained separately.
 """
 
-from __future__ import annotations
 
 from typing import Any
 
@@ -27,5 +26,4 @@ def calculate_bonuses(attack_effects: Any, enemy_object: Any, target: str) -> fl
     # scale by the attack_effects magnitude and normalize
     affected_bonus = attack_effects[1] * (unit_of_army / 100)
 
-    # return normalized small value (keeps parity with previous behaviour)
     return affected_bonus / 100

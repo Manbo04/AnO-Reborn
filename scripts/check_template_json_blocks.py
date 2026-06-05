@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fail CI if templates use JSON.parse with raw Jinja without tojson."""
 
-from __future__ import annotations
 
 import re
 import sys

@@ -47,7 +47,6 @@ class FakeConn:
 
 def test_generate_province_revenue_charges_operating_costs(monkeypatch):
     import tasks
-    import variables
 
     # Prepare infra_ids: [(province_id, user_id, land, productivity)]
     infra_ids = [(100, 1, 0, 50)]

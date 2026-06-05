@@ -11,7 +11,6 @@ Postgres volume attachment must be fixed in the dashboard if Postgres is Crashed
 (see docs/RAILWAY_FIX_ONCE.md).
 """
 
-from __future__ import annotations
 
 import os
 import secrets

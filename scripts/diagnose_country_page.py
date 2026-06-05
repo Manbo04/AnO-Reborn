@@ -9,7 +9,6 @@ Usage:
     DATABASE_PUBLIC_URL=postgresql://... python3 scripts/diagnose_country_page.py 27
 """
 
-from __future__ import annotations
 
 import os
 import sys

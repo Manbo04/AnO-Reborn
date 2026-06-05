@@ -16,7 +16,6 @@ Requirements:
 Run: python3 scripts/record_tutorial_walkthroughs.py --no-narration
 """
 
-from __future__ import annotations
 
 import argparse
 import json

@@ -47,7 +47,6 @@ from database import (
 )
 import province
 
-# import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -253,7 +252,6 @@ def before_request():
 
 
 # Import cache_response decorator
-# from database import cache_response
 
 # Performance: Enable gzip compression for responses
 try:

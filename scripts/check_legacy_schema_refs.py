@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fail CI if production Python modules reference dropped legacy tables."""
 
-from __future__ import annotations
 
 import re
 import sys

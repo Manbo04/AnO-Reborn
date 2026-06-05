@@ -9,7 +9,6 @@ import math
 from celery.schedules import crontab
 import variables
 import redis
-import urllib.parse
 
 logger = logging.getLogger(__name__)
 

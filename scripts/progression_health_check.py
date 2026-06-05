@@ -8,7 +8,6 @@ Usage:
   DATABASE_PUBLIC_URL=... python3 scripts/progression_health_check.py
 """
 
-from __future__ import annotations
 
 import os
 import sys
