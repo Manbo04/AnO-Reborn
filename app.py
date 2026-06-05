@@ -9,8 +9,8 @@ from flask_compress import Compress
 import traceback
 import upgrades
 import intelligence
-import world_map_bp
-import market
+import app_core.world_map.routes as world_map_bp
+from app_core.market.routes import market_bp
 import change
 from app_core.coalitions import register_coalitions_routes
 import countries
@@ -22,7 +22,7 @@ import policies
 import statistics
 import requests
 import trade_agreements
-import admin_tools
+
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
@@ -143,7 +143,7 @@ def create_app():
 
     signup.register_signup_routes(app)
     login.register_login_routes(app)
-    market.register_market_routes(app)
+    app.register_blueprint(market_bp)
     change.register_change_routes(app)
     bot_api.register_bot_api_routes(app)
     register_coalitions_routes(app)
@@ -151,7 +151,7 @@ def create_app():
     policies.register_policies_routes(app)
     statistics.register_statistics_routes(app)
     trade_agreements.register_trade_agreement_routes(app)
-    admin_tools.register_admin_tools_routes(app)
+    
 
     @app.after_request
     def after_request(response):
@@ -254,8 +254,8 @@ def create_app():
     app.register_blueprint(world_map_bp.bp)
     import ads_bp
     app.register_blueprint(ads_bp.bp)
-    import admin_bp
-    app.register_blueprint(admin_bp.admin_bp)
+    from app_core.admin.routes import admin_bp
+    app.register_blueprint(admin_bp)
 
     from app_core.main.routes import bp as main_bp
     from app_core.auth.routes import bp as auth_bp
