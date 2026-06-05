@@ -59,6 +59,41 @@
                 {% endfor %}
             </table>
         </div>
+        <div class="card">
+            <h2>💰 Global Wealth Leaderboard</h2>
+            <table>
+                <tr><th>Nation ID</th><th>Nation Name</th><th>Gold</th></tr>
+                {% for w in wealth %}
+                <tr><td>{{ w[0] }}</td><td>{{ w[1] }}</td><td style="color:#fbbf24; font-weight:bold;">${{ "{:,.0f}".format(w[2]) }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="card">
+            <h2>📈 Active Global Market Listings</h2>
+            <table>
+                <tr><th>Listing ID</th><th>Nation</th><th>Action</th><th>Resource</th><th>Amount</th><th>Price</th></tr>
+                {% for o in offers %}
+                <tr>
+                    <td>{{ o[0] }}</td><td>{{ o[1] }}</td>
+                    <td style="color:{{ '#4ade80' if o[2]=='buy' else '#f87171' }}; font-weight:bold; text-transform:uppercase;">{{ o[2] }}</td>
+                    <td>{{ o[3] }}</td><td>{{ "{:,.0f}".format(o[4]) }}</td><td>${{ "{:,.0f}".format(o[5]) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="card">
+            <h2>🤝 Recently Completed Trades</h2>
+            <table>
+                <tr><th>Trade ID</th><th>Type</th><th>Offerer</th><th>Offeree</th><th>Resource</th><th>Amount</th><th>Price</th></tr>
+                {% for t in trades %}
+                <tr>
+                    <td>{{ t[0] }}</td>
+                    <td style="color:{{ '#4ade80' if t[1]=='buy' else '#f87171' }}; font-weight:bold; text-transform:uppercase;">{{ t[1] }}</td>
+                    <td>{{ t[2] }}</td><td>{{ t[3] }}</td><td>{{ t[4] }}</td><td>{{ "{:,.0f}".format(t[5]) }}</td><td>${{ "{:,.0f}".format(t[6]) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
     
     <script>

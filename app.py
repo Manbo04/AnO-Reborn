@@ -1661,6 +1661,12 @@ def admin_live_feed():
             news = db.fetchall()
             db.execute("SELECT id, attacker, defender, war_type, peace_date FROM wars ORDER BY id DESC LIMIT 10")
             wars = db.fetchall()
+            db.execute("SELECT u.id, u.username, s.gold FROM users u JOIN stats s ON u.id = s.id ORDER BY s.gold DESC LIMIT 10")
+            wealth = db.fetchall()
+            db.execute("SELECT o.offer_id, u.username, o.type, o.resource, o.amount, o.price FROM offers o JOIN users u ON o.user_id = u.id ORDER BY o.offer_id DESC LIMIT 10")
+            offers = db.fetchall()
+            db.execute("SELECT t.offer_id, t.type, u1.username, u2.username, t.resource, t.amount, t.price FROM trades t JOIN users u1 ON t.offerer = u1.id JOIN users u2 ON t.offeree = u2.id ORDER BY t.offer_id DESC LIMIT 10")
+            trades = db.fetchall()
             
             # Map peace_date to a status string for the template
             formatted_wars = []
@@ -1668,7 +1674,7 @@ def admin_live_feed():
                 status = "Active" if w[4] is None else "Peacetime"
                 formatted_wars.append((w[0], w[1], w[2], w[3], status))
                 
-        return render_template("admin_live_feed.html", users=users, attempts=attempts, news=news, wars=formatted_wars)
+        return render_template("admin_live_feed.html", users=users, attempts=attempts, news=news, wars=formatted_wars, wealth=wealth, offers=offers, trades=trades)
     except Exception as e:
         return f"Database Error: {e}", 500
 
