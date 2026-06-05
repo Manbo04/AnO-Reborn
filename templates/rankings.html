@@ -1,0 +1,125 @@
+{% extends "layout.html" %} {% block title %} Rankings {% endblock %} {% block body %}
+<div class="templatediv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            leaderboard
+            </span>Global Rankings</h1>
+    </div>
+
+    <div class="templatedivcontent">
+
+        <h2 class="templatecontentheadercenter">Top 15 Leaderboards</h2>
+        <p class="templatecontentheadercenter" style="margin-top: -15px; margin-bottom: 30px;">Only verified nations are eligible for rankings.</p>
+
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="3"><span class="material-icons-outlined">
+                            people_alt
+                            </span>Largest Populations</th>
+                    </tr>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Nation</th>
+                        <th>Population</th>
+                    </tr>
+                    {% for idx in range(top_population|length) %}
+                    {% set nation = top_population[idx] %}
+                    <tr>
+                        <td style="text-align: center;">#{{ idx + 1 }}</td>
+                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td>{{ nation[2] | fmt }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_population %}
+                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="3"><span class="material-icons-outlined">
+                            military_tech
+                            </span>Largest Militaries</th>
+                    </tr>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Nation</th>
+                        <th>Army Size</th>
+                    </tr>
+                    {% for idx in range(top_military|length) %}
+                    {% set nation = top_military[idx] %}
+                    <tr>
+                        <td style="text-align: center;">#{{ idx + 1 }}</td>
+                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td>{{ nation[2] | fmt }} units</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_military %}
+                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="3"><span class="material-icons-outlined">
+                            account_balance
+                            </span>Wealthiest Nations</th>
+                    </tr>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Nation</th>
+                        <th>Treasury</th>
+                    </tr>
+                    {% for idx in range(top_wealth|length) %}
+                    {% set nation = top_wealth[idx] %}
+                    <tr>
+                        <td style="text-align: center;">#{{ idx + 1 }}</td>
+                        <td><a href="/country/{{ nation[0] }}" style="color: white;">{{ nation[1] }}</a></td>
+                        <td>${{ nation[2] | fmt }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_wealth %}
+                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="3"><span class="material-icons-outlined">
+                            public
+                            </span>Most Influential Alliances</th>
+                    </tr>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Alliance</th>
+                        <th>Total Population</th>
+                    </tr>
+                    {% for idx in range(top_alliances|length) %}
+                    {% set col = top_alliances[idx] %}
+                    <tr>
+                        <td style="text-align: center;">#{{ idx + 1 }}</td>
+                        <td><a href="/coalitions/{{ col[0] }}" style="color: white;">{{ col[1] }}</a></td>
+                        <td>{{ col[2] | fmt }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not top_alliances %}
+                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

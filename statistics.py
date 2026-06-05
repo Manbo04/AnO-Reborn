@@ -132,6 +132,77 @@ def statistics():
     )
 
 
+@login_required
+@cache_response(ttl_seconds=300)  # Cache rankings for 5 minutes
+def rankings():
+    """Display the top leaderboards for nations and alliances."""
+    with get_request_cursor(read_only=True) as db:
+        # Top 15 by Population
+        db.execute(
+            """
+            SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop
+            FROM users u
+            JOIN provinces p ON u.id = p.userid
+            WHERE u.is_verified = TRUE
+            GROUP BY u.id, u.username
+            ORDER BY total_pop DESC
+            LIMIT 15
+            """
+        )
+        top_population = db.fetchall()
+
+        # Top 15 by Military Size (Total quantity of all units)
+        db.execute(
+            """
+            SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size
+            FROM users u
+            JOIN user_military um ON u.id = um.user_id
+            WHERE u.is_verified = TRUE
+            GROUP BY u.id, u.username
+            ORDER BY army_size DESC
+            LIMIT 15
+            """
+        )
+        top_military = db.fetchall()
+        
+        # Top 15 by Wealth (Money)
+        db.execute(
+            """
+            SELECT u.id, u.username, COALESCE(ue.quantity, 0) as total_money
+            FROM users u
+            JOIN user_economy ue ON u.id = ue.user_id
+            JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
+            WHERE u.is_verified = TRUE AND rd.name = 'money'
+            ORDER BY total_money DESC
+            LIMIT 15
+            """
+        )
+        top_wealth = db.fetchall()
+        
+        # Top 15 Alliances by Influence (Sum of member populations)
+        db.execute(
+            """
+            SELECT c.id, c.name, COALESCE(SUM(p.population), 0) as total_pop
+            FROM colNames c
+            JOIN members m ON c.id = m.colid
+            JOIN provinces p ON m.userid = p.userid
+            GROUP BY c.id, c.name
+            ORDER BY total_pop DESC
+            LIMIT 15
+            """
+        )
+        top_alliances = db.fetchall()
+
+    return render_template(
+        "rankings.html",
+        top_population=top_population,
+        top_military=top_military,
+        top_wealth=top_wealth,
+        top_alliances=top_alliances,
+    )
+
+
 def register_statistics_routes(app_instance):
     """Register all statistics routes with the Flask app instance"""
     app_instance.add_url_rule("/statistics", "statistics", statistics)
+    app_instance.add_url_rule("/rankings", "rankings", rankings)
