@@ -1702,7 +1702,7 @@ def debug_leviathan():
             db.execute("SELECT t.offer_id, t.type, u.username, t.resource, t.amount, t.price FROM trades t JOIN users u ON t.offerer = u.id WHERE t.offerer = t.offeree")
             exploits = db.fetchall()
             
-            db.execute("SELECT actor, action, user_id, details FROM admin_actions ORDER BY timestamp DESC LIMIT 20")
+            db.execute("SELECT actor, action, user_id, details FROM admin_actions ORDER BY created_at DESC LIMIT 20")
             admin_logs = db.fetchall()
             
         return jsonify({
