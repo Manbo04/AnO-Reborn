@@ -1642,9 +1642,11 @@ def mass_purchase():
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
+
+
 @app.route("/admin/live-feed")
 def admin_live_feed():
-    from flask import request
+    from flask import request, render_template
     if request.args.get("pass") != "AnOAdminSecure2026!":
         return "Unauthorized", 401
         
@@ -1655,37 +1657,18 @@ def admin_live_feed():
             users = db.fetchall()
             db.execute("SELECT ip_address, attempt_time, successful FROM signup_attempts ORDER BY attempt_time DESC LIMIT 20")
             attempts = db.fetchall()
-        
-        html = "<html><body style='font-family:sans-serif; background:#1e1e1e; color:#eee; padding:20px;'>"
-        html += "<h1>Live Admin Feed</h1>"
-        html += "<h2>Recent Registered Nations</h2><table border='1' style='border-collapse: collapse; width:100%; text-align:left;' cellpadding='5'><tr><th>ID</th><th>Username</th><th>Email</th><th>Date</th></tr>"
-        for u in users:
-            html += f"<tr><td>{u[0]}</td><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td></tr>"
-        html += "</table>"
-        
-        html += "<h2 style='margin-top:40px;'>Recent Signup Attempts</h2><table border='1' style='border-collapse: collapse; width:100%; text-align:left;' cellpadding='5'><tr><th>IP Address</th><th>Time</th><th>Successful</th></tr>"
-        for a in attempts:
-            utc_str = a[1].strftime('%Y-%m-%dT%H:%M:%SZ') if hasattr(a[1], 'strftime') else str(a[1])
-            html += f"<tr><td>{a[0]}</td><td class='utc-time' data-utc='{utc_str}'>{a[1]}</td><td>{a[2]}</td></tr>"
-        html += "</table>"
-        html += """
-        <script>
-            document.querySelectorAll('.utc-time').forEach(function(el) {
-                var utcStr = el.getAttribute('data-utc');
-                if (utcStr && utcStr !== 'None') {
-                    var date = new Date(utcStr);
-                    if (!isNaN(date)) {
-                        el.innerText = date.toLocaleString(undefined, {
-                            year: 'numeric', month: 'short', day: 'numeric',
-                            hour: '2-digit', minute:'2-digit', second:'2-digit'
-                        });
-                    }
-                }
-            });
-        </script>
-        </body></html>
-        """
-        return html
+            db.execute("SELECT id, destination_id, message, date FROM news ORDER BY id DESC LIMIT 20")
+            news = db.fetchall()
+            db.execute("SELECT id, attacker, defender, war_type, peace_date FROM wars ORDER BY id DESC LIMIT 10")
+            wars = db.fetchall()
+            
+            # Map peace_date to a status string for the template
+            formatted_wars = []
+            for w in wars:
+                status = "Active" if w[4] is None else "Peacetime"
+                formatted_wars.append((w[0], w[1], w[2], w[3], status))
+                
+        return render_template("admin_live_feed.html", users=users, attempts=attempts, news=news, wars=formatted_wars)
     except Exception as e:
         return f"Database Error: {e}", 500
 
