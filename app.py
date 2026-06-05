@@ -16,6 +16,7 @@ from flask_compress import Compress
 import traceback
 import upgrades
 import intelligence
+import world_map_bp
 
 # import tasks
 import market
@@ -846,6 +847,7 @@ if upgrades.bp:
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
 app.register_blueprint(treaties_bp)
+app.register_blueprint(world_map_bp.bp)
 
 import config  # Parse Railway environment variables  # noqa: E402
 
