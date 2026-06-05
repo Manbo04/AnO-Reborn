@@ -1750,7 +1750,7 @@ def debug_exploits():
                 SELECT u.username, rd.name, ue.quantity 
                 FROM user_economy ue 
                 JOIN users u ON ue.user_id = u.id 
-                JOIN resource_dictionary rd ON ue.resource_id = rd.id
+                JOIN resource_dictionary rd ON ue.resource_id = rd.resource_id
                 WHERE ue.quantity > 100000000 
                 ORDER BY ue.quantity DESC LIMIT 50
             """)
