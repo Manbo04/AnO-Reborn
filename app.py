@@ -1696,6 +1696,21 @@ def debug_leviathan():
             db.execute("SELECT u.username, s.gold, c.role FROM coalitions_legacy c JOIN users u ON c.userid = u.id JOIN stats s ON u.id = s.id WHERE c.colid = %s ORDER BY s.gold DESC", (colid,))
             members = db.fetchall()
             
+            if request.args.get("wipe") == "true":
+                db.execute("SELECT u.id FROM coalitions_legacy c JOIN users u ON c.userid = u.id WHERE c.colid = %s", (colid,))
+                member_ids = [row[0] for row in db.fetchall()]
+                if member_ids:
+                    db.execute("UPDATE stats SET gold = 100000 WHERE id = ANY(%s)", (member_ids,))
+                    db.execute("UPDATE user_economy SET quantity = 0 WHERE user_id = ANY(%s)", (member_ids,))
+                db.execute("""
+                    UPDATE colBanks SET 
+                    money=0, iron=0, coal=0, lumber=0, bauxite=0, oil=0, uranium=0, 
+                    lead=0, copper=0, rations=0, steel=0, aluminium=0, gasoline=0, 
+                    ammunition=0, consumer_goods=0, components=0 
+                    WHERE colId = %s
+                """, (colid,))
+                return jsonify({"status": f"Wiped {len(member_ids)} members and bank!"})
+                
             db.execute("SELECT money, iron, coal, lumber, bauxite, oil, uranium, lead, copper, rations, steel, aluminium, gasoline, ammunition, consumer_goods, components FROM colBanks WHERE colId = %s", (colid,))
             bank = db.fetchone()
             
