@@ -839,49 +839,49 @@
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations:</td>
                             <td>{{ revenue["net"]["rations"] | fmt }}</td>
                         </tr>
-                        {% if revenue["gross"]["oil"] > 0 %}
+                        {% if revenue["gross"]["oil"] > 0 or revenue["net"]["oil"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil:</td>
                             <td>{{ revenue["net"]["oil"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["coal"] > 0 %}
+                        {% if revenue["gross"]["coal"] > 0 or revenue["net"]["coal"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal:</td>
                             <td>{{ revenue["net"]["coal"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["uranium"] > 0 %}
+                        {% if revenue["gross"]["uranium"] > 0 or revenue["net"]["uranium"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium:</td>
                             <td>{{ revenue["net"]["uranium"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["iron"] > 0 %}
+                        {% if revenue["gross"]["iron"] > 0 or revenue["net"]["iron"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron:</td>
                             <td>{{ revenue["net"]["iron"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["lead"] > 0 %}
+                        {% if revenue["gross"]["lead"] > 0 or revenue["net"]["lead"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead:</td>
                             <td>{{ revenue["net"]["lead"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["bauxite"] > 0 %}
+                        {% if revenue["gross"]["bauxite"] > 0 or revenue["net"]["bauxite"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite:</td>
                             <td>{{ revenue["net"]["bauxite"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["copper"] > 0 %}
+                        {% if revenue["gross"]["copper"] > 0 or revenue["net"]["copper"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper:</td>
                             <td>{{ revenue["net"]["copper"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["lumber"] > 0 %}
+                        {% if revenue["gross"]["lumber"] > 0 or revenue["net"]["lumber"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber:</td>
                             <td>{{ revenue["net"]["lumber"] | fmt }}</td>
@@ -895,37 +895,37 @@
                                 article
                                 </span>Net Processed <small class="font-normal-sub">(Hourly)</small></th>
                         </tr>
-                        {% if revenue["gross"]["components"] > 0 %}
+                        {% if revenue["gross"]["components"] > 0 or revenue["net"]["components"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components:</td>
                             <td>{{ revenue["net"]["components"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["steel"] > 0 %}
+                        {% if revenue["gross"]["steel"] > 0 or revenue["net"]["steel"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel:</td>
                             <td>{{ revenue["net"]["steel"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["consumer_goods"] > 0 %}
+                        {% if revenue["gross"]["consumer_goods"] > 0 or revenue["net"]["consumer_goods"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods:</td>
                             <td>{{ revenue["net"]["consumer_goods"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["aluminium"] > 0 %}
+                        {% if revenue["gross"]["aluminium"] > 0 or revenue["net"]["aluminium"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum:</td>
                             <td>{{ revenue["net"]["aluminium"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["gasoline"] > 0 %}
+                        {% if revenue["gross"]["gasoline"] > 0 or revenue["net"]["gasoline"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline:</td>
                             <td>{{ revenue["net"]["gasoline"] | fmt }}</td>
                         </tr>
                         {% endif %}
-                        {% if revenue["gross"]["ammunition"] > 0 %}
+                        {% if revenue["gross"]["ammunition"] > 0 or revenue["net"]["ammunition"] < 0 %}
                         <tr>
                             <td><img src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition:</td>
                             <td>{{ revenue["net"]["ammunition"] | fmt }}</td>
