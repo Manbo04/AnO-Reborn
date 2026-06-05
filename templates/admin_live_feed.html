@@ -35,7 +35,7 @@
                 {% for a in attempts %}
                 <tr>
                     <td>{{ a[0] }}</td>
-                    <td class='utc-time' data-utc='{{ a[1].strftime("%Y-%m-%dT%H:%M:%SZ") if a[1] and hasattr(a[1], "strftime") else a[1] }}'>{{ a[1] }}</td>
+                    <td class='utc-time' data-utc='{{ a[1] }}'>{{ a[1] }}</td>
                     <td class="status-{{ a[2]|lower }}">{{ "Success" if a[2] else "Blocked" }}</td>
                 </tr>
                 {% endfor %}
