@@ -164,6 +164,54 @@
         backgroundAlpha: 0 // transparent so css dot grid shows behind
     });
 
+    // Custom WebGL Shader: Advanced CRT & Hologram effect
+    const crtFragShader = `
+        varying vec2 vTextureCoord;
+        uniform sampler2D uSampler;
+        uniform float time;
+
+        void main(void) {
+            vec2 uv = vTextureCoord;
+            
+            // Warp effect
+            vec2 dc = abs(0.5 - uv);
+            dc *= dc;
+            uv.x -= 0.5; uv.x *= 1.0 + (dc.y * 0.1); uv.x += 0.5;
+            uv.y -= 0.5; uv.y *= 1.0 + (dc.x * 0.15); uv.y += 0.5;
+            
+            // Out of bounds check
+            if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+                gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                return;
+            }
+
+            vec4 color = texture2D(uSampler, uv);
+            
+            // RGB Shift
+            float shift = 0.002 * sin(time * 2.0);
+            vec4 colorR = texture2D(uSampler, uv + vec2(shift, 0.0));
+            vec4 colorB = texture2D(uSampler, uv - vec2(shift, 0.0));
+            color = vec4(colorR.r, color.g, colorB.b, color.a);
+            
+            // Scanlines
+            float scanline = sin(uv.y * 800.0 - time * 10.0) * 0.04;
+            color.rgb -= scanline;
+            
+            // Noise
+            float noise = (fract(sin(dot(uv, vec2(12.9898, 78.233)) * time) * 43758.5453) - 0.5) * 0.04;
+            color.rgb += noise;
+            
+            // Vignette
+            float vignette = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y);
+            vignette = clamp(pow(16.0 * vignette, 0.3), 0.0, 1.0);
+            color.rgb *= vignette;
+            
+            gl_FragColor = color;
+        }
+    `;
+    const crtFilter = new PIXI.Filter(null, crtFragShader, { time: 0 });
+    app.stage.filters = [crtFilter];
+
     // A viewport container we can pan/zoom
     const viewport = new PIXI.Container();
     app.stage.addChild(viewport);
@@ -377,6 +425,7 @@
     let time = 0;
     app.ticker.add((delta) => {
         time += 0.05 * delta;
+        crtFilter.uniforms.time = time;
         animatedNodes.forEach(anim => {
             // Slowly rotate the outer hex
             anim.outer.rotation += 0.01 * delta;
