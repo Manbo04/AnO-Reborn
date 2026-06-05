@@ -1,6 +1,6 @@
 from flask import render_template
 from helpers import login_required
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, get_coalition_members_table
 
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
@@ -180,11 +180,12 @@ def rankings():
         top_wealth = db.fetchall()
         
         # Top 15 Alliances by Influence (Sum of member populations)
+        members_tbl = get_coalition_members_table() or "coalitions_legacy"
         db.execute(
-            """
+            f"""
             SELECT c.id, c.name, COALESCE(SUM(p.population), 0) as total_pop
             FROM colNames c
-            JOIN members m ON c.id = m.colid
+            JOIN {members_tbl} m ON c.id = m.colid
             JOIN provinces p ON m.userid = p.userid
             GROUP BY c.id, c.name
             ORDER BY total_pop DESC
