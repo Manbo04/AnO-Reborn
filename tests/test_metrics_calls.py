@@ -1,14 +1,14 @@
 from flask import Flask, session
 
 try:
-    import market
+    from app_core import market
     import tasks
 except Exception:
     import os
     import sys
 
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    import market
+    from app_core import market
     import tasks
 
 from tests.test_integration_market_edgecases import fake_get_db_connection_factory
