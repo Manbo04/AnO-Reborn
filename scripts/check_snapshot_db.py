@@ -1,5 +1,4 @@
 import subprocess
-import os
 
 db_url = "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@postgres-check-snapshot.railway.internal:5432/railway"
 print(f"Connecting to {db_url}...")

@@ -102,7 +102,7 @@ def main():
                 print("\nNo issues found: all checks passed.")
 
             # Show backup applied-changes.json if present
-            backups_dir = f"backups/change-userid-{from_id}-*"
+            f"backups/change-userid-{from_id}-*"
             import glob
 
             matches = glob.glob(f"backups/change-userid-{from_id}-*")

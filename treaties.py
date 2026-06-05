@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for
 from helpers import login_required
-from database import get_db_connection, get_request_cursor
+from database import get_request_cursor
 
 treaties_bp = Blueprint("treaties", __name__)
 

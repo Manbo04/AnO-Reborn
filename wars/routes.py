@@ -1266,7 +1266,7 @@ def nuclear_strike():
         if not row or row[0] <= 0:
             return error(400, f"You don't have any {weapon_name}!")
             
-        qty = row[0]
+        row[0]
         unit_id = row[1]
 
         # Use 1 weapon
@@ -1406,7 +1406,6 @@ def strategic_airstrike():
                 (lost_fighters, target_id, fighters_unit_id)
             )
 
-        success = False
         damage_report = ""
 
         if surviving_bombers > 0:
@@ -1429,7 +1428,6 @@ def strategic_airstrike():
                             "UPDATE user_buildings SET quantity = quantity - %s WHERE user_id = %s AND building_id = %s",
                             (destroyed_silos, target_id, silo_building_id)
                         )
-                        success = True
                         damage_report = f"destroyed {destroyed_silos} Missile Silo(s)"
                     else:
                         damage_report = "dropped their payload but failed to penetrate the silo's reinforced armor due to poor accuracy or glancing hits"
@@ -1450,7 +1448,6 @@ def strategic_airstrike():
                             "UPDATE user_tech SET is_unlocked = FALSE WHERE user_id = %s AND tech_id = %s",
                             (target_id, tech_id)
                         )
-                        success = True
                         damage_report = "landed direct hits and completely destroyed their Nuclear Testing Facility!"
                     else:
                         damage_report = "dropped their payloads but failed to deal enough concentrated damage to destroy the massive Nuclear Testing Facility"
