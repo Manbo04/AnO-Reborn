@@ -254,6 +254,9 @@ def create_app():
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    from app_core.auth.email_auth import email_auth_bp
+    app.register_blueprint(email_auth_bp)
+
     app.register_blueprint(game_engine_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(admin_bp)
@@ -303,7 +306,7 @@ def create_app():
 
     # game_ui_context setup
     from database import get_request_cursor, rollback_db_cursor
-    from variables import REVENUE_TYPES
+
     def game_ui_context():
         try:
             from tests.conftest import TEST_UI_MOCK_CONTEXT
