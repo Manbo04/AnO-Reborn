@@ -1687,7 +1687,7 @@ def debug_leviathan():
     from database import get_request_cursor
     try:
         with get_request_cursor() as db:
-            db.execute("SELECT colid FROM colNames WHERE colName ILIKE '%leviathan%'")
+            db.execute("SELECT id FROM colNames WHERE name ILIKE '%leviathan%'")
             row = db.fetchone()
             if not row:
                 return jsonify({"error": "Leviathan not found"})
