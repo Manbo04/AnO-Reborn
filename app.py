@@ -1661,8 +1661,26 @@ def admin_live_feed():
         
         html += "<h2 style='margin-top:40px;'>Recent Signup Attempts</h2><table border='1' style='border-collapse: collapse; width:100%; text-align:left;' cellpadding='5'><tr><th>IP Address</th><th>Time</th><th>Successful</th></tr>"
         for a in attempts:
-            html += f"<tr><td>{a[0]}</td><td>{a[1]}</td><td>{a[2]}</td></tr>"
-        html += "</table></body></html>"
+            utc_str = a[1].strftime('%Y-%m-%dT%H:%M:%SZ') if hasattr(a[1], 'strftime') else str(a[1])
+            html += f"<tr><td>{a[0]}</td><td class='utc-time' data-utc='{utc_str}'>{a[1]}</td><td>{a[2]}</td></tr>"
+        html += "</table>"
+        html += """
+        <script>
+            document.querySelectorAll('.utc-time').forEach(function(el) {
+                var utcStr = el.getAttribute('data-utc');
+                if (utcStr && utcStr !== 'None') {
+                    var date = new Date(utcStr);
+                    if (!isNaN(date)) {
+                        el.innerText = date.toLocaleString(undefined, {
+                            year: 'numeric', month: 'short', day: 'numeric',
+                            hour: '2-digit', minute:'2-digit', second:'2-digit'
+                        });
+                    }
+                }
+            });
+        </script>
+        </body></html>
+        """
         return html
     except Exception as e:
         return f"Database Error: {e}", 500
