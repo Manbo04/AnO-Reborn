@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import variables  # noqa: E402
 import datetime  # noqa: E402
-from database import cache_response, rollback_db_cursor  # noqa: E402
+from database import cache_response, rollback_db_cursor, get_request_cursor  # noqa: E402
 from database import get_coalition_members_table  # noqa: E402
 from typing import Optional  # noqa: E402
 
