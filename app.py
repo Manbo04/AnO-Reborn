@@ -957,14 +957,30 @@ def commas(value):
     return returned
 
 
-# Jinja2 filter for human-readable numbers (now restored to standard commas)
+# Jinja2 filter for human-readable numbers (restored M/K abbreviations)
 @app.template_filter()
 def fmt(value):
     try:
         num = float(value)
-        if num.is_integer():
-            return "{:,}".format(int(num))
-        return "{:,.1f}".format(num)
+        if abs(num) < 1000:
+            if num.is_integer():
+                return "{:,}".format(int(num))
+            return "{:,.1f}".format(num)
+        elif abs(num) < 1_000_000:
+            k = num / 1000.0
+            if k.is_integer():
+                return "{:,}K".format(int(k))
+            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
+        elif abs(num) < 1_000_000_000:
+            m = num / 1_000_000.0
+            if m.is_integer():
+                return "{}M".format(int(m))
+            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
+        else:
+            b = num / 1_000_000_000.0
+            if b.is_integer():
+                return "{}B".format(int(b))
+            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
     except (TypeError, ValueError):
         return value
 
@@ -972,9 +988,25 @@ def fmt(value):
 def human_format(num):
     try:
         num = float(num)
-        if num.is_integer():
-            return "{:,}".format(int(num))
-        return "{:,.1f}".format(num)
+        if abs(num) < 1000:
+            if num.is_integer():
+                return "{:,}".format(int(num))
+            return "{:,.1f}".format(num)
+        elif abs(num) < 1_000_000:
+            k = num / 1000.0
+            if k.is_integer():
+                return "{:,}K".format(int(k))
+            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
+        elif abs(num) < 1_000_000_000:
+            m = num / 1_000_000.0
+            if m.is_integer():
+                return "{}M".format(int(m))
+            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
+        else:
+            b = num / 1_000_000_000.0
+            if b.is_integer():
+                return "{}B".format(int(b))
+            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
     except (ValueError, TypeError):
         return num
 
