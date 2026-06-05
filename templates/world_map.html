@@ -142,7 +142,7 @@
             <p><strong>Health:</strong> <span id="sb-health"></span> / 1000</p>
             
             <div style="margin-top: 30px;">
-                <button class="templatedivbutton" style="width: 100%; margin-bottom: 10px;" onclick="declareSiege()">Declare Siege (100 Intel)</button>
+                <button class="templatedivbutton" style="width: 100%; margin-bottom: 10px;" onclick="declareSiege()">Declare Siege ($5,000,000)</button>
                 <button class="templatedivbutton" style="width: 100%; background: #2a2a35;" onclick="closeSidebar()">Cancel</button>
             </div>
         </div>
@@ -220,8 +220,22 @@
         selectedNodeId = null;
     }
 
-    function declareSiege() {
-        alert("Siege mechanics not yet fully implemented on the backend! Come back soon.");
+    async function declareSiege() {
+        if (!selectedNodeId) return;
+        
+        try {
+            const res = await fetch(`/api/world_map/nodes/${selectedNodeId}/attack`, { method: "POST" });
+            const data = await res.json();
+            
+            alert(data.message);
+            if (data.status === 'success') {
+                closeSidebar();
+                // Refresh map to see the new color!
+                initMap();
+            }
+        } catch (e) {
+            alert("Network error declaring siege.");
+        }
     }
 
     // --- Fetch and Render Nodes ---
