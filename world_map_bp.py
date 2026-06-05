@@ -34,25 +34,7 @@ def world_map_view():
 @login_required
 def get_nodes():
     """Return JSON payload of all nodes, their ownership, and active battles."""
-    with get_request_cursor() as db:
-        db.execute("SELECT COUNT(*) FROM nodes")
-        if db.fetchone()[0] == 0:
-            # Auto-seed the database
-            nodes_data = [
-                ("Global Command Center", "fortress", 0, 0),
-                ("Northern Resource Hub", "resource", 300, -200),
-                ("Southern Outpost", "strategic", -150, 400),
-                ("Eastern Tech Core", "resource", 500, 100),
-                ("Western Relay Station", "strategic", -400, -50),
-                ("Deep Space Observatory", "fortress", 200, 350),
-                ("Abandoned Missile Silo", "fortress", -300, -300)
-            ]
-            for name, type_, x, y in nodes_data:
-                db.execute(
-                    "INSERT INTO nodes (name, type, coordinate_x, coordinate_y, health) VALUES (%s, %s, %s, %s, 1000)",
-                    (name, type_, x, y)
-                )
-        
+    with get_request_cursor(read_only=True) as db:
         db.execute(
             """
             SELECT 
@@ -91,24 +73,27 @@ def declare_siege(node_id):
         # Check user's coalition
         db.execute(
             """
-            SELECT c.id, c.name, u.money 
+            SELECT c.id, c.name
             FROM colNames c
             JOIN coalitions_legacy m ON c.id = m.colid
-            JOIN users u ON m.userid = u.id
-            WHERE u.id = %s
+            WHERE m.userid = %s
             """, (user_id,)
         )
-        user_data = db.fetchone()
-        if not user_data:
+        user_col = db.fetchone()
+        if not user_col:
             return jsonify({"status": "error", "message": "You must be in a Coalition to attack nodes."})
             
-        coalition_id, coalition_name, money = user_data
+        coalition_id, coalition_name = user_col
+        
+        # Lock user row to prevent concurrent money spending
+        db.execute("SELECT money FROM users WHERE id = %s FOR UPDATE", (user_id,))
+        money = db.fetchone()[0]
         
         if money < 5000000:
             return jsonify({"status": "error", "message": "You need $5,000,000 to fund a siege deployment."})
             
-        # Check node state
-        db.execute("SELECT name, controlling_coalition_id, shield_expires_at FROM nodes WHERE id = %s", (node_id,))
+        # Lock node row to prevent concurrent captures overriding shields
+        db.execute("SELECT name, controlling_coalition_id, shield_expires_at FROM nodes WHERE id = %s FOR UPDATE", (node_id,))
         node = db.fetchone()
         if not node:
             return jsonify({"status": "error", "message": "Node not found."})
@@ -123,7 +108,7 @@ def declare_siege(node_id):
             if shield_expires_at > datetime.now(timezone.utc):
                 return jsonify({"status": "error", "message": "This node is currently protected by a shield."})
         
-        # Deduct intel and set the node ownership instantly for MVP (simplified siege resolution)
+        # Deduct money and set the node ownership instantly
         db.execute("UPDATE users SET money = money - 5000000 WHERE id = %s", (user_id,))
         db.execute(
             "UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + INTERVAL '12 hours' WHERE id = %s",
