@@ -140,11 +140,11 @@ def rankings():
         # Top 15 by Population
         db.execute(
             """
-            SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop
+            SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop, u.flag
             FROM users u
             JOIN provinces p ON u.id = p.userid
             WHERE u.is_verified = TRUE
-            GROUP BY u.id, u.username
+            GROUP BY u.id, u.username, u.flag
             ORDER BY total_pop DESC
             LIMIT 15
             """
@@ -154,11 +154,11 @@ def rankings():
         # Top 15 by Military Size (Total quantity of all units)
         db.execute(
             """
-            SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size
+            SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size, u.flag
             FROM users u
             JOIN user_military um ON u.id = um.user_id
             WHERE u.is_verified = TRUE
-            GROUP BY u.id, u.username
+            GROUP BY u.id, u.username, u.flag
             ORDER BY army_size DESC
             LIMIT 15
             """
@@ -168,7 +168,7 @@ def rankings():
         # Top 15 by Wealth (Money)
         db.execute(
             """
-            SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money
+            SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money, u.flag
             FROM users u
             JOIN stats s ON u.id = s.id
             WHERE u.is_verified = TRUE
