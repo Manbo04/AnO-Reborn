@@ -415,7 +415,7 @@ def buy_market_offer(offer_id):
         if amount_wanted > total_amount:
             return error(400, "Requested amount exceeds available amount")
 
-        db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+        db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
         buyer_gold_row = db.fetchone()
         if not buyer_gold_row:
             return error(500, "Your nation data could not be found")
@@ -550,7 +550,7 @@ def sell_market_offer(offer_id):
             return error(400, "You don't have enough of that resource")
 
         # Check if buyer has enough money before doing anything
-        db.execute("SELECT gold FROM stats WHERE id=%s", (buyer_id,))
+        db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (buyer_id,))
         buyer_gold_row = db.fetchone()
         buyers_gold = int(buyer_gold_row[0] or 0) if buyer_gold_row else 0
         total_price = price_for_one * amount_wanted
@@ -703,7 +703,7 @@ def post_offer(offer_type):
 
         elif offer_type == "buy":
             money_to_take_away = int(amount) * int(price)
-            db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+            db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
             money_row = db.fetchone()
             if not money_row:
                 return error(500, "Your nation data could not be found")
@@ -891,7 +891,7 @@ def trade_offer(offer_type, offeree_id):
                 )
 
                 money_to_take_away = amount * price
-                db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
+                db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
                 escrow_money_row = db.fetchone()
                 if not escrow_money_row:
                     return error(500, "Your nation data could not be found")
@@ -1008,7 +1008,7 @@ def accept_trade(trade_id):
                 # Check buyer has sufficient gold first (SELECT only; do not
                 # modify DB yet so we can bail out without changing state if the
                 # resource transfer fails).
-                db.execute("SELECT gold FROM stats WHERE id=%s", (offeree,))
+                db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (offeree,))
                 row = db.fetchone()
                 if not row or row[0] < (amount * price):
                     return error(400, "Buyer doesn't have enough money")
@@ -1283,7 +1283,7 @@ def transfer(transferee):
             return error(400, "Amount cannot be less than 1")
 
         if resource in ["gold", "money"]:
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (cId,))
             row = db.fetchone()
             if not row:
                 return error(500, "Your nation data could not be found")
