@@ -28,6 +28,7 @@ import countries
 import signup
 import login
 from wars.routes import wars_bp
+from treaties import treaties_bp
 import policies
 import statistics
 import requests
@@ -844,6 +845,7 @@ if upgrades.bp:
     app.register_blueprint(upgrades.bp)
 app.register_blueprint(intelligence.bp)
 app.register_blueprint(wars_bp)
+app.register_blueprint(treaties_bp)
 
 import config  # Parse Railway environment variables  # noqa: E402
 
@@ -1505,12 +1507,40 @@ def country_redirect():
     return redirect("/my_country")
 
 
-"""
+@app.route("/assembly", methods=["GET", "POST"])
 @login_required
-@app.route("/assembly", methods=["GET"])
 def assembly():
-    return render_template("assembly.html")
-"""
+    from database import get_request_cursor
+    user_id = session.get("user_id")
+    poll_name = "world_name"
+
+    with get_request_cursor() as db:
+        if request.method == "POST":
+            vote_option = request.form.get("vote_option")
+            if vote_option in ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"]:
+                try:
+                    db.execute("""
+                        INSERT INTO poll_votes (user_id, poll_name, vote_option)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (user_id, poll_name) DO UPDATE SET vote_option = EXCLUDED.vote_option
+                    """, (user_id, poll_name, vote_option))
+                    flash("Your vote has been cast!", "success")
+                except Exception as e:
+                    db.execute("ROLLBACK")
+                    flash("Failed to cast vote.", "danger")
+            else:
+                flash("Invalid option.", "danger")
+            return redirect("/assembly")
+
+        # GET: Fetch current votes
+        db.execute("SELECT vote_option, COUNT(*) FROM poll_votes WHERE poll_name = %s GROUP BY vote_option", (poll_name,))
+        results = dict(db.fetchall())
+
+        db.execute("SELECT vote_option FROM poll_votes WHERE user_id = %s AND poll_name = %s", (user_id, poll_name))
+        row = db.fetchone()
+        user_vote = row[0] if row else None
+
+    return render_template("assembly.html", results=results, user_vote=user_vote)
 
 
 @app.route("/logout")
@@ -1642,6 +1672,44 @@ def mass_purchase():
 @app.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
 def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
+
+
+@app.route("/admin/migrate_treaties")
+def admin_migrate_treaties():
+    from database import get_db_connection
+    conn = get_db_connection()
+    db = conn.cursor()
+    try:
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS treaties (
+                id SERIAL PRIMARY KEY,
+                sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                recipient_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                treaty_type VARCHAR(50) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(sender_id, recipient_id, treaty_type)
+            )
+        """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS poll_votes (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                poll_name VARCHAR(50) NOT NULL,
+                vote_option VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, poll_name)
+            )
+        """)
+        conn.commit()
+        return "Treaties and Poll tables migrated successfully!", 200
+    except Exception as e:
+        conn.rollback()
+        return f"Error: {e}", 500
+    finally:
+        db.close()
+        conn.close()
 
 
 @app.route("/admin/live-feed")
