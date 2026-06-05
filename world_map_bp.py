@@ -86,7 +86,7 @@ def declare_siege(node_id):
         coalition_id, coalition_name = user_col
         
         # Lock user row to prevent concurrent money spending
-        db.execute("SELECT money FROM users WHERE id = %s FOR UPDATE", (user_id,))
+        db.execute("SELECT gold FROM stats WHERE id = %s FOR UPDATE", (user_id,))
         money = db.fetchone()[0]
         
         if money < 5000000:
@@ -109,7 +109,7 @@ def declare_siege(node_id):
                 return jsonify({"status": "error", "message": "This node is currently protected by a shield."})
         
         # Deduct money and set the node ownership instantly
-        db.execute("UPDATE users SET money = money - 5000000 WHERE id = %s", (user_id,))
+        db.execute("UPDATE stats SET gold = gold - 5000000 WHERE id = %s", (user_id,))
         db.execute(
             "UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + INTERVAL '12 hours' WHERE id = %s",
             (coalition_id, node_id)

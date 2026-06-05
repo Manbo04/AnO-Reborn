@@ -944,6 +944,18 @@ def country(cId):
                 distribution_status = None
                 food_score = None
 
+        try:
+            db.execute("""
+                SELECT t.treaty_type, u.username as other_nation, u.id as other_id
+                FROM treaties t
+                JOIN users u ON (u.id = t.recipient_id AND t.sender_id = %s) OR (u.id = t.sender_id AND t.recipient_id = %s)
+                WHERE t.status = 'active' AND (t.sender_id = %s OR t.recipient_id = %s)
+            """, (cId, cId, cId, cId))
+            active_treaties = db.fetchall()
+        except Exception:
+            rollback_db_cursor(db)
+            active_treaties = []
+
     return render_template(
         "country.html",
         username=username,
@@ -967,6 +979,7 @@ def country(cId):
         spy=spy,
         nuke_count=nuke_count,
         icbm_count=icbm_count,
+        active_treaties=active_treaties,
         attacker_bombers=attacker_bombers,
         target_silos=target_silos,
         target_has_nuclear_facility=target_has_nuclear_facility,
