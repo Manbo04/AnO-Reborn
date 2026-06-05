@@ -29,7 +29,10 @@
                     {% set nation = top_population[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
+                        <td>
+                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
+                            <a href="/country/{{ nation[0] }}">{{ nation[1] }}</a>
+                        </td>
                         <td>{{ nation[2] | fmt }}</td>
                     </tr>
                     {% endfor %}
@@ -55,8 +58,11 @@
                     {% set nation = top_military[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
-                        <td>{{ nation[2] | fmt }} units</td>
+                        <td>
+                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
+                            <a href="/country/{{ nation[0] }}">{{ nation[1] }}</a>
+                        </td>
+                        <td>{{ nation[2] | fmt }}</td>
                     </tr>
                     {% endfor %}
                     {% if not top_military %}
@@ -83,7 +89,10 @@
                     {% set nation = top_wealth[idx] %}
                     <tr>
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/country/{{ nation[0] }}">{{ nation[1] }}</a></td>
+                        <td>
+                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
+                            <a href="/country/{{ nation[0] }}">{{ nation[1] }}</a>
+                        </td>
                         <td>${{ nation[2] | fmt }}</td>
                     </tr>
                     {% endfor %}

@@ -163,20 +163,20 @@
                             <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'aluminium') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "gasoline" %}
                             <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gasoline') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "ammunition" %}
                             <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'ammunition') ) }}?v=2" class="resource resourcesmall" /> {% endif %}
-                            <span class="hidden">{{ resource }}</span>{{ amount }}</td>
+                            <span class="hidden">{{ resource }}</span>{{ amount | commas }}</td>
                     </div>
                     <td>
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price }} Each
+                                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
 
                             </div>
                         </div>
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" /> {{ total_price }} Total
+                                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" /> ${{ total_price | commas }} Total
 
                             </div>
                         </div>
