@@ -18,11 +18,7 @@ import upgrades
 import intelligence
 import world_map_bp
 
-# import tasks
 import market
-
-# import province
-# import military
 import change
 import coalitions
 import countries

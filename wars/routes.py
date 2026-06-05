@@ -864,6 +864,18 @@ def declare_war():
             )
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
+            
+            # Treaties check: Prevent war if an active Non-Aggression pact exists
+            db.execute(
+                """
+                SELECT id FROM treaties 
+                WHERE status = 'active' AND treaty_type = 'non_aggression' 
+                AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
+                """, 
+                (attacker.id, defender.id, defender.id, attacker.id)
+            )
+            if db.fetchone():
+                return error(403, "You cannot declare war on a nation you have an active Non-Aggression Pact with!")
             logger.debug("declare_war: checking existing wars")
             db.execute(
                 (
