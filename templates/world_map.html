@@ -29,29 +29,30 @@
     .map-overlay {
         position: absolute;
         pointer-events: none;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         z-index: 10;
+        /* Cyberpunk scanline overlay */
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        background-size: 100% 4px, 3px 100%;
     }
 
     .node-tooltip {
         position: absolute;
-        background: rgba(15, 15, 25, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(8, 12, 20, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(79, 195, 247, 0.4);
+        border-top: 3px solid #4fc3f7;
         color: #fff;
-        padding: 12px 16px;
-        border-radius: 6px;
-        font-family: inherit;
-        font-size: 0.9em;
+        padding: 16px 20px;
+        border-radius: 4px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95em;
         pointer-events: none;
         opacity: 0;
-        transition: opacity 0.2s ease, transform 0.1s ease;
-        transform: translate(-50%, -120%);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transform: translate(-50%, -130%);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(79, 195, 247, 0.1);
     }
 
     .node-tooltip.visible {
@@ -167,6 +168,23 @@
     const viewport = new PIXI.Container();
     app.stage.addChild(viewport);
 
+    // Draw an infinite-looking grid behind the nodes
+    const gridGfx = new PIXI.Graphics();
+    viewport.addChild(gridGfx);
+    
+    function drawGrid() {
+        gridGfx.clear();
+        gridGfx.lineStyle(1, 0xffffff, 0.05);
+        for(let i = -5000; i <= 5000; i += 100) {
+            gridGfx.moveTo(i, -5000); gridGfx.lineTo(i, 5000);
+            gridGfx.moveTo(-5000, i); gridGfx.lineTo(5000, i);
+        }
+    }
+    drawGrid();
+
+    // Arrays to store animated objects
+    const animatedNodes = [];
+
     // Basic drag-to-pan logic
     let isDragging = false;
     let dragStart = { x: 0, y: 0 };
@@ -252,14 +270,25 @@
         }
     }
 
+    function drawHexagon(gfx, color, radius) {
+        gfx.beginFill(color, 0.3);
+        gfx.lineStyle(2, color, 1);
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI) / 3;
+            points.push(new PIXI.Point(radius * Math.cos(angle), radius * Math.sin(angle)));
+        }
+        gfx.drawPolygon(points);
+        gfx.endFill();
+    }
+
     function renderNodes(nodes) {
-        // Draw some fake energy connections just for aesthetic
+        // Draw energy connections
         const graphics = new PIXI.Graphics();
-        graphics.lineStyle(1, 0x4fc3f7, 0.15); // faint cyan lines
+        graphics.lineStyle(2, 0x4fc3f7, 0.2); 
         
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < Math.min(i + 3, nodes.length); j++) {
-                // connect to next 2 nodes randomly to create a web
                 graphics.moveTo(nodes[i].x, nodes[i].y);
                 graphics.lineTo(nodes[j].x, nodes[j].y);
             }
@@ -268,85 +297,99 @@
 
         // Draw Nodes
         nodes.forEach(node => {
-            const nodeGfx = new PIXI.Graphics();
+            const nodeContainer = new PIXI.Container();
+            nodeContainer.x = node.x;
+            nodeContainer.y = node.y;
             
-            // Determine color based on ownership (neutral = gray, owned = colored)
-            const color = node.controlling_coalition_id ? 0xff3366 : 0x888888;
+            const color = node.controlling_coalition_id ? 0xff3366 : 0x00f3ff;
             
-            nodeGfx.lineStyle(2, color, 1);
-            nodeGfx.beginFill(color, 0.2);
-            nodeGfx.drawCircle(0, 0, 15);
-            nodeGfx.endFill();
-            
-            nodeGfx.x = node.x;
-            nodeGfx.y = node.y;
-            nodeGfx.eventMode = 'static';
-            nodeGfx.cursor = 'pointer';
+            // Outer Hexagon (animates/rotates)
+            const outerHex = new PIXI.Graphics();
+            drawHexagon(outerHex, color, 25);
+            nodeContainer.addChild(outerHex);
 
-            // Glow filter effect
+            // Inner Core (pulses)
+            const innerCore = new PIXI.Graphics();
+            innerCore.beginFill(color, 0.8);
+            innerCore.drawCircle(0, 0, 8);
+            innerCore.endFill();
+            
+            // Extreme Glow Filter
             const blurFilter = new PIXI.BlurFilter();
-            blurFilter.blur = 2;
-            const glowGfx = new PIXI.Graphics();
-            glowGfx.beginFill(color, 0.5);
-            glowGfx.drawCircle(0, 0, 20);
-            glowGfx.endFill();
-            glowGfx.filters = [blurFilter];
-            nodeGfx.addChildAt(glowGfx, 0);
+            blurFilter.blur = 10;
+            const glow = new PIXI.Graphics();
+            glow.beginFill(color, 0.4);
+            glow.drawCircle(0, 0, 30);
+            glow.endFill();
+            glow.filters = [blurFilter];
+            
+            nodeContainer.addChild(glow);
+            nodeContainer.addChild(innerCore);
+
+            animatedNodes.push({ outer: outerHex, core: innerCore, glow: glow, baseX: node.x, baseY: node.y, offset: Math.random() * 100 });
+            
+            nodeContainer.eventMode = 'static';
+            nodeContainer.cursor = 'pointer';
 
             // Interactions
-            nodeGfx.on('pointerover', (e) => {
-                nodeGfx.scale.set(1.2);
+            nodeContainer.on('pointerover', (e) => {
+                nodeContainer.scale.set(1.2);
                 tooltip.classList.add('visible');
                 document.getElementById('tt-name').innerText = node.name;
-                document.getElementById('tt-type').innerText = node.type;
-                document.getElementById('tt-owner').innerText = node.coalition_name || 'Neutral';
+                document.getElementById('tt-type').innerText = node.type.toUpperCase();
+                document.getElementById('tt-owner').innerText = node.coalition_name || 'NEUTRAL COMMAND';
             });
 
-            nodeGfx.on('pointermove', (e) => {
+            nodeContainer.on('pointermove', (e) => {
                 const canvasBounds = canvas.getBoundingClientRect();
                 tooltip.style.left = (e.global.x + canvasBounds.left) + 'px';
                 tooltip.style.top = (e.global.y + canvasBounds.top) + 'px';
             });
 
-            nodeGfx.on('pointerout', () => {
-                nodeGfx.scale.set(1.0);
+            nodeContainer.on('pointerout', () => {
+                nodeContainer.scale.set(1.0);
                 tooltip.classList.remove('visible');
             });
 
-            nodeGfx.on('pointerdown', (e) => {
-                // Stop dragging propagation
+            nodeContainer.on('pointerdown', (e) => {
                 e.stopPropagation();
-                
                 selectedNodeId = node.id;
                 sidebar.classList.add('open');
-                document.getElementById('sb-name').innerText = node.name;
-                document.getElementById('sb-type').innerText = node.type;
-                document.getElementById('sb-owner').innerText = node.coalition_name || 'Neutral';
+                document.getElementById('sb-name').innerText = node.name.toUpperCase();
+                document.getElementById('sb-type').innerText = node.type.toUpperCase();
+                document.getElementById('sb-owner').innerText = node.coalition_name || 'Neutral Command';
                 document.getElementById('sb-health').innerText = node.health;
                 
-                // Pan map to center on node
                 viewport.x = (container.clientWidth / 2) - (node.x * viewport.scale.x);
                 viewport.y = (container.clientHeight / 2) - (node.y * viewport.scale.y);
             });
 
-            viewport.addChild(nodeGfx);
+            viewport.addChild(nodeContainer);
         });
         
-        // Center viewport initially if nodes exist
         if (nodes.length > 0) {
             viewport.x = (container.clientWidth / 2) - nodes[0].x;
             viewport.y = (container.clientHeight / 2) - nodes[0].y;
-        } else {
-            // Fake nodes if DB is empty just so it's not a blank screen!
-            console.log("No nodes in DB, drawing fake map for preview");
-            renderNodes([
-                {id: 1, name: "Alpha Sector", type: "strategic", x: 0, y: 0, coalition_name: "Red Faction", controlling_coalition_id: 1, health: 1000},
-                {id: 2, name: "Resource Hub B", type: "resource", x: 200, y: 150, coalition_name: null, controlling_coalition_id: null, health: 1000},
-                {id: 3, name: "Command Center", type: "fortress", x: -150, y: 250, coalition_name: "Blue Faction", controlling_coalition_id: 2, health: 1000},
-                {id: 4, name: "Outpost X", type: "strategic", x: 300, y: -100, coalition_name: null, controlling_coalition_id: null, health: 1000}
-            ]);
         }
     }
+
+    // Animation Loop
+    let time = 0;
+    app.ticker.add((delta) => {
+        time += 0.05 * delta;
+        animatedNodes.forEach(anim => {
+            // Slowly rotate the outer hex
+            anim.outer.rotation += 0.01 * delta;
+            
+            // Pulse the core and glow
+            const pulse = Math.sin(time + anim.offset) * 0.2 + 0.8;
+            anim.core.scale.set(pulse);
+            anim.glow.alpha = pulse;
+            
+            // Subtle floating effect
+            anim.outer.parent.y = anim.baseY + Math.sin(time * 0.5 + anim.offset) * 5;
+        });
+    });
 
     // Start
     initMap();
