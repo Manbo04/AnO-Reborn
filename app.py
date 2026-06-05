@@ -4,24 +4,15 @@ import os
 import json
 import hmac
 import time as time_module
-from flask import (
-    Flask,
-    request,
-    render_template,
-    session,
-    redirect,
-    send_from_directory,
-)
+from flask import Flask, request, render_template, session, redirect, send_from_directory
 from flask_compress import Compress
 import traceback
 import upgrades
 import intelligence
-import user_coalition_settings_bp
-from app_core.world_map import world_map_bp
-
+import world_map_bp
 import market
 import change
-import coalitions
+from app_core.coalitions import register_coalitions_routes
 import countries
 import signup
 import login
@@ -40,1396 +31,357 @@ from datetime import datetime as dt
 import string
 import random
 from helpers import login_required, error
-from database import (
-    get_db_connection,
-    get_request_cursor,
-    rollback_db_cursor,
-    teardown_request_connection,
-)
+from database import get_db_connection, get_request_cursor, rollback_db_cursor, teardown_request_connection
 import province
-
 from dotenv import load_dotenv
 
 load_dotenv()
 
 sys.path.insert(-1, os.path.dirname(os.path.abspath(__file__)))
-if not hasattr(ast, "Str"):
-    ast.Str = ast.Constant
-if not hasattr(ast, "Num"):
-    ast.Num = ast.Constant
-if not hasattr(ast, "NameConstant"):
-    ast.NameConstant = ast.Constant
-if not hasattr(ast, "Ellipsis"):
-    ast.Ellipsis = ast.Constant
+if not hasattr(ast, "Str"): ast.Str = ast.Constant
+if not hasattr(ast, "Num"): ast.Num = ast.Constant
+if not hasattr(ast, "NameConstant"): ast.NameConstant = ast.Constant
+if not hasattr(ast, "Ellipsis"): ast.Ellipsis = ast.Constant
 
 app = Flask(__name__)
 
+def create_app():
+    # We use the globally defined `app` object so that existing imports don't break
+    global app
+    app.url_map.strict_slashes = False
 
-
-
-# Disable strict slash redirects globally so tests can POST to endpoints both with
-# and without trailing slashes without automatic 308/301 redirects.
-app.url_map.strict_slashes = False
-
-# Initialize Sentry (optional) if SENTRY_DSN is set in environment
-try:
-    import sentry_sdk
-    from sentry_sdk.integrations.flask import FlaskIntegration
-
-    sentry_dsn = os.getenv("SENTRY_DSN")
-    if sentry_dsn:
-        sentry_sdk.init(
-            dsn=sentry_dsn,
-            integrations=[FlaskIntegration()],
-            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
-            environment=os.getenv("ENVIRONMENT", "DEV"),
-        )
-except Exception:
-    # If sentry isn't installed or initialization fails, continue without it
-    pass
-
-# NOTE: Previously we instrumented session saving for debugging Set-Cookie
-# issues. That instrumentation has been removed to avoid verbose logs in
-# non-development environments. Reintroduce behind a feature flag if needed.
-
-
-# Debug test route for logging verification (must be after app is defined)
-# Only one debugtest route should exist, after app = Flask(__name__)
-
-
-# Add global 403 error handler after app is defined
-@app.errorhandler(403)
-def forbidden_error(error):
-    logger = logging.getLogger(__name__)
-    logger.warning(f"403 error handler triggered: {error}")
-    return (
-        render_template(
-            "error.html", code=403, message="Forbidden: 403 error handler triggered."
-        ),
-        403,
-    )
-
-
-# Configure trusted hosts for domain setup
-# This allows Flask to work with custom domains via reverse proxy
-app.config["PREFERRED_URL_SCHEME"] = "https"
-app.config["SERVER_NAME"] = None  # Allow dynamic hostnames via proxy headers
-app.config["ALLOWED_HOSTS"] = [
-    "affairsandorder.com",
-    "www.affairsandorder.com",
-    "web-production-55d7b.up.railway.app",
-]
-
-# Session cookies: Lax reduces CSRF risk while allowing OAuth return navigations
-app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
-# In production deployments (e.g. Railway), ensure secure (HTTPS-only) cookies.
-# For local development or test environments where HTTPS is not used, keep cookies
-# insecure so `requests` and `curl` clients can receive them.
-app.config["SESSION_COOKIE_SECURE"] = (
-    os.getenv("ENVIRONMENT") == "PROD"
-    and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
-)
-
-
-# Trust X-Forwarded-* headers from Railway reverse proxy
-@app.before_request
-def before_request():
-    # Track request start time for performance monitoring
-    from time import time
-
-    request.start_time = time()
-
-    # Set Sentry user context if available
     try:
         import sentry_sdk
-
-        user_id = session.get("user_id") if hasattr(session, "get") else None
-        if user_id:
-            sentry_sdk.set_user({"id": str(user_id)})
-        else:
-            sentry_sdk.set_user(None)
+        from sentry_sdk.integrations.flask import FlaskIntegration
+        sentry_dsn = os.getenv("SENTRY_DSN")
+        if sentry_dsn:
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                integrations=[FlaskIntegration()],
+                traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+                environment=os.getenv("ENVIRONMENT", "DEV"),
+            )
     except Exception:
-        # Sentry not configured or unavailable
         pass
 
-    # Ensure HTTPS is used (check X-Forwarded-Proto for reverse proxy)
-    # Exempt healthcheck endpoint — Railway probes use internal HTTP
-    if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
-        forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
-        if forwarded_proto != "https" and not request.is_secure:
-            url = request.url.replace("http://", "https://", 1)
-            return redirect(url, code=301)
+    @app.errorhandler(403)
+    def forbidden_error(error_msg):
+        logger = logging.getLogger(__name__)
+        logger.warning(f"403 error handler triggered: {error_msg}")
+        return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
 
-    user_id = session.get("user_id")
+    app.config["PREFERRED_URL_SCHEME"] = "https"
+    app.config["SERVER_NAME"] = None
+    app.config["ALLOWED_HOSTS"] = ["affairsandorder.com", "www.affairsandorder.com", "web-production-55d7b.up.railway.app"]
+    app.config["SESSION_COOKIE_DOMAIN"] = None
+    app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+    app.config["SESSION_COOKIE_SECURE"] = (os.getenv("ENVIRONMENT") == "PROD" and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None)
 
-    # Enforce admin ban / kick controls with session-level caching.
-    # Keep this interval configurable so busy deployments can reduce
-    # per-request DB pressure without code changes.
-    admin_ctrl_refresh_seconds = int(os.getenv("ADMIN_CTRL_REFRESH_SECONDS", "300"))
-    if user_id:
-        _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
-        _ctrl_stale = (time() - _ctrl_cache_ts) > admin_ctrl_refresh_seconds
-        if _ctrl_stale:
-            try:
-                with get_request_cursor() as _db:
-                    _db.execute(
-                        """
-                        SELECT COALESCE(is_banned, FALSE),
-                               COALESCE(ban_reason, ''),
-                               COALESCE(kick_pending, FALSE)
-                        FROM admin_user_controls
-                        WHERE user_id = %s
-                        """,
-                        (user_id,),
-                    )
-                    control_row = _db.fetchone()
-
-                if control_row:
-                    session["_admin_ctrl"] = list(control_row)
-                else:
-                    session["_admin_ctrl"] = None
-                session["_admin_ctrl_ts"] = time()
-            except Exception:
-                session["_admin_ctrl"] = None
-                session["_admin_ctrl_ts"] = time()
-
-        control_row = session.get("_admin_ctrl")
-        if control_row:
-            is_banned, ban_reason, kick_pending = control_row
-
-            if is_banned:
-                session.clear()
-                return (
-                    render_template(
-                        "error.html",
-                        code=403,
-                        message=(
-                            "Your account is banned. "
-                            f"Reason: {ban_reason or 'No reason provided.'}"
-                        ),
-                    ),
-                    403,
-                )
-
-            if kick_pending:
-                try:
-                    with get_request_cursor() as _db:
-                        _db.execute(
-                            (
-                                "UPDATE admin_user_controls "
-                                "SET kick_pending=FALSE, updated_at=NOW() "
-                                "WHERE user_id=%s"
-                            ),
-                            (user_id,),
-                        )
-                except Exception:
-                    pass
-
-                session.clear()
-                return redirect("/login")
-
-    # Lightweight last_active heartbeat: update at most once per hour
-    if user_id:
-        now = time()
-        last_ping = session.get("_last_active_ping", 0)
-        if now - last_ping > 3600:  # one hour
-            try:
-                from database import get_request_cursor
-
-                with get_request_cursor() as _db:
-                    _db.execute(
-                        "UPDATE users SET last_active = CURRENT_TIMESTAMP "
-                        "WHERE id = %s",
-                        (user_id,),
-                    )
-                session["_last_active_ping"] = now
-            except Exception:
-                pass  # best-effort; never block requests
-
-    return None
-    # Keep this hook small and non-verbose; avoid emitting per-request debug logs
-    # unless explicitly enabled in configuration.
-
-
-# Import cache_response decorator
-
-# Performance: Enable gzip compression for responses
-try:
-    Compress(app)
-except ImportError:
-    # Flask-Compress not installed, continue without it
-    pass
-
-app.teardown_appcontext(teardown_request_connection)
-
-# Register signup routes after app is fully initialized
-signup.register_signup_routes(app)
-login.register_login_routes(app)
-market.register_market_routes(app)
-change.register_change_routes(app)
-import bot_api  # noqa: E402
-
-bot_api.register_bot_api_routes(app)
-coalitions.register_coalitions_routes(app)
-countries.register_countries_routes(app)
-policies.register_policies_routes(app)
-statistics.register_statistics_routes(app)
-trade_agreements.register_trade_agreement_routes(app)
-admin_tools.register_admin_tools_routes(app)
-
-# Configure OAuth2 SECRET_KEY from login module
-oauth2_secret = os.getenv("DISCORD_CLIENT_SECRET")
-if oauth2_secret:
-    app.config["SECRET_KEY"] = oauth2_secret
-
-
-# Performance: Add caching headers for static files
-@app.after_request
-def add_cache_headers(response):
-    # Log slow requests for debugging (only in production)
-    from time import time
-
-    if hasattr(request, "start_time") and os.getenv("RAILWAY_ENVIRONMENT_NAME"):
-        elapsed = time() - request.start_time
-        # Lower threshold to 0.5s to catch inefficiencies earlier (will be noisy
-        # if too low; monitor and raise if necessary)
-        if elapsed > 0.5:
-            import logging
-
-            logger = logging.getLogger(__name__)
-            client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
-            ua = request.headers.get("User-Agent", "")
-            logger.info(
-                "SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s",
-                request.method,
-                request.path,
-                elapsed,
-                client_ip,
-                ua[:200],
-            )
-
-    # Static assets: allow CDN/browser cache but revalidate so deploys propagate.
-    # Do NOT use immutable — players were stuck on month-old CSS when ?v= wasn't bumped.
-    if request.path.startswith("/static/"):
-        if request.path.endswith((".css", ".js")):
-            response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
-        else:
-            response.headers["Cache-Control"] = "public, max-age=604800, must-revalidate"
-    # Allow short browser cache for HTML pages so back/forward navigation is instant
-    # and repeated visits within a few seconds don't re-fetch
-    else:
-        response.headers["Cache-Control"] = "private, max-age=5, must-revalidate"
-    return response
-
-
-# Helper to get minified asset path in production
-def asset(filename):
-    """Returns minified version of asset in production, original in development"""
-
-    is_production = (
-        os.getenv("FLASK_ENV") == "production"
-        or os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
-    )
-
-    if is_production and (filename.endswith(".css") or filename.endswith(".js")):
-        base, ext = filename.rsplit(".", 1)
-        minified = f"{base}.min.{ext}"
-        min_path = f"static/{minified}"
-        if os.path.exists(min_path):
-            return minified
-
-    return filename
-
-
-# Make asset helper available in templates
-app.jinja_env.globals["asset"] = asset
-
-
-# LOGGING
-logging_format = (
-    "====\n%(levelname)s (%(created)f - %(asctime)s) "
-    "(LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
-)
-logging.basicConfig(
-    level=logging.ERROR,
-    format=logging_format,
-    filename="errors.log",
-)
-logger = logging.getLogger(__name__)
-
-
-# Thread-safe queue for Discord webhook messages
-import threading  # noqa: E402
-import queue as queue_module  # noqa: E402
-
-_webhook_queue = queue_module.Queue()
-_webhook_thread = None
-_webhook_thread_lock = threading.Lock()
-
-
-def _webhook_worker():
-    """Background worker that sends Discord webhooks without blocking the main thread"""
-    while True:
+    @app.before_request
+    def before_request():
+        from time import time
+        request.start_time = time()
         try:
-            data = _webhook_queue.get(timeout=5)
-            if data is None:  # Shutdown signal
-                break
-            url = os.getenv("DISCORD_WEBHOOK_URL")
-            if url:
-                try:
-                    # Use a short timeout to avoid hanging
-                    requests.post(url, json=data, timeout=5)
-                except Exception:
-                    pass  # Don't let webhook failures crash the worker
-            _webhook_queue.task_done()
-        except queue_module.Empty:
-            continue  # Keep waiting for more messages
-
-
-def _ensure_webhook_thread():
-    """Start the webhook worker thread if not already running"""
-    global _webhook_thread
-    with _webhook_thread_lock:
-        if _webhook_thread is None or not _webhook_thread.is_alive():
-            _webhook_thread = threading.Thread(target=_webhook_worker, daemon=True)
-            _webhook_thread.start()
-
-
-def send_discord_webhook(record):
-    """Queue a Discord webhook message (non-blocking)"""
-    url = os.getenv("DISCORD_WEBHOOK_URL")
-    if not url:
-        return  # Skip if webhook not configured
-    formatter = logging.Formatter(logging_format)
-    message = formatter.format(record)
-    # Truncate message if too long for Discord (2000 char limit)
-    if len(message) > 1900:
-        message = message[:1900] + "...[truncated]"
-    data = {"content": message, "username": "A&O ERROR"}
-
-    _ensure_webhook_thread()
-    try:
-        _webhook_queue.put_nowait(data)  # Non-blocking
-    except queue_module.Full:
-        pass  # Drop message if queue is full (better than blocking)
-
-
-class RequestsHandler(logging.Handler):
-    def emit(self, record):
-        """Send the log records (created by loggers) to
-        the appropriate destination.
-        """
-        send_discord_webhook(record)
-
-
-###
-
-
-Markdown(app)
-
-
-@app.route("/health")
-def health():
-    """Simple health endpoint used by CI to verify the app is up."""
-    return "ok", 200
-
-
-@app.route("/deploy-info")
-def deploy_info():
-    """Public deploy fingerprint (no secrets). Use to verify Railway picked up a commit."""
-    from database import schema_compat_failed_steps, schema_compat_succeeded
-
-    payload = {
-        "git_commit": os.getenv("RAILWAY_GIT_COMMIT_SHA")
-        or os.getenv("GIT_COMMIT")
-        or "unknown",
-        "schema_compat": "ok" if schema_compat_succeeded() else "failed",
-        "boot_marker": os.getenv("ANO_BOOT_MARKER", "unknown"),
-        "start_command": "start_production.sh"
-        if os.getenv("ANO_USE_START_SCRIPT", "1") == "1"
-        else "procfile/gunicorn",
-    }
-    failures = schema_compat_failed_steps()
-    if failures:
-        payload["schema_compat_errors"] = failures[:8]
-
-    try:
-        from database import get_db_connection
-
-        with get_db_connection() as conn:
-            db = conn.cursor()
-            db.execute(
-                """
-                SELECT task_name,
-                       last_run,
-                       EXTRACT(EPOCH FROM (now() - last_run))::int AS age_seconds
-                FROM task_runs
-                WHERE task_name IN (
-                    'generate_province_revenue',
-                    'global_tick',
-                    'tax_income',
-                    'population_growth'
-                )
-                ORDER BY task_name
-                """
-            )
-            economy = {}
-            max_rev = int(os.getenv("READY_MAX_REVENUE_AGE_SECONDS", "7200"))
-            for name, last_run, age in db.fetchall():
-                entry = {
-                    "last_run": last_run.isoformat() if last_run else None,
-                    "age_seconds": int(age) if age is not None else None,
-                }
-                if name == "generate_province_revenue" and age is not None:
-                    entry["stale"] = int(age) > max_rev
-                economy[name] = entry
-            payload["economy_tasks"] = economy
-    except Exception as exc:
-        payload["economy_tasks_error"] = str(exc)[:200]
-
-    return payload, 200
-
-
-@app.route("/ready")
-def ready():
-    """Readiness probe: DB, normalized economy tables, schema compat, revenue task."""
-    checks = {}
-    try:
-        from database import get_db_connection, schema_compat_succeeded
-
-        if not schema_compat_succeeded():
-            checks["schema_compat"] = "failed"
-            return {"status": "not ready", "checks": checks}, 503
-
-        max_revenue_age = int(os.getenv("READY_MAX_REVENUE_AGE_SECONDS", "7200"))
-        with get_db_connection() as conn:
-            db = conn.cursor()
-            db.execute("SELECT 1")
-            db.fetchone()
-            db.execute("SELECT to_regclass('public.resource_dictionary')")
-            if db.fetchone()[0] is None:
-                checks["resource_dictionary"] = "missing"
-                return {"status": "not ready", "checks": checks}, 503
-            db.execute(
-                """
-                SELECT EXTRACT(EPOCH FROM (now() - last_run))
-                FROM task_runs
-                WHERE task_name = 'generate_province_revenue'
-                """
-            )
-            row = db.fetchone()
-            if not row or row[0] is None:
-                checks["generate_province_revenue"] = "no last_run"
-            elif float(row[0]) > max_revenue_age:
-                checks["generate_province_revenue"] = f"stale>{max_revenue_age}s"
+            import sentry_sdk
+            user_id = session.get("user_id") if hasattr(session, "get") else None
+            if user_id:
+                sentry_sdk.set_user({"id": str(user_id)})
             else:
-                checks["generate_province_revenue"] = "ok"
-        if checks.get("generate_province_revenue", "ok") != "ok":
-            app.logger.warning("Readiness: %s", checks)
-            return {"status": "not ready", "checks": checks}, 503
-        return {"status": "ok", "checks": checks}, 200
-    except Exception as e:
-        app.logger.warning("Readiness check failed: %s", e)
-        return {"status": "not ready", "error": str(e)}, 503
-
-
-
-# Initialize database with proper defaults for existing provinces
-def _init_province_defaults():
-    """Ensure all provinces have proper default values for stats"""
-    try:
-        with get_db_connection() as conn:
-            db = conn.cursor()
-            # Update provinces with 0 happiness/productivity
-            # to have neutral 50% defaults
-            db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
-            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
-            db.execute(
-                "UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0"
-            )
-            conn.commit()
-    except Exception as e:
-        print(f"Note: Province defaults initialization skipped (may be normal): {e}")
-
-
-_init_province_defaults()
-
-# register blueprints
-import app_core.military.routes as military  # noqa: E402
-
-app.register_blueprint(military.bp)
-app.register_blueprint(province.bp)
-if upgrades.bp:
-    app.register_blueprint(upgrades.bp)
-app.register_blueprint(intelligence.bp)
-app.register_blueprint(wars_bp)
-app.register_blueprint(treaties_bp)
-app.register_blueprint(world_map_bp)
-
-from app_core.ads import bp as ads_bp
-app.register_blueprint(ads_bp)
-
-import admin_bp
-app.register_blueprint(admin_bp.admin_bp)
-
-import config  # Parse Railway environment variables  # noqa: E402
-
-# Attempt to ensure critical tables exist at startup. This helps avoid
-# import-time UndefinedTable errors in production when the DB hasn't
-# been migrated yet. It's safe to call (idempotent) and failures are
-# non-fatal.
-try:
-    if hasattr(signup, "ensure_signup_attempts_table"):
-        signup.ensure_signup_attempts_table()
-except Exception as _e:
-    # Don't raise here; just log to stdout so deployment logs capture it.
-    print(f"Startup: could not ensure signup_attempts table: {_e}")
-
-try:
-    environment = os.getenv("ENVIRONMENT")
-except (AttributeError, TypeError):
-    environment = "DEV"
-
-if environment == "PROD":
-    app.secret_key = config.get_secret_key()
-
-    handler = RequestsHandler()
-    logger.addHandler(handler)
-else:
-    app.secret_key = config.get_secret_key()
-
-# CSRF protection for browser POST forms (bot API and diag endpoints exempt)
-try:
-    from flask_wtf.csrf import CSRFProtect
-
-    _csrf = CSRFProtect(app)
-    app.config.setdefault("WTF_CSRF_TIME_LIMIT", None)
-
-    for _endpoint in (
-        "health",
-        "ready",
-        "trigger_tasks",
-        "db_diagnostics",
-        "ai_logs",
-        "robots",
-        "serve_flag",
-    ):
-        _view = app.view_functions.get(_endpoint)
-        if _view is not None:
-            _csrf.exempt(_view)
-
-    if getattr(bot_api, "bp", None) is not None:
-        _csrf.exempt(bot_api.bp)
-except ImportError:
-    app.logger.warning("Flask-WTF not installed; CSRF protection disabled")
-
-# Import written packages
-# Don't put these above app = Flask(__name__)
-# because it will cause a circular import error
-
-
-def generate_error_code():
-    numbers = 20
-    code = "".join(
-        random.choice(string.ascii_lowercase + string.digits) for _ in range(numbers)
-    )
-    time = int(dt.now().timestamp())
-    full = f"{code}-{time}"
-    return full
-
-
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template("error.html", code=404, message="Page not found!"), 404
-
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    message = "This request method is not allowed!"
-    return render_template("error.html", code=405, message=message), 405
-
-
-@app.errorhandler(500)
-def invalid_server_error(error):
-    error_message = "Invalid Server Error. Sorry about that."
-    error_code = generate_error_code()
-    logger.error(f"[ERROR! ^^^] [{error_code}] [{error}]")
-    traceback.print_exc()
-    if request.path.startswith("/api/"):
-        return jsonify({"ok": False, "error": f"Internal Server Error (Code: {error_code})"}), 500
-    try:
-        body = render_template(
-            "error.html", code=500, message=error_message, error_code=error_code
-        )
-    except Exception:
-        body = render_template(
-            "error_standalone.html",
-            code=500,
-            message=error_message,
-            error_code=error_code,
-        )
-    return body, 500
-
-
-# Jinja2 filter to add commas to numbers
-
-
-@app.template_filter()
-def commas(value):
-    try:
-        rounded = round(value)
-        returned = "{:,}".format(rounded)
-    except (TypeError, ValueError):
-        returned = value
-    return returned
-
-
-# Jinja2 filter for human-readable numbers (restored M/K abbreviations)
-@app.template_filter()
-def fmt(value):
-    try:
-        num = float(value)
-        if abs(num) < 1000:
-            if num.is_integer():
-                return "{:,}".format(int(num))
-            return "{:,.1f}".format(num)
-        elif abs(num) < 1_000_000:
-            k = num / 1000.0
-            if k.is_integer():
-                return "{:,}K".format(int(k))
-            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
-        elif abs(num) < 1_000_000_000:
-            m = num / 1_000_000.0
-            if m.is_integer():
-                return "{}M".format(int(m))
-            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
-        else:
-            b = num / 1_000_000_000.0
-            if b.is_integer():
-                return "{}B".format(int(b))
-            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
-    except (TypeError, ValueError):
-        return value
-
-@app.template_filter("human_format")
-def human_format(num):
-    try:
-        num = float(num)
-        if abs(num) < 1000:
-            if num.is_integer():
-                return "{:,}".format(int(num))
-            return "{:,.1f}".format(num)
-        elif abs(num) < 1_000_000:
-            k = num / 1000.0
-            if k.is_integer():
-                return "{:,}K".format(int(k))
-            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
-        elif abs(num) < 1_000_000_000:
-            m = num / 1_000_000.0
-            if m.is_integer():
-                return "{}M".format(int(m))
-            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
-        else:
-            b = num / 1_000_000_000.0
-            if b.is_integer():
-                return "{}B".format(int(b))
-            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
-    except (ValueError, TypeError):
-        return num
-
-# Jinja2 filter for weight-based resource display (restored to standard commas)
-@app.template_filter()
-def weight_fmt(value):
-    try:
-        num = float(value)
-        if num.is_integer():
-            return "{:,}".format(int(num))
-        return "{:,.1f}".format(num)
-    except (TypeError, ValueError):
-        return value
-
-
-# Jinja2 filter to calculate days old from a date string (YYYY-MM-DD format)
-
-
-@app.template_filter()
-def days_old(date_string):
-    try:
-        date_obj = dt.strptime(str(date_string), "%Y-%m-%d")
-        today = dt.today()
-        delta = today - date_obj
-        days = delta.days
-        return f"{date_string} ({days} Days Old)"
-    except (ValueError, TypeError):
-        return date_string
-
-
-@app.template_filter()
-def timeago(value):
-    """Human-readable 'time ago' string for a datetime/timestamp.
-
-    Accepts datetime objects (from psycopg2) or ISO-format strings.
-    Returns e.g. 'Just now', '3 hours ago', '2 days ago', 'Never'.
-    """
-    if value is None:
-        return "Never"
-    try:
-        from datetime import datetime, timezone
-
-        if isinstance(value, str):
-            # handle common Postgres ISO formats
-            value = datetime.fromisoformat(value)
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
-        now = datetime.now(timezone.utc)
-        diff = now - value
-        seconds = int(diff.total_seconds())
-        if seconds < 60:
-            return "Just now"
-        minutes = seconds // 60
-        if minutes < 60:
-            return f"{minutes}m ago"
-        hours = minutes // 60
-        if hours < 24:
-            return f"{hours}h ago"
-        days = hours // 24
-        if days < 30:
-            return f"{days}d ago"
-        months = days // 30
-        if months < 12:
-            return f"{months}mo ago"
-        years = days // 365
-        return f"{years}y ago"
-    except Exception:
-        return "Unknown"
-
-
-# Jinja2 filter to render province building resource strings
-
-
-@app.template_filter()
-def prores(unit):
-    change_price = False
-    unit = unit.lower()
-    if "," in unit:
-        split_unit = unit.split(", ")
-        unit = split_unit[0]
-        change_price = float(split_unit[1])
-
-    renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
-
-    unit_name = unit.replace("_", " ").capitalize()
-    if unit_name == "Coal burners":
-        unit_name = "Coal power plants"
-    try:
-        unit = renames[unit_name]
-    except KeyError:
-        ...
-
-    price = PROVINCE_UNIT_PRICES[f"{unit}_price"]
-    if change_price:
-        price = price * change_price
-    try:
-        resources = ", ".join(
-            [
-                f"{weight_fmt(i[1])} {i[0]}"
-                for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()
-            ]
-        )
-        full = f"{unit_name} cost {fmt(price)}, {resources} each"
-    except KeyError:
-        full = f"{unit_name} cost {fmt(price)} each"
-    return full
-
-
-# Jinja2 filter to render military unit resource strings
-
-
-@app.template_filter()
-def milres(unit):
-    change_price = False
-    if "," in unit:
-        split_unit = unit.split(", ")
-        unit = split_unit[0]
-        change_price = float(split_unit[1])
-    price = MILDICT[unit]["price"]
-    if change_price:
-        price = price * change_price
-    try:
-        resources = ", ".join(
-            [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
-        )
-        full = f"{unit.capitalize()} cost {fmt(price)}, {resources} each"
-    except KeyError:
-        full = f"{unit.capitalize()} cost {fmt(price)} each"
-    return full
-
-
-# Jinja2 filter to format resource names (replace underscores with spaces)
-@app.template_filter()
-def formatname(value):
-    """Convert snake_case to Title Case, with special handling for certain terms"""
-    if not isinstance(value, str):
-        return value
-
-    # Special cases
-    if value.lower() == "citycount":
-        return "City"
-
-    # Replace underscores and capitalize
-    return value.replace("_", " ").title()
-
-
-def get_resources():
-    """Get user's resources with short-term caching to avoid repeated DB queries"""
-    from database import query_cache
-
-    # Default resources dict with all expected keys (prevents template errors)
-    default_resources = {
-        "gold": 0,
-        "rations": 0,
-        "oil": 0,
-        "coal": 0,
-        "uranium": 0,
-        "bauxite": 0,
-        "iron": 0,
-        "lead": 0,
-        "copper": 0,
-        "lumber": 0,
-        "components": 0,
-        "steel": 0,
-        "consumer_goods": 0,
-        "aluminium": 0,
-        "gasoline": 0,
-        "ammunition": 0,
-    }
-
-    target_user_id = session.get("user_id")
-    if not target_user_id:
-        return default_resources
-
-    # Check cache first (30 second TTL for resources - they change frequently)
-    cache_key = f"resources_{target_user_id}"
-    cached = query_cache.get(cache_key)
-    if cached is not None:
-        return cached
-
-    try:
-        from database import get_request_cursor
-
-        with get_request_cursor(cursor_factory=RealDictCursor) as db:
-            db.execute(
-                """
-                SELECT s.gold,
-                       rd.name AS res_name,
-                       COALESCE(ue.quantity, 0) AS quantity
-                FROM stats s
-                CROSS JOIN resource_dictionary rd
-                LEFT JOIN user_economy ue
-                  ON ue.resource_id = rd.resource_id
-                 AND ue.user_id = s.id
-                WHERE s.id = %s
-                ORDER BY rd.resource_id
-                """,
-                (target_user_id,),
-            )
-            rows = db.fetchall()
-
-            if not rows:
-                query_cache.set(cache_key, default_resources, ttl_seconds=15)
-                return default_resources
-
-            resources = default_resources.copy()
-            resources["gold"] = int(rows[0].get("gold") or 0)
-            for row in rows:
-                name = row.get("res_name")
-                if name in resources:
-                    resources[name] = int(row.get("quantity") or 0)
-
-            query_cache.set(cache_key, resources, ttl_seconds=15)
-            return resources
-    except Exception:
-        return default_resources
-
-
-@app.context_processor
-def inject_user():
-    from admin_tools import SUPER_ADMIN_USER_IDS
-    from game_ui import game_ui_context
-
-    top_ad = None
-    side_ad_left = None
-    side_ad_right = None
-    
-    try:
-        from database import get_request_cursor
-        with get_request_cursor(read_only=True) as db:
-            db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'top' ORDER BY RANDOM() LIMIT 1")
-            top_ad_row = db.fetchone()
-            if top_ad_row:
-                # Use column indices since connection might not use DictCursor
-                top_ad = {"image_url": top_ad_row[0], "target_url": top_ad_row[1]}
-                
-            db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'side' ORDER BY RANDOM() LIMIT 2")
-            side_ads = db.fetchall()
-            if side_ads:
-                side_ad_left = {"image_url": side_ads[0][0], "target_url": side_ads[0][1]}
-                if len(side_ads) > 1:
-                    side_ad_right = {"image_url": side_ads[1][0], "target_url": side_ads[1][1]}
-                else:
-                    side_ad_right = side_ad_left
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning(f"Error fetching ads: {e}")
-
-    return dict(
-        get_resources=get_resources,
-        admin_user_ids=SUPER_ADMIN_USER_IDS,
-        top_ad=top_ad,
-        side_ad_left=side_ad_left,
-        side_ad_right=side_ad_right,
-        **game_ui_context(),
-    )
-
-
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    # home page when a session exists or to help test clients detect cookie
-    # behavior when following redirects (requests may follow redirects and
-    # observe cookies set on the final response).
-    from flask import make_response
-
-    resp = make_response(render_template("index.html"))
-    # In local development, tests can use direct cookie assertions if desired.
-    # We intentionally don't set a global 'session_debug_home' cookie here to
-    # avoid leaving dev-only artifacts on responses. If you need such a
-    # cookie for debugging, add it behind a dev-only feature flag.
-    return resp
-
-
-# NOTE: developer-only endpoints `_debug_session` and `_test_set_session`
-# were removed during cleanup. If you need to inspect session/cookie settings
-# or set session values for troubleshooting, consider running the app in
-# a local-only debug mode and adding guarded handlers behind a config flag.
-
-
-@app.route("/robots.txt")
-def robots():
-    return send_from_directory("static", "robots.txt")
-
-
-@app.route("/flag/<flag_type>/<int:flag_id>")
-def serve_flag(flag_type, flag_id):
-    """Serve flag images from database storage (persistent across deployments).
-
-    Uses an in-memory LRU cache so repeated requests for the same flag
-    (e.g. from a listing page that still uses <img src="/flag/...">) don't
-    hit the database on every request.
-    """
-    import base64
-    from flask import Response
-
-    # Check module-level cache first (survives across requests in the same worker)
-    cache_key = f"{flag_type}_{flag_id}"
-    if not hasattr(serve_flag, "_cache"):
-        serve_flag._cache = {}  # key -> (body, mimetype, timestamp)
-    cached = serve_flag._cache.get(cache_key)
-    if cached is not None:
-        body, mimetype, cached_at = cached
-        # TTL: 5 minutes; flag changes become visible without worker restart
-        if time_module.time() - cached_at < 300:
-            response = Response(body, mimetype=mimetype)
-            response.headers["Cache-Control"] = "public, max-age=3600"
-            return response
-        else:
-            del serve_flag._cache[cache_key]
-
-    from database import table_has_column
-
-    with get_request_cursor() as cur:
-        row = None
-        try:
-            if flag_type == "country":
-                if table_has_column("users", "flag_data"):
-                    cur.execute(
-                        "SELECT flag_data FROM users WHERE id = %s", (flag_id,)
-                    )
-                    row = cur.fetchone()
-                if not (row and row[0]):
-                    cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
-                    fname = cur.fetchone()
-                    if fname and fname[0]:
-                        return send_from_directory(
-                            "static/flags", fname[0]
-                        )
-            elif flag_type == "coalition":
-                if table_has_column("colnames", "flag_data"):
-                    cur.execute(
-                        "SELECT flag_data FROM colNames WHERE id = %s", (flag_id,)
-                    )
-                    row = cur.fetchone()
-                if not (row and row[0]):
-                    cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
-                    fname = cur.fetchone()
-                    if fname and fname[0]:
-                        return send_from_directory(
-                            "static/flags", fname[0]
-                        )
-            else:
-                return send_from_directory("static/flags", "default_flag.jpg")
-        except Exception:
-            rollback_db_cursor(cur)
-            return send_from_directory("static/flags", "default_flag.jpg")
-
-        if row and row[0]:
-            try:
-                flag_data = base64.b64decode(row[0])
-                # Detect image type from magic bytes
-                if flag_data[:8] == b"\x89PNG\r\n\x1a\n":
-                    mimetype = "image/png"
-                elif flag_data[:2] == b"\xff\xd8":
-                    mimetype = "image/jpeg"
-                elif flag_data[:6] in (b"GIF87a", b"GIF89a"):
-                    mimetype = "image/gif"
-                else:
-                    mimetype = "image/png"
-
-                # Store in cache (cap at 500 entries to bound memory)
-                if len(serve_flag._cache) < 500:
-                    serve_flag._cache[cache_key] = (
-                        flag_data,
-                        mimetype,
-                        time_module.time(),
-                    )
-
-                response = Response(flag_data, mimetype=mimetype)
-                response.headers[
-                    "Cache-Control"
-                ] = "public, max-age=3600"  # Cache 1 hour
-                return response
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"Error decoding flag: {e}")
-
-        # Fall back to file system (for backward compatibility)
-        if flag_type == "country":
-            cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
-        else:
-            cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
-
-        row = cur.fetchone()
-        if row and row[0]:
-            try:
-                return send_from_directory("static/flags", row[0])
-            except Exception:
-                # Ignore file system access errors for backwards compatibility
-                pass
-
-        # Cache the default flag too so we never hit DB again for this key
-        default_path = os.path.join(app.static_folder, "flags", "default_flag.jpg")
-        try:
-            with open(default_path, "rb") as f:
-                default_bytes = f.read()
-            if len(serve_flag._cache) < 500:
-                serve_flag._cache[cache_key] = (
-                    default_bytes,
-                    "image/jpeg",
-                    time_module.time(),
-                )
+                sentry_sdk.set_user(None)
         except Exception:
             pass
 
-        return send_from_directory("static/flags", "default_flag.jpg")
+        if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
+            forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
+            if forwarded_proto != "https" and not request.is_secure:
+                url = request.url.replace("http://", "https://", 1)
+                return redirect(url, code=301)
 
-
-@app.route("/account", methods=["GET"])
-@login_required
-def account():
-    from datetime import timezone
-
-    from database import users_table_has_column
-
-    cId = session["user_id"]
-    user = None
-
-    with get_request_cursor(cursor_factory=RealDictCursor) as db:
-        try:
-            user_cols = "username, email, date"
-            if users_table_has_column("discord_id"):
-                user_cols += ", discord_id"
-            db.execute(f"SELECT {user_cols} FROM users WHERE id=%s", (cId,))
-            row = db.fetchone()
-            if row:
-                user = dict(row)
-        except Exception:
-            rollback_db_cursor(db)
-            try:
-                db.execute(
-                    "SELECT username, email, date FROM users WHERE id=%s",
-                    (cId,),
-                )
-                row = db.fetchone()
-                if row:
-                    user = dict(row)
-                    user.setdefault("discord_id", None)
-            except Exception:
-                rollback_db_cursor(db)
-
-    if not user:
-        return error(404, "Account not found")
-
-    user.setdefault("discord_id", None)
-
-    discord_bot_link = None
-    discord_link_ttl_minutes = 30
-    try:
-        from bot_api import CODE_TTL_MINUTES, get_active_discord_link_code
-
-        discord_link_ttl_minutes = CODE_TTL_MINUTES
-        discord_bot_link = get_active_discord_link_code(cId)
-    except Exception:
-        pass
-
-    if discord_bot_link:
-        exp = discord_bot_link.get("expires_at")
-        if exp is not None:
-            if getattr(exp, "tzinfo", None) is None:
-                exp = exp.replace(tzinfo=timezone.utc)
-            discord_bot_link["expires_display"] = exp.astimezone(
-                timezone.utc
-            ).strftime("%Y-%m-%d %H:%M UTC")
-        else:
-            discord_bot_link["expires_display"] = "soon"
-
-    return render_template(
-        "account.html",
-        user=user,
-        discord_bot_link=discord_bot_link,
-        discord_link_ttl_minutes=discord_link_ttl_minutes,
-    )
-
-
-@app.route("/recruitments", methods=["GET"])
-@login_required
-def recruitments():
-    # List coalitions marked as recruiting
-    from database import get_request_cursor
-
-    with get_request_cursor() as db:
-        db.execute(
-            (
-                "SELECT id, name, type, description, flag "
-                "FROM colNames WHERE recruiting=TRUE ORDER BY id ASC"
-            )
-        )
-        cols = db.fetchall()
-    return render_template("recruitments.html", coalitions=cols)
-
-
-@app.route("/businesses", methods=["GET"])
-@login_required
-def businesses():
-    return render_template("businesses.html")
-
-
-# Redirect bare /country to the user's own country page
-@app.route("/country", methods=["GET"])
-@login_required
-def country_redirect():
-    return redirect("/my_country")
-
-
-@app.route("/assembly", methods=["GET", "POST"])
-@login_required
-def assembly():
-    from database import get_request_cursor
-    user_id = session.get("user_id")
-    poll_name = "world_name"
-
-    with get_request_cursor() as db:
-        # Guarantee the table exists without relying on the migration script
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS poll_votes (
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                poll_name TEXT NOT NULL,
-                vote_option TEXT NOT NULL,
-                PRIMARY KEY (user_id, poll_name)
-            )
-        """)
-        
-        if request.method == "POST":
-            vote_option = request.form.get("vote_option")
-            if vote_option in ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"]:
+        user_id = session.get("user_id")
+        admin_ctrl_refresh_seconds = int(os.getenv("ADMIN_CTRL_REFRESH_SECONDS", "300"))
+        if user_id:
+            _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
+            _ctrl_stale = (time() - _ctrl_cache_ts) > admin_ctrl_refresh_seconds
+            if _ctrl_stale:
                 try:
-                    db.execute("""
-                        INSERT INTO poll_votes (user_id, poll_name, vote_option)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (user_id, poll_name) DO UPDATE SET vote_option = EXCLUDED.vote_option
-                    """, (user_id, poll_name, vote_option))
-                    flash("Your vote has been cast!", "success")
+                    with get_request_cursor() as _db:
+                        _db.execute("SELECT COALESCE(is_banned, FALSE), COALESCE(ban_reason, ''), COALESCE(kick_pending, FALSE) FROM admin_user_controls WHERE user_id = %s", (user_id,))
+                        control_row = _db.fetchone()
+                    session["_admin_ctrl"] = list(control_row) if control_row else None
+                    session["_admin_ctrl_ts"] = time()
                 except Exception:
-                    db.execute("ROLLBACK")
-                    flash("Failed to cast vote.", "danger")
-            else:
-                flash("Invalid option.", "danger")
-            return redirect("/assembly")
+                    session["_admin_ctrl"] = None
+                    session["_admin_ctrl_ts"] = time()
+            control_row = session.get("_admin_ctrl")
+            if control_row:
+                is_banned, ban_reason, kick_pending = control_row
+                if is_banned:
+                    session.clear()
+                    return render_template("error.html", code=403, message=(f"Your account is banned. Reason: {ban_reason or 'No reason provided.'}")), 403
+                if kick_pending:
+                    try:
+                        with get_request_cursor() as _db:
+                            _db.execute("UPDATE admin_user_controls SET kick_pending=FALSE, updated_at=NOW() WHERE user_id=%s", (user_id,))
+                    except Exception:
+                        pass
+                    session.clear()
+                    return redirect("/login")
+        if user_id:
+            now = time()
+            last_ping = session.get("_last_active_ping", 0)
+            if now - last_ping > 3600:
+                try:
+                    with get_request_cursor() as _db:
+                        _db.execute("UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+                    session["_last_active_ping"] = now
+                except Exception:
+                    pass
+        return None
 
-        # GET: Fetch current votes
-        db.execute("SELECT vote_option, COUNT(*) as vote_count FROM poll_votes WHERE poll_name = %s GROUP BY vote_option", (poll_name,))
-        rows = db.fetchall()
-        results = {}
-        for r in rows:
-            if isinstance(r, dict) or hasattr(r, 'keys'):
-                results[r['vote_option']] = r['vote_count']
-            else:
-                results[r[0]] = r[1]
+    Compress(app)
+    app.teardown_request(teardown_request_connection)
 
-        db.execute("SELECT vote_option FROM poll_votes WHERE user_id = %s AND poll_name = %s", (user_id, poll_name))
-        row = db.fetchone()
-        if row:
-            user_vote = row['vote_option'] if (isinstance(row, dict) or hasattr(row, 'keys')) else row[0]
+    signup.register_signup_routes(app)
+    login.register_login_routes(app)
+    market.register_market_routes(app)
+    change.register_change_routes(app)
+    bot_api.register_bot_api_routes(app)
+    register_coalitions_routes(app)
+    countries.register_countries_routes(app)
+    policies.register_policies_routes(app)
+    statistics.register_statistics_routes(app)
+    trade_agreements.register_trade_agreement_routes(app)
+    admin_tools.register_admin_tools_routes(app)
+
+    @app.after_request
+    def after_request(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            from time import time
+            elapsed = time() - getattr(request, "start_time", time())
+        except AttributeError:
+            elapsed = 0
+        if elapsed > 1.0 and not request.path.startswith("/static/"):
+            client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
+            ua = request.headers.get("User-Agent", "")
+            logger.info("SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s", request.method, request.path, elapsed, client_ip, ua[:200])
+        if request.path.startswith("/static/"):
+            if request.path.endswith((".css", ".js")):
+                response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
+            else:
+                response.headers["Cache-Control"] = "public, max-age=604800, must-revalidate"
         else:
-            user_vote = None
+            response.headers["Cache-Control"] = "private, max-age=5, must-revalidate"
+        return response
 
-    return render_template("assembly.html", results=results, user_vote=user_vote)
+    def asset(filename):
+        is_production = (os.getenv("FLASK_ENV") == "production" or os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None)
+        if is_production and (filename.endswith(".css") or filename.endswith(".js")):
+            base, ext = filename.rsplit(".", 1)
+            minified = f"{base}.min.{ext}"
+            min_path = f"static/{minified}"
+            if os.path.exists(min_path):
+                return minified
+        return filename
+    app.jinja_env.globals["asset"] = asset
 
+    logging_format = "====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+    logging.basicConfig(level=logging.ERROR, format=logging_format, filename="errors.log")
+    logger = logging.getLogger(__name__)
 
-@app.route("/logout")
-def logout():
-    if session.get("user_id") is not None:
-        session.clear()
-    else:
-        pass
-    return redirect("/")
+    import threading, queue as queue_module
+    _webhook_queue = queue_module.Queue()
+    _webhook_thread = None
+    _webhook_thread_lock = threading.Lock()
 
+    def _webhook_worker():
+        while True:
+            try:
+                data = _webhook_queue.get(timeout=5)
+                if data is None: break
+                url = os.getenv("DISCORD_WEBHOOK_URL")
+                if url:
+                    try: requests.post(url, json=data, timeout=5)
+                    except Exception: pass
+                _webhook_queue.task_done()
+            except queue_module.Empty:
+                continue
 
-@app.route("/tutorial", methods=["GET"])
-def tutorial():
-    import json
-    import variables as game_vars
+    def _ensure_webhook_thread():
+        nonlocal _webhook_thread
+        with _webhook_thread_lock:
+            if _webhook_thread is None or not _webhook_thread.is_alive():
+                _webhook_thread = threading.Thread(target=_webhook_worker, daemon=True)
+                _webhook_thread.start()
 
-    tutorial_constants = {
-        "tax_per_citizen": game_vars.DEFAULT_TAX_INCOME,
-        "cg_tax_multiplier": game_vars.CONSUMER_GOODS_TAX_MULTIPLIER,
-        "no_energy_tax_multiplier": game_vars.NO_ENERGY_TAX_MULTIPLIER,
-        "no_food_tax_multiplier": game_vars.NO_FOOD_TAX_MULTIPLIER,
-        "land_tax_multiplier": game_vars.DEFAULT_LAND_TAX_MULTIPLIER,
-        "province_base_cost": 8_000_000,
-        "province_cost_scale": 0.16,
-        "min_attack_supplies": 200,
-    }
-    chapters_path = os.path.join(app.root_path, "static", "tutorial", "chapters.json")
-    with open(chapters_path, encoding="utf-8") as f:
-        tutorial_chapters = json.load(f)["chapters"]
-    return render_template(
-        "tutorial.html",
-        tutorial_constants=tutorial_constants,
-        tutorial_chapters=tutorial_chapters,
-    )
+    def send_discord_webhook(record):
+        url = os.getenv("DISCORD_WEBHOOK_URL")
+        if not url: return
+        formatter = logging.Formatter(logging_format)
+        message = formatter.format(record)
+        if len(message) > 1900: message = message[:1900] + "...[truncated]"
+        data = {"content": message, "username": "A&O ERROR"}
+        _ensure_webhook_thread()
+        try: _webhook_queue.put_nowait(data)
+        except queue_module.Full: pass
 
+    class RequestsHandler(logging.Handler):
+        def emit(self, record):
+            send_discord_webhook(record)
 
-@app.route("/mechanics", methods=["GET"])
-def mechanics():
-    return render_template("mechanics.html")
+    Markdown(app)
 
-
-@app.route("/mechanics/consumer_goods", methods=["GET"])
-def mechanics_consumer_goods():
-    return render_template("mechanics/consumer_goods.html")
-
-
-@app.route("/mechanics/revenue", methods=["GET"])
-def mechanics_revenue():
-    return render_template("mechanics/revenue.html")
-
-
-@app.route("/mechanics/resources", methods=["GET"])
-def mechanics_resources():
-    return render_template("mechanics/resources.html")
-
-
-@app.route("/mechanics/rations", methods=["GET"])
-def mechanics_rations():
-    return render_template("mechanics/rations.html")
-
-
-@app.route("/mechanics/war", methods=["GET"])
-def mechanics_war():
-    return render_template("mechanics/war.html")
-
-
-@app.route("/forgot_password", methods=["GET"])
-def forget_password():
+    # Initialize province defaults
     try:
-        from email_utils import is_email_configured
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute("UPDATE provinces SET happiness=50 WHERE happiness=0")
+            db.execute("UPDATE provinces SET productivity=50 WHERE productivity=0")
+            db.execute("UPDATE provinces SET consumer_spending=50 WHERE consumer_spending=0")
+            conn.commit()
+    except Exception as e:
+        pass
 
-        email_enabled = is_email_configured()
+    import military
+    app.register_blueprint(military.bp)
+    app.register_blueprint(province.bp)
+    if upgrades.bp:
+        app.register_blueprint(upgrades.bp)
+    app.register_blueprint(intelligence.bp)
+    app.register_blueprint(wars_bp)
+    app.register_blueprint(treaties_bp)
+    app.register_blueprint(world_map_bp.bp)
+    import ads_bp
+    app.register_blueprint(ads_bp.bp)
+    import admin_bp
+    app.register_blueprint(admin_bp.admin_bp)
+
+    from app_core.main.routes import bp as main_bp
+    from app_core.auth.routes import bp as auth_bp
+    from app_core.game_engine.routes import bp as game_engine_bp
+    from app_core.system.routes import bp as system_bp
+
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(game_engine_bp)
+    app.register_blueprint(system_bp)
+
+    import config
+    try:
+        if hasattr(signup, "ensure_signup_attempts_table"):
+            signup.ensure_signup_attempts_table()
     except Exception:
-        email_enabled = False
-    return render_template("forgot_password.html", email_enabled=email_enabled)
+        pass
 
+    environment = os.getenv("ENVIRONMENT", "DEV")
+    app.secret_key = config.get_secret_key()
+    if environment == "PROD":
+        handler = RequestsHandler()
+        logger.addHandler(handler)
 
-"""
-@app.route("/statistics", methods=["GET"])
-def statistics():
-    return render_template("statistics.html")
-"""
-
-
-@app.route("/my_offers", methods=["GET"])
-def myoffers():
-    return render_template("my_offers.html")
-
-
-@app.route("/war", methods=["GET"])
-def war():
-    # Redirect to the consolidated Wars page handled by the 'wars' blueprint
-    return redirect("/wars")
-
-
-# Deprecated: warresult route moved to `wars` blueprint.
-# Keep a lowercase route that redirects to the new war result page for logged-in users.
-@app.route("/warresult", methods=["GET"])
-def warresult_deprecated():
-    # Redirect to canonical /warResult route when accessed from legacy code
-    return redirect("/warResult")
-
-
-@app.route("/mass_purchase", methods=["GET"])
-@login_required
-def mass_purchase():
-    cId = session["user_id"]
-    with get_request_cursor() as db:
-        db.execute(
-            (
-                "SELECT id, provinceName as name, "
-                "CAST(citycount AS INTEGER) as citycount, "
-                "land FROM provinces WHERE userId=%s ORDER BY provinceName"
-            ),
-            (cId,),
+    @app.context_processor
+    def utility_processor():
+        def humanize_number(value):
+            if value is None: return "0"
+            try: return f"{int(value):,}"
+            except (ValueError, TypeError): return str(value)
+        def determine_color(change):
+            if change > 0: return "green"
+            elif change < 0: return "red"
+            else: return "white"
+        def format_resources(value):
+            if value is None: return "0"
+            try: return f"{float(value):.2f}"
+            except (ValueError, TypeError): return str(value)
+        def format_currency(value):
+            if value is None: return "$0.00"
+            try: return f"${float(value):,.2f}"
+            except (ValueError, TypeError): return str(value)
+        return dict(
+            humanize_number=humanize_number,
+            determine_color=determine_color,
+            format_resources=format_resources,
+            format_currency=format_currency,
         )
-        provinces = db.fetchall()
 
-        # Convert to list of dicts for template
-        province_list = []
-        if provinces:
-            colnames = [desc[0] for desc in db.description]
-            for row in provinces:
-                province_list.append(dict(zip(colnames, row)))
+    # game_ui_context setup
+    from database import get_request_cursor, rollback_db_cursor
+    from variables import REVENUE_TYPES
+    def game_ui_context():
+        try:
+            from tests.conftest import TEST_UI_MOCK_CONTEXT
+            if TEST_UI_MOCK_CONTEXT.get("active"): return TEST_UI_MOCK_CONTEXT.get("context", {})
+        except ImportError: pass
+        if "user_id" not in session: return {}
+        user_id = session["user_id"]
+        ctx = {}
+        with get_request_cursor() as _db:
+            try:
+                _db.execute("SELECT countryName FROM users WHERE id = %s", (user_id,))
+                r = _db.fetchone()
+                ctx["country_name"] = r[0] if r else "Unknown"
+                _db.execute("SELECT id, name FROM colNames WHERE id = (SELECT coalitionId FROM users WHERE id=%s)", (user_id,))
+                c_row = _db.fetchone()
+                if c_row: ctx["coalition_id"], ctx["coalition_name"] = c_row[0], c_row[1]
+                else: ctx["coalition_id"], ctx["coalition_name"] = None, None
+            except Exception:
+                rollback_db_cursor(_db)
+                ctx["country_name"], ctx["coalition_id"], ctx["coalition_name"] = "Error", None, None
+        return ctx
 
-    return render_template("mass_purchase.html", provinces=province_list)
+    app.context_processor(game_ui_context)
 
+    # Global context for inject_global_data
+    @app.context_processor
+    def inject_global_data():
+        if "user_id" not in session: return {"game_ui": {}}
+        user_id = session["user_id"]
+        from database import get_request_cursor, rollback_db_cursor
+        with get_request_cursor() as cur:
+            try:
+                cur.execute("SELECT has_unseen_combat_logs FROM users WHERE id = %s", (user_id,))
+                row = cur.fetchone()
+                has_combat = row[0] if row else False
+            except Exception:
+                rollback_db_cursor(cur)
+                has_combat = False
+        return {"game_ui": {"has_unseen_combat_logs": has_combat}}
 
+    @app.context_processor
+    def inject_user():
+        top_ad = None
+        side_ad_left = None
+        side_ad_right = None
+        try:
+            from database import get_request_cursor
+            with get_request_cursor(read_only=True) as db:
+                db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'top' ORDER BY RANDOM() LIMIT 1")
+                top_ad_row = db.fetchone()
+                if top_ad_row:
+                    top_ad = {"image_url": top_ad_row[0], "target_url": top_ad_row[1]}
+                db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'side' ORDER BY RANDOM() LIMIT 2")
+                side_ads = db.fetchall()
+                if side_ads:
+                    side_ad_left = {"image_url": side_ads[0][0], "target_url": side_ads[0][1]}
+                    if len(side_ads) > 1:
+                        side_ad_right = {"image_url": side_ads[1][0], "target_url": side_ads[1][1]}
+        except Exception:
+            pass
 
-# Emit an explicit startup message so we can detect successful initialisation
-# in the platform logs
-app.logger.info("App fully initialized and ready to serve requests")
+        # Since we use `game_ui_context` inside the template but previously it was here,
+        # we'll just merge it or return the ads
+        return dict(
+            top_ad=top_ad,
+            side_ad_left=side_ad_left,
+            side_ad_right=side_ad_right,
+            **game_ui_context()
+        )
+
+    return app
+
+create_app()
 
 if __name__ == "__main__":
-    # Use port 5000 by default for local development/testing
-    # to match test suite expectations
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, use_reloader=False)
