@@ -38,13 +38,14 @@ def upload_ad():
         
     return render_template("upload_ad.html", my_ads=my_ads)
 
+from admin_tools import SUPER_ADMIN_USER_IDS
+
 @bp.route("/admin/ads", methods=["GET", "POST"])
 @login_required
 def admin_ads():
     """Admin panel to approve or reject ads."""
-    # Note: Replace with actual admin check logic! Assuming user_id = 1 is admin for now.
     user_id = session.get("user_id")
-    if user_id != 1:
+    if user_id not in SUPER_ADMIN_USER_IDS:
         flash("Unauthorized access.", "danger")
         return redirect("/")
         

@@ -131,8 +131,8 @@ def declare_siege(node_id):
         db.execute("UPDATE stats SET gold = gold - %s WHERE id = %s", (cost_gold, user_id))
         db.execute("UPDATE military SET soldiers = soldiers - %s WHERE id = %s", (cost_soldiers, user_id))
         db.execute(
-            f"UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + INTERVAL '{shield_hours} hours' WHERE id = %s",
-            (coalition_id, node_id)
+            "UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + %s * INTERVAL '1 hour' WHERE id = %s",
+            (coalition_id, shield_hours, node_id)
         )
         
         return jsonify({"status": "success", "message": f"Successfully captured {node_name} for {coalition_name}!"})
