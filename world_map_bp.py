@@ -40,7 +40,7 @@ def get_nodes():
             SELECT 
                 n.id, n.name, n.type, n.coordinate_x, n.coordinate_y, 
                 n.controlling_coalition_id, c.name as coalition_name,
-                n.health, n.shield_expires_at
+                n.health, n.shield_expires_at, n.tier
             FROM nodes n
             LEFT JOIN colNames c ON n.controlling_coalition_id = c.id
             """
@@ -60,6 +60,7 @@ def get_nodes():
                 "coalition_name": n[6],
                 "health": n[7],
                 "shield_expires_at": n[8].isoformat() if n[8] else None,
+                "tier": n[9] if len(n) > 9 else 1,
             })
             
     return jsonify({"status": "success", "nodes": node_list})
@@ -87,18 +88,36 @@ def declare_siege(node_id):
         
         # Lock user row to prevent concurrent money spending
         db.execute("SELECT gold FROM stats WHERE id = %s FOR UPDATE", (user_id,))
-        money = db.fetchone()[0]
+        stats = db.fetchone()
+        if not stats:
+            return jsonify({"status": "error", "message": "User stats not found."})
+        money = stats[0]
         
-        if money < 5000000:
-            return jsonify({"status": "error", "message": "You need $5,000,000 to fund a siege deployment."})
-            
+        # Lock military row to prevent pacifism exploit
+        db.execute("SELECT soldiers FROM military WHERE id = %s FOR UPDATE", (user_id,))
+        military = db.fetchone()
+        if not military:
+            return jsonify({"status": "error", "message": "Military stats not found."})
+        soldiers = military[0]
+        
         # Lock node row to prevent concurrent captures overriding shields
-        db.execute("SELECT name, controlling_coalition_id, shield_expires_at FROM nodes WHERE id = %s FOR UPDATE", (node_id,))
+        db.execute("SELECT name, controlling_coalition_id, shield_expires_at, COALESCE(tier, 1) as tier FROM nodes WHERE id = %s FOR UPDATE", (node_id,))
         node = db.fetchone()
         if not node:
             return jsonify({"status": "error", "message": "Node not found."})
             
-        node_name, controlling_id, shield_expires_at = node
+        node_name, controlling_id, shield_expires_at, tier = node
+        
+        # Tier scaling logic
+        cost_gold = 5000000 * tier
+        cost_soldiers = 50000 * tier
+        shield_hours = 4 * tier
+        
+        if money < cost_gold:
+            return jsonify({"status": "error", "message": f"You need ${cost_gold:,} to fund a Tier {tier} siege deployment."})
+            
+        if soldiers < cost_soldiers:
+            return jsonify({"status": "error", "message": f"You need {cost_soldiers:,} Soldiers to launch a Tier {tier} siege!"})
         
         if controlling_id == coalition_id:
             return jsonify({"status": "error", "message": "Your coalition already controls this node!"})
@@ -108,10 +127,11 @@ def declare_siege(node_id):
             if shield_expires_at > datetime.now(timezone.utc):
                 return jsonify({"status": "error", "message": "This node is currently protected by a shield."})
         
-        # Deduct money and set the node ownership instantly
-        db.execute("UPDATE stats SET gold = gold - 5000000 WHERE id = %s", (user_id,))
+        # Deduct money and soldiers (Combat Casualties), and set the node ownership instantly
+        db.execute("UPDATE stats SET gold = gold - %s WHERE id = %s", (cost_gold, user_id))
+        db.execute("UPDATE military SET soldiers = soldiers - %s WHERE id = %s", (cost_soldiers, user_id))
         db.execute(
-            "UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + INTERVAL '12 hours' WHERE id = %s",
+            f"UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + INTERVAL '{shield_hours} hours' WHERE id = %s",
             (coalition_id, node_id)
         )
         

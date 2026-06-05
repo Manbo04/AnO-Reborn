@@ -136,11 +136,12 @@
             <span class="material-icons-outlined sidebar-close" onclick="closeSidebar()">close</span>
             <h2 id="sb-name" style="color: #4fc3f7; margin-top: 0;">Node Details</h2>
             <p><strong>Type:</strong> <span id="sb-type"></span></p>
+            <p><strong>Tier:</strong> <span id="sb-tier"></span></p>
             <p><strong>Owner:</strong> <span id="sb-owner"></span></p>
             <p><strong>Health:</strong> <span id="sb-health"></span> / 1000</p>
             
             <div style="margin-top: 30px;">
-                <button class="templatedivbutton" style="width: 100%; margin-bottom: 10px;" onclick="declareSiege()">Declare Siege ($5,000,000)</button>
+                <button class="templatedivbutton" style="width: 100%; margin-bottom: 10px;" id="siege-btn" onclick="declareSiege()">Declare Siege</button>
                 <button class="templatedivbutton" style="width: 100%; background: #2a2a35;" onclick="closeSidebar()">Cancel</button>
             </div>
         </div>
@@ -404,7 +405,7 @@
                 nodeContainer.scale.set(1.2);
                 tooltip.classList.add('visible');
                 document.getElementById('tt-name').innerText = node.name;
-                document.getElementById('tt-type').innerText = node.type.toUpperCase();
+                document.getElementById('tt-type').innerText = `TIER ${node.tier || 1} ${node.type.toUpperCase()}`;
                 document.getElementById('tt-owner').innerText = node.coalition_name || 'NEUTRAL COMMAND';
             });
 
@@ -425,8 +426,13 @@
                 sidebar.classList.add('open');
                 document.getElementById('sb-name').innerText = node.name.toUpperCase();
                 document.getElementById('sb-type').innerText = node.type.toUpperCase();
+                document.getElementById('sb-tier').innerText = node.tier || 1;
                 document.getElementById('sb-owner').innerText = node.coalition_name || 'Neutral Command';
                 document.getElementById('sb-health').innerText = node.health;
+                
+                let costGold = 5 * (node.tier || 1);
+                let costSoldiers = 50 * (node.tier || 1);
+                document.getElementById('siege-btn').innerText = `Declare Siege ($${costGold}M, ${costSoldiers}k Soldiers)`;
                 
                 viewport.x = (container.clientWidth / 2) - (node.x * viewport.scale.x);
                 viewport.y = (container.clientHeight / 2) - (node.y * viewport.scale.y);
