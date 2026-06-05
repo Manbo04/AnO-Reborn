@@ -240,7 +240,7 @@ def peace_offers():
                                 f"{required} > {available}"
                             ),
                         )
-                    from market import give_resource
+                    from app_core.market import give_resource
 
                     successful = give_resource(cId, author_id, res, required)
                     if successful is not True:

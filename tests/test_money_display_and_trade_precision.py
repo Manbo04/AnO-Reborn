@@ -1,7 +1,7 @@
 from flask import Flask, session
 
 try:
-    import market
+    from app_core import market
     import app as app_module
 except Exception:
     import os
@@ -9,7 +9,7 @@ except Exception:
 
     # Running tests directly may not have project root on sys.path; add fallback
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    import market
+    from app_core import market
     import app as app_module
 
 from tests.test_integration_market_edgecases import fake_get_db_connection_factory

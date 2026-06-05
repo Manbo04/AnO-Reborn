@@ -152,7 +152,7 @@ def test_buy_apaches_does_not_block_buying_fighters():
     - restores original DB state (LEAVE NO TRACE)
     """
     from flask import Flask
-    import military as military_module
+    import app_core.military.routes as military_module
 
     TEST_UID = 16
 
@@ -254,10 +254,12 @@ def test_buy_apaches_does_not_block_buying_fighters():
         assert db.fetchone()[0] == 1
 
     # Limits: fighters/bombers capacity should be derived from aerodomes only
-    limits_after = military_module.compute_display_limits(TEST_UID)
+    from app_core.military.services import compute_display_limits
+    with get_db_cursor() as db:
+        limits_after = compute_display_limits(TEST_UID, db=db)
     assert (
         limits_after["fighters"]
-        == military_module.Military.get_limits(TEST_UID)["fighters"]
+        == Military.get_limits(TEST_UID)["fighters"]
     )
 
     # Cleanup: restore original rows and delete transient infra

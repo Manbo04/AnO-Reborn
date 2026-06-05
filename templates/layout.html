@@ -4,12 +4,25 @@
 
 <head>
     <meta charset="utf-8">
-    <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png') }}?v=3" />
+    <title>{% block seo_title %}{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game{% endblock %}</title>
+    <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3" />
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
-    <meta name="description" content="Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries,
-    and wage war on adversaries.">
+    <meta name="description" content="{% block seo_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries, and wage war on adversaries.{% endblock %}">
+    
+    <!-- OpenGraph Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Affairs and Order · MMO Nation Game{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.{% endblock %}">
+    <meta property="og:url" content="{{ request.url if request else 'https://affairsandorder.com/' }}">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Affairs and Order · MMO Nation Game{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3">
+
     <meta name="theme-color" content="#1c2029" id="meta-theme-color">
     <meta name="deploy-commit" content="{{ asset_version }}">
     <meta name="format-detection" content="telephone=no">
@@ -88,7 +101,6 @@
     </style>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
-    <title>{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game</title>
     {% if session.get('user_id') is none %}
     <script data-ad-client="ca-pub-2399873064840158" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     {% endif %}
@@ -328,98 +340,98 @@
             <!--I WILL REPLACE THE TEXT WITH RESOURCE ICONS SOON - CARSON-->
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" alt="Gold" class="resource" loading="lazy" />
                 <p class="resourcetag" title="${{ resources['gold'] | fmt }}">${{ resources["gold"] | fmt }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
             <p class="resource-section-label">Consumables</p>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" alt="Rations" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["rations"] | weight_fmt }}</p>
                 <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
             </div>
             <p class="resource-section-label">Raw Resources</p>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" alt="Oil" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["oil"] | weight_fmt }}</p>
                 <div class="resourceinfo">Oil can be used to make power, and can be refined into gasoline for fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" alt="Coal" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["coal"] | weight_fmt }}</p>
                 <div class="resourceinfo">Coal is a cheap but pollution intensive fuel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" alt="Uranium" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["uranium"] | weight_fmt }}</p>
                 <div class="resourceinfo">Uranium is capable of fueling large nuclear power plants, or being a reactant in nuclear weapons.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" alt="Bauxite" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["bauxite"] | weight_fmt }}</p>
                 <div class="resourceinfo">Bauxite is a valuable mineral when manufactured into aluminium</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" alt="Iron" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["iron"] | weight_fmt }}</p>
                 <div class="resourceinfo">Iron is incredibly useful when refined with coke into steel.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" alt="Lead" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["lead"] | weight_fmt }}</p>
                 <div class="resourceinfo">Lead is useful for war, as it can be refined into ammunition.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" alt="Copper" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["copper"] | weight_fmt }}</p>
                 <div class="resourceinfo">Copper can be refined into consumer goods.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" alt="Lumber" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["lumber"] | weight_fmt }}</p>
                 <div class="resourceinfo">Lumber is a common building material.</div>
 
             </div>
             <p class="resource-section-label">Manufactured</p>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'components') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'components') ) }}?v=2" alt="Components" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["components"] | weight_fmt }}</p>
                 <div class="resourceinfo">Components are necessary for advanced war machines and country projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'steel') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'steel') ) }}?v=2" alt="Steel" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["steel"] | weight_fmt }}</p>
                 <div class="resourceinfo">Steel is invaluable for building infrastructure, military machines, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'consumer_goods') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'consumer_goods') ) }}?v=2" alt="Consumer Goods" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["consumer_goods"] | weight_fmt }}</p>
                 <div class="resourceinfo">Consumer goods increase tax income by up to 50%. Every 80,000 people consume 1 CG per tick. Requires distribution buildings (gas stations, malls, etc.) to reach your population.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'aluminium') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'aluminium') ) }}?v=2" alt="Aluminium" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["aluminium"] | weight_fmt }}</p>
                 <div class="resourceinfo">Aluminium is a useful material for infrastructure, military, and projects.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gasoline') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gasoline') ) }}?v=2" alt="Gasoline" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["gasoline"] | weight_fmt }}</p>
                 <div class="resourceinfo">Gasoline is necessary to maintain a functioning military in war, fueling all types of vehicles.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
-                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'ammunition') ) }}?v=2" class="resource" loading="lazy" />
+                <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'ammunition') ) }}?v=2" alt="Ammunition" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["ammunition"] | weight_fmt }}</p>
                 <div class="resourceinfo">Ammunition allows for both your soldiers to be more effective, and for your military machines to fight in war.</div>
 
@@ -448,7 +460,7 @@
             <div class="global-ad global-ad-left" style="display: none; width: 160px; min-width: 160px; margin-right: 20px; flex-direction: column; align-items: center;">
                 <div style="width: 160px; height: 600px; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: sticky; top: 110px; overflow: hidden;">
                     {% if side_ad_left %}
-                        <a href="{{ side_ad_left.target_url }}" target="_blank"><img src="{{ side_ad_left.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ side_ad_left.target_url }}" target="_blank"><img alt="Image" src="{{ side_ad_left.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}
@@ -458,7 +470,7 @@
             <div class="global-ad-center" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;">
                 <div class="global-ad global-ad-top" style="width: 100%; max-width: 728px; height: 90px; margin: 0 auto 0 auto; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: relative; z-index: 10; overflow: hidden;">
                     {% if top_ad %}
-                        <a href="{{ top_ad.target_url }}" target="_blank"><img src="{{ top_ad.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ top_ad.target_url }}" target="_blank"><img alt="Image" src="{{ top_ad.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}
@@ -472,7 +484,7 @@
             <div class="global-ad global-ad-right" style="display: none; width: 160px; min-width: 160px; margin-left: 20px; flex-direction: column; align-items: center;">
                 <div style="width: 160px; height: 600px; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: sticky; top: 110px; overflow: hidden;">
                     {% if side_ad_right %}
-                        <a href="{{ side_ad_right.target_url }}" target="_blank"><img src="{{ side_ad_right.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ side_ad_right.target_url }}" target="_blank"><img alt="Image" src="{{ side_ad_right.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}

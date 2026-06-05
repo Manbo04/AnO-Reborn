@@ -1,5 +1,5 @@
 from database import query_cache
-from market import give_resource
+from app_core.market import give_resource
 
 
 class FakeCursor:

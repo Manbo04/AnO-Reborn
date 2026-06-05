@@ -43,11 +43,11 @@ class FakeConn:
 
 
 def test_give_resource_money_bank_to_user(monkeypatch):
-    from market import give_resource
+    from app_core.market import give_resource
 
     db = FakeCursor()
     conn = FakeConn(db)
-    import market as _market
+    from app_core import market as _market
 
     monkeypatch.setattr(_market, "get_db_connection", lambda: conn)
 
@@ -58,12 +58,12 @@ def test_give_resource_money_bank_to_user(monkeypatch):
 
 
 def test_give_resource_money_user_insufficient(monkeypatch):
-    from market import give_resource
+    from app_core.market import give_resource
 
     # Simulate insufficient funds (UPDATE RETURNING fails)
     db = FakeCursor(fetchone_returns=[None])
     conn = FakeConn(db)
-    import market as _market
+    from app_core import market as _market
 
     monkeypatch.setattr(_market, "get_db_connection", lambda: conn)
 
@@ -73,12 +73,12 @@ def test_give_resource_money_user_insufficient(monkeypatch):
 
 
 def test_give_resource_non_money_transfer(monkeypatch):
-    from market import give_resource
+    from app_core.market import give_resource
 
     # Simulate giver has 20 of resource
     db = FakeCursor(fetchone_returns=[(20,)])
     conn = FakeConn(db)
-    import market as _market
+    from app_core import market as _market
 
     monkeypatch.setattr(_market, "get_db_connection", lambda: conn)
 

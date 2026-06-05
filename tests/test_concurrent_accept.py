@@ -1,6 +1,6 @@
 import threading
 from flask import Flask
-import market
+from app_core import market
 from tests.test_integration_market_edgecases import fake_get_db_connection_factory
 
 
