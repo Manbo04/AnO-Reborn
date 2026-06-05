@@ -10,7 +10,6 @@ Inventory dimensions:
   3) Per-file usage counts for each discovered reference
 """
 
-from __future__ import annotations
 
 import json
 import re

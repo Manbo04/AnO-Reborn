@@ -1,6 +1,5 @@
 """Entry point: python -m discord_bot.main"""
 
-from __future__ import annotations
 
 import logging
 

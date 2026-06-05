@@ -8,7 +8,6 @@ Usage:
     DATABASE_PUBLIC_URL=postgresql://... python3 scripts/diagnose_all_routes.py 16
 """
 
-from __future__ import annotations
 
 import os
 import sys

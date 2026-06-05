@@ -1,6 +1,5 @@
 """Discord embed builders for nation summaries."""
 
-from __future__ import annotations
 
 # Bump when embed layout changes — visible in footer so you can confirm bot deploy.
 EMBED_UI_VERSION = "2.1"

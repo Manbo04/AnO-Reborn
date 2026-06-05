@@ -71,7 +71,6 @@ def _cached_get_particular_resources(self, resources):
 
 # `calculate_bonuses` moved to `attack_scripts.nations_helpers` to
 # begin progressive refactoring and enable focused unit tests.
-from attack_scripts.nations_helpers import calculate_bonuses  # noqa: F401
 
 
 class Economy:
@@ -346,13 +345,10 @@ class Nation:
 
             # # determine wheter the user is the aggressor or the defender
             # current_wars_result = []
-            # for war_id in id_list:
             # db.execute("SELECT 1 FROM wars WHERE id=(%s) AND attacker=(%s)", (war_id[0], id))
             #     is_attacker = db.fetchone()
             #
-            #     if is_attacker:
             #         war_id.append("attacker")
-            #     else:
             #         war_id.append("defender")
 
             return id_list
@@ -552,7 +548,6 @@ class Military(Nation):
             winners: list of winner ids (currently only one winner supported)
             losers: list of loser ids
         """
-        # def reparation_tax(winner_side, loser_side):
 
         # get remaining morale for winner (only one supported current_wars)
         with get_db_connection() as connection:
@@ -611,7 +606,6 @@ class Military(Nation):
             destruction_rate = random.uniform(0.3, 0.5)
             final_destruction = destruction_rate * min_destruction
 
-            # print(final_destruction, "final_destruction")
 
             before_casulaties = list(dict(defender.selected_units).values())[0]
             defender.casualties(target, final_destruction)
@@ -751,7 +745,6 @@ class Military(Nation):
         elif attacker_unit_amount_bonuses == 0:
             attacker_chance = 0
 
-        # print(attacker_chance, defender_chance)
 
         # Determine the winner using the extracted helper (keeps logic identical)
         from attack_scripts.combat_helpers import resolve_battle_outcome
@@ -793,8 +786,6 @@ class Military(Nation):
 
         war_id, morale = Military.get_morale(morale_column, attacker, defender)
 
-        # print("MORALE COLUMN", morale_column, "WINNER FROM FIGHT MEHTOD", winner.user_id)
-        # print("ATTC", attacker.user_id, defender.user_id)
 
         # Compute a per-unit morale delta based on the loser's unit composition and the win_type.
         # We attach the computed delta to the loser object so `morale_change` can consume it.
@@ -873,7 +864,6 @@ class Military(Nation):
         # # example for the above line: if war_type is raze then attack_effects[0]*10
         # infra_damage_effects = Military.infrastructure_damage(attack_effects[0], public_works, random_province)
 
-        # return (winner.user_id, return_winner_cas, return_loser_cas)
         return (winner.user_id, win_condition, [dealt_infra_damage, 0])
 
     # select only needed units instead of all

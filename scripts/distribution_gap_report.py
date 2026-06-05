@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Report ration distribution gap for a nation (default: test user 16)."""
 
-from __future__ import annotations
 
 import argparse
 import os

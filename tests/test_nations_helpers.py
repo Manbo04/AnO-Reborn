@@ -9,7 +9,6 @@ class _FakeEnemy:
 def test_calculate_bonuses_basic():
     # 10 of target unit, total 110 -> unit_of_army ~= 9.90099
     # attack_effects[1] = 50 -> affected_bonus ~= 50 * 0.0990099 = 4.95049
-    # return value ~= 4.95049 / 100 = 0.0495049
     enemy = _FakeEnemy({"soldiers": 10, "tanks": 100})
     v = calculate_bonuses((0, 50), enemy, "soldiers")
     # expected ~= 0.045045045 (see calculation in helper)
