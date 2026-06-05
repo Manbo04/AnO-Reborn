@@ -1676,22 +1676,21 @@ def admin_init_database():
 
 @app.route("/admin/debug_wealth")
 def admin_debug_wealth():
-    """Temporary route to debug the database schema in production."""
+    """Temporary route to debug the resource dictionary in production."""
     with get_request_cursor(read_only=True) as db:
         db.execute(
             """
-            SELECT table_name, column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name ILIKE '%user%' OR table_name ILIKE '%stat%' OR table_name ILIKE '%econ%'
-            ORDER BY table_name, ordinal_position;
+            SELECT resource_id, name, display_name 
+            FROM resource_dictionary 
+            ORDER BY resource_id;
             """
         )
-        columns = db.fetchall()
+        resources = db.fetchall()
         
         # Format the output for HTML readability
-        html = "<h3>Database Schema</h3><table border='1'><tr><th>Table</th><th>Column</th><th>Type</th></tr>"
-        for col in columns:
-            html += f"<tr><td>{col[0]}</td><td>{col[1]}</td><td>{col[2]}</td></tr>"
+        html = "<h3>Resource Dictionary</h3><table border='1'><tr><th>ID</th><th>Name</th><th>Display</th></tr>"
+        for res in resources:
+            html += f"<tr><td>{res[0]}</td><td>{res[1]}</td><td>{res[2]}</td></tr>"
         html += "</table>"
         
         return html
