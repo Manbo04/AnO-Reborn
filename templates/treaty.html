@@ -1,0 +1,121 @@
+{% extends "layout.html" %} {% block title %} Treaties {% endblock %} {% block body %}
+
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            handshake
+            </span>Diplomatic Treaties</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft">Form alliances and pacts with other nations. Treaties offer mutual benefits, such as preventing wars via Non-Aggression Pacts.</p>
+        
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">add_circle</span> Offer Treaty</h2>
+        <div class="templateformdiv">
+            <form action="/treaties/offer" method="post">
+                <input type="text" name="recipient_name" placeholder="Nation Name" class="templateinput" required>
+                <select name="treaty_type" class="templateinput" required>
+                    <option value="non_aggression">Non-Aggression Pact (NAP)</option>
+                    <option value="mutual_defense">Mutual Defense Pact (MDP)</option>
+                </select>
+                <button type="submit" class="templatebutton">Send Offer</button>
+            </form>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">verified</span> Active Treaties</h2>
+        <table class="templatetable">
+            <tr>
+                <th>Nation</th>
+                <th>Type</th>
+                <th>Date Formed</th>
+                <th>Action</th>
+            </tr>
+            {% for t in active_treaties %}
+            <tr>
+                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td>
+                    {% if t[1] == 'non_aggression' %}
+                    <span style="color: lightgreen;">Non-Aggression</span>
+                    {% elif t[1] == 'mutual_defense' %}
+                    <span style="color: orange;">Mutual Defense</span>
+                    {% endif %}
+                </td>
+                <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <form action="/treaties/cancel/{{ t[0] }}" method="post" style="display:inline;">
+                        <button type="submit" class="templatebuttondanger" style="padding: 2px 10px;">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not active_treaties %}
+            <tr><td colspan="4" style="text-align: center;">No active treaties.</td></tr>
+            {% endif %}
+        </table>
+
+        <br>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">mark_email_unread</span> Incoming Offers</h2>
+        <table class="templatetable">
+            <tr>
+                <th>From Nation</th>
+                <th>Type</th>
+                <th>Date Offered</th>
+                <th>Action</th>
+            </tr>
+            {% for t in incoming_treaties %}
+            <tr>
+                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td>
+                    {% if t[1] == 'non_aggression' %}Non-Aggression
+                    {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
+                </td>
+                <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <form action="/treaties/accept/{{ t[0] }}" method="post" style="display:inline;">
+                        <button type="submit" class="templatebutton" style="padding: 2px 10px;">Accept</button>
+                    </form>
+                    <form action="/treaties/reject/{{ t[0] }}" method="post" style="display:inline;">
+                        <button type="submit" class="templatebuttondanger" style="padding: 2px 10px;">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not incoming_treaties %}
+            <tr><td colspan="4" style="text-align: center;">No incoming offers.</td></tr>
+            {% endif %}
+        </table>
+
+        <br>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">schedule</span> Pending Outgoing Offers</h2>
+        <table class="templatetable">
+            <tr>
+                <th>To Nation</th>
+                <th>Type</th>
+                <th>Date Sent</th>
+                <th>Action</th>
+            </tr>
+            {% for t in outgoing_treaties %}
+            <tr>
+                <td><a href="/country/{{ t[4] }}" style="color: white;">{{ t[3] }}</a></td>
+                <td>
+                    {% if t[1] == 'non_aggression' %}Non-Aggression
+                    {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
+                </td>
+                <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <form action="/treaties/cancel/{{ t[0] }}" method="post" style="display:inline;">
+                        <button type="submit" class="templatebuttondanger" style="padding: 2px 10px;">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not outgoing_treaties %}
+            <tr><td colspan="4" style="text-align: center;">No outgoing offers.</td></tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}

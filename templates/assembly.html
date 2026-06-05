@@ -1,67 +1,63 @@
-{% extends "layout.html"%} {% block title %} Assembly {% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Assembly {% endblock %} {% block body %}
 
 <div class="templatediv">
-
-    <div class="templatedivtopper assemblytopper">
+    <div class="templatedivtopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            chat
-            </span>Assembly</h1>
+            how_to_vote
+            </span>World Assembly</h1>
     </div>
 
     <div class="templatedivcontent">
+        <h2 class="templatecontentheadercenter">Official Poll: Name of the World</h2>
+        <p class="templatecontentpleft">The time has come to officially name our planet. Cast your vote below. You can change your vote at any time before the poll closes.</p>
 
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Issue</th>
-                    <th>Last Author</th>
-                    <th>Last Post</th>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="/dows">Declerations of War</a>
-                    </td>
-                    <td>[[ lastAuthor ]]</td>
-                    <td>[[ timeSince ]]</td>
-                </tr>
-            </table>
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="2"><span class="material-icons-outlined">
+                            ballot
+                            </span>Vote Here</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <form action="/assembly" method="post" style="display: flex; flex-direction: column; gap: 10px;">
+                                {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
+                                {% for opt in options %}
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                                    <input type="radio" name="vote_option" value="{{ opt }}" {% if user_vote == opt %}checked{% endif %} required>
+                                    <span>{{ opt }}</span>
+                                    {% if user_vote == opt %}<span style="color: lightgreen; font-size: 0.8em;">(Your Current Vote)</span>{% endif %}
+                                </label>
+                                {% endfor %}
+                                <button type="submit" class="templatebutton" style="margin-top: 10px;">Submit Vote</button>
+                            </form>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr>
+                        <th colspan="2"><span class="material-icons-outlined">
+                            poll
+                            </span>Current Results</th>
+                    </tr>
+                    <tr>
+                        <th>Option</th>
+                        <th>Votes</th>
+                    </tr>
+                    {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
+                    {% for opt in options %}
+                    <tr>
+                        <td>{{ opt }}</td>
+                        <td>{{ results.get(opt, 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
