@@ -228,6 +228,11 @@ def create_app():
     # Root route registrations
     signup.register_signup_routes(app)
     login.register_login_routes(app)
+    
+    # Google Auth Registration
+    from app_core.auth.google_auth import register_google_auth_routes
+    register_google_auth_routes(app)
+    
     change.register_change_routes(app)
     bot_api.register_bot_api_routes(app)
     countries.register_countries_routes(app)
