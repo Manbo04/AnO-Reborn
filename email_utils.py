@@ -104,25 +104,42 @@ def verify_email_token(token):
         return None
 
 
+
 def send_email(to_email, subject, html_content, text_content=None):
     """
-    Send an email using SMTP.
-
-    Args:
-        to_email: Recipient email address
-        subject: Email subject line
-        html_content: HTML body of the email
-        text_content: Plain text fallback (optional)
-
-    Returns:
-        bool: True if sent successfully, False otherwise
+    Send an email using Resend API.
     """
+    import os
+    import resend
+    
     config = get_email_config()
+    resend.api_key = os.getenv("RESEND_API_KEY")
+    
+    if not resend.api_key:
+        logger.warning("RESEND_API_KEY is not set.")
+        return False
 
-    if not is_email_configured():
-        logger.warning(
-            "Email not configured - EMAIL_HOST_USER and EMAIL_HOST_PASSWORD required"
-        )
+    try:
+        from_email = config.get('user', 'onboarding@resend.dev')
+        if '@' not in from_email:
+            from_email = 'onboarding@resend.dev'
+            
+        params = {
+            "from": f"{config.get('from_name', 'Affairs and Order')} <{from_email}>",
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+        }
+
+        if text_content:
+            params["text"] = text_content
+
+        resend.Emails.send(params)
+        logger.info(f"Email sent successfully to {to_email} via Resend")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error sending email via Resend: {e}")
         return False
 
     try:

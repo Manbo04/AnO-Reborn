@@ -41,6 +41,9 @@ def register_email():
         db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('hash', 'password')")
         cols = [r[0] for r in db.fetchall()]
         
+        db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
+        has_verification = db.fetchone() is not None
+        
         insert_cols = "username, email, date, auth_type"
         insert_vals = "(%s, %s, %s, %s"
         params = [username, email, str(datetime.date.today()), "email"]
@@ -54,18 +57,32 @@ def register_email():
             insert_vals += ", %s"
             params.append(hashed_password)
             
+        verification_token = None
+        from email_utils import is_email_configured, generate_verification_token, send_verification_email
+        if has_verification and is_email_configured():
+            verification_token = generate_verification_token(email)
+            insert_cols += ", is_verified, verification_token, token_created_at"
+            insert_vals += ", %s, %s, NOW()"
+            params.extend([False, verification_token])
+            
         insert_vals += ")"
         
         db.execute(f"INSERT INTO users ({insert_cols}) VALUES {insert_vals} RETURNING id", params)
         user_id = db.fetchone()[0]
+
+        if verification_token and is_email_configured():
+            send_verification_email(email, username, verification_token)
 
         db.execute("INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING", (user_id, continent))
         db.execute("INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (user_id,))
         from signup import _init_economy_tables
         _init_economy_tables(db, user_id)
         
-    session["user_id"] = user_id
-    return redirect("/")
+    if verification_token:
+        return redirect(f"/verification_pending?email={email}")
+    else:
+        session["user_id"] = user_id
+        return redirect("/")
 
 @email_auth_bp.route("/login/email", methods=["POST"])
 def login_email():
