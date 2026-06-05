@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Warn if POST forms in templates lack explicit csrf_token (layout JS is not enough)."""
 
-from __future__ import annotations
 
 import re
 import sys

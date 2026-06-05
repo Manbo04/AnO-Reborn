@@ -1,5 +1,4 @@
 import json
-import urllib.request
 import time
 
 TOKEN = "rw_Fe26.2**13a534d682a356b16fc581fe3571adafbfc3fc31fe0372f5eae495987f1b3341*DYwZuP-Zxj1Byc4sCLtbUg*mlOxC3rwVMEDC5msL_6jlpvXMWcTzkiJGx0gv3So1UE9qnimMvzJL3xkhh7peGXRIj7cLEtcpxotLQgPsMrEPw*1781889391930*c7436faf6b69f84424161f23fa92a744173466e146796911a8e0dd910b25c85f*egCXV341RQsf50mqFjns50hRhfkETnXEGuG2ZucitqA"

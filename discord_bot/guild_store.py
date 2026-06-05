@@ -1,6 +1,5 @@
 """Persist Discord guild panel configuration and message IDs."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional

@@ -1,6 +1,5 @@
 """Guild admin checks for staff-only slash commands."""
 
-from __future__ import annotations
 
 import os
 from typing import Optional, Set

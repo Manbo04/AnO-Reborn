@@ -6,7 +6,6 @@ Requires: pip install edge-tts
 Run from repo root: python3 scripts/generate_tutorial_narration.py
 """
 
-from __future__ import annotations
 
 import asyncio
 import json

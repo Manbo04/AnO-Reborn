@@ -17,7 +17,6 @@ Usage:
 After applying views on Railway, redeploy **web**, **bot**, **celery-worker**, and **beat**.
 """
 
-from __future__ import annotations
 
 import argparse
 import os

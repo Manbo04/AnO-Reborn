@@ -9,7 +9,6 @@ Example (natural-gratitude Discord, 2026-05-23):
 Uses diagnose_database_schema first; exits if users table missing.
 """
 
-from __future__ import annotations
 
 import argparse
 import os

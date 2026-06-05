@@ -4,7 +4,6 @@ DB-backed progression milestones for test account 16 (Tester of the Game).
 Snapshots and restores user state — LEAVE NO TRACE.
 """
 
-from __future__ import annotations
 
 import os
 import subprocess
@@ -152,8 +151,6 @@ def test_gas_station_price_matches_variables():
 
 def test_production_country_page_200():
     """Smoke production country page without importing Flask (avoids jinja2 pin issues)."""
-    import urllib.error
-    import urllib.request
 
     base = os.getenv("PROD_URL", "https://affairsandorder.com").rstrip("/")
     url = f"{base}/country/id={TEST_USER_ID}"

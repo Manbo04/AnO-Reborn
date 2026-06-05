@@ -847,3 +847,18 @@ def get_coalition_influence(coalition_id):
         query_cache.set(cache_key, total_influence)
 
         return total_influence
+
+def get_valid_int(field_name, default="0", min_val=1, error_invalid="Invalid value", error_min="Value must be positive"):
+    from flask import request
+    val_str = request.form.get(field_name, default)
+    if not val_str:
+        return None, error(400, f"{field_name} is required")
+    try:
+        if isinstance(val_str, str):
+            val_str = val_str.replace(",", "")
+        val = int(val_str)
+        if min_val is not None and val < min_val:
+            return None, error(400, error_min)
+        return val, None
+    except (ValueError, TypeError, AttributeError):
+        return None, error(400, error_invalid)

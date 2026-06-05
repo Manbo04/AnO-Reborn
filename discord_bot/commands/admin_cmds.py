@@ -1,6 +1,5 @@
 """Staff-only admin slash commands (not available to regular players)."""
 
-from __future__ import annotations
 
 import asyncio
 

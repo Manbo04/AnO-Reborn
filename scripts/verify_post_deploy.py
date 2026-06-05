@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """HTTP smoke checks after deploy (no auth required for public routes)."""
 
-from __future__ import annotations
 
 import argparse
 import sys
-import urllib.error
-import urllib.request
 
 DEFAULT_BASE = "https://affairsandorder.com"
 

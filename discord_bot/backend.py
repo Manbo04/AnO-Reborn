@@ -1,6 +1,5 @@
 """Data access for slash commands: direct Postgres (preferred on Railway bot) or HTTP API."""
 
-from __future__ import annotations
 
 import os
 from typing import Any, Dict, Optional, Protocol

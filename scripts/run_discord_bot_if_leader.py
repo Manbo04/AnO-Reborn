@@ -9,7 +9,6 @@ Requires REDIS_URL (same as Celery). Set DISCORD_BOT_TOKEN and either
 BOT_API_SECRET or SECRET_KEY (for derived API auth).
 """
 
-from __future__ import annotations
 
 import os
 import sys
@@ -18,7 +17,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
-import urllib.parse
 
 LOCK_KEY = os.getenv("DISCORD_BOT_LEADER_LOCK_KEY", "discord_bot:leader")
 LOCK_TTL = int(os.getenv("DISCORD_BOT_LEADER_LOCK_TTL", "120"))

@@ -1,6 +1,5 @@
 """Staff-only guild panel configuration (administrators only)."""
 
-from __future__ import annotations
 
 import discord
 from discord import app_commands

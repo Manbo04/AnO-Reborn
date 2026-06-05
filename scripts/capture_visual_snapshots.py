@@ -6,7 +6,6 @@ Usage:
   DEPLOY_URL=https://affairsandorder.com python3 scripts/capture_visual_snapshots.py
 """
 
-from __future__ import annotations
 
 import os
 from pathlib import Path

@@ -1,6 +1,5 @@
 """Authenticated HTTP API for the AnO Discord bot (internal use only)."""
 
-from __future__ import annotations
 
 import hashlib
 import hmac

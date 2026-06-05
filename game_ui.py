@@ -1,7 +1,6 @@
 """
 Game UI layer: feature flags, asset manifest, province base layout, Jinja helpers.
 """
-from __future__ import annotations
 
 import json
 import os

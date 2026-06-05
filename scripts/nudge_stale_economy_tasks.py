@@ -11,11 +11,9 @@ Usage (automatic from scripts/start_production.sh):
     DATABASE_URL=... REDIS_URL=... python3 scripts/nudge_stale_economy_tasks.py
 """
 
-from __future__ import annotations
 
 import os
 import sys
-import urllib.parse
 
 from dotenv import load_dotenv
 

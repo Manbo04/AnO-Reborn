@@ -8,7 +8,6 @@ Uses ffmpeg (Ken Burns + optional slideshow). Run from repo root:
 Output: static/tutorial/videos/chNN-*.mp4
 """
 
-from __future__ import annotations
 
 import subprocess
 import sys

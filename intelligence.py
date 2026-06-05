@@ -3,7 +3,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
 import time
-from random import random
 from dotenv import load_dotenv
 import variables
 import random as rand
