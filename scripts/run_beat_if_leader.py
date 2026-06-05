@@ -63,10 +63,10 @@ r = redis.Redis(**redis_kwargs)
 
 def acquire_lock():
     """Try to acquire the Redis leader lock with retries."""
-    max_wait = LOCK_TTL * 2
     retry_interval = 5
     elapsed = 0
-    while elapsed < max_wait:
+    # Wait indefinitely so rolling deployments don't crash the new container
+    while True:
         try:
             got = r.set(LOCK_KEY, "1", nx=True, ex=LOCK_TTL)
         except Exception as e:
@@ -76,11 +76,10 @@ def acquire_lock():
             return True
         print(
             f"Did not acquire beat leader lock; retrying in {retry_interval}s "
-            f"({elapsed}/{max_wait}s elapsed)"
+            f"({elapsed}s elapsed)"
         )
         time.sleep(retry_interval)
         elapsed += retry_interval
-    return False
 
 
 def run_beat():
@@ -102,9 +101,7 @@ def run_beat():
 
 # --- Main loop: acquire lock, run beat, restart on failure ---
 
-if not acquire_lock():
-    print(f"Failed to acquire beat leader lock after {LOCK_TTL * 2}s")
-    sys.exit(1)
+acquire_lock()
 
 print("Acquired beat leader lock; starting celery beat")
 
