@@ -392,7 +392,7 @@ def buy_market_offer(offer_id):
             return error(400, "Amount must be a valid number")
 
         db.execute(
-            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
+            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=%s",
             (offer_id,),
         )
         row = db.fetchone()
@@ -414,7 +414,7 @@ def buy_market_offer(offer_id):
         if amount_wanted > total_amount:
             return error(400, "Requested amount exceeds available amount")
 
-        db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
+        db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (cId,))
         buyer_gold_row = db.fetchone()
         if not buyer_gold_row:
             return error(500, "Your nation data could not be found")
@@ -487,10 +487,10 @@ def buy_market_offer(offer_id):
         new_offer_amount = total_amount - amount_wanted
 
         if new_offer_amount == 0:
-            db.execute("DELETE FROM offers WHERE offer_id=(%s)", (offer_id,))
+            db.execute("DELETE FROM offers WHERE offer_id=%s", (offer_id,))
         else:
             db.execute(
-                "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
+                "UPDATE offers SET amount=%s WHERE offer_id=%s",
                 (new_offer_amount, offer_id),
             )
 
@@ -522,7 +522,7 @@ def sell_market_offer(offer_id):
             return error(400, "Amount must be a valid number")
 
         db.execute(
-            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)",
+            "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=%s",
             (offer_id,),
         )
         row = db.fetchone()
@@ -609,12 +609,12 @@ def sell_market_offer(offer_id):
 
         if new_offer_amount == 0:  # Checks if the new offer amount is equal to 0
             db.execute(
-                "DELETE FROM offers WHERE offer_id=(%s)", (offer_id,)
+                "DELETE FROM offers WHERE offer_id=%s", (offer_id,)
             )  # If yes, it deletes the offer
 
         else:
             db.execute(
-                "UPDATE offers SET amount=(%s) WHERE offer_id=(%s)",
+                "UPDATE offers SET amount=%s WHERE offer_id=%s",
                 (new_offer_amount, offer_id),
             )  # Updates the database with the new amount
 
@@ -692,7 +692,7 @@ def post_offer(offer_type):
 
         elif offer_type == "buy":
             money_to_take_away = int(amount) * int(price)
-            db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
+            db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (cId,))
             money_row = db.fetchone()
             if not money_row:
                 return error(500, "Your nation data could not be found")
@@ -736,7 +736,7 @@ def my_offers():
                 "SELECT trades.offer_id, trades.price, trades.resource, "
                 "trades.amount, trades.type, trades.offeree, users.username "
                 "FROM trades INNER JOIN users ON trades.offeree=users.id "
-                "WHERE trades.offerer=(%s) ORDER BY trades.offer_id ASC"
+                "WHERE trades.offerer=%s ORDER BY trades.offer_id ASC"
             ),
             (cId,),
         )
@@ -747,7 +747,7 @@ def my_offers():
                 "SELECT trades.offer_id, trades.price, trades.resource, "
                 "trades.amount, trades.type, trades.offerer, users.username "
                 "FROM trades INNER JOIN users ON trades.offerer=users.id "
-                "WHERE trades.offeree=(%s) ORDER BY trades.offer_id ASC"
+                "WHERE trades.offeree=%s ORDER BY trades.offer_id ASC"
             ),
             (cId,),
         )
@@ -756,7 +756,7 @@ def my_offers():
         db.execute(
             (
                 "SELECT offer_id, price, resource, amount, type "
-                "FROM offers WHERE user_id=(%s) ORDER BY offer_id ASC"
+                "FROM offers WHERE user_id=%s ORDER BY offer_id ASC"
             ),
             (cId,),
         )
@@ -772,7 +772,7 @@ def delete_offer(offer_id):
     with get_request_cursor() as db:
         # Atomic delete to prevent race conditions
         db.execute(
-            "DELETE FROM offers WHERE offer_id=(%s) AND user_id=(%s) RETURNING type, amount, price, resource",
+            "DELETE FROM offers WHERE offer_id=%s AND user_id=%s RETURNING type, amount, price, resource",
             (offer_id, cId)
         )
         deleted_row = db.fetchone()
@@ -870,7 +870,7 @@ def trade_offer(offer_type, offeree_id):
                 )
 
                 money_to_take_away = amount * price
-                db.execute("SELECT gold FROM stats WHERE id=(%s) FOR UPDATE", (cId,))
+                db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (cId,))
                 escrow_money_row = db.fetchone()
                 if not escrow_money_row:
                     return error(500, "Your nation data could not be found")
@@ -902,7 +902,7 @@ def decline_trade(trade_id):
     with get_request_cursor() as db:
         # Atomic delete to prevent race conditions and duplicate refunds
         db.execute(
-            "DELETE FROM trades WHERE offer_id=(%s) AND (offeree=(%s) OR offerer=(%s)) RETURNING type, resource, amount, price, offerer",
+            "DELETE FROM trades WHERE offer_id=%s AND (offeree=%s OR offerer=%s) RETURNING type, resource, amount, price, offerer",
             (trade_id, cId, cId)
         )
         deleted_row = db.fetchone()
@@ -960,7 +960,7 @@ def accept_trade(trade_id):
             db.execute(
                 (
                     "SELECT offeree, type, offerer, resource, amount, price "
-                    "FROM trades WHERE offer_id=(%s)"
+                    "FROM trades WHERE offer_id=%s"
                 ),
                 (trade_id,),
             )
@@ -1146,7 +1146,7 @@ def accept_trade(trade_id):
 
         # Remove the trade now that the transfer has succeeded
         try:
-            db.execute("DELETE FROM trades WHERE offer_id=(%s)", (trade_id,))
+            db.execute("DELETE FROM trades WHERE offer_id=%s", (trade_id,))
         except Exception:
             pass
 
