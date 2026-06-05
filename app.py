@@ -957,86 +957,35 @@ def commas(value):
     return returned
 
 
-# Jinja2 filter for human-readable numbers (1K, 1.5M, 2B, etc.)
+# Jinja2 filter for human-readable numbers (now restored to standard commas)
 @app.template_filter()
 def fmt(value):
-    """Format numbers in human-readable format:
-    - Under 10,000: show as-is with commas (1, 100, 1,000, 9,999)
-    - 10K-999K: show as K (10K, 100K, 500K)
-    - 1M-999M: show as M (1M, 1.5M, 100M)
-    - 1B+: show as B (1B, 1.5B)
-    """
     try:
         num = float(value)
-        if num < 0:
-            return "-" + fmt(abs(num))
-
-        if num < 10000:
-            # Under 10K: show with commas
-            if num == int(num):
-                return "{:,}".format(int(num))
-            return "{:,.1f}".format(num)
-        elif num < 1000000:
-            # 10K - 999K
-            k = num / 1000
-            if k == int(k):
-                return "{:,}K".format(int(k))
-            return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
-        elif num < 1000000000:
-            # 1M - 999M
-            m = num / 1000000
-            if m == int(m):
-                return "{}M".format(int(m))
-            return "{:.1f}M".format(m).rstrip("0").rstrip(".")
-        else:
-            # 1B+
-            b = num / 1000000000
-            if b == int(b):
-                return "{}B".format(int(b))
-            return "{:.1f}B".format(b).rstrip("0").rstrip(".")
+        if num.is_integer():
+            return "{:,}".format(int(num))
+        return "{:,.1f}".format(num)
     except (TypeError, ValueError):
         return value
 
+@app.template_filter("human_format")
+def human_format(num):
+    try:
+        num = float(num)
+        if num.is_integer():
+            return "{:,}".format(int(num))
+        return "{:,.1f}".format(num)
+    except (ValueError, TypeError):
+        return num
 
-# Jinja2 filter for weight-based resource display (kg/t/kt/Mt)
-
-
+# Jinja2 filter for weight-based resource display (restored to standard commas)
 @app.template_filter()
 def weight_fmt(value):
-    """Format numbers as weight units (kg → t → kt → Mt):
-    - Under 1,000: show as kg (500 kg, 999 kg)
-    - 1K-999K: show as t (1 t, 500 t, 999 t) [Metric Tons]
-    - 1M-999M: show as kt (1 kt, 500 kt, 999 kt) [Kilotons]
-    - 1B+: show as Mt (1 Mt, 50 Mt) [Megatons]
-    """
     try:
         num = float(value)
-        if num < 0:
-            return "-" + weight_fmt(abs(num))
-
-        if num < 1000:
-            # Under 1K: show as kg
-            if num == int(num):
-                return "{:,} kg".format(int(num))
-            return "{:,.1f} kg".format(num)
-        elif num < 1000000:
-            # 1K - 999K: Metric Tons
-            t = num / 1000
-            if t == int(t):
-                return "{:,} t".format(int(t))
-            return "{:,.1f} t".format(t)
-        elif num < 1000000000:
-            # 1M - 999M: Kilotons
-            kt = num / 1000000
-            if kt == int(kt):
-                return "{:,} kt".format(int(kt))
-            return "{:,.1f} kt".format(kt)
-        else:
-            # 1B+: Megatons
-            mt = num / 1000000000
-            if mt == int(mt):
-                return "{:,} Mt".format(int(mt))
-            return "{:,.1f} Mt".format(mt)
+        if num.is_integer():
+            return "{:,}".format(int(num))
+        return "{:,.1f}".format(num)
     except (TypeError, ValueError):
         return value
 

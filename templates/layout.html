@@ -482,7 +482,8 @@
 
         <style>
             @media (min-width: 1250px) {
-                .global-ad-left, .global-ad-right {
+                body:not(.game-shell-active) .global-ad-left,
+                body:not(.game-shell-active) .global-ad-right {
                     display: flex !important;
                 }
             }
