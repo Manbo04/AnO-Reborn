@@ -5023,6 +5023,11 @@ body:has(.loginsignupdiv) .footer {
     padding: 8px 16px 24px;
 }
 
+.loginsignupdiv .templatedivcontent p,
+.loginsignupdiv .templatedivcontent label {
+    color: #e2e8f0 !important;
+}
+
 .auth-columns {
     display: flex;
     flex-wrap: wrap;
