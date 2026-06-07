@@ -66,7 +66,29 @@ def _init_economy_tables(db, user_id):
         "ON CONFLICT DO NOTHING",
         (user_id,),
     )
-    logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)
+    logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)\n
+def init_user_game_data(db, user_id, continent):
+    """Initialize all game-related data for a new user across all providers."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # 1. Stats
+    db.execute(
+        "INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+        (user_id, continent),
+    )
+    
+    # 2. Policies
+    db.execute(
+        "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
+        (user_id,),
+    )
+    
+    # 3. Economy 2.0
+    _init_economy_tables(db, user_id)
+    
+    logger.info(f"Initialized game data for user_id={user_id} on continent={continent}")
+
 
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
@@ -832,36 +854,7 @@ def signup():
             # These must be created for ALL signup paths (verification and legacy)
             # NOTE: resources and upgrades tables were removed in Economy 2.0
             # migration; their data now lives in user_economy / user_buildings.
-            db.execute(
-                (
-                    "INSERT INTO stats (id, location) VALUES (%s, %s) "
-                    "ON CONFLICT DO NOTHING RETURNING id"
-                ),
-                (user_id, continent),
-            )
-            if not db.fetchone():
-                logger.info(
-                    "signup: stats row already exists for user_id=%s ip=%s",
-                    user_id,
-                    request.remote_addr,
-                )
-
-            db.execute(
-                (
-                    "INSERT INTO policies (user_id) VALUES (%s) "
-                    "ON CONFLICT DO NOTHING RETURNING user_id"
-                ),
-                (user_id,),
-            )
-            if not db.fetchone():
-                logger.info(
-                    "signup: policies row already exists for user_id=%s ip=%s",
-                    user_id,
-                    request.remote_addr,
-                )
-
-            # Initialize Economy 2.0 normalized tables
-            _init_economy_tables(db, user_id)
+            init_user_game_data(db, user_id, continent)
 
             # If verification is enabled, redirect to pending page.
             # Otherwise, log them in
