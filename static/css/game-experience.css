@@ -1176,7 +1176,16 @@ body.game-reduced-motion .province-map-node-pin::after {
 }
 
 .market-offer-total {
+    display: none;
     margin: 6px 0 0;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
+}
+
+.market-offer-total.is-visible {
+    display: block;
+}
+
+td .market-offer-total.is-visible {
+    margin-top: 4px;
 }
