@@ -53,3 +53,4 @@ Affairs & order is a nation simulation game, where you can make your own nation,
 2. Run the beat pool by running: `celery -A app.celery beat --loglevel=INFO` in the terminal.
 3. Run *1* worker by running: `celery -A app.celery worker --loglevel=INFO` in another terminal window.
 4. For `celery` to work, RabbitMQ must be running.
+# Trigger build
