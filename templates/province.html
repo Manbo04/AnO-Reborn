@@ -2,11 +2,10 @@
 {% block title %}{{ province['name'] }}{% endblock %}
 {% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
 {% block extra_head %}
-{% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-{% endif %}
+<script defer src="{{ url_for('static', filename='province-demographics.js') }}?v=1"></script>
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
-<script defer src="{{ url_for('static', filename='province-base.js') }}?v=7"></script>
+<script defer src="{{ url_for('static', filename='province-base.js') }}?v=8"></script>
 {% endif %}
 {% endblock %}
 {% block body %}
@@ -35,59 +34,42 @@
         {% include 'partials/province_info.html' %}
 
 
-        <div class="templatedivflex2 menuflex">
-            {% if province["own"] %}
-            <div class="templatedivflex2left">
-                <div class="infodiv">
-                    <h3 class="templatecontentheadercenter">Quick Build (Normalized)</h3>
-                    <form method="POST" action="/build_structure">
-                        <input type="hidden" name="province_id" value="{{ province['id'] }}" />
-                        <label for="building_id">Structure</label>
-                        <select class="templateselect" name="building_id" id="building_id" required>
-                            {% if normalized_buildings and normalized_buildings|length > 0 %}
-                            {% for b in normalized_buildings %}
-                            <option value="{{ b['building_id'] }}">
-                                {{ b['display_name'] }} ({{ b['base_cost'] | fmt }} {{ build_cost_resource }})
-                            </option>
-                            {% endfor %}
-                            {% else %}
-                            <option value="" disabled selected>No structures available</option>
-                            {% endif %}
-                        </select>
-                        <label for="build_qty">Quantity</label>
-                        <input
-                            class="loginsignupinput"
-                            type="number"
-                            min="1"
-                            value="1"
-                            name="quantity"
-                            id="build_qty"
-                            required
-                        />
-                        <button type="submit" class="templatedivbutton templatecenteredbutton">
-                            <span class="material-icons-outlined">construction</span>Build
-                        </button>
-                    </form>
+        {% if province["own"] %}
+        <div class="province-owner-tools game-stack">
+            <div class="infodiv province-owner-build">
+                <h3 class="templatecontentheadercenter">Quick Build (Normalized)</h3>
+                <form method="POST" action="/build_structure">
+                    <input type="hidden" name="province_id" value="{{ province['id'] }}" />
+                    <label for="building_id">Structure</label>
+                    <select class="templateselect" name="building_id" id="building_id" required>
+                        {% if normalized_buildings and normalized_buildings|length > 0 %}
+                        {% for b in normalized_buildings %}
+                        <option value="{{ b['building_id'] }}">
+                            {{ b['display_name'] }} ({{ b['base_cost'] | fmt }} {{ build_cost_resource }})
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="" disabled selected>No structures available</option>
+                        {% endif %}
+                    </select>
+                    <label for="build_qty">Quantity</label>
+                    <input
+                        class="loginsignupinput"
+                        type="number"
+                        min="1"
+                        value="1"
+                        name="quantity"
+                        id="build_qty"
+                        required
+                    />
+                    <button type="submit" class="templatedivbutton templatecenteredbutton">
+                        <span class="material-icons-outlined">construction</span>Build
+                    </button>
+                </form>
+            </div>
 
-                    <form method="POST">
-
-                        <div class="templatedivflex2 divflex2center">
-                            <div class="templatedivflex2left">
-
-                                <label>Purchase type</label>
-
-                                <select name="resource" class="templateselect">
-
-                            <option selected="selected">Add Amount</option>
-                            <!--
-                            <option class="templateoption">Purchase up to</option>
-                            Temporarily disabled, will add after launch
-                            -->
-
-                                    </select>
-
-                            </div>
-                        </div>
+            <form method="POST" class="province-purchase-grid game-panel-grid game-panel-grid--2">
+                <div class="infodiv province-purchase-panel">
                         <script>
                             const citiesCost = function(event) {
                                 var citiesamount = document.getElementById("citiesamount").value;
@@ -122,7 +104,7 @@
                                 citiesoutput.innerHTML = newOutputPrice;
                             }
                         </script>
-                        <ul>Purchase Cities</ul>
+                        <h3 class="templatecontentheadercenter">Purchase Cities</h3>
 
                         <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
                             <strong id="citiesoutput">0</strong>
@@ -144,7 +126,9 @@
 
                             </div>
                         </div>
+                </div>
 
+                <div class="infodiv province-purchase-panel">
                         <script>
                             const landCost = function(event) {
                                 var landamount = document.getElementById("landamount").value;
@@ -178,7 +162,7 @@
                                 landoutput.innerHTML = land_output_price;
                             }
                         </script>
-                        <ul>Purchase Land</ul>
+                        <h3 class="templatecontentheadercenter">Purchase Land</h3>
 
                         <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
                             <strong id="landoutput">0</strong>
@@ -200,9 +184,8 @@
                             </div>
                         </div>
                 </div>
-            </div>
+            </form>
         </div>
-        </form>
         {% endif %}
         {% if province["own"] %}
         <h2 class="templatecontentheaderleft">Infrastructure</h2>

@@ -1,60 +1,41 @@
-<div class="center fit notificationparent divflex2full">
-    <div class="left fit notificationchild">
-        {% if has_power %}
-        <ul class="right vanilla notificationchildleft">
-            <span class="material-icons-outlined">check</span>
-            Your province is powered
-        </ul>
-        {% else %}
-        <ul class="right vanilla notificationchildright">
-            <span class="material-icons-outlined">clear</span>
-            Your province is not powered
-        </ul>
-        {% endif %}
+<div class="province-status-grid">
+    <div class="province-status-card {% if has_power %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
+        <div class="province-status-card__head">
+            <span class="material-icons-outlined">{% if has_power %}check_circle{% else %}cancel{% endif %}</span>
+            <span>{% if has_power %}Your province is powered{% else %}Your province is not powered{% endif %}</span>
+        </div>
     </div>
-    <div class="left fit notificationchild">
-        {% if enough_rations %}
-        <ul class="right vanilla notificationchildleft">
-            <span class="material-icons-outlined">check</span>
-            Your citizens have rations
-        </ul>
-        {% else %}
-        <ul class="right vanilla notificationchildright">
-            <span class="material-icons-outlined">clear</span>
-            Your citizens do not have rations
-        </ul>
-        {% endif %}
+
+    <div class="province-status-card {% if enough_rations %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
+        <div class="province-status-card__head">
+            <span class="material-icons-outlined">{% if enough_rations %}check_circle{% else %}cancel{% endif %}</span>
+            <span>{% if enough_rations %}Your citizens have rations{% else %}Your citizens do not have rations{% endif %}</span>
+        </div>
         {% if distribution_capacity is not none %}
-        <ul class="right vanilla notificationchild">
+        <p class="province-status-card__detail">
             National ration distribution serves {{ distribution_capacity | commas }} population
             {% if nation_distribution and nation_distribution.uncovered_population > 0 %}
             ({{ nation_distribution.uncovered_population | commas }} citizens unserved)
             {% endif %}
-        </ul>
+        </p>
         {% endif %}
         {% if nation_distribution and nation_distribution.stockpile_bottleneck and not enough_rations %}
-        <ul class="right vanilla notificationchildright">
+        <p class="province-status-card__detail province-status-card__detail--warn">
             <span class="material-icons-outlined">warning</span>
             Large national stockpile, but distribution buildings cannot reach all citizens.
-        </ul>
+        </p>
         {% endif %}
     </div>
-    <div class="left fit notificationchild">
-        {% if enough_consumer_goods %}
-        <ul class="right vanilla notificationchildleft">
-            <span class="material-icons-outlined">check</span>
-            Your citizens have consumer goods
-        </ul>
-        {% else %}
-        <ul class="right vanilla notificationchildright">
-            <span class="material-icons-outlined">clear</span>
-            Your citizens do not have consumer goods
-        </ul>
-        {% endif %}
+
+    <div class="province-status-card {% if enough_consumer_goods %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
+        <div class="province-status-card__head">
+            <span class="material-icons-outlined">{% if enough_consumer_goods %}check_circle{% else %}cancel{% endif %}</span>
+            <span>{% if enough_consumer_goods %}Your citizens have consumer goods{% else %}Your citizens do not have consumer goods{% endif %}</span>
+        </div>
         {% if cg_distribution_capacity is not none %}
-        <ul class="right vanilla notificationchild">
+        <p class="province-status-card__detail">
             CG distribution serves {{ cg_distribution_capacity | commas }} population
-        </ul>
+        </p>
         {% endif %}
     </div>
 </div>
