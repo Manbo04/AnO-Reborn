@@ -36,7 +36,9 @@ else
   echo "[start] Add DISCORD_BOT_TOKEN to the web service (or use a dedicated bot service)."
 fi
 
-if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
+SERVICE_NAME="${RAILWAY_SERVICE_NAME:-web}"
+
+if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" && ( "$SERVICE_NAME" == "web" || "$SERVICE_NAME" == *"worker"* || "$SERVICE_NAME" == *"celery"* || "$SERVICE_NAME" == *"beat"* ) ]]; then
   echo "[start] Applying pending SQL migrations (best-effort)..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
   echo "[start] Next.js compatibility views (best-effort)..."
@@ -54,8 +56,6 @@ else
 fi
 
 export ANO_BOOT_DONE=1
-
-SERVICE_NAME="${RAILWAY_SERVICE_NAME:-web}"
 
 if [[ "$SERVICE_NAME" == *"worker"* ]] || [[ "$SERVICE_NAME" == *"celery"* ]]; then
   echo "[start] Starting Celery worker for service $SERVICE_NAME..."
