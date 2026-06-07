@@ -324,8 +324,8 @@ def main() -> None:
         _upsert_var(
             token, project_id, env_id, bot_id, "DISCORD_BOT_SKIP_LEADER_LOCK", "1"
         )
-        _upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_SIDECAR", "0")
-        print("  bot will render embeds from web API (UI updates on web deploy)")
+        _upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_SIDECAR", "1")
+        print("  web sidecar enabled (dedicated bot service optional — delete to save cost)")
         if db_url:
             _upsert_var(token, project_id, env_id, bot_id, "DATABASE_URL", db_url)
             print("  copied DATABASE_URL from web to bot (direct DB mode)")
