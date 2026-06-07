@@ -6,6 +6,7 @@ import pytest
 from app_core.ads.helpers import (
     load_rotating_ads,
     normalize_ad_image_url,
+    reset_ad_cache,
     save_ad_image_upload,
 )
 
@@ -18,11 +19,7 @@ def test_normalize_ad_image_url_external():
 
 
 def test_normalize_ad_image_url_upload_filename():
-    with patch(
-        "app_core.ads.helpers.url_for",
-        return_value="/static/uploads/ads/abc.png",
-    ):
-        assert normalize_ad_image_url("abc.png") == "/static/uploads/ads/abc.png"
+    assert normalize_ad_image_url("abc.png") == "/static/uploads/ads/abc.png"
 
 
 def test_normalize_ad_image_url_static_path():
@@ -32,6 +29,7 @@ def test_normalize_ad_image_url_static_path():
 
 
 def test_load_rotating_ads_caches_results():
+    reset_ad_cache()
     calls = {"count": 0}
 
     class FakeCursor:
