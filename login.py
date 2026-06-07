@@ -91,7 +91,7 @@ def login():
                             (
                                 "SELECT id, username, email, description, "
                                 "password, auth_type, is_verified FROM users "
-                                "WHERE username=(%s) AND auth_type='normal'"
+                                "WHERE trim(username)=trim(%s) AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
                             (username,),
                         )
@@ -100,8 +100,8 @@ def login():
                             (
                                 "SELECT id, username, email, description, "
                                 "hash, auth_type, "
-                                "is_verified FROM users WHERE username=(%s) "
-                                "AND auth_type='normal'"
+                                "is_verified FROM users WHERE trim(username)=trim(%s) "
+                                "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
                             (username,),
                         )
@@ -110,8 +110,8 @@ def login():
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
-                                "password, auth_type FROM users WHERE username=(%s) "
-                                "AND auth_type='normal'"
+                                "password, auth_type FROM users WHERE trim(username)=trim(%s) "
+                                "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
                             (username,),
                         )
@@ -119,8 +119,8 @@ def login():
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
-                                "hash, auth_type FROM users WHERE username=(%s) "
-                                "AND auth_type='normal'"
+                                "hash, auth_type FROM users WHERE trim(username)=trim(%s) "
+                                "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
                             (username,),
                         )

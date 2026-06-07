@@ -22,7 +22,7 @@ async def refresh_guild_panels(
     bot: discord.Client,
     guild_id: int,
     *,
-    channel: Optional[discord.abc.MessageableChannel] = None,
+    channel: Optional[discord.abc.Messageable] = None,
 ) -> int:
     """Update or create all bound panels for a guild. Returns count refreshed."""
     settings = get_guild_settings(str(guild_id))
