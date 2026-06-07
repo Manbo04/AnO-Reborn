@@ -421,10 +421,10 @@ def province(pId):
             normalized_buildings = [
                 enrich_building_row(
                     {
-                        "building_id": r[0],
-                        "name": r[1],
-                        "display_name": r[2],
-                        "base_cost": r[3],
+                        "building_id": r["building_id"],
+                        "name": r["name"],
+                        "display_name": r["display_name"],
+                        "base_cost": r["base_cost"],
                     }
                 )
                 for r in rows
