@@ -338,7 +338,7 @@ def province(pId):
         if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
             from tasks import consumer_goods_distribution_capacity
 
-            cg_dist_cap = consumer_goods_distribution_capacity(cId) or 0
+            cg_dist_cap = consumer_goods_distribution_capacity(cId, db=db) or 0
             # CG check must consider both stockpile AND distribution capacity
             cg_available = min(consumer_goods, cg_dist_cap)
             enough_consumer_goods = cg_available >= max_cg
@@ -373,7 +373,7 @@ def province(pId):
                 nation_distribution = None
                 dist_cap = 0
             # Match tax/population_growth: national stockpile capped by distribution
-            enough_rations = food_stats(cId) >= -1.0
+            enough_rations = food_stats(cId, db=db) >= -1.0
         else:
             enough_rations = rations - rations_minus > 1
 

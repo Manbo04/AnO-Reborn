@@ -2,7 +2,9 @@
 {% block title %}{{ province['name'] }}{% endblock %}
 {% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endif %}
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
 <script defer src="{{ url_for('static', filename='province-base.js') }}?v=7"></script>
 {% endif %}
