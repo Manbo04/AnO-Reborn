@@ -126,14 +126,6 @@ function provincesettingstoggle() {
     if (parent) parent.classList.toggle("provincesettingsparentshow");
 }
 
-// ---------------------------------------------------------------------------
-// Country page helpers
-// ---------------------------------------------------------------------------
-function revenuehide() { var el = _el("countryrevenue"); if (el) el.classList.add("hidden"); }
-function newshide() { var el = _el("countrynews"); if (el) el.classList.add("hidden"); }
-function edithide() { var el = _el("countryedit"); if (el) el.classList.add("hidden"); }
-function actionshide() { var el = _el("countryactions"); if (el) el.classList.add("hidden"); }
-
 // Coalition helpers
 function joinhide() { var el = _el("coalitionjoin"); if (el) el.classList.add("hidden"); }
 function leaderhide() { var el = _el("coalitionleader"); if (el) el.classList.add("hidden"); }

@@ -14,6 +14,7 @@ Usage (automatic from scripts/start_production.sh):
 
 import os
 import sys
+import urllib.parse
 
 from dotenv import load_dotenv
 

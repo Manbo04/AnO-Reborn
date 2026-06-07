@@ -115,14 +115,37 @@ def verify_email_token(token):
 
 def send_email(to_email, subject, html_content, text_content=None):
     """
-    Send an email. Tries Resend API first, falls back to SMTP.
+    Send an email. Prefers SMTP when configured; falls back to Resend API.
     """
     import os
     import logging
 
     logger = logging.getLogger(__name__)
     config = get_email_config()
-    
+
+    # --- Try SMTP first (Gmail / custom sender) ---
+    if config["user"] and config["password"]:
+        try:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"{config['from_name']} <{config['user']}>"
+            message["To"] = to_email
+
+            if text_content:
+                message.attach(MIMEText(text_content, "plain"))
+            message.attach(MIMEText(html_content, "html"))
+
+            context = ssl.create_default_context()
+            with smtplib.SMTP(config["host"], config["port"]) as server:
+                server.starttls(context=context)
+                server.login(config["user"], config["password"])
+                server.sendmail(config["user"], to_email, message.as_string())
+
+            logger.info("Email sent successfully to %s via SMTP", to_email)
+            return True
+        except Exception as e:
+            logger.error("Error sending email via SMTP: %s", e)
+
     # --- Try Resend ---
     resend_api_key = os.getenv("RESEND_API_KEY")
     if resend_api_key:
@@ -130,9 +153,13 @@ def send_email(to_email, subject, html_content, text_content=None):
             import resend
             resend.api_key = resend_api_key
             
-            from_email = config.get('user', 'onboarding@resend.dev')
-            if not from_email or '@' not in from_email:
-                from_email = 'onboarding@resend.dev'
+            from_email = (
+                os.getenv("RESEND_FROM")
+                or config.get("user")
+                or "onboarding@resend.dev"
+            )
+            if not from_email or "@" not in from_email:
+                from_email = "onboarding@resend.dev"
                 
             params = {
                 "from": f"{config.get('from_name', 'Affairs and Order')} <{from_email}>",
@@ -149,35 +176,9 @@ def send_email(to_email, subject, html_content, text_content=None):
         except ImportError:
             logger.debug("Resend library not installed, falling back to SMTP")
         except Exception as e:
-            logger.error(f"Error sending email via Resend: {e}")
-            # Fall through to SMTP
+            logger.error("Error sending email via Resend: %s", e)
 
-    # --- Try SMTP ---
-    if config["user"] and config["password"]:
-        try:
-            # Create message
-            message = MIMEMultipart("alternative")
-            message["Subject"] = subject
-            message["From"] = f"{config['from_name']} <{config['user']}>"
-            message["To"] = to_email
-
-            if text_content:
-                message.attach(MIMEText(text_content, "plain"))
-            message.attach(MIMEText(html_content, "html"))
-
-            # Connect and send
-            context = ssl.create_default_context()
-            with smtplib.SMTP(config["host"], config["port"]) as server:
-                server.starttls(context=context)
-                server.login(config["user"], config["password"])
-                server.sendmail(config["user"], to_email, message.as_string())
-
-            logger.info(f"Email sent successfully to {to_email} via SMTP")
-            return True
-        except Exception as e:
-            logger.error(f"Error sending email via SMTP: {e}")
-
-    logger.error(f"Failed to send email to {to_email}: No provider configured or all failed")
+    logger.error("Failed to send email to %s: No provider configured or all failed", to_email)
     return False
 
 def send_verification_email(to_email, username, token):
@@ -299,7 +300,7 @@ def send_password_reset_email(to_email, username, token):
         bool: True if sent successfully
     """
     config = get_email_config()
-    reset_url = f"{config['base_url']}/reset_password?token={token}"
+    reset_url = f"{config['base_url']}/reset_password/{token}"
 
     subject = "Reset your Affairs and Order password"
 
