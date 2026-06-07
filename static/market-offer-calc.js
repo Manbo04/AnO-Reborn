@@ -14,16 +14,23 @@
     }
 
     function ensureTotalEl(input) {
-        var wrap = input.closest('.game-market-card-form, .templatedivflex2, tr, form');
-        if (!wrap) return null;
+        var form = input.closest('form');
+        if (!form) return null;
         var id = input.getAttribute('name') || input.id || 'market';
-        var el = wrap.querySelector('[data-market-total-for="' + id + '"]');
-        if (!el) {
-            el = document.createElement('p');
-            el.className = 'market-offer-total';
-            el.setAttribute('data-market-total-for', id);
-            input.parentNode.insertBefore(el, input.nextSibling);
+        var el = form.querySelector('[data-market-total-for="' + id + '"]');
+        if (el) return el;
+
+        el = document.createElement('span');
+        el.className = 'market-offer-total';
+        el.setAttribute('data-market-total-for', id);
+
+        var flexRow = input.closest('.templatedivflex2');
+        if (flexRow) {
+            flexRow.parentNode.insertBefore(el, flexRow.nextSibling);
+            return el;
         }
+
+        form.appendChild(el);
         return el;
     }
 
@@ -41,7 +48,8 @@
         var el = ensureTotalEl(input);
         if (!el) return;
         if (amount < 1 || unitPrice <= 0) {
-            el.textContent = 'Enter amount to see total';
+            el.textContent = '';
+            el.classList.remove('is-visible');
             return;
         }
         el.textContent =
@@ -50,6 +58,7 @@
             ' (incl. 5% fee: ' +
             formatMoney(fee) +
             ')';
+        el.classList.add('is-visible');
     }
 
     function bindInput(input) {

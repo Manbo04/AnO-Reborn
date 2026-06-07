@@ -1,6 +1,6 @@
 {% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market{% endblock %}
 {% block extra_head %}
-<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=1"></script>
+<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=2"></script>
 {% endblock %}
 {% block body %}
 
@@ -13,9 +13,10 @@
     </div>
 
     <div class="templatedivcontent">
-        <form action="/market" method="GET" class="market-filters game-panel-grid game-panel-grid--2">
+        <div class="templatedivflex2 divflex2full">
             <div class="templatedivflex2left">
 
+                <form action="/market" method="GET">
                     <select name="filtered_resource" class="templateselect">
 
     <option disabled="true" selected="selected">Resource</option>
@@ -72,6 +73,7 @@
                     </span>Submit</button>
 
             </div>
+        </div>
         </form>
 
         <!-- Result count info -->
@@ -81,7 +83,7 @@
         </p>
         {% endif %}
 
-        <div class="market-actions game-panel-grid game-panel-grid--2">
+        <div class="templatedivflex2 divflex2center">
             <div class="templatedivflex2left">
 
                 <a href="marketoffer" class="center templatedivbutton"><span class="material-icons-outlined">
