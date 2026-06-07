@@ -303,7 +303,7 @@ def create_app():
             if value is None: return "$0.00"
             try: return f"${float(value):,.2f}"
             except (ValueError, TypeError): return str(value)
-        return dict(
+        return dict(\n            google_client_id=google_client_id,
             humanize_number=humanize_number,
             determine_color=determine_color,
             format_resources=format_resources,
@@ -354,7 +354,7 @@ def create_app():
         return {"game_ui": {"has_unseen_combat_logs": has_combat}}
 
     @app.context_processor
-    def inject_user():
+    def inject_user():\n        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         top_ad = None
         side_ad_left = None
         side_ad_right = None
@@ -374,7 +374,7 @@ def create_app():
         except Exception:
             pass
 
-        return dict(
+        return dict(\n            google_client_id=google_client_id,
             top_ad=top_ad,
             side_ad_left=side_ad_left,
             side_ad_right=side_ad_right,

@@ -73,10 +73,8 @@ def register_email():
         if verification_token and is_email_configured():
             send_verification_email(email, username, verification_token)
 
-        db.execute("INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING", (user_id, continent))
-        db.execute("INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (user_id,))
-        from signup import _init_economy_tables
-        _init_economy_tables(db, user_id)
+        from signup import init_user_game_data
+        init_user_game_data(db, user_id, continent)
         
     if verification_token:
         return redirect(f"/verification_pending?email={email}")
