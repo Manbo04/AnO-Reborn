@@ -36,12 +36,15 @@ def _init_economy_tables(db, user_id):
         (user_id,),
     )
 
-    # Starter care package: +15,000 steel, +10,000 components, +10,000 aluminium
-    # These help new players bootstrap their first processing buildings.
+    # Starter care package — enough to build farm + coal plant + mine without market.
     starter_resources = [
-        ("steel", 15000),
-        ("components", 10000),
-        ("aluminium", 10000),
+        ("lumber", 120_000),
+        ("iron", 50_000),
+        ("coal", 50_000),
+        ("rations", 350_000),
+        ("steel", 15_000),
+        ("components", 10_000),
+        ("aluminium", 10_000),
     ]
     for res_name, qty in starter_resources:
         db.execute(
@@ -75,8 +78,9 @@ def init_user_game_data(db, user_id, continent):
     
     # 1. Stats
     db.execute(
-        "INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-        (user_id, continent),
+        "INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s) "
+        "ON CONFLICT DO NOTHING",
+        (user_id, continent, 80_000_000),
     )
     
     # 2. Policies
@@ -615,9 +619,9 @@ def discord_register():
                 # NOTE: resources and upgrades tables were removed in Economy 2.0
                 # migration; their data now lives in user_economy / user_buildings.
                 db.execute(
-                    "INSERT INTO stats (id, location) VALUES (%s, %s) "
+                    "INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s) "
                     "ON CONFLICT DO NOTHING",
-                    (user_id, continent),
+                    (user_id, continent, 80_000_000),
                 )
                 db.execute(
                     "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
