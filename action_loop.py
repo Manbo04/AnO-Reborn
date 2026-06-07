@@ -3,6 +3,10 @@ import os
 from dataclasses import dataclass
 
 from database import get_db_connection
+from app_core.economy.building_purchase import (
+    BuildingPurchaseError,
+    purchase_building,
+)
 
 
 BUILD_COST_RESOURCE = os.getenv("BUILD_COST_RESOURCE", "steel")
@@ -44,12 +48,7 @@ def _is_tech_unlocked(db, user_id: int, tech_id: int) -> bool:
 def build_structure(
     user_id: int, building_id: int, quantity: int, province_id: int = None
 ) -> ActionResult:
-    """Build structure(s) using normalized schema.
-
-    Cost is deducted from `user_economy` using `BUILD_COST_RESOURCE`.
-    Buildings are associated with a specific province via province_id.
-    Transactions use consistent ascending-order user_id locking to prevent deadlocks.
-    """
+    """Build structure(s) using canonical PROVINCE_UNIT_PRICES (gold + resources)."""
     if quantity <= 0:
         raise ActionLoopError("Quantity must be greater than 0.")
     if province_id is None:
@@ -57,17 +56,11 @@ def build_structure(
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        # Acquire advisory lock for deadlock safety (always by ascending user_id)
         db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
-
-        db.execute("SELECT userId FROM provinces WHERE id = %s", (province_id,))
-        owner_row = db.fetchone()
-        if not owner_row or owner_row[0] != user_id:
-            raise ActionLoopError("You do not own this province.")
 
         db.execute(
             """
-            SELECT building_id, display_name, base_cost, required_tech_id, is_active
+            SELECT building_id, name, display_name, required_tech_id, is_active
             FROM building_dictionary
             WHERE building_id=%s
             """,
@@ -77,74 +70,23 @@ def build_structure(
         if not row:
             raise ActionLoopError("Building not found.")
 
-        _, display_name, base_cost, required_tech_id, is_active = row
+        _, building_name, display_name, required_tech_id, is_active = row
         if not is_active:
             raise ActionLoopError("This building is not currently available.")
 
         if required_tech_id and not _is_tech_unlocked(db, user_id, required_tech_id):
             raise ActionLoopError("Required technology is not unlocked.")
 
-        resource_id = _get_resource_id(db, BUILD_COST_RESOURCE)
-        if resource_id is None:
-            raise ActionLoopError(
-                "Build cost resource is not configured in dictionary."
+        try:
+            purchase_building(
+                db,
+                user_id,
+                province_id,
+                building_name,
+                quantity,
             )
-
-        total_cost = int(base_cost) * int(quantity)
-
-        db.execute(
-            """
-            INSERT INTO user_economy (user_id, resource_id, quantity)
-            VALUES (%s, %s, 0)
-            ON CONFLICT (user_id, resource_id) DO NOTHING
-            """,
-            (user_id, resource_id),
-        )
-
-        db.execute(
-            """
-            UPDATE user_economy
-            SET quantity = quantity - %s,
-                updated_at = now()
-            WHERE user_id=%s
-              AND resource_id=%s
-              AND quantity >= %s
-            RETURNING quantity
-            """,
-            (total_cost, user_id, resource_id, total_cost),
-        )
-        if db.fetchone() is None:
-            raise ActionLoopError(
-                f"Not enough {BUILD_COST_RESOURCE} to build {display_name}."
-            )
-
-        if province_id is not None:
-            db.execute(
-                """
-                INSERT INTO user_buildings
-                    (user_id, building_id, province_id, quantity, last_upgraded)
-                VALUES (%s, %s, %s, %s, now())
-                ON CONFLICT (user_id, building_id, province_id)
-                DO UPDATE SET
-                    quantity = user_buildings.quantity + EXCLUDED.quantity,
-                    last_upgraded = now()
-                """,
-                (user_id, building_id, province_id, quantity),
-            )
-        else:
-            # Fallback for global buildings: where province_id is NULL
-            db.execute(
-                """
-                INSERT INTO user_buildings
-                    (user_id, building_id, quantity, last_upgraded)
-                VALUES (%s, %s, %s, now())
-                ON CONFLICT (user_id, building_id) WHERE province_id IS NULL
-                DO UPDATE SET
-                    quantity = user_buildings.quantity + EXCLUDED.quantity,
-                    last_upgraded = now()
-                """,
-                (user_id, building_id, quantity),
-            )
+        except BuildingPurchaseError as exc:
+            raise ActionLoopError(str(exc)) from exc
 
         conn.commit()
 
@@ -162,7 +104,6 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
     """
     with get_db_connection() as conn:
         db = conn.cursor()
-        # Acquire advisory lock for deadlock safety (always by ascending user_id)
         db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
         db.execute(
@@ -214,7 +155,6 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
             (total_cost, user_id, resource_id, total_cost),
         )
         if db.fetchone() is None:
-            # Fetch current balance for a helpful error message
             db.execute(
                 "SELECT COALESCE(quantity, 0) FROM user_economy "
                 "WHERE user_id=%s AND resource_id=%s",

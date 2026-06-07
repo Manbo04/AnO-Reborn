@@ -27,7 +27,12 @@ from database import (
 )
 import os
 import math
-from action_loop import build_structure, ActionLoopError, BUILD_COST_RESOURCE
+from action_loop import build_structure, ActionLoopError
+from app_core.economy.building_costs import enrich_building_row, get_build_cost
+from app_core.economy.building_purchase import (
+    BuildingPurchaseError,
+    purchase_building,
+)
 from game_ui import (
     FEATURE_PROVINCE_BASE_VIEW,
     SLOT_THEMES,
@@ -402,19 +407,30 @@ def province(pId):
 
         # Normalized buildings (for Action Loop quick-build form)
         # This is static dictionary data — cache it to avoid querying every request
-        normalized_buildings = query_cache.get("building_dictionary_active")
+        normalized_buildings = query_cache.get("building_dictionary_active_v2")
         if normalized_buildings is None:
             db.execute(
                 """
-                SELECT building_id, display_name, base_cost
+                SELECT building_id, name, display_name, base_cost
                 FROM building_dictionary
                 WHERE is_active = TRUE
                 ORDER BY display_name ASC
                 """
             )
-            normalized_buildings = db.fetchall() or []
+            rows = db.fetchall() or []
+            normalized_buildings = [
+                enrich_building_row(
+                    {
+                        "building_id": r[0],
+                        "name": r[1],
+                        "display_name": r[2],
+                        "base_cost": r[3],
+                    }
+                )
+                for r in rows
+            ]
             query_cache.set(
-                "building_dictionary_active", normalized_buildings, ttl_seconds=600
+                "building_dictionary_active_v2", normalized_buildings, ttl_seconds=600
             )
 
         infra = variables.INFRA
@@ -443,7 +459,6 @@ def province(pId):
             prices=prices,
             new_infra=new_infra,
             normalized_buildings=normalized_buildings,
-            build_cost_resource=BUILD_COST_RESOURCE,
             distribution_capacity=(
                 dist_cap if variables.FEATURE_RATIONS_DISTRIBUTION else None
             ),
@@ -672,26 +687,29 @@ def province_slot_api(pId, slot_id):
             if row["name"] not in names:
                 continue
             qty = int(row["quantity"] or 0)
-            buildings.append(
+            entry = enrich_building_row(
                 {
                     "building_id": row["building_id"],
                     "name": row["name"],
                     "display_name": row["display_name"],
-                    "icon": building_visual_icon(row["name"]),
-                    "quantity": qty,
                     "base_cost": int(row["base_cost"] or 0),
-                    "can_build": True,
                 }
             )
+            entry["icon"] = building_visual_icon(row["name"])
+            entry["quantity"] = qty
+            entry["can_build"] = True
+            buildings.append(entry)
         buildings.sort(key=lambda b: (-b["quantity"], b["display_name"]))
 
     suggest_build = None
     if buildings:
-        starter = min(buildings, key=lambda b: (b["base_cost"], b["display_name"]))
+        starter = min(buildings, key=lambda b: (b["gold_cost"], b["display_name"]))
         suggest_build = {
             "building_id": starter["building_id"],
             "display_name": starter["display_name"],
-            "base_cost": starter["base_cost"],
+            "gold_cost": starter["gold_cost"],
+            "resource_cost": starter["resource_cost"],
+            "cost_display": starter["cost_display"],
             "icon": starter["icon"],
         }
 
@@ -703,7 +721,6 @@ def province_slot_api(pId, slot_id):
             "icon": slot["icon"],
             "theme": theme,
             "buildings": buildings,
-            "build_cost_resource": BUILD_COST_RESOURCE,
             "suggest_build": suggest_build,
         }
     )
@@ -1385,96 +1402,60 @@ def province_sell_buy(way, units, province_id):
             resource_stuff(resources_data, way)
 
         elif way == "buy":
-            if (
-                totalPrice > gold
-            ):  # Checks if user wants to buy more units than he has gold
-                return error(400, "You don't have enough money.")
-
-            if free_slots < wantedUnits and units not in ["cityCount", "land"]:
-                return error(400, f"Not enough {slot_type} slots for {wantedUnits}")
-
-            res_error = resource_stuff(resources_data, way)
-            if res_error:
-                missing_count = res_error["difference"] * -1
-                missing_res = res_error["resource"]
-                return error(400, f"Missing {missing_count} {missing_res}")
-
-            # Capture gold before and perform atomic decrement
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_before_row = db.fetchone()
-            if not gold_before_row:
-                return error(500, "Nation data could not be found")
-            gold_before = gold_before_row[0] or 0
-
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s)", (totalPrice, cId))
-
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
-            gold_after_row = db.fetchone()
-            gold_after = (gold_after_row[0] or 0) if gold_after_row else gold_before
-
             if units in ["land", "cityCount"]:
-                updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"
-                db.execute(updStat, ((currentUnits + wantedUnits), province_id))
-            else:
-                # Economy 2.0: increment user_buildings for this province
+                if totalPrice > gold:
+                    return error(400, "You don't have enough money.")
+
+                res_error = resource_stuff(resources_data, way)
+                if res_error:
+                    missing_count = res_error["difference"] * -1
+                    missing_res = res_error["resource"]
+                    return error(400, f"Missing {missing_count} {missing_res}")
+
+                db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+                gold_before_row = db.fetchone()
+                if not gold_before_row:
+                    return error(500, "Nation data could not be found")
+                gold_before = gold_before_row[0] or 0
+
                 db.execute(
-                    """
-                    INSERT INTO user_buildings
-                        (user_id, building_id, province_id, quantity, last_upgraded)
-                    VALUES (
-                        %s,
-                        (SELECT building_id FROM building_dictionary WHERE name = %s),
-                        %s,
-                        %s,
-                        now()
-                    )
-                    ON CONFLICT (user_id, building_id, province_id)
-                    DO UPDATE SET
-                        quantity = user_buildings.quantity + EXCLUDED.quantity,
-                        last_upgraded = now()
-                    """,
-                    (cId, units, province_id, wantedUnits),
+                    "UPDATE stats SET gold=gold-%s WHERE id=(%s)",
+                    (totalPrice, cId),
                 )
 
-            # Audit the buy event
-            db.execute(
-                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
-                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-                (
-                    cId,
-                    province_id,
-                    units,
-                    wantedUnits,
-                    gold_before,
-                    gold_after,
-                    f"buy_{units}",
-                ),
-            )
+                db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+                gold_after_row = db.fetchone()
+                gold_after = (
+                    (gold_after_row[0] or 0) if gold_after_row else gold_before
+                )
 
-            # Sentry alert for large purchases
-            try:
-                THRESH = int(os.getenv("PURCHASE_SENTRY_THRESHOLD", "1000000"))
-                diff = abs(gold_before - gold_after)
-                if diff >= THRESH:
-                    try:
-                        import sentry_sdk
+                updStat = f"UPDATE provinces SET {units}=%s WHERE id=%s"
+                db.execute(updStat, ((currentUnits + wantedUnits), province_id))
 
-                        with sentry_sdk.push_scope() as scope:
-                            scope.set_extra("user_id", cId)
-                            scope.set_extra("province_id", province_id)
-                            scope.set_extra("unit", units)
-                            scope.set_extra("units", wantedUnits)
-                            scope.set_extra("gold_before", gold_before)
-                            scope.set_extra("gold_after", gold_after)
-                            msg = (
-                                f"Large buy: {units} x{wantedUnits} by user {cId} "
-                                f"({diff} gold)"
-                            )
-                            sentry_sdk.capture_message(msg)
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+                db.execute(
+                    "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                    "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        cId,
+                        province_id,
+                        units,
+                        wantedUnits,
+                        gold_before,
+                        gold_after,
+                        f"buy_{units}",
+                    ),
+                )
+            else:
+                try:
+                    purchase_building(
+                        db,
+                        cId,
+                        int(province_id),
+                        units,
+                        wantedUnits,
+                    )
+                except BuildingPurchaseError as exc:
+                    return error(400, str(exc))
 
         if way == "buy":
             rev_type = "expense"

@@ -600,7 +600,6 @@ PROVINCE_UNIT_PRICES = {
     # Resource Extraction (Tier 1)
     # ALL must be buildable with raw Tier-0/1 resources only
     "farms_price": 1500000,
-    "farms_resource": {"lumber": 15000},
     "pumpjacks_price": 3000000,
     "pumpjacks_resource": {"iron": 22000},
     "coal_mines_price": 3500000,

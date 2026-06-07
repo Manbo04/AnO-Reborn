@@ -82,8 +82,14 @@
         return d.innerHTML;
     }
 
-    function formatCost(n, res) {
-        return '$' + Number(n).toLocaleString() + ' · ' + Number(n).toLocaleString() + ' ' + (res || 'gold');
+    function formatCost(building) {
+        if (building && building.cost_display) {
+            return building.cost_display;
+        }
+        if (building && typeof building === 'object') {
+            return building.display_name || building.name || 'Build';
+        }
+        return String(building || '');
     }
 
     function closeSheet() {
@@ -225,7 +231,7 @@
         });
     }
 
-    function renderBuildingList(buildings, costResource, container) {
+    function renderBuildingList(buildings, container) {
         var list = container || qs('[data-building-list]');
         if (!list) return;
         list.innerHTML = '';
@@ -246,7 +252,7 @@
                 '</span>' +
                 escapeHtml(b.display_name || b.name) +
                 '</div><div class="province-base-building-meta">' +
-                formatCost(b.base_cost, costResource) +
+                formatCost(b) +
                 '</div></div>' +
                 '<span class="province-base-building-qty" data-qty>' +
                 b.quantity +
@@ -261,7 +267,7 @@
         bindBuildButtons(list);
     }
 
-    function renderDockCards(buildings, costResource) {
+    function renderDockCards(buildings) {
         var dockList = qs('[data-dock-buildings]');
         if (!dockList) return;
         dockList.innerHTML = '';
@@ -288,7 +294,7 @@
                 b.quantity +
                 '</span></div>' +
                 '<span class="province-base-building-meta">' +
-                formatCost(b.base_cost, costResource) +
+                formatCost(b) +
                 '</span>' +
                 (own
                     ? '<button type="button" class="province-base-build-btn" data-build-id="' +
@@ -330,7 +336,7 @@
             sub.textContent =
                 total + ' structure' + (total === 1 ? '' : 's') + ' in this district';
         }
-        renderDockCards(data.buildings || [], data.build_cost_resource);
+        renderDockCards(data.buildings || []);
         var hint = qs('[data-dock-hint]');
         if (hint) {
             if (data.suggest_build) {
@@ -338,7 +344,7 @@
                     'Suggested: <strong>' +
                     escapeHtml(data.suggest_build.display_name) +
                     '</strong> · ' +
-                    formatCost(data.suggest_build.base_cost, data.build_cost_resource) +
+                    formatCost(data.suggest_build) +
                     ' — tap + Build on the card';
             } else {
                 hint.innerHTML =
@@ -396,7 +402,7 @@
                     }, 0);
                     sub.textContent = total + ' structures · tap + to build';
                 }
-                renderBuildingList(data.buildings || [], data.build_cost_resource);
+                renderBuildingList(data.buildings || []);
                 applySuggestHighlight(data);
             })
             .catch(function (err) {
