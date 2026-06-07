@@ -8,6 +8,55 @@ logger = logging.getLogger(__name__)
 
 email_auth_bp = Blueprint('email_auth', __name__)
 
+
+def _users_auth_columns(db):
+    """Return which credential / verification columns exist on users."""
+    db.execute(
+        """
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'users'
+          AND column_name IN ('hash', 'password', 'is_verified')
+        """
+    )
+    found = {row[0] for row in db.fetchall()}
+    return {
+        "has_hash": "hash" in found,
+        "has_password": "password" in found,
+        "has_verification": "is_verified" in found,
+    }
+
+
+def _password_matches(stored_hash, password: str) -> bool:
+    """Check werkzeug or bcrypt password hashes."""
+    if not stored_hash or not isinstance(stored_hash, str):
+        return False
+
+    if stored_hash.startswith(("scrypt:", "pbkdf2:sha256:")):
+        return check_password_hash(stored_hash, password)
+
+    try:
+        import bcrypt
+
+        return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+    except Exception:
+        return False
+
+
+def _complete_email_login(user_id, is_verified, has_verification, email):
+    from email_utils import is_email_configured
+
+    try:
+        email_enforced = is_email_configured()
+    except Exception:
+        email_enforced = False
+
+    if email_enforced and has_verification and is_verified is False:
+        return redirect(f"/verification_pending?email={email}")
+
+    session["user_id"] = user_id
+    return redirect("/")
+
+
 @email_auth_bp.route("/register/email", methods=["POST"])
 def register_email():
     username = request.form.get("username")
@@ -38,35 +87,31 @@ def register_email():
             flash("Username or email already taken.")
             return redirect("/signup")
 
-        db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('hash', 'password')")
-        cols = [r[0] for r in db.fetchall()]
-        
-        db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_verified'")
-        has_verification = db.fetchone() is not None
-        
+        cols = _users_auth_columns(db)
+
         insert_cols = "username, email, date, auth_type"
         insert_vals = "(%s, %s, %s, %s"
         params = [username, email, str(datetime.date.today()), "email"]
-        
-        if "hash" in cols:
+
+        if cols["has_hash"]:
             insert_cols += ", hash"
             insert_vals += ", %s"
             params.append(hashed_password)
-        if "password" in cols:
+        if cols["has_password"]:
             insert_cols += ", password"
             insert_vals += ", %s"
             params.append(hashed_password)
-            
+
         verification_token = None
         from email_utils import is_email_configured, generate_verification_token, send_verification_email
-        if has_verification and is_email_configured():
+        if cols["has_verification"] and is_email_configured():
             verification_token = generate_verification_token(email)
             insert_cols += ", is_verified, verification_token, token_created_at"
             insert_vals += ", %s, %s, NOW()"
             params.extend([False, verification_token])
-            
+
         insert_vals += ")"
-        
+
         db.execute(f"INSERT INTO users ({insert_cols}) VALUES {insert_vals} RETURNING id", params)
         user_id = db.fetchone()[0]
 
@@ -75,16 +120,16 @@ def register_email():
 
         from signup import init_user_game_data
         init_user_game_data(db, user_id, continent)
-        
+
     if verification_token:
         return redirect(f"/verification_pending?email={email}")
-    else:
-        session["user_id"] = user_id
-        return redirect("/")
+    session["user_id"] = user_id
+    return redirect("/")
+
 
 @email_auth_bp.route("/login/email", methods=["POST"])
 def login_email():
-    email = request.form.get("email")
+    email = (request.form.get("email") or "").strip()
     password = request.form.get("password")
 
     if not email or not password:
@@ -92,72 +137,44 @@ def login_email():
         return redirect("/login")
 
     with get_request_cursor() as db:
-        db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('hash', 'password')")
-        cols = [r[0] for r in db.fetchall()]
-        
-        sel_cols = "id, is_verified"
-        if "hash" in cols: sel_cols += ", hash"
-        if "password" in cols: sel_cols += ", password"
-        
-        db.execute(f"SELECT {sel_cols} FROM users WHERE email=%s", (email,))
-        user = db.fetchone()
+        cols = _users_auth_columns(db)
 
-    if not user:
+        select_cols = ["id"]
+        if cols["has_verification"]:
+            select_cols.append("is_verified")
+        if cols["has_hash"]:
+            select_cols.append("hash")
+        if cols["has_password"]:
+            select_cols.append("password")
+
+        db.execute(
+            f"SELECT {', '.join(select_cols)} FROM users WHERE email=%s",
+            (email,),
+        )
+        row = db.fetchone()
+
+    if not row:
         flash("Invalid email or password.")
         return redirect("/login")
 
-    user_id = user[0]
-    
-    hash_idx = 1 if "hash" in cols else -1
-    pw_idx = 2 if "hash" in cols and "password" in cols else (1 if "password" in cols else -1)
-    
-    hash_val = user[hash_idx] if hash_idx != -1 else None
-    password_val = user[pw_idx] if pw_idx != -1 else None
-    
-    # Try werkzeug hash
-    for val in (hash_val, password_val):
-        if val and val.startswith('scrypt:'):
-            if check_password_hash(val, password):
-                from email_utils import is_email_configured
-                try:
-                    email_enforced = is_email_configured()
-                except Exception:
-                    email_enforced = False
+    row_map = dict(zip(select_cols, row))
+    user_id = row_map["id"]
+    is_verified = row_map.get("is_verified")
 
-                if email_enforced:
-                    is_verified = user[1] # is_verified is 2nd column
-                    if is_verified is False:
-                        return redirect(f"/verification_pending?email={email}")
+    hash_candidates = []
+    if cols["has_hash"] and row_map.get("hash"):
+        hash_candidates.append(row_map["hash"])
+    if cols["has_password"] and row_map.get("password"):
+        hash_candidates.append(row_map["password"])
 
-                session["user_id"] = user_id
-                return redirect("/")
-        elif val and val.startswith('pbkdf2:sha256:'):
-            if check_password_hash(val, password):
-                from email_utils import is_email_configured
-                try:
-                    email_enforced = is_email_configured()
-                except Exception:
-                    email_enforced = False
-
-                if email_enforced:
-                    is_verified = user[1] # is_verified is 2nd column
-                    if is_verified is False:
-                        return redirect(f"/verification_pending?email={email}")
-
-                session["user_id"] = user_id
-                return redirect("/")
-    
-    # Fallback to bcrypt
-    import bcrypt
-    pwd_bytes = password.encode('utf-8')
-    for val in (hash_val, password_val):
-        if val:
-            try:
-                if bcrypt.checkpw(pwd_bytes, val.encode('utf-8')):
-                    session["user_id"] = user_id
-                    return redirect("/")
-            except Exception:
-                pass
+    for stored_hash in hash_candidates:
+        if _password_matches(stored_hash, password):
+            return _complete_email_login(
+                user_id,
+                is_verified,
+                cols["has_verification"],
+                email,
+            )
 
     flash("Invalid email or password.")
     return redirect("/login")
