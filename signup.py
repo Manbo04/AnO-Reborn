@@ -858,12 +858,17 @@ def signup():
             init_user_game_data(db, user_id, continent)
 
             # If verification is enabled, redirect to pending page.
-            # Otherwise, log them in
+            # Otherwise, log them in and issue a one-time recovery key.
             if verification_token:
                 return redirect(f"/verification_pending?email={email}")
             else:
-                # Legacy: log them in directly
+                from change import create_recovery_key_for_user
+
                 session["user_id"] = user_id
+                raw_key = create_recovery_key_for_user(db, user_id)
+                if raw_key:
+                    session["pending_recovery_key"] = raw_key
+                    return redirect("/save_recovery_key")
                 return redirect("/")
 
         # Mark attempt as successful
@@ -894,6 +899,21 @@ def verification_pending():
     """Show the verification pending page after signup."""
     email = request.args.get("email", "")
     return render_template("verification_pending.html", email=email)
+
+
+def save_recovery_key():
+    """Show the one-time backup recovery key after signup or email verification."""
+    raw_key = session.pop("pending_recovery_key", None)
+    if not raw_key:
+        if session.get("user_id"):
+            return redirect("/")
+        return redirect("/login")
+    logged_in = bool(session.get("user_id"))
+    return render_template(
+        "save_recovery_key.html",
+        recovery_key=raw_key,
+        logged_in=logged_in,
+    )
 
 
 def verify_email():
@@ -940,6 +960,13 @@ def verify_email():
             """,
                 (user_id,),
             )
+
+            from change import create_recovery_key_for_user
+
+            raw_key = create_recovery_key_for_user(cur, user_id)
+            if raw_key:
+                session["pending_recovery_key"] = raw_key
+                return redirect("/save_recovery_key")
 
             return redirect("/login?message=verified")
     except Exception as e:
@@ -1022,6 +1049,9 @@ def register_signup_routes(app_instance):
     # Email verification routes
     app_instance.add_url_rule(
         "/verification_pending", "verification_pending", verification_pending
+    )
+    app_instance.add_url_rule(
+        "/save_recovery_key", "save_recovery_key", save_recovery_key, methods=["GET"]
     )
     app_instance.add_url_rule("/verify", "verify_email", verify_email)
     app_instance.add_url_rule(

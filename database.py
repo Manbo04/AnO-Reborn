@@ -1281,6 +1281,28 @@ def ensure_schema_compat() -> None:
             ),
         )
         core_ok &= _run_schema_step(
+            "users_recovery_key",
+            lambda db: db.execute(
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.views
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                    ) THEN
+                        RETURN;
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'recovery_key'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN recovery_key VARCHAR(255);
+                    END IF;
+                END $$;
+                """
+            ),
+        )
+        core_ok &= _run_schema_step(
             "users_discord_id",
             lambda db: db.execute(
                 """

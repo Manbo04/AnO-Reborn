@@ -29,7 +29,14 @@ from datetime import datetime as dt
 import string
 import random
 from helpers import login_required, error
-from database import get_db_connection, get_request_cursor, rollback_db_cursor, teardown_request_connection
+from database import (
+    get_db_connection,
+    get_db_cursor,
+    get_request_cursor,
+    query_cache,
+    rollback_db_cursor,
+    teardown_request_connection,
+)
 import province
 import game_ui
 import bot_api
@@ -339,6 +346,65 @@ def create_app():
 
     app.context_processor(_get_user_game_context)
 
+    def get_resources():
+        """User resource HUD values for layout templates."""
+        default_resources = {
+            "gold": 0,
+            "rations": 0,
+            "oil": 0,
+            "coal": 0,
+            "uranium": 0,
+            "bauxite": 0,
+            "iron": 0,
+            "lead": 0,
+            "copper": 0,
+            "lumber": 0,
+            "components": 0,
+            "steel": 0,
+            "consumer_goods": 0,
+            "aluminium": 0,
+            "gasoline": 0,
+            "ammunition": 0,
+        }
+        target_user_id = session.get("user_id")
+        if not target_user_id:
+            return default_resources
+
+        cache_key = f"resources_{target_user_id}"
+        cached = query_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        with get_db_cursor(cursor_factory=RealDictCursor) as db:
+            try:
+                db.execute("SELECT gold FROM stats WHERE id=%s", (target_user_id,))
+                gold_row = db.fetchone()
+                if gold_row:
+                    default_resources["gold"] = gold_row.get("gold", 0) or 0
+
+                db.execute(
+                    """
+                    SELECT rd.name, COALESCE(ue.quantity, 0) AS quantity
+                    FROM resource_dictionary rd
+                    LEFT JOIN user_economy ue
+                      ON ue.resource_id = rd.resource_id
+                     AND ue.user_id = %s
+                    ORDER BY rd.resource_id
+                    """,
+                    (target_user_id,),
+                )
+                rows = db.fetchall()
+                resources = default_resources.copy()
+                for row in rows:
+                    name = row.get("name")
+                    if name in resources:
+                        resources[name] = int(row.get("quantity") or 0)
+
+                query_cache.set(cache_key, resources, ttl_seconds=15)
+                return resources
+            except Exception:
+                return default_resources
+
     # Global context for inject_global_data
     @app.context_processor
     def inject_global_data():
@@ -382,6 +448,7 @@ def create_app():
             top_ad=top_ad,
             side_ad_left=side_ad_left,
             side_ad_right=side_ad_right,
+            get_resources=get_resources,
             **game_ui.game_ui_context(),
             **_get_user_game_context()
         )
