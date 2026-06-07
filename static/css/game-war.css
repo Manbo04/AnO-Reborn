@@ -1,6 +1,18 @@
 /**
  * War / military screens — mobile game card polish
  */
+
+body.page-war .wartopper {
+    margin: 0;
+    border-radius: var(--game-radius-md, 12px) var(--game-radius-md, 12px) 0 0;
+}
+
+body.page-war .material-icons-outlined.iconlarge {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+}
+
 @media (max-width: 857px) {
     body.game-shell-active .warflexparent.templatedivflex2 {
         flex-direction: column;

@@ -456,50 +456,41 @@
 
     <div class="templatecontainer">
         
-        <div class="global-ad-layout" style="display: flex; justify-content: center; width: 100%; max-width: 1600px; margin: 0 auto; box-sizing: border-box; padding-top: 110px;">
-            <div class="global-ad global-ad-left" style="display: none; width: 160px; min-width: 160px; margin-right: 20px; flex-direction: column; align-items: center;">
-                <div style="width: 160px; height: 600px; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: sticky; top: 110px; overflow: hidden;">
+        <div class="global-ad-layout">
+            <div class="global-ad global-ad-left">
+                <div class="global-ad-side-slot">
                     {% if side_ad_left %}
-                        <a href="{{ side_ad_left.target_url }}" target="_blank"><img alt="Left Side Advertisement" src="{{ side_ad_left.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ side_ad_left.target_url }}" target="_blank"><img alt="Left Side Advertisement" src="{{ side_ad_left.image_url }}"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}
                 </div>
             </div>
 
-            <div class="global-ad-center" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;">
-                <div class="global-ad global-ad-top" style="width: 100%; max-width: 728px; height: 90px; margin: 0 auto 0 auto; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: relative; z-index: 10; overflow: hidden;">
+            <div class="global-ad-center">
+                <div class="global-ad global-ad-top">
                     {% if top_ad %}
-                        <a href="{{ top_ad.target_url }}" target="_blank"><img alt="Top Advertisement" src="{{ top_ad.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ top_ad.target_url }}" target="_blank"><img alt="Top Advertisement" src="{{ top_ad.image_url }}"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}
                 </div>
-                
-                <div style="width: 100%; margin-top: -60px;">
+
+                <div class="global-ad-body-wrap">
                     {% block body %} {% endblock %}
                 </div>
             </div>
 
-            <div class="global-ad global-ad-right" style="display: none; width: 160px; min-width: 160px; margin-left: 20px; flex-direction: column; align-items: center;">
-                <div style="width: 160px; height: 600px; background: repeating-linear-gradient(45deg, var(--background), var(--background) 10px, var(--border) 10px, var(--border) 20px); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 0.9em; position: sticky; top: 110px; overflow: hidden;">
+            <div class="global-ad global-ad-right">
+                <div class="global-ad-side-slot">
                     {% if side_ad_right %}
-                        <a href="{{ side_ad_right.target_url }}" target="_blank"><img alt="Right Side Advertisement" src="{{ side_ad_right.image_url }}" style="width: 100%; height: 100%; object-fit: cover;"></a>
+                        <a href="{{ side_ad_right.target_url }}" target="_blank"><img alt="Right Side Advertisement" src="{{ side_ad_right.image_url }}"></a>
                     {% else %}
                         Player Advertisement
                     {% endif %}
                 </div>
             </div>
         </div>
-
-        <style>
-            @media (min-width: 1250px) {
-                body:not(.game-shell-active) .global-ad-left,
-                body:not(.game-shell-active) .global-ad-right {
-                    display: flex !important;
-                }
-            }
-        </style>
 
         {% with messages = get_flashed_messages() %}
         {% if messages %}

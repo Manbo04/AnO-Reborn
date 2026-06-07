@@ -1,4 +1,4 @@
-{% extends "layout.html"%} {% block title %} {{ attacker_name }} vs {{ defender_name }} {% endblock %} {% block body %}
+{% extends "layout.html"%} {% block title %} {{ attacker_name }} vs {{ defender_name }} {% endblock %}{% block body_class %} page-war{% endblock %} {% block body %}
 
 <div class="templatediv">
     <div class="templatedivtopper wartopper">
@@ -11,7 +11,7 @@
 
         <!--AGGRESSOR-->
         {% if cId_type == "attacker" %}
-        <div class="templatedivflex2 menuflex warflexparentcolors">
+        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
             <div class="templatedivflex2left">
 
                 <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
@@ -62,7 +62,7 @@
         <!--CODE IT TO CHOOSE ON OR THE OTHER DEPENDING ON IF YOU ATTACKED, OR GOT ATTACKED-->
         <!--DEFENDER-->
         {% if cId_type == "defender" %}
-        <div class="templatedivflex2 menuflex warflexparentcolors">
+        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
             <div class="templatedivflex2left">
 
                 <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>

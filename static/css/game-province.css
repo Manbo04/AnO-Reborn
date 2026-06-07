@@ -1,0 +1,41 @@
+/**
+ * Province page — classic + base view alignment
+ */
+
+body.game-shell-active.page-province .templatediv {
+    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 16px));
+}
+
+body.page-province .templatedivcontent .templatedivflex2.menuflex.warflexparentcolors {
+    align-items: stretch;
+}
+
+body.page-province .provincetopper,
+body.page-province .provincestopper {
+    margin: 0;
+    border-radius: var(--game-radius-md, 12px) var(--game-radius-md, 12px) 0 0;
+}
+
+body.page-province .templatedivflex2left .templatetable,
+body.page-province .templatedivflex2right .templatetable {
+    width: 100%;
+}
+
+body.page-province .material-icons-outlined.iconlarge {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+}
+
+/* Province list cards */
+body.page-provinces .game-province-card-thumb img,
+body.page-provinces .game-province-card-thumb {
+    overflow: hidden;
+    border-radius: var(--game-radius-sm, 8px);
+}
+
+body.page-provinces .game-province-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
