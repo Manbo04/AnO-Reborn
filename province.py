@@ -1,5 +1,18 @@
-from flask import Blueprint, request, render_template, session, redirect, jsonify
-from helpers import login_required, error, require_post_origin
+from flask import (
+    Blueprint,
+    request,
+    render_template,
+    session,
+    redirect,
+    jsonify,
+)
+from helpers import (
+    login_required,
+    error,
+    require_post_origin,
+    compress_province_image,
+    province_image_url,
+)
 from dotenv import load_dotenv
 import variables
 from helpers import get_date
@@ -8,6 +21,7 @@ from database import (
     cache_response,
     invalidate_user_cache,
     provinces_has_demographics,
+    provinces_has_image_data,
     rollback_db_cursor,
 )
 import os
@@ -42,7 +56,24 @@ def provinces():
         )
         provinces = db.fetchall()
 
-        return render_template("provinces.html", provinces=provinces)
+        provinces_with_images = set()
+        if provinces_has_image_data():
+            db.execute(
+                """
+                SELECT id FROM provinces
+                WHERE userId = %s
+                  AND image_data IS NOT NULL
+                  AND image_data <> ''
+                """,
+                (cId,),
+            )
+            provinces_with_images = {row[0] for row in db.fetchall()}
+
+        return render_template(
+            "provinces.html",
+            provinces=provinces,
+            provinces_with_images=provinces_with_images,
+        )
 
 
 @bp.route("/province/<pId>", methods=["GET"])
@@ -58,8 +89,13 @@ def province(pId):
     # + upgrades - all in ONE database connection
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         # Combined query for province + stats (legacy resources/proInfra tables removed)
+        image_select = (
+            "(p.image_data IS NOT NULL AND p.image_data <> '') AS has_image"
+            if provinces_has_image_data()
+            else "FALSE AS has_image"
+        )
         if provinces_has_demographics():
-            province_sql = """
+            province_sql = f"""
             SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
                    p.pollution, p.happiness, p.productivity, p.consumer_spending,
                    CAST(p.citycount AS INTEGER) as citycount,
@@ -67,19 +103,21 @@ def province(pId):
                    s.location,
                    COALESCE(p.pop_children, 0) AS pop_children,
                    COALESCE(p.pop_working, 0) AS pop_working,
-                   COALESCE(p.pop_elderly, 0) AS pop_elderly
+                   COALESCE(p.pop_elderly, 0) AS pop_elderly,
+                   {image_select}
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
             WHERE p.id = %s
             """
         else:
-            province_sql = """
+            province_sql = f"""
             SELECT p.id, p.userId AS user, p.provinceName AS name, p.population,
                    p.pollution, p.happiness, p.productivity, p.consumer_spending,
                    CAST(p.citycount AS INTEGER) as citycount,
                    p.land, p.energy AS electricity,
                    s.location,
-                   0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly
+                   0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                   {image_select}
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
             WHERE p.id = %s
@@ -96,7 +134,8 @@ def province(pId):
                        CAST(p.citycount AS INTEGER) as citycount,
                        p.land, p.energy AS electricity,
                        s.location,
-                       0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly
+                       0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                       FALSE AS has_image
                 FROM provinces p
                 LEFT JOIN stats s ON p.userId = s.id
                 WHERE p.id = %s
@@ -377,6 +416,11 @@ def province(pId):
             province["own"] = province.get("own", province["user"] == cId)
             province_base_layout = build_province_layout_payload(province, units)
 
+        province["has_image"] = bool(province.get("has_image"))
+        province["image_url"] = province_image_url(
+            province["id"], province["has_image"]
+        )
+
         return render_template(
             "province.html",
             province=province,
@@ -400,6 +444,131 @@ def province(pId):
             ),
             province_base_layout=province_base_layout,
         )
+
+
+@bp.route("/province-image/<int:pId>")
+def serve_province_image(pId):
+    """Serve a province's custom banner image (public, like country flags)."""
+    import base64
+    import time as time_module
+
+    from flask import Response, send_from_directory, current_app
+
+    if not provinces_has_image_data():
+        return send_from_directory(
+            current_app.static_folder, "images/province.jpg"
+        )
+
+    cache_key = f"province_image_{pId}"
+    if not hasattr(serve_province_image, "_cache"):
+        serve_province_image._cache = {}
+    cached = serve_province_image._cache.get(cache_key)
+    if cached is not None:
+        body, mimetype, cached_at = cached
+        if time_module.time() - cached_at < 300:
+            response = Response(body, mimetype=mimetype)
+            response.headers["Cache-Control"] = "public, max-age=3600"
+            return response
+        del serve_province_image._cache[cache_key]
+
+    with get_request_cursor(read_only=True) as db:
+        db.execute(
+            "SELECT image_data FROM provinces WHERE id = %s",
+            (pId,),
+        )
+        row = db.fetchone()
+
+    if not row or not row[0]:
+        return send_from_directory(
+            current_app.static_folder, "images/province.jpg"
+        )
+
+    try:
+        image_data = base64.b64decode(row[0])
+        if image_data[:8] == b"\x89PNG\r\n\x1a\n":
+            mimetype = "image/png"
+        elif image_data[:2] == b"\xff\xd8":
+            mimetype = "image/jpeg"
+        elif image_data[:6] in (b"GIF87a", b"GIF89a"):
+            mimetype = "image/gif"
+        else:
+            mimetype = "image/jpeg"
+
+        if len(serve_province_image._cache) < 500:
+            serve_province_image._cache[cache_key] = (
+                image_data,
+                mimetype,
+                time_module.time(),
+            )
+        response = Response(image_data, mimetype=mimetype)
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return response
+    except Exception:
+        return send_from_directory(
+            current_app.static_folder, "images/province.jpg"
+        )
+
+
+@bp.route("/province/<int:pId>/image", methods=["POST"])
+@login_required
+@require_post_origin
+def update_province_image(pId):
+    """Upload or remove a province banner image."""
+    from database import invalidate_view_cache, query_cache
+
+    cId = session["user_id"]
+    remove_image = request.form.get("remove_image") == "1"
+
+    with get_request_cursor() as db:
+        if not provinces_has_image_data():
+            return error(503, "Province images are not available yet")
+
+        db.execute(
+            "SELECT userId FROM provinces WHERE id = %s",
+            (pId,),
+        )
+        row = db.fetchone()
+        if not row:
+            return error(404, "Province doesn't exist")
+        if int(row[0]) != int(cId):
+            return error(403, "You do not own this province")
+
+        if remove_image:
+            db.execute(
+                "UPDATE provinces SET image_data = NULL WHERE id = %s",
+                (pId,),
+            )
+        else:
+            allowed_extensions = {"png", "jpg", "jpeg", "webp"}
+            upload = request.files.get("province_image")
+            if not upload or not upload.filename:
+                return error(400, "No image file provided")
+
+            extension = upload.filename.rsplit(".", 1)[-1].lower()
+            if extension not in allowed_extensions:
+                return error(400, "Use PNG, JPG, or WEBP")
+
+            image_data, _ext = compress_province_image(upload)
+            db.execute(
+                "UPDATE provinces SET image_data = %s WHERE id = %s",
+                (image_data, pId),
+            )
+
+    if hasattr(serve_province_image, "_cache"):
+        serve_province_image._cache.pop(f"province_image_{pId}", None)
+
+    try:
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+    except Exception:
+        pass
+
+    from time import time as _now
+
+    return redirect(f"/province/{pId}?_={int(_now())}")
 
 
 @bp.route("/api/province/<int:pId>/layout", methods=["GET"])

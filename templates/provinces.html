@@ -27,7 +27,7 @@
         </div>
 
         <div class="game-card-list game-card-list--mobile-only">
-        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6] %} {% set energy = province[7] %}
+        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6] %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
         <a href="/province/{{ pId }}" class="game-province-card">
             <div class="game-province-card-stats">
                 <h2 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
@@ -36,14 +36,14 @@
                 <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
                 <span><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
             </div>
-            <img class="game-province-card-thumb" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="" />
+            <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" alt="" />
         </a>
         {% endfor %}
         </div>
 
         <div class="game-table-fallback--hide-mobile">
         {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
-        %} {% set energy = province[7] %}
+        %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
         <a href="/province/{{ pId }}" class="province-list-card-link">
             <div class="templatedivflex2 menuflex warflexparentcolors card-align-row province-list-card">
                 <div class="templatedivflex2left province-list-card-stats">
@@ -98,7 +98,7 @@
                 </div>
                 <div class="templatedivflex2right province-list-card-media">
 
-                    <img alt="Image" tabindex="0" class="province-list-card-image" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" />
+                    <img alt="Image" tabindex="0" class="province-list-card-image" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" />
 
                 </div>
             </div>

@@ -1527,6 +1527,7 @@ def _ensure_provinces_demographic_columns(db) -> None:
         "edu_none INTEGER NOT NULL DEFAULT 0",
         "edu_highschool INTEGER NOT NULL DEFAULT 0",
         "edu_college INTEGER NOT NULL DEFAULT 0",
+        "image_data TEXT",
     ):
         try:
             db.execute(
@@ -1590,6 +1591,11 @@ def table_has_column(table_name: str, column_name: str) -> bool:
 def provinces_has_demographics() -> bool:
     """True when province age-bracket columns exist (migration 0013)."""
     return table_has_column("provinces", "pop_children")
+
+
+def provinces_has_image_data() -> bool:
+    """True when province custom image column exists (migration 0035)."""
+    return table_has_column("provinces", "image_data")
 
 
 def _ensure_reset_codes_table(db) -> None:
