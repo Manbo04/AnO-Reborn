@@ -23,6 +23,7 @@ from database import (
     provinces_has_demographics,
     provinces_has_image_data,
     rollback_db_cursor,
+    row_val,
 )
 import os
 import math
@@ -58,16 +59,21 @@ def provinces():
 
         provinces_with_images = set()
         if provinces_has_image_data():
-            db.execute(
-                """
-                SELECT id FROM provinces
-                WHERE userId = %s
-                  AND image_data IS NOT NULL
-                  AND image_data <> ''
-                """,
-                (cId,),
-            )
-            provinces_with_images = {row[0] for row in db.fetchall()}
+            try:
+                db.execute(
+                    """
+                    SELECT id FROM provinces
+                    WHERE userId = %s
+                      AND image_data IS NOT NULL
+                      AND image_data <> ''
+                    """,
+                    (cId,),
+                )
+                provinces_with_images = {
+                    row_val(row, "id", 0) for row in db.fetchall()
+                }
+            except Exception:
+                rollback_db_cursor(db)
 
         return render_template(
             "provinces.html",
@@ -335,20 +341,22 @@ def province(pId):
         rations = economy_values.get("rations", 0) or 0
 
         max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
-        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-            from tasks import consumer_goods_distribution_capacity
+        cg_dist_cap = 0
+        enough_consumer_goods = consumer_goods >= max_cg
+        try:
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+                from tasks import consumer_goods_distribution_capacity
 
-            cg_dist_cap = consumer_goods_distribution_capacity(cId, db=db) or 0
-            # CG check must consider both stockpile AND distribution capacity
-            cg_available = min(consumer_goods, cg_dist_cap)
-            enough_consumer_goods = cg_available >= max_cg
-        else:
-            cg_dist_cap = 0
-            enough_consumer_goods = consumer_goods >= max_cg
+                cg_dist_cap = consumer_goods_distribution_capacity(cId, db=db) or 0
+                cg_available = min(consumer_goods, cg_dist_cap)
+                enough_consumer_goods = cg_available >= max_cg
+        except Exception:
+            rollback_db_cursor(db)
 
         rations_minus = province["population"] // variables.RATIONS_PER
         nation_distribution = None
         dist_cap = None
+        enough_rations = rations - rations_minus > 1
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             from tasks import fetch_nation_distribution_status, food_stats
 
@@ -359,7 +367,9 @@ def province(pId):
                     (cId,),
                 )
                 nat_pop_row = db.fetchone()
-                national_pop = int(nat_pop_row[0] or 0) if nat_pop_row else 0
+                national_pop = int(
+                    row_val(nat_pop_row, "coalesce", 0, default=0) or 0
+                )
                 nat_rations_need = max(1, national_pop // variables.RATIONS_PER)
                 nation_distribution = fetch_nation_distribution_status(
                     db, cId, national_pop, nat_rations_need
@@ -369,13 +379,12 @@ def province(pId):
                     if nation_distribution
                     else 0
                 )
+                enough_rations = food_stats(cId, db=db) >= -1.0
             except Exception:
+                rollback_db_cursor(db)
                 nation_distribution = None
                 dist_cap = 0
-            # Match tax/population_growth: national stockpile capped by distribution
-            enough_rations = food_stats(cId, db=db) >= -1.0
-        else:
-            enough_rations = rations - rations_minus > 1
+                enough_rations = rations - rations_minus > 1
 
         # Calculate energy in-memory from proInfra data
         consumers = variables.ENERGY_CONSUMERS
