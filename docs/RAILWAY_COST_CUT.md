@@ -21,14 +21,23 @@ Each service → **Settings** → **Resources**:
 
 Keep **Compute Usage Limit** at **$30**.
 
-### 3. Delete deprecated services (after deploy verified)
+### 3. Delete deprecated services (done via API 2026-06-07)
 
-Once web sidecar + worker+beat are confirmed working:
+Removed via `python3 scripts/railway_delete_services.py`:
 
-1. **beat** service → Settings → **Remove service** (scheduler now runs on celery-worker)
-2. **bot** service → Settings → **Remove service** (bot runs as web sidecar)
+| Deleted | Why |
+|---------|-----|
+| beat | Merged into celery-worker (`--beat`) |
+| bot | Runs as web sidecar |
+| postgres-recovery | Orphan from agent recovery — **major memory leak** |
+| dummy-restorer | Orphan debug service |
+| postgres-final-recovery | Orphan debug service |
+| snapshot-inspector | Orphan debug service |
+| postgres-validated | Orphan duplicate Postgres |
 
-Do **not** delete Postgres or Redis.
+**Keep:** web, celery-worker, **prod-validator** (live DB), Redis
+
+Do **not** delete `prod-validator` — web `DATABASE_URL` points to `prod-validator.railway.internal`.
 
 ## What the code changes do
 
