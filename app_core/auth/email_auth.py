@@ -136,45 +136,58 @@ def login_email():
         flash("Email and password are required.")
         return redirect("/login")
 
-    with get_request_cursor() as db:
-        cols = _users_auth_columns(db)
+    try:
+        with get_request_cursor() as db:
+            cols = _users_auth_columns(db)
 
-        select_cols = ["id"]
-        if cols["has_verification"]:
-            select_cols.append("is_verified")
-        if cols["has_hash"]:
-            select_cols.append("hash")
-        if cols["has_password"]:
-            select_cols.append("password")
+            select_cols = ["id"]
+            if cols["has_verification"]:
+                select_cols.append("is_verified")
+            if cols["has_hash"]:
+                select_cols.append("hash")
+            if cols["has_password"]:
+                select_cols.append("password")
 
-        db.execute(
-            f"SELECT {', '.join(select_cols)} FROM users WHERE email=%s",
-            (email,),
-        )
-        row = db.fetchone()
+            db.execute(
+                f"SELECT {', '.join(select_cols)} FROM users WHERE email=%s",
+                (email,),
+            )
+            row = db.fetchone()
 
-    if not row:
+        if not row:
+            flash("Invalid email or password.")
+            return redirect("/login")
+
+        row_map = dict(zip(select_cols, row))
+        user_id = row_map["id"]
+        is_verified = row_map.get("is_verified")
+
+        hash_candidates = []
+        if cols["has_hash"] and row_map.get("hash"):
+            hash_candidates.append(row_map["hash"])
+        if cols["has_password"] and row_map.get("password"):
+            hash_candidates.append(row_map["password"])
+
+        for stored_hash in hash_candidates:
+            if _password_matches(stored_hash, password):
+                return _complete_email_login(
+                    user_id,
+                    is_verified,
+                    cols["has_verification"],
+                    email,
+                )
+
         flash("Invalid email or password.")
         return redirect("/login")
+    except Exception as exc:
+        import logging
+        import uuid
 
-    row_map = dict(zip(select_cols, row))
-    user_id = row_map["id"]
-    is_verified = row_map.get("is_verified")
-
-    hash_candidates = []
-    if cols["has_hash"] and row_map.get("hash"):
-        hash_candidates.append(row_map["hash"])
-    if cols["has_password"] and row_map.get("password"):
-        hash_candidates.append(row_map["password"])
-
-    for stored_hash in hash_candidates:
-        if _password_matches(stored_hash, password):
-            return _complete_email_login(
-                user_id,
-                is_verified,
-                cols["has_verification"],
-                email,
-            )
-
-    flash("Invalid email or password.")
-    return redirect("/login")
+        logger = logging.getLogger(__name__)
+        event_id = f"{uuid.uuid4().hex[:8]}"
+        logger.exception("login_email failed (id=%s): %s", event_id, exc)
+        flash(
+            "Login failed due to a server error. "
+            f"Please try again or report id: {event_id}"
+        )
+        return redirect("/login")

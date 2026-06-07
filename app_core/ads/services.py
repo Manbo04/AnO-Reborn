@@ -26,7 +26,7 @@ class AdService:
             
         status = "approved" if action == "approve" else "rejected"
         self.repo.update_ad_status(ad_id, status)
-        from app_core.ads.helpers import _AD_CACHE
+        from app_core.ads.helpers import reset_ad_cache
 
-        _AD_CACHE["loaded_at"] = 0.0
+        reset_ad_cache()
         return True, f"Advertisement {status}!"

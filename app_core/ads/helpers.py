@@ -7,12 +7,17 @@ import time
 import uuid
 from typing import Any, Dict, Optional, Tuple
 
-from flask import url_for
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 _AD_CACHE: Dict[str, Any] = {"loaded_at": 0.0, "payload": None}
 _AD_CACHE_TTL = 60.0
+
+
+def reset_ad_cache() -> None:
+    """Clear cached ad rotation (tests and admin approve/reject)."""
+    _AD_CACHE["loaded_at"] = 0.0
+    _AD_CACHE["payload"] = None
 
 _DISCORD_SNOWFLAKE = re.compile(r"^\d{17,20}$")
 
@@ -27,8 +32,8 @@ def normalize_ad_image_url(image_url: str | None) -> str | None:
     if raw.startswith("static/"):
         return f"/{raw}"
     if raw.startswith("uploads/ads/"):
-        return url_for("static", filename=raw)
-    return url_for("static", filename=f"uploads/ads/{raw}")
+        return f"/static/{raw}"
+    return f"/static/uploads/ads/{raw}"
 
 
 def save_ad_image_upload(
