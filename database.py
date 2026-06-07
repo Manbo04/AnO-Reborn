@@ -1742,6 +1742,27 @@ def teardown_request_connection(exc=None):
         g._db_conn_broken = False
 
 
+def row_val(row, *keys, default=None):
+    """Read a column from a tuple row or a RealDict/mapping row."""
+    if row is None:
+        return default
+    if isinstance(row, dict):
+        for key in keys:
+            if isinstance(key, str) and key in row:
+                return row[key]
+        values = list(row.values())
+        for key in keys:
+            if isinstance(key, int) and 0 <= key < len(values):
+                return values[key]
+        return default
+    for key in keys:
+        try:
+            return row[key]
+        except (IndexError, KeyError, TypeError):
+            continue
+    return default
+
+
 @contextmanager
 def reuse_or_new_cursor(existing_cursor=None, cursor_factory=None, read_only=False):
     """Context manager that reuses an existing DB cursor or creates a new one.
