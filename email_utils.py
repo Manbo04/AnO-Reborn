@@ -35,9 +35,16 @@ def get_email_config():
 
 
 def is_email_configured():
-    """Check if email sending is properly configured"""
+    """Check if email sending is properly configured (SMTP or Resend)"""
+    import os
     config = get_email_config()
-    return bool(config["user"] and config["password"])
+    # Check for SMTP config
+    if config["user"] and config["password"]:
+        return True
+    # Check for Resend config
+    if os.getenv("RESEND_API_KEY"):
+        return True
+    return False
 
 
 def generate_verification_token(email):
@@ -105,19 +112,77 @@ def verify_email_token(token):
 
 
 
+
 def send_email(to_email, subject, html_content, text_content=None):
     """
-    Send an email using Resend API.
+    Send an email. Tries Resend API first, falls back to SMTP.
     """
     import os
-    import resend
-    
+    import logging
+    import smtplib
+    import ssl
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    logger = logging.getLogger(__name__)
     config = get_email_config()
-    resend.api_key = os.getenv("RESEND_API_KEY")
     
-    if not resend.api_key:
-        logger.warning("RESEND_API_KEY is not set.")
-        return False
+    # --- Try Resend ---
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            import resend
+            resend.api_key = resend_api_key
+            
+            from_email = config.get('user', 'onboarding@resend.dev')
+            if not from_email or '@' not in from_email:
+                from_email = 'onboarding@resend.dev'
+                
+            params = {
+                "from": f"{config.get('from_name', 'Affairs and Order')} <{from_email}>",
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+            }
+            if text_content:
+                params["text"] = text_content
+
+            resend.Emails.send(params)
+            logger.info(f"Email sent successfully to {to_email} via Resend")
+            return True
+        except ImportError:
+            logger.warning("Resend library not installed, falling back to SMTP")
+        except Exception as e:
+            logger.error(f"Error sending email via Resend: {e}")
+            # Fall through to SMTP
+
+    # --- Try SMTP ---
+    if config["user"] and config["password"]:
+        try:
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"{config['from_name']} <{config['user']}>"
+            message["To"] = to_email
+
+            if text_content:
+                message.attach(MIMEText(text_content, "plain"))
+            message.attach(MIMEText(html_content, "html"))
+
+            # Connect and send
+            context = ssl.create_default_context()
+            with smtplib.SMTP(config["host"], config["port"]) as server:
+                server.starttls(context=context)
+                server.login(config["user"], config["password"])
+                server.sendmail(config["user"], to_email, message.as_string())
+
+            logger.info(f"Email sent successfully to {to_email} via SMTP")
+            return True
+        except Exception as e:
+            logger.error(f"Error sending email via SMTP: {e}")
+
+    logger.error(f"Failed to send email to {to_email}: No provider configured or all failed")
+    return False
 
     try:
         from_email = config.get('user', 'onboarding@resend.dev')
