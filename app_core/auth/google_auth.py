@@ -217,15 +217,8 @@ def google_signup_route():
                 session.permanent = True
                 session.modified = True
 
-                db.execute(
-                    "INSERT INTO stats (id, location) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    (user_id, continent),
-                )
-                db.execute(
-                    "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
-                    (user_id,),
-                )
-                _init_economy_tables(db, user_id)
+                from signup import init_user_game_data
+                init_user_game_data(db, user_id, continent)
 
                 db.execute(
                     "UPDATE signup_attempts SET successful = TRUE WHERE id = (SELECT id FROM signup_attempts WHERE ip_address = %s ORDER BY attempt_time DESC LIMIT 1)",

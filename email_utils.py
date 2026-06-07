@@ -119,10 +119,6 @@ def send_email(to_email, subject, html_content, text_content=None):
     """
     import os
     import logging
-    import smtplib
-    import ssl
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
 
     logger = logging.getLogger(__name__)
     config = get_email_config()
@@ -151,7 +147,7 @@ def send_email(to_email, subject, html_content, text_content=None):
             logger.info(f"Email sent successfully to {to_email} via Resend")
             return True
         except ImportError:
-            logger.warning("Resend library not installed, falling back to SMTP")
+            logger.debug("Resend library not installed, falling back to SMTP")
         except Exception as e:
             logger.error(f"Error sending email via Resend: {e}")
             # Fall through to SMTP
