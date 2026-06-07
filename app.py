@@ -31,6 +31,7 @@ import random
 from helpers import login_required, error
 from database import get_db_connection, get_request_cursor, rollback_db_cursor, teardown_request_connection
 import province
+import game_ui
 import bot_api
 from dotenv import load_dotenv
 
@@ -312,7 +313,7 @@ def create_app():
     # game_ui_context setup
     from database import get_request_cursor, rollback_db_cursor
 
-    def game_ui_context():
+    def _get_user_game_context():
         try:
             from tests.conftest import TEST_UI_MOCK_CONTEXT
             if TEST_UI_MOCK_CONTEXT.get("active"): return TEST_UI_MOCK_CONTEXT.get("context", {})
@@ -334,7 +335,7 @@ def create_app():
                 ctx["country_name"], ctx["coalition_id"], ctx["coalition_name"] = "Error", None, None
         return ctx
 
-    app.context_processor(game_ui_context)
+    app.context_processor(_get_user_game_context)
 
     # Global context for inject_global_data
     @app.context_processor
@@ -377,7 +378,8 @@ def create_app():
             top_ad=top_ad,
             side_ad_left=side_ad_left,
             side_ad_right=side_ad_right,
-            **game_ui_context()
+            **game_ui.game_ui_context(),
+            **_get_user_game_context()
         )
 
 

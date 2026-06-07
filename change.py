@@ -423,7 +423,13 @@ def reset_password_recovery_key():
                 return redirect("/forgot_password")
 
             user_id = user[0]
-            stored_hash = user[1].encode("utf-8")
+            stored_val = user[1]
+            
+            if not stored_val:
+                flash("Invalid username or recovery key.")
+                return redirect("/forgot_password")
+                
+            stored_hash = stored_val.encode("utf-8")
 
             if bcrypt.checkpw(recovery_key.encode("utf-8"), stored_hash):
                 session['reset_user_id'] = user_id
