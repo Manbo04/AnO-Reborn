@@ -393,7 +393,9 @@ class DatabasePool:
                             self._kwargs = kwargs
 
                         def getconn(self):
-                            return psycopg2.connect(**self._kwargs)
+                            kwargs = self._kwargs.copy()
+                            if "interchange" in kwargs.get("host", "") and "sslmode" not in kwargs: kwargs["sslmode"] = "require"
+                            return psycopg2.connect(**kwargs)
 
                         def putconn(self, conn, close=False):
                             try:
@@ -422,7 +424,8 @@ class DatabasePool:
                     keepalives=1,  # Enable TCP keepalives
                     keepalives_idle=30,  # Sendkeepalive after 30 seconds idle
                     keepalives_interval=10,  # Retry every 10 seconds
-                    keepalives_count=3,  # Give up after 3 failed keepalives
+                    keepalives_count=3,
+                    sslmode="require" if "interchange" in os.getenv("PG_HOST", "") else "prefer",  # Give up after 3 failed keepalives
                 )
                 # Create a queue to track available slots with timeout support
                 self._available = queue.Queue(maxsize=maxconn)
