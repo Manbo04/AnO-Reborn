@@ -106,31 +106,24 @@ def send_discord_password_reset_dm(discord_user_id, reset_url):
 def sendEmail(recipient, code):
     url = generateUrlFromCode(code)
     import logging
+    from email_utils import send_email
 
     logger = logging.getLogger(__name__)
 
-    try:
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import Mail
-    except Exception:
-        logger.error("SendGrid not available; skipping email send")
-        return
-
-    message = Mail(
-        from_email=os.getenv("MAIL_USERNAME"),
-        to_emails=recipient,
-        subject="Affairs & Order | Password change request",
-        html_content=(
-            "Click this URL and complete further steps to change your password. "
-            f"{url}. If you did not request a password change, ignore this email."
-        ),
+    subject = "Affairs & Order | Password change request"
+    html_content = (
+        f"<p>Click the link below to change your password:</p>"
+        f"<p><a href='{url}'>{url}</a></p>"
+        f"<p>If you did not request a password change, ignore this email.</p>"
     )
-    try:
-        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-        response = sg.send(message)
-        logger.info(f"Email sent: {response.status_code}")
-    except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+    text_content = f"Click this URL to change your password: {url}"
+
+    if send_email(recipient, subject, html_content, text_content):
+        logger.info(f"Password reset email sent to {recipient}")
+        return True
+    else:
+        logger.error(f"Failed to send password reset email to {recipient}")
+        return False
 
 
 # Route for requesting a password reset. After this, user can reset their password.
