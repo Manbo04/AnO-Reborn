@@ -184,67 +184,6 @@ def send_email(to_email, subject, html_content, text_content=None):
     logger.error(f"Failed to send email to {to_email}: No provider configured or all failed")
     return False
 
-    try:
-        from_email = config.get('user', 'onboarding@resend.dev')
-        if '@' not in from_email:
-            from_email = 'onboarding@resend.dev'
-            
-        params = {
-            "from": f"{config.get('from_name', 'Affairs and Order')} <{from_email}>",
-            "to": [to_email],
-            "subject": subject,
-            "html": html_content,
-        }
-
-        if text_content:
-            params["text"] = text_content
-
-        resend.Emails.send(params)
-        logger.info(f"Email sent successfully to {to_email} via Resend")
-        return True
-
-    except Exception as e:
-        logger.error(f"Error sending email via Resend: {e}")
-        return False
-
-    try:
-        # Create message
-        message = MIMEMultipart("alternative")
-        message["Subject"] = subject
-        message["From"] = f"{config['from_name']} <{config['user']}>"
-        message["To"] = to_email
-
-        # Add plain text version
-        if text_content:
-            part1 = MIMEText(text_content, "plain")
-            message.attach(part1)
-
-        # Add HTML version
-        part2 = MIMEText(html_content, "html")
-        message.attach(part2)
-
-        # Connect and send
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP(config["host"], config["port"]) as server:
-            server.starttls(context=context)
-            server.login(config["user"], config["password"])
-            server.sendmail(config["user"], to_email, message.as_string())
-
-        logger.info(f"Email sent successfully to {to_email}")
-        return True
-
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP Authentication failed: {e}")
-        return False
-    except smtplib.SMTPException as e:
-        logger.error(f"SMTP error sending email: {e}")
-        return False
-    except Exception as e:
-        logger.error(f"Error sending email: {e}")
-        return False
-
-
 def send_verification_email(to_email, username, token):
     """
     Send a verification email to a new user.
