@@ -264,7 +264,7 @@ def release_pg_advisory_lock(conn, lock_id: int):
 # Returns how many rations a player needs
 # (matching population_growth consumption logic)
 def rations_needed(cId, db=None):
-    from database import reuse_or_new_cursor
+    from database import reuse_or_new_cursor, row_val
 
     with reuse_or_new_cursor(db) as active_db:
         # Check if Rationing Program policy is enabled
@@ -273,7 +273,7 @@ def rations_needed(cId, db=None):
             (cId,),
         )
         policy_row = active_db.fetchone()
-        policies = policy_row[0] if policy_row else []
+        policies = row_val(policy_row, "education", 0, default=[]) or []
 
         rationing_multiplier = (
             variables.POLICY_RATIONING_CONSUMPTION_REDUCTION
@@ -293,13 +293,15 @@ def rations_needed(cId, db=None):
 
         total_needed = 0
         for province_row in provinces:
+            pop_children = row_val(province_row, "pop_children", 1)
             if (
                 variables.FEATURE_DEMOGRAPHIC_CONSUMPTION
-                and len(province_row) >= 4
-                and province_row[1] is not None
+                and pop_children is not None
             ):
-                # Demographic-based: pop_children, pop_working, pop_elderly
-                pop, pc, pw, pe = province_row
+                pop = int(row_val(province_row, "population", 0, default=0) or 0)
+                pc = int(row_val(province_row, "pop_children", default=0) or 0)
+                pw = int(row_val(province_row, "pop_working", default=0) or 0)
+                pe = int(row_val(province_row, "pop_elderly", default=0) or 0)
                 province_consumption = int(
                     (
                         pw * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
@@ -310,7 +312,7 @@ def rations_needed(cId, db=None):
                 )
             else:
                 # Fallback to old method: total population / RATIONS_PER
-                pop = province_row[0] if province_row else 0
+                pop = int(row_val(province_row, "population", 0, default=0) or 0)
                 province_pop = pop if pop else 0
                 province_consumption = int(
                     (province_pop // variables.RATIONS_PER) * rationing_multiplier
@@ -403,7 +405,7 @@ def energy_info(province_id):
 # -1 = Enough or more than enough rations
 # -1.4 = No rations at all
 def food_stats(user_id, db=None):
-    from database import get_db_cursor, reuse_or_new_cursor
+    from database import reuse_or_new_cursor, row_val
 
     with reuse_or_new_cursor(db) as active_db:
         needed_rations = rations_needed(user_id, db=active_db)
@@ -419,7 +421,7 @@ def food_stats(user_id, db=None):
             (user_id,),
         )
         row = active_db.fetchone()
-        current_rations = row[0] if row else 0
+        current_rations = row_val(row, "coalesce", 0, default=0) or 0
 
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
@@ -439,8 +441,8 @@ def food_stats(user_id, db=None):
             )
             distribution_cap = 0
             for brow in active_db.fetchall():
-                bname = brow[0]
-                qty = brow[1] or 0
+                bname = row_val(brow, "name", 0)
+                qty = row_val(brow, "qty", 1, default=0) or 0
                 cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
                     bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
                 )
@@ -510,6 +512,8 @@ def nation_distribution_status(
 
 def fetch_nation_distribution_status(db, user_id, total_population, rations_need):
     """Load economy/buildings and return nation_distribution_status dict."""
+    from database import row_val
+
     if not variables.FEATURE_RATIONS_DISTRIBUTION:
         return None
 
@@ -523,7 +527,7 @@ def fetch_nation_distribution_status(db, user_id, total_population, rations_need
         (user_id,),
     )
     row = db.fetchone()
-    rations_stockpile = int(row[0]) if row else 0
+    rations_stockpile = int(row_val(row, "coalesce", 0, default=0) or 0)
 
     db.execute(
         """
@@ -536,7 +540,10 @@ def fetch_nation_distribution_status(db, user_id, total_population, rations_need
         """,
         (user_id, list(variables.RATIONS_DISTRIBUTION_BUILDINGS)),
     )
-    building_qty = {r[0]: int(r[1] or 0) for r in db.fetchall()}
+    building_qty = {
+        row_val(r, "name", 0): int(row_val(r, "qty", 1, default=0) or 0)
+        for r in db.fetchall()
+    }
     return nation_distribution_status(
         total_population, rations_stockpile, rations_need, building_qty
     )
@@ -547,7 +554,7 @@ def consumer_goods_distribution_capacity(user_id, db=None):
     if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
         return None
 
-    from database import reuse_or_new_cursor
+    from database import reuse_or_new_cursor, row_val
 
     with reuse_or_new_cursor(db) as active_db:
         # Query normalized user_buildings table — tiered CG capacity
@@ -568,8 +575,8 @@ def consumer_goods_distribution_capacity(user_id, db=None):
         )
         total = 0
         for row in active_db.fetchall():
-            bname = row[0]
-            qty = row[1] or 0
+            bname = row_val(row, "name", 0)
+            qty = row_val(row, "qty", 1, default=0) or 0
             cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
                 bname, variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT
             )
