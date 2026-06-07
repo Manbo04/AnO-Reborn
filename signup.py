@@ -66,7 +66,8 @@ def _init_economy_tables(db, user_id):
         "ON CONFLICT DO NOTHING",
         (user_id,),
     )
-    logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)\n
+    logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)
+
 def init_user_game_data(db, user_id, continent):
     """Initialize all game-related data for a new user across all providers."""
     import logging
