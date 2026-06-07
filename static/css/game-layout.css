@@ -4,6 +4,49 @@
 
 :root {
     --page-content-max: 1200px;
+    --game-breakpoint-md: 768px;
+    --game-breakpoint-lg: 1024px;
+}
+
+/* --- Shared responsive panel utilities --- */
+.game-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-md, 16px);
+    width: 100%;
+}
+
+.game-panel-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--game-space-md, 16px);
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .game-panel-grid--2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.game-shell-active .infodiv {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        box-sizing: border-box;
+    }
+
+    body.game-shell-active .infodiv .templatedivflex2left,
+    body.game-shell-active .infodiv .templatedivflex2right {
+        max-width: none;
+        width: 100%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .game-panel-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 /* --- Content column (player ads disabled) --- */
@@ -185,4 +228,37 @@ body.game-shell-active .templatecontainer {
 
 .templatedivcontent .templatetable {
     margin: var(--game-space-sm, 8px) 0;
+}
+
+/* Market filters — full-width responsive grid */
+body.page-market .market-filters.game-panel-grid {
+    align-items: end;
+}
+
+body.page-market .market-filters .templateselect,
+body.page-market .market-filters .loginsignupinput {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body.page-market .market-actions.game-panel-grid--2 {
+    margin-top: var(--game-space-md, 16px);
+}
+
+body.page-market .market-actions .templatedivbutton {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Country tab panels */
+body.page-country .templatedivcontent .infodiv {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    body.page-country .country-overview-grid {
+        width: 100%;
+    }
 }
