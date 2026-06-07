@@ -380,6 +380,144 @@ def create_app():
             **game_ui_context()
         )
 
+
+    # --- RESTORED JINJA2 FILTERS ---
+    @app.template_filter()
+    def commas(value):
+        try:
+            rounded = round(value)
+            returned = "{:,}".format(rounded)
+        except (TypeError, ValueError):
+            returned = value
+        return returned
+
+    @app.template_filter()
+    def fmt(value):
+        try:
+            num = float(value)
+            if num < 0: return "-" + fmt(abs(num))
+            if num < 10000:
+                if num == int(num): return "{:,}".format(int(num))
+                return "{:,.1f}".format(num)
+            elif num < 1000000:
+                k = num / 1000
+                if k == int(k): return "{:,}K".format(int(k))
+                return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
+            elif num < 1000000000:
+                m = num / 1000000
+                if m == int(m): return "{}M".format(int(m))
+                return "{:.1f}M".format(m).rstrip("0").rstrip(".")
+            else:
+                b = num / 1000000000
+                if b == int(b): return "{}B".format(int(b))
+                return "{:.1f}B".format(b).rstrip("0").rstrip(".")
+        except (TypeError, ValueError): return value
+
+    @app.template_filter()
+    def weight_fmt(value):
+        try:
+            num = float(value)
+            if num < 0: return "-" + weight_fmt(abs(num))
+            if num < 1000:
+                if num == int(num): return "{:,} kg".format(int(num))
+                return "{:,.1f} kg".format(num)
+            elif num < 1000000:
+                t = num / 1000
+                if t == int(t): return "{:,} t".format(int(t))
+                return "{:,.1f} t".format(t)
+            elif num < 1000000000:
+                kt = num / 1000000
+                if kt == int(kt): return "{:,} kt".format(int(kt))
+                return "{:,.1f} kt".format(kt)
+            else:
+                mt = num / 1000000000
+                if mt == int(mt): return "{:,} Mt".format(int(mt))
+                return "{:,.1f} Mt".format(mt)
+        except (TypeError, ValueError): return value
+
+    @app.template_filter()
+    def days_old(date_string):
+        try:
+            from datetime import datetime as _dt
+            date_obj = _dt.strptime(str(date_string), "%Y-%m-%d")
+            today = _dt.today()
+            delta = today - date_obj
+            return f"{date_string} ({delta.days} Days Old)"
+        except (ValueError, TypeError): return date_string
+
+    @app.template_filter()
+    def timeago(value):
+        if value is None: return "Never"
+        try:
+            from datetime import datetime, timezone
+            if isinstance(value, str): value = datetime.fromisoformat(value)
+            if value.tzinfo is None: value = value.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            diff = now - value
+            seconds = int(diff.total_seconds())
+            if seconds < 60: return "Just now"
+            minutes = seconds // 60
+            if minutes < 60: return f"{minutes}m ago"
+            hours = minutes // 60
+            if hours < 24: return f"{hours}h ago"
+            days = hours // 24
+            if days < 30: return f"{days}d ago"
+            months = days // 30
+            if months < 12: return f"{months}mo ago"
+            years = days // 365
+            return f"{years}y ago"
+        except Exception: return "Unknown"
+
+    @app.template_filter()
+    def prores(unit):
+        try:
+            from variables import PROVINCE_UNIT_PRICES
+            change_price = False
+            unit = unit.lower()
+            if "," in unit:
+                split_unit = unit.split(", ")
+                unit = split_unit[0]
+                change_price = float(split_unit[1])
+            renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
+            unit_name = unit.replace("_", " ").capitalize()
+            if unit_name == "Coal burners": unit_name = "Coal power plants"
+            try: unit = renames[unit_name]
+            except KeyError: pass
+            price = PROVINCE_UNIT_PRICES[f"{unit}_price"]
+            if change_price: price = price * change_price
+            try:
+                res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
+                resources = ", ".join(res_parts)
+                return f"{unit_name} cost {fmt(price)}, {resources} each"
+            except KeyError:
+                return f"{unit_name} cost {fmt(price)} each"
+        except Exception: return unit
+
+    @app.template_filter()
+    def milres(unit):
+        try:
+            from variables import MILDICT
+            change_price = False
+            if "," in unit:
+                split_unit = unit.split(", ")
+                unit = split_unit[0]
+                change_price = float(split_unit[1])
+            price = MILDICT[unit]["price"]
+            if change_price: price = price * change_price
+            try:
+                res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
+                resources = ", ".join(res_parts)
+                return f"{unit.capitalize()} cost {fmt(price)}, {resources} each"
+            except KeyError:
+                return f"{unit.capitalize()} cost {fmt(price)} each"
+        except Exception: return unit
+
+    @app.template_filter()
+    def formatname(value):
+        if not isinstance(value, str): return value
+        if value.lower() == "citycount": return "City"
+        return value.replace("_", " ").title()
+    # --- END RESTORED FILTERS ---
     return app
 
 create_app()
