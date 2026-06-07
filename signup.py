@@ -407,8 +407,37 @@ def callback():
 
         if duplicate:
             return redirect("/discord_login/")
-        else:
-            return redirect("/discord_signup")
+
+        discord_email = (session.get("discord_email") or "").strip()
+        if discord_email:
+            from database import assign_discord_id_to_user
+
+            with get_request_cursor() as link_db:
+                link_db.execute(
+                    """
+                    SELECT id, discord_id
+                    FROM users
+                    WHERE LOWER(email) = LOWER(%s)
+                    LIMIT 1
+                    """,
+                    (discord_email,),
+                )
+                email_row = link_db.fetchone()
+            if email_row:
+                linked_user_id, existing_discord = email_row[0], email_row[1]
+                if (
+                    existing_discord
+                    and str(existing_discord) != str(discord_user_id)
+                ):
+                    flash(
+                        "This email is already linked to a different Discord account. "
+                        "Log in with email/password or contact support."
+                    )
+                    return redirect("/login?discord_error=email_conflict")
+                assign_discord_id_to_user(linked_user_id, discord_user_id)
+                return redirect("/discord_login/")
+
+        return redirect("/discord_signup")
     except Exception as e:
         err_name = type(e).__name__
         err_str = str(e)

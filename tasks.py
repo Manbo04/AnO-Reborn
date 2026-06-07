@@ -263,16 +263,16 @@ def release_pg_advisory_lock(conn, lock_id: int):
 
 # Returns how many rations a player needs
 # (matching population_growth consumption logic)
-def rations_needed(cId):
-    from database import get_db_cursor
+def rations_needed(cId, db=None):
+    from database import reuse_or_new_cursor
 
-    with get_db_cursor() as db:
+    with reuse_or_new_cursor(db) as active_db:
         # Check if Rationing Program policy is enabled
-        db.execute(
+        active_db.execute(
             "SELECT education FROM policies WHERE user_id = %s",
             (cId,),
         )
-        policy_row = db.fetchone()
+        policy_row = active_db.fetchone()
         policies = policy_row[0] if policy_row else []
 
         rationing_multiplier = (
@@ -282,14 +282,14 @@ def rations_needed(cId):
         )
 
         # Get population per province - each province has minimum 1 ration
-        db.execute(
+        active_db.execute(
             (
                 "SELECT population, pop_children, pop_working, "
                 "pop_elderly FROM provinces WHERE userId=%s"
             ),
             (cId,),
         )
-        provinces = db.fetchall()
+        provinces = active_db.fetchall()
 
         total_needed = 0
         for province_row in provinces:
@@ -402,14 +402,14 @@ def energy_info(province_id):
 # Returns a rations score for a user, from -1 to -1.4
 # -1 = Enough or more than enough rations
 # -1.4 = No rations at all
-def food_stats(user_id):
-    from database import get_db_cursor
+def food_stats(user_id, db=None):
+    from database import get_db_cursor, reuse_or_new_cursor
 
-    with get_db_cursor() as db:
-        needed_rations = rations_needed(user_id)
+    with reuse_or_new_cursor(db) as active_db:
+        needed_rations = rations_needed(user_id, db=active_db)
 
         # Query normalized user_economy table
-        db.execute(
+        active_db.execute(
             """
             SELECT COALESCE(ue.quantity, 0)
             FROM user_economy ue
@@ -418,14 +418,14 @@ def food_stats(user_id):
             """,
             (user_id,),
         )
-        row = db.fetchone()
+        row = active_db.fetchone()
         current_rations = row[0] if row else 0
 
         # compute distribution capacity if the feature is enabled
         distribution_cap = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             # Query normalized user_buildings table — tiered capacity
-            db.execute(
+            active_db.execute(
                 """
                 SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
                 FROM user_buildings ub
@@ -438,7 +438,7 @@ def food_stats(user_id):
                 (user_id,),
             )
             distribution_cap = 0
-            for brow in db.fetchall():
+            for brow in active_db.fetchall():
                 bname = brow[0]
                 qty = brow[1] or 0
                 cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(
@@ -542,16 +542,16 @@ def fetch_nation_distribution_status(db, user_id, total_population, rations_need
     )
 
 
-def consumer_goods_distribution_capacity(user_id):
+def consumer_goods_distribution_capacity(user_id, db=None):
     """Return the population that can be served by CG distribution buildings."""
     if not variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
         return None
 
-    from database import get_db_cursor
+    from database import reuse_or_new_cursor
 
-    with get_db_cursor() as db:
+    with reuse_or_new_cursor(db) as active_db:
         # Query normalized user_buildings table — tiered CG capacity
-        db.execute(
+        active_db.execute(
             """
             SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
             FROM user_buildings ub
@@ -567,7 +567,7 @@ def consumer_goods_distribution_capacity(user_id):
             (user_id,),
         )
         total = 0
-        for row in db.fetchall():
+        for row in active_db.fetchall():
             bname = row[0]
             qty = row[1] or 0
             cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(

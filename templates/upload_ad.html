@@ -23,10 +23,18 @@
                 {% endif %}
             {% endwith %}
 
-            <form action="{{ url_for('ads_bp.upload_ad') if 'ads_bp.upload_ad' else '/ads/upload' }}" method="POST" enctype="multipart/form-data" style="max-width: 500px; margin: 0 auto;">
+            <form action="{{ url_for('ads.upload_ad') }}" method="POST" enctype="multipart/form-data" style="max-width: 500px; margin: 0 auto;">
                 {% if csrf_token is defined %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 {% endif %}
+
+                <div style="margin-bottom: 15px;">
+                    <label for="ad_type" style="color: #90caf9; font-weight: 600; display: block; margin-bottom: 5px;">Placement</label>
+                    <select class="loginsignupinput w-full" id="ad_type" name="ad_type" required>
+                        <option value="top">Top banner (728×90)</option>
+                        <option value="side">Side banner (160×600)</option>
+                    </select>
+                </div>
                 
                 <div style="margin-bottom: 15px;">
                     <label for="ad_image" style="color: #90caf9; font-weight: 600; display: block; margin-bottom: 5px;">Advertisement Image</label>
