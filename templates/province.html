@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}{{ province['name'] }}{% endblock %}
-{% block body_class %}{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
+{% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
@@ -297,7 +297,7 @@
 
                         <h2 class="templatecontentheaderleft">Coal Power Plants</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["coal_burners"] }} Coal Power Plants</h3>
@@ -345,7 +345,7 @@
 
                         <h2 class="templatecontentheaderleft">Oil Power Plants</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["oil_burners"] }} Oil Power Plants</h3>
@@ -395,7 +395,7 @@
 
                         <h2 class="templatecontentheaderleft">Solar Fields</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["solar_fields"] }} Solar Fields</h3>
@@ -439,7 +439,7 @@
 
                         <h2 class="templatecontentheaderleft">Hydroelectric Dams</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["hydro_dams"] }} Hydro Dams</h3>
@@ -486,7 +486,7 @@
 
                         <h2 class="templatecontentheaderleft">Nuclear Reactors</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["nuclear_reactors"] }} Nuclear Reactors</h3>
@@ -553,7 +553,7 @@
 
                         <h2 class="templatecontentheaderleft">Gas Stations</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["gas_stations"] }} Gas Stations</h3>
@@ -603,7 +603,7 @@
 
                         <h2 class="templatecontentheaderleft">General Stores</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["general_stores"] }} General stores</h3>
@@ -651,7 +651,7 @@
 
                         <h2 class="templatecontentheaderleft">Farmers Markets</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["farmers_markets"] }} Farmers Markets</h3>
@@ -696,7 +696,7 @@
 
                         <h2 class="templatecontentheaderleft">Banks</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["banks"] }} Banks</h3>
@@ -741,7 +741,7 @@
                         {% if upgrades["onlineshopping"] %} {% set malls_name = "Fulfillment Centers" %} {% else %} {% set malls_name = "Malls" %} {% endif %}
                         <h2 class="templatecontentheaderleft">{{ malls_name }}</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["malls"] }} {{ malls_name }}</h3>
@@ -794,7 +794,7 @@
                         {% if units["distribution_centers"] > 0 %}
                         <h2 class="templatecontentheaderleft">Distribution Centers (Deprecated)</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["distribution_centers"] }} Distribution Centers</h3>
@@ -841,7 +841,7 @@
 
                         <h2 class="templatecontentheaderleft">City Parks</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["city_parks"] }} City Parks</h3>
@@ -886,7 +886,7 @@
 
                         <h2 class="templatecontentheaderleft">Libraries</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["libraries"] }} Libraries</h3>
@@ -928,7 +928,7 @@
 
                         <h2 class="templatecontentheaderleft">Hospitals</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["hospitals"] }} Hospitals</h3>
@@ -973,7 +973,7 @@
 
                         <h2 class="templatecontentheaderleft">Universities</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["universities"] }} Universities</h3>
@@ -1018,7 +1018,7 @@
                         {% if upgrades["highspeedrail"] %} {% set monorails_name = "Bullet Trains" %} {% else %} {% set monorails_name = "Monorails" %} {% endif %}
                         <h2 class="templatecontentheaderleft">{{ monorails_name }}</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["monorails"] }} {{ monorails_name }}</h3>
@@ -1161,7 +1161,7 @@
 
                         <h2 class="templatecontentheaderleft">Army Bases</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["army_bases"] }} Army Bases</h3>
@@ -1209,7 +1209,7 @@
 
                         <h2 class="templatecontentheaderleft">Air Bases</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["aerodomes"] }} Air Bases</h3>
@@ -1256,7 +1256,7 @@
 
                         <h2 class="templatecontentheaderleft">Naval Bases</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["harbours"] }} Naval Bases</h3>
@@ -1302,7 +1302,7 @@
 
                         <h2 class="templatecontentheaderleft">Administrative Buildings</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["admin_buildings"] }} Administrative Buildings</h3>
@@ -1348,7 +1348,7 @@
 
                         <h2 class="templatecontentheaderleft">Silos</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["silos"] }} Silos</h3>
@@ -1397,7 +1397,7 @@
 
                         <h2 class="templatecontentheaderleft">Farms</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["farms"] }} Farms</h3>
@@ -1451,7 +1451,7 @@
 
                         <h2 class="templatecontentheaderleft">Iron Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["iron_mines"] }} Iron Mines</h3>
@@ -1502,7 +1502,7 @@
 
                         <h2 class="templatecontentheaderleft">Coal Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["coal_mines"] }} Coal Mines</h3>
@@ -1554,7 +1554,7 @@
 
                         <h2 class="templatecontentheaderleft">Copper Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["copper_mines"] }} Copper Mines</h3>
@@ -1602,7 +1602,7 @@
 
                         <h2 class="templatecontentheaderleft">Pumpjacks</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["pumpjacks"] }} Pumpjacks</h3>
@@ -1649,7 +1649,7 @@
                     <div class="menudiv">
                         <h2 class="templatecontentheaderleft">Lumber Mills</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
@@ -1698,7 +1698,7 @@
 
                         <h2 class="templatecontentheaderleft">Lead Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["lead_mines"] }} Lead Mines</h3>
@@ -1746,7 +1746,7 @@
 
                         <h2 class="templatecontentheaderleft">Bauxite Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["bauxite_mines"] }} Bauxite Mines</h3>
@@ -1793,7 +1793,7 @@
                     <div class="menudiv">
                         <h2 class="templatecontentheaderleft">Lumber Mills</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
@@ -1842,7 +1842,7 @@
 
                         <h2 class="templatecontentheaderleft">Pumpjacks</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["pumpjacks"] }} Pumpjacks</h3>
@@ -1889,7 +1889,7 @@
                     <div class="menudiv">
                         <h2 class="templatecontentheaderleft">Lumber Mills</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
@@ -1936,7 +1936,7 @@
 
                         <h2 class="templatecontentheaderleft">Uranium Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["uranium_mines"] }} Uranium Mines</h3>
@@ -1983,7 +1983,7 @@
 
                         <h2 class="templatecontentheaderleft">Bauxite Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["bauxite_mines"] }} Bauxite Mines</h3>
@@ -2031,7 +2031,7 @@
 
                         <h2 class="templatecontentheaderleft">Coal Mines</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["coal_mines"] }} Coal Mines</h3>
@@ -2083,7 +2083,7 @@
 
                         <h2 class="templatecontentheaderleft">Component Factories</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["component_factories"] }} Component factories</h3>
@@ -2132,7 +2132,7 @@
 
                         <h2 class="templatecontentheaderleft">Steel Mills</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["steel_mills"] }} Steel Mills</h3>
@@ -2183,7 +2183,7 @@
 
                         <h2 class="templatecontentheaderleft">Ammunition Factories</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["ammunition_factories"] }} Ammunition Factories</h3>
@@ -2228,7 +2228,7 @@
 
                         <h2 class="templatecontentheaderleft">Aluminium Refineries</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["aluminium_refineries"] }} Aluminium Refineries</h3>
@@ -2272,7 +2272,7 @@
 
                         <h2 class="templatecontentheaderleft">Oil Refinery</h2>
 
-                        <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
                             <div class="templatedivflex2left">
 
                                 <h3 class="templatecontentheadercenter">You have {{ units["oil_refineries"] }} Oil Refineries</h3>

@@ -8,8 +8,10 @@ MARKER = "/* === GAME UI BUNDLE (auto-generated) === */"
 FILES = [
     "static/css/tokens.css",
     "static/css/game-shell.css",
+    "static/css/game-layout.css",
     "static/css/game-experience.css",
     "static/css/game-country.css",
+    "static/css/game-province.css",
     "static/css/game-war.css",
 ]
 

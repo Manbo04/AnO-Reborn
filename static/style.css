@@ -5210,12 +5210,10 @@ body.game-shell-active .footer {
 
 body.game-shell-active .templatecontainer {
     padding-bottom: var(--game-space-md);
-    margin-top: 0;
 }
 
 body.game-shell-active .templatediv {
-    /* Clear the 55px fixed navbar plus some spacing */
-    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 24px));
+    margin-top: var(--game-space-md);
 }
 
 /* Compact resource HUD (below fixed navbar) */
@@ -5541,8 +5539,8 @@ body.game-reduced-motion .game-market-card::after {
 }
 
 @media (min-width: 858px) {
-    .game-card-list--mobile-only {
-        display: none !important;
+    .game-card-list--mobile-only .game-province-card {
+        display: none;
     }
 }
 
@@ -5596,6 +5594,253 @@ body.game-reduced-motion .game-market-card::after {
 }
 
 
+/* --- static/css/game-layout.css --- */
+/**
+ * Global game layout alignment — content column, ads, cards, floating HUD
+ */
+
+:root {
+    --page-content-max: 1200px;
+}
+
+/* --- Ad shell (replaces layout.html inline styles) --- */
+.global-ad-layout {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: var(--page-content-max);
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 16px));
+}
+
+body.game-shell-active .global-ad-layout {
+    padding-top: 0;
+}
+
+body:not(.game-shell-active) .templatediv {
+    margin-top: calc(var(--game-navbar-height, 55px) + 90px + var(--game-space-md, 16px));
+}
+
+.global-ad-left,
+.global-ad-right {
+    display: none;
+    width: 160px;
+    min-width: 160px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.global-ad-left {
+    margin-right: 20px;
+}
+
+.global-ad-right {
+    margin-left: 20px;
+}
+
+.global-ad-center {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.global-ad-body-wrap {
+    width: 100%;
+}
+
+.global-ad-top {
+    width: 100%;
+    max-width: 728px;
+    height: 90px;
+    margin: 0 auto var(--game-space-md, 16px);
+    background: repeating-linear-gradient(
+        45deg,
+        var(--background),
+        var(--background) 10px,
+        var(--border) 10px,
+        var(--border) 20px
+    );
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.9em;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.global-ad-side-slot {
+    width: 160px;
+    height: 600px;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--background),
+        var(--background) 10px,
+        var(--border) 10px,
+        var(--border) 20px
+    );
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.9em;
+    position: sticky;
+    top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 16px));
+    overflow: hidden;
+}
+
+.global-ad-top img,
+.global-ad-side-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (min-width: 1250px) {
+    body:not(.game-shell-active) .global-ad-left,
+    body:not(.game-shell-active) .global-ad-right {
+        display: flex !important;
+    }
+}
+
+/* --- Content column spine --- */
+body.game-shell-active .templatecontainer {
+    margin-top: 0;
+}
+
+.templatedivcontent {
+    padding: 0 var(--game-space-md, 16px) var(--game-space-lg, 24px);
+    box-sizing: border-box;
+}
+
+.templatedivcontent > .menuflex2,
+.templatedivcontent > .templatedivflex2.menuflex2,
+.templatedivcontent .menuflex2.width100 {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* --- Building / war cards --- */
+.templatedivcontent .warflexparentcolors {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    overflow: hidden;
+    border-radius: var(--game-radius-sm, 4px);
+}
+
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left,
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right {
+    margin: 0;
+}
+
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left {
+    padding: var(--game-space-md, 16px);
+}
+
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.templatedivcontent .warflexparentcolors .unitimage {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+}
+
+/* --- Tab navigation --- */
+.menuflex2 {
+    width: 100%;
+    min-height: 48px;
+    height: auto;
+    overflow: visible;
+}
+
+.menuflex2 div,
+.menuflex2 a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    height: auto;
+    padding: 6px 10px;
+    gap: 4px;
+}
+
+.menuflex2 div h3,
+.menuflex2 a h3 {
+    height: auto;
+    line-height: 1.2;
+    font-size: 17px;
+}
+
+.menuflex2 .material-icons-outlined,
+.menuflex2 .notificationicon {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.menuflex2notification {
+    top: -6px;
+}
+
+/* --- Floating resource ($) panel --- */
+.resourcediv,
+.resourcedivcontent {
+    top: calc(var(--game-navbar-height, 55px) + 12px);
+}
+
+.resourcediv .material-icons-outlined,
+.resourcedivcontent .material-icons-outlined {
+    top: 0;
+    right: 0;
+}
+
+.resourcedivchild {
+    align-items: center;
+    justify-content: center;
+}
+
+.resourceicon.material-icons-outlined {
+    margin-left: 0;
+}
+
+@media all and (max-width: 500px) {
+    .resourcediv,
+    .resourcedivcontent {
+        top: calc(var(--game-navbar-height, 55px) + 8px);
+        right: 8px;
+    }
+}
+
+/* --- Section headers inside cards --- */
+.templatedivcontent .templatecontentheaderleft {
+    margin: var(--game-space-md, 16px) 0;
+}
+
+.templatedivcontent .templatetable {
+    margin: var(--game-space-sm, 8px) 0;
+}
+
+
 /* --- static/css/game-experience.css --- */
 /**
  * Interactive province base — strategy-game feel (CSS art, no low-res photos).
@@ -5626,7 +5871,7 @@ body.province-base-view-active .templatediv {
 }
 
 body.game-shell-active.province-base-view-active .templatediv {
-    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-sm, 12px));
+    margin-top: var(--game-space-sm);
 }
 
 @media (min-width: 856px) {
@@ -5635,7 +5880,7 @@ body.game-shell-active.province-base-view-active .templatediv {
     }
 
     body.game-shell-active.province-base-view-active .templatediv {
-        margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-sm, 12px));
+        margin-top: var(--game-space-sm);
     }
 }
 
@@ -5705,13 +5950,11 @@ body.game-shell-active.province-base-view-active .templatediv {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 6px 12px;
+    font-size: 0.72rem;
+    padding: 4px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-    box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
 }
 
 .province-stat-chip .material-icons-outlined {
@@ -5729,8 +5972,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     gap: 10px 14px;
     align-items: center;
     justify-items: center;
-    min-height: 520px;
-    padding: 32px 12px 20px;
+    min-height: min(58vh, 520px);
+    padding: 16px 12px 20px;
     background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
     overflow: hidden;
 }
@@ -5831,12 +6074,11 @@ body.game-shell-active.province-base-view-active .templatediv {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #ffffff;
-    margin-bottom: 6px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
 }
 
 .province-vital-label .material-icons-outlined {
@@ -5950,7 +6192,15 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-map-tree--3 { left: 22%; bottom: 22%; transform: scale(0.85); opacity: 0.7; }
 
 .province-map-road {
-    display: none !important;
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    bottom: 28%;
+    height: 8px;
+    background: rgba(60, 50, 40, 0.45);
+    border-radius: 4px;
+    transform: perspective(200px) rotateX(55deg);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Central capital hub — grid cell in center column */
@@ -5969,22 +6219,21 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-hub-platform {
-    width: 86px;
-    height: 86px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    background: radial-gradient(circle at top, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
-    backdrop-filter: blur(12px);
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.25));
+    border: 3px solid rgba(255, 255, 255, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 2px 24px rgba(255, 255, 255, 0.3), 0 0 30px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 -6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .province-map-hub-icon {
-    font-size: 2.5rem;
-    color: #ffffff;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+    font-size: 2rem;
+    color: #fff;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
     line-height: 1;
 }
 
@@ -6009,26 +6258,24 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-hub-label {
-    margin-top: 12px;
-    font-size: 0.85rem;
-    font-weight: 800;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #ffffff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
     text-align: center;
     line-height: 1.2;
 }
 
 .province-map-hub-empty {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-top: 6px;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 4px;
     text-align: center;
-    line-height: 1.3;
-    max-width: 140px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    line-height: 1.25;
+    max-width: 120px;
     animation: pulse-hint 2s ease infinite;
 }
 
@@ -6225,25 +6472,21 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-node-cta {
-    margin-top: 8px;
+    margin-top: 4px;
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: rgba(255, 255, 255, 0.85);
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 999px;
-    background: rgba(0, 167, 225, 0.7);
+    background: rgba(0, 167, 225, 0.45);
     animation: pulse-hint 2s ease infinite;
     white-space: nowrap;
 }
 
 .province-map-node.is-empty .province-map-node-pin {
     opacity: 0.92;
-}
-
-.province-map-node.is-empty .province-map-node-qty {
-    display: none;
 }
 
 .province-map-node.pulse-hint .province-map-node-pin {
@@ -6821,7 +7064,10 @@ body.page-country .menuflex2 a h3 {
 }
 
 .country-demographics-panel {
-    padding: 12px 0 0 0;
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    background: var(--foregroundThree);
+    padding: 12px;
 }
 
 .country-demographics-panel .templatecontentheaderleft {
@@ -6840,6 +7086,7 @@ body.page-country .menuflex2 a h3 {
     height: 260px;
     border: 1px solid var(--border);
     border-radius: var(--game-radius-md);
+    background: transparent;
     padding: 8px;
 }
 
@@ -7037,6 +7284,7 @@ body.page-country .menuflex2 a h3 {
     padding: 14px;
     border-radius: var(--game-radius-md);
     border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.14);
 }
 
 .country-customize-section-head {
@@ -7115,13 +7363,14 @@ body.page-country .menuflex2 a h3 {
 
 .country-biome-warning {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
     color: #e8a87c;
 }
 
 .country-biome-warning .material-icons-outlined {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    margin-top: 2px;
 }
 
 .country-biome-current {
@@ -7315,10 +7564,66 @@ body.page-country .country-lore-editor-wrap .editor-toolbar a.active {
 }
 
 
+/* --- static/css/game-province.css --- */
+/**
+ * Province page — classic + base view alignment
+ */
+
+body.game-shell-active.page-province .templatediv {
+    margin-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 16px));
+}
+
+body.page-province .templatedivcontent .templatedivflex2.menuflex.warflexparentcolors {
+    align-items: stretch;
+}
+
+body.page-province .provincetopper,
+body.page-province .provincestopper {
+    margin: 0;
+    border-radius: var(--game-radius-md, 12px) var(--game-radius-md, 12px) 0 0;
+}
+
+body.page-province .templatedivflex2left .templatetable,
+body.page-province .templatedivflex2right .templatetable {
+    width: 100%;
+}
+
+body.page-province .material-icons-outlined.iconlarge {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+}
+
+/* Province list cards */
+body.page-provinces .game-province-card-thumb img,
+body.page-provinces .game-province-card-thumb {
+    overflow: hidden;
+    border-radius: var(--game-radius-sm, 8px);
+}
+
+body.page-provinces .game-province-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
 /* --- static/css/game-war.css --- */
 /**
  * War / military screens — mobile game card polish
  */
+
+body.page-war .wartopper {
+    margin: 0;
+    border-radius: var(--game-radius-md, 12px) var(--game-radius-md, 12px) 0 0;
+}
+
+body.page-war .material-icons-outlined.iconlarge {
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+}
+
 @media (max-width: 857px) {
     body.game-shell-active .warflexparent.templatedivflex2 {
         flex-direction: column;
