@@ -192,6 +192,52 @@
         });
     }
 
+    function showRewardToast(message, granted) {
+        var toast = document.getElementById("tutorial-reward-toast");
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "tutorial-reward-toast";
+            toast.className = "tutorial-reward-toast";
+            toast.setAttribute("role", "status");
+            toast.setAttribute("aria-live", "polite");
+            document.body.appendChild(toast);
+        }
+        var parts = [message];
+        if (granted && typeof granted === "object") {
+            Object.keys(granted).forEach(function (key) {
+                parts.push("+" + granted[key].toLocaleString() + " " + key);
+            });
+        }
+        toast.textContent = parts.join(" · ");
+        toast.classList.add("is-show");
+        setTimeout(function () {
+            toast.classList.remove("is-show");
+        }, 6000);
+    }
+
+    function claimTutorialReward(payload) {
+        return fetch("/api/tutorial/claim", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify(payload || {}),
+        })
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    if (!res.ok || !data.ok) {
+                        throw new Error((data && data.error) || "Reward claim failed");
+                    }
+                    return data;
+                });
+            })
+            .then(function (data) {
+                if (data.message && !data.already_claimed) {
+                    showRewardToast(data.message, data.granted);
+                }
+                return data;
+            });
+    }
+
     function markChapterComplete(index) {
         if (progress.completed[index]) return;
         progress.completed[index] = true;
@@ -199,8 +245,14 @@
         saveProgress(progress);
         updateStatsUI();
         unlockChapters();
+        claimTutorialReward({ chapter_index: index }).catch(function (err) {
+            console.warn("Tutorial chapter reward:", err.message || err);
+        });
         if (completedCount() === totalChapters) {
             showGraduation();
+            claimTutorialReward({ graduate: true }).catch(function (err) {
+                console.warn("Tutorial graduation reward:", err.message || err);
+            });
         }
     }
 

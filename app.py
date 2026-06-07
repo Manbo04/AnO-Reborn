@@ -264,6 +264,7 @@ def create_app():
     from app_core.market.routes import market_bp
     from app_core.military.routes import bp as military_bp
     from app_core.coalitions.routes import register_coalitions_routes
+    from app_core.tutorial.routes import bp as tutorial_api_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -277,6 +278,7 @@ def create_app():
     app.register_blueprint(world_map_bp)
     app.register_blueprint(market_bp)
     app.register_blueprint(military_bp)
+    app.register_blueprint(tutorial_api_bp)
     register_coalitions_routes(app)
 
     import config
@@ -541,27 +543,23 @@ def create_app():
     @app.template_filter()
     def prores(unit):
         try:
-            from variables import PROVINCE_UNIT_PRICES
+            from app_core.economy.building_costs import get_build_cost
+
             change_price = False
-            unit = unit.lower()
+            raw = unit
             if "," in unit:
                 split_unit = unit.split(", ")
-                unit = split_unit[0]
+                raw = split_unit[0]
                 change_price = float(split_unit[1])
-            renames = {"Fulfillment centers": "malls", "Bullet trains": "monorails"}
-            unit_name = unit.replace("_", " ").capitalize()
-            if unit_name == "Coal burners": unit_name = "Coal power plants"
-            try: unit = renames[unit_name]
-            except KeyError: pass
-            price = PROVINCE_UNIT_PRICES[f"{unit}_price"]
-            if change_price: price = price * change_price
-            try:
-                res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in PROVINCE_UNIT_PRICES[f"{unit}_resource"].items()]
-                resources = ", ".join(res_parts)
-                return f"{unit_name} cost {fmt(price)}, {resources} each"
-            except KeyError:
-                return f"{unit_name} cost {fmt(price)} each"
-        except Exception: return unit
+            cost = get_build_cost(raw)
+            if change_price != 1.0 and change_price:
+                scaled_gold = int(cost["gold"] * change_price)
+                cost["cost_display"] = cost["cost_display"].replace(
+                    fmt(cost["gold"]), fmt(scaled_gold), 1
+                )
+            return cost["cost_display"]
+        except Exception:
+            return unit
 
     @app.template_filter()
     def milres(unit):

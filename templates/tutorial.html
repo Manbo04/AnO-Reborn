@@ -198,7 +198,7 @@
                         <img class="unitimage imageborder" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="Province management" />
                     </div>
                     <div class="tutorial-callout tip-warn">
-                        <strong>Starter tip:</strong> Build power first (coal/oil burners use Tier-1 resources only), then farms and distribution so rations reach your population.
+                        <strong>Early-game order (power is not urgent):</strong> You start with several days of rations. Build a <strong>Lumber Mill</strong> first — it only costs cash, like the tutorial implies for camps. Use lumber (or cheap Market buys) for mines and farms. Add a coal power plant when you want more buildings, not on day one. Quick Build and classic pages now show the same costs (lumber for coal burners, not steel).
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[1]) }}
                     <div class="tutorial-quiz">
@@ -217,6 +217,7 @@
                     </div>
                     <div class="tutorial-actions">
                         <a href="/createprovince" class="templatedivbutton"><span class="material-icons-outlined">north_east</span> Create Province</a>
+                        <a href="/market" class="templatedivbutton"><span class="material-icons-outlined">storefront</span> Market</a>
                         <button type="button" class="templatedivbutton tutorial-btn-complete" data-chapter-complete disabled>Complete chapter</button>
 </div>
                     </div>
@@ -232,7 +233,7 @@
                     </div>
                     {{ chapter_video_block(tutorial_chapters[2]) }}
                     <div class="tutorial-chapter-body">
-                    <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods.</p>
+                    <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods. New nations receive a rations reserve (several days for one province) plus starter lumber — farms themselves only cost cash, so you can plant food before you have power.</p>
 
                     <div class="tutorial-widget" data-widget="chain-game">
                         <h4><span class="material-icons-outlined">timeline</span> Chain challenge — click in order</h4>
