@@ -133,13 +133,15 @@ def request_password_reset():
     logger = logging.getLogger(__name__)
     code = generateResetCode()
 
+    logged_in = bool(session.get("user_id"))
+
     with get_request_cursor() as db:
         try:
             cId = session.get("user_id")
         except KeyError:
             cId = None
 
-        if cId:  # User is logged in
+        if logged_in:
             db.execute("SELECT email FROM users WHERE id=%s", (cId,))
             result = db.fetchone()
             email = result[0] if result else None
@@ -182,7 +184,7 @@ def request_password_reset():
     reset_url = generateUrlFromCode(code)
 
     # Logged-in account page: prefer Discord DM or immediate reset link (no email)
-    if cId:
+    if logged_in:
         discord_id = None
         with get_request_cursor() as db:
             try:
