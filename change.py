@@ -13,6 +13,7 @@ from database import (
     fetchone_first,
     get_request_cursor,
     set_user_password,
+    users_table_has_column,
 )
 
 load_dotenv()
@@ -369,79 +370,118 @@ def generate_discord_link_code():
     return redirect("/account")
 
 
-@login_required
-def generate_recovery_key():
+def create_recovery_key_for_user(db, user_id: int):
+    """Generate and store a bcrypt-hashed recovery key; return plaintext once."""
     import secrets
     import logging
+
+    if not users_table_has_column("recovery_key"):
+        return None
+
+    raw_key = secrets.token_hex(8)
+    hashed_key = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt(14)).decode(
+        "utf-8"
+    )
+    db.execute("UPDATE users SET recovery_key=%s WHERE id=%s", (hashed_key, user_id))
+    logging.getLogger(__name__).info("Generated recovery key for user_id=%s", user_id)
+    return raw_key
+
+
+@login_required
+def generate_recovery_key():
+    import logging
+
     logger = logging.getLogger(__name__)
-    
+
+    if not users_table_has_column("recovery_key"):
+        flash(
+            "Recovery keys are not available yet — use email reset or contact support."
+        )
+        return redirect("/account")
+
     with get_request_cursor() as db:
         cId = session["user_id"]
-        
-        # Check current password before generating
+
         password_raw = request.form.get("password")
         if not password_raw:
             flash("You must provide your password to generate a recovery key.")
             return redirect("/account")
-        
+
         db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
         if not row or not row[0]:
             return error(500, "Account data is missing.")
-            
+
         if not bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8")):
             flash("Incorrect password.")
             return redirect("/account")
-            
-        raw_key = secrets.token_hex(8)
-        hashed_key = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt(14)).decode("utf-8")
-        
-        db.execute("UPDATE users SET recovery_key=%s WHERE id=%s", (hashed_key, cId))
-        
-        flash(f"Your new Backup Recovery Key is: {raw_key} - SAVE THIS SECURELY. IT WILL ONLY BE SHOWN ONCE.")
+
+        raw_key = create_recovery_key_for_user(db, cId)
+        if not raw_key:
+            flash(
+                "Recovery keys are not available yet — use email reset or contact support."
+            )
+            return redirect("/account")
+
+        flash(
+            f"Your new Backup Recovery Key is: {raw_key} - SAVE THIS SECURELY. "
+            "IT WILL ONLY BE SHOWN ONCE."
+        )
         logger.info("Generated new recovery key for user_id=%s", cId)
-        
+
     return redirect("/account")
 
 
 def reset_password_recovery_key():
     import logging
+
     logging.getLogger(__name__)
 
     if request.method == "POST":
-        username = request.form.get("username")
+        username = (request.form.get("username") or "").strip()
         recovery_key = request.form.get("recovery_key")
 
         if not username or not recovery_key:
             flash("Username and Recovery Key are required.")
             return redirect("/forgot_password")
 
+        if not users_table_has_column("recovery_key"):
+            flash(
+                "Recovery keys are not available yet — use email reset or contact support."
+            )
+            return redirect("/forgot_password")
+
         with get_request_cursor() as db:
-            db.execute("SELECT id, recovery_key FROM users WHERE username=%s LIMIT 1", (username,))
+            db.execute(
+                "SELECT id, recovery_key FROM users WHERE trim(username)=trim(%s) LIMIT 1",
+                (username,),
+            )
             user = db.fetchone()
 
-            if not user or not user[1]:
+            if not user:
                 flash("Invalid username or recovery key.")
                 return redirect("/forgot_password")
 
             user_id = user[0]
             stored_val = user[1]
-            
+
             if not stored_val:
-                flash("Invalid username or recovery key.")
+                flash(
+                    "No recovery key on file for this account. "
+                    "Use email reset or contact support."
+                )
                 return redirect("/forgot_password")
-                
+
             stored_hash = stored_val.encode("utf-8")
 
             if bcrypt.checkpw(recovery_key.encode("utf-8"), stored_hash):
-                session['reset_user_id'] = user_id
-                # Wipe the recovery key so it can only be used once
+                session["reset_user_id"] = user_id
                 db.execute("UPDATE users SET recovery_key=NULL WHERE id=%s", (user_id,))
                 return redirect("/discord_reset_password_page")
-            else:
-                flash("Invalid username or recovery key.")
-                return redirect("/forgot_password")
-    
+
+            flash("Invalid username or recovery key.")
+            return redirect("/forgot_password")
+
     return redirect("/forgot_password")
 
 

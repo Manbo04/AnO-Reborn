@@ -102,6 +102,11 @@
 
         <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
         <div class="infodiv">
+            {% if not has_recovery_key %}
+            <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107;">
+                You don't have a backup recovery key yet — generate one now while you can log in.
+            </p>
+            {% endif %}
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
             <form action="/generate_recovery_key" method="POST" class="account-action-form">
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />

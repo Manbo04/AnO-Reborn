@@ -18,12 +18,21 @@ A PostgreSQL collation issue also prevented `username = %s` equality matches for
 
 ## Suggested Discord reply
 
-> Hey Dennis — sorry for the hassle. Your login username is **Primexia** (not LEVI — that's your Discord tag). I've reset your password to a temporary one and DM'd you / posted it here: **[share temp password privately]** — please log in and change it under Account.
+> Hey Dennis — sorry for the hassle. Your login username is **Primexia** (not LEVI — that's your Discord tag).
 >
-> Email password reset is working again if you prefer that route (use dennis.sebalemba@gmail.com).
+> Email password reset is working again at https://affairsandorder.com/forgot_password — use **dennis.sebalemba@gmail.com**.
+>
+> Backup recovery keys were never auto-issued to older accounts, so you wouldn't have received one in email. That wasn't your fault. After you log in, open **Account** and generate a Backup Recovery Key so you have one saved for next time.
 >
 > The nation Edit/Actions tab issue is fixed on the live site — hard refresh (Cmd+Shift+R) and check Tester of the Game again; you should only see Actions when viewing someone else's nation.
->
-> After you're in, generate a Backup Recovery Key from your account page so future resets are easier.
+
+## Recovery key fixes deployed
+
+- `recovery_key` column added via schema compat + migration `0034_add_users_recovery_key.sql`
+- Forgot-password page: email primary; recovery key collapsed under "Have a saved recovery key?"
+- Recovery reset uses `trim(username)` and clearer errors when no key exists
+- New signups receive a one-time recovery key on `/save_recovery_key`
+- Account page shows a banner when no recovery key is on file
+- Support script: `python3 scripts/admin_password_reset_link.py --username Primexia`
 
 **Do not commit the temp password to git.**
