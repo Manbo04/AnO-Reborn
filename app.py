@@ -169,7 +169,8 @@ def create_app():
         return filename
     app.jinja_env.globals["asset"] = asset
 
-    logging_format = "====\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+    logging_format = "====
+%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
     logging.basicConfig(level=logging.ERROR, format=logging_format, filename="errors.log")
     logger = logging.getLogger(__name__)
 
@@ -287,6 +288,7 @@ def create_app():
 
     @app.context_processor
     def utility_processor():
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         def humanize_number(value):
             if value is None: return "0"
             try: return f"{int(value):,}"
@@ -303,7 +305,8 @@ def create_app():
             if value is None: return "$0.00"
             try: return f"${float(value):,.2f}"
             except (ValueError, TypeError): return str(value)
-        return dict(\n            google_client_id=google_client_id,
+        return dict(
+            google_client_id=google_client_id,
             humanize_number=humanize_number,
             determine_color=determine_color,
             format_resources=format_resources,
@@ -354,7 +357,8 @@ def create_app():
         return {"game_ui": {"has_unseen_combat_logs": has_combat}}
 
     @app.context_processor
-    def inject_user():\n        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    def inject_user():
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         top_ad = None
         side_ad_left = None
         side_ad_right = None
@@ -374,7 +378,8 @@ def create_app():
         except Exception:
             pass
 
-        return dict(\n            google_client_id=google_client_id,
+        return dict(
+            google_client_id=google_client_id,
             top_ad=top_ad,
             side_ad_left=side_ad_left,
             side_ad_right=side_ad_right,
