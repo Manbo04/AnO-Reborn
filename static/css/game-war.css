@@ -72,3 +72,35 @@ body.page-war .material-icons-outlined.iconlarge {
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
 }
+
+/* Full-width war panels on laptop */
+body.page-war .templatedivcontent .infodiv,
+body.page-military .templatedivcontent .infodiv {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    body.page-war .game-unit-card-grid.unitcardparent,
+    body.page-war .game-unit-card-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--game-space-md, 16px);
+        width: 100%;
+    }
+
+    body.page-war .game-unit-card-grid .unitcard,
+    body.page-war .game-unit-card-grid .templatedivflex2left {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    body.page-war .game-unit-card-grid.unitcardparent,
+    body.page-war .game-unit-card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

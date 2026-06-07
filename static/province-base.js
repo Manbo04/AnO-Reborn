@@ -531,6 +531,9 @@
             toggle.textContent = isBase ? 'Classic view' : 'Base view';
             var nudge = document.getElementById('province-view-nudge');
             if (nudge) nudge.hidden = isBase;
+            if (!isBase && typeof window.initProvinceDemographicsChart === 'function') {
+                window.initProvinceDemographicsChart();
+            }
         }
 
         apply(mode);

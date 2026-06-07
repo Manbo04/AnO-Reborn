@@ -154,3 +154,175 @@ body.page-provinces .game-province-card-thumb img {
 .province-settings-remove {
     background: var(--foregroundThree);
 }
+
+/* Status cards */
+.province-status-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--game-space-md, 16px);
+    width: 100%;
+    margin: var(--game-space-md, 16px) 0;
+}
+
+.province-status-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm, 8px);
+    padding: var(--game-space-md, 16px);
+    border-radius: var(--game-radius-md, 12px);
+    border: 1px solid var(--border);
+    background: var(--foregroundThree);
+    min-height: 72px;
+}
+
+.province-status-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--game-space-sm, 8px);
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.province-status-card__head .material-icons-outlined {
+    flex-shrink: 0;
+    font-size: 22px;
+    top: 0;
+    right: 0;
+}
+
+.province-status-card__detail {
+    margin: 0;
+    padding-left: 30px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.province-status-card__detail--warn {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--warning, #c9a227);
+}
+
+.province-status-card__detail--warn .material-icons-outlined {
+    font-size: 18px;
+    top: 0;
+    right: 0;
+}
+
+.province-status-card--ok {
+    border-color: rgba(45, 159, 111, 0.45);
+    background: linear-gradient(135deg, rgba(45, 159, 111, 0.12), var(--foregroundThree));
+}
+
+.province-status-card--ok .province-status-card__head .material-icons-outlined {
+    color: var(--success, #2d9f6f);
+}
+
+.province-status-card--bad {
+    border-color: rgba(220, 88, 88, 0.45);
+    background: linear-gradient(135deg, rgba(220, 88, 88, 0.12), var(--foregroundThree));
+}
+
+.province-status-card--bad .province-status-card__head .material-icons-outlined {
+    color: var(--danger, #dc5858);
+}
+
+@media (min-width: 768px) {
+    .province-status-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
+    .province-status-card {
+        height: 100%;
+    }
+}
+
+/* Province info two-column layout */
+.province-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--game-space-md, 16px);
+    width: 100%;
+    align-items: start;
+}
+
+.province-info-grid > .templatedivflex2left,
+.province-info-grid > .templatedivflex2right {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+}
+
+.province-info-demographics .chart-wrapper {
+    max-width: none;
+    width: 100%;
+    min-height: 280px;
+    margin: var(--game-space-sm, 8px) 0;
+}
+
+.chart-wrapper--empty .chart-wrapper__empty-msg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.chart-wrapper__empty-msg[hidden] {
+    display: none !important;
+}
+
+@media (min-width: 768px) {
+    .province-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Owner tools — Quick Build + purchase */
+.province-owner-tools {
+    width: 100%;
+    margin: var(--game-space-md, 16px) 0;
+}
+
+.province-owner-tools .infodiv {
+    width: 100%;
+    max-width: 100%;
+}
+
+.province-purchase-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--game-space-md, 16px);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.province-purchase-panel {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .province-purchase-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Province list cards — desktop alignment */
+body.page-provinces .province-list-card.warflexparent.card-align-row {
+    align-items: stretch;
+}
+
+body.page-provinces .province-list-card-media {
+    flex: 0 0 38%;
+    max-width: 42%;
+}
