@@ -169,8 +169,7 @@ def create_app():
         return filename
     app.jinja_env.globals["asset"] = asset
 
-    logging_format = "====
-%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
+    logging_format = "====\\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
     logging.basicConfig(level=logging.ERROR, format=logging_format, filename="errors.log")
     logger = logging.getLogger(__name__)
 
