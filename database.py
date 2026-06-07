@@ -18,6 +18,8 @@ from urllib.parse import urlparse
 from collections import OrderedDict
 
 load_dotenv()
+if os.getenv("DATABASE_URL") and "interchange" in os.getenv("DATABASE_URL"):
+    os.environ["PGSSLMODE"] = "require"
 import config  # Parse Railway DATABASE_URL  # noqa: E402
 
 # Ensure PG_* env vars are populated from DATABASE_URL (or DATABASE_PUBLIC_URL).
