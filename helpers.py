@@ -14,6 +14,59 @@ import base64
 load_dotenv()
 
 
+def province_image_url(province_id: int, has_image: bool = False) -> str:
+    """Public URL for a province banner, or the default stock image."""
+    if has_image:
+        return f"/province-image/{province_id}"
+    from flask import url_for
+
+    return url_for("static", filename="images/province.jpg") + "?v=2"
+
+
+def compress_province_image(
+    file_storage, max_width=1200, max_height=675, quality=82
+):
+    """
+    Compress a province banner image for database storage (landscape-friendly).
+
+    Returns:
+        tuple: (base64_encoded_data, extension)
+    """
+    try:
+        from PIL import Image
+
+        img = Image.open(file_storage)
+        if img.mode in ("RGBA", "P"):
+            background = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            if img.mode == "RGBA":
+                background.paste(img, mask=img.split()[-1])
+            else:
+                background.paste(img)
+            img = background
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+        img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
+        buffer.seek(0)
+        image_data = base64.b64encode(buffer.read()).decode("utf-8")
+        return image_data, "jpg"
+    except ImportError:
+        file_storage.seek(0)
+        image_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[-1].lower()
+        return image_data, extension
+    except Exception:
+        file_storage.seek(0)
+        image_data = base64.b64encode(file_storage.read()).decode("utf-8")
+        extension = file_storage.filename.rsplit(".", 1)[-1].lower()
+        return image_data, extension
+
+
 def compress_flag_image(file_storage, max_size=300, quality=85):
     """
     Compress and resize a flag image for efficient database storage.

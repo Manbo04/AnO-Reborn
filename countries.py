@@ -730,6 +730,25 @@ def country(cId):
                 rollback_db_cursor(db)
                 provinces = []
 
+        provinces_with_images = set()
+        try:
+            from database import provinces_has_image_data
+
+            if provinces_has_image_data():
+                db.execute(
+                    """
+                    SELECT id FROM provinces
+                    WHERE userId = %s
+                      AND image_data IS NOT NULL
+                      AND image_data <> ''
+                    """,
+                    (cId,),
+                )
+                provinces_with_images = {row[0] for row in db.fetchall()}
+        except Exception:
+            rollback_db_cursor(db)
+            provinces_with_images = set()
+
         try:
             db.execute(
                 """
@@ -973,6 +992,7 @@ def country(cId):
         total_cities=total_cities,
         total_land=total_land,
         provinces=provinces,
+        provinces_with_images=provinces_with_images,
         colId=coalition_id,
         coalition_id=coalition_id,
         flag=flag,
