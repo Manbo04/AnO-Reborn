@@ -97,7 +97,7 @@ def login_email():
         db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('hash', 'password')")
         cols = [r[0] for r in db.fetchall()]
         
-        sel_cols = "id"
+        sel_cols = "id, is_verified"
         if "hash" in cols: sel_cols += ", hash"
         if "password" in cols: sel_cols += ", password"
         
@@ -120,10 +120,32 @@ def login_email():
     for val in (hash_val, password_val):
         if val and val.startswith('scrypt:'):
             if check_password_hash(val, password):
+                from email_utils import is_email_configured
+                try:
+                    email_enforced = is_email_configured()
+                except Exception:
+                    email_enforced = False
+
+                if email_enforced:
+                    is_verified = user[1] # is_verified is 2nd column
+                    if is_verified is False:
+                        return redirect(f"/verification_pending?email={email}")
+
                 session["user_id"] = user_id
                 return redirect("/")
         elif val and val.startswith('pbkdf2:sha256:'):
             if check_password_hash(val, password):
+                from email_utils import is_email_configured
+                try:
+                    email_enforced = is_email_configured()
+                except Exception:
+                    email_enforced = False
+
+                if email_enforced:
+                    is_verified = user[1] # is_verified is 2nd column
+                    if is_verified is False:
+                        return redirect(f"/verification_pending?email={email}")
+
                 session["user_id"] = user_id
                 return redirect("/")
     

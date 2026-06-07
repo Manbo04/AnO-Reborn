@@ -1231,7 +1231,7 @@ def _run_schema_step(label: str, fn) -> bool:
             fn(db)
         return True
     except Exception as exc:
-        logger.warning("ensure_schema_compat (%s): %s", label, exc)
+        logger.error("CRITICAL SCHEMA ERROR (%s): %s", label, exc)
         _schema_compat_failed_steps.append(f"{label}: {exc}")
         try:
             with get_db_cursor() as db:
