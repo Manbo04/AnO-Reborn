@@ -1,3 +1,4 @@
+{% if province.own %}
 <div class="templatedivflex2 menuflex divflex2center width100">
     <div class="templatedivflex2left">
         <button type="button" class="templatedivbutton templatecenteredbutton" id="provincesettingsbutton" onclick="provincesettingstoggle()">
@@ -6,7 +7,42 @@
     </div>
 </div>
 <div class="provincesettingsparent templatedivflex2 menuflex divflex2center width100" id="provincesettingsparent">
-    <div class="infodiv">
-        <h3 class="templatecontentheadercenter">Sorry, this content is not currently functional</h3>
+    <div class="infodiv province-settings-panel">
+        <h3 class="templatecontentheadercenter">Province picture</h3>
+        <p class="province-settings-hint">Upload a landscape photo for this province. It appears on your province page, province list, and nation page.</p>
+
+        <div class="province-settings-preview">
+            <img
+                src="{{ province.image_url }}"
+                alt="{{ province.name }} banner preview"
+                class="province-settings-preview-image"
+                id="province-settings-preview"
+            />
+        </div>
+
+        <form method="POST" action="/province/{{ province.id }}/image" enctype="multipart/form-data" class="province-settings-form">
+            <label class="province-settings-label" for="province_image_input">Choose image</label>
+            <input
+                class="loginsignupinput province-settings-file"
+                type="file"
+                name="province_image"
+                id="province_image_input"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+            />
+            <p class="province-settings-hint">PNG, JPG, or WEBP. Wide images work best (up to 1200×675).</p>
+            <button type="submit" class="templatedivbutton templatecenteredbutton province-settings-save">
+                <span class="material-icons-outlined">upload</span>Save picture
+            </button>
+        </form>
+
+        {% if province.has_image %}
+        <form method="POST" action="/province/{{ province.id }}/image" class="province-settings-remove-form">
+            <input type="hidden" name="remove_image" value="1" />
+            <button type="submit" class="templatedivbutton templatecenteredbutton province-settings-remove">
+                <span class="material-icons-outlined">delete</span>Remove custom picture
+            </button>
+        </form>
+        {% endif %}
     </div>
 </div>
+{% endif %}

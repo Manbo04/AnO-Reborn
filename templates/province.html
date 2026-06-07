@@ -11,7 +11,7 @@
 <div class="templatediv">
 
     {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
-    <div class="templatedivtopper provincetopper">
+    <div class="templatedivtopper provincetopper{% if province.has_image %} provincetopper--custom{% endif %}"{% if province.has_image %} style="background-image: url('{{ province.image_url }}');"{% endif %}>
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
                 account_balance
             </span>{{ province['name'] }}</h1>
