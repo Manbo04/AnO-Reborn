@@ -380,9 +380,7 @@ def create_app():
 
     @app.context_processor
     def inject_layout_context():
-        """Single layout context: game UI, ads, admin ids, and per-user HUD data."""
-        from app_core.ads.helpers import load_rotating_ads
-
+        """Single layout context: game UI, admin ids, and per-user HUD data."""
         try:
             from tests.conftest import TEST_UI_MOCK_CONTEXT
 
@@ -396,17 +394,8 @@ def create_app():
             "google_client_id": os.getenv("GOOGLE_CLIENT_ID"),
             "admin_user_ids": list(SUPER_ADMIN_USER_IDS),
             "get_resources": get_resources,
-            "top_ad": None,
-            "side_ad_left": None,
-            "side_ad_right": None,
             "game_ui": {},
         }
-
-        try:
-            ads = load_rotating_ads(get_request_cursor)
-            ctx.update(ads)
-        except Exception:
-            pass
 
         if "user_id" not in session:
             return ctx
