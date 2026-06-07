@@ -44,9 +44,9 @@
         <div class="game-table-fallback--hide-mobile">
         {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
         %} {% set energy = province[7] %}
-        <a href="/province/{{ pId }}">
-            <div class="warflexparent templatedivflex2 menuflex">
-                <div class="templatedivflex2left vanilla">
+        <a href="/province/{{ pId }}" class="province-list-card-link">
+            <div class="templatedivflex2 menuflex warflexparentcolors card-align-row province-list-card">
+                <div class="templatedivflex2left province-list-card-stats">
 
                     <table class="templatetable inverttable ">
                         <tr>
@@ -96,9 +96,9 @@
                         </tr>
                     </table>
                 </div>
-                <div class="templatedivflex2left vanilla">
+                <div class="templatedivflex2right province-list-card-media">
 
-                    <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" />
+                    <img alt="Image" tabindex="0" class="province-list-card-image" loading="lazy" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" />
 
                 </div>
             </div>

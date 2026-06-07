@@ -133,8 +133,10 @@ body.game-shell-active .templatecontainer {
     margin-right: 0;
 }
 
-/* --- Building / war cards --- */
-.templatedivcontent .warflexparentcolors {
+/* --- Building / war / list cards --- */
+.templatedivcontent .warflexparentcolors,
+.templatedivcontent .warflexparent.card-align-row,
+.templatedivcontent a > .warflexparent.card-align-row {
     width: 100%;
     margin-left: 0;
     margin-right: 0;
@@ -142,29 +144,68 @@ body.game-shell-active .templatecontainer {
     border-radius: var(--game-radius-sm, 4px);
 }
 
+.templatedivcontent .warflexparentcolors.card-align-row,
+.templatedivcontent .warflexparent.card-align-row {
+    align-items: stretch !important;
+}
+
 .templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left,
-.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right {
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2left,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2right {
     margin: 0;
+    align-self: stretch;
 }
 
-.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left {
-    padding: var(--game-space-md, 16px);
-}
-
-.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right {
-    padding: 0;
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2left {
+    padding: 0 var(--game-space-md, 16px) var(--game-space-md, 16px) var(--game-space-md, 16px);
     display: flex;
     flex-direction: column;
 }
 
-.templatedivcontent .warflexparentcolors .unitimage {
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left > :first-child,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2left > :first-child {
+    margin-top: var(--game-space-md, 16px);
+}
+
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2right,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2right,
+.templatedivcontent .province-card-media,
+.templatedivcontent .province-list-card-media {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.templatedivcontent .warflexparentcolors.card-align-row > .templatedivflex2left .templatetable,
+.templatedivcontent .warflexparent.card-align-row > .templatedivflex2left .templatetable {
+    margin: 0;
+    width: 100%;
+    flex: 1;
+}
+
+.templatedivcontent .warflexparentcolors .unitimage,
+.templatedivcontent .province-card-media .unitimage,
+.templatedivcontent .province-list-card-image {
     display: block;
     width: 100%;
-    max-height: 320px;
+    height: 100%;
+    min-height: 100%;
+    max-height: none;
     object-fit: cover;
     border-radius: 0;
     box-shadow: none;
     margin: 0;
+    flex: 1;
+    align-self: stretch;
+}
+
+.templatedivcontent .warflexparent.card-align-row img {
+    height: auto;
 }
 
 /* --- Tab navigation --- */
