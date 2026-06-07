@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Web service entry: optional Discord bot sidecar + gunicorn.
-# Pushes to master redeploy the web service; the sidecar runs latest bot code and
-# renders embeds via the web API (DISCORD_BOT_USE_WEB_EMBEDS=1).
+# Cost-optimized: bot sidecar on web, celery worker+beat merged, slim gunicorn.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -9,9 +8,10 @@ export ANO_USE_START_SCRIPT=1
 export ANO_BOOT_MARKER="${RAILWAY_GIT_COMMIT_SHA:-unknown}"
 
 PORT="${PORT:-8080}"
+SERVICE_NAME="${RAILWAY_SERVICE_NAME:-web}"
 
-# Dedicated Railway "bot" service should run the bot. Web sidecar is opt-in only.
-if [[ -n "${DISCORD_BOT_TOKEN:-}" && "${DISCORD_BOT_SIDECAR:-0}" == "1" ]]; then
+# Discord bot sidecar on web (replaces dedicated bot service — saves one container).
+if [[ -n "${DISCORD_BOT_TOKEN:-}" && "${DISCORD_BOT_SIDECAR:-1}" == "1" ]]; then
   echo "[start] Discord bot sidecar: clearing stale leader locks..."
   python3 - <<'PY' || true
 import os
@@ -32,16 +32,18 @@ PY
   echo "[start] Starting Discord bot sidecar (embeds from web API)..."
   python3 scripts/run_discord_bot_if_leader.py >>/tmp/discord-bot.log 2>&1 &
 else
-  echo "[start] DISCORD_BOT_TOKEN unset — skip Discord sidecar."
-  echo "[start] Add DISCORD_BOT_TOKEN to the web service (or use a dedicated bot service)."
+  echo "[start] Discord bot sidecar disabled (DISCORD_BOT_SIDECAR=${DISCORD_BOT_SIDECAR:-0})."
 fi
 
-SERVICE_NAME="${RAILWAY_SERVICE_NAME:-web}"
+# Heavy boot (migrations, schema compat, economy nudge) runs on celery-worker only.
+# Web starts gunicorn fast; worker owns DB schema + Celery beat schedule.
+_is_worker_service() {
+  [[ "$SERVICE_NAME" == *"worker"* || "$SERVICE_NAME" == *"celery"* ]]
+}
 
-if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" && ( "$SERVICE_NAME" == "web" || "$SERVICE_NAME" == *"worker"* || "$SERVICE_NAME" == *"celery"* || "$SERVICE_NAME" == *"beat"* ) ]]; then
-  echo "[start] Applying pending SQL migrations (best-effort)..."
+if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]] && _is_worker_service; then
+  echo "[start] Worker boot: applying migrations and schema compat..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
-  echo "[start] Next.js compatibility views (best-effort)..."
   python3 scripts/apply_nextjs_compat_views.py || echo "[start] WARN: compat views script exited non-zero"
   python3 -c "
 from database import ensure_schema_compat, schema_compat_succeeded, schema_compat_failed_steps
@@ -51,28 +53,32 @@ print('[start] schema_compat', 'ok' if ok else 'failed', schema_compat_failed_st
 " || echo "[start] WARN: schema compat check failed"
   echo "[start] Nudge stale economy tasks if beat missed schedules..."
   python3 scripts/nudge_stale_economy_tasks.py || echo "[start] WARN: economy nudge exited non-zero"
+elif [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
+  echo "[start] Skipping migrations on $SERVICE_NAME (worker handles schema boot)."
 else
   echo "[start] No DATABASE_URL — skip migrations"
 fi
 
 export ANO_BOOT_DONE=1
 
-if [[ "$SERVICE_NAME" == *"worker"* ]] || [[ "$SERVICE_NAME" == *"celery"* ]]; then
-  echo "[start] Starting Celery worker for service $SERVICE_NAME..."
-  exec celery -A tasks worker --loglevel=INFO
+if _is_worker_service; then
+  CELERY_CONCURRENCY="${CELERY_CONCURRENCY:-2}"
+  echo "[start] Starting Celery worker+beat (concurrency=${CELERY_CONCURRENCY})..."
+  exec celery -A tasks worker --beat --loglevel=INFO --concurrency="${CELERY_CONCURRENCY}"
 elif [[ "$SERVICE_NAME" == *"beat"* ]]; then
-  echo "[start] Starting Celery beat for service $SERVICE_NAME..."
+  echo "[start] WARN: dedicated beat service is deprecated — use celery-worker with --beat."
   exec python3 scripts/run_beat_if_leader.py
 elif [[ "$SERVICE_NAME" == *"bot"* ]] || [[ "$SERVICE_NAME" == *"discord"* ]]; then
-  echo "[start] Starting Discord bot for service $SERVICE_NAME..."
+  echo "[start] WARN: dedicated bot service is deprecated — use DISCORD_BOT_SIDECAR=1 on web."
   exec python3 scripts/run_discord_bot_if_leader.py
 else
-  echo "[start] Starting gunicorn on :${PORT} for service $SERVICE_NAME..."
+  GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
+  GUNICORN_THREADS="${GUNICORN_THREADS:-2}"
+  echo "[start] Starting gunicorn on :${PORT} (workers=${GUNICORN_WORKERS} threads=${GUNICORN_THREADS})..."
   exec gunicorn \
     --bind "0.0.0.0:${PORT}" \
-    --preload \
-    --workers 4 \
-    --threads 4 \
+    --workers "${GUNICORN_WORKERS}" \
+    --threads "${GUNICORN_THREADS}" \
     --worker-class gthread \
     --timeout 120 \
     --graceful-timeout 15 \

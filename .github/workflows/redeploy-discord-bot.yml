@@ -1,5 +1,5 @@
-# Redeploy the Railway `bot` service after Discord bot code changes on master.
-# Requires repository secret: RAILWAY_TOKEN (Railway account/workspace token).
+# Redeploy web after Discord bot code changes (bot runs as web sidecar — no dedicated bot service).
+# Requires repository secret: RAILWAY_TOKEN
 
 name: Redeploy Discord Bot
 
@@ -12,7 +12,6 @@ on:
       - "migrations/0023_discord_guild_panels.sql"
       - "docs/DISCORD_GUILD_ROOT_AI_SETUP.md"
       - "bot_api.py"
-      - "database.py"
       - "Dockerfile.discord-bot"
       - "railway.discord-bot.json"
       - "scripts/run_discord_bot_if_leader.py"
@@ -23,25 +22,29 @@ on:
       - "railway.json"
       - ".github/workflows/redeploy-discord-bot.yml"
 
+concurrency:
+  group: railway-deploy
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  redeploy-bot:
+  redeploy-web-sidecar:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure and redeploy bot on Railway
+      - name: Configure sidecar vars and redeploy web
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
         run: |
           if [ -z "${RAILWAY_TOKEN:-}" ]; then
-            echo "::warning::RAILWAY_TOKEN is not set — skipping bot redeploy (non-blocking for web deploy)."
+            echo "::warning::RAILWAY_TOKEN is not set — skipping redeploy."
             exit 0
           fi
-          python3 scripts/railway_production_fix.py
+          python3 scripts/railway_production_fix.py --services web
 
       - name: Verify web bot API is reachable
         run: |
