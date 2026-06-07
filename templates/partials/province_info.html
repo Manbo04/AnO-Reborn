@@ -1,229 +1,109 @@
-<div class="templatedivflex2 menuflex">
-            <div class="templatedivflex2left">
-
-                <table class="templatetable">
-                    <tr>
-                        <th><span class="material-icons-outlined">
-                                account_balance
-                            </span>Province Information</th>
-                    </tr>
-                    <tr>
-                        <td>
-                            <strong class="tooltipparent">
-                                <div class="tooltip">By default, every citizen pays $0.025 each turn</div><span class="material-icons-outlined">
-                                people_alt
-                            </span>Population:</strong>
-                        </td>
-                        <td>{{ province['population'] | commas }}</td>
-                    </tr>
-                    {% if province['happiness'] < 50 %}
-                    <tr>
-                        <td><strong class="tooltipparent">
-                            <div class="tooltip">Each percent of happiness increases max population by 0.08%</div><span class="material-icons-outlined">
-                                 sentiment_dissatisfied
-                            </span>Happiness:</strong></td>
-                        <td>{{ province['happiness'] }}%</td>
-                    </tr>
-                        {% else %}
-                        <tr>
-                            <td><strong class="tooltipparent">
-                                <div class="tooltip">Each percent of happiness increases max population by 0.08%</div><span class="material-icons-outlined">
-                                    sentiment_satisfied
-                                </span>Happiness:</strong></td>
-                            <td>{{ province['happiness'] }}%</td>
-                        </tr>
-                    {% endif %}
-                    {% if province['productivity'] < 50 %}
-                    <tr>
-                            <td><strong class="tooltipparent">
-                            <div class="tooltip">Each percent of productivity increases resource output by 0.9%</div><span class="material-icons-outlined">
-                                 arrow_circle_down
-                            </span>Productivity:</strong></td>
-                            <td>{{ province['productivity'] }}%</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td><strong class="tooltipparent">
-                                <div class="tooltip">Each percent of productivity increases resource output by 0.9%</div><span class="material-icons-outlined">
-                                    arrow_circle_up
-                                </span>Productivity:</strong></td>
-                                <td>{{ province['productivity'] }}%</td>
-                            </tr>
-                        {% endif %}
-                            <tr>
-                                <td><strong class="tooltipparent">
-                            <div class="tooltip">When consumer spending is 100%, tax income is increased by 150%</div><span class="material-icons-outlined">
-                                attach_money
-                            </span>Consumer Spending:</strong></td>
-                                <td>{{ province['consumer_spending'] }}%</td>
-                            </tr>
-                            <tr>
-                                <td><strong class="tooltipparent">
-                            <div class="tooltip">Each percent of pollution decreases max population by 0.06%</div><span class="material-icons-outlined">
-                                emoji_transportation
-                            </span>Pollution:</strong></td>
-                                <td>{{ province['pollution'] }}%</td>
-                            </tr>
-                            <tr>
-                                <td><strong class="tooltipparent">
-                            <div class="tooltip">Each city slot allows construction of one additional city infrastructure, and increases max population by 750,000</div><span class="material-icons-outlined">
-                                business
-                            </span>City slots:</strong></td>
-                                <td>{{ province['free_cityCount']}} / {{ province['citycount'] }}</td>
-                                <!-- how much you are using out of how much you have -->
-                            </tr>
-                            <tr>
-                                <td><strong class="tooltipparent">
-                            <div class="tooltip">Each land slot allows construction of one additional land infrastructure, increases max population by 120,000 and increases tax income by 2%</div><span class="material-icons-outlined">
-                                landscape
-                            </span>Land slots:</strong></td>
-                                <td>{{ province['free_land'] }} / {{ province['land'] }}</td>
-                                <!-- how much you are using out of how much you have -->
-                            </tr>
-                            <tr>
-                                <td><strong class="tooltipparent">
-                            <div class="tooltip">Electricity allows for certain infrastructure to function, and affects tax income</div><span class="material-icons-outlined">
-                            power
-                            </span>Electricity:</strong></td>
-                                <td>{{ energy['production'] }} produced / {{ energy['consumption'] }} needed</td>
-                                <!-- production / consumption for clarity -->
-                            </tr>
-                </table>
-
-            </div>
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographic Shape</h3>
-                <div class="chart-wrapper">
-                    <canvas id="provinceDemographicsChart"></canvas>
-                </div>
-                <table class="templatetable" class="table-mt">
-                    <tr>
-                        <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
-                    </tr>
-                    <tr>
-                        <td><span class="material-icons-outlined">child_care</span>Children:</td>
-                        <td>{{ province['pop_children'] | commas }}</td>
-                    </tr>
-                    <tr>
-                        <td><span class="material-icons-outlined">work</span>Working Age:</td>
-                        <td>{{ province['pop_working'] | commas }}</td>
-                    </tr>
-                    <tr>
-                        <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
-                        <td>{{ province['pop_elderly'] | commas }}</td>
-                    </tr>
-                </table>
-            </div>
+<div class="province-info-grid templatedivflex2 menuflex">
+    <div class="templatedivflex2left province-info-stats">
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">account_balance</span>Province Information</th>
+            </tr>
+            <tr>
+                <td>
+                    <strong class="tooltipparent">
+                        <div class="tooltip">By default, every citizen pays $0.025 each turn</div>
+                        <span class="material-icons-outlined">people_alt</span>Population:
+                    </strong>
+                </td>
+                <td>{{ province['population'] | commas }}</td>
+            </tr>
+            {% if province['happiness'] < 50 %}
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each percent of happiness increases max population by 0.08%</div>
+                    <span class="material-icons-outlined">sentiment_dissatisfied</span>Happiness:</strong></td>
+                <td>{{ province['happiness'] }}%</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each percent of happiness increases max population by 0.08%</div>
+                    <span class="material-icons-outlined">sentiment_satisfied</span>Happiness:</strong></td>
+                <td>{{ province['happiness'] }}%</td>
+            </tr>
+            {% endif %}
+            {% if province['productivity'] < 50 %}
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each percent of productivity increases resource output by 0.9%</div>
+                    <span class="material-icons-outlined">arrow_circle_down</span>Productivity:</strong></td>
+                <td>{{ province['productivity'] }}%</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each percent of productivity increases resource output by 0.9%</div>
+                    <span class="material-icons-outlined">arrow_circle_up</span>Productivity:</strong></td>
+                <td>{{ province['productivity'] }}%</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">When consumer spending is 100%, tax income is increased by 150%</div>
+                    <span class="material-icons-outlined">attach_money</span>Consumer Spending:</strong></td>
+                <td>{{ province['consumer_spending'] }}%</td>
+            </tr>
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each percent of pollution decreases max population by 0.06%</div>
+                    <span class="material-icons-outlined">emoji_transportation</span>Pollution:</strong></td>
+                <td>{{ province['pollution'] }}%</td>
+            </tr>
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each city slot allows construction of one additional city infrastructure, and increases max population by 750,000</div>
+                    <span class="material-icons-outlined">business</span>City slots:</strong></td>
+                <td>{{ province['free_cityCount'] }} / {{ province['citycount'] }}</td>
+            </tr>
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Each land slot allows construction of one additional land infrastructure, increases max population by 120,000 and increases tax income by 2%</div>
+                    <span class="material-icons-outlined">landscape</span>Land slots:</strong></td>
+                <td>{{ province['free_land'] }} / {{ province['land'] }}</td>
+            </tr>
+            <tr>
+                <td><strong class="tooltipparent">
+                    <div class="tooltip">Electricity allows for certain infrastructure to function, and affects tax income</div>
+                    <span class="material-icons-outlined">power</span>Electricity:</strong></td>
+                <td>{{ energy['production'] }} produced / {{ energy['consumption'] }} needed</td>
+            </tr>
+        </table>
+    </div>
+    <div class="templatedivflex2right province-info-demographics">
+        <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographic Shape</h3>
+        <div class="chart-wrapper">
+            <canvas id="provinceDemographicsChart"></canvas>
+            <p class="chart-wrapper__empty-msg" hidden>No demographic data yet</p>
         </div>
-
-        <script>
-        // Wait for DOM to be fully loaded before initializing charts
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initProvinceCharts);
-        } else {
-            initProvinceCharts();
-        }
-
-        function initProvinceCharts() {
-            const ctx = document.getElementById('provinceDemographicsChart');
-            if (!ctx) return;
-
-            // Weight formatter: kg -> t -> kt -> Mt
-            function formatWeight(value) {
-                if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
-                if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
-                if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
-                return value.toFixed(0) + ' kg';
-            }
-
-            const totalPop = {{ province['population'] if province['population'] else 1 }};
-            const childrenPct = ({{ province['pop_children'] }} / totalPop) * 100;
-            const workingPct = ({{ province['pop_working'] }} / totalPop) * 100;
-            const elderlyPct = ({{ province['pop_elderly'] }} / totalPop) * 100;
-
-            new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Children', 'Working Age', 'Elderly'],
-                    datasets: [{
-                        label: '{{ province["name"] }} (% of Population)',
-                        data: [childrenPct, workingPct, elderlyPct],
-                        backgroundColor: 'rgba(94, 89, 255, 0.15)',
-                        borderColor: 'rgba(94, 89, 255, 1)',
-                        borderWidth: 2.5,
-                        pointBackgroundColor: 'rgba(94, 89, 255, 1)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 1.5,
-                        pointRadius: 4,
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(94, 89, 255, 1)',
-                        pointHoverRadius: 6,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeInOutQuart'
-                    },
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 25,
-                                callback: function(value) {
-                                    return value + '%';
-                                },
-                                font: { size: 11 }
-                            },
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.1)'
-                            },
-                            angleLines: {
-                                color: 'rgba(200, 200, 200, 0.15)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Demographic Structure: ' + '{{ province["name"] }}',
-                            font: {
-                                size: 12,
-                                weight: 'bold'
-                            },
-                            padding: 8
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            padding: 12,
-                            cornerRadius: 8,
-                            titleFont: { size: 12, weight: 'bold' },
-                            bodyFont: { size: 11 },
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const pct = context.parsed.r.toFixed(1);
-                                    const counts = {
-                                        'Children': {{ province['pop_children'] }},
-                                        'Working Age': {{ province['pop_working'] }},
-                                        'Elderly': {{ province['pop_elderly'] }}
-                                    };
-                                    const count = counts[label] || 0;
-                                    return label + ': ' + pct + '% (' + formatWeight(count) + ')';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        </script>
+        <table class="templatetable table-mt">
+            <tr>
+                <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
+            </tr>
+            <tr>
+                <td><span class="material-icons-outlined">child_care</span>Children:</td>
+                <td>{{ province['pop_children'] | commas }}</td>
+            </tr>
+            <tr>
+                <td><span class="material-icons-outlined">work</span>Working Age:</td>
+                <td>{{ province['pop_working'] | commas }}</td>
+            </tr>
+            <tr>
+                <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
+                <td>{{ province['pop_elderly'] | commas }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script type="application/json" id="province-demographics-data">{{ {
+    "name": province['name'],
+    "population": province['population'] or 1,
+    "pop_children": province['pop_children'] or 0,
+    "pop_working": province['pop_working'] or 0,
+    "pop_elderly": province['pop_elderly'] or 0
+} | tojson }}</script>
