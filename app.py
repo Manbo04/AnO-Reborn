@@ -294,7 +294,6 @@ def create_app():
 
     @app.context_processor
     def utility_processor():
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         def humanize_number(value):
             if value is None: return "0"
             try: return f"{int(value):,}"
@@ -312,39 +311,13 @@ def create_app():
             try: return f"${float(value):,.2f}"
             except (ValueError, TypeError): return str(value)
         return dict(
-            google_client_id=google_client_id,
             humanize_number=humanize_number,
             determine_color=determine_color,
             format_resources=format_resources,
             format_currency=format_currency,
         )
 
-    # game_ui_context setup
-    from database import get_request_cursor, rollback_db_cursor
-
-    def _get_user_game_context():
-        try:
-            from tests.conftest import TEST_UI_MOCK_CONTEXT
-            if TEST_UI_MOCK_CONTEXT.get("active"): return TEST_UI_MOCK_CONTEXT.get("context", {})
-        except ImportError: pass
-        if "user_id" not in session: return {}
-        user_id = session["user_id"]
-        ctx = {}
-        with get_request_cursor() as _db:
-            try:
-                _db.execute("SELECT countryName FROM users WHERE id = %s", (user_id,))
-                r = _db.fetchone()
-                ctx["country_name"] = r[0] if r else "Unknown"
-                _db.execute("SELECT id, name FROM colNames WHERE id = (SELECT coalitionId FROM users WHERE id=%s)", (user_id,))
-                c_row = _db.fetchone()
-                if c_row: ctx["coalition_id"], ctx["coalition_name"] = c_row[0], c_row[1]
-                else: ctx["coalition_id"], ctx["coalition_name"] = None, None
-            except Exception:
-                rollback_db_cursor(_db)
-                ctx["country_name"], ctx["coalition_id"], ctx["coalition_name"] = "Error", None, None
-        return ctx
-
-    app.context_processor(_get_user_game_context)
+    from app_core.admin.services import SUPER_ADMIN_USER_IDS
 
     def get_resources():
         """User resource HUD values for layout templates."""
@@ -375,8 +348,8 @@ def create_app():
         if cached is not None:
             return cached
 
-        with get_db_cursor(cursor_factory=RealDictCursor) as db:
-            try:
+        try:
+            with get_db_cursor(cursor_factory=RealDictCursor) as db:
                 db.execute("SELECT gold FROM stats WHERE id=%s", (target_user_id,))
                 gold_row = db.fetchone()
                 if gold_row:
@@ -402,42 +375,91 @@ def create_app():
 
                 query_cache.set(cache_key, resources, ttl_seconds=15)
                 return resources
-            except Exception:
-                return default_resources
-
-    # Global context for inject_global_data
-    @app.context_processor
-    def inject_global_data():
-        if "user_id" not in session: return {"game_ui": {}}
-        user_id = session["user_id"]
-        from database import get_request_cursor, rollback_db_cursor
-        with get_request_cursor() as cur:
-            try:
-                cur.execute("SELECT has_unseen_combat_logs FROM users WHERE id = %s", (user_id,))
-                row = cur.fetchone()
-                has_combat = row[0] if row else False
-            except Exception:
-                rollback_db_cursor(cur)
-                has_combat = False
-        return {"game_ui": {"has_unseen_combat_logs": has_combat}}
+        except Exception:
+            return default_resources
 
     @app.context_processor
-    def inject_user():
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    def inject_layout_context():
+        """Single layout context: game UI, ads, admin ids, and per-user HUD data."""
         from app_core.ads.helpers import load_rotating_ads
-        from database import get_request_cursor
 
-        ads = load_rotating_ads(get_request_cursor)
+        try:
+            from tests.conftest import TEST_UI_MOCK_CONTEXT
 
-        return dict(
-            google_client_id=google_client_id,
-            top_ad=ads["top_ad"],
-            side_ad_left=ads["side_ad_left"],
-            side_ad_right=ads["side_ad_right"],
-            get_resources=get_resources,
+            if TEST_UI_MOCK_CONTEXT.get("active"):
+                return TEST_UI_MOCK_CONTEXT.get("context", {})
+        except ImportError:
+            pass
+
+        ctx = {
             **game_ui.game_ui_context(),
-            **_get_user_game_context()
-        )
+            "google_client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "admin_user_ids": list(SUPER_ADMIN_USER_IDS),
+            "get_resources": get_resources,
+            "top_ad": None,
+            "side_ad_left": None,
+            "side_ad_right": None,
+            "game_ui": {},
+        }
+
+        try:
+            ads = load_rotating_ads(get_request_cursor)
+            ctx.update(ads)
+        except Exception:
+            pass
+
+        if "user_id" not in session:
+            return ctx
+
+        user_id = session["user_id"]
+        try:
+            with get_request_cursor() as db:
+                try:
+                    db.execute(
+                        "SELECT countryName FROM users WHERE id = %s",
+                        (user_id,),
+                    )
+                    row = db.fetchone()
+                    ctx["country_name"] = row[0] if row else "Unknown"
+
+                    db.execute(
+                        """
+                        SELECT id, name FROM colNames
+                        WHERE id = (SELECT coalitionId FROM users WHERE id=%s)
+                        """,
+                        (user_id,),
+                    )
+                    coalition = db.fetchone()
+                    if coalition:
+                        ctx["coalition_id"], ctx["coalition_name"] = (
+                            coalition[0],
+                            coalition[1],
+                        )
+                    else:
+                        ctx["coalition_id"], ctx["coalition_name"] = None, None
+
+                    has_combat = False
+                    try:
+                        db.execute(
+                            "SELECT has_unseen_combat_logs FROM users WHERE id = %s",
+                            (user_id,),
+                        )
+                        combat_row = db.fetchone()
+                        has_combat = combat_row[0] if combat_row else False
+                    except Exception:
+                        rollback_db_cursor(db)
+                    ctx["game_ui"] = {"has_unseen_combat_logs": has_combat}
+                except Exception:
+                    rollback_db_cursor(db)
+                    ctx["country_name"] = "Error"
+                    ctx["coalition_id"], ctx["coalition_name"] = None, None
+                    ctx["game_ui"] = {"has_unseen_combat_logs": False}
+        except Exception:
+            ctx["country_name"] = "Error"
+            ctx["coalition_id"], ctx["coalition_name"] = None, None
+            ctx["game_ui"] = {"has_unseen_combat_logs": False}
+
+        return ctx
 
 
     # --- RESTORED JINJA2 FILTERS ---
