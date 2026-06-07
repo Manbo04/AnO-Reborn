@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""One-shot Railway production repair: bot Online + Discord embed UI from web.
+"""One-shot Railway production repair: web sidecar bot + scoped redeploys.
 
 Requires:
   export RAILWAY_TOKEN='...'
 
 Run:
   python3 scripts/railway_production_fix.py
+  python3 scripts/railway_production_fix.py --redeploy-only --services web,celery-worker
 
 Postgres volume attachment must be fixed in the dashboard if Postgres is Crashed
 (see docs/RAILWAY_FIX_ONCE.md).
@@ -16,7 +17,6 @@ import os
 import secrets
 import sys
 
-# Import helpers from sibling script (same directory on path).
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPT_DIR not in sys.path:
     sys.path.insert(0, _SCRIPT_DIR)
@@ -33,6 +33,9 @@ POSTGRES CRASHED — fix in Railway UI first:
   6. Re-run this script
 """
 
+# Never auto-redeploy databases on code push — wastes compute and risks downtime.
+DEFAULT_REDEPLOY_SERVICES = ("web", "celery-worker")
+
 
 def _service_id(services: list, *names: str) -> str | None:
     by_name = {s["name"].lower(): s["id"] for s in services}
@@ -47,53 +50,49 @@ def _service_id(services: list, *names: str) -> str | None:
     return None
 
 
-def _configure_all(
+def _configure_sidecar_web(
     token: str, project_id: str, env_id: str, services: list, base_url: str
 ) -> None:
     web_id = _service_id(services, "web")
-    bot_id = _service_id(services, "bot", rds.BOT_SERVICE_NAME)
-    if not web_id or not bot_id:
-        raise RuntimeError("web and bot services required in project")
+    if not web_id:
+        raise RuntimeError("web service required in project")
 
+    bot_id = _service_id(services, "bot", rds.BOT_SERVICE_NAME)
     web_vars = rds._get_service_variables(token, project_id, env_id, web_id)
     bot_secret = os.getenv("BOT_API_SECRET", "").strip() or secrets.token_hex(32)
 
     rds._upsert_var(token, project_id, env_id, web_id, "BOT_API_SECRET", bot_secret)
     rds._upsert_var(token, project_id, env_id, web_id, "BOT_API_BASE_URL", base_url)
-    rds._upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_SIDECAR", "0")
+    rds._upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_SIDECAR", "1")
+    rds._upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1")
+    rds._upsert_var(token, project_id, env_id, web_id, "GUNICORN_WORKERS", "2")
+    rds._upsert_var(token, project_id, env_id, web_id, "GUNICORN_THREADS", "2")
 
-    for obsolete in ("DISCORD_BOT_URL", "PORT"):
-        rds._delete_var(token, project_id, env_id, bot_id, obsolete)
+    worker_id = _service_id(services, "celery-worker")
+    if worker_id:
+        rds._upsert_var(token, project_id, env_id, worker_id, "CELERY_CONCURRENCY", "2")
 
-    rds._upsert_var(
-        token, project_id, env_id, bot_id, "RAILWAY_DOCKERFILE_PATH", "Dockerfile.discord-bot"
-    )
-    rds._upsert_var(token, project_id, env_id, bot_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1")
-    rds._upsert_var(token, project_id, env_id, bot_id, "DISCORD_BOT_SKIP_LEADER_LOCK", "1")
-    rds._upsert_var(
-        token, project_id, env_id, bot_id, "DISCORD_BOT_LEADER_LOCK_KEY", "discord_bot:leader:v3"
-    )
-    rds._upsert_var(token, project_id, env_id, bot_id, "BOT_API_BASE_URL", base_url)
-    rds._upsert_var(token, project_id, env_id, bot_id, "BOT_API_SECRET", bot_secret)
+    if bot_id:
+        bot_vars = rds._get_service_variables(token, project_id, env_id, bot_id)
+        bot_token = (bot_vars.get("DISCORD_BOT_TOKEN") or "").strip()
+        if bot_token:
+            rds._upsert_var(
+                token, project_id, env_id, web_id, "DISCORD_BOT_TOKEN", bot_token
+            )
+            print("  copied DISCORD_BOT_TOKEN from bot → web (sidecar)")
+        elif not (web_vars.get("DISCORD_BOT_TOKEN") or "").strip():
+            print("  WARN: no DISCORD_BOT_TOKEN on bot or web — set on web manually")
 
-    db_url = web_vars.get("DATABASE_PUBLIC_URL") or web_vars.get("DATABASE_URL")
-    if db_url:
-        rds._upsert_var(token, project_id, env_id, bot_id, "DATABASE_URL", db_url)
-    redis_url = web_vars.get("REDIS_URL")
-    if redis_url:
-        rds._upsert_var(token, project_id, env_id, bot_id, "REDIS_URL", redis_url)
-    secret = web_vars.get("SECRET_KEY")
-    if secret:
-        rds._upsert_var(token, project_id, env_id, bot_id, "SECRET_KEY", secret)
-
-    rds._set_start_command(token, bot_id, env_id, rds.BOT_START_COMMAND)
-    print("Bot configured: web embeds, skip leader lock, Dockerfile.discord-bot")
+    print("Web configured: Discord sidecar=1, gunicorn 2x2")
 
 
-def _redeploy_chain(token: str, env_id: str, services: list) -> None:
-    for name in ("Postgres", "postgres", "web", "beat", "celery-worker", "bot"):
+def _redeploy_chain(
+    token: str, env_id: str, services: list, service_names: tuple[str, ...]
+) -> None:
+    for name in service_names:
         sid = _service_id(services, name)
         if not sid:
+            print(f"  skip (not found): {name}")
             continue
         label = next((s["name"] for s in services if s["id"] == sid), name)
         try:
@@ -118,6 +117,16 @@ def _resolve_env_id(token: str, project_id: str) -> str:
     return env_id
 
 
+def _parse_services_arg(raw: str | None) -> tuple[str, ...]:
+    if not raw:
+        return DEFAULT_REDEPLOY_SERVICES
+    names = tuple(s.strip() for s in raw.split(",") if s.strip())
+    blocked = {n.lower() for n in names} & {"postgres", "redis"}
+    if blocked:
+        raise ValueError(f"Refusing to redeploy database services: {blocked}")
+    return names or DEFAULT_REDEPLOY_SERVICES
+
+
 def main() -> None:
     import argparse
 
@@ -125,7 +134,12 @@ def main() -> None:
     parser.add_argument(
         "--redeploy-only",
         action="store_true",
-        help="Only redeploy web/worker/beat/bot — skip variable changes",
+        help="Only redeploy selected services — skip variable changes",
+    )
+    parser.add_argument(
+        "--services",
+        default=",".join(DEFAULT_REDEPLOY_SERVICES),
+        help="Comma-separated service names (default: web,celery-worker). Never Postgres/Redis.",
     )
     args = parser.parse_args()
 
@@ -140,19 +154,22 @@ def main() -> None:
     base_url = os.getenv("BOT_API_BASE_URL", "https://affairsandorder.com").rstrip("/")
     env_id = _resolve_env_id(token, project_id)
     services = rds._project_services(token, project_id)
+    service_names = _parse_services_arg(args.services)
     print("Services:", ", ".join(s["name"] for s in services))
+    print("Redeploy targets:", ", ".join(service_names))
 
     if not args.redeploy_only:
         print(POSTGRES_VOLUME_HELP)
-        print("\nConfiguring variables...")
-        _configure_all(token, project_id, env_id, services, base_url)
+        print("\nConfiguring variables (web sidecar mode)...")
+        _configure_sidecar_web(token, project_id, env_id, services, base_url)
 
-    print("\nRedeploying game stack...")
-    _redeploy_chain(token, env_id, services)
+    print("\nRedeploying selected services (Postgres/Redis excluded)...")
+    _redeploy_chain(token, env_id, services, service_names)
 
     print("\nAfter deploy (~5 min):")
+    print("  curl -s https://affairsandorder.com/ready")
     print("  curl -s https://affairsandorder.com/deploy-info")
-    print("  expect schema_compat=ok and git_commit matching master")
+    print("  Delete beat + bot services in dashboard once verified (see docs/RAILWAY_COST_CUT.md)")
 
 
 if __name__ == "__main__":
