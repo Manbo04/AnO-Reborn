@@ -1452,8 +1452,29 @@ def get_users_password_column_names() -> set:
     return cols
 
 
+def _preserve_discord_link_before_password_reset(db, user_id: int) -> None:
+    """Copy legacy discord snowflake from hash into discord_id before bcrypt overwrite."""
+    if not users_table_has_column("discord_id"):
+        return
+    try:
+        db.execute(
+            """
+            UPDATE users
+            SET discord_id = hash
+            WHERE id = %s
+              AND COALESCE(auth_type, '') = 'discord'
+              AND (discord_id IS NULL OR discord_id = '')
+              AND hash ~ '^[0-9]{17,20}$'
+            """,
+            (user_id,),
+        )
+    except Exception as exc:
+        logger.warning("_preserve_discord_link_before_password_reset: %s", exc)
+
+
 def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
     """Persist bcrypt hash on every password column; allow username/password login."""
+    _preserve_discord_link_before_password_reset(db, user_id)
     cols = get_users_password_column_names()
     if not cols:
         raise RuntimeError("users table has no hash or password column")

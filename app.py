@@ -424,30 +424,16 @@ def create_app():
     @app.context_processor
     def inject_user():
         google_client_id = os.getenv("GOOGLE_CLIENT_ID")
-        top_ad = None
-        side_ad_left = None
-        side_ad_right = None
-        try:
-            from database import get_request_cursor
-            with get_request_cursor(read_only=True) as db:
-                db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'top' ORDER BY RANDOM() LIMIT 1")
-                top_ad_row = db.fetchone()
-                if top_ad_row:
-                    top_ad = {"image_url": top_ad_row[0], "target_url": top_ad_row[1]}
-                db.execute("SELECT image_url, target_url FROM advertisements WHERE status = 'approved' AND ad_type = 'side' ORDER BY RANDOM() LIMIT 2")
-                side_ads = db.fetchall()
-                if side_ads:
-                    side_ad_left = {"image_url": side_ads[0][0], "target_url": side_ads[0][1]}
-                    if len(side_ads) > 1:
-                        side_ad_right = {"image_url": side_ads[1][0], "target_url": side_ads[1][1]}
-        except Exception:
-            pass
+        from app_core.ads.helpers import load_rotating_ads
+        from database import get_request_cursor
+
+        ads = load_rotating_ads(get_request_cursor)
 
         return dict(
             google_client_id=google_client_id,
-            top_ad=top_ad,
-            side_ad_left=side_ad_left,
-            side_ad_right=side_ad_right,
+            top_ad=ads["top_ad"],
+            side_ad_left=ads["side_ad_left"],
+            side_ad_right=ads["side_ad_right"],
             get_resources=get_resources,
             **game_ui.game_ui_context(),
             **_get_user_game_context()

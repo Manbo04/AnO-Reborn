@@ -5601,6 +5601,7 @@ body.game-reduced-motion .game-market-card::after {
 
 :root {
     --page-content-max: 1200px;
+    --page-ad-layout-max: 1600px;
 }
 
 /* --- Ad shell (replaces layout.html inline styles) --- */
@@ -5608,7 +5609,7 @@ body.game-reduced-motion .game-market-card::after {
     display: flex;
     justify-content: center;
     width: 100%;
-    max-width: var(--page-content-max);
+    max-width: var(--page-ad-layout-max);
     margin: 0 auto;
     box-sizing: border-box;
     padding-top: calc(var(--game-navbar-height, 55px) + var(--game-space-md, 16px));
@@ -5698,16 +5699,37 @@ body:not(.game-shell-active) .templatediv {
     overflow: hidden;
 }
 
-.global-ad-top img,
-.global-ad-side-slot img {
+.global-ad-top a,
+.global-ad-side-slot a {
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+}
+
+.global-ad-top img,
+.global-ad-side-slot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #0d1117;
+}
+
+.global-ad-top--live,
+.global-ad-side-slot--live {
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+.global-ad-top--live:empty,
+.global-ad-side-slot--live:empty {
+    display: none;
 }
 
 @media (min-width: 1250px) {
-    body:not(.game-shell-active) .global-ad-left,
-    body:not(.game-shell-active) .global-ad-right {
+    .global-ad-left,
+    .global-ad-right {
         display: flex !important;
     }
 }
