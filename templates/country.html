@@ -19,69 +19,26 @@
 
         <div class="templatedivflex2 menuflex2">
             <div class="templatedivflex2left" id="countryview" onclick="countryview()">
-
                 <h3 class="smallheader">View</h3>
-
             </div>
 
-            {% if not status %}
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    revenuehide();
-
-                });
-            </script>
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    newshide();
-
-                });
-            </script>
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    edithide();
-
-                });
-            </script>
-            {% endif %}
+            {% if status %}
             <div class="templatedivflex2left" id="countryrevenue" onclick="countryrevenue()">
-
                 <h3 class="smallheader">Revenue</h3>
-                <!--Hide when vising other nations-->
-
             </div>
             <div class="templatedivflex2left" id="countrynews" onclick="countrynews()">
-
                 <h3 class="smallheader">News {% if news_amount != 0 %}
                     <span class="menuflex2notification">{{news_amount}}</span> {% endif %}
                 </h3>
-                <!--Hide when vising other nations-->
-
             </div>
             <div class="templatedivflex2left" id="countryedit" onclick="countryedit()">
-
                 <h3 class="smallheader">Edit</h3>
-                <!--Hide when vising other nations-->
-
             </div>
-            {% if status %}
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    actionshide();
-
-                });
-            </script>
-            {% endif %}
+            {% else %}
             <div class="templatedivflex2left" id="countryactions" onclick="countryactions()">
-
                 <h3 class="smallheader">Actions</h3>
-                <!--show ONLY when vising other nations-->
-
             </div>
+            {% endif %}
 
         </div>
 
@@ -703,6 +660,7 @@
             </div>
         </div>
         <!--Revenue-->
+        {% if status %}
         <div class="revenue" id="revenue">
 
             {# Macro to show theoretical (original) gross and projected actual value #}
@@ -2119,7 +2077,9 @@
             </div>
             -->
     </div>
+        {% endif %}
 
+        {% if not status %}
     <!-- Actions -->
     <div class="actions" id="actions">
 
@@ -2355,6 +2315,7 @@
             </div>
         </form>
     </div>
+        {% endif %}
 </div>
 </div>
 {% endblock %}
