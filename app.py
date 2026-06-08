@@ -95,6 +95,16 @@ def create_app():
         except Exception:
             pass
 
+        if request.host:
+            host_only = request.host.split(":")[0].lower()
+            if host_only.startswith("www."):
+                apex = host_only[4:]
+                port = request.host.split(":", 1)[1] if ":" in request.host else ""
+                canonical = request.url.replace(
+                    f"://{request.host}", f"://{apex}" + (f":{port}" if port else ""), 1
+                )
+                return redirect(canonical, code=301)
+
         if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
             forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
             if forwarded_proto != "https" and not request.is_secure:
