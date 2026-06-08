@@ -17,12 +17,14 @@
         return !!form.querySelector('button[formaction*="buy_offer"]');
     }
 
-    function buildTooltipContent(subtotal, fee, total, isPurchase) {
+    function buildTooltipContent(subtotal, fee, total, isPurchase, hasAmount) {
+        if (!hasAmount) {
+            return 'Enter an amount to see what this trade will cost.';
+        }
         if (isPurchase) {
             return (
                 '<strong>Market transaction fee</strong><br>' +
-                'When you buy resources, the market adds a 5% fee on top of the listed price. ' +
-                'This fee is paid to the national bank.<br><br>' +
+                'Buying adds a 5% fee on top of the listed price (paid to the national bank).<br><br>' +
                 'Subtotal: ' +
                 formatMoney(subtotal) +
                 '<br>Fee (5%): ' +
@@ -34,8 +36,7 @@
         }
         return (
             '<strong>Sale proceeds</strong><br>' +
-            'When you sell to a buy offer, there is no market fee. ' +
-            'The buyer pays the listed price and you receive the full amount.<br><br>' +
+            'Selling to a buy offer has no market fee.<br><br>' +
             '<strong>You receive: ' +
             formatMoney(subtotal) +
             '</strong>'
@@ -58,31 +59,28 @@
                 arrow: true,
                 animation: 'scale',
                 appendTo: document.body,
-                delay: [80, 50],
+                delay: [120, 50],
             });
             return;
         }
         trigger.setAttribute('title', content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
     }
 
-    function ensureTotalEl(input) {
+    function ensureHintBtn(input) {
         var form = input.closest('form');
         if (!form) return null;
         var id = input.getAttribute('name') || input.id || 'market';
-        var el = form.querySelector('[data-market-total-for="' + id + '"]');
+        var el = form.querySelector('[data-market-hint-for="' + id + '"]');
         if (el) return el;
 
-        el = document.createElement('span');
-        el.className = 'market-offer-total';
-        el.setAttribute('data-market-total-for', id);
-
-        var flexRow = input.closest('.templatedivflex2');
-        if (flexRow) {
-            flexRow.parentNode.insertBefore(el, flexRow.nextSibling);
-            return el;
-        }
-
-        form.appendChild(el);
+        el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'market-offer-hint';
+        el.setAttribute('data-market-hint-for', id);
+        el.setAttribute('aria-label', 'Transaction cost info');
+        el.innerHTML =
+            '<span class="material-icons-outlined" aria-hidden="true">info</span>';
+        input.parentNode.insertBefore(el, input.nextSibling);
         return el;
     }
 
@@ -99,35 +97,20 @@
         var fee = Math.round(subtotal * FEE_RATE);
         var total = subtotal + fee;
         var isPurchase = form ? isPurchaseForm(form) : true;
-        var el = ensureTotalEl(input);
-        if (!el) return;
+        var hasAmount = amount >= 1 && unitPrice > 0;
+        var hint = ensureHintBtn(input);
+        if (!hint) return;
 
-        if (amount < 1 || unitPrice <= 0) {
-            el.innerHTML = '';
-            el.classList.remove('is-visible');
-            return;
-        }
-
-        var label = isPurchase
-            ? 'Total: ' + formatMoney(total)
-            : 'You receive: ' + formatMoney(subtotal);
-        var tooltip = buildTooltipContent(subtotal, fee, total, isPurchase);
-
-        el.innerHTML =
-            '<span class="market-offer-total-label">' +
-            label +
-            '</span>' +
-            '<button type="button" class="market-offer-total-info" aria-label="Explain this total">' +
-            '<span class="material-icons-outlined" aria-hidden="true">info</span>' +
-            '</button>';
-        el.classList.add('is-visible');
-
-        bindTooltip(el.querySelector('.market-offer-total-info'), tooltip);
+        bindTooltip(
+            hint,
+            buildTooltipContent(subtotal, fee, total, isPurchase, hasAmount)
+        );
     }
 
     function bindInput(input) {
         if (!input || input.getAttribute('data-market-calc-bound')) return;
         input.setAttribute('data-market-calc-bound', '1');
+        ensureHintBtn(input);
         input.addEventListener('input', function () {
             updateOfferTotal(input);
         });
