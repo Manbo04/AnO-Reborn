@@ -59,33 +59,20 @@
                 arrow: true,
                 animation: 'scale',
                 appendTo: document.body,
-                delay: [120, 50],
+                delay: [100, 50],
             });
             return;
         }
-        trigger.setAttribute('title', content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-    }
-
-    function ensureHintBtn(input) {
-        var form = input.closest('form');
-        if (!form) return null;
-        var id = input.getAttribute('name') || input.id || 'market';
-        var el = form.querySelector('[data-market-hint-for="' + id + '"]');
-        if (el) return el;
-
-        el = document.createElement('button');
-        el.type = 'button';
-        el.className = 'market-offer-hint';
-        el.setAttribute('data-market-hint-for', id);
-        el.setAttribute('aria-label', 'Transaction cost info');
-        el.innerHTML =
-            '<span class="material-icons-outlined" aria-hidden="true">info</span>';
-        input.parentNode.insertBefore(el, input.nextSibling);
-        return el;
+        trigger.setAttribute(
+            'title',
+            content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        );
     }
 
     function updateOfferTotal(input) {
-        var form = input.closest('form');
+        var form = input.closest('.market-purchase-form');
+        if (!form) return;
+
         var unitPrice = parseFloat(input.getAttribute('data-unit-price') || '0');
         var maxAmount = parseAmount(input.getAttribute('data-max-amount'));
         var amount = parseAmount(input.value);
@@ -96,9 +83,9 @@
         var subtotal = Math.round(amount * unitPrice);
         var fee = Math.round(subtotal * FEE_RATE);
         var total = subtotal + fee;
-        var isPurchase = form ? isPurchaseForm(form) : true;
+        var isPurchase = isPurchaseForm(form);
         var hasAmount = amount >= 1 && unitPrice > 0;
-        var hint = ensureHintBtn(input);
+        var hint = form.querySelector('.market-offer-hint');
         if (!hint) return;
 
         bindTooltip(
@@ -107,10 +94,10 @@
         );
     }
 
-    function bindInput(input) {
+    function bindForm(form) {
+        var input = form.querySelector('input[name^="amount_"]');
         if (!input || input.getAttribute('data-market-calc-bound')) return;
         input.setAttribute('data-market-calc-bound', '1');
-        ensureHintBtn(input);
         input.addEventListener('input', function () {
             updateOfferTotal(input);
         });
@@ -120,5 +107,13 @@
         updateOfferTotal(input);
     }
 
-    document.querySelectorAll('input[name^="amount_"]').forEach(bindInput);
+    function init() {
+        document.querySelectorAll('.market-purchase-form').forEach(bindForm);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
