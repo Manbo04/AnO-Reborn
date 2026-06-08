@@ -7039,50 +7039,107 @@ body.game-reduced-motion .province-map-node-pin::after {
     transform: translateX(-50%) translateY(0);
 }
 
+body.page-market .templatetable2 {
+    table-layout: fixed;
+}
+
+body.page-market .templatetable2 td:first-child,
+body.page-market .templatetable2 th:first-child {
+    width: 15%;
+    max-width: none;
+    padding: 8px;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+body.page-market .templatetable2 th:nth-child(1),
+body.page-market .templatetable2 td:nth-child(1) {
+    width: 15%;
+}
+
+body.page-market .templatetable2 th:nth-child(2),
+body.page-market .templatetable2 td:nth-child(2) {
+    width: 10%;
+}
+
+body.page-market .templatetable2 th:nth-child(3),
+body.page-market .templatetable2 td:nth-child(3) {
+    width: 18%;
+}
+
+body.page-market .templatetable2 th:nth-child(4),
+body.page-market .templatetable2 td:nth-child(4) {
+    width: 22%;
+}
+
+body.page-market .templatetable2 th:nth-child(5),
+body.page-market .templatetable2 td:nth-child(5) {
+    width: 35%;
+}
+
 body.page-market .market-purchase-cell {
-    min-width: 200px;
+    overflow: hidden;
+    padding: 4px 6px;
 }
 
-body.page-market .market-purchase-row,
-body.page-market .game-market-card-form.market-purchase-form {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    flex-wrap: nowrap;
-}
-
-body.page-market .market-purchase-row {
+body.page-market .market-purchase-flex {
     width: 100%;
-    max-width: 240px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
-body.page-market .market-purchase-input {
-    display: inline-block;
-    width: 84px;
-    min-width: 72px;
-    max-width: 96px;
+body.page-market .market-purchase-flex .templatedivflex2left {
     margin: 0;
-    padding: 8px 8px;
+    padding: 4px;
+    flex: 0 1 auto;
+}
+
+body.page-market .market-input-wrap {
+    position: relative;
+    display: inline-block;
+    width: max-content;
+    max-width: 100%;
+}
+
+body.page-market .market-purchase-input {
+    display: block;
+    width: 92px;
+    max-width: 100%;
+    margin: 0;
+    padding: 8px 24px 8px 8px;
     font-size: 14px;
-    flex: 0 0 auto;
+    box-sizing: border-box;
 }
 
 body.page-market .market-purchase-btn {
     margin: 0;
-    padding: 8px 10px;
-    white-space: nowrap;
-    flex: 0 0 auto;
+    padding: 8px 14px;
+    letter-spacing: 0.6px;
+    font-size: 0.82rem;
+}
+
+body.page-market .game-market-card-form.market-purchase-form {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+body.page-market .game-market-card-form .market-purchase-input {
+    flex: 1 1 auto;
+    width: auto;
 }
 
 body.page-market .market-offer-hint {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     padding: 0;
     margin: 0;
     border: 0;
@@ -7091,10 +7148,11 @@ body.page-market .market-offer-hint {
     cursor: help;
     line-height: 1;
     opacity: 0.55;
+    z-index: 1;
 }
 
 body.page-market .market-offer-hint .material-icons-outlined {
-    font-size: 15px;
+    font-size: 14px;
 }
 
 body.page-market .market-offer-hint:hover,
