@@ -1297,3 +1297,55 @@ body.page-market .market-offer-hint:focus-visible {
     color: var(--accent, #00a7e1);
     outline: none;
 }
+
+/* Rankings — equal-height side-by-side leaderboard tables */
+body.page-rankings .card-align-row {
+    align-items: stretch !important;
+}
+
+body.page-rankings .card-align-row > .templatedivflex2left {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+body.page-rankings .rankings-table {
+    width: 100%;
+    margin: 0 !important;
+    flex: 1 1 auto;
+    table-layout: fixed;
+}
+
+body.page-rankings .rankings-table tbody tr {
+    height: 44px;
+}
+
+body.page-rankings .rankings-table tbody td {
+    height: 44px;
+    max-height: 44px;
+    padding: 6px 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+body.page-rankings .rankings-table tbody td:first-child {
+    width: 56px;
+    text-align: center;
+}
+
+body.page-rankings .rankings-table tbody td:last-child {
+    width: 32%;
+    text-align: right;
+}
+
+body.page-rankings .rankings-table tbody td a {
+    display: inline;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
