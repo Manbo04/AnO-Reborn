@@ -1,6 +1,6 @@
 {% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market{% endblock %}
 {% block extra_head %}
-<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=4"></script>
+<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=5"></script>
 {% endblock %}
 {% block body %}
 
@@ -112,12 +112,13 @@
                     <span class="game-market-amount">{{ amount }}</span>
                     <span class="game-market-price">${{ price }} / ${{ total_price }} total</span>
                 </div>
-                <form method="POST" class="game-market-card-form">
-                    <input class="loginsignupinput" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                <form method="POST" class="game-market-card-form market-purchase-form">
+                    <input class="loginsignupinput market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                    <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                     {% if type == "sell" %}
-                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton">Buy</button>
+                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn">Buy</button>
                     {% elif type == "buy" %}
-                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton">Sell</button>
+                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn">Sell</button>
                     {% endif %}
                 </form>
             </article>
@@ -185,21 +186,16 @@
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <form method="POST">
-                            <div class="templatedivflex2 divflex2center">
-                                <div class="templatedivflex2left">
-                                    <input class="loginsignupinput" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
-                                </div>
-                                <div class="templatedivflex2left">
-                                    {% if type == "sell" %}
-                                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        check
-                                        </span>Buy</button> {% elif type == "buy" %}
-                                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                        check
-                                        </span>Sell</button> {% endif %}
-                                </div>
+                    <td class="market-purchase-cell">
+                        <form method="POST" class="market-purchase-form">
+                            <div class="market-purchase-row">
+                                <input class="loginsignupinput market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                                <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                                {% if type == "sell" %}
+                                <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Buy</button>
+                                {% elif type == "buy" %}
+                                <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Sell</button>
+                                {% endif %}
                             </div>
                         </form>
                     </td>
