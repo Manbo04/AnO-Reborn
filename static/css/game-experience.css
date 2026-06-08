@@ -1180,12 +1180,42 @@ body.game-reduced-motion .province-map-node-pin::after {
     margin: 6px 0 0;
     font-size: 0.82rem;
     color: var(--text-secondary);
+    align-items: center;
+    gap: 4px;
 }
 
 .market-offer-total.is-visible {
-    display: block;
+    display: inline-flex;
 }
 
 td .market-offer-total.is-visible {
     margin-top: 4px;
+}
+
+.market-offer-total-label {
+    font-weight: 500;
+    color: var(--text-primary, inherit);
+}
+
+.market-offer-total-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent, #00a7e1);
+    cursor: help;
+    line-height: 1;
+}
+
+.market-offer-total-info .material-icons-outlined {
+    font-size: 1rem;
+}
+
+.market-offer-total-info:hover,
+.market-offer-total-info:focus-visible {
+    color: var(--accent-hover, #0088b8);
+    outline: none;
 }
