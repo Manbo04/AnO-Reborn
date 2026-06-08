@@ -1,5 +1,7 @@
 # Email setup — affairsandordersupport@gmail.com
 
+For SSL, `www` DNS, and Resend domain verification checklist, see [DOMAIN_AND_EMAIL_SETUP.md](DOMAIN_AND_EMAIL_SETUP.md).
+
 ## Gmail SMTP (recommended — sends from your support inbox)
 
 ### 1. Turn on 2-Step Verification
