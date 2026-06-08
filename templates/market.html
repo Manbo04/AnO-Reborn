@@ -1,6 +1,6 @@
 {% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market{% endblock %}
 {% block extra_head %}
-<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=5"></script>
+<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=6"></script>
 {% endblock %}
 {% block body %}
 
@@ -113,8 +113,10 @@
                     <span class="game-market-price">${{ price }} / ${{ total_price }} total</span>
                 </div>
                 <form method="POST" class="game-market-card-form market-purchase-form">
-                    <input class="loginsignupinput market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
-                    <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                    <span class="market-input-wrap">
+                        <input class="loginsignupinput market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                        <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                    </span>
                     {% if type == "sell" %}
                     <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn">Buy</button>
                     {% elif type == "buy" %}
@@ -188,14 +190,18 @@
                     </td>
                     <td class="market-purchase-cell">
                         <form method="POST" class="market-purchase-form">
-                            <div class="market-purchase-row">
-                                <input class="loginsignupinput market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
-                                <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
-                                {% if type == "sell" %}
-                                <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Buy</button>
-                                {% elif type == "buy" %}
-                                <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Sell</button>
-                                {% endif %}
+                            <div class="templatedivflex2 divflex2center market-purchase-flex">
+                                <div class="templatedivflex2left market-input-wrap">
+                                    <input class="loginsignupinput market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                                    <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                                </div>
+                                <div class="templatedivflex2left">
+                                    {% if type == "sell" %}
+                                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Buy</button>
+                                    {% elif type == "buy" %}
+                                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Sell</button>
+                                    {% endif %}
+                                </div>
                             </div>
                         </form>
                     </td>
