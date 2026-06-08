@@ -7039,49 +7039,45 @@ body.game-reduced-motion .province-map-node-pin::after {
     transform: translateX(-50%) translateY(0);
 }
 
-.market-offer-total {
-    display: none;
-    margin: 6px 0 0;
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    align-items: center;
-    gap: 4px;
-}
-
-.market-offer-total.is-visible {
-    display: inline-flex;
-}
-
-td .market-offer-total.is-visible {
-    margin-top: 4px;
-}
-
-.market-offer-total-label {
-    font-weight: 500;
-    color: var(--text-primary, inherit);
-}
-
-.market-offer-total-info {
+.market-offer-hint {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
     padding: 0;
-    margin: 0;
+    margin: 0 0 0 2px;
     border: 0;
     background: transparent;
-    color: var(--accent, #00a7e1);
+    color: var(--text-secondary);
     cursor: help;
     line-height: 1;
+    vertical-align: middle;
+    opacity: 0.45;
 }
 
-.market-offer-total-info .material-icons-outlined {
-    font-size: 1rem;
+.market-offer-hint .material-icons-outlined {
+    font-size: 14px;
 }
 
-.market-offer-total-info:hover,
-.market-offer-total-info:focus-visible {
-    color: var(--accent-hover, #0088b8);
+.market-offer-hint:hover,
+.market-offer-hint:focus-visible {
+    opacity: 0.85;
+    color: var(--accent, #00a7e1);
     outline: none;
+}
+
+td .templatedivflex2left:has(.market-offer-hint) {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+td .templatedivflex2left:has(.market-offer-hint) .loginsignupinput {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 
