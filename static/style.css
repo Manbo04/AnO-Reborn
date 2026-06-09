@@ -41,9 +41,7 @@
     font-display: swap;
 }
 
-* {
-    transition: all 0.3s;
-}
+/* Global transition removed — was slowing paint on large pages */
 
 .material-icons-outlined {
     font-family: 'Material Icons Outlined';
@@ -3256,7 +3254,7 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     left: 0;
     right: 0;
     height: min-content;
-    width: 60%;
+    width: min(900px, 92%);
 }
 
 @media all and (max-width: 750px) {
@@ -4130,6 +4128,67 @@ footer {
     text-align: left;
 }
 
+.footer-sitemap {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+    font-size: 0.9rem;
+}
+
+.footer-sitemap a {
+    color: var(--colorOne);
+    text-decoration: none;
+    opacity: 0.85;
+}
+
+.footer-sitemap a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.referral-invite-banner {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(76, 175, 80, 0.15);
+    border-left: 3px solid #4caf50;
+    border-radius: 4px;
+}
+
+.referral-panel .referral-link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 0.75rem 0;
+}
+
+.referral-link-input {
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.referral-code-line code {
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.referral-subheader {
+    margin-top: 1.25rem;
+    font-size: 1rem;
+}
+
+.referral-milestone-list {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    line-height: 1.55;
+}
+
+.referral-pending-tag {
+    opacity: 0.75;
+    font-size: 0.85em;
+}
+
 .footertitle {
     width: 100%;
     float: none;
@@ -4724,6 +4783,10 @@ ul.flashes {
 }
 
 /* Login/signup pages: transparent container, hidden footer */
+html:has(.loginsignupdiv),
+body:has(.loginsignupdiv) {
+    background: transparent !important;
+}
 body:has(.loginsignupdiv) .templatecontainer {
     background: transparent !important;
 }
@@ -5013,19 +5076,86 @@ body:has(.loginsignupdiv) .footer {
 
 /* === UI hotfix: auth pages & forms === */
 .loginsignupdiv.templatediv {
-    background: rgba(28, 32, 41, 0.96);
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-    color: var(--textMain, #e2e8f0);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #e2e8f0;
+}
+
+.loginsignupdiv .templatedivtopper {
+    background: transparent;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.loginsignupdiv .templatedivtitle {
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.75);
 }
 
 .loginsignupdiv .templatedivcontent {
-    padding: 8px 16px 24px;
+    padding: 12px 16px 24px;
+    background: transparent;
 }
 
-.loginsignupdiv .templatedivcontent p,
-.loginsignupdiv .templatedivcontent label {
+.loginsignupdiv .templatedivcontent > p,
+.loginsignupdiv .templatedivcontent > label,
+.loginsignupdiv .referral-invite-banner {
     color: #e2e8f0 !important;
+}
+
+.loginsignupdiv .auth-panel p,
+.loginsignupdiv .auth-panel ul,
+.loginsignupdiv .auth-panel li,
+.loginsignupdiv .auth-panel h2 {
+    color: #1e293b !important;
+    font-weight: 500;
+}
+
+.loginsignupdiv .signup-biome-copy p,
+.loginsignupdiv .signup-biome-copy .signup-biome-title,
+.loginsignupdiv .signup-biome-copy ul.medium,
+.loginsignupdiv .signup-biome-resources .slidelist {
+    color: #0f172a !important;
+    font-weight: 500 !important;
+}
+
+.loginsignupdiv .signup-biome-copy p,
+.loginsignupdiv .signup-biome-copy .templatecontentpleft,
+.loginsignupdiv .signup-biome-copy .landingpagecontent {
+    line-height: 1.55;
+}
+
+.loginsignupdiv .signup-biome-copy ul.medium {
+    font-weight: 600 !important;
+    margin: 0.75rem 0 0.35rem;
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.loginsignupdiv .auth-panel .templatecontentheaderleft {
+    background: #f1f5f9;
+    color: #0f172a !important;
+}
+
+.theme-dark .loginsignupdiv .auth-panel p,
+.theme-dark .loginsignupdiv .auth-panel ul,
+.theme-dark .loginsignupdiv .auth-panel li,
+.theme-dark .loginsignupdiv .auth-panel h2 {
+    color: #e8edf5 !important;
+}
+
+.theme-dark .loginsignupdiv .signup-biome-copy p,
+.theme-dark .loginsignupdiv .signup-biome-copy .signup-biome-title,
+.theme-dark .loginsignupdiv .signup-biome-copy ul.medium,
+.theme-dark .loginsignupdiv .signup-biome-resources .slidelist {
+    color: #e8edf5 !important;
+}
+
+.theme-dark .loginsignupdiv .auth-panel .templatecontentheaderleft {
+    background: #262b36;
+    color: #e8edf5 !important;
 }
 
 .auth-columns {
@@ -5048,10 +5178,39 @@ body:has(.loginsignupdiv) .footer {
     box-sizing: border-box;
 }
 
+.loginsignupdiv .auth-panel {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+}
+
+.theme-dark .loginsignupdiv .auth-panel {
+    background: #1c2029;
+    border-color: var(--border);
+}
+
+.loginsignupdiv .auth-note {
+    color: #475569 !important;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+
 .auth-panel .templatecontentheadercenter,
 .auth-panel h2.templatecontentheadercenter {
     margin-top: 0;
     color: var(--colorOne);
+}
+
+.loginsignupdiv .auth-panel .templatecontentheadercenter,
+.loginsignupdiv .auth-panel h2.templatecontentheadercenter {
+    color: #0f172a !important;
+}
+
+.theme-dark .loginsignupdiv .auth-panel .templatecontentheadercenter,
+.theme-dark .loginsignupdiv .auth-panel h2.templatecontentheadercenter {
+    color: #e8edf5 !important;
 }
 
 .auth-panel .loginsignupinput {
@@ -5660,7 +5819,7 @@ body:not(.game-shell-active) .templatediv {
 
 /* --- Content column spine --- */
 body.game-shell-active .templatecontainer {
-    margin-top: 0;
+    margin-top: var(--game-navbar-height, 55px);
 }
 
 .templatedivcontent {
@@ -7212,6 +7371,233 @@ body.page-rankings .rankings-table tbody td a {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+.onboarding-checklist {
+    margin: 0.75rem 0 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(93, 173, 226, 0.12);
+    border-left: 3px solid var(--accent, #5dade2);
+    border-radius: 4px;
+}
+
+.onboarding-checklist-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+}
+
+.onboarding-checklist-steps {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.onboarding-checklist-steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.onboarding-checklist-steps .onboarding-done {
+    opacity: 0.75;
+}
+
+.onboarding-tutorial-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.onboarding-tutorial-modal[hidden] {
+    display: none;
+}
+
+.onboarding-tutorial-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 10, 18, 0.82);
+}
+
+.onboarding-tutorial-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100%, 28rem);
+    padding: 2rem 1.5rem 1.35rem;
+    border-radius: 12px;
+    border: 1px solid rgba(93, 173, 226, 0.45);
+    background: linear-gradient(165deg, #1a2233 0%, #121820 100%);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.onboarding-tutorial-panel .material-icons-outlined {
+    position: static;
+    top: auto;
+    right: auto;
+    line-height: 1;
+}
+
+.onboarding-tutorial-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #9aa8bc;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.onboarding-tutorial-close:hover,
+.onboarding-tutorial-close:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.onboarding-tutorial-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: 0 0 0.75rem;
+    border-radius: 50%;
+    background: rgba(93, 173, 226, 0.18);
+    color: var(--accent, #5dade2);
+    flex-shrink: 0;
+}
+
+.onboarding-tutorial-icon .material-icons-outlined {
+    font-size: 1.85rem;
+}
+
+.onboarding-tutorial-title {
+    margin: 0 0 0.65rem;
+    font-size: 1.35rem;
+    line-height: 1.25;
+}
+
+.onboarding-tutorial-lead {
+    margin: 0 0 1rem;
+    color: #c5d0df;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    max-width: 22rem;
+}
+
+.onboarding-tutorial-rewards {
+    width: 100%;
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 1rem;
+    list-style: none;
+    border-radius: 8px;
+    background: rgba(93, 173, 226, 0.1);
+    box-sizing: border-box;
+}
+
+.onboarding-tutorial-rewards li {
+    display: grid;
+    grid-template-columns: 1.35rem 1fr;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0.4rem 0;
+    font-size: 0.88rem;
+    color: #dce6f2;
+    text-align: left;
+}
+
+.onboarding-tutorial-rewards .material-icons-outlined {
+    font-size: 1.1rem;
+    color: var(--accent, #5dade2);
+    justify-self: center;
+}
+
+.onboarding-tutorial-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    width: 100%;
+}
+
+.onboarding-tutorial-panel .onboarding-tutorial-cta.templatedivbutton {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: block;
+    top: 0;
+    animation: none;
+    transform: none;
+}
+
+.onboarding-tutorial-panel .onboarding-tutorial-cta.templatedivbutton:hover,
+.onboarding-tutorial-panel .onboarding-tutorial-cta.templatedivbutton:active,
+.onboarding-tutorial-panel .onboarding-tutorial-cta.templatedivbutton:focus {
+    transform: none;
+    top: 0;
+}
+
+.onboarding-tutorial-later {
+    border: none;
+    background: transparent;
+    color: #9aa8bc;
+    font-size: 0.88rem;
+    cursor: pointer;
+    padding: 0.35rem;
+    align-self: center;
+}
+
+.onboarding-tutorial-later:hover,
+.onboarding-tutorial-later:focus-visible {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.onboarding-tutorial-footnote {
+    margin: 0.85rem 0 0;
+    font-size: 0.78rem;
+    color: #7f8ea3;
+    max-width: 20rem;
+}
+
+.economy-heartbeat-warn {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.distribution-alert {
+    border-left: 3px solid #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+@media (max-width: 720px) {
+    .templatetable,
+    .templatetable2 {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .templatetable tr {
+        min-width: 520px;
+    }
 }
 
 
