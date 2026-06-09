@@ -130,7 +130,7 @@ def buy_market_offer(offer_id):
         if new_offer_amount == 0:
             delete_offer(db, offer_id)
         else:
-            update_offer_amount(db, offer_id, new_amount)
+            update_offer_amount(db, offer_id, new_offer_amount)
 
     try:
         invalidate_user_cache(cId)
@@ -179,12 +179,7 @@ def sell_market_offer(offer_id):
         if sellers_resource < amount_wanted:
             return error(400, "You don't have enough of that resource")
 
-        buyers_gold = get_user_gold_for_update(db, buyer_id)
-        if buyers_gold is None: buyers_gold = 0
         total_price = price_for_one * amount_wanted
-
-        if buyers_gold < total_price:
-            return error(400, "The buyer does not have enough money to fulfill this offer.")
 
         res = give_resource(seller_id, buyer_id, resource, amount_wanted, cursor=db)
         if res is not True:
@@ -192,10 +187,10 @@ def sell_market_offer(offer_id):
             report_trade_error(f"sell_market_offer: give_resource(seller -> buyer) failed: {res}")
             return error(400, str(res))
 
-        res = give_resource(buyer_id, seller_id, "money", total_price, cursor=db)
+        res = give_resource("bank", seller_id, "money", total_price, cursor=db)
         if res is not True:
             rollback_db_cursor(db)
-            report_trade_error(f"sell_market_offer: give_resource(buyer -> seller money) failed: {res}")
+            report_trade_error(f"sell_market_offer: give_resource(bank -> seller money) failed: {res}")
             return error(400, str(res))
 
         new_offer_amount = total_amount - amount_wanted

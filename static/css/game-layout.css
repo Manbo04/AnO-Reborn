@@ -63,7 +63,7 @@ body:not(.game-shell-active) .templatediv {
 
 /* --- Content column spine --- */
 body.game-shell-active .templatecontainer {
-    margin-top: 0;
+    margin-top: var(--game-navbar-height, 55px);
 }
 
 .templatedivcontent {
