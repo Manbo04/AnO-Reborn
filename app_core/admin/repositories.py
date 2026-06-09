@@ -83,14 +83,16 @@ class AdminRepository:
         db.execute(
             """
             SELECT aa.actor,
-                   COALESCE(actor_u.username, CAST(aa.actor AS TEXT), "System") AS actor_name,
+                   COALESCE(actor_u.username, CAST(aa.actor AS TEXT), 'System') AS actor_name,
                    aa.action,
                    aa.user_id AS target_id,
-                   COALESCE(target_u.username, "—") AS target_name,
+                   COALESCE(target_u.username, '—') AS target_name,
                    aa.details,
                    aa.created_at
             FROM admin_actions aa
-            LEFT JOIN users actor_u ON actor_u.id = aa.actor
+            LEFT JOIN users actor_u
+                ON (CAST(aa.actor AS TEXT) ~ '^[0-9]+$' AND actor_u.id = CAST(aa.actor AS INTEGER))
+                OR (CAST(aa.actor AS TEXT) !~ '^[0-9]+$' AND actor_u.username = CAST(aa.actor AS TEXT))
             LEFT JOIN users target_u ON target_u.id = aa.user_id
             ORDER BY aa.created_at DESC
             LIMIT 50
