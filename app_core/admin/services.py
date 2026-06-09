@@ -6,7 +6,7 @@ import hmac
 from time import time
 from helpers import error, get_valid_int
 from database import get_request_cursor, invalidate_user_cache
-from variables import RESOURCES
+from variables import RESOURCES as resources
 from .repositories import AdminRepository
 
 def _load_super_admin_ids():
@@ -45,6 +45,27 @@ def action_badge_class(action):
     _, cls = _ACTION_LABELS.get(action, (action, "muted"))
     return cls
 
+
+
+def flatten_dict(obj, prefix=""):
+    parts = []
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            label = (
+                f"{prefix}{k}".replace("_", " ").title()
+                if prefix
+                else str(k).replace("_", " ").title()
+            )
+            if isinstance(v, dict):
+                parts.extend(flatten_dict(v, f"{k}."))
+            elif isinstance(v, (list, tuple)):
+                parts.append((label, ", ".join(str(i) for i in v)))
+            else:
+                parts.append((label, str(v)))
+    else:
+        parts.append((prefix.rstrip(".").title() or "Value", str(obj)))
+    return parts
+
 def parse_details(raw):
     if not raw:
         return []
@@ -65,24 +86,7 @@ def parse_details(raw):
             parts.append(("Info", token))
     return parts
 
-def flatten_dict(obj, prefix=""):
-    parts = []
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            label = (
-                f"{prefix}{k}".replace("_", " ").title()
-                if prefix
-                else str(k).replace("_", " ").title()
-            )
-            if isinstance(v, dict):
-                parts.extend(flatten_dict(v, f"{k}."))
-            elif isinstance(v, (list, tuple)):
-                parts.append((label, ", ".join(str(i) for i in v)))
-            else:
-                parts.append((label, str(v)))
-    else:
-        parts.append((prefix.rstrip(".").title() or "Value", str(obj)))
-    return parts
+
 
 def get_admin_command_center_data():
     with get_request_cursor() as db:
@@ -113,7 +117,7 @@ def get_admin_command_center_data():
         "recent_actions": parsed_actions,
         "new_accounts_by_day": new_accounts_by_day,
         "new_accounts_total": new_accounts_total,
-        "RESOURCES": RESOURCES,
+        "RESOURCES": resources,
     }
 
 def process_add_resource(actor, target_user_id, amount, resource):
@@ -214,7 +218,7 @@ def get_economy_dashboard_data():
         current_totals = AdminRepository.get_current_totals(db)
         snapshot_count = AdminRepository.get_snapshot_count(db)
     
-    resource_list = ["gold"] + RESOURCES
+    resource_list = ["gold"] + resources
     return {
         "current_totals": current_totals,
         "snapshot_count": snapshot_count,
@@ -222,7 +226,7 @@ def get_economy_dashboard_data():
     }
 
 def get_economy_api_data(resource, days):
-    valid_resources = {"gold"} | set(RESOURCES)
+    valid_resources = {"gold"} | set(resources)
     if resource not in valid_resources:
         return {"error": "Unknown resource"}, 400
 
