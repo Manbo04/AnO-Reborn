@@ -214,7 +214,7 @@ body.game-shell-active .game-bottom-nav {
         display: none;
     }
 
-    body.game-shell-active .menubardiv .resourcedivcontent {
+    body.game-shell-active .resourcedivcontent {
         display: none;
     }
 }
