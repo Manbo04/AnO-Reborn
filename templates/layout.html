@@ -9,6 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
     <meta name="description" content="{% block seo_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries, and wage war on adversaries.{% endblock %}">
+    <link rel="canonical" href="{% block seo_canonical %}https://affairsandorder.com{{ request.path if request else '/' }}{% endblock %}">
+    {% include 'partials/seo_structured_data.html' %}
     
     <!-- OpenGraph Tags -->
     <meta property="og:type" content="website">
@@ -26,7 +28,6 @@
     <meta name="theme-color" content="#1c2029" id="meta-theme-color">
     <meta name="deploy-commit" content="{{ asset_version }}">
     <meta name="format-detection" content="telephone=no">
-    {% if csrf_token is defined %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -41,13 +42,28 @@
             input.value = token;
             form.appendChild(input);
         });
+        var origFetch = window.fetch;
+        if (origFetch && token) {
+            window.fetch = function (url, opts) {
+                opts = opts || {};
+                var method = (opts.method || 'GET').toUpperCase();
+                if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+                    opts.headers = opts.headers || {};
+                    if (opts.headers instanceof Headers) {
+                        if (!opts.headers.has('X-CSRFToken')) opts.headers.set('X-CSRFToken', token);
+                    } else {
+                        opts.headers['X-CSRFToken'] = opts.headers['X-CSRFToken'] || token;
+                    }
+                }
+                return origFetch(url, opts);
+            };
+        }
     });
     </script>
-    {% endif %}
 
 
     {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
-    <link href="{{ url_for('static', filename='style.css') }}?v={{ asset_version }}" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename=game_stylesheet|default('style.css')) }}?v={{ asset_version }}" rel="stylesheet" type="text/css" />
     {# Critical scroll fix: survives long-lived cached style.css when legacy HTML nests content in fixed navbar #}
     <style id="critical-scroll-fix">
     .navbarparent:has(.templatecontainer){position:relative;height:auto;overflow:visible;padding:0;background:transparent;box-shadow:none;border-bottom:none}
@@ -86,6 +102,7 @@
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     {% if FEATURE_GAME_SHELL and session.get('user_id') %}
     <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=8"></script>
+    <script defer src="{{ url_for('static', filename='onboarding.js') }}?v=1"></script>
     {% endif %}
     
     <!-- Interactive Tooltips -->
@@ -326,9 +343,10 @@
                 insert_chart_outlined
             </span>Statistics</a>
         -->
+    </div>
 
-        <div class="resourcediv" id="resourcediv">
-            <div class="resourcedivchild" onclick="resourcedivcontentshow()">
+    <div class="resourcediv" id="resourcediv">
+        <div class="resourcedivchild" onclick="resourcedivcontentshow()">
                 <span class="material-icons-outlined resourceicon">
                     monetization_on
                 </span>
@@ -437,7 +455,6 @@
 
             </div>
         </div>
-    </div>
     {% endif %}
     <!-- <div class="menubardiv " id="menubardiv ">
 
@@ -455,6 +472,8 @@
         -->
 
     <div class="templatecontainer">
+        {% include 'partials/onboarding_checklist.html' %}
+        {% include 'partials/onboarding_tutorial_popup.html' %}
         {% block body %} {% endblock %}
 
         {% with messages = get_flashed_messages() %}
@@ -485,6 +504,12 @@
 
 
                 <div class="footercopyright">© {{ now().year if now is defined else 2026 }}</div>
+                <nav class="footer-sitemap" aria-label="Site pages">
+                    <a href="/login">Login</a>
+                    <a href="/signup">Sign up</a>
+                    <a href="/tutorial">Tutorial</a>
+                    <a href="/mechanics">Game Mechanics</a>
+                </nav>
 
             </div>
             <div class="templatedivflex2left footerchild">
