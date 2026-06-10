@@ -1,0 +1,48 @@
+{% if onboarding_checklist and onboarding_checklist.show_tutorial_prompt and session.get('user_id') %}
+<div
+    id="onboarding-tutorial-popup"
+    class="onboarding-tutorial-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="onboarding-tutorial-title"
+    aria-hidden="true"
+    hidden
+    data-user-id="{{ session['user_id'] }}"
+    data-tutorial-href="{{ onboarding_checklist.tutorial_href }}"
+>
+    <div class="onboarding-tutorial-backdrop" data-tutorial-popup-dismiss></div>
+    <div class="onboarding-tutorial-panel">
+        <button
+            type="button"
+            class="onboarding-tutorial-close"
+            aria-label="Close"
+            data-tutorial-popup-dismiss
+        >
+            <span class="material-icons-outlined" aria-hidden="true">close</span>
+        </button>
+        <div class="onboarding-tutorial-icon" aria-hidden="true">
+            <span class="material-icons-outlined">school</span>
+        </div>
+        <h2 id="onboarding-tutorial-title" class="onboarding-tutorial-title">Welcome to Affairs and Order</h2>
+        <p class="onboarding-tutorial-lead">
+            New nations get the strongest start by finishing the <strong>Nation Academy</strong> tutorial first.
+            Each chapter you complete unlocks free resources and cash for your country.
+        </p>
+        <ul class="onboarding-tutorial-rewards" aria-label="Tutorial rewards">
+            <li><span class="material-icons-outlined" aria-hidden="true">redeem</span> Chapter 1: lumber and rations</li>
+            <li><span class="material-icons-outlined" aria-hidden="true">payments</span> Later chapters: millions in gold</li>
+            <li><span class="material-icons-outlined" aria-hidden="true">military_tech</span> Graduation bonus: lumber, coal, rations, and $10M</li>
+        </ul>
+        <div class="onboarding-tutorial-actions">
+            <a
+                href="{{ onboarding_checklist.tutorial_href }}"
+                class="templatedivbutton onboarding-tutorial-cta"
+            >Start tutorial</a>
+            <button type="button" class="onboarding-tutorial-later" data-tutorial-popup-later>
+                Remind me later
+            </button>
+        </div>
+        <p class="onboarding-tutorial-footnote">Takes about 10 minutes. You can return anytime from the menu.</p>
+    </div>
+</div>
+{% endif %}
