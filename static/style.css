@@ -5566,14 +5566,6 @@ body.game-shell-active .game-bottom-nav {
     body.game-shell-active .navbarparentloginsignupdiv {
         display: none !important;
     }
-
-    body.game-shell-active .resourcediv {
-        display: none;
-    }
-
-    body.game-shell-active .resourcedivcontent {
-        display: none;
-    }
 }
 
 /* More menu sheet */
