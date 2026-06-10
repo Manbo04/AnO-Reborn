@@ -1,0 +1,18 @@
+{% if onboarding_checklist and onboarding_checklist.show_checklist %}
+<div class="onboarding-checklist" role="region" aria-label="Getting started">
+    <h3 class="onboarding-checklist-title">Getting started ({{ onboarding_checklist.completed }}/{{ onboarding_checklist.total }})</h3>
+    <ol class="onboarding-checklist-steps">
+        {% for step in onboarding_checklist.steps %}
+        <li class="{% if step.done %}onboarding-done{% endif %}">
+            {% if step.done %}
+            <span class="material-icons-outlined" aria-hidden="true">check_circle</span>
+            {% else %}
+            <span class="material-icons-outlined" aria-hidden="true">radio_button_unchecked</span>
+            <a href="{{ step.href }}">{{ step.label }}</a>
+            {% endif %}
+            {% if step.done %}<span>{{ step.label }}</span>{% endif %}
+        </li>
+        {% endfor %}
+    </ol>
+</div>
+{% endif %}

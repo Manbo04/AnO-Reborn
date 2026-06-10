@@ -1,0 +1,43 @@
+{% set site_origin = 'https://affairsandorder.com' %}
+{% set page_url = seo_canonical_url | default(site_origin + request.path) %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "{{ site_origin }}/#organization",
+      "name": "Affairs and Order",
+      "url": "{{ site_origin }}/",
+      "logo": "{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3",
+      "sameAs": [
+        "https://discord.gg/SEae3Ua",
+        "https://www.youtube.com/channel/UColguUP75p-RObWBdiHiXHQ",
+        "https://www.reddit.com/r/AffairsandOrderReborn/",
+        "https://x.com/Manbo04040404",
+        "https://affairsandorder.fandom.com/wiki/Affairs_%26_Order_Wiki",
+        "https://github.com/Affairs-and-Order/AnO"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "{{ site_origin }}/#website",
+      "url": "{{ site_origin }}/",
+      "name": "Affairs and Order",
+      "alternateName": ["Affairs and Order Game", "AffairsandOrder", "AnO"],
+      "description": "Affairs and Order is a browser-based massively multiplayer nation building game.",
+      "publisher": { "@id": "{{ site_origin }}/#organization" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "{{ page_url }}#webpage",
+      "url": "{{ page_url }}",
+      "name": "{{ seo_page_name | default('Affairs and Order') }}",
+      "isPartOf": { "@id": "{{ site_origin }}/#website" },
+      "about": { "@id": "{{ site_origin }}/#organization" },
+      "inLanguage": "en"
+    }{{ seo_graph_extra | default('', true) }}
+  ]
+}
+</script>
