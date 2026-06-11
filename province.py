@@ -67,33 +67,27 @@ def provinces():
             
         offset = (page - 1) * per_page
 
+        has_image_col = ""
+        if provinces_has_image_data():
+            has_image_col = ", (image_data IS NOT NULL AND image_data <> '') AS has_image"
+
         db.execute(
             (
-                "SELECT CAST(citycount AS INTEGER) AS citycount, population, "
-                "provinceName, id, land, happiness, "
-                "productivity, energy FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
+                f"SELECT CAST(citycount AS INTEGER) AS citycount, population, "
+                f"provinceName, id, land, happiness, "
+                f"productivity, energy{has_image_col} "
+                f"FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
             ),
             (cId, per_page, offset),
         )
-        provinces = db.fetchall()
+        provinces_raw = db.fetchall()
 
+        provinces = []
         provinces_with_images = set()
-        if provinces_has_image_data():
-            try:
-                db.execute(
-                    """
-                    SELECT id FROM provinces
-                    WHERE userId = %s
-                      AND image_data IS NOT NULL
-                      AND image_data <> ''
-                    """,
-                    (cId,),
-                )
-                provinces_with_images = {
-                    row_val(row, "id", 0) for row in db.fetchall()
-                }
-            except Exception:
-                rollback_db_cursor(db)
+        for row in provinces_raw:
+            provinces.append(row[:8])
+            if len(row) > 8 and row[8]:
+                provinces_with_images.add(row[3])
 
         return render_template(
             "provinces.html",
