@@ -146,6 +146,8 @@ def create_app():
                 try:
                     with get_request_cursor() as _db:
                         _db.execute("UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+                        from app_core.referrals.service import process_referral_activity
+                        process_referral_activity(_db, user_id)
                     session["_last_active_ping"] = now
                 except Exception: pass
         return None
@@ -275,6 +277,8 @@ def create_app():
     from app_core.military.routes import bp as military_bp
     from app_core.coalitions.routes import register_coalitions_routes
     from app_core.tutorial.routes import bp as tutorial_api_bp
+    from app_core.referrals.routes import bp as referrals_api_bp
+    from app_core.onboarding.routes import bp as onboarding_api_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -289,9 +293,13 @@ def create_app():
     app.register_blueprint(market_bp)
     app.register_blueprint(military_bp)
     app.register_blueprint(tutorial_api_bp)
+    app.register_blueprint(referrals_api_bp)
+    app.register_blueprint(onboarding_api_bp)
     register_coalitions_routes(app)
 
     import config
+    config.validate_production_secrets()
+    config.warn_optional_integrations()
     try:
         if hasattr(signup, "ensure_signup_attempts_table"):
             signup.ensure_signup_attempts_table()
@@ -300,6 +308,11 @@ def create_app():
 
     environment = os.getenv("ENVIRONMENT", "DEV")
     app.secret_key = config.get_secret_key()
+
+    from flask_wtf.csrf import CSRFProtect
+
+    csrf = CSRFProtect(app)
+    csrf.exempt(bot_api.bp)
     if environment == "PROD":
         handler = RequestsHandler()
         logger.addHandler(handler)
@@ -401,9 +414,12 @@ def create_app():
         except ImportError:
             pass
 
+        from app_core.auth.google_auth import is_google_auth_configured
+
         ctx = {
             **game_ui.game_ui_context(),
             "google_client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "google_auth_enabled": is_google_auth_configured(),
             "admin_user_ids": list(SUPER_ADMIN_USER_IDS),
             "get_resources": get_resources,
             "game_ui": {},
@@ -450,6 +466,12 @@ def create_app():
                     except Exception:
                         rollback_db_cursor(db)
                     ctx["game_ui"] = {"has_unseen_combat_logs": has_combat}
+                    try:
+                        from app_core.onboarding.service import get_onboarding_status
+
+                        ctx["onboarding_checklist"] = get_onboarding_status(db, user_id)
+                    except Exception:
+                        ctx["onboarding_checklist"] = None
                 except Exception:
                     rollback_db_cursor(db)
                     ctx["country_name"] = "Error"

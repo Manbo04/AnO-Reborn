@@ -1,0 +1,12 @@
+[start] Discord bot sidecar: clearing stale leader locks...
+  cleared leader lock keys
+[start] Starting Discord bot sidecar (embeds from web API)...
+[start] Skipping migrations on web (worker handles schema boot).
+Starting Container
+[start] web schema_compat ok
+[start] Starting gunicorn on :8080 (workers=1 threads=2)...
+[2026-06-11 08:52:48 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-06-11 08:52:48 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-06-11 08:52:48 +0000] [1] [INFO] Using worker: gthread
+[2026-06-11 08:52:48 +0000] [6] [INFO] Booting worker with pid: 6
+100.64.0.2 - - [11/Jun/2026:08:55:16 +0000] "GET /signup HTTP/1.1" 200 5123 "-" "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.61 Safari/537.36"

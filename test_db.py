@@ -1,14 +1,10 @@
+import os
 import sys
-sys.path.insert(0, '/Users/dede/AnO-Reborn')
-from app import app
-from database import get_request_cursor
+sys.path.insert(0, '/app')
+from database import get_db_cursor
+with get_db_cursor(read_only=True) as db:
+    db.execute('SELECT * FROM offers LIMIT 5;')
+    print('Offers:', db.fetchall())
+    db.execute('SELECT * FROM trades LIMIT 5;')
+    print('Trades:', db.fetchall())
 
-with app.app_context():
-    with get_request_cursor() as db:
-        db.execute("SELECT 1 AS vote_option, 2 AS count")
-        print("fetchall:", db.fetchall())
-        
-        db.execute("SELECT 1 AS vote_option")
-        row = db.fetchone()
-        print("fetchone:", row)
-        print("row[0]:", row[0] if row else None)

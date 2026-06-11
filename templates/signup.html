@@ -1,5 +1,24 @@
-{% extends "layout.html" %} {% block title %} Sign up {% endblock %} {% block head %}
+{% extends "layout.html" %}
+{% block seo_title %}Sign up · Affairs and Order{% endblock %}
+{% block seo_description %}Create a free Affairs and Order account and start your nation. Browser MMO nation simulator — build provinces, trade, and compete with other players.{% endblock %}
+{% block seo_canonical %}https://affairsandorder.com/signup{% endblock %}
+{% block title %} Sign up {% endblock %} {% block head %}
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<style>
+.loginsignupdiv .signup-biome-copy p,
+.loginsignupdiv .signup-biome-copy .signup-biome-title,
+.loginsignupdiv .signup-biome-copy ul.medium,
+.loginsignupdiv .signup-biome-resources .slidelist {
+    color: #0f172a !important;
+    font-weight: 500 !important;
+}
+.theme-dark .loginsignupdiv .signup-biome-copy p,
+.theme-dark .loginsignupdiv .signup-biome-copy .signup-biome-title,
+.theme-dark .loginsignupdiv .signup-biome-copy ul.medium,
+.theme-dark .loginsignupdiv .signup-biome-resources .slidelist {
+    color: #e8edf5 !important;
+}
+</style>
 {% endblock %} {% block body%}
 <!-- START------------------------------------------------------------------------->
 <script>
@@ -38,6 +57,11 @@
     </div>
 
     <div class="templatedivcontent">
+        {% if referral_invite %}
+        <p class="referral-invite-banner" role="status">
+            You were invited to Affairs and Order — sign up for a bonus of +5M gold and +15k lumber.
+        </p>
+        {% endif %}
         <div class="auth-columns">
             {% if way != "discord" and way != "google" %}
             <div class="auth-panel">
@@ -47,6 +71,7 @@
                         <span class="material-icons-outlined">add_circle_outline</span>Discord Sign Up
                     </button>
                 </form>
+                {% if google_auth_enabled %}
                 <form action="/login/google" method="GET" style="margin-top: 15px;">
                     <input type="hidden" name="intent" value="login" />
                     <h2 class="templatecontentheadercenter">Google Sign Up</h2>
@@ -54,13 +79,14 @@
                         <span class="material-icons-outlined">add_circle_outline</span>Google Sign Up
                     </button>
                 </form>
+                {% endif %}
             </div>
             {% endif %}
 
             <div class="auth-panel auth-panel-wide">
                 <h2 class="templatecontentheadercenter">Default Sign Up</h2>
                 {% if way != "discord" and way != "google" %}
-                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">
+                <p class="auth-note">
                     <em>Note: Email verification does not exist yet. Only Discord accounts are verified for now.</em>
                 </p>
                 <form id="signup-form" class="loginsignupform" action="/register/email" method="POST">
@@ -71,6 +97,11 @@
                 {% endif %}
                     {% if csrf_token is defined %}
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% endif %}
+                    {% if referral_invite %}
+                    <input type="hidden" name="referral_code" value="{{ referral_invite }}" />
+                    {% elif session.get('referral_code') %}
+                    <input type="hidden" name="referral_code" value="{{ session.get('referral_code') }}" />
                     {% endif %}
                     <input class="loginsignupinput w-full" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
                     {% if way != "discord" and way != "google" %}
@@ -95,9 +126,9 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Tundra</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Tundra</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Tundra is a cold, nearly lifeless plane. While rich in valuable natural resources, it lacks necessary resources like lumber.
@@ -105,7 +136,7 @@
 
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
@@ -127,16 +158,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Savanna</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Savanna</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Savannas consist of miles of open grassland with the occasional tree. It has lots of space for farming, with rich mineral deposits below.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
@@ -158,16 +189,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Desert</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Desert</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Deserts are barren and hostile. Farming is possible, but only at rivers and oases. This is compensated for by rare resources ripe for the taking.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
@@ -189,16 +220,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Jungle</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Jungle</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Jungles are dense forest, with deadly animals and often warm climates. This is not an ideal place to settle. Nonetheless, people still do so, as jungles are rich with wood and oil.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
@@ -220,16 +251,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Boreal Forest</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Boreal Forest</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Boreal Forests are densely packed forests that can get quite cold in the winter. They're a fine place to find valuable minerals to extract.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
@@ -251,16 +282,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Grassland</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Grassland</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Grasslands are full of many unique plants, and they're a perfect place for farming. They also contain coal, iron, and other useful minerals.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
@@ -282,16 +313,16 @@
 
                     </div>
                 </div>
-                <div class="slidechild slidebottom">
+                <div class="slidechild slidebottom signup-biome-copy">
 
-                    <h2 class="templatecontentheadercenter">Mountain Range</h2>
+                    <h2 class="templatecontentheadercenter signup-biome-title">Mountain Range</h2>
 
                     <p class="templatecontentpleft landingpagecontent">
                         Mountain Ranges are terribly cold with lots of rain. They aren't pretty to settle, but they provide marketworthy minerals to sell.
                     </p>
                     <ul class="medium">Available Resources</ul>
 
-                    <div class="listcontainer">
+                    <div class="listcontainer signup-biome-resources">
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
                         <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
