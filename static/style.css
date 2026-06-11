@@ -925,6 +925,7 @@ body:has(.navbarparent .templatecontainer) {
     transition: all 0.3s;
     width: 56px;
     height: 56px;
+    cursor: pointer;
 }
 
 .resourcedivchild:hover {
