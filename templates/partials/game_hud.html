@@ -9,7 +9,29 @@
         </span>
     </button>
     {% endfor %}
-    <span class="game-tick-badge" data-game-tick-countdown aria-live="polite"></span>
+    <span class="game-tick-badge" data-game-tick-countdown data-economy-heartbeat aria-live="polite" title="Economy tick status"></span>
+    <script>
+    (function () {
+        var el = document.querySelector('[data-economy-heartbeat]');
+        if (!el) return;
+        fetch('/api/economy/status', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.tasks) return;
+                var rev = data.tasks.generate_province_revenue;
+                if (!rev) return;
+                var mins = rev.age_minutes;
+                if (mins == null) {
+                    el.textContent = 'Economy: waiting';
+                    el.classList.add('economy-heartbeat-warn');
+                    return;
+                }
+                el.textContent = 'Revenue: ' + mins + 'm ago';
+                if (data.stale || rev.stale) el.classList.add('economy-heartbeat-warn');
+            })
+            .catch(function () {});
+    })();
+    </script>
     <button type="button" class="game-hud-chip game-hud-expand" data-game-hud-expand aria-label="All resources">
         <span class="material-icons-outlined">expand_more</span>
     </button>

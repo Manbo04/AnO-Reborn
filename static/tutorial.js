@@ -48,6 +48,19 @@
 
     var progress = loadProgress();
 
+    fetch("/api/tutorial/progress", { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (data) {
+            if (!data || !data.ok || !data.chapters_claimed) return;
+            data.chapters_claimed.forEach(function (idx) {
+                progress.completed[idx] = true;
+            });
+            saveProgress(progress);
+            updateStatsUI();
+            unlockChapters();
+        })
+        .catch(function () {});
+
     function completedCount() {
         var n = 0;
         for (var i = 0; i < totalChapters; i++) {

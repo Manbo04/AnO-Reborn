@@ -9,34 +9,50 @@ from helpers import error
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-
-if "RAILWAY_STATIC_URL" in os.environ:
-    GOOGLE_REDIRECT_URI = "https://affairsandorder.com/login/google/callback"
-else:
-    GOOGLE_REDIRECT_URI = os.environ.get(
-        "GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/login/google/callback"
+def is_google_auth_configured() -> bool:
+    return bool(
+        os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+        and os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
     )
+
+
+def _google_client_id() -> str:
+    return os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+
+
+def _google_client_secret() -> str:
+    return os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+
+
+def get_google_redirect_uri() -> str:
+    """OAuth callback URL — override with GOOGLE_REDIRECT_URI on any environment."""
+    explicit = os.environ.get("GOOGLE_REDIRECT_URI", "").strip()
+    if explicit:
+        return explicit
+    if os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("RAILWAY_ENVIRONMENT_NAME"):
+        return "https://affairsandorder.com/login/google/callback"
+    return "http://127.0.0.1:5000/login/google/callback"
+
 
 AUTHORIZATION_BASE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 
-if "http://" in GOOGLE_REDIRECT_URI:
+if "http://" in get_google_redirect_uri():
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
 
 def make_google_session(token=None, state=None):
     return OAuth2Session(
-        client_id=GOOGLE_CLIENT_ID,
+        client_id=_google_client_id(),
         token=token,
         state=state,
         scope=["openid", "email", "profile"],
-        redirect_uri=GOOGLE_REDIRECT_URI,
+        redirect_uri=get_google_redirect_uri(),
     )
 
 def google_login_route():
-    if not GOOGLE_CLIENT_ID:
+    if not is_google_auth_configured():
         flash("Google login is not configured.")
         return redirect("/login")
     
@@ -67,13 +83,25 @@ def google_callback_route():
     try:
         token = google.fetch_token(
             TOKEN_URL,
-            client_secret=GOOGLE_CLIENT_SECRET,
+            client_secret=_google_client_secret(),
             authorization_response=request.url,
         )
         session["google_oauth2_token"] = token
     except Exception as e:
-        logger.error(f"Google fetch token error: {e}")
-        flash("Failed to retrieve token from Google.")
+        redirect_uri = get_google_redirect_uri()
+        logger.error(
+            "Google fetch token error (redirect_uri=%s): %s",
+            redirect_uri,
+            e,
+        )
+        err_text = str(e).lower()
+        if "redirect_uri_mismatch" in err_text or "redirect uri" in err_text:
+            flash(
+                "Google login failed: redirect URI mismatch. "
+                f"Ensure Google Cloud allows: {redirect_uri}"
+            )
+        else:
+            flash("Failed to retrieve token from Google.")
         return redirect("/login")
 
     try:
@@ -123,9 +151,15 @@ def google_signup_route():
     from signup import ensure_signup_attempts_table, _init_economy_tables
 
     if request.method == "GET":
+        from app_core.referrals.service import capture_referral_from_request
+
+        referral_invite = capture_referral_from_request()
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         return render_template(
-            "signup.html", way="google", recaptcha_site_key=recaptcha_site_key
+            "signup.html",
+            way="google",
+            recaptcha_site_key=recaptcha_site_key,
+            referral_invite=referral_invite,
         )
 
     elif request.method == "POST":
@@ -217,8 +251,10 @@ def google_signup_route():
                 session.permanent = True
                 session.modified = True
 
-                from signup import init_user_game_data
+                from signup import _complete_referral_signup, init_user_game_data
+
                 init_user_game_data(db, user_id, continent)
+                _complete_referral_signup(db, user_id)
 
                 db.execute(
                     "UPDATE signup_attempts SET successful = TRUE WHERE id = (SELECT id FROM signup_attempts WHERE ip_address = %s ORDER BY attempt_time DESC LIMIT 1)",
@@ -229,7 +265,9 @@ def google_signup_route():
             session.pop("google_oauth2_token", None)
             session.pop("google_email", None)
 
-            return redirect("/")
+            from app_core.onboarding.service import post_signup_redirect
+
+            return redirect(post_signup_redirect(user_id))
 
         except Exception as e:
             logger.exception(f"Google signup error: {e}")

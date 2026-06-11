@@ -18,14 +18,7 @@ import config  # Parse Railway environment variables  # noqa: E402
 # Toggle noisy per-building revenue logs (default off in production)
 VERBOSE_REVENUE_LOGS = os.getenv("VERBOSE_REVENUE_LOGS") == "1"
 
-# Configurable task timing thresholds (seconds)
-TASK_RUN_THRESHOLDS = {
-    "tax_income": int(os.getenv("TAX_INCOME_MIN_INTERVAL", "65")),
-    "population_growth": int(os.getenv("POP_GROWTH_MIN_INTERVAL", "100")),
-    "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "100")),
-    "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
-    "global_tick": int(os.getenv("GLOBAL_TICK_MIN_INTERVAL", "540")),
-}
+from app_core.celery_schedule import CELERY_BEAT_SCHEDULE, TASK_RUN_THRESHOLDS
 
 # Mapping from normalized building names to produced resource names.
 # Used by the global tick economy engine.
@@ -37,89 +30,18 @@ TASK_RUN_THRESHOLDS = {
 BUILDING_PRODUCTION_RESOURCE_MAP = {}
 
 
-# Optionally allow celery beat schedule to be loaded from env/config
-def get_crontab_env(var, default):
-    val = os.getenv(var)
-    if val:
-        # Support formats like "0" or "*/15" or "5,35"
-        return crontab(minute=val)
-    return default
-
-
 redis_url = config.get_redis_url()
 celery = Celery("app", broker=redis_url)
 celery.conf.update(
     broker_url=redis_url, result_backend=redis_url, CELERY_BROKER_URL=redis_url
 )
 
-# Allow schedule override via env, fallback to defaults
-celery_beat_schedule = {
-    "tax_income": {
-        "task": "tasks.task_tax_income",
-        "schedule": get_crontab_env("TAX_INCOME_CRON", crontab(minute="0")),
-    },
-    "generate_province_revenue": {
-        "task": "tasks.task_generate_province_revenue",
-        "schedule": get_crontab_env("PROV_REV_CRON", crontab(minute="25")),
-    },
-    "population_growth": {
-        "task": "tasks.task_population_growth",
-        "schedule": get_crontab_env("POP_GROWTH_CRON", crontab(minute="45")),
-    },
-    "war_reparation_tax": {
-        "task": "tasks.task_war_reparation_tax",
-        "schedule": get_crontab_env("WAR_REP_CRON", crontab(minute="0", hour="0")),
-    },
-    "manpower_increase": {
-        "task": "tasks.task_manpower_increase",
-        "schedule": get_crontab_env("MANPOWER_CRON", crontab(minute="5", hour="*/4")),
-    },
-    "backfill_missing_resources": {
-        "task": "tasks.task_backfill_missing_resources",
-        "schedule": get_crontab_env("BACKFILL_CRON", crontab(minute="15", hour="1")),
-    },
-    "cleanup_orphan_user_rows": {
-        "task": "tasks.task_cleanup_orphan_user_rows",
-        "schedule": get_crontab_env(
-            "ORPHAN_CLEANUP_CRON", crontab(minute="10", hour="1")
-        ),
-    },
-    "refresh_bot_offers": {
-        "task": "tasks.task_refresh_bot_offers",
-        "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="*/5")),
-    },
-    "execute_trade_agreements": {
-        "task": "tasks.task_execute_trade_agreements",
-        "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),
-    },
-    "global_tick": {
-        "task": "tasks.task_global_tick",
-        "schedule": get_crontab_env("GLOBAL_TICK_CRON", crontab(minute="*/10")),
-    },
-    "cleanup_old_spyinfo": {
-        "task": "tasks.task_cleanup_old_spyinfo",
-        "schedule": get_crontab_env(
-            "SPYINFO_CLEANUP_CRON", crontab(minute="30", hour="2")
-        ),
-    },
-    "economy_snapshot": {
-        "task": "tasks.task_economy_snapshot",
-        "schedule": get_crontab_env(
-            "ECONOMY_SNAPSHOT_CRON", crontab(minute="0", hour="*/1")
-        ),
-    },
-    "ai_agent": {
-        "task": "tasks.task_ai_agent",
-        "schedule": get_crontab_env("AI_AGENT_CRON", crontab(minute="30", hour="*/1")),
-    },
-}
-
 celery.conf.update(
     timezone="UTC",
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
-    beat_schedule=celery_beat_schedule,
+    beat_schedule=CELERY_BEAT_SCHEDULE,
 )
 
 

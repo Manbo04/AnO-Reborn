@@ -1,3 +1,4 @@
+import hmac
 import os
 from flask import Blueprint, request, render_template, session, redirect, jsonify, current_app, flash
 from helpers import login_required, get_valid_int
@@ -7,9 +8,16 @@ from .services import (
     get_economy_api_data, take_economy_snapshot, trigger_tasks_service, admin_ai_agent_service,
     get_ai_logs, action_badge_class
 )
+from .guards import admin_diag_authorized, admin_diag_denied_response, admin_diag_or_session
 from .repositories import AdminRepository
 
 admin_bp = Blueprint('admin', __name__)
+
+
+def _require_admin_diag_or_session():
+    if not admin_diag_or_session(session.get("user_id")):
+        return admin_diag_denied_response()
+    return None
 
 @admin_bp.record
 def record_params(setup_state):
@@ -72,7 +80,11 @@ def admin_init_database():
     return "Database already initialized. Remove this route from app.py", 200
 
 @admin_bp.route("/admin/debug_wealth")
+@login_required
 def admin_debug_wealth():
+    denied = _require_admin_diag_or_session()
+    if denied:
+        return denied
     resources = AdminRepository.get_debug_wealth()
     html = "<h3>Resource Dictionary</h3><table border='1'><tr><th>ID</th><th>Name</th><th>Display</th></tr>"
     for res in resources:
@@ -81,14 +93,20 @@ def admin_debug_wealth():
     return html
 
 @admin_bp.route("/admin/migrate_treaties")
+@login_required
 def admin_migrate_treaties():
+    denied = _require_admin_diag_or_session()
+    if denied:
+        return denied
     success, msg = AdminRepository.migrate_treaties()
     return msg, 200 if success else 500
 
 @admin_bp.route("/admin/live-feed")
+@login_required
 def admin_live_feed():
-    if request.args.get("pass") != "AnOAdminSecure2026!":
-        return "Unauthorized", 401
+    denied = _require_admin_diag_or_session()
+    if denied:
+        return denied
     try:
         data = AdminRepository.get_live_feed()
         formatted_wars = []
@@ -100,12 +118,25 @@ def admin_live_feed():
         return f"Database Error: {e}", 500
 
 @admin_bp.route("/admin/debug/leviathan")
+@login_required
 def debug_leviathan():
-    pass_code = request.args.get("pass")
-    if pass_code not in ("AnOAdminSecure2026!", "WipeNow123", "WipeProvinces123"):
+    denied = _require_admin_diag_or_session()
+    if denied:
+        return denied
+    wipe_secret = (os.getenv("ADMIN_WIPE_SECRET") or "").strip()
+    pass_code = (request.args.get("pass") or "").strip()
+    wipe_now = bool(wipe_secret and pass_code and hmac.compare_digest(pass_code, wipe_secret))
+    wipe_provinces = bool(
+        wipe_secret
+        and pass_code
+        and hmac.compare_digest(pass_code, f"{wipe_secret}:provinces")
+    )
+    if pass_code and not wipe_now and not wipe_provinces:
         return "Unauthorized", 401
     try:
-        data, err = AdminRepository.get_leviathan_debug(wipe_now=(pass_code=="WipeNow123"), wipe_provinces=(pass_code=="WipeProvinces123"))
+        data, err = AdminRepository.get_leviathan_debug(
+            wipe_now=wipe_now, wipe_provinces=wipe_provinces
+        )
         if err:
             return jsonify({"error": err})
         return jsonify(data)
@@ -113,9 +144,11 @@ def debug_leviathan():
         return f"Database Error: {e}", 500
 
 @admin_bp.route("/admin/debug/exploits")
+@login_required
 def debug_exploits():
-    if request.args.get("pass") != "AnOAdminSecure2026!":
-        return "Unauthorized", 401
+    denied = _require_admin_diag_or_session()
+    if denied:
+        return denied
     try:
         wipe = request.args.get("wipe") == "true"
         data = AdminRepository.get_exploits_debug(wipe)
