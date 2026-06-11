@@ -203,48 +203,44 @@ def rations_needed(cId, db=None):
             else 1.0
         )
 
-        # Get population per province - each province has minimum 1 ration
-        active_db.execute(
-            (
-                "SELECT population, pop_children, pop_working, "
-                "pop_elderly FROM provinces WHERE userId=%s"
-            ),
-            (cId,),
-        )
-        provinces = active_db.fetchall()
+        pw_mult = variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
+        pc_mult = variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
+        pe_mult = variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+        r_per = variables.RATIONS_PER
 
-        total_needed = 0
-        for province_row in provinces:
-            pop_children = row_val(province_row, "pop_children", 1)
-            if (
-                variables.FEATURE_DEMOGRAPHIC_CONSUMPTION
-                and pop_children is not None
-            ):
-                pop = int(row_val(province_row, "population", 0, default=0) or 0)
-                pc = int(row_val(province_row, "pop_children", default=0) or 0)
-                pw = int(row_val(province_row, "pop_working", default=0) or 0)
-                pe = int(row_val(province_row, "pop_elderly", default=0) or 0)
-                province_consumption = int(
-                    (
-                        pw * variables.DEMO_RATIONS_CONSUMPTION["pop_working"]
-                        + pc * variables.DEMO_RATIONS_CONSUMPTION["pop_children"]
-                        + pe * variables.DEMO_RATIONS_CONSUMPTION["pop_elderly"]
+        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
+            query = f"""
+                SELECT COALESCE(SUM(
+                    GREATEST(
+                        CAST(
+                            CASE WHEN pop_children IS NOT NULL THEN
+                                (COALESCE(pop_working,0) * {pw_mult} + COALESCE(pop_children,0) * {pc_mult} + COALESCE(pop_elderly,0) * {pe_mult}) * {rationing_multiplier}
+                            ELSE
+                                FLOOR(COALESCE(population,0) / {r_per}) * {rationing_multiplier}
+                            END
+                        AS INTEGER),
+                        1
                     )
-                    * rationing_multiplier
-                )
-            else:
-                # Fallback to old method: total population / RATIONS_PER
-                pop = int(row_val(province_row, "population", 0, default=0) or 0)
-                province_pop = pop if pop else 0
-                province_consumption = int(
-                    (province_pop // variables.RATIONS_PER) * rationing_multiplier
-                )
-
-            if province_consumption < 1:
-                province_consumption = 1
-            total_needed += province_consumption
-
-        return total_needed if total_needed > 0 else 1
+                ), 0)
+                FROM provinces WHERE userId = %s
+            """
+        else:
+            query = f"""
+                SELECT COALESCE(SUM(
+                    GREATEST(
+                        CAST(
+                            FLOOR(COALESCE(population,0) / {r_per}) * {rationing_multiplier}
+                        AS INTEGER),
+                        1
+                    )
+                ), 0)
+                FROM provinces WHERE userId = %s
+            """
+        
+        active_db.execute(query, (cId,))
+        total_needed = active_db.fetchone()
+        ans = int(total_needed[0]) if total_needed and total_needed[0] else 0
+        return ans if ans > 0 else 1
 
 
 def rations_distribution_capacity(user_id):
