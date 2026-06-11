@@ -1194,8 +1194,8 @@ def countries():
             SELECT *
             FROM country_rows
             WHERE provinces_count >= %s
-              AND (%s IS NULL OR influence >= %s)
-              AND (%s IS NULL OR influence <= %s)
+              AND (%s::numeric IS NULL OR influence >= %s)
+              AND (%s::numeric IS NULL OR influence <= %s)
         """
 
         filter_sql_simple = f"""
@@ -1278,11 +1278,7 @@ def countries():
         total_pages = 1
         offset = 0
         paginated_results = []
-        try:
-            _run_count_and_page(filter_sql)
-        except Exception:
-            rollback_db_cursor(db)
-            _run_count_and_page(filter_sql_simple)
+        _run_count_and_page(filter_sql)
 
     return render_template(
         "countries.html",
