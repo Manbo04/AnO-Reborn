@@ -151,7 +151,33 @@ def main() -> int:
 
     print(f"[nudge] enqueued: {', '.join(sent) or 'none'}")
     print("[nudge] ensure celery-worker service is Online on Railway")
+    _maybe_discord_alert(stale_tasks, ages)
     return 0
+
+
+def _maybe_discord_alert(stale_tasks: list[str], ages: dict) -> None:
+    """Notify staff when economy tasks are stale (rate-limited via Redis)."""
+    url = (os.getenv("DISCORD_WEBHOOK_URL") or "").strip()
+    if not url or not stale_tasks:
+        return
+    r = _redis_client()
+    alert_key = os.getenv("ECONOMY_ALERT_LOCK_KEY", "web:economy_alert:v1")
+    cooldown = int(os.getenv("ECONOMY_ALERT_COOLDOWN_SECONDS", "3600"))
+    try:
+        if r and not r.set(alert_key, "1", nx=True, ex=cooldown):
+            return
+    except Exception:
+        pass
+    lines = [f"**Economy tasks stale** on {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'production')}"]
+    for name in stale_tasks:
+        age = ages.get(name)
+        lines.append(f"- `{name}`: age={int(age) if age else 'never'}s")
+    try:
+        import requests
+
+        requests.post(url, json={"content": "\n".join(lines)[:1900]}, timeout=8)
+    except Exception as exc:
+        print(f"[nudge] discord alert failed: {exc}")
 
 
 if __name__ == "__main__":

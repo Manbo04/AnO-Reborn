@@ -1,0 +1,6 @@
+mcp-server/
+test_env/
+.venv/
+venv310/
+backups/
+static/assets/

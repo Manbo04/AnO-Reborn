@@ -49,6 +49,32 @@ def _apply_rewards(db, user_id: int, rewards: dict[str, int]) -> dict[str, int]:
     return granted
 
 
+@bp.route("/api/tutorial/progress", methods=["GET"])
+@login_required
+def tutorial_progress():
+    user_id = session["user_id"]
+    with get_request_cursor() as db:
+        _ensure_tutorial_columns(db)
+        db.execute(
+            """
+            SELECT tutorial_chapters_claimed, tutorial_graduated_at
+            FROM stats WHERE id = %s
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "Nation not found"}), 404
+    claimed = sorted(int(x) for x in (row[0] or []))
+    return jsonify(
+        {
+            "ok": True,
+            "chapters_claimed": claimed,
+            "graduated": row[1] is not None,
+        }
+    )
+
+
 @bp.route("/api/tutorial/claim", methods=["POST"])
 @login_required
 def claim_tutorial_reward():

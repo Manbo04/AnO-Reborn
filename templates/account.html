@@ -65,6 +65,75 @@
             </div>
         </form>
 
+        {% if referral_dashboard %}
+        <h2 class="templatecontentheaderleft">Invite Friends</h2>
+        <div class="infodiv referral-panel">
+            <p class="templatecontentpleft">
+                Share your link — friends get <strong>{{ referral_dashboard.invitee_bonus_summary }}</strong> at signup.
+                You earn more gold and resources for each day they keep playing (Day 1, 3, 7, and 14).
+            </p>
+            <div class="referral-link-row">
+                <input
+                    type="text"
+                    class="loginsignupinput referral-link-input"
+                    id="referral-link-input"
+                    readonly
+                    value="{{ referral_dashboard.referral_link }}"
+                    aria-label="Referral signup link"
+                    onclick="this.select()"
+                />
+                <button type="button" class="templatedivbutton templatecenteredbutton" onclick="copyReferralLink()">
+                    <span class="material-icons-outlined">content_copy</span>Copy link
+                </button>
+            </div>
+            <p class="templatecontentpleft referral-code-line">
+                Your code: <code>{{ referral_dashboard.referral_code }}</code>
+            </p>
+
+            <h3 class="templatecontentheaderleft referral-subheader">Your milestone goals (per invitee)</h3>
+            <ul class="referral-milestone-list">
+                {% for goal in referral_dashboard.milestone_goals %}
+                <li>Day {{ goal.days }} active — {{ goal.summary }}</li>
+                {% endfor %}
+            </ul>
+
+            <h3 class="templatecontentheaderleft referral-subheader">Players you invited ({{ referral_dashboard.total_invitees }})</h3>
+            {% if referral_dashboard.invitees %}
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2 referral-invitees-table">
+                    <tr>
+                        <th>Nation</th>
+                        <th>Days active</th>
+                        <th>Next goal</th>
+                        <th>You earned</th>
+                    </tr>
+                    {% for inv in referral_dashboard.invitees %}
+                    <tr>
+                        <td>{{ inv.username }}</td>
+                        <td>{{ inv.days_active }}</td>
+                        <td>
+                            {% if inv.next_milestone %}Day {{ inv.next_milestone }}{% else %}All milestones{% endif %}
+                            {% if not inv.is_verified %}<span class="referral-pending-tag">(awaiting verify)</span>{% endif %}
+                        </td>
+                        <td>{{ inv.earned_summary }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% else %}
+            <p class="templatecontentpleft">No signups from your link yet. Post it on Discord or send to friends!</p>
+            {% endif %}
+        </div>
+        <script>
+        function copyReferralLink() {
+            var input = document.getElementById('referral-link-input');
+            if (!input) return;
+            input.select();
+            navigator.clipboard.writeText(input.value).catch(function () {});
+        }
+        </script>
+        {% endif %}
+
         <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
         <div class="infodiv">
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
@@ -444,7 +513,7 @@ function executeDelete() {
         const csrf = document.createElement('input');
         csrf.type = 'hidden';
         csrf.name = 'csrf_token';
-        csrf.value = '{{ csrf_token() }}';
+        csrf.value = '{% if csrf_token is defined %}{{ csrf_token() }}{% endif %}';
         form.appendChild(csrf);
         document.body.appendChild(form);
         form.submit();

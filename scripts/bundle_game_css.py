@@ -28,7 +28,19 @@ def main() -> None:
         chunks.append(path.read_text(encoding="utf-8"))
         chunks.append("")
 
-    STYLE.write_text(text + "\n" + "\n".join(chunks), encoding="utf-8")
+    combined = text + "\n" + "\n".join(chunks)
+    STYLE.write_text(combined, encoding="utf-8")
+    min_path = STYLE.with_name("style.min.css")
+    try:
+        import re
+
+        minified = re.sub(r"/\*.*?\*/", "", combined, flags=re.S)
+        minified = re.sub(r"\s+", " ", minified)
+        minified = re.sub(r" ?([{}:;,]) ?", r"\1", minified)
+        min_path.write_text(minified.strip(), encoding="utf-8")
+        print(f"Wrote minified CSS to {min_path}")
+    except Exception as exc:
+        print(f"WARN: minify skipped: {exc}")
     print(f"Bundled {len(FILES)} files into {STYLE}")
 
 

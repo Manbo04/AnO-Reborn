@@ -17,8 +17,26 @@ import os  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
 import requests  # noqa: E402
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 load_dotenv()
+if os.getenv("ENVIRONMENT") != "PROD" and not os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+
+def _complete_referral_signup(db, user_id: int) -> None:
+    """Link inviter from session/form and grant invitee signup bonus."""
+    from app_core.referrals.service import (
+        apply_signup_referral_bonus,
+        link_referrer_on_signup,
+        referral_code_from_signup_request,
+    )
+
+    code = referral_code_from_signup_request()
+    link_referrer_on_signup(db, user_id, code)
+    apply_signup_referral_bonus(db, user_id)
+    try:
+        session.pop("referral_code", None)
+    except RuntimeError:
+        pass
 
 
 def _init_economy_tables(db, user_id):
@@ -463,9 +481,15 @@ def discord_register():
     from app import app
 
     if request.method == "GET":
+        from app_core.referrals.service import capture_referral_from_request
+
+        referral_invite = capture_referral_from_request()
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         return render_template(
-            "signup.html", way="discord", recaptcha_site_key=recaptcha_site_key
+            "signup.html",
+            way="discord",
+            recaptcha_site_key=recaptcha_site_key,
+            referral_invite=referral_invite,
         )
 
     elif request.method == "POST":
@@ -630,6 +654,7 @@ def discord_register():
 
                 # Initialize Economy 2.0 normalized tables
                 _init_economy_tables(db, user_id)
+                _complete_referral_signup(db, user_id)
 
             # Mark attempt as successful
             with get_request_cursor() as db:
@@ -654,7 +679,9 @@ def discord_register():
             except (KeyError, RuntimeError):
                 pass
 
-            return redirect("/")
+            from app_core.onboarding.service import post_signup_redirect
+
+            return redirect(post_signup_redirect(user_id))
 
         except Exception as e:
             error_msg = str(e)
@@ -669,19 +696,14 @@ def signup():
         # Defensive: ensure signup_attempts exists
         ensure_signup_attempts_table()
 
-        remote = request.remote_addr
-        forwarded = request.headers.get("X-Forwarded-For")
-        logger.debug(f"signup request remote_addr={remote} X-Forwarded-For={forwarded}")
+        from helpers import client_ip_from_request
 
-        # IP rate limiting: max 3 attempts per IP per day
-        # Prefer X-Forwarded-For when present (app may run behind a proxy)
-        forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
-            "X-Forwarded-For".lower()
+        client_ip = client_ip_from_request()
+        logger.debug(
+            "signup request remote_addr=%s client_ip=%s",
+            request.remote_addr,
+            client_ip,
         )
-        if forwarded:
-            client_ip = forwarded.split(",")[0].strip()
-        else:
-            client_ip = request.remote_addr
 
         # Allow a higher threshold (or effectively bypass) for local dev/testing
         with get_request_cursor() as db:
@@ -889,6 +911,7 @@ def signup():
             # NOTE: resources and upgrades tables were removed in Economy 2.0
             # migration; their data now lives in user_economy / user_buildings.
             init_user_game_data(db, user_id, continent)
+            _complete_referral_signup(db, user_id)
 
             # If verification is enabled, redirect to pending page.
             # Otherwise, log them in and issue a one-time recovery key.
@@ -899,10 +922,12 @@ def signup():
 
                 session["user_id"] = user_id
                 raw_key = create_recovery_key_for_user(db, user_id)
+                from app_core.onboarding.service import post_signup_redirect
+
                 if raw_key:
                     session["pending_recovery_key"] = raw_key
                     return redirect("/save_recovery_key")
-                return redirect("/")
+                return redirect(post_signup_redirect(user_id))
 
         # Mark attempt as successful
         with get_request_cursor() as db:
@@ -922,9 +947,15 @@ def signup():
 
         return redirect("/")
     elif request.method == "GET":
+        from app_core.referrals.service import capture_referral_from_request
+
+        referral_invite = capture_referral_from_request()
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         return render_template(
-            "signup.html", way="normal", recaptcha_site_key=recaptcha_site_key
+            "signup.html",
+            way="normal",
+            recaptcha_site_key=recaptcha_site_key,
+            referral_invite=referral_invite,
         )
 
 

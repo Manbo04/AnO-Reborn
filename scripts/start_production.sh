@@ -69,7 +69,7 @@ fi
 export ANO_BOOT_DONE=1
 
 if _is_worker_service; then
-  CELERY_CONCURRENCY="${CELERY_CONCURRENCY:-2}"
+  CELERY_CONCURRENCY="${CELERY_CONCURRENCY:-1}"
   echo "[start] Starting Celery worker+beat (concurrency=${CELERY_CONCURRENCY})..."
   exec celery -A tasks worker --beat --loglevel=INFO --concurrency="${CELERY_CONCURRENCY}"
 elif [[ "$SERVICE_NAME" == *"beat"* ]]; then
@@ -79,7 +79,7 @@ elif [[ "$SERVICE_NAME" == *"bot"* ]] || [[ "$SERVICE_NAME" == *"discord"* ]]; t
   echo "[start] WARN: dedicated bot service is deprecated — use DISCORD_BOT_SIDECAR=1 on web."
   exec python3 scripts/run_discord_bot_if_leader.py
 else
-  GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
+  GUNICORN_WORKERS="${GUNICORN_WORKERS:-1}"
   GUNICORN_THREADS="${GUNICORN_THREADS:-2}"
   echo "[start] Starting gunicorn on :${PORT} (workers=${GUNICORN_WORKERS} threads=${GUNICORN_THREADS})..."
   exec gunicorn \

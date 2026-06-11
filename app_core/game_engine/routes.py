@@ -62,8 +62,6 @@ def assembly():
 
     return render_template("assembly.html", results=results, user_vote=user_vote)
 
-@bp.route("/my_offers", methods=["GET"])
-def myoffers(): return render_template("my_offers.html")
 
 @bp.route("/war", methods=["GET"])
 def war(): return redirect("/wars")

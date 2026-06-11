@@ -966,7 +966,7 @@ def country(cId):
         try:
             db.execute("""
                 SELECT t.treaty_type, u.username as other_nation, u.id as other_id
-                FROM treaties t
+                FROM nation_treaties t
                 JOIN users u ON (u.id = t.recipient_id AND t.sender_id = %s) OR (u.id = t.sender_id AND t.recipient_id = %s)
                 WHERE t.status = 'active' AND (t.sender_id = %s OR t.recipient_id = %s)
             """, (cId, cId, cId, cId))
@@ -1115,7 +1115,7 @@ def countries():
                         + COALESCE(r.total_resources, 0) * 0.001
                         + COALESCE(s.gold, 0) * 0.00001
                     )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM u.date::timestamp)::bigint, 0) AS unix
+                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\d{4}-\d{2}-\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
@@ -1216,7 +1216,7 @@ def countries():
                         + COALESCE(p.total_land, 0) * 10
                         + COALESCE(s.gold, 0) * 0.00001
                     )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM u.date::timestamp)::bigint, 0) AS unix
+                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\d{4}-\d{2}-\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (

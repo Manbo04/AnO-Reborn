@@ -65,12 +65,12 @@ def _configure_sidecar_web(
     rds._upsert_var(token, project_id, env_id, web_id, "BOT_API_BASE_URL", base_url)
     rds._upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_SIDECAR", "1")
     rds._upsert_var(token, project_id, env_id, web_id, "DISCORD_BOT_USE_WEB_EMBEDS", "1")
-    rds._upsert_var(token, project_id, env_id, web_id, "GUNICORN_WORKERS", "2")
+    rds._upsert_var(token, project_id, env_id, web_id, "GUNICORN_WORKERS", "1")
     rds._upsert_var(token, project_id, env_id, web_id, "GUNICORN_THREADS", "2")
 
     worker_id = _service_id(services, "celery-worker")
     if worker_id:
-        rds._upsert_var(token, project_id, env_id, worker_id, "CELERY_CONCURRENCY", "2")
+        rds._upsert_var(token, project_id, env_id, worker_id, "CELERY_CONCURRENCY", "1")
 
     if bot_id:
         bot_vars = rds._get_service_variables(token, project_id, env_id, bot_id)

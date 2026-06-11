@@ -1,79 +1,66 @@
-# Railway cost cut — target ≤ $30/month total
+# Railway cost cut — target ≤ $30/month total (stay on Pro)
 
-## Dashboard actions (do once, ~15 min)
+Pro keeps multi-region deploys so players worldwide get acceptable latency. Hobby is **not** required.
 
-### 1. Downgrade Pro → Hobby
+## What was leaking money (fixed 2026-06-08)
 
-1. Railway → **manbo04's workspace** → **Usage** or **Billing**
-2. Change plan from **Pro ($20/mo)** to **Hobby ($5/mo)**
-3. Hobby includes **$5** usage credit; target total bill **≤ $30**
+**15 extra containers** were running in stale environments:
 
-### 2. Set RAM limits per service
+| Environment | Services running |
+|-------------|------------------|
+| AnO-Reborn-pr-39, pr-46, pr-48 | web + celery-worker + Redis each |
+| AnO-Reborn-pr-3, pr-52 | partial stacks |
+| development | web + celery-worker + Redis |
+| recovery | orphan env |
 
-Each service → **Settings** → **Resources**:
+PR preview environments do **not** auto-delete when PRs close. They bill 24/7 until removed.
 
-| Service | Target RAM |
-|---------|------------|
-| web | 512 MB (max 1 GB) |
-| celery-worker | 512 MB |
-| Postgres | smallest viable |
-| Redis | smallest viable |
+**Fix applied:** `python3 scripts/railway_cost_trim.py --apply` deleted all non-production environments.
 
-Keep **Compute Usage Limit** at **$30**.
+## Production stack (only 4 services)
 
-### 3. Delete deprecated services (done via API 2026-06-07)
+| Service | RAM cap | vCPU cap |
+|---------|---------|----------|
+| web | 512 MB | 1 |
+| celery-worker | 512 MB | 1 |
+| prod-validator (Postgres) | 1 GB | 1 |
+| Redis | 512 MB | 0.5 |
 
-Removed via `python3 scripts/railway_delete_services.py`:
+Lean env vars on production:
 
-| Deleted | Why |
-|---------|-----|
-| beat | Merged into celery-worker (`--beat`) |
-| bot | Runs as web sidecar |
-| postgres-recovery | Orphan from agent recovery — **major memory leak** |
-| dummy-restorer | Orphan debug service |
-| postgres-final-recovery | Orphan debug service |
-| snapshot-inspector | Orphan debug service |
-| postgres-validated | Orphan duplicate Postgres |
+| Service | Setting |
+|---------|---------|
+| web | `GUNICORN_WORKERS=1`, `GUNICORN_THREADS=2`, `DISCORD_BOT_SIDECAR=1` |
+| celery-worker | `CELERY_CONCURRENCY=1`, worker runs `--beat` |
 
-**Keep:** web, celery-worker, **prod-validator** (live DB), Redis
+## Dashboard — do once
 
-Do **not** delete `prod-validator` — web `DATABASE_URL` points to `prod-validator.railway.internal`.
+1. **Usage** → set **Compute Usage Limit** to **$30**
+2. Confirm only **production** environment exists (no PR/dev/recovery envs)
+3. Do **not** redeploy Postgres/Redis unless necessary (deploy spikes cost)
 
-## What the code changes do
-
-| Change | Savings |
-|--------|---------|
-| `celery worker --beat` on celery-worker | Removes dedicated beat container |
-| `DISCORD_BOT_SIDECAR=1` on web | Removes dedicated bot container |
-| Gunicorn 2 workers × 2 threads (no preload) | Lower web RAM |
-| Migrations only on worker boot | Faster, cheaper web restarts |
-| Redeploy web+worker only (never Postgres) | Stops deploy-cost spikes |
-
-## Verify after deploy
+## Re-run trim script
 
 ```bash
-curl -s https://affairsandorder.com/ready
-curl -s https://affairsandorder.com/deploy-info
+python3 scripts/railway_cost_trim.py --dry-run   # preview
+python3 scripts/railway_cost_trim.py --apply     # delete stale envs + cap prod
 ```
 
-- Discord: `/bot_version` or `/me` in your server
-- Economy: resources should still tick (worker+beat schedules tasks)
-
-## Env vars (set automatically by `railway_production_fix.py`)
-
-| Service | Variable | Value |
-|---------|----------|-------|
-| web | `DISCORD_BOT_SIDECAR` | `1` |
-| web | `GUNICORN_WORKERS` | `2` |
-| web | `GUNICORN_THREADS` | `2` |
-| celery-worker | `CELERY_CONCURRENCY` | `2` |
-
-## Expected bill after cuts
+## Expected bill on Pro
 
 | Item | ~Monthly |
 |------|----------|
-| Hobby plan | $5 |
-| Postgres + Redis + 2 app services | $20–25 |
-| **Total** | **$25–30** |
+| Pro subscription | $20 (includes $20 usage credit) |
+| Production compute (4 services, capped) | ~$8–12 |
+| **Total** | **~$20–28** |
 
-Monitor **Usage** for 48h; daily burn should fall from ~$2.80/day toward ~$0.85/day.
+Monitor **Usage** for 48h after trim. Estimated usage should drop from ~$37 toward ~$10–15.
+
+## Verify game still works
+
+```bash
+curl -s https://affairsandorder.com/deploy-info
+curl -s https://affairsandorder.com/ready
+```
+
+Discord: `/me` in your server. Economy tasks should still tick on worker+beat.

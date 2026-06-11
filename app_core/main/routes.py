@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, session, send_from_directory, flash, Response, current_app
+from xml.sax.saxutils import escape
 from helpers import login_required, error
 from database import get_request_cursor
 import os
@@ -16,6 +17,46 @@ def index():
 @bp.route("/robots.txt")
 def robots():
     return send_from_directory("static", "robots.txt")
+
+
+@bp.route("/google7c77c4ff4f7be650.html")
+def google_search_console_verify():
+    return send_from_directory("static", "google7c77c4ff4f7be650.html")
+
+
+@bp.route("/sitemap.xml")
+def sitemap():
+    """Public pages Google uses for sitelinks and rich results."""
+    site = "https://affairsandorder.com"
+    pages = [
+        ("/", "daily", "1.0"),
+        ("/signup", "monthly", "0.9"),
+        ("/login", "monthly", "0.9"),
+        ("/tutorial", "weekly", "0.8"),
+        ("/mechanics", "weekly", "0.8"),
+        ("/mechanics/resources", "monthly", "0.6"),
+        ("/mechanics/revenue", "monthly", "0.6"),
+        ("/mechanics/consumer_goods", "monthly", "0.6"),
+        ("/mechanics/rations", "monthly", "0.6"),
+        ("/mechanics/war", "monthly", "0.6"),
+        ("/forgot_password", "yearly", "0.4"),
+        ("/rankings", "daily", "0.7"),
+        ("/countries", "daily", "0.7"),
+    ]
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for path, changefreq, priority in pages:
+        loc = escape(f"{site}{path}")
+        lines.append("  <url>")
+        lines.append(f"    <loc>{loc}</loc>")
+        lines.append(f"    <changefreq>{changefreq}</changefreq>")
+        lines.append(f"    <priority>{priority}</priority>")
+        lines.append("  </url>")
+    lines.append("</urlset>")
+    body = "\n".join(lines)
+    return Response(body, mimetype="application/xml")
 
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
