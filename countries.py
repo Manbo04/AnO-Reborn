@@ -1084,7 +1084,7 @@ def countries():
     )
 
     with get_request_cursor(read_only=True) as db:
-        base_cte_sql = f"""
+        filter_sql = f"""
             WITH country_rows AS (
                 SELECT
                     u.id,
@@ -1115,7 +1115,7 @@ def countries():
                         + COALESCE(r.total_resources, 0) * 0.001
                         + COALESCE(s.gold, 0) * 0.00001
                     )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\d{4}-\d{2}-\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
+                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{4}-\\d{2}-\\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
@@ -1216,7 +1216,7 @@ def countries():
                         + COALESCE(p.total_land, 0) * 10
                         + COALESCE(s.gold, 0) * 0.00001
                     )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\d{4}-\d{2}-\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
+                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{4}-\\d{2}-\\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
@@ -1238,6 +1238,7 @@ def countries():
                 WHERE 1=1
                 {search_filter}
             )
+            SELECT * FROM country_rows
         """
 
         filter_params = list(params)
