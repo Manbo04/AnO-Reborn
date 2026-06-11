@@ -271,3 +271,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 3000 + (i * 500));
     });
 });
+
+// Mobile resource menu toggle
+function resourcedivcontentshow() {
+    var rd = document.getElementById("resourcediv");
+    var rdc = document.getElementById("resourcedivcontent");
+    if (rd) rd.classList.toggle("resourcedivshow");
+    if (rdc) rdc.classList.toggle("resourcedivcontentshow");
+}
