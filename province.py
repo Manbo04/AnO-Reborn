@@ -374,6 +374,9 @@ def province(pId):
         nation_distribution = None
         dist_cap = None
         enough_rations = rations - rations_minus > 1
+        food_score = None
+        national_pop = None
+
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             from tasks import fetch_nation_distribution_status, food_stats
 
@@ -396,7 +399,8 @@ def province(pId):
                     if nation_distribution
                     else 0
                 )
-                enough_rations = food_stats(cId, db=db) >= -1.0
+                food_score = food_stats(cId, db=db)
+                enough_rations = food_score >= -1.0
             except Exception:
                 rollback_db_cursor(db)
                 nation_distribution = None
@@ -459,22 +463,10 @@ def province(pId):
         )
 
         distribution_status = nation_distribution
-        food_score = None
-        national_pop = None
         if variables.FEATURE_RATIONS_DISTRIBUTION:
-            try:
-                db.execute(
-                    "SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId = %s",
-                    (cId,),
-                )
-                nat_pop_row = db.fetchone()
-                national_pop = int(row_val(nat_pop_row, "coalesce", 0, default=0) or 0)
-                food_score = food_stats(cId, db=db)
-                if distribution_status and food_score is not None and food_score < -1:
-                    distribution_status = dict(distribution_status)
-                    distribution_status["show_alert"] = True
-            except Exception:
-                rollback_db_cursor(db)
+            if distribution_status and food_score is not None and food_score < -1:
+                distribution_status = dict(distribution_status)
+                distribution_status["show_alert"] = True
 
         return render_template(
             "province.html",
