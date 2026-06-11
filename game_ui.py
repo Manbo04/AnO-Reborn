@@ -11,21 +11,31 @@ from typing import Any
 
 _MANIFEST_PATH = Path(__file__).resolve().parent / "static" / "asset-manifest.json"
 _STYLE_CSS_PATH = Path(__file__).resolve().parent / "static" / "style.css"
+_STYLE_MIN_PATH = Path(__file__).resolve().parent / "static" / "style.min.css"
+
+
+def game_stylesheet_filename() -> str:
+    """Prefer minified bundle when present (nixpacks build)."""
+    if _STYLE_MIN_PATH.is_file():
+        return "style.min.css"
+    return "style.css"
 
 
 def get_asset_version() -> str:
-    """Cache-bust token tied to deploy commit (or style.css mtime locally)."""
+    """Cache-bust token tied to deploy commit plus CSS mtime when rebuilt."""
     commit = (
         os.getenv("RAILWAY_GIT_COMMIT_SHA")
         or os.getenv("GIT_COMMIT")
         or os.getenv("SOURCE_VERSION")
     )
-    if commit:
-        return commit.strip()[:12]
+    css_path = _STYLE_MIN_PATH if _STYLE_MIN_PATH.is_file() else _STYLE_CSS_PATH
     try:
-        return str(int(_STYLE_CSS_PATH.stat().st_mtime))
+        mtime_token = str(int(css_path.stat().st_mtime))
     except OSError:
-        return "dev"
+        mtime_token = "dev"
+    if commit:
+        return f"{commit.strip()[:12]}-{mtime_token}"
+    return mtime_token
 
 
 def _env_flag(name: str, default: str = "true") -> bool:
@@ -580,6 +590,7 @@ def game_ui_context() -> dict[str, Any]:
         "FEATURE_PROVINCE_BASE_VIEW": FEATURE_PROVINCE_BASE_VIEW,
         "FEATURE_GAME_PWA": FEATURE_GAME_PWA,
         "asset_version": get_asset_version(),
+        "game_stylesheet": game_stylesheet_filename(),
         "game_asset_path": game_asset_path,
         "nation_biome_choices": nation_biome_choices,
         "biome_theme": biome_theme,

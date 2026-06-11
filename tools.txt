@@ -1,0 +1,47 @@
+Tools available to the agent:
+
+1. call_mcp_tool
+Description: Call a lazy-loaded MCP tool. Read the tool's schema file to understand the tool's arguments and usage. 
+*Note on Postgres/Databases*: This tool can be used to query databases by calling tools exposed by the `postgres` MCP server (e.g., using `ServerName: "postgres"` once the server is configured/started).
+
+2. find_by_name
+Description: Search for files and subdirectories within a specified directory using fd. Search uses smart case and will ignore gitignored files by default.
+
+3. grep_search
+Description: Use ripgrep to find exact pattern matches within files or directories. Total results are capped at 50 matches.
+
+4. list_dir
+Description: List the contents of a directory, i.e. all files and subdirectories that are children of the directory.
+
+5. manage_task
+Description: Manage background tasks. Use this tool to list running tasks or interact with tasks that were sent to the background (list, kill, status, send_input).
+
+6. multi_replace_file_content
+Description: Use this tool to edit an existing file when you are making MULTIPLE, NON-CONTIGUOUS edits to the same file.
+
+7. read_url_content
+Description: Fetch content from a URL via HTTP request (invisible to USER). Converts HTML to markdown.
+
+8. replace_file_content
+Description: Use this tool to edit an existing file when you are making a SINGLE CONTIGUOUS block of edits to the same file.
+
+9. run_command
+Description: PROPOSE a command to run on behalf of the user. Note that the user will have to approve the command before it is executed.
+
+10. schedule
+Description: Schedule a one-shot timer or a recurring cron job that sends notifications in the background.
+
+11. search_web
+Description: Performs a web search for a given query. Returns a summary of relevant information along with URL citations.
+
+12. send_message
+Description: Send a message to another agent. This tool can be used to communicate with subagents, peer agents, etc.
+
+13. view_file
+Description: View the contents of a file from the local filesystem. Supports text files and certain binary files (image, pdf, video, audio).
+
+14. write_to_file
+Description: Use this tool to create new files. The file and any parent directories will be created for you if they do not already exist.
+
+**Database / Postgres Tools:**
+While there are no native built-in database querying tools, the `call_mcp_tool` allows me to interface with MCP (Model Context Protocol) servers. Based on your global user rules, a `postgres` MCP server is available (via `/Volumes/Be Careful 1/MCP_Engine/npm_global/bin/mcp-server-postgres`). I can use `call_mcp_tool` with the server name "postgres" to perform database queries once it is active. Also, `run_command` can be used to execute psql commands directly via shell.

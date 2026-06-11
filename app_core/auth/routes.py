@@ -56,12 +56,22 @@ def account():
             discord_bot_link["expires_display"] = exp.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         else: discord_bot_link["expires_display"] = "soon"
 
+    referral_dashboard = None
+    try:
+        from app_core.referrals.service import get_referral_dashboard
+
+        with get_request_cursor() as db:
+            referral_dashboard = get_referral_dashboard(db, cId)
+    except Exception:
+        pass
+
     return render_template(
         "account.html",
         user=user,
         discord_bot_link=discord_bot_link,
         discord_link_ttl_minutes=discord_link_ttl_minutes,
         has_recovery_key=has_recovery_key,
+        referral_dashboard=referral_dashboard,
     )
 
 @bp.route("/logout")

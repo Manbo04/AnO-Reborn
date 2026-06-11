@@ -1,4 +1,7 @@
 {% extends "layout.html" %}
+{% block seo_title %}Login · Affairs and Order{% endblock %}
+{% block seo_description %}Log in to Affairs and Order with email or Discord. Continue your nation, manage provinces, trade on the market, and join coalitions.{% endblock %}
+{% block seo_canonical %}https://affairsandorder.com/login{% endblock %}
 {% block title %}Login{% endblock %}
 {% block body %}
 {% if recaptcha_site_key %}
@@ -30,6 +33,7 @@
                         <span class="material-icons-outlined">login</span>Discord
                     </button>
                 </form>
+                {% if google_auth_enabled %}
                 <form action="/login/google" method="GET" style="margin-top: 15px;">
                     <input type="hidden" name="intent" value="login" />
                     <h2 class="templatecontentheadercenter">Google Login</h2>
@@ -37,6 +41,7 @@
                         <span class="material-icons-outlined">login</span>Google
                     </button>
                 </form>
+                {% endif %}
             </div>
 
             <div class="auth-panel">

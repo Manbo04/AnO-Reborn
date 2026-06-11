@@ -335,6 +335,20 @@ def send_peace_offer(war_id, enemy_id):
                     ),
                     (cId, resources_string[:-1], amount_string[:-1]),
                 )
+            try:
+                from app_core.discord_notify import notify_peace_offer
+
+                db.execute(
+                    "SELECT id, username FROM users WHERE id IN (%s, %s)",
+                    (cId, enemy_id),
+                )
+                by_id = {int(row[0]): row[1] for row in db.fetchall()}
+                notify_peace_offer(
+                    by_id.get(cId, str(cId)),
+                    by_id.get(enemy_id, str(enemy_id)),
+                )
+            except Exception:
+                pass
         return redirect("/peace_offers")
 
 
@@ -828,6 +842,17 @@ def warResult():
     attacker.save()
     session.pop("attack_units", None)
     session.pop("enemy_id", None)
+    try:
+        from app_core.discord_notify import notify_war_result
+
+        notify_war_result(
+            attacker_name=getattr(attacker, "username", str(attacker.user_id)),
+            defender_name=getattr(defender, "username", str(defender.user_id)),
+            winner=str(winner),
+            win_condition=win_condition,
+        )
+    except Exception:
+        pass
     return render_template(
         "warResult.html",
         winner=winner,

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+from app_core.auth.passwords import hash_password, password_matches
 from database import get_request_cursor
 import datetime
 import logging
@@ -24,22 +24,6 @@ def _users_auth_columns(db):
         "has_password": "password" in found,
         "has_verification": "is_verified" in found,
     }
-
-
-def _password_matches(stored_hash, password: str) -> bool:
-    """Check werkzeug or bcrypt password hashes."""
-    if not stored_hash or not isinstance(stored_hash, str):
-        return False
-
-    if stored_hash.startswith(("scrypt:", "pbkdf2:sha256:")):
-        return check_password_hash(stored_hash, password)
-
-    try:
-        import bcrypt
-
-        return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
-    except Exception:
-        return False
 
 
 def _complete_email_login(user_id, is_verified, has_verification, email):
@@ -72,7 +56,7 @@ def register_email():
         flash("Passwords do not match.")
         return redirect("/signup")
 
-    hashed_password = generate_password_hash(password)
+    hashed_password = hash_password(password)
     continent_str = request.form.get("continent", "1")
     try:
         continent_number = int(continent_str) - 1
@@ -118,13 +102,17 @@ def register_email():
         if verification_token and is_email_configured():
             send_verification_email(email, username, verification_token)
 
-        from signup import init_user_game_data
+        from signup import _complete_referral_signup, init_user_game_data
+
         init_user_game_data(db, user_id, continent)
+        _complete_referral_signup(db, user_id)
 
     if verification_token:
         return redirect(f"/verification_pending?email={email}")
     session["user_id"] = user_id
-    return redirect("/")
+    from app_core.onboarding.service import post_signup_redirect
+
+    return redirect(post_signup_redirect(user_id))
 
 
 @email_auth_bp.route("/login/email", methods=["POST"])
@@ -169,7 +157,7 @@ def login_email():
             hash_candidates.append(row_map["password"])
 
         for stored_hash in hash_candidates:
-            if _password_matches(stored_hash, password):
+            if password_matches(stored_hash, password):
                 return _complete_email_login(
                     user_id,
                     is_verified,

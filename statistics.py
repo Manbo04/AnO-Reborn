@@ -132,8 +132,7 @@ def statistics():
     )
 
 
-@login_required
-@cache_response(ttl_seconds=300)  # Cache rankings for 5 minutes
+@cache_response(ttl_seconds=300)  # Cache rankings for 5 minutes — public leaderboard
 def rankings():
     """Display the top leaderboards for nations and alliances."""
     with get_request_cursor(read_only=True) as db:

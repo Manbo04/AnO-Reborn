@@ -3,7 +3,7 @@
 import os
 from urllib.parse import urlparse
 
-from flask import redirect, render_template, session, request
+from flask import redirect, render_template, session, request, jsonify
 from functools import wraps
 from dotenv import load_dotenv
 from datetime import date
@@ -12,6 +12,18 @@ from io import BytesIO
 import base64
 
 load_dotenv()
+
+
+def client_ip_from_request() -> str | None:
+    """Resolve client IP; trust X-Forwarded-For only behind Railway/proxy."""
+    trust_proxy = os.getenv("TRUST_PROXY")
+    if trust_proxy is None:
+        trust_proxy = "1" if os.getenv("RAILWAY_ENVIRONMENT_NAME") else "0"
+    if trust_proxy == "1":
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return request.remote_addr
 
 
 def province_image_url(province_id: int, has_image: bool = False) -> str:

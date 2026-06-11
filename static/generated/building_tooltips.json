@@ -1,0 +1,230 @@
+{
+  "coal_burners": {
+    "display_name": "Coal Burners",
+    "produces": "4 energy",
+    "consumes": "\u2014",
+    "upkeep_gold": 7800
+  },
+  "oil_burners": {
+    "display_name": "Oil Burners",
+    "produces": "5 energy",
+    "consumes": "\u2014",
+    "upkeep_gold": 11700
+  },
+  "hydro_dams": {
+    "display_name": "Hydro Dams",
+    "produces": "6 energy",
+    "consumes": "\u2014",
+    "upkeep_gold": 24000
+  },
+  "nuclear_reactors": {
+    "display_name": "Nuclear Reactors",
+    "produces": "15 energy",
+    "consumes": "\u2014",
+    "upkeep_gold": 111000
+  },
+  "solar_fields": {
+    "display_name": "Solar Fields",
+    "produces": "3 energy",
+    "consumes": "\u2014",
+    "upkeep_gold": 13000
+  },
+  "distribution_centers": {
+    "display_name": "Distribution Centers",
+    "produces": "8 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 15000
+  },
+  "gas_stations": {
+    "display_name": "Gas Stations",
+    "produces": "12 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 20000
+  },
+  "general_stores": {
+    "display_name": "General Stores",
+    "produces": "10 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 37500
+  },
+  "farmers_markets": {
+    "display_name": "Farmers Markets",
+    "produces": "16 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 48000
+  },
+  "banks": {
+    "display_name": "Banks",
+    "produces": "20 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 100000
+  },
+  "malls": {
+    "display_name": "Malls",
+    "produces": "30 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 150000
+  },
+  "industrial_district": {
+    "display_name": "Industrial District",
+    "produces": "50 consumer goods",
+    "consumes": "\u2014",
+    "upkeep_gold": 85000
+  },
+  "city_parks": {
+    "display_name": "City Parks",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 25000
+  },
+  "libraries": {
+    "display_name": "Libraries",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 60000
+  },
+  "hospitals": {
+    "display_name": "Hospitals",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 85000
+  },
+  "universities": {
+    "display_name": "Universities",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 175000
+  },
+  "primary_school": {
+    "display_name": "Primary School",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 30000
+  },
+  "high_school": {
+    "display_name": "High School",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 75000
+  },
+  "monorails": {
+    "display_name": "Monorails",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 270000
+  },
+  "army_bases": {
+    "display_name": "Army Bases",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 25000
+  },
+  "harbours": {
+    "display_name": "Harbours",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 35000
+  },
+  "aerodomes": {
+    "display_name": "Aerodomes",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 55000
+  },
+  "admin_buildings": {
+    "display_name": "Admin Buildings",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 90000
+  },
+  "silos": {
+    "display_name": "Silos",
+    "produces": "\u2014",
+    "consumes": "\u2014",
+    "upkeep_gold": 340000
+  },
+  "farms": {
+    "display_name": "Farms",
+    "produces": "12 rations",
+    "consumes": "\u2014",
+    "upkeep_gold": 3000
+  },
+  "pumpjacks": {
+    "display_name": "Pumpjacks",
+    "produces": "24 oil",
+    "consumes": "\u2014",
+    "upkeep_gold": 9500
+  },
+  "coal_mines": {
+    "display_name": "Coal Mines",
+    "produces": "31 coal",
+    "consumes": "\u2014",
+    "upkeep_gold": 4200
+  },
+  "bauxite_mines": {
+    "display_name": "Bauxite Mines",
+    "produces": "20 bauxite",
+    "consumes": "\u2014",
+    "upkeep_gold": 8000
+  },
+  "copper_mines": {
+    "display_name": "Copper Mines",
+    "produces": "25 copper",
+    "consumes": "\u2014",
+    "upkeep_gold": 5000
+  },
+  "uranium_mines": {
+    "display_name": "Uranium Mines",
+    "produces": "12 uranium",
+    "consumes": "\u2014",
+    "upkeep_gold": 45000
+  },
+  "lead_mines": {
+    "display_name": "Lead Mines",
+    "produces": "19 lead",
+    "consumes": "\u2014",
+    "upkeep_gold": 7200
+  },
+  "iron_mines": {
+    "display_name": "Iron Mines",
+    "produces": "23 iron",
+    "consumes": "\u2014",
+    "upkeep_gold": 11000
+  },
+  "lumber_mills": {
+    "display_name": "Lumber Mills",
+    "produces": "35 lumber",
+    "consumes": "\u2014",
+    "upkeep_gold": 7500
+  },
+  "component_factories": {
+    "display_name": "Component Factories",
+    "produces": "5 components",
+    "consumes": "\u2014",
+    "upkeep_gold": 50000
+  },
+  "steel_mills": {
+    "display_name": "Steel Mills",
+    "produces": "12 steel",
+    "consumes": "\u2014",
+    "upkeep_gold": 60000
+  },
+  "ammunition_factories": {
+    "display_name": "Ammunition Factories",
+    "produces": "12 ammunition",
+    "consumes": "\u2014",
+    "upkeep_gold": 15000
+  },
+  "aluminium_refineries": {
+    "display_name": "Aluminium Refineries",
+    "produces": "16 aluminium",
+    "consumes": "\u2014",
+    "upkeep_gold": 42000
+  },
+  "oil_refineries": {
+    "display_name": "Oil Refineries",
+    "produces": "11 gasoline",
+    "consumes": "\u2014",
+    "upkeep_gold": 35000
+  }
+}

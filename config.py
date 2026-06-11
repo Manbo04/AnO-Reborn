@@ -54,7 +54,41 @@ def get_secret_key():
     """
     Get or generate secret key for Flask
     """
-    return os.getenv("SECRET_KEY") or os.urandom(24).hex()
+    key = (os.getenv("SECRET_KEY") or "").strip()
+    if key:
+        return key
+    if os.getenv("ENVIRONMENT") == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        raise RuntimeError("SECRET_KEY must be set in production")
+    return os.urandom(24).hex()
+
+
+def validate_production_secrets() -> None:
+    """Fail fast when critical secrets are missing on Railway production."""
+    if os.getenv("ENVIRONMENT") != "PROD" and not os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        return
+    missing = []
+    if not (os.getenv("SECRET_KEY") or "").strip():
+        missing.append("SECRET_KEY")
+    if not (os.getenv("BOT_API_SECRET") or "").strip():
+        missing.append("BOT_API_SECRET")
+    if missing:
+        raise RuntimeError(f"Missing required production env vars: {', '.join(missing)}")
+
+
+def warn_optional_integrations() -> None:
+    """Log non-fatal warnings for optional production integrations."""
+    import logging
+
+    if os.getenv("ENVIRONMENT") != "PROD" and not os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        return
+    log = logging.getLogger(__name__)
+    if not (os.getenv("GOOGLE_CLIENT_ID") or "").strip() or not (
+        os.getenv("GOOGLE_CLIENT_SECRET") or ""
+    ).strip():
+        log.warning(
+            "Google OAuth not configured (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). "
+            "Google login and signup buttons will be hidden."
+        )
 
 
 # Parse on import to ensure environment variables are set

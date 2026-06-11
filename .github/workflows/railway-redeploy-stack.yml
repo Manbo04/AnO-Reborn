@@ -43,3 +43,16 @@ jobs:
             exit 0
           fi
           python3 scripts/railway_production_fix.py --redeploy-only --services web,celery-worker
+
+      - name: Wait for production health
+        run: |
+          for i in $(seq 1 24); do
+            if curl -sf "https://affairsandorder.com/health" | grep -qi ok; then
+              echo "health ok"
+              break
+            fi
+            echo "waiting for deploy ($i/24)..."
+            sleep 15
+          done
+          curl -sf "https://affairsandorder.com/ready" || echo "::warning::/ready not yet healthy"
+          curl -sf "https://affairsandorder.com/api/economy/status" | head -c 400
