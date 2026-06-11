@@ -52,13 +52,28 @@ def provinces():
     with get_request_cursor(read_only=True) as db:
         cId = session["user_id"]
 
+        page = request.args.get('page', 1, type=int)
+        per_page = 30
+        
+        db.execute("SELECT COUNT(*) FROM provinces WHERE userId=(%s)", (cId,))
+        total_count = db.fetchone()
+        total_count = total_count[0] if total_count else 0
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        
+        if page < 1:
+            page = 1
+        elif page > total_pages:
+            page = total_pages
+            
+        offset = (page - 1) * per_page
+
         db.execute(
             (
                 "SELECT CAST(citycount AS INTEGER) AS citycount, population, "
                 "provinceName, id, land, happiness, "
-                "productivity, energy FROM provinces WHERE userId=(%s) ORDER BY id ASC"
+                "productivity, energy FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
             ),
-            (cId,),
+            (cId, per_page, offset),
         )
         provinces = db.fetchall()
 
@@ -84,6 +99,9 @@ def provinces():
             "provinces.html",
             provinces=provinces,
             provinces_with_images=provinces_with_images,
+            current_page=page,
+            total_pages=total_pages,
+            total_count=total_count,
         )
 
 
