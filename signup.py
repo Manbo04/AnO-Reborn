@@ -349,7 +349,7 @@ def callback():
         return error(500, "Discord login misconfigured (missing client secret)")
 
 
-    discord_state = make_session(state=session.get("oauth2_state"))
+    discord_state = make_session(state=oauth_state)
 
     # Fetch the token. If a state mismatch occurs, attempt a controlled
     # fallback by re-creating the session with the incoming `state` value

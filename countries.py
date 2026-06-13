@@ -1537,6 +1537,51 @@ def delete_own_account():
         try:
             import logging
 
+def reset_account():
+    from flask import request, session, redirect, flash
+    from helpers import error
+    from database import get_request_cursor, invalidate_view_cache
+    from signup import _init_economy_tables
+    
+    reset_type = request.form.get("reset_type", "keep")
+    cId = session["user_id"]
+    
+    try:
+        with get_request_cursor() as db:
+            db.execute("DELETE FROM user_military WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM offers WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM wars WHERE defender_id=%s OR attacker_id=%s", (cId, cId))
+            db.execute("SELECT id FROM provinces WHERE userid=%s", (cId,))
+            province_ids = db.fetchall()
+            if province_ids:
+                ids = [p[0] for p in province_ids]
+                placeholders = ",".join(["%s"] * len(ids))
+                db.execute(f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids))
+            db.execute("DELETE FROM user_buildings WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
+            db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
+            db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
+            db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
+            db.execute("DELETE FROM peace WHERE author=%s", (cId,))
+            db.execute("DELETE FROM user_tech WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM policies WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
+            if reset_type == "scratch":
+                db.execute("DELETE FROM stats WHERE id=%s", (cId,))
+                db.execute("DELETE FROM user_economy WHERE user_id=%s", (cId,))
+                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", 0))
+                _init_economy_tables(db, cId)
+            else:
+                db.execute("INSERT INTO user_military (user_id, unit_id, quantity) SELECT %s, unit_id, 0 FROM unit_dictionary WHERE is_active = TRUE ON CONFLICT DO NOTHING", (cId,))
+                db.execute("INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (cId,))
+            invalidate_view_cache(cId)
+            flash("Your account has been reset successfully.")
+            return redirect("/account")
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Account reset failed for user {cId}: {e}")
+        return error(500, "An error occurred while resetting your account.")
+
             logging.getLogger(__name__).info(
                 "delete_own_account: deleted_counts=%s", deleted_counts
             )
