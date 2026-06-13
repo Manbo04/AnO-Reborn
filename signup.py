@@ -338,6 +338,17 @@ def callback():
         return request.values["error"]
 
     # Create an OAuth session using the stored state (may be None)
+    # Guard against missing oauth2_state in session
+    oauth_state = session.get("oauth2_state")
+    if not oauth_state and "state" in request.values:
+        oauth_state = request.values["state"]
+
+    if not OAUTH2_CLIENT_SECRET:
+        import logging
+        logging.getLogger(__name__).error("DISCORD_CLIENT_SECRET not set")
+        return error(500, "Discord login misconfigured (missing client secret)")
+
+
     discord_state = make_session(state=session.get("oauth2_state"))
 
     # Fetch the token. If a state mismatch occurs, attempt a controlled

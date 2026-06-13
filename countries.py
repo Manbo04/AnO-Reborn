@@ -1621,6 +1621,14 @@ def register_countries_routes(app_instance):
         methods=["POST"],
     )
 
+    # Register reset_account route
+    app_instance.add_url_rule(
+        "/reset_account",
+        "reset_account",
+        login_required(reset_account),
+        methods=["POST"],
+    )
+
     # Register delete_own_account route
     app_instance.add_url_rule(
         "/delete_own_account",

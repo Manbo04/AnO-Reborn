@@ -2,7 +2,7 @@
 {% set resources = get_resources() %}
 <div class="game-hud" id="game-hud" role="region" aria-label="Resources">
     {% for res_key in HUD_STRIP_RESOURCES %}
-    <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}">
+    <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}" onclick="toggleResourceDrawer()">
         <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
         <span class="game-hud-value">
             {% if res_key == 'gold' %}${{ resources[res_key] | fmt }}{% else %}{{ resources[res_key] | weight_fmt }}{% endif %}
@@ -10,30 +10,56 @@
     </button>
     {% endfor %}
     <span class="game-tick-badge" data-game-tick-countdown data-economy-heartbeat aria-live="polite" title="Economy tick status"></span>
-    <script>
-    (function () {
-        var el = document.querySelector('[data-economy-heartbeat]');
-        if (!el) return;
-        fetch('/api/economy/status', { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (!data || !data.tasks) return;
-                var rev = data.tasks.generate_province_revenue;
-                if (!rev) return;
-                var mins = rev.age_minutes;
-                if (mins == null) {
-                    el.textContent = 'Economy: waiting';
-                    el.classList.add('economy-heartbeat-warn');
-                    return;
-                }
-                el.textContent = 'Revenue: ' + mins + 'm ago';
-                if (data.stale || rev.stale) el.classList.add('economy-heartbeat-warn');
-            })
-            .catch(function () {});
-    })();
-    </script>
-    <button type="button" class="game-hud-chip game-hud-expand" data-game-hud-expand aria-label="All resources">
+    
+    <button type="button" class="game-hud-chip game-hud-expand" data-game-hud-expand aria-label="All resources" onclick="toggleResourceDrawer()">
         <span class="material-icons-outlined">expand_more</span>
     </button>
 </div>
+
+<!-- Mobile Resource Drawer -->
+<div class="game-resource-drawer" id="game-resource-drawer">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--game-space-md); padding: 10px 0;">
+        <h2 style="margin: 0; font-size: 1.25rem;">All Resources</h2>
+        <button type="button" class="iconbutton" onclick="toggleResourceDrawer()" aria-label="Close">
+            <span class="material-icons-outlined" style="font-size: 2rem;">close</span>
+        </button>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding-bottom: 20px;">
+        {% for res_key, res_val in resources.items() %}
+        <div class="game-hud-chip" style="cursor: default; width: 100%; box-sizing: border-box;">
+            <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">{{ res_key | replace('_', ' ') }}</span>
+                <span class="game-hud-value">
+                    {% if res_key == 'gold' %}${{ res_val | fmt }}{% else %}{{ res_val | weight_fmt }}{% endif %}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+(function () {
+    var el = document.querySelector('[data-economy-heartbeat]');
+    if (!el) return;
+    fetch('/api/economy/status', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data || !data.tasks) return;
+            var rev = data.tasks.generate_province_revenue;
+            if (!rev) return;
+            var mins = rev.age_minutes;
+            if (mins == null) {
+                el.textContent = 'Economy: waiting';
+                el.classList.add('economy-heartbeat-warn');
+                return;
+            }
+            el.textContent = 'Revenue: ' + mins + 'm ago';
+            if (data.stale || rev.stale) el.classList.add('economy-heartbeat-warn');
+        })
+        .catch(function () {});
+})();
+</script>
 {% endif %}
