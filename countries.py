@@ -1535,7 +1535,38 @@ def delete_own_account():
         deleted_counts["news"] = db.rowcount
 
         try:
-            import logging
+
+            logging.getLogger(__name__).info(
+                "delete_own_account: deleted_counts=%s", deleted_counts
+            )
+        except Exception:
+            pass
+
+        # --- CACHE INVALIDATION ------------------------------------------------
+        # Removing a nation should immediately purge any leaderboard / country
+        # page HTML that might still reference the departed player. Without this
+        # the /countries view (cached for 60s) can continue to serve a stale
+        # copy with links pointing at the old id. Players who quickly delete and
+        # re‑roll would see their new name on the leaderboard, click it, and hit
+        # "Country doesn't exist".  The Discord bug report describes exactly
+        # that behaviour.
+        #
+        # Invalidate the entire countries listing (affects all users) and clear
+        # any cached individual country pages for the deleted id.  We also kick
+        # the my_country cache for good measure.
+        try:
+            invalidate_view_cache("countries")
+            invalidate_view_cache("country", page=f"/country/id={cId}")
+            invalidate_view_cache("my_country", user_id=cId)
+        except Exception:
+            pass
+        # ----------------------------------------------------------------------
+
+    session.clear()
+
+    return redirect("/")
+
+
 
 def reset_account():
     from flask import request, session, redirect, flash
@@ -1581,38 +1612,6 @@ def reset_account():
         import logging
         logging.getLogger(__name__).error(f"Account reset failed for user {cId}: {e}")
         return error(500, "An error occurred while resetting your account.")
-
-            logging.getLogger(__name__).info(
-                "delete_own_account: deleted_counts=%s", deleted_counts
-            )
-        except Exception:
-            pass
-
-        # --- CACHE INVALIDATION ------------------------------------------------
-        # Removing a nation should immediately purge any leaderboard / country
-        # page HTML that might still reference the departed player. Without this
-        # the /countries view (cached for 60s) can continue to serve a stale
-        # copy with links pointing at the old id. Players who quickly delete and
-        # re‑roll would see their new name on the leaderboard, click it, and hit
-        # "Country doesn't exist".  The Discord bug report describes exactly
-        # that behaviour.
-        #
-        # Invalidate the entire countries listing (affects all users) and clear
-        # any cached individual country pages for the deleted id.  We also kick
-        # the my_country cache for good measure.
-        try:
-            invalidate_view_cache("countries")
-            invalidate_view_cache("country", page=f"/country/id={cId}")
-            invalidate_view_cache("my_country", user_id=cId)
-        except Exception:
-            pass
-        # ----------------------------------------------------------------------
-
-    session.clear()
-
-    return redirect("/")
-
-
 def register_countries_routes(app_instance):
     """Register all routes from countries module after app initialization.
 
