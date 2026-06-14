@@ -1,1 +1,563 @@
-{% extends "layout.html" %} {% block title %} Account {% endblock %}
+{% extends "layout.html" %} {% block title %} Account {% endblock %} {% block body %}
+<div class="templatediv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            perm_identity
+            </span>{{ user.username }}'s Account</h1>
+    </div>
+
+    <div class="templatedivcontent">
+
+        <h2 class="templatecontentheaderleft">Account Information</h2>
+
+
+        <form action="/change" method="POST">
+            <div class="infodiv">
+                <div class="templateoutertablediv">
+                    <table class="templatetable templatetable2">
+                        <tr>
+                            <th>Category</th>
+                            <th>Value</th>
+                            <th>Change Info</th>
+                        </tr>
+                        <tr>
+                            <td>Country:</td>
+                            <td>{{ user["username"] }}</td>
+                            <td><input class="loginsignupinput" name="name" placeholder="New name" /></td>
+                        </tr>
+                        <tr>
+                            <td>Email:</td>
+                            <td>{{ user["email"] }}</td>
+                            <td><input class="loginsignupinput" name="email" placeholder="New email" /></td>
+                        </tr>
+                        <tr>
+                            <td>Password:</td>
+                            <td>************</td>
+                            <td><button formaction="/request_password_reset" type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
+                                lock_reset
+                                </span>Reset password</button></td>
+                        </tr>
+                        <tr>
+                            <td>Date joined:</td>
+                            <td>{{ user["date"] }}</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Discord:</td>
+                            <td>{% if user.get('discord_id') %}Linked{% else %}Not Linked{% endif %}</td>
+                            <td>
+                                <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton" style="width: auto; padding: 5px 15px;">
+                                    <span class="material-icons-outlined">link</span>{% if user.get('discord_id') %}Relink{% else %}Link{% endif %} Discord
+                                </button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="account-action-form" style="margin-top: 15px;">
+                    <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
+
+                    <button class="templatedivbutton templatecenteredbutton" type="submit">
+                        <span class="material-icons-outlined">save</span>Save Details
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        {% if referral_dashboard %}
+        <h2 class="templatecontentheaderleft">Invite Friends</h2>
+        <div class="infodiv referral-panel">
+            <p class="templatecontentpleft">
+                Share your link — friends get <strong>{{ referral_dashboard.invitee_bonus_summary }}</strong> at signup.
+                You earn more gold and resources for each day they keep playing (Day 1, 3, 7, and 14).
+            </p>
+            <div class="referral-link-row">
+                <input
+                    type="text"
+                    class="loginsignupinput referral-link-input"
+                    id="referral-link-input"
+                    readonly
+                    value="{{ referral_dashboard.referral_link }}"
+                    aria-label="Referral signup link"
+                    onclick="this.select()"
+                />
+                <button type="button" class="templatedivbutton templatecenteredbutton" onclick="copyReferralLink()">
+                    <span class="material-icons-outlined">content_copy</span>Copy link
+                </button>
+            </div>
+            <p class="templatecontentpleft referral-code-line">
+                Your code: <code>{{ referral_dashboard.referral_code }}</code>
+            </p>
+
+            <h3 class="templatecontentheaderleft referral-subheader">Your milestone goals (per invitee)</h3>
+            <ul class="referral-milestone-list">
+                {% for goal in referral_dashboard.milestone_goals %}
+                <li>Day {{ goal.days }} active — {{ goal.summary }}</li>
+                {% endfor %}
+            </ul>
+
+            <h3 class="templatecontentheaderleft referral-subheader">Players you invited ({{ referral_dashboard.total_invitees }})</h3>
+            {% if referral_dashboard.invitees %}
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2 referral-invitees-table">
+                    <tr>
+                        <th>Nation</th>
+                        <th>Days active</th>
+                        <th>Next goal</th>
+                        <th>You earned</th>
+                    </tr>
+                    {% for inv in referral_dashboard.invitees %}
+                    <tr>
+                        <td>{{ inv.username }}</td>
+                        <td>{{ inv.days_active }}</td>
+                        <td>
+                            {% if inv.next_milestone %}Day {{ inv.next_milestone }}{% else %}All milestones{% endif %}
+                            {% if not inv.is_verified %}<span class="referral-pending-tag">(awaiting verify)</span>{% endif %}
+                        </td>
+                        <td>{{ inv.earned_summary }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% else %}
+            <p class="templatecontentpleft">No signups from your link yet. Post it on Discord or send to friends!</p>
+            {% endif %}
+        </div>
+        <script>
+        function copyReferralLink() {
+            var input = document.getElementById('referral-link-input');
+            if (!input) return;
+            input.select();
+            navigator.clipboard.writeText(input.value).catch(function () {});
+        }
+        </script>
+        {% endif %}
+
+        <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
+        <div class="infodiv">
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
+
+            {% if discord_bot_link %}
+            <div class="discord-bot-link-panel" id="discord-bot-link-panel" role="region" aria-label="Active Discord bot link code">
+                <p class="discord-bot-link-label">Your active link code <span class="discord-bot-link-expiry">(expires {{ discord_bot_link.expires_display }})</span></p>
+                <div class="discord-bot-link-row">
+                    <input
+                        type="text"
+                        class="loginsignupinput discord-bot-link-input"
+                        id="discord-link-code-input"
+                        readonly
+                        value="{{ discord_bot_link.code }}"
+                        aria-label="Discord bot link code"
+                        onclick="this.select()"
+                    />
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordLinkCode()">
+                        <span class="material-icons-outlined">content_copy</span>Copy code
+                    </button>
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordRegisterCommand()">
+                        <span class="material-icons-outlined">terminal</span>Copy command
+                    </button>
+                </div>
+                <p class="discord-bot-link-command">Discord: <code id="discord-register-command">/register code:{{ discord_bot_link.code }}</code></p>
+                <p class="discord-bot-link-copied" id="discord-link-copied-msg" hidden aria-live="polite">Copied to clipboard.</p>
+            </div>
+            {% endif %}
+
+            <form action="/generate_discord_link_code" method="POST" class="account-action-form">
+                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
+                <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">smart_toy</span>Generate Bot Link Code</button>
+            </form>
+        </div>
+
+        <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
+        <div class="infodiv">
+            {% if not has_recovery_key %}
+            <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107;">
+                You don't have a backup recovery key yet — generate one now while you can log in.
+            </p>
+            {% endif %}
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
+            <form action="/generate_recovery_key" method="POST" class="account-action-form">
+                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
+                <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">key</span>Generate Key</button>
+            </form>
+        </div>
+
+        <h2 class="templatecontentheaderleft">General</h2>
+
+        <div class="infodiv">
+
+            <!--
+            <input class="loginsignupinput" name="" placeholder="Discord Username" />
+            -->
+
+            <label class="templatecheckmarklabel fit">Dark Mode
+                <input type="checkbox" onchange="toggleTheme()" id="slider">
+                <span class="templatecheckmark center"></span>
+              </label>
+
+            <!-- <button id="templatedivbutton" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
+                        check
+                    </span>Update</button>
+                -->
+
+        </div>
+    </div>
+
+    <h2 class="templatecontentheaderleft">Danger Zone</h2>
+
+    <div class="infodiv">
+        <form method="POST" id="deleteAccountForm">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <button type="button" onclick="openResetModal()" class="templatedivbutton templatecenteredbutton" style="background: #f39c12;"><span class="material-icons-outlined">
+                        restart_alt
+                        </span>Reset account</button>
+                </div>
+                <div class="templatedivflex2left">
+
+                    <button type="button" onclick="confirmDeleteAccount()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
+                                cancel
+                                </span>Delete account</button>
+
+                </div>
+
+                <div class="templatedivflex2left">
+
+                    <button type="button" onclick="confirmLogout()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
+                            arrow_forward
+                            </span>Log Out</button>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div id="deleteAccountModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined" style="color: #ff4444;">warning</span> Delete Account</h2>
+        <p>Are you sure you want to <strong>permanently delete</strong> your account?</p>
+        <p style="color: #ff6666;">This action cannot be undone. All your data, including your nation, resources, and progress will be lost forever.</p>
+        <div class="modal-input">
+            <label>Type your country name to confirm: <strong>{{ user.username }}</strong></label>
+            <input type="text" id="deleteConfirmInput" placeholder="Enter country name" />
+        </div>
+        <div class="modal-buttons">
+            <button onclick="closeDeleteModal()" class="templatedivbutton">Cancel</button>
+            <button onclick="executeDelete()" class="templatedivbutton redactionbutton" id="confirmDeleteBtn" disabled>Delete Forever</button>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined">logout</span> Log Out</h2>
+        <p>Are you sure you want to log out?</p>
+        <div class="modal-buttons">
+            <button onclick="closeLogoutModal()" class="templatedivbutton">Cancel</button>
+            <a href="/logout" class="templatedivbutton redactionbutton">Yes, Log Out</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.modal-content h2 {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-content p {
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+.modal-input {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.modal-input label {
+    display: block;
+    margin-bottom: 8px;
+    color: #aaa;
+}
+
+.modal-input input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background: #0f0f1a;
+    color: #fff;
+    font-size: 14px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.modal-buttons .templatedivbutton {
+    flex: 1;
+}
+
+.account-action-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+.account-action-form input.loginsignupinput {
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 0 !important;
+}
+.account-action-form button.templatedivbutton {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-bottom: 0 !important;
+}
+
+    min-width: 120px;
+}
+
+#confirmDeleteBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.discord-bot-link-panel {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #3d5a80;
+    background: rgba(61, 90, 128, 0.15);
+}
+
+.discord-bot-link-label {
+    margin: 0 0 10px;
+    font-weight: 600;
+}
+
+.discord-bot-link-expiry {
+    font-weight: 400;
+    opacity: 0.7;
+    font-size: 0.92em;
+}
+
+.discord-bot-link-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.discord-bot-link-input {
+    flex: 1 1 12rem;
+    min-width: 10rem;
+    font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    font-size: 1.15rem;
+    letter-spacing: 0.12em;
+    text-align: center;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.discord-copy-btn {
+    width: auto;
+    padding: 8px 14px;
+    white-space: nowrap;
+}
+
+.discord-bot-link-command {
+    margin: 12px 0 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+.discord-bot-link-command code {
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.discord-bot-link-copied {
+    margin: 8px 0 0;
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.account-action-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    width: 100%;
+}
+
+.account-action-form-input {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.account-action-form .templatedivbutton {
+    width: auto;
+    min-width: 220px;
+}
+</style>
+
+<script>
+function showDiscordCopied() {
+    var el = document.getElementById("discord-link-copied-msg");
+    if (!el) return;
+    el.hidden = false;
+    clearTimeout(window._discordCopyHideTimer);
+    window._discordCopyHideTimer = setTimeout(function() { el.hidden = true; }, 4000);
+}
+
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+    }
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand("copy");
+        return Promise.resolve();
+    } finally {
+        document.body.removeChild(ta);
+    }
+}
+
+function copyDiscordLinkCode() {
+    var input = document.getElementById("discord-link-code-input");
+    if (!input) return;
+    copyTextToClipboard(input.value).then(showDiscordCopied).catch(function() {
+        input.select();
+        showDiscordCopied();
+    });
+}
+
+function copyDiscordRegisterCommand() {
+    var cmd = document.getElementById("discord-register-command");
+    var text = cmd ? cmd.textContent : "";
+    if (!text) return;
+    copyTextToClipboard(text).then(showDiscordCopied).catch(showDiscordCopied);
+}
+
+const expectedName = {{ user.username | tojson }};
+
+function confirmDeleteAccount() {
+    document.getElementById('deleteAccountModal').style.display = 'flex';
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteAccountModal').style.display = 'none';
+}
+
+function confirmLogout() {
+    document.getElementById('logoutModal').style.display = 'flex';
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+
+document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = this.value !== expectedName;
+});
+
+function executeDelete() {
+    if (document.getElementById('deleteConfirmInput').value === expectedName) {
+        // Create and submit form to delete account
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/delete_own_account';
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = '{% if csrf_token is defined %}{{ csrf_token() }}{% endif %}';
+        form.appendChild(csrf);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Close modals when clicking outside
+document.getElementById('deleteAccountModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+
+document.getElementById('logoutModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLogoutModal();
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+        closeLogoutModal();
+    }
+});
+
+function openResetModal() {
+    document.getElementById('resetAccountModal').style.display = 'flex';
+}
+
+function closeResetModal() {
+    document.getElementById('resetAccountModal').style.display = 'none';
+}
+
+function submitReset(type) {
+    if (confirm('Are you absolutely sure? This cannot be undone.')) {
+        document.getElementById('reset_type_field').value = type;
+        document.getElementById('resetAccountForm').submit();
+    }
+}
+</script>
+
+    {% include "partials/reset_modal.html" %}
+</div>
+{% endblock %}
