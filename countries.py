@@ -1611,7 +1611,7 @@ def reset_account():
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Account reset failed for user {cId}: {e}")
-        return error(500, "An error occurred while resetting your account.")
+        return error(500, f"Reset failed: {e}")
 def register_countries_routes(app_instance):
     """Register all routes from countries module after app initialization.
 
