@@ -116,12 +116,9 @@ def init_user_game_data(db, user_id, continent):
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-try:
-    environment = os.getenv("ENVIRONMENT")
-except Exception:
-    environment = "DEV"
+environment = os.getenv("ENVIRONMENT", "DEV")
 
-if environment == "PROD":
+if environment == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
     # Use Railway domain or custom domain
     OAUTH2_REDIRECT_URI = os.getenv(
         "DISCORD_REDIRECT_URI", "https://affairsandorder.com/callback"
