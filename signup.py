@@ -352,10 +352,16 @@ def callback():
     # fallback by re-creating the session with the incoming `state` value
     # from the request and retrying once.
     try:
+        auth_response = request.url
+        environment = os.getenv("ENVIRONMENT", "DEV")
+        if environment == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+            if auth_response.startswith("http://"):
+                auth_response = auth_response.replace("http://", "https://", 1)
+
         token = discord_state.fetch_token(
             TOKEN_URL,
             client_secret=OAUTH2_CLIENT_SECRET,
-            authorization_response=request.url,
+            authorization_response=auth_response,
         )
         session["oauth2_token"] = token
 
