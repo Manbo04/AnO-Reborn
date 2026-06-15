@@ -484,7 +484,7 @@ def callback():
 
         if is_state_error:
             logger.warning("OAuth state mismatch — rejecting login (no fallback)")
-        raise
+        return redirect("/login?discord_error=session")
 
 
 def discord_register():
