@@ -45,13 +45,13 @@
             </div>
 
             <div class="auth-panel">
-                <form action="/login/email" id="login-form" class="loginsignupform" method="POST">
+                <form action="/login" id="login-form" class="loginsignupform" method="POST">
                     <h2 class="templatecontentheadercenter">Default Login</h2>
                     {% if csrf_token is defined %}
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     {% endif %}
 
-                    <input class="loginsignupinput w-full" name="email" placeholder="Email Address" type="email" autocomplete="email" required />
+                    <input class="loginsignupinput w-full" name="username" placeholder="Username" type="text" autocomplete="username" required />
                     <input class="loginsignupinput w-full" name="password" placeholder="Password" type="password" autocomplete="current-password" required />
 
                     <div class="auth-row-split">
