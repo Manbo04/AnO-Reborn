@@ -5399,8 +5399,10 @@ body.game-shell-active .templatediv {
     display: none;
 }
 
-body.game-shell-active .game-hud {
-    display: flex;
+@media (max-width: 857px) {
+    body.game-shell-active .game-hud {
+        display: flex;
+    }
 }
 
 .game-hud-chip {
