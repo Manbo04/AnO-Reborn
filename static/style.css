@@ -907,15 +907,7 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .resourcedivshow {
-    box-shadow: rgba(58, 59, 69, 0.4) 0px 6px -6px 0px, inset rgba(58, 59, 69, 0.4) 0px 2px 9px 0px;
-    background-color: rgba(0, 167, 225, 0.15);
-    border-radius: 0;
-    right: 0px;
-    padding: 0;
-    padding-left: 10px;
-    width: 190px;
-    display: flex;
-    flex-direction: row;
+    right: 200px !important;
 }
 
 .resourcedivchild {
@@ -932,10 +924,6 @@ body:has(.navbarparent .templatecontainer) {
     cursor: pointer;
 }
 
-.resourcedivshow .resourcedivchild {
-    width: 190px;
-}
-
 .resourceicon {
     font-size: 46px !important;
     margin-left: 10px;
@@ -947,22 +935,16 @@ body:has(.navbarparent .templatecontainer) {
 
 .resourceicontext {
     opacity: 0;
-    pointer-events: none;
+    position: absolute;
     display: none;
-    color: white;
-    font-size: 20px;
+    font-family: inherit;
+    font-weight: 500;
+    padding-left: 20px;
+    font-size: 26px;
+    text-align: center;
     line-height: 56px;
-    height: 0;
-    margin: 0;
-    user-select: none;
-}
-
-.resourcedivshow .resourceicontext {
-    opacity: 1;
-    pointer-events: all;
-    transition: all 0.3s;
+    vertical-align: middle;
     color: white;
-    display: block;
 }
 
 .resourcedivcontent {
@@ -1093,7 +1075,7 @@ body:has(.navbarparent .templatecontainer) {
     }
 
     .resourcedivshow {
-        right: 0 !important;
+        right: 180px !important;
         width: 56px !important;
         border-radius: 100px !important;
         padding-left: 0 !important;
