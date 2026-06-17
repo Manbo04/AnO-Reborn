@@ -1541,16 +1541,14 @@ def get_global_events():
     events = []
     try:
         with get_request_cursor() as db:
-            # 1. Newest nation
-            db.execute("SELECT username FROM users ORDER BY id DESC LIMIT 1")
-            res = db.fetchone()
-            if res:
+            # 1. Newest nations
+            db.execute("SELECT username FROM users ORDER BY id DESC LIMIT 8")
+            for res in db.fetchall():
                 events.append(f"A new nation, {res[0]}, has risen to power in Terra.")
             
-            # 2. Newest province
-            db.execute("SELECT name FROM provinces ORDER BY id DESC LIMIT 1")
-            res = db.fetchone()
-            if res:
+            # 2. Newest provinces
+            db.execute("SELECT name FROM provinces ORDER BY id DESC LIMIT 8")
+            for res in db.fetchall():
                 events.append(f"New territory established: the province of {res[0]} has been settled.")
                 
             # 3. Market shortages (resources with 0 quantity)
@@ -1559,22 +1557,19 @@ def get_global_events():
                 FROM resource_dictionary rd
                 LEFT JOIN global_market gm ON rd.resource_id = gm.resource_id
                 WHERE gm.quantity IS NULL OR gm.quantity = 0
-                LIMIT 3
+                LIMIT 5
             """)
-            shortages = db.fetchall()
-            for row in shortages:
+            for row in db.fetchall():
                 events.append(f"Global market crisis: {row[0]} supplies have been completely exhausted!")
                 
-            # 4. Recent treaties/alliances (if coalitions exist)
-            db.execute("SELECT name FROM coalitions_normalized ORDER BY id DESC LIMIT 1")
-            res = db.fetchone()
-            if res:
+            # 4. Recent treaties/alliances
+            db.execute("SELECT name FROM coalitions_normalized ORDER BY id DESC LIMIT 5")
+            for res in db.fetchall():
                 events.append(f"Diplomatic breakthrough: The {res[0]} coalition gathers strength.")
                 
             # 5. Battles/Wars
-            db.execute("SELECT attacker_name, defender_name FROM wars_normalized ORDER BY id DESC LIMIT 1")
-            res = db.fetchone()
-            if res:
+            db.execute("SELECT attacker_name, defender_name FROM wars_normalized ORDER BY id DESC LIMIT 5")
+            for res in db.fetchall():
                 events.append(f"Conflict erupts! {res[0]} has declared war on {res[1]}.")
                 
             # 6. Nation Projects / Tech
@@ -1583,22 +1578,21 @@ def get_global_events():
                 FROM user_tech ut 
                 JOIN tech_dictionary td ON ut.tech_id = td.tech_id 
                 JOIN users u ON ut.user_id = u.id 
-                ORDER BY RANDOM() LIMIT 1
+                ORDER BY ut.id DESC LIMIT 8
             """)
-            res = db.fetchone()
-            if res:
+            for res in db.fetchall():
                 events.append(f"Scientific breakthrough: {res[0]} has developed {res[1]}.")
                 
             # 7. Dynamic Weather Reports
             weather_conditions = [
                 "Heavy thunderstorms", "Clear skies and sunshine", "Dense fog",
                 "Torrential rain", "Unprecedented heatwaves", "Brisk winds",
-                "Light drizzle", "Overcast skies", "A sudden cold snap"
+                "Light drizzle", "Overcast skies", "A sudden cold snap",
+                "Blizzard conditions", "Dust storms", "Perfect harvest weather"
             ]
             import random
-            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 3")
-            provinces = db.fetchall()
-            for p in provinces:
+            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 10")
+            for p in db.fetchall():
                 condition = random.choice(weather_conditions)
                 events.append(f"Weather Update: {condition} reported in the province of {p[0]}.")
                 
@@ -1609,9 +1603,16 @@ def get_global_events():
                 "Stock markets reflect cautious stability.",
                 "Rumors of technological espionage circulate in the capital.",
                 "Agricultural yields are expected to meet demand.",
-                "Independent analysts praise recent infrastructural improvements."
+                "Independent analysts praise recent infrastructural improvements.",
+                "World Health officials monitor for potential outbreaks.",
+                "Global military expenditure sees a slight increase this quarter.",
+                "Merchants report increased demand for luxury goods.",
+                "Piracy on international trade routes has decreased."
             ]
-            events.extend(random.sample(generic_filler, 3))
+            events.extend(random.sample(generic_filler, 6))
+
+            # Shuffle all events so they mix nicely
+            random.shuffle(events)
 
     except Exception as e:
         print("Error fetching global events:", e)
