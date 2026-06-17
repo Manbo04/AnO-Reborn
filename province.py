@@ -1576,6 +1576,32 @@ def get_global_events():
             res = db.fetchone()
             if res:
                 events.append(f"Conflict erupts! {res[0]} has declared war on {res[1]}.")
+                
+            # 6. Nation Projects / Tech
+            db.execute("""
+                SELECT u.username, td.name 
+                FROM user_tech ut 
+                JOIN tech_dictionary td ON ut.tech_id = td.tech_id 
+                JOIN users u ON ut.user_id = u.id 
+                ORDER BY RANDOM() LIMIT 1
+            """)
+            res = db.fetchone()
+            if res:
+                events.append(f"Scientific breakthrough: {res[0]} has developed {res[1]}.")
+                
+            # 7. Dynamic Weather Reports
+            weather_conditions = [
+                "Heavy thunderstorms", "Clear skies and sunshine", "Dense fog",
+                "Torrential rain", "Unprecedented heatwaves", "Brisk winds",
+                "Light drizzle", "Overcast skies", "A sudden cold snap"
+            ]
+            import random
+            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 2")
+            provinces = db.fetchall()
+            for p in provinces:
+                condition = random.choice(weather_conditions)
+                events.append(f"Weather Update: {condition} reported in the province of {p[0]}.")
+                
     except Exception as e:
         print("Error fetching global events:", e)
         pass
