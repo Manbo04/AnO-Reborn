@@ -1456,7 +1456,7 @@ def delete_own_account():
         db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
         deleted_counts["offers"] = db.rowcount
         db.execute(
-            "DELETE FROM wars WHERE defender_id=%s OR attacker_id=%s", (cId, cId)
+            "DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId)
         )
         deleted_counts["wars"] = db.rowcount
 
@@ -1581,7 +1581,7 @@ def reset_account():
         with get_request_cursor() as db:
             db.execute("DELETE FROM user_military WHERE user_id=%s", (cId,))
             db.execute("DELETE FROM offers WHERE user_id=%s", (cId,))
-            db.execute("DELETE FROM wars WHERE defender_id=%s OR attacker_id=%s", (cId, cId))
+            db.execute("DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId))
             db.execute("SELECT id FROM provinces WHERE userid=%s", (cId,))
             province_ids = db.fetchall()
             if province_ids:
