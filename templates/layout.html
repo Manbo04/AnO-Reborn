@@ -117,6 +117,36 @@
     <!-- Hide dropdown arrows in navbar -->
     <style>
     .dropbtnchild .iconright { display: none; }
+    
+    /* Force bypass cache for resource menu button */
+    .resourcedivshow {
+        right: 200px !important;
+        width: 56px !important;
+        border-radius: 100px !important;
+        background-color: #1c2029 !important;
+        padding-left: 0 !important;
+        box-shadow: rgba(58, 59, 69, 0.4) 0px 0px 6px 0px !important;
+    }
+    .resourcedivshow .resourceicontext {
+        display: none !important;
+        opacity: 0 !important;
+    }
+    .resourcedivshow .resourcedivchild {
+        width: 56px !important;
+    }
+    
+    /* Force bypass cache for scrollbar */
+    .resourcedivcontent::-webkit-scrollbar {
+        width: 8px !important;
+        background: transparent !important;
+    }
+    .resourcedivcontent::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 4px !important;
+    }
+    .resourcedivcontent::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+    }
     </style>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
