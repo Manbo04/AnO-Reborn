@@ -5949,7 +5949,7 @@ body.game-shell-active .templatecontainer {
 .resourcediv,
 .resourcedivcontent {
     top: calc(var(--game-navbar-height, 55px) + 12px);
-    z-index: 11000 !important;
+    z-index: 999999 !important;
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -7116,7 +7116,7 @@ body.game-reduced-motion .province-map-node-pin::after {
     left: 0;
     right: 0;
     top: 0;
-    z-index: 1050;
+    z-index: 999999 !important;
     max-height: 70vh;
     overflow-y: auto;
     background: var(--foreground);
