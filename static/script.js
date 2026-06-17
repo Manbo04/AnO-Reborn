@@ -302,21 +302,52 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // Immersion and Engagement Additions
 function initImmersion() {
-    // 1. Live News Ticker
+    // 1. Live News Ticker - Real Game Events
     if (!document.querySelector('.news-ticker')) {
         const tickerContainer = document.createElement('div');
         tickerContainer.className = 'news-ticker';
-        const events = [
-            "Citizens report clear skies in the capital...",
-            "Stock market sees slight growth today.",
-            "New trade routes opened across the continent.",
-            "Local farmers report a bountiful harvest.",
-            "Technological advancements promise a brighter future.",
-            "Public approval rises following recent policies.",
-            "Infrastructure projects completed ahead of schedule."
-        ];
-        tickerContainer.innerHTML = `<div class="news-ticker-content"><span>BREAKING NEWS: ${events[Math.floor(Math.random() * events.length)]}</span> &nbsp;&nbsp;&nbsp;&nbsp; <span>GLOBAL: Tensions remain stable.</span></div>`;
+        
+        async function fetchEventsAndAnimate() {
+            let events = [];
+            try {
+                const res = await fetch('/api/global_events');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.events && data.events.length > 0) {
+                        events = data.events;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load global events");
+            }
+
+            if (events.length === 0) {
+                events = [
+                    "Citizens report clear skies in the capital...",
+                    "Stock market sees slight growth today.",
+                    "New trade routes opened across the continent.",
+                    "Global market trends remain stable."
+                ];
+            }
+
+            // Shuffle events for variety
+            events = events.sort(() => Math.random() - 0.5);
+
+            const eventsStr = events.map(e => `<span>BREAKING NEWS: ${e}</span>`).join(" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ");
+            
+            // To make it continuous and unaffected by tab switches, we calculate the negative delay based on Date.now()
+            const durationMs = 60000; // 60 seconds loop
+            const now = Date.now();
+            const elapsed = now % durationMs;
+            const delay = -elapsed;
+            
+            tickerContainer.innerHTML = `<div class="news-ticker-content" style="animation: tickerScroll ${durationMs}ms linear infinite; animation-delay: ${delay}ms;">${eventsStr} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>TERRA: Global state remains active.</span></div>`;
+        }
+
         document.body.appendChild(tickerContainer);
+        fetchEventsAndAnimate();
+        // Update the events periodically every minute without breaking the animation flow
+        setInterval(fetchEventsAndAnimate, 60000);
     }
 
     // 2. Subtle Background Animations
