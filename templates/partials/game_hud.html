@@ -1,6 +1,6 @@
 {% if FEATURE_GAME_SHELL and session.get('user_id') %}
 {% set resources = get_resources() %}
-<div class="game-hud" id="game-hud" role="region" aria-label="Resources">
+<div class="game-hud" id="game-hud" role="region" aria-label="Resources" style="z-index: 999999 !important;">
     {% for res_key in HUD_STRIP_RESOURCES %}
     <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}" onclick="toggleResourceDrawer()">
         <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
@@ -17,7 +17,7 @@
 </div>
 
 <!-- Mobile Resource Drawer -->
-<div class="game-resource-drawer" id="game-resource-drawer">
+<div class="game-resource-drawer" id="game-resource-drawer" style="z-index: 999999 !important;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--game-space-md); padding: 10px 0;">
         <h2 style="margin: 0; font-size: 1.25rem;">All Resources</h2>
         <button type="button" class="iconbutton" onclick="toggleResourceDrawer()" aria-label="Close">

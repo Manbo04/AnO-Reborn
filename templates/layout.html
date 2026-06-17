@@ -348,7 +348,7 @@
         -->
     </div>
 
-    <div class="resourcediv" id="resourcediv" style="top: 150px !important;">
+    <div class="resourcediv" id="resourcediv" style="top: 150px !important; z-index: 999999 !important;">
         <div class="resourcedivchild" onclick="resourcedivcontentshow()">
                 <span class="material-icons-outlined resourceicon">
                     monetization_on
@@ -357,7 +357,7 @@
             </div>
         </div>
 
-        <div class="resourcedivcontent" id="resourcedivcontent">
+        <div class="resourcedivcontent" id="resourcedivcontent" style="z-index: 999999 !important;">
             <!--I WILL REPLACE THE TEXT WITH RESOURCE ICONS SOON - CARSON-->
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
