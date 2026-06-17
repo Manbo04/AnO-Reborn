@@ -883,7 +883,7 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .resourcediv {
-    top: 75px;
+    top: 150px;
     right: 20px;
     position: fixed;
     background-color: #1c2029;

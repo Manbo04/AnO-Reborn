@@ -279,3 +279,24 @@ function resourcedivcontentshow() {
     if (rd) rd.classList.toggle("resourcedivshow");
     if (rdc) rdc.classList.toggle("resourcedivcontentshow");
 }
+
+// Toggle top horizontal HUD
+function toggleGameHud() {
+    var hud = document.getElementById("game-hud");
+    if (hud) {
+        hud.classList.toggle("hidden-hud");
+        var isHidden = hud.classList.contains("hidden-hud");
+        try { localStorage.setItem("gameHudHidden", isHidden ? "true" : "false"); } catch(e) {}
+    }
+}
+
+// Restore HUD visibility
+document.addEventListener("DOMContentLoaded", function() {
+    try {
+        if (localStorage.getItem("gameHudHidden") === "true") {
+            var hud = document.getElementById("game-hud");
+            if (hud) hud.classList.add("hidden-hud");
+        }
+    } catch(e) {}
+});
+
