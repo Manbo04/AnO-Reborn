@@ -135,6 +135,11 @@
         width: 56px !important;
     }
     
+    /* Force tooltips to be above everything */
+    [data-tippy-root], .tippy-popper, .tippy-box {
+        z-index: 9999999 !important;
+    }
+    
     /* Force bypass cache for scrollbar */
     .resourcedivcontent::-webkit-scrollbar {
         width: 8px !important;
