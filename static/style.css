@@ -992,7 +992,17 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .resourcedivcontent::-webkit-scrollbar {
-    width: 0px;
+    width: 8px;
+    background: transparent;
+}
+
+.resourcedivcontent::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.resourcedivcontent::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .resource-section-label {
