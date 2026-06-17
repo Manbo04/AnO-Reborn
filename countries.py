@@ -1600,7 +1600,7 @@ def reset_account():
             if reset_type == "scratch":
                 db.execute("DELETE FROM stats WHERE id=%s", (cId,))
                 db.execute("DELETE FROM user_economy WHERE user_id=%s", (cId,))
-                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", 0))
+                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", 70000000))
                 _init_economy_tables(db, cId)
             else:
                 db.execute("INSERT INTO user_military (user_id, unit_id, quantity) SELECT %s, unit_id, 0 FROM unit_dictionary WHERE is_active = TRUE ON CONFLICT DO NOTHING", (cId,))
