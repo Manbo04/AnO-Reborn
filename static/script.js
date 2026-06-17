@@ -300,3 +300,32 @@ document.addEventListener("DOMContentLoaded", function() {
     } catch(e) {}
 });
 
+// Immersion and Engagement Additions
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Live News Ticker
+    const tickerContainer = document.createElement('div');
+    tickerContainer.className = 'news-ticker';
+    const events = [
+        "Citizens report clear skies in the capital...",
+        "Stock market sees slight growth today.",
+        "New trade routes opened across the continent.",
+        "Local farmers report a bountiful harvest.",
+        "Technological advancements promise a brighter future.",
+        "Public approval rises following recent policies.",
+        "Infrastructure projects completed ahead of schedule."
+    ];
+    tickerContainer.innerHTML = `<div class="news-ticker-content"><span>BREAKING NEWS: ${events[Math.floor(Math.random() * events.length)]}</span> &nbsp;&nbsp;&nbsp;&nbsp; <span>GLOBAL: Tensions remain stable.</span></div>`;
+    document.body.appendChild(tickerContainer);
+
+    // 2. Subtle Background Animations
+    const bgElements = document.querySelectorAll('.countrytopper, .provincestopper, .militarytopper, .markettopper, .tutorial-chapter-banner, .game-war-result-banner');
+    bgElements.forEach(el => {
+        el.style.animation = 'subtleDrift 60s infinite alternate linear';
+    });
+
+    // 3. Resource Number Animations
+    const resourceTags = document.querySelectorAll('.resourcetagparent');
+    resourceTags.forEach((tag, index) => {
+        tag.style.animation = `popIn 0.4s ease-out ${index * 0.05}s both`;
+    });
+});
