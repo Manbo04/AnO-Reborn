@@ -1596,12 +1596,23 @@ def get_global_events():
                 "Light drizzle", "Overcast skies", "A sudden cold snap"
             ]
             import random
-            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 2")
+            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 3")
             provinces = db.fetchall()
             for p in provinces:
                 condition = random.choice(weather_conditions)
                 events.append(f"Weather Update: {condition} reported in the province of {p[0]}.")
                 
+            # 8. Guaranteed World-Building Filler (to prevent empty gaps)
+            generic_filler = [
+                "Global trade routes report steady traffic.",
+                "Citizens express optimism for the upcoming year.",
+                "Stock markets reflect cautious stability.",
+                "Rumors of technological espionage circulate in the capital.",
+                "Agricultural yields are expected to meet demand.",
+                "Independent analysts praise recent infrastructural improvements."
+            ]
+            events.extend(random.sample(generic_filler, 3))
+
     except Exception as e:
         print("Error fetching global events:", e)
         pass
