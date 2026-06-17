@@ -333,16 +333,14 @@ function initImmersion() {
             // Shuffle events for variety
             events = events.sort(() => Math.random() - 0.5);
 
-            // If there are few events, duplicate them so the string is long enough to fill the screen width
+            // We no longer need to duplicate the array because the backend now returns 30-40 unique events!
             let displayEvents = [...events];
-            while (displayEvents.length < 15) {
-                displayEvents = displayEvents.concat(events);
-            }
 
             const eventsStr = displayEvents.map(e => `<span>BREAKING NEWS: ${e}</span>`).join(" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ");
             
             // To make it continuous and unaffected by tab switches, we calculate the negative delay based on Date.now()
-            const durationMs = 90000; // 90 seconds loop (longer to accommodate more text)
+            // With ~40 events, we need a much longer loop to read them all smoothly. Let's do 5 minutes (300,000 ms)
+            const durationMs = 300000; 
             const now = Date.now();
             const elapsed = now % durationMs;
             const delay = -elapsed;
