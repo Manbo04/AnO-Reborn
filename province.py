@@ -1597,19 +1597,18 @@ def get_global_events():
                 events.append(f"Weather Update: {condition} reported in the province of {p[0]}.")
                 
             # 8. Guaranteed World-Building Filler (to prevent empty gaps)
-            generic_filler = [
-                "Global trade routes report steady traffic.",
-                "Citizens express optimism for the upcoming year.",
-                "Stock markets reflect cautious stability.",
-                "Rumors of technological espionage circulate in the capital.",
-                "Agricultural yields are expected to meet demand.",
-                "Independent analysts praise recent infrastructural improvements.",
-                "World Health officials monitor for potential outbreaks.",
-                "Global military expenditure sees a slight increase this quarter.",
-                "Merchants report increased demand for luxury goods.",
-                "Piracy on international trade routes has decreased."
-            ]
-            events.extend(random.sample(generic_filler, 6))
+            from flavor_text import GENERIC_FLAVOR_EVENTS
+            try:
+                from flavor_text_2 import GENERIC_FLAVOR_EVENTS_2
+            except ImportError:
+                GENERIC_FLAVOR_EVENTS_2 = []
+            try:
+                from flavor_text_3 import GENERIC_FLAVOR_EVENTS_3
+            except ImportError:
+                GENERIC_FLAVOR_EVENTS_3 = []
+                
+            generic_filler = GENERIC_FLAVOR_EVENTS + GENERIC_FLAVOR_EVENTS_2 + GENERIC_FLAVOR_EVENTS_3
+            events.extend(random.sample(generic_filler, 30))
 
             # Shuffle all events so they mix nicely
             random.shuffle(events)
