@@ -147,6 +147,25 @@
     .resourcedivcontent::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.25) !important;
     }
+    
+    /* Device-specific visibility rules */
+    @media (max-width: 768px) {
+        .resourcediv, .resourcedivcontent {
+            display: none !important;
+        }
+        body.game-shell-active .game-hud {
+            display: flex !important;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .game-hud {
+            display: none !important;
+        }
+        .resourcediv {
+            display: block !important;
+        }
+    }
     </style>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
