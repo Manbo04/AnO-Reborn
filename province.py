@@ -1723,18 +1723,23 @@ def temp_dump_db():
 
 @bp.route("/wipe_exploiter")
 def wipe_exploiter():
-    with get_request_cursor() as cur:
-        cur.execute("SELECT id FROM stats WHERE username='glob'")
-        row = cur.fetchone()
-        if not row:
-            return jsonify({"status": "no user"})
-        
-        cId = row[0]
-        cur.execute("UPDATE stats SET gold = 2000000, color = 'Green' WHERE id=%s", (cId,))
-        cur.execute("UPDATE user_economy SET quantity = 0 WHERE user_id=%s", (cId,))
-        cur.execute("DELETE FROM provinces WHERE userId=%s", (cId,))
-        cur.execute("DELETE FROM user_buildings WHERE user_id=%s", (cId,))
-        return jsonify({"status": "wiped glob"})
+    try:
+        with get_request_cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE username='glob'")
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"status": "no user"})
+            
+            cId = row[0]
+            cur.execute("UPDATE stats SET gold = 2000000 WHERE id=%s", (cId,))
+            cur.execute("UPDATE user_economy SET quantity = 0 WHERE user_id=%s", (cId,))
+            cur.execute("DELETE FROM provinces WHERE userId=%s", (cId,))
+            cur.execute("DELETE FROM user_buildings WHERE user_id=%s", (cId,))
+            cur.execute("DELETE FROM user_military WHERE user_id=%s", (cId,))
+            return jsonify({"status": "wiped glob"})
+    except Exception as e:
+        return str(e)
+
 
 @bp.route('/temp_debug_revenue')
 def temp_debug_revenue():
