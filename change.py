@@ -635,14 +635,16 @@ def register_change_routes(app_instance):
                         "buildings": {}
                     }
                     
-                    db.execute("SELECT id, land, cities FROM provinces WHERE userid=%s", (p_id,))
+                    db.execute("SELECT * FROM provinces WHERE userid=%s", (p_id,))
                     provinces = db.fetchall()
+                    col_names = [desc[0] for desc in db.description]
                     for prov in provinces:
-                        data[p_id]["provinces"].append({
-                            "id": prov[0],
-                            "land": prov[1],
-                            "cities": prov[2]
-                        })
+                        prov_dict = dict(zip(col_names, prov))
+                        # convert Decimal/datetime to string for JSON serialization
+                        for k, v in prov_dict.items():
+                            if type(v) not in (int, float, str, bool, type(None)):
+                                prov_dict[k] = str(v)
+                        data[p_id]["provinces"].append(prov_dict)
                     
                     db.execute("SELECT r.name, ue.quantity FROM user_economy ue JOIN resource_dictionary r ON ue.resource_id = r.resource_id WHERE ue.user_id=%s", (p_id,))
                     economy = db.fetchall()
