@@ -616,6 +616,52 @@ def register_change_routes(app_instance):
         except Exception as e:
             return f"Error: {e}"
 
+    def dump_players_json_temp():
+        try:
+            from database import get_request_cursor
+            with get_request_cursor() as db:
+                db.execute("SELECT id, name, location, gold FROM stats")
+                players = db.fetchall()
+                
+                data = {}
+                for p in players:
+                    p_id = p[0]
+                    data[p_id] = {
+                        "id": p_id,
+                        "name": p[1],
+                        "location": p[2],
+                        "gold": float(p[3]),
+                        "provinces": [],
+                        "economy": {},
+                        "buildings": {}
+                    }
+                    
+                    db.execute("SELECT id, name, land, cities FROM provinces WHERE userid=%s", (p_id,))
+                    provinces = db.fetchall()
+                    for prov in provinces:
+                        data[p_id]["provinces"].append({
+                            "id": prov[0],
+                            "name": prov[1],
+                            "land": prov[2],
+                            "cities": prov[3]
+                        })
+                    
+                    db.execute("SELECT r.name, ue.quantity FROM user_economy ue JOIN resource_dictionary r ON ue.resource_id = r.resource_id WHERE ue.user_id=%s", (p_id,))
+                    economy = db.fetchall()
+                    for ec in economy:
+                        data[p_id]["economy"][ec[0]] = float(ec[1])
+                        
+                    db.execute("SELECT b.name, SUM(ub.quantity) FROM user_buildings ub JOIN building_dictionary b ON ub.building_id = b.building_id WHERE ub.user_id=%s GROUP BY b.name", (p_id,))
+                    buildings = db.fetchall()
+                    for bd in buildings:
+                        data[p_id]["buildings"][bd[0]] = float(bd[1])
+                        
+                from flask import jsonify
+                return jsonify(data)
+        except Exception as e:
+            return str(e)
+
+    app_instance.add_url_rule("/dump_players_json_temp", "dump_players_json_temp", dump_players_json_temp, methods=["GET"])
     app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
         "/reset_password_recovery_key",
