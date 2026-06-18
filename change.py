@@ -582,11 +582,11 @@ def register_change_routes(app_instance):
             db.execute("SELECT id FROM provinces WHERE userId=%s", (uid,))
             provinces = db.fetchall()
             if not provinces:
-                db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_teens, pop_adults, pop_seniors) VALUES (%s, 'Dede Capital', 500000, 500000, 1000000, 200000) RETURNING id", (uid,))
+                db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_working, pop_elderly) VALUES (%s, 'Dede Capital', 500000, 1500000, 200000) RETURNING id", (uid,))
                 pId = db.fetchone()[0]
             else:
                 pId = provinces[0][0]
-                db.execute("UPDATE provinces SET pop_children=500000, pop_teens=500000, pop_adults=1000000, pop_seniors=200000 WHERE id=%s", (pId,))
+                db.execute("UPDATE provinces SET pop_children=500000, pop_working=1500000, pop_elderly=200000 WHERE id=%s", (pId,))
             db.execute("SELECT id, name FROM building_dictionary")
             b_dict = {row[1]: row[0] for row in db.fetchall()}
             for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill']:
@@ -596,7 +596,7 @@ def register_change_routes(app_instance):
             r_dict = {row[1]: row[0] for row in db.fetchall()}
             for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
                 if rname in r_dict:
-                    db.execute("INSERT INTO user_economy (user_id, resource_id, amount) VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO UPDATE SET amount = EXCLUDED.amount", (uid, r_dict[rname], ramount))
+                    db.execute("INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO UPDATE SET quantity = EXCLUDED.quantity", (uid, r_dict[rname], ramount))
         return "Done spawning economy for Dede!"
 
     app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede", spawn_economy_dede, methods=["GET"])
