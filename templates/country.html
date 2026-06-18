@@ -689,6 +689,12 @@
                             <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Monetary gross:</td>
                             <td>{{ revenue["gross"]["money"] | fmt }}</td>
                         </tr>
+                        {% if revenue.get("coalition_tax") %}
+                        <tr style="visibility: hidden;">
+                            <td>Spacer</td>
+                            <td>Spacer</td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations:</td>
                             <td>{{ revenue["gross"]["rations"] | fmt }}</td>
