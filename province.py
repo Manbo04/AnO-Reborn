@@ -1571,8 +1571,8 @@ def get_global_events():
             db.execute("""
                 SELECT u1.username, u2.username 
                 FROM wars 
-                JOIN users u1 ON wars.attacker_id = u1.id 
-                JOIN users u2 ON wars.defender_id = u2.id 
+                JOIN users u1 ON wars.attacker = u1.id 
+                JOIN users u2 ON wars.defender = u2.id 
                 ORDER BY war_id DESC LIMIT 5
             """)
             for res in db.fetchall():
