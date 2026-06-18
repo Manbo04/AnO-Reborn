@@ -319,7 +319,13 @@ def change():
             if email:
                 db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
             if name:
-                db.execute("UPDATE users SET username=%s WHERE id=%s", (name, cId))
+                try:
+                    db.execute("UPDATE users SET username=%s WHERE id=%s", (name, cId))
+                except Exception as e:
+                    import psycopg2
+                    if isinstance(e, psycopg2.errors.UniqueViolation):
+                        return error(400, "That nation name is already taken.")
+                    return error(500, "An error occurred while updating your name.")
         else:
             return error(401, "Incorrect password")
 
