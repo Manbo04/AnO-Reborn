@@ -907,9 +907,9 @@ def temp_build_stuff():
             for prov in provinces:
                 prov_id = prov[0]
                 buildings = {
-                    'farm': 10, 'coal_power_plant': 5, 'coal_mine': 10,
-                    'distribution_center': 5, 'lumber_camp': 10, 'iron_mine': 5,
-                    'bauxite_mine': 5, 'steel_mill': 2, 'aluminium_refinery': 2,
+                    'farms': 10, 'coal_burners': 5, 'coal_mines': 10,
+                    'distribution_centers': 5, 'lumber_mills': 10, 'iron_mines': 5,
+                    'bauxite_mines': 5, 'steel_mills': 2, 'aluminium_refineries': 2,
                     'primary_school': 5, 'high_school': 5
                 }
                 for name, qty in buildings.items():
