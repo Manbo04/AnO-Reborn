@@ -1686,8 +1686,32 @@ def temp_build_stuff_real():
                     ON CONFLICT (user_id, resource_id) DO UPDATE SET
                         quantity = user_economy.quantity + EXCLUDED.quantity
                 """, (res_name,))
-                
-        return "Built successfully in user_buildings table!"
+            
+            # Clear cache so the player sees it instantly
+            from utils import query_cache
+            query_cache.invalidate("revenue_1")
+            
+        return "Built successfully in user_buildings table! (Cache cleared)"
     except Exception as e:
         import traceback
         return traceback.format_exc()
+
+@bp.route('/temp_dump_db')
+def temp_dump_db():
+    try:
+        with get_request_cursor() as cur:
+            cur.execute("""
+                SELECT ub.province_id, bd.name, ub.quantity
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = 1
+            """)
+            ub = cur.fetchall()
+            
+            cur.execute("SELECT name FROM building_dictionary")
+            bd = cur.fetchall()
+            
+            return {"user_buildings": ub, "building_dictionary": bd}
+    except Exception as e:
+        import traceback
+        return str(traceback.format_exc())
