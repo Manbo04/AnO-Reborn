@@ -1392,7 +1392,7 @@ def update_col_info(coalition_id):
                         # Charge gold for rename (500,000 gold)
                         RENAME_COST = 500000
                         db.execute(
-                            "SELECT money FROM user_economy JOIN resource_dictionary ON user_economy.resource_id = resource_dictionary.id WHERE user_economy.user_id = %s AND resource_dictionary.name = 'money'",
+                            "SELECT gold FROM stats WHERE id = %s",
                             (cId,),
                         )
                         money_row = db.fetchone()
@@ -1407,9 +1407,9 @@ def update_col_info(coalition_id):
                         # Deduct gold from leader
                         db.execute(
                             """
-                            UPDATE user_economy
-                            SET quantity = quantity - %s
-                            WHERE user_id = %s AND resource_id = (SELECT id FROM resource_dictionary WHERE name = 'money')
+                            UPDATE stats
+                            SET gold = gold - %s
+                            WHERE id = %s
                             """,
                             (RENAME_COST, cId),
                         )
