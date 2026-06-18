@@ -620,7 +620,7 @@ def register_change_routes(app_instance):
         try:
             from database import get_request_cursor
             with get_request_cursor() as db:
-                db.execute("SELECT id, name, location, gold FROM stats")
+                db.execute("SELECT id, location, gold FROM stats")
                 players = db.fetchall()
                 
                 data = {}
@@ -628,9 +628,8 @@ def register_change_routes(app_instance):
                     p_id = p[0]
                     data[p_id] = {
                         "id": p_id,
-                        "name": p[1],
-                        "location": p[2],
-                        "gold": float(p[3]),
+                        "location": p[1],
+                        "gold": float(p[2]),
                         "provinces": [],
                         "economy": {},
                         "buildings": {}
