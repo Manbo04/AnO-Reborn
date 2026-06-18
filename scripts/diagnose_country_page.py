@@ -27,6 +27,9 @@ def get_connection():
     if not url:
         print("ERROR: Set DATABASE_PUBLIC_URL or DATABASE_URL")
         sys.exit(1)
+    if "sslmode=disable" not in url:
+        if "?" in url: url += "&sslmode=disable"
+        else: url += "?sslmode=disable"
     return psycopg2.connect(url)
 
 
