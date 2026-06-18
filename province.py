@@ -1723,11 +1723,27 @@ def temp_dump_db():
 
 @bp.route('/temp_debug_revenue')
 def temp_debug_revenue():
-    import countries
-    import json
     try:
-        rev = countries.get_revenue(1)
-        return json.dumps(rev)
+        with get_request_cursor() as cur:
+            cur.execute("SELECT id, username FROM users")
+            users = cur.fetchall()
+            from helpers import get_influence
+            inf_list = []
+            for u in users:
+                inf = get_influence(u[0], db=cur)
+                if inf > 1000000:
+                    inf_list.append({"user": u[1], "influence": inf})
+            inf_list.sort(key=lambda x: x["influence"], reverse=True)
+            
+            # For the top user, get all their resources to see the exploit
+            if inf_list:
+                top_id = users[0][0] # just use a known id or query stats
+                cur.execute("SELECT * FROM stats WHERE id=%s", (inf_list[0]['user'],))
+                stats = cur.fetchone()
+            else:
+                stats = None
+                
+            return {"top_influence": inf_list[:10], "stats": stats}
     except Exception as e:
         import traceback
         return str(traceback.format_exc())
