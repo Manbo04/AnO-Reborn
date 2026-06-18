@@ -1,0 +1,24 @@
+Starting Container
+[start] Discord bot sidecar: clearing stale leader locks...
+  cleared leader lock keys
+[start] Starting Discord bot sidecar (embeds from web API)...
+[start] Skipping migrations on web (worker handles schema boot).
+[start] web schema_compat ok
+[start] Starting gunicorn on :8080 (workers=1 threads=2)...
+[2026-06-15 11:45:26 +0000] [1] [INFO] Starting gunicorn 20.1.0
+[2026-06-15 11:45:26 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+[2026-06-15 11:45:26 +0000] [1] [INFO] Using worker: gthread
+[2026-06-15 11:45:26 +0000] [6] [INFO] Booting worker with pid: 6
+100.64.0.2 - - [15/Jun/2026:11:45:46 +0000] "GET /login?discord_error=session HTTP/1.1" 200 4290 "https://discord.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.3 - - [15/Jun/2026:11:45:46 +0000] "GET /static/style.min.css?v=c24032d2e976-1781523813 HTTP/1.1" 200 26637 "https://affairsandorder.com/login?discord_error=session" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.4 - - [15/Jun/2026:11:45:47 +0000] "GET /discord? HTTP/1.1" 302 629 "https://affairsandorder.com/login?discord_error=session" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.5 - - [15/Jun/2026:11:45:52 +0000] "GET /callback?code=MltCVvuNwiREkx2YXLnfKsQUcDo1cy&state=Cl3CMGrADzboEXhY67ADpN7KE8yvBP HTTP/1.1" 302 243 "https://discord.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.2 - - [15/Jun/2026:11:45:52 +0000] "GET /login?discord_error=session HTTP/1.1" 200 4289 "https://discord.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.2 - - [15/Jun/2026:11:45:52 +0000] "GET /static/manifest.webmanifest HTTP/1.1" 200 0 "https://affairsandorder.com/login?discord_error=session" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.5 - - [15/Jun/2026:11:46:32 +0000] "GET / HTTP/1.1" 200 6096 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.6 - - [15/Jun/2026:11:46:32 +0000] "GET /static/manifest.webmanifest HTTP/1.1" 200 0 "https://affairsandorder.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.6 - - [15/Jun/2026:11:46:34 +0000] "GET /login HTTP/1.1" 200 4241 "https://affairsandorder.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.7 - - [15/Jun/2026:11:46:36 +0000] "GET /discord? HTTP/1.1" 302 629 "https://affairsandorder.com/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.6 - - [15/Jun/2026:11:46:40 +0000] "GET /callback?code=Iss183jzzURonSKIHOHq48A3L0VgfL&state=Ulm8bilWjXKe1BwaJuu9Qo6gk6Eyjz HTTP/1.1" 302 243 "https://discord.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.5 - - [15/Jun/2026:11:46:40 +0000] "GET /login?discord_error=session HTTP/1.1" 200 4291 "https://discord.com/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+100.64.0.7 - - [15/Jun/2026:11:46:40 +0000] "GET /static/manifest.webmanifest HTTP/1.1" 200 0 "https://affairsandorder.com/login?discord_error=session" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
