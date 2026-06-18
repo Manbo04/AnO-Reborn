@@ -1665,6 +1665,9 @@ def temp_build_stuff_real():
                             quantity = user_buildings.quantity + EXCLUDED.quantity,
                             last_upgraded = now()
                     """, (b_name, prov_id, qty))
+                
+                # Give them 100 land slots so they aren't completely negative
+                cur.execute("UPDATE provinces SET land = land + 100 WHERE id = %s", (prov_id,))
             
             # Grant money and resources safely
             cur.execute("UPDATE stats SET gold = gold + 50000000 WHERE id = 1")
