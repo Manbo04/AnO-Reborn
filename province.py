@@ -1638,31 +1638,53 @@ def get_global_events():
 @bp.route('/temp_build_stuff_real', methods=['GET'])
 def temp_build_stuff_real():
     try:
-        import json
         with get_request_cursor() as cur:
-            cur.execute("SELECT id, buildings FROM provinces WHERE userId = 1")
+            cur.execute("SELECT id FROM provinces WHERE userId = 1")
             provinces = cur.fetchall()
             if not provinces:
                 return "No provinces found for user 1."
+            
+            buildings_to_add = {
+                'coal_burners': 10, 'coal_mines': 10, 'lumber_mills': 10,
+                'farms': 10, 'iron_mines': 10, 'pumpjacks': 10
+            }
+            
             for prov in provinces:
                 prov_id = prov[0]
-                buildings = prov[1]
-                if isinstance(buildings, str):
-                    buildings = json.loads(buildings)
-                if not buildings:
-                    buildings = {}
-                
-                buildings["coal_burners"] = buildings.get("coal_burners", 0) + 10
-                buildings["coal_mines"] = buildings.get("coal_mines", 0) + 10
-                buildings["lumber_mills"] = buildings.get("lumber_mills", 0) + 10
-                buildings["farms"] = buildings.get("farms", 0) + 10
-                buildings["iron_mines"] = buildings.get("iron_mines", 0) + 10
-                buildings["pumpjacks"] = buildings.get("pumpjacks", 0) + 10
-                
-                cur.execute("UPDATE provinces SET buildings=%s WHERE id=%s", (json.dumps(buildings), prov_id))
+                for b_name, qty in buildings_to_add.items():
+                    cur.execute("""
+                        INSERT INTO user_buildings (user_id, building_id, province_id, quantity, last_upgraded)
+                        VALUES (
+                            1,
+                            (SELECT building_id FROM building_dictionary WHERE name = %s),
+                            %s,
+                            %s,
+                            now()
+                        )
+                        ON CONFLICT (user_id, building_id, province_id) DO UPDATE SET
+                            quantity = user_buildings.quantity + EXCLUDED.quantity,
+                            last_upgraded = now()
+                    """, (b_name, prov_id, qty))
+            
+            # Grant money and resources safely
             cur.execute("UPDATE stats SET gold = gold + 50000000 WHERE id = 1")
-            cur.execute("UPDATE user_economy SET quantity = quantity + 1000000 WHERE user_id = 1")
-        return "Built successfully in provinces table!"
+            
+            # For user_economy, they might not have a row for each resource yet!
+            starter_res = ['lumber', 'iron', 'coal', 'rations', 'steel', 'components', 'aluminium', 'oil']
+            for res_name in starter_res:
+                cur.execute("""
+                    INSERT INTO user_economy (user_id, resource_id, quantity, price)
+                    VALUES (
+                        1,
+                        (SELECT resource_id FROM resource_dictionary WHERE name = %s),
+                        1000000,
+                        0
+                    )
+                    ON CONFLICT (user_id, resource_id) DO UPDATE SET
+                        quantity = user_economy.quantity + EXCLUDED.quantity
+                """, (res_name,))
+                
+        return "Built successfully in user_buildings table!"
     except Exception as e:
         import traceback
         return traceback.format_exc()
