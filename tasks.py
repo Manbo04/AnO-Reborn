@@ -2217,8 +2217,8 @@ def generate_province_revenue():  # Runs each hour
         user_resources = variables.RESOURCES
         infra = variables.NEW_INFRA
 
-        max_chunks = int(os.getenv("PROVINCE_REVENUE_CHUNKS_PER_RUN", "3"))
-        chunk_size = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "400"))
+        max_chunks = int(os.getenv("PROVINCE_REVENUE_CHUNKS_PER_RUN", "50"))
+        chunk_size = int(os.getenv("PROVINCE_REVENUE_CHUNK_SIZE", "500"))
         revenue_deadline = start_time + float(
             os.getenv("PROVINCE_REVENUE_TIME_BUDGET_SEC", "270")
         )
