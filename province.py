@@ -914,10 +914,20 @@ def temp_build_stuff():
                 }
                 for name, qty in buildings.items():
                     cur.execute("""
-                        INSERT INTO buildings (province_id, name, qty) 
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (province_id, name) DO UPDATE SET qty = buildings.qty + EXCLUDED.qty
-                    """, (prov_id, name, qty))
+                        INSERT INTO user_buildings
+                            (user_id, building_id, province_id, quantity, last_upgraded)
+                        VALUES (
+                            1,
+                            (SELECT building_id FROM building_dictionary WHERE name = %s),
+                            %s,
+                            %s,
+                            now()
+                        )
+                        ON CONFLICT (user_id, building_id, province_id)
+                        DO UPDATE SET
+                            quantity = user_buildings.quantity + EXCLUDED.quantity,
+                            last_upgraded = now()
+                    """, (name, prov_id, qty))
             cur.execute("UPDATE stats SET gold = gold + 50000000 WHERE id = 1")
             cur.execute("UPDATE user_economy SET quantity = quantity + 1000000 WHERE user_id = 1")
         return "Built successfully."
