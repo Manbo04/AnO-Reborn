@@ -572,32 +572,49 @@ def register_change_routes(app_instance):
     )
 
     def spawn_economy_dede():
-        from database import get_request_cursor
-        with get_request_cursor() as db:
-            db.execute("SELECT id FROM users WHERE username='Dede'")
-            res = db.fetchone()
-            if not res:
-                return "Dede not found"
-            uid = res[0]
-            db.execute("SELECT id FROM provinces WHERE userId=%s", (uid,))
-            provinces = db.fetchall()
-            if not provinces:
-                db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_working, pop_elderly) VALUES (%s, 'Dede Capital', 500000, 1500000, 200000) RETURNING id", (uid,))
-                pId = db.fetchone()[0]
-            else:
-                pId = provinces[0][0]
-                db.execute("UPDATE provinces SET pop_children=500000, pop_working=1500000, pop_elderly=200000 WHERE id=%s", (pId,))
-            db.execute("SELECT id, name FROM building_dictionary")
-            b_dict = {row[1]: row[0] for row in db.fetchall()}
-            for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill']:
-                if bname in b_dict:
-                    db.execute("INSERT INTO user_buildings (user_id, province_id, building_id, quantity) VALUES (%s, %s, %s, %s) ON CONFLICT (user_id, province_id, building_id) DO UPDATE SET quantity = EXCLUDED.quantity", (uid, pId, b_dict[bname], 50))
-            db.execute("SELECT id, name FROM resource_dictionary")
-            r_dict = {row[1]: row[0] for row in db.fetchall()}
-            for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
-                if rname in r_dict:
-                    db.execute("INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO UPDATE SET quantity = EXCLUDED.quantity", (uid, r_dict[rname], ramount))
-        return "Done spawning economy for Dede!"
+        try:
+            from database import get_request_cursor
+            with get_request_cursor() as db:
+                db.execute("SELECT id FROM users WHERE username='Dede'")
+                res = db.fetchone()
+                if not res:
+                    return "Dede not found"
+                uid = res[0]
+                db.execute("SELECT id FROM provinces WHERE userId=%s", (uid,))
+                provinces = db.fetchall()
+                if not provinces:
+                    db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_working, pop_elderly) VALUES (%s, 'Dede Capital', 500000, 1500000, 200000) RETURNING id", (uid,))
+                    pId = db.fetchone()[0]
+                else:
+                    pId = provinces[0][0]
+                    db.execute("UPDATE provinces SET pop_children=500000, pop_working=1500000, pop_elderly=200000 WHERE id=%s", (pId,))
+                
+                db.execute("SELECT id, name FROM building_dictionary")
+                b_dict = {row[1]: row[0] for row in db.fetchall()}
+                for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill', 'distribution_center', 'supermarket']:
+                    if bname in b_dict:
+                        bid = b_dict[bname]
+                        db.execute("SELECT quantity FROM user_buildings WHERE user_id=%s AND province_id=%s AND building_id=%s", (uid, pId, bid))
+                        b_res = db.fetchone()
+                        if not b_res:
+                            db.execute("INSERT INTO user_buildings (user_id, province_id, building_id, quantity) VALUES (%s, %s, %s, %s)", (uid, pId, bid, 50))
+                        else:
+                            db.execute("UPDATE user_buildings SET quantity=50 WHERE user_id=%s AND province_id=%s AND building_id=%s", (uid, pId, bid))
+                
+                db.execute("SELECT id, name FROM resource_dictionary")
+                r_dict = {row[1]: row[0] for row in db.fetchall()}
+                for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
+                    if rname in r_dict:
+                        rid = r_dict[rname]
+                        db.execute("SELECT quantity FROM user_economy WHERE user_id=%s AND resource_id=%s", (uid, rid))
+                        r_res = db.fetchone()
+                        if not r_res:
+                            db.execute("INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, %s)", (uid, rid, ramount))
+                        else:
+                            db.execute("UPDATE user_economy SET quantity=%s WHERE user_id=%s AND resource_id=%s", (ramount, uid, rid))
+            return "Done spawning economy for Dede!"
+        except Exception as e:
+            return f"Error: {e}"
 
     app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
