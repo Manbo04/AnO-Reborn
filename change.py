@@ -589,7 +589,7 @@ def register_change_routes(app_instance):
                     pId = provinces[0][0]
                     db.execute("UPDATE provinces SET pop_children=500000, pop_working=1500000, pop_elderly=200000 WHERE id=%s", (pId,))
                 
-                db.execute("SELECT id, name FROM building_dictionary")
+                db.execute("SELECT building_id, name FROM building_dictionary")
                 b_dict = {row[1]: row[0] for row in db.fetchall()}
                 for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill', 'distribution_center', 'supermarket']:
                     if bname in b_dict:
@@ -601,7 +601,7 @@ def register_change_routes(app_instance):
                         else:
                             db.execute("UPDATE user_buildings SET quantity=50 WHERE user_id=%s AND province_id=%s AND building_id=%s", (uid, pId, bid))
                 
-                db.execute("SELECT id, name FROM resource_dictionary")
+                db.execute("SELECT resource_id, name FROM resource_dictionary")
                 r_dict = {row[1]: row[0] for row in db.fetchall()}
                 for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
                     if rname in r_dict:
