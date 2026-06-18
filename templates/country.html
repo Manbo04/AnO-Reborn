@@ -690,9 +690,9 @@
                             <td>{{ revenue["gross"]["money"] | fmt }}</td>
                         </tr>
                         {% if revenue.get("coalition_tax") %}
-                        <tr style="visibility: hidden;">
-                            <td>Spacer</td>
-                            <td>Spacer</td>
+                        <tr style="opacity: 0; pointer-events: none;">
+                            <td>Coalition tax:</td>
+                            <td>-{{ revenue["coalition_tax"] | fmt }}</td>
                         </tr>
                         {% endif %}
                         <tr>
