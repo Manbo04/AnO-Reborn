@@ -378,11 +378,18 @@
         function updateProv() {
             var n = parseInt(countInput.value, 10) || 0;
             var cost = Math.floor(baseCost * (1 + scale * n));
+            if (n === 0) cost = 2000000;
+            if (n === 1) cost = 5000000;
             if (provResult) {
+                var pos = n + 1;
+                var suffix = "th";
+                if (pos === 1) suffix = "st";
+                else if (pos === 2) suffix = "nd";
+                else if (pos === 3) suffix = "rd";
                 provResult.innerHTML =
                     "Your <strong>" +
-                    (n + 1) +
-                    "th</strong> province costs <strong>$" +
+                    pos +
+                    suffix + "</strong> province costs <strong>$" +
                     formatNum(cost) +
                     "</strong>";
             }
