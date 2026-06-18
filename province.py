@@ -1543,7 +1543,9 @@ from database import get_request_cursor
 # Add to province.py
 @bp.route("/api/global_events", methods=["GET"])
 def get_global_events():
-    events = []
+    events = [
+        "🚨 BREAKING NEWS: New Balance Update! First Province now costs $2M! New player Grace Period active (no starvation)! Lumber is now a core building requirement for Tier 2 buildings. Steel Mills & Aluminium Refineries cost 50% less! 🚨"
+    ] * 5  # Duplicate it a few times so it shows up frequently
     try:
         with get_request_cursor() as db:
             # 1. Newest nations
