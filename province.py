@@ -1573,7 +1573,7 @@ def get_global_events():
                 FROM wars 
                 JOIN users u1 ON wars.attacker = u1.id 
                 JOIN users u2 ON wars.defender = u2.id 
-                ORDER BY war_id DESC LIMIT 5
+                ORDER BY id DESC LIMIT 5
             """)
             for res in db.fetchall():
                 events.append(f"Conflict erupts! {res[0]} has declared war on {res[1]}.")
