@@ -201,18 +201,18 @@
                         <img class="unitimage imageborder" src="{{ url_for('static', filename='images/province.jpg') }}?v=2" alt="Province management" />
                     </div>
                     <div class="tutorial-callout tip-warn">
-                        <strong>Early-game order (power is not urgent):</strong> You start with several days of rations. Build a <strong>Lumber Mill</strong> first — it only costs cash, like the tutorial implies for camps. Use lumber (or cheap Market buys) for mines and farms. Add a coal power plant when you want more buildings, not on day one. Quick Build and classic pages now show the same costs (lumber for coal burners, not steel).
+                        <strong>Early-game order (power is not urgent):</strong> You start with a <strong>Grace Period</strong> where your citizens won't starve and you face no food tax penalties (lasts while you have &le; 1 province and &le; 20 land blocks). Build a <strong>Lumber Mill</strong> first — it only costs cash. <strong>Lumber is now required</strong> for Tier 2 buildings (Component Factories, Schools, Refineries) and Farms. Use lumber (or cheap Market buys) to build farms before your Grace Period ends. Add a coal power plant when you want more buildings. Quick Build and classic pages now show the same costs.
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[1]) }}
                     <div class="tutorial-quiz">
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p class="tutorial-quiz-q">Province acquisition cost scales with the number of provinces you already have. The formula uses a base of $8M plus what factor per existing province?</p>
+                            <p class="tutorial-quiz-q">Province acquisition cost scales with the number of provinces you already have. With the early game discount, how much do your first and second province cost?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">+5% flat</span></label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">+16% per province owned</span></label>
-                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">Fixed $8M always</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">$8M and $12M</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">$2M and $5M</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">$1M and $2M</span></label>
                             </div>
                         </div>
                         <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
