@@ -24,7 +24,7 @@
 
         {% include 'partials/province_base_view.html' %}
         {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
-        <p class="province-view-nudge" id="province-view-nudge" hidden>
+        <p class="province-view-nudge" id="province-view-nudge" style="display: none !important;" hidden>
             <span class="material-icons-outlined">map</span>
             Try the <strong>district map</strong> above — tap <button type="button" class="province-view-nudge-btn" data-province-view-toggle>Base view</button>
         </p>
