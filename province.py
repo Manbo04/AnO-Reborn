@@ -1687,7 +1687,7 @@ def temp_build_stuff_real():
                 """, (res_name,))
             
             # Clear cache so the player sees it instantly
-            from utils import query_cache
+            from database import query_cache
             query_cache.invalidate("revenue_1")
             
         return "Built successfully in user_buildings table! (Cache cleared)"
