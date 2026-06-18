@@ -1714,3 +1714,14 @@ def temp_dump_db():
     except Exception as e:
         import traceback
         return str(traceback.format_exc())
+
+@bp.route('/temp_debug_revenue')
+def temp_debug_revenue():
+    import countries
+    import json
+    try:
+        rev = countries.get_revenue(1)
+        return json.dumps(rev)
+    except Exception as e:
+        import traceback
+        return str(traceback.format_exc())
