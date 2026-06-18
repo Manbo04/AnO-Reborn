@@ -299,7 +299,7 @@ def get_revenue(cId, db=None):
                 # Demographic CG need (matches tax_income)
                 total_cg_need = 0.0
                 for row in province_rows:
-                    pw = row[3] if row[3] else 0  # population as proxy
+                    pw = float(row[3]) if row[3] else 0.0  # population as proxy
                     # Use per-province demographic data if available
                     total_cg_need += (
                         pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
