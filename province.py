@@ -1634,3 +1634,35 @@ def get_global_events():
         pass
         
     return jsonify({"events": events})
+
+@bp.route('/temp_build_stuff_real', methods=['GET'])
+def temp_build_stuff_real():
+    try:
+        import json
+        with get_request_cursor() as cur:
+            cur.execute("SELECT id, buildings FROM provinces WHERE userId = 1")
+            provinces = cur.fetchall()
+            if not provinces:
+                return "No provinces found for user 1."
+            for prov in provinces:
+                prov_id = prov[0]
+                buildings = prov[1]
+                if isinstance(buildings, str):
+                    buildings = json.loads(buildings)
+                if not buildings:
+                    buildings = {}
+                
+                buildings["coal_burners"] = buildings.get("coal_burners", 0) + 10
+                buildings["coal_mines"] = buildings.get("coal_mines", 0) + 10
+                buildings["lumber_mills"] = buildings.get("lumber_mills", 0) + 10
+                buildings["farms"] = buildings.get("farms", 0) + 10
+                buildings["iron_mines"] = buildings.get("iron_mines", 0) + 10
+                buildings["pumpjacks"] = buildings.get("pumpjacks", 0) + 10
+                
+                cur.execute("UPDATE provinces SET buildings=%s WHERE id=%s", (json.dumps(buildings), prov_id))
+            cur.execute("UPDATE stats SET gold = gold + 50000000 WHERE id = 1")
+            cur.execute("UPDATE user_economy SET quantity = quantity + 1000000 WHERE user_id = 1")
+        return "Built successfully in provinces table!"
+    except Exception as e:
+        import traceback
+        return traceback.format_exc()
