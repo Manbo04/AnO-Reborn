@@ -1178,7 +1178,11 @@ def tax_income():
                     effective_rations = current_rations
                 
                 rcp = min(0.0, (effective_rations / needed_rations) - 1.0)
-                food_tax_multiplier = 1.0 + (rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER))
+                grace_period = (len(provinces) <= 1) and (sum(p[1] for p in provinces) <= 20)
+                if grace_period:
+                    food_tax_multiplier = 1.0
+                else:
+                    food_tax_multiplier = 1.0 + (rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER))
                 income *= food_tax_multiplier
 
                 money = int(math.floor(income))
@@ -1497,6 +1501,13 @@ def population_growth():  # Function for growing population
         )
         all_provinces = dbdict.fetchall()
 
+        user_total_provinces = {}
+        user_total_land = {}
+        for prov in all_provinces:
+            uid = prov["userid"]
+            user_total_provinces[uid] = user_total_provinces.get(uid, 0) + 1
+            user_total_land[uid] = user_total_land.get(uid, 0) + (prov["land"] or 0)
+
         if not all_provinces:
             try:
                 release_pg_advisory_lock(conn, 9003)
@@ -1626,7 +1637,8 @@ def population_growth():  # Function for growing population
             newPop = int(round((maxPop / 100) * growth_rate))
 
             starvation_deaths = 0
-            if rations_ratio < 1.0:
+            grace_period = (user_total_provinces.get(user_id, 1) <= 1) and (user_total_land.get(user_id, 1) <= 20)
+            if rations_ratio < 1.0 and not grace_period:
                 # Up to 1% of the current population dies per hour at 0 rations
                 starvation_rate = (1.0 - rations_ratio) * 0.01
                 starvation_deaths = int(round(curPop * starvation_rate))
