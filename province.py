@@ -905,7 +905,7 @@ def temp_build_stuff():
             if not provinces:
                 return "No provinces found."
             for prov in provinces:
-                prov_id = prov['id']
+                prov_id = prov[0]
                 buildings = {
                     'farm': 10, 'coal_power_plant': 5, 'coal_mine': 10,
                     'distribution_center': 5, 'lumber_camp': 10, 'iron_mine': 5,
