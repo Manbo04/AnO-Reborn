@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/app/province.py", line 1723, in temp_debug_revenue
+    rev = countries.get_revenue(1)
+  File "/app/countries.py", line 323, in get_revenue
+    pw_sum
+TypeError: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'
