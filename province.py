@@ -1710,7 +1710,13 @@ def temp_dump_db():
             cur.execute("SELECT name FROM building_dictionary")
             bd = cur.fetchall()
             
-            return {"user_buildings": ub, "building_dictionary": bd}
+            cur.execute("SELECT id, land, productivity FROM provinces WHERE userid=1")
+            provs = cur.fetchall()
+            
+            cur.execute("SELECT gold FROM stats WHERE id=1")
+            gold = cur.fetchone()
+            
+            return {"user_buildings": ub, "building_dictionary": bd, "provinces": provs, "gold": gold}
     except Exception as e:
         import traceback
         return str(traceback.format_exc())
