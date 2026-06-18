@@ -635,14 +635,13 @@ def register_change_routes(app_instance):
                         "buildings": {}
                     }
                     
-                    db.execute("SELECT id, name, land, cities FROM provinces WHERE userid=%s", (p_id,))
+                    db.execute("SELECT id, land, cities FROM provinces WHERE userid=%s", (p_id,))
                     provinces = db.fetchall()
                     for prov in provinces:
                         data[p_id]["provinces"].append({
                             "id": prov[0],
-                            "name": prov[1],
-                            "land": prov[2],
-                            "cities": prov[3]
+                            "land": prov[1],
+                            "cities": prov[2]
                         })
                     
                     db.execute("SELECT r.name, ue.quantity FROM user_economy ue JOIN resource_dictionary r ON ue.resource_id = r.resource_id WHERE ue.user_id=%s", (p_id,))
