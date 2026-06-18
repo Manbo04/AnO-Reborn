@@ -568,8 +568,8 @@ PROVINCE_UNIT_PRICES = {
     "industrial_district_price": 280000000,
     "industrial_district_resource": {"steel": 800000, "components": 200000},
     # Distribution Centers (Tier 1 — key early-game building for rations/CG flow)
-    "distribution_centers_price": 5000000,
-    "distribution_centers_resource": {"lumber": 50000, "iron": 20000},
+    "distribution_centers_price": 2500000,
+    "distribution_centers_resource": {"lumber": 25000, "iron": 5000},
     # Public Works (Tier 2-3)
     "city_parks_price": 4500000,
     "city_parks_resource": {"steel": 22000},
@@ -583,9 +583,9 @@ PROVINCE_UNIT_PRICES = {
     "monorails_resource": {"steel": 600000, "aluminium": 300000},
     # Education Buildings (Tier 2)
     "primary_school_price": 4000000,
-    "primary_school_resource": {"steel": 25000, "aluminium": 15000},
+    "primary_school_resource": {"steel": 25000, "aluminium": 15000, "lumber": 40000},
     "high_school_price": 12000000,
-    "high_school_resource": {"steel": 60000, "aluminium": 40000},
+    "high_school_resource": {"steel": 60000, "aluminium": 40000, "lumber": 80000},
     # Military Infrastructure (Tier 2-4)
     "army_bases_price": 8000000,
     "army_bases_resource": {"lumber": 120000},
@@ -600,6 +600,7 @@ PROVINCE_UNIT_PRICES = {
     # Resource Extraction (Tier 1)
     # ALL must be buildable with raw Tier-0/1 resources only
     "farms_price": 1500000,
+    "farms_resource": {"lumber": 30000},
     "pumpjacks_price": 3000000,
     "pumpjacks_resource": {"iron": 22000},
     "coal_mines_price": 3500000,
@@ -617,12 +618,12 @@ PROVINCE_UNIT_PRICES = {
     "lumber_mills_price": 2200000,
     # Processing (Tier 2) — steel_mills/aluminium_refineries use only Tier 1 raws
     "component_factories_price": 16000000,
-    "component_factories_resource": {"steel": 30000, "aluminium": 30000},
-    "steel_mills_price": 12000000,
+    "component_factories_resource": {"steel": 30000, "aluminium": 30000, "lumber": 80000},
+    "steel_mills_price": 6000000,
     "steel_mills_resource": {"iron": 60000, "coal": 40000, "lumber": 30000},
     "ammunition_factories_price": 10000000,
     "ammunition_factories_resource": {"iron": 25000, "copper": 15000},
-    "aluminium_refineries_price": 11000000,
+    "aluminium_refineries_price": 5500000,
     "aluminium_refineries_resource": {"iron": 40000, "lumber": 20000},
     "oil_refineries_price": 9000000,
     "oil_refineries_resource": {"iron": 30000, "lumber": 15000},

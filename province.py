@@ -886,7 +886,12 @@ def get_province_price(user_id):
         current_province_amount = count_row[0] if count_row else 0
 
         multiplier = 1 + (0.16 * current_province_amount)
-        price = int(8000000 * multiplier)
+        if current_province_amount == 0:
+            price = 2000000
+        elif current_province_amount == 1:
+            price = 5000000
+        else:
+            price = int(8000000 * multiplier)
 
         return price
 
