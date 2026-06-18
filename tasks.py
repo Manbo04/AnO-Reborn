@@ -462,9 +462,17 @@ def fetch_nation_distribution_status(db, user_id, total_population, rations_need
         row_val(r, "name", 0): int(row_val(r, "qty", 1, default=0) or 0)
         for r in db.fetchall()
     }
-    return nation_distribution_status(
+    db.execute("SELECT land FROM provinces WHERE userId = %s", (user_id,))
+    user_provinces = db.fetchall()
+    total_land = sum((int(row_val(r, "land", 0, default=0) or 0) for r in user_provinces)) if user_provinces else 0
+    grace_period = (len(user_provinces) <= 1) and (total_land <= 20)
+    
+    status = nation_distribution_status(
         total_population, rations_stockpile, rations_need, building_qty
     )
+    if status:
+        status["grace_period"] = grace_period
+    return status
 
 
 def consumer_goods_distribution_capacity(user_id, db=None):
