@@ -1,4 +1,18 @@
 {% if distribution_status and distribution_status.show_alert %}
+{% if distribution_status.grace_period %}
+<div class="center fit notificationparent distribution-alert" role="status" style="border-color: #2ecc71;">
+    <div class="left fit notificationchild">
+        <ul class="right vanilla notificationchildright" style="color: #2ecc71;">
+            <span class="material-icons-outlined" style="color: #2ecc71;">verified</span>
+            <strong>GRACE PERIOD ACTIVE - NO STARVATION</strong>
+        </ul>
+        <ul class="right vanilla notificationchild">
+            <span class="material-icons-outlined">restaurant</span>
+            Your citizens are fed without penalties while you have &le; 1 province and &le; 20 land blocks.
+        </ul>
+    </div>
+</div>
+{% else %}
 <div class="center fit notificationparent distribution-alert" role="status">
     <div class="left fit notificationchild">
         <ul class="right vanilla notificationchildright">
@@ -24,4 +38,5 @@
         {% endif %}
     </div>
 </div>
+{% endif %}
 {% endif %}
