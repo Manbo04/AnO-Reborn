@@ -1568,7 +1568,13 @@ def get_global_events():
                 events.append(f"Diplomatic breakthrough: The {res[0]} coalition gathers strength.")
                 
             # 5. Battles/Wars
-            db.execute("SELECT attacker_name, defender_name FROM wars_normalized ORDER BY id DESC LIMIT 5")
+            db.execute("""
+                SELECT u1.username, u2.username 
+                FROM wars 
+                JOIN users u1 ON wars.attacker_id = u1.id 
+                JOIN users u2 ON wars.defender_id = u2.id 
+                ORDER BY war_id DESC LIMIT 5
+            """)
             for res in db.fetchall():
                 events.append(f"Conflict erupts! {res[0]} has declared war on {res[1]}.")
                 
