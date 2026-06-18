@@ -1,0 +1,500 @@
+100.64.0.8 - - [18/Jun/2026:06:34:24 +0000] "GET /static/images/province.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/provinces" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.3 - - [18/Jun/2026:06:34:24 +0000] "GET /api/economy/status HTTP/1.1" 200 499 "https://affairsandorder.com/provinces" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:24 +0000] "GET /static/images/provinces.jpg HTTP/1.1" 200 0 "https://affairsandorder.com/static/style.min.css?v=4a4394ac083f-1781690680" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:34:24 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/provinces" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:24 +0000] "GET /static/images/titleimage.png HTTP/1.1" 304 0 "https://affairsandorder.com/provinces" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.3 - - [18/Jun/2026:06:34:26 +0000] "GET /province/1293 HTTP/1.1" 200 20076 "https://affairsandorder.com/provinces" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:26 +0000] "GET /static/province-demographics.js?v=1 HTTP/1.1" 200 1463 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.18 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/hydrodam.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.19 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/coalburner.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:34:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/farmersmarket.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.23 - - [18/Jun/2026:06:34:26 +0000] "GET /api/economy/status HTTP/1.1" 200 499 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/gasstation.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.9 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/nuclearreactor.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.20 - - [18/Jun/2026:06:34:26 +0000] "GET /static/province-base.js?v=9 HTTP/1.1" 200 5247 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.5 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/oilburner.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/mall.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.11 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/solarfield.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/skytrain.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.19 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/generalstore.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/hospital.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/administrativebuilding.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.11 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/library.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/silo.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.17 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/harbour.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.3 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/armybase.png?v=2 HTTP/1.1" 304 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.19 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/citypark.png?v=2 HTTP/1.1" 304 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.8 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/bank.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.8 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/university.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.4 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/farm.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/componentfactory.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.18 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/ironmine.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.17 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/leadmine.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.21 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/lumbermill.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.11 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/steelmill.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.5 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/oilrefinery.jpg?v=2 HTTP/1.1" 304 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.9 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/aluminiumrefinery.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.8 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/aerodrome.png?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.4 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/ammunitionfactory.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.23 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/coalmine.jpg?v=2 HTTP/1.1" 200 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.6 - - [18/Jun/2026:06:34:26 +0000] "GET /static/images/titleimage.png HTTP/1.1" 304 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.18 - - [18/Jun/2026:06:34:27 +0000] "GET /static/images/titleimage.png?v=2 HTTP/1.1" 304 0 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.23 - - [18/Jun/2026:06:34:27 +0000] "GET /api/province/1293/slot/power HTTP/1.1" 200 616 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:34:46 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:35:27 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.15 - - [18/Jun/2026:06:35:46 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:36:27 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:36:46 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.3 - - [18/Jun/2026:06:37:23 +0000] "POST /change HTTP/1.1" 500 265 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.17 - - [18/Jun/2026:06:37:26 +0000] "GET /account HTTP/1.1" 200 11151 "https://affairsandorder.com/market" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.18 - - [18/Jun/2026:06:37:26 +0000] "GET /static/style.min.css?v=4a4394ac083f-1781690680 HTTP/1.1" 200 26784 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.15 - - [18/Jun/2026:06:37:26 +0000] "GET /api/economy/status HTTP/1.1" 200 209 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:37:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.18 - - [18/Jun/2026:06:37:26 +0000] "GET /static/images/titleimage.png HTTP/1.1" 304 0 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.15 - - [18/Jun/2026:06:38:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.11 - - [18/Jun/2026:06:38:27 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.11 - - [18/Jun/2026:06:39:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:39:27 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.15 - - [18/Jun/2026:06:40:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.15 - - [18/Jun/2026:06:40:27 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.11 - - [18/Jun/2026:06:41:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:41:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:42:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.11 - - [18/Jun/2026:06:42:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.17 - - [18/Jun/2026:06:43:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.15 - - [18/Jun/2026:06:43:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:44:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:44:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:45:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:45:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:46:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:46:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:47:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:47:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:48:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:48:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:49:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:49:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:50:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:50:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:51:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:51:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:52:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:52:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:53:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:53:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:54:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:54:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:06:55:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:55:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:56:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:56:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:57:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:57:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:58:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:58:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:06:59:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:06:59:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:00:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:00:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:01:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:01:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:02:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:02:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:03:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:03:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:04:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:04:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:05:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:05:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:06:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:06:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:07:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:07:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:08:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:08:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:09:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:09:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:10:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:10:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:11:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:11:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:12:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:12:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:13:26 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.16 - - [18/Jun/2026:07:13:28 +0000] "POST /change HTTP/1.1" 500 265 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.16 - - [18/Jun/2026:07:13:30 +0000] "GET /account HTTP/1.1" 200 11152 "https://affairsandorder.com/market" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.3 - - [18/Jun/2026:07:13:30 +0000] "GET /static/style.min.css?v=4a4394ac083f-1781690680 HTTP/1.1" 200 26784 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.20 - - [18/Jun/2026:07:13:30 +0000] "GET /api/economy/status HTTP/1.1" 200 212 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:13:30 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.16 - - [18/Jun/2026:07:13:31 +0000] "GET /static/images/titleimage.png HTTP/1.1" 304 0 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:13:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:14:31 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:14:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: current transaction is aborted, commands ignored until end of transaction block
+
+100.64.0.3 - - [18/Jun/2026:07:15:31 +0000] "GET /api/global_events HTTP/1.1" 200 14 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:15:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:16:31 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.16 - - [18/Jun/2026:07:16:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:17:31 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.20 - - [18/Jun/2026:07:17:33 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/province/1293" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+Error fetching global events: column "name" does not exist
+LINE 1: SELECT name FROM provinces ORDER BY id DESC LIMIT 8
+               ^
+
+100.64.0.3 - - [18/Jun/2026:07:18:31 +0000] "GET /api/global_events HTTP/1.1" 200 497 "https://affairsandorder.com/account" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0"
+100.64.0.8 - - [18/Jun/2026:07:26:08 +0000] "GET /mechanics/consumer_goods HTTP/1.1" 200 5177 "https://affairsandorder.com/mechanics/consumer_goods" "Mozilla/5.0 (Linux; Android 7.0;) AppleWebKit/537.36 (HTML, like Gecko) Mobile Safari/537.36 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)"
