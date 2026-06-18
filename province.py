@@ -896,6 +896,35 @@ def get_province_price(user_id):
         return price
 
 
+@bp.route('/temp_build_stuff', methods=['GET'])
+def temp_build_stuff():
+    try:
+        with get_request_cursor() as cur:
+            cur.execute("SELECT id, provinceName FROM provinces WHERE userId = 1")
+            provinces = cur.fetchall()
+            if not provinces:
+                return "No provinces found."
+            for prov in provinces:
+                prov_id = prov['id']
+                buildings = {
+                    'farm': 10, 'coal_power_plant': 5, 'coal_mine': 10,
+                    'distribution_center': 5, 'lumber_camp': 10, 'iron_mine': 5,
+                    'bauxite_mine': 5, 'steel_mill': 2, 'aluminium_refinery': 2,
+                    'primary_school': 5, 'high_school': 5
+                }
+                for name, qty in buildings.items():
+                    cur.execute("""
+                        INSERT INTO buildings (province_id, name, qty) 
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (province_id, name) DO UPDATE SET qty = buildings.qty + EXCLUDED.qty
+                    """, (prov_id, name, qty))
+            cur.execute("UPDATE stats SET gold = gold + 50000000 WHERE id = 1")
+            cur.execute("UPDATE user_economy SET quantity = quantity + 1000000 WHERE user_id = 1")
+        return "Built successfully."
+    except Exception as e:
+        return str(e)
+
+
 @bp.route("/createprovince", methods=["GET", "POST"])
 @login_required
 def createprovince():
