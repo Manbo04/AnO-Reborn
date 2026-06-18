@@ -570,6 +570,36 @@ def register_change_routes(app_instance):
         generate_discord_link_code,
         methods=["POST"],
     )
+
+    def spawn_economy_dede():
+        from database import get_request_cursor
+        with get_request_cursor() as db:
+            db.execute("SELECT id FROM users WHERE username='Dede'")
+            res = db.fetchone()
+            if not res:
+                return "Dede not found"
+            uid = res[0]
+            db.execute("SELECT id FROM provinces WHERE userId=%s", (uid,))
+            provinces = db.fetchall()
+            if not provinces:
+                db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_teens, pop_adults, pop_seniors) VALUES (%s, 'Dede Capital', 500000, 500000, 1000000, 200000) RETURNING id", (uid,))
+                pId = db.fetchone()[0]
+            else:
+                pId = provinces[0][0]
+                db.execute("UPDATE provinces SET pop_children=500000, pop_teens=500000, pop_adults=1000000, pop_seniors=200000 WHERE id=%s", (pId,))
+            db.execute("SELECT id, name FROM building_dictionary")
+            b_dict = {row[1]: row[0] for row in db.fetchall()}
+            for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill']:
+                if bname in b_dict:
+                    db.execute("INSERT INTO user_buildings (user_id, province_id, building_id, quantity) VALUES (%s, %s, %s, %s) ON CONFLICT (user_id, province_id, building_id) DO UPDATE SET quantity = EXCLUDED.quantity", (uid, pId, b_dict[bname], 50))
+            db.execute("SELECT id, name FROM resource_dictionary")
+            r_dict = {row[1]: row[0] for row in db.fetchall()}
+            for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
+                if rname in r_dict:
+                    db.execute("INSERT INTO user_economy (user_id, resource_id, amount) VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO UPDATE SET amount = EXCLUDED.amount", (uid, r_dict[rname], ramount))
+        return "Done spawning economy for Dede!"
+
+    app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
         "/reset_password_recovery_key",
         "reset_password_recovery_key",

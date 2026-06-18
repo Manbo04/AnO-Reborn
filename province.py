@@ -1563,7 +1563,7 @@ def get_global_events():
                 events.append(f"Global market crisis: {row[0]} supplies have been completely exhausted!")
                 
             # 4. Recent treaties/alliances
-            db.execute("SELECT name FROM coalitions_normalized ORDER BY id DESC LIMIT 5")
+            db.execute("SELECT name FROM coalitions_normalized ORDER BY coalition_id DESC LIMIT 5")
             for res in db.fetchall():
                 events.append(f"Diplomatic breakthrough: The {res[0]} coalition gathers strength.")
                 
