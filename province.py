@@ -1547,7 +1547,7 @@ def get_global_events():
                 events.append(f"A new nation, {res[0]}, has risen to power in Terra.")
             
             # 2. Newest provinces
-            db.execute("SELECT name FROM provinces ORDER BY id DESC LIMIT 8")
+            db.execute("SELECT provinceName FROM provinces ORDER BY id DESC LIMIT 8")
             for res in db.fetchall():
                 events.append(f"New territory established: the province of {res[0]} has been settled.")
                 
@@ -1591,7 +1591,7 @@ def get_global_events():
                 "Blizzard conditions", "Dust storms", "Perfect harvest weather"
             ]
             import random
-            db.execute("SELECT name FROM provinces ORDER BY RANDOM() LIMIT 10")
+            db.execute("SELECT provinceName FROM provinces ORDER BY RANDOM() LIMIT 10")
             for p in db.fetchall():
                 condition = random.choice(weather_conditions)
                 events.append(f"Weather Update: {condition} reported in the province of {p[0]}.")
