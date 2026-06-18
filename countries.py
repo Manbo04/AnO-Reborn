@@ -316,9 +316,9 @@ def get_revenue(cId, db=None):
                 )
                 demo_row = db.fetchone()
                 if demo_row:
-                    pw_sum = demo_row[0] or 0
-                    pc_sum = demo_row[1] or 0
-                    pe_sum = demo_row[2] or 0
+                    pw_sum = float(demo_row[0] or 0)
+                    pc_sum = float(demo_row[1] or 0)
+                    pe_sum = float(demo_row[2] or 0)
                     total_cg_need = (
                         pw_sum
                         * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
