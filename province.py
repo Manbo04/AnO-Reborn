@@ -922,7 +922,8 @@ def temp_build_stuff():
             cur.execute("UPDATE user_economy SET quantity = quantity + 1000000 WHERE user_id = 1")
         return "Built successfully."
     except Exception as e:
-        return str(e)
+        import traceback
+        return traceback.format_exc()
 
 
 @bp.route("/createprovince", methods=["GET", "POST"])
