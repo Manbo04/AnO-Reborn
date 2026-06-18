@@ -1676,12 +1676,11 @@ def temp_build_stuff_real():
             starter_res = ['lumber', 'iron', 'coal', 'rations', 'steel', 'components', 'aluminium', 'oil']
             for res_name in starter_res:
                 cur.execute("""
-                    INSERT INTO user_economy (user_id, resource_id, quantity, price)
+                    INSERT INTO user_economy (user_id, resource_id, quantity)
                     VALUES (
                         1,
                         (SELECT resource_id FROM resource_dictionary WHERE name = %s),
-                        1000000,
-                        0
+                        1000000
                     )
                     ON CONFLICT (user_id, resource_id) DO UPDATE SET
                         quantity = user_economy.quantity + EXCLUDED.quantity
