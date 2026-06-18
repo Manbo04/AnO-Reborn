@@ -1732,18 +1732,20 @@ def temp_debug_revenue():
             for u in users:
                 inf = get_influence(u[0], db=cur)
                 if inf > 1000000:
-                    inf_list.append({"user": u[1], "influence": inf})
+                    inf_list.append({"user_id": u[0], "user": u[1], "influence": inf})
             inf_list.sort(key=lambda x: x["influence"], reverse=True)
             
             # For the top user, get all their resources to see the exploit
             if inf_list:
-                top_id = users[0][0] # just use a known id or query stats
-                cur.execute("SELECT * FROM stats WHERE id=%s", (inf_list[0]['user'],))
+                cur.execute("SELECT * FROM stats WHERE id=%s", (inf_list[0]['user_id'],))
                 stats = cur.fetchone()
+                cur.execute("SELECT r.name, u.quantity FROM user_economy u JOIN resource_dictionary r ON u.resource_id = r.id WHERE u.user_id=%s", (inf_list[0]['user_id'],))
+                economy = cur.fetchall()
             else:
                 stats = None
+                economy = None
                 
-            return {"top_influence": inf_list[:10], "stats": stats}
+            return {"top_influence": inf_list[:10], "stats": stats, "economy": economy}
     except Exception as e:
         import traceback
         return str(traceback.format_exc())
