@@ -46,6 +46,7 @@ def _cleanup_user(db, uid, members_tbl):
     db.execute("DELETE FROM colBanksRequests WHERE reqId = %s", (uid,))
     db.execute(f"DELETE FROM {members_tbl} WHERE userid = %s", (uid,))
     db.execute("DELETE FROM requests WHERE reqId = %s", (uid,))
+    db.execute("DELETE FROM referral_active_days WHERE referred_user_id = %s", (uid,))
     db.execute("DELETE FROM stats WHERE id = %s", (uid,))
     db.execute("DELETE FROM users WHERE id = %s", (uid,))
 
