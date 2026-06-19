@@ -114,7 +114,9 @@ jobs:
         run: python init_db_railway.py
 
       - name: Apply schema compatibility
-        run: python scripts/apply_schema_compat.py
+        run: |
+          python scripts/apply_schema_compat.py
+          python scripts/apply_all_pending_migrations.py
 
       - name: Run DB-backed coalition and schema tests
         run: |
