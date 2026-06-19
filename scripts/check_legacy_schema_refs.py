@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP_DIRS = {"tests", "scripts", "venv310", ".venv_test", "mcp-server", "node_modules", ".venv", "venv", "test_env"}
+SKIP_DIRS = {"tests", "scripts", "venv310", ".venv_test", "mcp-server", "node_modules", ".venv", "venv", "test_env", "myvenv", "env", ".local"}
 PATTERNS = [
     re.compile(r"\bFROM\s+proInfra\b", re.I),
     re.compile(r"\bFROM\s+resources\b", re.I),

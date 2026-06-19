@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 # Order matters; 0001-0010 assumed applied on long-lived prod DBs.
 MIGRATION_FILES = [
