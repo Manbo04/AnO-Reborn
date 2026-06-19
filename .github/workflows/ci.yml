@@ -116,11 +116,13 @@ jobs:
       - name: Apply schema compatibility
         run: |
           python scripts/apply_schema_compat.py
-          psql $DATABASE_URL -f migrations/0002_normalize_economy_military.sql || true
-          psql $DATABASE_URL -f migrations/0003_normalize_diplomacy_market.sql || true
-          psql $DATABASE_URL -f migrations/0004_normalize_infrastructure_tech.sql || true
-          psql $DATABASE_URL -f migrations/0005_finalize_normalized_cleanup.sql || true
-          psql $DATABASE_URL -f migrations/0007_seed_unit_dictionary.sql || true
+          for file in migrations/000*.sql migrations/0010*.sql migrations/01*.py migrations/016*.sql; do
+            if [[ $file == *.sql ]]; then
+              psql $DATABASE_URL -f "$file" || true
+            elif [[ $file == *.py ]]; then
+              python "$file" || true
+            fi
+          done
           python scripts/apply_all_pending_migrations.py
 
       - name: Run DB-backed coalition and schema tests
