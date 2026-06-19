@@ -1067,6 +1067,19 @@
 
                 <form method="POST" enctype="multipart/form-data" class="country-customize-form">
 
+                    <section class="country-customize-section country-name-studio" aria-labelledby="country-name-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">badge</span>
+                            <div>
+                                <h3 id="country-name-heading" class="country-customize-section-title">Nation Name</h3>
+                                <p class="country-customize-section-hint">Choose a powerful name for your country. Letters and numbers only.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-editor-wrap" style="padding: 15px 20px;">
+                            <input type="text" name="countryName" class="loginsignupinput" value="{{ username|e }}" placeholder="New Nation Name" minlength="3" maxlength="20" pattern="[a-zA-Z0-9 ]+">
+                        </div>
+                    </section>
+
                     <section class="country-customize-section country-flag-studio" aria-labelledby="country-flag-heading">
                         <div class="country-customize-section-head">
                             <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">flag</span>

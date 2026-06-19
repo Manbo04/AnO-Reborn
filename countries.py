@@ -1309,6 +1309,14 @@ def update_info():
                 "UPDATE users SET description=%s WHERE id=%s", (description, cId)
             )
 
+        # Name changing
+        new_name = request.form.get("countryName", "").strip()
+        if new_name and len(new_name) >= 3 and len(new_name) <= 20:
+            db.execute("SELECT id FROM users WHERE username=%s AND id != %s", (new_name, cId))
+            if db.fetchone():
+                return error(400, "Nation name is already taken")
+            db.execute("UPDATE users SET username=%s WHERE id=%s", (new_name, cId))
+
         # Flag changing
         ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg"]
 
