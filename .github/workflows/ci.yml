@@ -116,6 +116,11 @@ jobs:
       - name: Apply schema compatibility
         run: |
           python scripts/apply_schema_compat.py
+          psql $DATABASE_URL -f migrations/0002_normalize_economy_military.sql || true
+          psql $DATABASE_URL -f migrations/0003_normalize_diplomacy_market.sql || true
+          psql $DATABASE_URL -f migrations/0004_normalize_infrastructure_tech.sql || true
+          psql $DATABASE_URL -f migrations/0005_finalize_normalized_cleanup.sql || true
+          psql $DATABASE_URL -f migrations/0007_seed_unit_dictionary.sql || true
           python scripts/apply_all_pending_migrations.py
 
       - name: Run DB-backed coalition and schema tests
