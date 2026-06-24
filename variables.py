@@ -1,7 +1,7 @@
 # File for variables that are repeated multiple times in other files
 # (for example, the resources list)
 
-DEFAULT_TAX_INCOME = 0.50
+DEFAULT_TAX_INCOME = 0.75
 CONSUMER_GOODS_TAX_MULTIPLIER = 1.5
 NO_ENERGY_TAX_MULTIPLIER = (
     0.85  # How much the tax income will decrease if there's no energy -15%
@@ -422,57 +422,57 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     ################
     # Industry — synced to NEW_INFRA engine values
     "farms_money": 3000,
-    "farms_plus": {"rations": 12},
+    "farms_plus": {"rations": 48},
     "farms_effect": [{"pollution": 1}],
     "pumpjacks_money": 9500,
-    "pumpjacks_plus": {"oil": 24},
+    "pumpjacks_plus": {"oil": 96},
     "pumpjacks_effect": [{"pollution": 2}],
     "coal_mines_money": 4200,
-    "coal_mines_plus": {"coal": 31},
+    "coal_mines_plus": {"coal": 124},
     "coal_mines_effect": [{"pollution": 2}],
     "bauxite_mines_money": 8000,
-    "bauxite_mines_plus": {"bauxite": 20},
+    "bauxite_mines_plus": {"bauxite": 80},
     "bauxite_mines_effect": [{"pollution": 2}],
     "copper_mines_money": 5000,
-    "copper_mines_plus": {"copper": 25},
+    "copper_mines_plus": {"copper": 100},
     "copper_mines_effect": [{"pollution": 2}],
     "uranium_mines_money": 45000,
-    "uranium_mines_plus": {"uranium": 12},
+    "uranium_mines_plus": {"uranium": 48},
     "uranium_mines_effect": [{"pollution": 1}],
     "lead_mines_money": 7200,
-    "lead_mines_plus": {"lead": 19},
+    "lead_mines_plus": {"lead": 76},
     "lead_mines_effect": [{"pollution": 2}],
     "iron_mines_money": 11000,
-    "iron_mines_plus": {"iron": 23},
+    "iron_mines_plus": {"iron": 92},
     "iron_mines_effect": [{"pollution": 2}],
     "lumber_mills_money": 7500,
-    "lumber_mills_plus": {"lumber": 35},
+    "lumber_mills_plus": {"lumber": 140},
     "lumber_mills_effect": [{"pollution": 1}],
     ################
     # Processing — synced to NEW_INFRA engine values
     "component_factories_money": 50000,
     "component_factories_convert_minus": [
-        {"copper": 20},
-        {"steel": 10},
-        {"aluminium": 15},
+        {"copper": 80},
+        {"steel": 40},
+        {"aluminium": 60},
     ],
-    "component_factories_plus": {"components": 5},
+    "component_factories_plus": {"components": 20},
     "component_factories_effect": [{"pollution": 5}],
     "steel_mills_money": 60000,
-    "steel_mills_convert_minus": [{"coal": 35}, {"iron": 35}],
-    "steel_mills_plus": {"steel": 12},
+    "steel_mills_convert_minus": [{"coal": 140}, {"iron": 140}],
+    "steel_mills_plus": {"steel": 48},
     "steel_mills_effect": [{"pollution": 4}],
     "ammunition_factories_money": 15000,
-    "ammunition_factories_convert_minus": [{"copper": 10}, {"lead": 20}],
-    "ammunition_factories_plus": {"ammunition": 12},
+    "ammunition_factories_convert_minus": [{"copper": 40}, {"lead": 80}],
+    "ammunition_factories_plus": {"ammunition": 48},
     "ammunition_factories_effect": [{"pollution": 3}],
     "aluminium_refineries_money": 42000,
-    "aluminium_refineries_convert_minus": [{"bauxite": 15}],
-    "aluminium_refineries_plus": {"aluminium": 16},
+    "aluminium_refineries_convert_minus": [{"bauxite": 60}],
+    "aluminium_refineries_plus": {"aluminium": 64},
     "aluminium_refineries_effect": [{"pollution": 3}],
     "oil_refineries_money": 35000,
-    "oil_refineries_convert_minus": [{"oil": 20}],
-    "oil_refineries_plus": {"gasoline": 11},
+    "oil_refineries_convert_minus": [{"oil": 80}],
+    "oil_refineries_plus": {"gasoline": 44},
     "oil_refineries_effect": [{"pollution": 6}],
 }
 
@@ -605,7 +605,7 @@ PROVINCE_UNIT_PRICES = {
     "pumpjacks_resource": {"iron": 22000},
     "coal_mines_price": 3500000,
     "coal_mines_resource": {"lumber": 45000},
-    "bauxite_mines_price": 3200000,
+    "bauxite_mines_price": 2400000,
     "bauxite_mines_resource": {"lumber": 30000},
     "copper_mines_price": 2800000,
     "copper_mines_resource": {"lumber": 38000},
@@ -728,74 +728,74 @@ NEW_INFRA = {  # (NEW INFRA)
     # INDUSTRY
     "farms": {
         "money": 3000,
-        "plus": {"rations": 12},
+        "plus": {"rations": 48},
         "eff": {"pollution": 1},
     },
-    "pumpjacks": {"money": 9500, "plus": {"oil": 24}, "eff": {"pollution": 2}},
+    "pumpjacks": {"money": 9500, "plus": {"oil": 96}, "eff": {"pollution": 2}},
     "coal_mines": {
         "money": 4200,  # Costs $10k
-        "plus": {"coal": 31},
+        "plus": {"coal": 124},
         "eff": {"pollution": 2},
     },
     "bauxite_mines": {
         "money": 8000,  # Costs $8k
-        "plus": {"bauxite": 20},
+        "plus": {"bauxite": 80},
         "eff": {"pollution": 2},
     },
     "copper_mines": {
         "money": 5000,
-        "plus": {"copper": 25},
+        "plus": {"copper": 100},
         "eff": {"pollution": 2},
     },
     "uranium_mines": {
         "money": 45000,  # Costs $18k
-        "plus": {"uranium": 12},
+        "plus": {"uranium": 48},
         "eff": {"pollution": 1},
     },
     "lead_mines": {
         "money": 7200,
-        "plus": {"lead": 19},
+        "plus": {"lead": 76},
         "eff": {"pollution": 2},
     },
     "iron_mines": {
         "money": 11000,
-        "plus": {"iron": 23},
+        "plus": {"iron": 92},
         "eff": {"pollution": 2},
     },
     "lumber_mills": {
         "money": 7500,
-        "plus": {"lumber": 35},
+        "plus": {"lumber": 140},
         "eff": {"pollution": 1},
     },
     # PROCESSING
     "component_factories": {
         "money": 50000,  # Costs $220k
-        "minus": {"copper": 20, "steel": 10, "aluminium": 15},
-        "plus": {"components": 5},
+        "minus": {"copper": 80, "steel": 40, "aluminium": 60},
+        "plus": {"components": 20},
         "eff": {"pollution": 5},
     },
     "steel_mills": {
         "money": 60000,
-        "minus": {"coal": 35, "iron": 35},
-        "plus": {"steel": 12},
+        "minus": {"coal": 140, "iron": 140},
+        "plus": {"steel": 48},
         "eff": {"pollution": 4},
     },
     "ammunition_factories": {
         "money": 15000,
-        "minus": {"copper": 10, "lead": 20},
-        "plus": {"ammunition": 12},
+        "minus": {"copper": 40, "lead": 80},
+        "plus": {"ammunition": 48},
         "eff": {"pollution": 3},
     },
     "aluminium_refineries": {
         "money": 42000,
-        "minus": {"bauxite": 15},
-        "plus": {"aluminium": 16},
+        "minus": {"bauxite": 60},
+        "plus": {"aluminium": 64},
         "eff": {"pollution": 3},
     },
     "oil_refineries": {
         "money": 35000,
-        "minus": {"oil": 20},
-        "plus": {"gasoline": 11},
+        "minus": {"oil": 80},
+        "plus": {"gasoline": 44},
         "eff": {"pollution": 6},
     },
 }
