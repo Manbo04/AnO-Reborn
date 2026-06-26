@@ -27,6 +27,10 @@ def _ensure_tutorial_columns(db) -> None:
         "ALTER TABLE stats ADD COLUMN IF NOT EXISTS "
         "tutorial_graduated_at TIMESTAMPTZ"
     )
+    db.execute(
+        "ALTER TABLE stats ADD COLUMN IF NOT EXISTS "
+        "tutorial_step INTEGER DEFAULT 0"
+    )
     _columns_ready = True
 
 
