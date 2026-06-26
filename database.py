@@ -414,11 +414,11 @@ class DatabasePool:
                 self._pool = pool_cls(
                     minconn=1,
                     maxconn=maxconn,
-                    database=os.getenv("PG_DATABASE"),
-                    user=os.getenv("PG_USER"),
-                    password=os.getenv("PG_PASSWORD"),
-                    host=os.getenv("PG_HOST"),
-                    port=os.getenv("PG_PORT"),
+                    database=os.getenv("LOCAL_PG_DATABASE") or os.getenv("PG_DATABASE"),
+                    user=os.getenv("LOCAL_PG_USER") or os.getenv("PG_USER"),
+                    password=os.getenv("LOCAL_PG_PASSWORD") or os.getenv("PG_PASSWORD"),
+                    host=os.getenv("LOCAL_PG_HOST") or os.getenv("PG_HOST"),
+                    port=os.getenv("LOCAL_PG_PORT") or os.getenv("PG_PORT"),
                     # Connection timeout settings to prevent hanging
                     connect_timeout=10,  # 10 seconds to establish connection
                     options="-c statement_timeout=30000",  # 30 second query timeout
@@ -427,7 +427,7 @@ class DatabasePool:
                     keepalives_idle=30,  # Sendkeepalive after 30 seconds idle
                     keepalives_interval=10,  # Retry every 10 seconds
                     keepalives_count=3,
-                    sslmode="require" if "interchange" in os.getenv("PG_HOST", "") else "prefer",  # Give up after 3 failed keepalives
+                    sslmode="require" if "interchange" in (os.getenv("LOCAL_PG_HOST") or os.getenv("PG_HOST", "")) else "prefer",
                 )
                 # Create a queue to track available slots with timeout support
                 self._available = queue.Queue(maxsize=maxconn)
@@ -1297,6 +1297,24 @@ def ensure_schema_compat() -> None:
                         WHERE table_name = 'users' AND column_name = 'recovery_key'
                     ) THEN
                         ALTER TABLE users ADD COLUMN recovery_key VARCHAR(255);
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'is_verified'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'verification_token'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN verification_token VARCHAR(255);
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'token_created_at'
+                    ) THEN
+                        ALTER TABLE users ADD COLUMN token_created_at TIMESTAMP;
                     END IF;
                 END $$;
                 """

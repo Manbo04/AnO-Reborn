@@ -38,6 +38,8 @@ LEGACY_UPGRADE_TO_TECH = {
     "ballisticmissilesilo": "ballistic_missile_silo",
     "icbmsilo": "icbm_silo",
     "nucleartestingfacility": "nuclear_testing_facility",
+    "integratedsteelmaking": "integrated_steelmaking",
+    "electricarcfurnace": "electric_arc_furnace",
 }
 
 TECH_TO_LEGACY_UPGRADE = {v: k for k, v in LEGACY_UPGRADE_TO_TECH.items()}
