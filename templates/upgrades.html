@@ -487,6 +487,69 @@
                     </div>
 
                 </div>
+                
+                <div class="menudiv">
+
+                    <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2left">
+
+                            <h3 class="templatecontentheadercenter">Integrated Steelmaking</h3>
+
+                            <p class="templatecontentpleft">Ironworks that boosts Steel Mills' production by 36% nationwide. Iron and Coal usages are proportionally increased to create more Steel.
+                            </p>
+
+                            <ul>Costs {{ tech_costs.get("integratedsteelmaking", 0) | weight_fmt }} components</ul>
+                            <div class="purchasemilitarydiv">
+                                {% if not upgrades["integratedsteelmaking"] %}
+                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/integratedSteelmaking">
+                                        <span class="material-icons-outlined">
+                                            add_circle_outline
+                                        </span>Research</button> {% endif %} {% if upgrades["integratedsteelmaking"] %}
+                                <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+                        <div class="templatedivflex2left">
+
+                            <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/integratedsteelmaking.avif') }}?v=2" />
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="menudiv">
+
+                    <div class="templatedivflex2 menuflex warflexparentcolors">
+                        <div class="templatedivflex2left">
+
+                            <h3 class="templatecontentheadercenter">Electric Arc Furnace</h3>
+
+                            <p class="templatecontentpleft">A modern steelmaking method that consumes less raw iron and coal, but uses immense amounts of electricity.
+                            </p>
+
+                            <ul>Costs {{ tech_costs.get("electricarcfurnace", 0) | weight_fmt }} components</ul>
+                            <div class="purchasemilitarydiv">
+                                {% if not upgrades["electricarcfurnace"] %}
+                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/electricArcFurnace">
+                                        <span class="material-icons-outlined">
+                                            add_circle_outline
+                                        </span>Research</button> {% endif %} {% if upgrades["electricarcfurnace"] %}
+                                <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+                        <div class="templatedivflex2left">
+
+                            <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/electricarcfurnace.avif') }}?v=2" />
+                        </div>
+                    </div>
+
+                </div>
+
         </div>
 
         <!--MILITARY-->

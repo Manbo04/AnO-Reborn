@@ -197,6 +197,8 @@ def province(pId):
                 "ballisticmissilesilo": "ballistic_missile_silo",
                 "icbmsilo": "icbm_silo",
                 "nucleartestingfacility": "nuclear_testing_facility",
+                "integratedsteelmaking": "integrated_steelmaking",
+                "electricarcfurnace": "electric_arc_furnace",
             }
             tech_to_legacy = {v: k for k, v in legacy_upgrade_to_tech.items()}
             upgrades = {k: False for k in legacy_upgrade_to_tech.keys()}
