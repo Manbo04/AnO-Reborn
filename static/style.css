@@ -5043,6 +5043,15 @@ body:has(.loginsignupdiv) .footer {
     border-radius: 2px;
     object-fit: cover;
 }
+.researched-badge {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 5px auto !important;
+    width: fit-content;
+    text-align: center !important;
+}
 .researched-badge .material-icons-outlined {
     vertical-align: middle;
 }
