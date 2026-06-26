@@ -1777,6 +1777,13 @@ body:has(.navbarparent .templatecontainer) {
     margin-top: 0;
 }
 
+.d-flex-center {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
 .templatedivbutton {
     width: fit-content;
     width: -moz-fit-content;
