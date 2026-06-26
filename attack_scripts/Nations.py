@@ -335,7 +335,7 @@ class Nation:
         with get_db_connection() as connection:
             db = connection.cursor()
             db.execute(
-                "SELECT war_id FROM wars WHERE (attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
                 (
                     id,
                     id,
@@ -392,7 +392,7 @@ class Nation:
     def set_peace(db, connection, war_id=None, options=None):
         if war_id is not None:
             db.execute(
-                "UPDATE wars SET peace_date=(%s) WHERE war_id=(%s)",
+                "UPDATE wars SET peace_date=(%s) WHERE id=(%s)",
                 (time.time(), war_id),
             )
         else:
@@ -523,8 +523,7 @@ class Military(Nation):
 
         with get_db_cursor() as db:
             db.execute(
-                "SELECT war_id FROM wars WHERE (attacker_id=(%s) OR attacker_id=(%s)) AND (defender_id=(%s) OR defender_id=(%s))"
-                " AND peace_date IS NULL",
+                "SELECT id FROM wars WHERE (attacker=(%s) OR attacker=(%s)) AND (defender=(%s) OR defender=(%s)) AND peace_date IS NULL",
                 (
                     attacker.user_id,
                     defender.user_id,
@@ -536,7 +535,7 @@ class Military(Nation):
             if not rows:
                 return (None, 0)
             war_id = rows[-1][0]
-            db.execute(f"SELECT {column} FROM wars WHERE war_id=(%s)", (war_id,))
+            db.execute(f"SELECT {column} FROM wars WHERE id=(%s)", (war_id,))
             morale = fetchone_first(db, 0)
             return (war_id, morale)
 
@@ -558,7 +557,7 @@ class Military(Nation):
             # (winners[0], winners[0], losers[0], losers[0]))
 
             db.execute(
-                "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker_id=%s OR defender_id=%s) AND (attacker_id=%s OR defender_id=%s)",
+                "SELECT CASE WHEN attacker_morale=0 THEN defender_morale\n ELSE attacker_morale\n END\n FROM wars WHERE (attacker=%s OR defender=%s) AND (attacker=%s OR defender=%s)",
                 (winners[0], winners[0], losers[0], losers[0]),
             )
             winner_remaining_morale = fetchone_first(db, 0)
@@ -769,7 +768,7 @@ class Military(Nation):
             db = connection.cursor()
 
             db.execute(
-                "SELECT attacker_id FROM wars WHERE (attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
+                "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
                 (winner.user_id, winner.user_id),
             )
             abs_attacker = fetchone_first(db, 0)
