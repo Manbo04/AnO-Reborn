@@ -2309,6 +2309,8 @@ def generate_province_revenue():  # Runs each hour
                 "ballisticmissilesilo": "ballistic_missile_silo",
                 "icbmsilo": "icbm_silo",
                 "nucleartestingfacility": "nuclear_testing_facility",
+                "integratedsteelmaking": "integrated_steelmaking",
+                "electricarcfurnace": "electric_arc_furnace",
             }
             tech_to_legacy = {v: k for k, v in legacy_upgrade_to_tech.items()}
 
@@ -2782,6 +2784,23 @@ def generate_province_revenue():  # Runs each hour
                             # Track energy in provinces_data for batch update
                             if province_id in provinces_data:
                                 provinces_data[province_id]["energy"] = new_energy
+                                
+                        elif unit == "steel_mills" and upgrades.get("electricarcfurnace"):
+                            prov_data = provinces_data.get(province_id, {})
+                            current_energy = prov_data.get("energy", 0)
+
+                            new_energy = (
+                                current_energy - (unit_amount * 2)
+                            )  # EAF consumes 2 energy per mill
+
+                            if new_energy < 0:
+                                has_enough_stuff["status"] = False
+                                has_enough_stuff["issues"].append("energy")
+                                new_energy = 0
+
+                            # Track energy in provinces_data for batch update
+                            if province_id in provinces_data:
+                                provinces_data[province_id]["energy"] = new_energy
 
                         # Use preloaded resources instead of per-building queries
                         resources = resources_map.get(user_id, {})
@@ -2805,6 +2824,14 @@ def generate_province_revenue():  # Runs each hour
                             # LARGER FORGES
                             if unit == "steel_mills" and upgrades.get("largerforges"):
                                 amount *= 0.7
+                                
+                            # INTEGRATED STEELMAKING
+                            if unit == "steel_mills" and upgrades.get("integratedsteelmaking"):
+                                amount *= 1.36
+                                
+                            # ELECTRIC ARC FURNACE
+                            if unit == "steel_mills" and upgrades.get("electricarcfurnace"):
+                                amount *= 0.5
 
                             new_resource = effective_current - amount
 
@@ -2896,6 +2923,10 @@ def generate_province_revenue():  # Runs each hour
                             plus_amount += int(
                                 land * variables.LAND_FARM_PRODUCTION_ADDITION
                             )
+                            
+                        if unit == "steel_mills":
+                            if upgrades.get("integratedsteelmaking"):
+                                plus_amount_multiplier += 0.36
 
                         # PHASE 3: Apply workforce efficiency multiplier
                         # (reduces production if understaffed)
