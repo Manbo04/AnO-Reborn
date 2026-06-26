@@ -259,7 +259,7 @@ def reset_password(code):
                 if user_id is None:
                     return error(400, "Invalid or expired reset code.")
 
-                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode(
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(12)).decode(
                     "utf-8"
                 )
                 set_user_password(db, int(user_id), hashed)
@@ -390,7 +390,7 @@ def create_recovery_key_for_user(db, user_id: int):
         return None
 
     raw_key = secrets.token_hex(8)
-    hashed_key = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt(14)).decode(
+    hashed_key = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt(12)).decode(
         "utf-8"
     )
     db.execute("UPDATE users SET recovery_key=%s WHERE id=%s", (hashed_key, user_id))
@@ -519,7 +519,7 @@ def discord_reset_password_page():
 
         try:
             with get_request_cursor() as db:
-                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(14)).decode(
+                hashed = bcrypt.hashpw(new_password, bcrypt.gensalt(12)).decode(
                     "utf-8"
                 )
                 set_user_password(db, int(user_id), hashed)
