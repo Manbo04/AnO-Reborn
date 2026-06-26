@@ -593,6 +593,30 @@
 
     </footer>
 
+    {% if session.get('user_id') %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/tutorial/progress', { credentials: 'same-origin' })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (!data || !data.ok || data.graduated || typeof window.TutorialSpotlight === 'undefined') return;
+                    
+                    const step = data.tutorial_step || 0;
+                    const spotlight = new window.TutorialSpotlight();
+                    
+                    if (step === 0 && window.location.pathname.startsWith('/provinces')) {
+                        spotlight.highlight('#btn-new-province');
+                    } else if (step === 1 && window.location.pathname.includes('province_view')) {
+                        spotlight.highlight('#build-farm');
+                    } else if (step === 2 && window.location.pathname.includes('province_view')) {
+                        spotlight.highlight('#build-mine');
+                    } else if (step === 3) {
+                        // Tutorial finished! 
+                        spotlight.clear();
+                    }
+                });
+        });
+    </script>
+    {% endif %}
 </body>
-
 </html>
