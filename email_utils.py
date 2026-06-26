@@ -68,14 +68,14 @@ def verify_email_token(token):
     Returns:
         str: The email address if valid, None otherwise
     """
-    from database import get_connection
+    from database import get_db_connection
     from datetime import timedelta
 
     if not token:
         return None
 
     try:
-        conn = get_connection()
+        conn = get_db_connection()
         cur = conn.cursor()
 
         # Find user with this token, check it's not expired (24 hour validity)
