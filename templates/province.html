@@ -272,12 +272,12 @@
                             <td>{{ units["primary_school"] }} Primary Schools</td>
                         </tr>
                         <tr>
-                            <td></td>
+                            <td>{{ units["wind_farms"] }} Wind Farms</td>
                             <td>{{ units["distribution_centers"] }} Distribution Centers</td>
                             <td>{{ units["high_school"] }} High Schools</td>
                         </tr>
                         <tr>
-                            <td></td>
+                            <td>{{ units["geothermal_plants"] }} Geothermal Plants</td>
                             <td>{{ units["industrial_district"] }} Industrial Districts</td>
                             {% if upgrades["highspeedrail"] %}
                             <td>{{ units["monorails"] }} Bullet Trains</td>
@@ -429,6 +429,94 @@
                             <div class="templatedivflex2right province-card-media">
 
                                 <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'solar_fields')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Wind Farms</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["wind_farms"] }} Wind Farms</h3>
+
+                                <p class="templatecontentpleft">Wind farms provide a renewable source of energy to support your infrastructure.</p>
+
+                                <ul>Wind Farms cost {{ infra["wind_farms_money"] | fmt }} per hour and contribute +{{ infra["wind_farms_plus"]["energy"]}} electricity
+                                </ul>
+                                <ul>{{ "wind_farms" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="wind_farms" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/wind_farms/{{ province['id'] }}"><span class="material-icons-outlined">
+                                add_circle_outline
+                            </span>Buy</button>
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/wind_farms/{{ province['id'] }}"><span class="material-icons-outlined">
+                                remove_circle_outline
+                            </span>Sell</button>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'wind_farms')) }}?v=1" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Geothermal Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["geothermal_plants"] }} Geothermal Plants</h3>
+
+                                <p class="templatecontentpleft">Geothermal plants tap into the earth's natural heat to provide massive amounts of zero-emission electricity.</p>
+
+                                <ul>Geothermal Plants cost {{ infra["geothermal_plants_money"] | fmt }} per hour and contribute +{{ infra["geothermal_plants_plus"]["energy"]}} electricity
+                                </ul>
+                                <ul>{{ "geothermal_plants" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="geothermal_plants" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/geothermal_plants/{{ province['id'] }}"><span class="material-icons-outlined">
+                                add_circle_outline
+                            </span>Buy</button>
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/geothermal_plants/{{ province['id'] }}"><span class="material-icons-outlined">
+                                remove_circle_outline
+                            </span>Sell</button>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'geothermal_plants')) }}?v=1" />
                             </div>
                         </div>
                     </div>
