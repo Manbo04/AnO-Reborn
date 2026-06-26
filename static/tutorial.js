@@ -691,3 +691,76 @@
     updateStatsUI();
     setChapter(progress.current || 0, false);
 })();
+
+
+class TutorialSpotlight {
+    constructor() {
+        this.overlay = document.createElement('div');
+        this.overlay.id = 'tutorial-spotlight-overlay';
+        document.body.appendChild(this.overlay);
+        
+        // Prevent clicks on the dark overlay from reaching other UI elements
+        this.overlay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        // Recalculate on resize to keep spotlight over the element
+        window.addEventListener('resize', () => {
+            if (this.currentTarget) {
+                this.highlight(this.currentTarget);
+            }
+        });
+    }
+
+    highlight(targetSelectorOrElement, padding = 5) {
+        let el = targetSelectorOrElement;
+        if (typeof targetSelectorOrElement === 'string') {
+            el = document.querySelector(targetSelectorOrElement);
+        }
+
+        if (!el) {
+            this.clear();
+            return;
+        }
+
+        this.currentTarget = el;
+        const rect = el.getBoundingClientRect();
+        
+        // Ensure bounds don't crash the polygon
+        const top = Math.max(0, rect.top - padding);
+        const left = Math.max(0, rect.left - padding);
+        const right = Math.min(window.innerWidth, rect.right + padding);
+        const bottom = Math.min(window.innerHeight, rect.bottom + padding);
+
+        // Clip-path polygon with a hole.
+        // Outer box goes clockwise, inner box (the hole) goes counter-clockwise.
+        const polygon = `polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 
+            ${left}px ${top}px, 
+            ${left}px ${bottom}px, 
+            ${right}px ${bottom}px, 
+            ${right}px ${top}px, 
+            ${left}px ${top}px
+        )`;
+
+        this.overlay.style.clipPath = polygon;
+        this.overlay.style.webkitClipPath = polygon; // Safari support
+        this.overlay.classList.add('active');
+        
+        // Scroll the element into view smoothly if not visible
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => this.highlight(el, padding), 300);
+        }
+    }
+
+    clear() {
+        this.currentTarget = null;
+        this.overlay.classList.remove('active');
+        this.overlay.style.clipPath = 'none';
+        this.overlay.style.webkitClipPath = 'none';
+    }
+}
+window.TutorialSpotlight = TutorialSpotlight;
+
