@@ -893,7 +893,7 @@ def declare_war():
             # Treaties check: Prevent war if an active Non-Aggression pact exists
             db.execute(
                 """
-                SELECT id FROM treaties 
+                SELECT id FROM nation_treaties 
                 WHERE status = 'active' AND treaty_type = 'non_aggression' 
                 AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
                 """, 
