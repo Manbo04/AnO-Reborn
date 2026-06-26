@@ -220,6 +220,18 @@ def purchase_building(
     except Exception:
         pass
 
+    # === TUTORIAL ACTION INTERCEPTION ===
+    try:
+        from app_core.tutorial.routes import advance_tutorial_step_by_action
+        if name == "farms":
+            advance_tutorial_step_by_action(db, user_id, "build_farm")
+        elif name == "distribution_centers":
+            advance_tutorial_step_by_action(db, user_id, "build_distribution_center")
+        elif name == "mines":
+            advance_tutorial_step_by_action(db, user_id, "build_mine")
+    except Exception as exc:
+        pass # Fail silently so we don't break the purchase transaction
+
     return {
         "building_name": name,
         "quantity": quantity,
