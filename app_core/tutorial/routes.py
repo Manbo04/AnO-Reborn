@@ -175,3 +175,60 @@ def claim_tutorial_reward():
             "message": " · ".join(messages) + " applied to your nation.",
         }
     )
+
+
+def advance_tutorial_step_by_action(db, user_id: int, action: str) -> None:
+    # Map the string action to the corresponding chapter index
+    ACTION_CHAPTER_MAP = {
+        "build_farm": 0,
+        "build_distribution_center": 1,
+        "build_mine": 2, 
+    }
+    
+    target_chapter = ACTION_CHAPTER_MAP.get(action)
+    if target_chapter is None:
+        return
+        
+    _ensure_tutorial_columns(db)
+    
+    # Try adding tutorial_step if it doesn't exist
+    try:
+        db.execute("ALTER TABLE stats ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
+    db.execute(
+        "SELECT tutorial_chapters_claimed FROM stats WHERE id = %s",
+        (user_id,)
+    )
+    row = db.fetchone()
+    if not row:
+        return
+        
+    claimed = list(row[0] or [])
+        
+    # Prevent claiming twice
+    if target_chapter in claimed:
+        return
+        
+    # Apply rewards automatically
+    from app_core.tutorial.rewards import CHAPTER_REWARDS
+    chapter_reward = CHAPTER_REWARDS.get(target_chapter, {})
+    
+    if chapter_reward:
+        from app_core.tutorial.routes import _apply_rewards
+        _apply_rewards(db, user_id, chapter_reward)
+        
+    claimed.append(target_chapter)
+    db.execute(
+        "UPDATE stats SET tutorial_chapters_claimed = %s, tutorial_step = %s WHERE id = %s",
+        (claimed, target_chapter + 1, user_id)
+    )
+    
+    # Invalidate user cache to ensure UI updates
+    try:
+        from database import invalidate_user_cache
+        invalidate_user_cache(user_id)
+    except Exception:
+        pass
+
