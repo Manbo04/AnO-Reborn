@@ -112,6 +112,7 @@ def main() -> None:
                 _mark_applied(cur, name)
             except Exception as exc:
                 print(f"  WARN {name}: {exc}")
+                conn.rollback()
 
     if not args.dry_run:
         from database import ensure_schema_compat
