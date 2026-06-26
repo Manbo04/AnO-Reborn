@@ -63,6 +63,15 @@ def tutorial():
     from flask import redirect, url_for
     return redirect("/provinces")
 
+@bp.route("/dev/reset_tutorial", methods=["GET"])
+@login_required
+def dev_reset_tutorial():
+    from database import get_request_cursor
+    user_id = session["user_id"]
+    with get_request_cursor() as db:
+        db.execute("UPDATE stats SET tutorial_step = 0, tutorial_chapters_claimed = '{}', tutorial_graduated_at = NULL WHERE id = %s", (user_id,))
+    return "Tutorial reset! Go to /provinces"
+
 @bp.route("/mechanics", methods=["GET"])
 def mechanics(): return render_template("mechanics.html")
 
