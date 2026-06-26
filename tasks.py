@@ -3698,7 +3698,7 @@ def task_manpower_increase():
             if not population:
                 continue
 
-            capable_population = population * 0.2
+            capable_population = float(population) * 0.2
             army_tradition = 0.5  # Increased for faster regeneration
             produced_manpower = int(capable_population * army_tradition)
 
