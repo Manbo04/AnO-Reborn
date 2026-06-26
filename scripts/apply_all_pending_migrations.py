@@ -113,6 +113,10 @@ def main() -> None:
             except Exception as exc:
                 print(f"  WARN {name}: {exc}")
                 conn.rollback()
+                try:
+                    cur.execute("ROLLBACK")
+                except Exception:
+                    pass
 
     if not args.dry_run:
         from database import ensure_schema_compat
