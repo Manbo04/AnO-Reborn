@@ -132,9 +132,9 @@ def persist_fight_results(
         # most-recent matching row). Use the same selection filter as the
         # legacy `morale_change` implementation.
         db.execute(
-            "SELECT war_id FROM wars WHERE "
-            "(attacker_id=(%s) OR attacker_id=(%s)) "
-            "AND (defender_id=(%s) OR defender_id=(%s))"
+            "SELECT id FROM wars WHERE "
+            "(attacker=(%s) OR attacker=(%s)) "
+            "AND (defender=(%s) OR defender=(%s)) "
             " AND peace_date IS NULL",
             (
                 winner.user_id,
