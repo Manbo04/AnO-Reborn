@@ -126,6 +126,14 @@ BUILDING_EMPLOYMENT_MATRICES = {
         "worker_count": 60000,
         "education": {"edu_highschool": 0.3, "edu_college": 0.7},
     },
+    "wind_farms": {
+        "worker_count": 40000,
+        "education": {"edu_highschool": 0.5, "edu_college": 0.5},
+    },
+    "geothermal_plants": {
+        "worker_count": 80000,
+        "education": {"edu_highschool": 0.2, "edu_college": 0.8},
+    },
     "industrial_district": {
         "worker_count": 200000,
         "education": {"edu_none": 0.8, "edu_highschool": 0.2},
@@ -234,6 +242,8 @@ ENERGY_UNITS = [
     "hydro_dams",
     "nuclear_reactors",
     "solar_fields",
+    "wind_farms",
+    "geothermal_plants",
 ]
 
 ENERGY_CONSUMERS = [
@@ -272,6 +282,8 @@ INFRA_TYPE_BUILDINGS = {
         "hydro_dams",
         "nuclear_reactors",
         "solar_fields",
+        "wind_farms",
+        "geothermal_plants",
     ],
     "retail": [
         "gas_stations",
@@ -318,6 +330,8 @@ BUILDINGS = [
     "hydro_dams",
     "nuclear_reactors",
     "solar_fields",
+    "wind_farms",
+    "geothermal_plants",
     "gas_stations",
     "general_stores",
     "farmers_markets",
@@ -373,6 +387,10 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "nuclear_reactors_money": 111000,
     "solar_fields_plus": {"energy": 3},
     "solar_fields_money": 13000,
+    "wind_farms_plus": {"energy": 2},
+    "wind_farms_money": 8000,
+    "geothermal_plants_plus": {"energy": 5},
+    "geothermal_plants_money": 20000,
     ####################
     # Retail — synced to NEW_INFRA engine values
     "distribution_centers_plus": {"consumer_goods": 8},
@@ -554,6 +572,10 @@ PROVINCE_UNIT_PRICES = {
     "nuclear_reactors_resource": {"steel": 500000},
     "solar_fields_price": 8000000,
     "solar_fields_resource": {"copper": 40000, "bauxite": 30000},
+    "wind_farms_price": 4000000,
+    "wind_farms_resource": {"copper": 20000, "bauxite": 15000},
+    "geothermal_plants_price": 12000000,
+    "geothermal_plants_resource": {"copper": 60000, "bauxite": 45000},
     # Retail / Consumer Goods (Tier 2-3)
     "gas_stations_price": 7000000,
     "gas_stations_resource": {"steel": 75000, "aluminium": 50000},
@@ -657,6 +679,8 @@ NEW_INFRA = {  # (NEW INFRA)
         "money": 111000,
     },
     "solar_fields": {"plus": {"energy": 3}, "money": 13000},
+    "wind_farms": {"plus": {"energy": 2}, "money": 8000},
+    "geothermal_plants": {"plus": {"energy": 5}, "money": 20000},
     # RETAIL
     "distribution_centers": {
         "plus": {"consumer_goods": 8},

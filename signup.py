@@ -857,7 +857,7 @@ def signup():
                 return error(400, "Passwords must match.")
 
             # Hashes the inputted password
-            hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8")
+            hashed = bcrypt.hashpw(password, bcrypt.gensalt(12)).decode("utf-8")
 
             # Check if email verification columns exist
             from email_utils import (

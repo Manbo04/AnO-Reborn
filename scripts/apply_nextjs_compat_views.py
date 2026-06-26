@@ -181,6 +181,19 @@ def _build_users_view(user_cols: Dict[str, str], nation_cols: Dict[str, str]) ->
         lines.append(f"  COALESCE({col_or_null(u, auth_type)}, 'normal') AS auth_type")
     else:
         lines.append("  'normal'::varchar AS auth_type")
+    
+    verification_token = _pick(user_cols, ("verificationToken", "verification_token"))
+    if verification_token:
+        lines.append(f"  {col_or_null(u, verification_token)} AS verification_token")
+    else:
+        lines.append("  NULL::varchar AS verification_token")
+        
+    token_created_at = _pick(user_cols, ("tokenCreatedAt", "token_created_at"))
+    if token_created_at:
+        lines.append(f"  {col_or_null(u, token_created_at)} AS token_created_at")
+    else:
+        lines.append("  NULL::timestamp AS token_created_at")
+        
     lines.append("  NULL::varchar AS recovery_key")
     if join_num:
         lines.append(f"  {col_or_null(u, join_num)} AS join_number")
@@ -324,16 +337,31 @@ def _build_provinces_view(
     )
 
 
-def _ensure_user_discord_column(cur, dry_run: bool) -> None:
-    """Add discordId to Prisma User table when missing (signup/OAuth)."""
+def _ensure_user_extra_columns(cur, dry_run: bool) -> None:
+    """Add extra columns like discordId and email verification to Prisma User table when missing."""
     cols = _columns(cur, PRISMA_USER)
-    if "discordId" in cols or "discord_id" in cols:
-        print("  OK User.discordId already present")
+    
+    sqls = []
+    if "discordId" not in cols and "discord_id" not in cols:
+        sqls.append(f'ALTER TABLE {_qident(PRISMA_USER)} ADD COLUMN IF NOT EXISTS "discordId" VARCHAR(255)')
+    
+    if "isVerified" not in cols and "is_verified" not in cols:
+        sqls.append(f'ALTER TABLE {_qident(PRISMA_USER)} ADD COLUMN IF NOT EXISTS "isVerified" BOOLEAN DEFAULT FALSE')
+        
+    if "verificationToken" not in cols and "verification_token" not in cols:
+        sqls.append(f'ALTER TABLE {_qident(PRISMA_USER)} ADD COLUMN IF NOT EXISTS "verificationToken" VARCHAR(255)')
+        
+    if "tokenCreatedAt" not in cols and "token_created_at" not in cols:
+        sqls.append(f'ALTER TABLE {_qident(PRISMA_USER)} ADD COLUMN IF NOT EXISTS "tokenCreatedAt" TIMESTAMP')
+
+    if not sqls:
+        print("  OK User extra columns already present")
         return
-    sql = f'ALTER TABLE {_qident(PRISMA_USER)} ADD COLUMN IF NOT EXISTS "discordId" VARCHAR(255)'
-    print(f"  Applying: {sql}")
-    if not dry_run:
-        cur.execute(sql)
+
+    for sql in sqls:
+        print(f"  Applying: {sql}")
+        if not dry_run:
+            cur.execute(sql)
 
 
 def main() -> int:
@@ -373,7 +401,7 @@ def main() -> int:
         )
 
         print("=== Next.js → legacy compatibility views ===")
-        _ensure_user_discord_column(cur, args.dry_run)
+        _ensure_user_extra_columns(cur, args.dry_run)
 
         statements: List[Tuple[str, str]] = []
         statements.append(("users", _build_users_view(user_cols, nation_cols)))
