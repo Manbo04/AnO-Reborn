@@ -501,10 +501,7 @@
                             <ul>Costs {{ tech_costs.get("integratedsteelmaking", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["integratedsteelmaking"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/integratedSteelmaking">
-                                        <span class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Research</button> {% endif %} {% if upgrades["integratedsteelmaking"] %}
+                                <button type="submit" class="templatedivbutton templatecenteredbutton d-flex-center" formaction="/upgrades_sb/buy/integratedSteelmaking"><span class="material-icons-outlined">add_circle_outline</span>Research</button> {% endif %} {% if upgrades["integratedsteelmaking"] %}
                                 <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
                                 {% endif %}
 
@@ -532,10 +529,7 @@
                             <ul>Costs {{ tech_costs.get("electricarcfurnace", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["electricarcfurnace"] %}
-                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/electricArcFurnace">
-                                        <span class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Research</button> {% endif %} {% if upgrades["electricarcfurnace"] %}
+                                <button type="submit" class="templatedivbutton templatecenteredbutton d-flex-center" formaction="/upgrades_sb/buy/electricArcFurnace"><span class="material-icons-outlined">add_circle_outline</span>Research</button> {% endif %} {% if upgrades["electricarcfurnace"] %}
                                 <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
                                 {% endif %}
 
