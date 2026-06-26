@@ -540,7 +540,7 @@ class Units(Military):
 
             # Determine whether this user is attacker or defender in the war
             db.execute(
-                "SELECT attacker_id, defender_id FROM wars WHERE war_id = %s",
+                "SELECT attacker, defender FROM wars WHERE id = %s",
                 (self.war_id,),
             )
             row = db.fetchone()
@@ -557,7 +557,7 @@ class Units(Military):
             db.execute(
                 f"UPDATE wars SET {supply_col} = "
                 f"GREATEST(0, {supply_col} - %s) "
-                f"WHERE war_id = %s",
+                f"WHERE id = %s",
                 (self.supply_costs, self.war_id),
             )
             connection.commit()
@@ -601,7 +601,7 @@ class Units(Military):
                 db = connection.cursor()
 
                 db.execute(
-                    "SELECT attacker_id FROM wars WHERE war_id=(%s)", (self.war_id,)
+                    "SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,)
                 )
                 row = db.fetchone()
 
@@ -613,7 +613,7 @@ class Units(Military):
                 # otherwise read defender_supplies.
                 if attacker_id is not None and attacker_id == self.user_id:
                     db.execute(
-                        "SELECT attacker_supplies FROM wars WHERE war_id=(%s)",
+                        "SELECT attacker_supplies FROM wars WHERE id=(%s)",
                         (self.war_id,),
                     )
                     fetched = db.fetchone()
@@ -622,7 +622,7 @@ class Units(Military):
                     )
                 else:
                     db.execute(
-                        "SELECT defender_supplies FROM wars WHERE war_id=(%s)",
+                        "SELECT defender_supplies FROM wars WHERE id=(%s)",
                         (self.war_id,),
                     )
                     fetched = db.fetchone()

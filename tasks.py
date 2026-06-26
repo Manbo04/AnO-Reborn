@@ -3457,8 +3457,8 @@ def war_reparation_tax():
         db = conn.cursor()
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
         db.execute(
-            "SELECT war_id, peace_date, attacker_id, attacker_morale, "
-            "defender_id, defender_morale FROM wars WHERE (peace_date IS NOT "
+            "SELECT id, peace_date, attacker, attacker_morale, "
+            "defender, defender_morale FROM wars WHERE (peace_date IS NOT "
             "NULL) AND (peace_offer_id IS NULL)"
         )
         truces = db.fetchall()
@@ -3468,7 +3468,7 @@ def war_reparation_tax():
 
             # Remove peace records older than one week (604800 seconds)
             if peace_date < (time.time() - 604800):
-                db.execute("DELETE FROM wars WHERE war_id=%s", (war_id,))
+                db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
 
             # Transfer resources to attacker (winner)
             else:
@@ -3499,7 +3499,7 @@ def war_reparation_tax():
                     row["resource_name"]: row["quantity"] for row in dbdict.fetchall()
                 }
 
-                db.execute("SELECT war_type FROM wars WHERE war_id=%s", (war_id,))
+                db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
                 war_type = db.fetchone()
 
                 for resource in Economy.resources:
