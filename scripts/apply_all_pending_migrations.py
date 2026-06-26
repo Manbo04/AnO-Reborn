@@ -37,6 +37,17 @@ MIGRATION_FILES = [
     "0025_tech_tree_prerequisites.sql",
     "0026_fix_building_costs.sql",
     "0027_deprecate_distribution_centers.sql",
+    "0028_add_world_map_nodes.sql",
+    "0029_optimize_queries.sql",
+    "0030_tutorial_rewards.sql",
+    "0030_world_map_tiers.sql",
+    "0031_advertisements.sql",
+    "0032_poll_votes.sql",
+    "0033_optimize_schema.sql",
+    "0034_add_users_recovery_key.sql",
+    "0035_add_provinces_image_data.sql",
+    "0036_referrals.sql",
+    "0030_add_furnace_projects.sql",
 ]
 
 
