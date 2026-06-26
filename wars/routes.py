@@ -37,7 +37,7 @@ def peace_offers():
     with get_request_cursor() as db:
         db.execute(
             "SELECT peace_offer_id FROM wars WHERE "
-            "(attacker_id=(%s) OR defender_id=(%s)) AND peace_date IS NULL",
+            "(attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
             (cId, cId),
         )
         peace_offers = db.fetchall()
@@ -60,8 +60,8 @@ def peace_offers():
                     db.execute(
                         (
                             "SELECT p.id, p.demanded_resources, p.demanded_amount, "
-                            "p.author, u.username as author_name, w.attacker_id, "
-                            "w.defender_id FROM peace p "
+                            "p.author, u.username as author_name, w.attacker, "
+                            "w.defender FROM peace p "
                             "JOIN users u ON p.author = u.id "
                             "JOIN wars w ON w.peace_offer_id = p.id "
                             "AND w.peace_date IS NULL "
@@ -161,8 +161,8 @@ def peace_offers():
             # Make sure others can't accept/delete/etc. the peace
             # offer other than the participants
             db.execute(
-                "SELECT war_id, attacker_id, defender_id FROM wars WHERE "
-                "(attacker_id=(%s) OR defender_id=(%s)) AND peace_offer_id=(%s) "
+                "SELECT id, attacker, defender FROM wars WHERE "
+                "(attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) "
                 "AND peace_date IS NULL",
                 (cId, cId, offer_id),
             )
@@ -289,7 +289,7 @@ def send_peace_offer(war_id, enemy_id):
             if not war_id:
                 return error(400, "War id is invalid")
             db.execute(
-                "SELECT attacker_id, defender_id FROM wars WHERE war_id=%s",
+                "SELECT attacker, defender FROM wars WHERE id=%s",
                 (war_id,),
             )
             war_row = db.fetchone()
@@ -307,7 +307,7 @@ def send_peace_offer(war_id, enemy_id):
                         raise Exception("Invalid resource")
                     resources_string += res + ","
                     amount_string += str(amo) + ","
-            db.execute("SELECT peace_offer_id FROM wars WHERE war_id=(%s)", (war_id,))
+            db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
             peace_row = db.fetchone()
             peace_offer_id = peace_row[0] if peace_row else None
             if not peace_offer_id:
@@ -324,7 +324,7 @@ def send_peace_offer(war_id, enemy_id):
                     return error(500, "Failed to create peace offer")
                 lastrowid = peace_id_row[0]
                 db.execute(
-                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE war_id=(%s)",
+                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE id=(%s)",
                     (lastrowid, war_id),
                 )
             else:
@@ -360,9 +360,9 @@ def war_with_id(war_id):
         # Single query to get all war data
         db.execute(
             (
-                "SELECT war_id, attacker_id, defender_id, war_type, aggressor_message, "
+                "SELECT id, attacker, defender, war_type, aggressor_message, "
                 "peace_date, attacker_supplies, attacker_morale, "
-                "defender_supplies, defender_morale FROM wars WHERE war_id=(%s)"
+                "defender_supplies, defender_morale FROM wars WHERE id=(%s)"
             ),
             (war_id,),
         )
@@ -741,8 +741,8 @@ def warResult():
             db.execute(
                 (
                     "SELECT war_type FROM wars "
-                    "WHERE ((attacker_id=%s AND defender_id=%s) "
-                    "OR (attacker_id=%s AND defender_id=%s)) "
+                    "WHERE ((attacker=%s AND defender=%s) "
+                    "OR (attacker=%s AND defender=%s)) "
                     "AND peace_date IS NULL"
                 ),
                 (
@@ -904,9 +904,9 @@ def declare_war():
             logger.debug("declare_war: checking existing wars")
             db.execute(
                 (
-                    "SELECT war_id FROM wars "
-                    "WHERE ((attacker_id=%s AND defender_id=%s) "
-                    "OR (attacker_id=%s AND defender_id=%s)) "
+                    "SELECT id FROM wars "
+                    "WHERE ((attacker=%s AND defender=%s) "
+                    "OR (attacker=%s AND defender=%s)) "
                     "AND peace_date IS NULL"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
@@ -955,8 +955,8 @@ def declare_war():
             # Check most recent peace date between the two nations
             db.execute(
                 (
-                    "SELECT MAX(peace_date) FROM wars WHERE ((attacker_id=%s "
-                    "AND defender_id=%s) OR (attacker_id=%s AND defender_id=%s))"
+                    "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s "
+                    "AND defender=%s) OR (attacker=%s AND defender=%s))"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
@@ -969,7 +969,7 @@ def declare_war():
             start_dates = datetime.fromtimestamp(time.time())
             db.execute(
                 (
-                    "INSERT INTO wars (attacker_id, defender_id, "
+                    "INSERT INTO wars (attacker, defender, "
                     "war_type, aggressor_message, start_date, "
                     "last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
                 ),
@@ -1050,9 +1050,9 @@ def wars():
             try:
                 db.execute(
                     (
-                        "SELECT war_id, defender_id, attacker_id "
-                        "FROM wars WHERE (attacker_id=%s "
-                        "OR defender_id=%s) "
+                        "SELECT id, defender, attacker "
+                        "FROM wars WHERE (attacker=%s "
+                        "OR defender=%s) "
                         "AND peace_date IS NULL"
                     ),
                     (cId, cId),
@@ -1072,9 +1072,9 @@ def wars():
                     war_placeholders = ",".join(["%s"] * len(war_ids))
                     db.execute(
                         (
-                            "SELECT war_id, attacker_morale, attacker_supplies, "
+                            "SELECT id, attacker_morale, attacker_supplies, "
                             "defender_morale, defender_supplies "
-                            "FROM wars WHERE war_id IN (" + war_placeholders + ")"
+                            "FROM wars WHERE id IN (" + war_placeholders + ")"
                         ),
                         tuple(war_ids),
                     )
@@ -1128,8 +1128,8 @@ def wars():
             try:
                 db.execute(
                     (
-                        "SELECT COUNT(attacker_id) FROM wars WHERE (defender_id=%s "
-                        "OR attacker_id=%s) AND peace_date IS NULL"
+                        "SELECT COUNT(attacker) FROM wars WHERE (defender=%s "
+                        "OR attacker=%s) AND peace_date IS NULL"
                     ),
                     (cId, cId),
                 )
