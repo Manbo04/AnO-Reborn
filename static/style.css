@@ -1778,10 +1778,10 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .d-flex-center {
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .templatedivbutton {
@@ -1801,7 +1801,10 @@ body:has(.navbarparent .templatecontainer) {
     text-transform: uppercase;
     transition: all 0.2s ease;
     background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     width: max-content;
     letter-spacing: 1.2px;
     box-shadow: 0 2px 8px rgba(0, 167, 225, 0.25);
