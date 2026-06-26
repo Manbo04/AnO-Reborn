@@ -67,10 +67,14 @@ def tutorial():
 @login_required
 def dev_reset_tutorial():
     from database import get_request_cursor
-    user_id = session["user_id"]
-    with get_request_cursor() as db:
-        db.execute("UPDATE stats SET tutorial_step = 0, tutorial_chapters_claimed = '{}', tutorial_graduated_at = NULL WHERE id = %s", (user_id,))
-    return "Tutorial reset! Go to /provinces"
+    try:
+        user_id = session["user_id"]
+        with get_request_cursor() as db:
+            db.execute("UPDATE stats SET tutorial_step = 0, tutorial_chapters_claimed = '{}', tutorial_graduated_at = NULL WHERE id = %s", (user_id,))
+        return "Tutorial reset! Go to /provinces"
+    except Exception as e:
+        import traceback
+        return f"Error: {str(e)}<br><pre>{traceback.format_exc()}</pre>"
 
 @bp.route("/mechanics", methods=["GET"])
 def mechanics(): return render_template("mechanics.html")
