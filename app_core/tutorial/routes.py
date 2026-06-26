@@ -57,7 +57,7 @@ def tutorial_progress():
         _ensure_tutorial_columns(db)
         db.execute(
             """
-            SELECT tutorial_chapters_claimed, tutorial_graduated_at
+            SELECT tutorial_chapters_claimed, tutorial_graduated_at, tutorial_step
             FROM stats WHERE id = %s
             """,
             (user_id,),
@@ -66,11 +66,13 @@ def tutorial_progress():
     if not row:
         return jsonify({"ok": False, "error": "Nation not found"}), 404
     claimed = sorted(int(x) for x in (row[0] or []))
+    tutorial_step = row[2] if len(row) > 2 else 0
     return jsonify(
         {
             "ok": True,
             "chapters_claimed": claimed,
-            "graduated": row[1] is not None,
+            "tutorial_step": tutorial_step,
+            "graduated": bool(row[1]),
         }
     )
 
