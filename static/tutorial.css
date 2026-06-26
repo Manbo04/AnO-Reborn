@@ -1149,3 +1149,23 @@ html.page-tutorial .tutorial-academy .smallheader .material-icons-outlined {
         width: 100% !important;
     }
 }
+
+
+#tutorial-spotlight-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9998; /* Below the tutorial modal but above everything else */
+    transition: clip-path 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none; /* Disabled when hidden */
+}
+
+#tutorial-spotlight-overlay.active {
+    opacity: 1;
+    pointer-events: auto; /* Intercept clicks on the dark mask */
+}
+
