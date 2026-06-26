@@ -54,15 +54,13 @@ print('[start] schema_compat', 'ok' if ok else 'failed', schema_compat_failed_st
   echo "[start] Nudge stale economy tasks if beat missed schedules..."
   python3 scripts/nudge_stale_economy_tasks.py || echo "[start] WARN: economy nudge exited non-zero"
 elif [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
-  echo "[start] Skipping migrations on $SERVICE_NAME (worker handles schema boot)."
-  if [[ "$SERVICE_NAME" == "web" ]]; then
-    python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
-    python3 -c "
+  echo "[start] Running migrations on $SERVICE_NAME to guarantee execution..."
+  python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
+  python3 -c "
 from database import ensure_schema_compat, schema_compat_succeeded
 ensure_schema_compat()
 print('[start] web schema_compat', 'ok' if schema_compat_succeeded() else 'failed')
 " || echo "[start] WARN: web schema_compat check failed"
-  fi
 else
   echo "[start] No DATABASE_URL — skip migrations"
 fi
