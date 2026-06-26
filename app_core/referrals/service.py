@@ -35,42 +35,7 @@ def _normalize_code(code: str | None) -> str | None:
 
 
 def ensure_referral_schema(db) -> None:
-    global _schema_ready
-    if _schema_ready:
-        return
-    db.execute(
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12) UNIQUE"
-    )
-    db.execute(
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
-        "referred_by_user_id INTEGER REFERENCES users(id)"
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS referral_active_days (
-          referred_user_id INTEGER NOT NULL REFERENCES users(id),
-          activity_date DATE NOT NULL,
-          PRIMARY KEY (referred_user_id, activity_date)
-        )
-        """
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS referral_milestone_payouts (
-          id SERIAL PRIMARY KEY,
-          referrer_user_id INTEGER NOT NULL REFERENCES users(id),
-          referred_user_id INTEGER NOT NULL REFERENCES users(id),
-          milestone_days INTEGER NOT NULL,
-          paid_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          UNIQUE (referrer_user_id, referred_user_id, milestone_days)
-        )
-        """
-    )
-    db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_users_referred_by "
-        "ON users (referred_by_user_id)"
-    )
-    _schema_ready = True
+    pass
 
 
 def _generate_code() -> str:

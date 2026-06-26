@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 def hash_password(password: str) -> str:
     """Create a bcrypt hash for new accounts."""
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(14)).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(12)).decode("utf-8")
 
 
 def password_matches(stored_hash: str | None, password: str) -> bool:
