@@ -50,7 +50,7 @@ FEATURE_GAME_PWA = _env_flag("FEATURE_GAME_PWA", "true")
 # Legacy JPG filenames (no extension) keyed by normalized building name.
 BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "coal_burners": "coalburner.jpg",
-    "oil_burners": "oilburner.jpg",
+    "oil_burners": "oilpowerplant.jpg",
     "solar_fields": "solarfield.jpg",
     "hydro_dams": "hydrodam.jpg",
     "nuclear_reactors": "nuclearreactor.jpg",
