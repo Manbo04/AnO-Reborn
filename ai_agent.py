@@ -76,6 +76,8 @@ ENERGY_BUILDINGS = [
     "hydro_dams",
     "nuclear_reactors",
     "solar_fields",
+    "wind_farms",
+    "geothermal_plants",
 ]
 
 # Building name → what it produces and consumes per tick
@@ -99,6 +101,8 @@ NEW_INFRA = {
         "money": 111000,
     },
     "solar_fields": {"plus": {"energy": 3}, "money": 13000},
+    "wind_farms": {"plus": {"energy": 2}, "money": 8000},
+    "geothermal_plants": {"plus": {"energy": 5}, "money": 20000},
     "distribution_centers": {"plus": {"consumer_goods": 8}, "money": 15000},
     "gas_stations": {
         "plus": {"consumer_goods": 12},
@@ -190,6 +194,8 @@ BUILDING_COSTS = {
     "hydro_dams": 35000000,
     "nuclear_reactors": 150000000,
     "solar_fields": 8000000,
+    "wind_farms": 4000000,
+    "geothermal_plants": 12000000,
     "gas_stations": 7000000,
     "general_stores": 15000000,
     "farmers_markets": 4500000,
@@ -232,6 +238,8 @@ BUILDING_RESOURCE_COSTS = {
     "hydro_dams": {"steel": 180000, "aluminium": 90000},
     "nuclear_reactors": {"steel": 500000},
     "solar_fields": {"copper": 40000, "bauxite": 30000},
+    "wind_farms": {"copper": 20000, "bauxite": 15000},
+    "geothermal_plants": {"copper": 60000, "bauxite": 45000},
     "gas_stations": {"steel": 75000, "aluminium": 50000},
     "general_stores": {"steel": 90000, "aluminium": 105000},
     "farmers_markets": {"steel": 110000, "aluminium": 120000},
@@ -324,6 +332,8 @@ CITY_SLOT_BUILDINGS = {
     "hydro_dams",
     "nuclear_reactors",
     "solar_fields",
+    "wind_farms",
+    "geothermal_plants",
     "gas_stations",
     "general_stores",
     "farmers_markets",
@@ -853,6 +863,8 @@ class AIDecisionEngine:
             ("coal_burners", 4),  # 4 energy each
             ("oil_burners", 5),  # 5 energy each
             ("solar_fields", 3),  # 3 energy, no fuel
+            ("wind_farms", 2),
+            ("geothermal_plants", 5),
             ("hydro_dams", 6),  # 6 energy, no fuel
             ("nuclear_reactors", 15),  # 15 energy, expensive
         ]
