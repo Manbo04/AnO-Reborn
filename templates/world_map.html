@@ -337,16 +337,16 @@
         }
     }
 
-    function drawHexagon(gfx, color, radius) {
-        gfx.beginFill(color, 0.3);
-        gfx.lineStyle(2, color, 1);
+    function drawHexagon(gfx, color, radius, fillAlpha = 0.3, lineAlpha = 1, lineWidth = 2) {
+        if (fillAlpha > 0) gfx.beginFill(color, fillAlpha);
+        if (lineWidth > 0) gfx.lineStyle(lineWidth, color, lineAlpha);
         const points = [];
         for (let i = 0; i < 6; i++) {
             const angle = (i * Math.PI) / 3;
             points.push(new PIXI.Point(radius * Math.cos(angle), radius * Math.sin(angle)));
         }
         gfx.drawPolygon(points);
-        gfx.endFill();
+        if (fillAlpha > 0) gfx.endFill();
     }
 
     let initialRender = true;
@@ -377,25 +377,30 @@
             
             // Outer Hexagon (animates/rotates)
             const outerHex = new PIXI.Graphics();
-            drawHexagon(outerHex, color, 25);
+            drawHexagon(outerHex, color, 28, 0, 0.8, 2);
             nodeContainer.addChild(outerHex);
+
+            // Inner Hexagon (counter rotates)
+            const innerHex = new PIXI.Graphics();
+            drawHexagon(innerHex, color, 20, 0.2, 0.5, 1);
+            nodeContainer.addChild(innerHex);
 
             // Inner Core (pulses)
             const innerCore = new PIXI.Graphics();
-            innerCore.beginFill(color, 0.8);
-            innerCore.drawCircle(0, 0, 8);
+            innerCore.beginFill(color, 0.9);
+            innerCore.drawCircle(0, 0, 6);
             innerCore.endFill();
             
             // Simple Glow without costly BlurFilter
             const glow = new PIXI.Graphics();
             glow.beginFill(color, 0.15);
-            glow.drawCircle(0, 0, 30);
+            glow.drawCircle(0, 0, 35);
             glow.endFill();
             
             nodeContainer.addChild(glow);
             nodeContainer.addChild(innerCore);
 
-            animatedNodes.push({ outer: outerHex, core: innerCore, glow: glow, baseX: node.x, baseY: node.y, offset: Math.random() * 100 });
+            animatedNodes.push({ outer: outerHex, inner: innerHex, core: innerCore, glow: glow, baseX: node.x, baseY: node.y, offset: Math.random() * 100 });
             
             nodeContainer.eventMode = 'static';
             nodeContainer.cursor = 'pointer';
@@ -454,8 +459,9 @@
         time += 0.05 * delta;
         crtFilter.uniforms.time = time;
         animatedNodes.forEach(anim => {
-            // Slowly rotate the outer hex
-            anim.outer.rotation += 0.01 * delta;
+            // Slowly rotate the hexes
+            anim.outer.rotation += 0.005 * delta;
+            anim.inner.rotation -= 0.003 * delta;
             
             // Pulse the core and glow
             const pulse = Math.sin(time + anim.offset) * 0.2 + 0.8;
@@ -463,7 +469,7 @@
             anim.glow.alpha = pulse;
             
             // Subtle floating effect
-            anim.outer.parent.y = anim.baseY + Math.sin(time * 0.5 + anim.offset) * 5;
+            anim.outer.parent.y = anim.baseY + Math.sin(time * 0.5 + anim.offset) * 3;
         });
     });
 
