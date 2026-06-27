@@ -5,21 +5,21 @@
 {% block head %}
 <style>
     :root {
-        --canvas-bg: linear-gradient(135deg, #1f506e 0%, #3e1b6a 100%);
-        --grid-color: rgba(255, 255, 255, 0.1);
-        --node-bg: rgba(30, 40, 60, 0.4);
-        --node-border: rgba(255, 255, 255, 0.2);
-        --node-glow: rgba(79, 195, 247, 0.3);
+        --canvas-bg: #0b0e14;
+        --grid-color: rgba(255, 255, 255, 0.04);
+        --node-border: rgba(79, 195, 247, 0.3);
+        --node-bg: rgba(18, 24, 38, 0.85);
+        --node-glow: rgba(79, 195, 247, 0.4);
     }
 
     html, body.page-lore-map {
         margin: 0;
-        overflow: hidden !important; /* Prevent normal scrolling */
+        overflow: hidden !important;
         background: var(--canvas-bg) !important;
         height: 100vh;
+        font-family: 'Inter', sans-serif;
     }
     
-    /* Override standard AnO layout background */
     .templatecontainer, .navbarparent:has(.templatecontainer), #page-content-wrapper, .container-fluid, .body-content {
         background: transparent !important;
         padding: 0 !important;
@@ -31,70 +31,125 @@
         min-height: 0 !important;
     }
 
-    /* Hide the footer on this full-screen canvas */
-    .footer, footer {
-        display: none !important;
-    }
+    .footer, footer { display: none !important; }
 
     .templatedivtopper {
         position: fixed;
         top: 80px;
         left: 20px;
         z-index: 1000;
-        background: rgba(10, 14, 20, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--node-border);
-        padding: 10px 20px;
-        border-radius: 8px;
+        background: rgba(10, 14, 20, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 24px;
+        border-radius: 12px;
         pointer-events: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
     
     .templatedivtitle {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 10px;
+        color: #fff;
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
     
     .templatedivtitle .material-icons-outlined {
+        color: #4fc3f7;
+    }
+
+    #viewport {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        cursor: grab;
+        background-color: var(--canvas-bg);
+        background-image: 
+            radial-gradient(circle at 50% 50%, rgba(20, 40, 70, 0.3) 0%, transparent 70%),
+            radial-gradient(var(--grid-color) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 50px 50px;
+        background-position: 0 0, 0 0;
+    }
+
+    #viewport:active { cursor: grabbing; }
+
+    #canvas {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform-origin: 0 0;
+        width: 0; height: 0;
+    }
+
+    /* Map Controls UI */
+    .map-controls {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+    }
+
+    .control-btn {
+        background: rgba(15, 20, 30, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
 
-    /* Infinite Canvas Viewport */
-    #viewport {
+    .control-btn:hover {
+        background: rgba(79, 195, 247, 0.2);
+        border-color: rgba(79, 195, 247, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Hex Tile Wrapper for shadows (clip-path hides box-shadows) */
+    .hex-wrapper {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        cursor: grab;
-        /* Dot grid pattern */
-        background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
-        background-size: 40px 40px;
-        background-position: 0 0;
+        width: 173.2px;
+        height: 200px;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+        cursor: pointer;
+        z-index: 1;
     }
 
-    #viewport:active {
-        cursor: grabbing;
+    .hex-wrapper:hover {
+        transform: translate(-50%, -50%) scale(1.08);
+        z-index: 10;
+        filter: drop-shadow(0 0 20px var(--node-glow));
     }
 
-    /* The actual canvas container that scales and translates */
-    #canvas {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform-origin: 0 0;
-        width: 0;
-        height: 0;
-    }
-
+    /* The actual border layer */
     .hex-tile {
         position: absolute;
-        width: 173.2px; /* size * sqrt(3) */
-        height: 200px;  /* size * 2 */
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(79,195,247,0.7), rgba(40,80,120,0.3));
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    /* The inner content layer */
+    .hex-inner {
+        position: absolute;
+        inset: 2px; /* Border thickness */
         background: var(--node-bg);
         clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
         display: flex;
@@ -104,38 +159,49 @@
         text-align: center;
         padding: 20px;
         color: #fff;
-        backdrop-filter: blur(8px);
-        transform: translate(-50%, -50%); /* Center on the calculated x,y */
-        transition: all 0.2s ease;
-        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .hex-tile:hover {
-        background: rgba(79, 195, 247, 0.3);
-        z-index: 10;
-        transform: translate(-50%, -50%) scale(1.05);
-    }
-
-    .hex-tile h3 {
-        margin: 0 0 5px 0;
-        font-size: 0.9rem;
-        color: #4fc3f7;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    .hex-wrapper:hover .hex-inner {
+        background: rgba(25, 35, 55, 0.9);
     }
     
-    .hex-tile p {
+    .hex-wrapper:hover .hex-tile {
+        background: linear-gradient(135deg, rgba(79,195,247,1), rgba(79,195,247,0.4));
+    }
+
+    .hex-inner h3 {
+        margin: 0 0 6px 0;
+        font-size: 0.95rem;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-shadow: 0 2px 8px rgba(79,195,247,0.5);
+    }
+    
+    .hex-inner p.user {
+        margin: 0 0 4px 0;
+        font-size: 0.8rem;
+        color: #4fc3f7;
+        font-weight: 500;
+    }
+
+    .hex-inner p.pop {
         margin: 0;
-        font-size: 0.75rem;
-        color: #ccc;
+        font-size: 0.7rem;
+        color: #aaa;
+        background: rgba(0,0,0,0.3);
+        padding: 2px 8px;
+        border-radius: 10px;
     }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="templatedivtopper">
-    <h1 class="templatedivtitle" style="margin: 0; font-size: 1.2rem;">
-        <span class="material-icons-outlined iconlarge" style="vertical-align: middle;">public</span>
+    <h1 class="templatedivtitle">
+        <span class="material-icons-outlined iconlarge">public</span>
         Province Map
     </h1>
 </div>
@@ -166,12 +232,12 @@
 
     function updateTransform() {
         canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        viewport.style.backgroundPosition = `${panX}px ${panY}px`;
-        viewport.style.backgroundSize = `${40 * scale}px ${40 * scale}px`;
+        viewport.style.backgroundPosition = `0 0, ${panX}px ${panY}px`;
+        viewport.style.backgroundSize = `100% 100%, ${50 * scale}px ${50 * scale}px`;
     }
 
     viewport.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.hex-tile') || e.target.closest('.control-btn')) return;
+        if (e.target.closest('.hex-wrapper') || e.target.closest('.control-btn')) return;
         isDragging = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
@@ -193,7 +259,7 @@
         const zoomIntensity = 0.001;
         const delta = -e.deltaY * zoomIntensity;
         let newScale = scale * Math.exp(delta);
-        newScale = Math.max(0.1, Math.min(newScale, 5));
+        newScale = Math.max(0.1, Math.min(newScale, 4));
 
         const rect = viewport.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -208,7 +274,7 @@
 
     window.zoom = function(amount) {
         let newScale = scale + amount;
-        newScale = Math.max(0.1, Math.min(newScale, 5));
+        newScale = Math.max(0.1, Math.min(newScale, 4));
         const mouseX = window.innerWidth / 2;
         const mouseY = window.innerHeight / 2;
         panX = mouseX - (mouseX - panX) * (newScale / scale);
@@ -226,7 +292,7 @@
 
     updateTransform();
 
-    const HEX_SIZE = 100; // Radius of hex
+    const HEX_SIZE = 100;
     const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
     const HEX_HEIGHT = 2 * HEX_SIZE;
 
@@ -236,55 +302,64 @@
         .then(data => {
             if (data.status === 'success' && data.provinces && data.provinces.length > 0) {
                 data.provinces.forEach(prov => {
-                    const nodeEl = document.createElement('div');
-                    nodeEl.className = 'hex-tile';
+                    const wrapperEl = document.createElement('div');
+                    wrapperEl.className = 'hex-wrapper';
                     
-                    // Axial to Pixel Coordinates (pointy-topped)
                     const q = prov.x;
                     const r = prov.y;
                     
                     const pixelX = HEX_SIZE * Math.sqrt(3) * (q + r/2);
                     const pixelY = HEX_SIZE * 3/2 * r;
                     
-                    // Gap between hexes (optional, we can leave a tiny gap by multiplying by 1.02)
-                    const spacing = 1.05;
+                    const spacing = 1.03; // tighter fit
 
-                    nodeEl.style.left = (pixelX * spacing) + 'px';
-                    nodeEl.style.top = (pixelY * spacing) + 'px';
+                    wrapperEl.style.left = (pixelX * spacing) + 'px';
+                    wrapperEl.style.top = (pixelY * spacing) + 'px';
                     
-                    nodeEl.innerHTML = `
-                        <h3>${prov.name}</h3>
-                        <p>${prov.username}</p>
-                        <p style="font-size: 0.65rem; color: #888;">Pop: ${prov.population.toLocaleString()}</p>
+                    wrapperEl.innerHTML = `
+                        <div class="hex-tile"></div>
+                        <div class="hex-inner">
+                            <h3>${prov.name}</h3>
+                            <p class="user">${prov.username}</p>
+                            <p class="pop">Pop: ${prov.population.toLocaleString()}</p>
+                        </div>
                     `;
                     
-                    // Add click event to go to province page
-                    nodeEl.onclick = () => {
+                    wrapperEl.onclick = () => {
                         window.location.href = `/province/${prov.id}`;
                     };
                     
-                    canvas.appendChild(nodeEl);
+                    canvas.appendChild(wrapperEl);
                 });
             } else {
-                const nodeEl = document.createElement('div');
-                nodeEl.className = 'hex-tile';
-                nodeEl.style.left = '0px';
-                nodeEl.style.top = '0px';
-                nodeEl.innerHTML = `
-                    <h3>Map Empty</h3>
-                    <p>No provinces or no coordinates assigned yet.</p>
+                const wrapperEl = document.createElement('div');
+                wrapperEl.className = 'hex-wrapper';
+                wrapperEl.style.left = '0px';
+                wrapperEl.style.top = '0px';
+                wrapperEl.innerHTML = `
+                    <div class="hex-tile" style="background: rgba(255,255,255,0.1)"></div>
+                    <div class="hex-inner">
+                        <h3 style="color:#aaa;">Map Empty</h3>
+                        <p class="pop">No provinces assigned</p>
+                    </div>
                 `;
-                canvas.appendChild(nodeEl);
+                canvas.appendChild(wrapperEl);
             }
         })
         .catch(err => {
             console.error("Error loading nodes:", err);
-            const nodeEl = document.createElement('div');
-            nodeEl.className = 'hex-tile';
-            nodeEl.style.left = '0px';
-            nodeEl.style.top = '0px';
-            nodeEl.innerHTML = `<h3>Error</h3><p>${err.message}</p>`;
-            canvas.appendChild(nodeEl);
+            const wrapperEl = document.createElement('div');
+            wrapperEl.className = 'hex-wrapper';
+            wrapperEl.style.left = '0px';
+            wrapperEl.style.top = '0px';
+            wrapperEl.innerHTML = `
+                <div class="hex-tile" style="background: rgba(255,100,100,0.5)"></div>
+                <div class="hex-inner">
+                    <h3 style="color:#ff6b6b">Error</h3>
+                    <p class="pop">Failed to load</p>
+                </div>
+            `;
+            canvas.appendChild(wrapperEl);
         });
 </script>
 {% endblock %}
