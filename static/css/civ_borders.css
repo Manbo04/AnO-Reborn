@@ -1,0 +1,36 @@
+.hex-wrapper.civ-mode {
+  position: relative;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.civ-border {
+  /* Hexagon border simulation using drop-shadows */
+  filter: 
+    drop-shadow(0 0 2px rgba(255, 215, 0, 0.8)) /* Inner gold glow */
+    drop-shadow(0 0 6px rgba(255, 215, 0, 0.6)) /* Medium gold glow */
+    drop-shadow(0 0 12px rgba(255, 140, 0, 0.4)); /* Outer orange/gold glow */
+  
+  /* Additional border styling */
+  border: 2px solid rgba(255, 215, 0, 0.9); /* Solid gold border */
+  border-radius: 4px; /* Slight rounding for hex edges if needed */
+  
+  /* Civilization VI style team colors could be added here or via inline styles/modifiers */
+}
+
+/* Example modifier for a specific civilization team color */
+.civ-border.team-blue {
+  filter: 
+    drop-shadow(0 0 2px rgba(0, 191, 255, 0.8))
+    drop-shadow(0 0 6px rgba(0, 191, 255, 0.6))
+    drop-shadow(0 0 12px rgba(0, 0, 255, 0.4));
+  border-color: rgba(0, 191, 255, 0.9);
+}
+
+.civ-border.team-red {
+  filter: 
+    drop-shadow(0 0 2px rgba(255, 69, 0, 0.8))
+    drop-shadow(0 0 6px rgba(255, 69, 0, 0.6))
+    drop-shadow(0 0 12px rgba(139, 0, 0, 0.4));
+  border-color: rgba(255, 69, 0, 0.9);
+}
