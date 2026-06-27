@@ -59,12 +59,12 @@ def get_province_map_nodes():
     provinces = []
     for r in rows:
         provinces.append({
-            "id": r[0],
-            "name": r[1],
-            "user_id": r[2],
-            "username": r[3],
-            "x": r[4],
-            "y": r[5],
+            "id": int(r[0]) if r[0] is not None else 0,
+            "name": str(r[1]) if r[1] is not None else "",
+            "user_id": int(r[2]) if r[2] is not None else None,
+            "username": str(r[3]) if r[3] is not None else None,
+            "x": float(r[4]) if r[4] is not None else 0.0,
+            "y": float(r[5]) if r[5] is not None else 0.0,
             "population": int(r[6]) if r[6] is not None else 0,
             "tax_rate": float(r[7]) if r[7] is not None else 0.0,
             "unrest": float(r[8]) if r[8] is not None else 0.0,
