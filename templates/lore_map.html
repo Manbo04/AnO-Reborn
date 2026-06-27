@@ -241,6 +241,17 @@
     let startX = 0;
     let startY = 0;
 
+    let updatePending = false;
+    function requestUpdateTransform() {
+        if (!updatePending) {
+            updatePending = true;
+            requestAnimationFrame(() => {
+                updateTransform();
+                updatePending = false;
+            });
+        }
+    }
+
     function updateTransform() {
         canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         viewport.style.backgroundPosition = `0 0, ${panX}px ${panY}px`;
@@ -250,35 +261,23 @@
     viewport.addEventListener('mousedown', (e) => {
         if (e.target.closest('.hex-wrapper') || e.target.closest('.control-btn')) return;
         isDragging = true;
-        document.body.classList.add('dragging');
         startX = e.clientX - panX;
         startY = e.clientY - panY;
     });
 
     window.addEventListener('mouseup', () => {
         isDragging = false;
-        document.body.classList.remove('dragging');
     });
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         panX = e.clientX - startX;
         panY = e.clientY - startY;
-        updateTransform();
+        requestUpdateTransform();
     });
 
-    let wheelTimeout;
     viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
-        
-        document.body.classList.add('dragging');
-        clearTimeout(wheelTimeout);
-        wheelTimeout = setTimeout(() => {
-            if (!isDragging) {
-                document.body.classList.remove('dragging');
-            }
-        }, 150);
-
         const zoomIntensity = 0.001;
         const delta = -e.deltaY * zoomIntensity;
         let newScale = scale * Math.exp(delta);
@@ -292,7 +291,7 @@
         panY = mouseY - (mouseY - panY) * (newScale / scale);
         
         scale = newScale;
-        updateTransform();
+        requestUpdateTransform();
     }, { passive: false });
 
     window.zoom = function(amount) {
@@ -303,14 +302,14 @@
         panX = mouseX - (mouseX - panX) * (newScale / scale);
         panY = mouseY - (mouseY - panY) * (newScale / scale);
         scale = newScale;
-        updateTransform();
+        requestUpdateTransform();
     };
 
     window.resetView = function() {
         scale = 1;
         panX = 0;
         panY = 0;
-        updateTransform();
+        requestUpdateTransform();
     };
 
     updateTransform();
