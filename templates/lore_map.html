@@ -298,9 +298,18 @@
 
     // Fetch live map nodes
     fetch('/api/province_map/nodes')
-        .then(res => res.json())
+        .then(async res => {
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status}: ${text}`);
+            }
+            return res.json();
+        })
         .then(data => {
-            if (data.status === 'success' && data.provinces && data.provinces.length > 0) {
+            if (data.status !== 'success') {
+                throw new Error(data.message || "API returned non-success status");
+            }
+            if (data.provinces && data.provinces.length > 0) {
                 data.provinces.forEach(prov => {
                     const wrapperEl = document.createElement('div');
                     wrapperEl.className = 'hex-wrapper';
@@ -357,6 +366,7 @@
                 <div class="hex-inner">
                     <h3 style="color:#ff6b6b">Error</h3>
                     <p class="pop">Failed to load</p>
+                    <p style="font-size:0.6rem;color:#ff6b6b;overflow:hidden;text-overflow:ellipsis;max-width:150px;white-space:nowrap;" title="${err.message.replace(/"/g, '&quot;')}">${err.message}</p>
                 </div>
             `;
             canvas.appendChild(wrapperEl);
