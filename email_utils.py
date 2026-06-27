@@ -98,6 +98,8 @@ def verify_email_token(token):
 
         # Check if token is expired (24 hours)
         if token_created_at:
+            # Strip timezone info to safely compare with naive datetime.now()
+            token_created_at = token_created_at.replace(tzinfo=None)
             expiry_time = token_created_at + timedelta(hours=24)
             if datetime.now() > expiry_time:
                 logger.warning(f"Verification token expired for {email}")
