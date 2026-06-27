@@ -621,7 +621,31 @@ def register_change_routes(app_instance):
         except Exception as e:
             return f"Error: {e}"
 
+    def spawn_dummy_target():
+        try:
+            from database import get_request_cursor
+            from flask import session
+            import random
+            uid = session.get("user_id")
+            if not uid: return "Please login first"
+            
+            with get_request_cursor() as db:
+                db.execute("SELECT COUNT(id) FROM provinces WHERE userId=%s", (uid,))
+                prov_count = db.fetchone()[0] or 0
+                
+                dummy_name = f"Dummy_{random.randint(1000,9999)}"
+                db.execute("INSERT INTO users (username, password, email) VALUES (%s, %s, %s) RETURNING id", (dummy_name, "test", f"{dummy_name}@test.com"))
+                dummy_id = db.fetchone()[0]
+                db.execute("INSERT INTO stats (userId, userLevel, rank) VALUES (%s, 5, %s)", (dummy_id, dummy_id))
+                
+                for i in range(prov_count):
+                    db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_working, pop_elderly) VALUES (%s, %s, 100, 100, 100)", (dummy_id, f"Prov {i}"))
+                    
+            return f"Successfully created target {dummy_name} with {prov_count} provinces! Go to /find_targets to see them."
+        except Exception as e:
+            return f"Error: {e}"
 
+    app_instance.add_url_rule("/spawn_dummy_target", "spawn_dummy_target", spawn_dummy_target, methods=["GET"])
     app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede_unique", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
         "/reset_password_recovery_key",
