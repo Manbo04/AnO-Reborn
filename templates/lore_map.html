@@ -91,110 +91,43 @@
         height: 0;
     }
 
-    /* HTML Nodes on the Canvas */
-    .map-node {
+    .hex-tile {
         position: absolute;
-        width: 320px;
+        width: 173.2px; /* size * sqrt(3) */
+        height: 200px;  /* size * 2 */
         background: var(--node-bg);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--node-border);
-        border-top: 3px solid #4fc3f7;
-        border-radius: 12px;
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
         padding: 20px;
         color: #fff;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px var(--node-glow);
-        transform: translate(-50%, -50%); /* Center the node on its x/y coordinates */
-        transition: box-shadow 0.2s, transform 0.1s;
-        cursor: pointer;
-    }
-
-    .map-node:hover {
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), inset 0 0 30px rgba(79, 195, 247, 0.3);
-        z-index: 10;
-    }
-
-    .map-node h3 {
-        margin: 0 0 10px 0;
-        color: #4fc3f7;
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        font-size: 1.2rem;
-    }
-
-    .map-node p {
-        margin: 0;
-        color: #ccc;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-    
-    .map-node .meta {
-        margin-top: 15px;
-        font-size: 0.8rem;
-        color: #888;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    /* Timeline connectors (SVG layer behind nodes) */
-    #svg-layer {
-        position: absolute;
-        top: -50000px;
-        left: -50000px;
-        width: 100000px;
-        height: 100000px;
-        pointer-events: none;
-    }
-
-    #svg-layer path {
-        stroke: rgba(79, 195, 247, 0.4);
-        stroke-width: 3;
-        fill: none;
-        stroke-dasharray: 8;
-        animation: dash 30s linear infinite;
-    }
-
-    @keyframes dash {
-        to {
-            stroke-dashoffset: -1000;
-        }
-    }
-
-    /* Controls overlay */
-    .map-controls {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        display: flex;
-        gap: 12px;
-        z-index: 100;
-    }
-
-    .control-btn {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: rgba(15, 20, 30, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         backdrop-filter: blur(8px);
+        transform: translate(-50%, -50%); /* Center on the calculated x,y */
         transition: all 0.2s ease;
+        cursor: pointer;
     }
 
-    .control-btn:hover {
-        background: rgba(30, 40, 60, 0.9);
-        transform: translateY(-2px);
+    .hex-tile:hover {
+        background: rgba(79, 195, 247, 0.3);
+        z-index: 10;
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    .hex-tile h3 {
+        margin: 0 0 5px 0;
+        font-size: 0.9rem;
+        color: #4fc3f7;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
     
-    .control-btn .material-icons-outlined {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .hex-tile p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #ccc;
     }
 </style>
 {% endblock %}
@@ -202,17 +135,14 @@
 {% block body %}
 <div class="templatedivtopper">
     <h1 class="templatedivtitle" style="margin: 0; font-size: 1.2rem;">
-        <span class="material-icons-outlined iconlarge" style="vertical-align: middle;">auto_awesome_mosaic</span>
-        Story Canvas
+        <span class="material-icons-outlined iconlarge" style="vertical-align: middle;">public</span>
+        Province Map
     </h1>
 </div>
 
 <div id="viewport">
     <div id="canvas">
-        <svg id="svg-layer">
-        </svg>
-
-        <!-- Nodes will be injected here dynamically via JS -->
+        <!-- Provinces will be injected here dynamically via JS -->
     </div>
 </div>
 
@@ -235,19 +165,13 @@
     let startY = 0;
 
     function updateTransform() {
-        // Apply transform to the canvas
         canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        
-        // Offset the dot grid background to create a parallax/panning effect
         viewport.style.backgroundPosition = `${panX}px ${panY}px`;
         viewport.style.backgroundSize = `${40 * scale}px ${40 * scale}px`;
     }
 
-    // Pan via Dragging
     viewport.addEventListener('mousedown', (e) => {
-        // Don't drag if clicking a node
-        if (e.target.closest('.map-node') || e.target.closest('.canvas-btn')) return;
-        
+        if (e.target.closest('.hex-tile') || e.target.closest('.control-btn')) return;
         isDragging = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
@@ -264,25 +188,17 @@
         updateTransform();
     });
 
-    // Zoom via Scroll
     viewport.addEventListener('wheel', (e) => {
-        // Prevent default browser scrolling
         e.preventDefault();
-
-        // Determine zoom direction and speed
         const zoomIntensity = 0.001;
         const delta = -e.deltaY * zoomIntensity;
         let newScale = scale * Math.exp(delta);
-        
-        // Clamp scale
         newScale = Math.max(0.1, Math.min(newScale, 5));
 
-        // Calculate mouse position relative to canvas
         const rect = viewport.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        // Adjust pan to zoom towards mouse cursor
         panX = mouseX - (mouseX - panX) * (newScale / scale);
         panY = mouseY - (mouseY - panY) * (newScale / scale);
         
@@ -290,17 +206,13 @@
         updateTransform();
     }, { passive: false });
 
-    // UI Controls
     window.zoom = function(amount) {
         let newScale = scale + amount;
         newScale = Math.max(0.1, Math.min(newScale, 5));
-        
-        // Zoom towards center of screen
         const mouseX = window.innerWidth / 2;
         const mouseY = window.innerHeight / 2;
         panX = mouseX - (mouseX - panX) * (newScale / scale);
         panY = mouseY - (mouseY - panY) * (newScale / scale);
-        
         scale = newScale;
         updateTransform();
     };
@@ -312,42 +224,55 @@
         updateTransform();
     };
 
-    // Init
     updateTransform();
 
+    const HEX_SIZE = 100; // Radius of hex
+    const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+    const HEX_HEIGHT = 2 * HEX_SIZE;
+
     // Fetch live map nodes
-    fetch('/api/world_map/nodes')
+    fetch('/api/province_map/nodes')
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success' && data.nodes && data.nodes.length > 0) {
-                data.nodes.forEach(node => {
+            if (data.status === 'success' && data.provinces && data.provinces.length > 0) {
+                data.provinces.forEach(prov => {
                     const nodeEl = document.createElement('div');
-                    nodeEl.className = 'map-node';
+                    nodeEl.className = 'hex-tile';
                     
-                    nodeEl.style.left = (node.x || 0) + 'px';
-                    nodeEl.style.top = (node.y || 0) + 'px';
+                    // Axial to Pixel Coordinates (pointy-topped)
+                    const q = prov.x;
+                    const r = prov.y;
+                    
+                    const pixelX = HEX_SIZE * Math.sqrt(3) * (q + r/2);
+                    const pixelY = HEX_SIZE * 3/2 * r;
+                    
+                    // Gap between hexes (optional, we can leave a tiny gap by multiplying by 1.02)
+                    const spacing = 1.05;
+
+                    nodeEl.style.left = (pixelX * spacing) + 'px';
+                    nodeEl.style.top = (pixelY * spacing) + 'px';
                     
                     nodeEl.innerHTML = `
-                        <h3>${node.name}</h3>
-                        <p><strong>${node.type || 'Region'}</strong><br/>
-                           Controlled by: ${node.coalition_name || 'Neutral'}</p>
-                        <div class="meta">
-                            <span>Tier ${node.tier || 1}</span>
-                            <span>HP: ${node.health || 100}</span>
-                        </div>
+                        <h3>${prov.name}</h3>
+                        <p>${prov.username}</p>
+                        <p style="font-size: 0.65rem; color: #888;">Pop: ${prov.population.toLocaleString()}</p>
                     `;
+                    
+                    // Add click event to go to province page
+                    nodeEl.onclick = () => {
+                        window.location.href = `/province/${prov.id}`;
+                    };
+                    
                     canvas.appendChild(nodeEl);
                 });
             } else {
-                // Fallback / Debug node if DB is empty or fetch returned success but no nodes
                 const nodeEl = document.createElement('div');
-                nodeEl.className = 'map-node';
+                nodeEl.className = 'hex-tile';
                 nodeEl.style.left = '0px';
                 nodeEl.style.top = '0px';
                 nodeEl.innerHTML = `
-                    <h3>Database Empty / Fetch Failed</h3>
-                    <p>No nodes were returned from /api/world_map/nodes.</p>
-                    <div class="meta"><span>Check console</span></div>
+                    <h3>Map Empty</h3>
+                    <p>No provinces or no coordinates assigned yet.</p>
                 `;
                 canvas.appendChild(nodeEl);
             }
@@ -355,13 +280,10 @@
         .catch(err => {
             console.error("Error loading nodes:", err);
             const nodeEl = document.createElement('div');
-            nodeEl.className = 'map-node';
+            nodeEl.className = 'hex-tile';
             nodeEl.style.left = '0px';
             nodeEl.style.top = '0px';
-            nodeEl.innerHTML = `
-                <h3>Javascript Error</h3>
-                <p>${err.message}</p>
-            `;
+            nodeEl.innerHTML = `<h3>Error</h3><p>${err.message}</p>`;
             canvas.appendChild(nodeEl);
         });
 </script>

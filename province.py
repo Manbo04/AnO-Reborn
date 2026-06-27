@@ -938,13 +938,46 @@ def createprovince():
                 if not result:
                     return error(400, "You don't have enough money.")
 
+                # Find an available adjacent hex coordinate for the new province
+                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
+                occupied_coords = set(db.fetchall())
+
+                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE user_id = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (cId,))
+                user_coords = set(db.fetchall())
+
+                hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+                new_x, new_y = None, None
+
+                if not user_coords:
+                    import random
+                    # Drop them somewhere random
+                    while True:
+                        new_x = random.randint(-25, 25)
+                        new_y = random.randint(-25, 25)
+                        if (new_x, new_y) not in occupied_coords:
+                            break
+                else:
+                    # Find an adjacent free hex tile
+                    found = False
+                    for ux, uy in user_coords:
+                        for dx, dy in hex_directions:
+                            nx, ny = ux + dx, uy + dy
+                            if (nx, ny) not in occupied_coords:
+                                new_x, new_y = nx, ny
+                                found = True
+                                break
+                        if found:
+                            break
+                    if not found:
+                        new_x, new_y = 0, 0 # Fallback
+
                 db.execute(
                     (
                         "INSERT INTO provinces "
-                        "(userId, provinceName, pop_children) "
-                        "VALUES (%s, %s, 1000000) RETURNING id"
+                        "(userId, provinceName, pop_children, coordinate_x, coordinate_y) "
+                        "VALUES (%s, %s, 1000000, %s, %s) RETURNING id"
                     ),
-                    (cId, pName),
+                    (cId, pName, new_x, new_y),
                 )
                 db.fetchone()  # Consume result
 
