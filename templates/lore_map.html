@@ -202,6 +202,10 @@
         transform: translateZ(0);
         backface-visibility: hidden;
         pointer-events: none;
+        border-radius: 50%;
+        box-shadow: inset -40px -40px 80px rgba(0,0,0,0.8), 0 0 60px rgba(0,0,0,0.5);
+        opacity: 0.9;
+        object-fit: cover;
     }
 
     /* Disable heavy filters during interaction */
@@ -408,8 +412,6 @@
                     img.style.height = (rPix * 2) + 'px';
                     img.style.left = (px - rPix) + 'px';
                     img.style.top = (py - rPix) + 'px';
-                    img.style.borderRadius = '50%';
-                    img.style.boxShadow = 'inset 0 0 100px rgba(0,0,0,1)';
                     img.style.zIndex = '-2';
                     
                     canvas.appendChild(img);
