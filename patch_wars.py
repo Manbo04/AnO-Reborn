@@ -14,8 +14,20 @@ def run_patch():
 
     with app.app_context():
         try:
-            QueryHelper.execute("ALTER TABLE wars ADD COLUMN IF NOT EXISTS aggressor_message VARCHAR(240);")
-            print("Successfully patched 'wars' table! Added 'aggressor_message' column.")
+            columns = [
+                "aggressor_message VARCHAR(240)",
+                "peace_date TIMESTAMP WITH TIME ZONE",
+                "attacker_supplies INTEGER DEFAULT 200",
+                "defender_supplies INTEGER DEFAULT 200",
+                "attacker_morale INTEGER DEFAULT 100",
+                "defender_morale INTEGER DEFAULT 100",
+                "peace_offer_id INTEGER",
+                "status VARCHAR(20) DEFAULT 'active'",
+                "winner_id INTEGER"
+            ]
+            for col in columns:
+                QueryHelper.execute(f"ALTER TABLE wars ADD COLUMN IF NOT EXISTS {col};")
+            print("Successfully patched 'wars' table! Added potentially missing columns.")
         except Exception as e:
             print(f"Error: {e}")
 
