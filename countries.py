@@ -1,4 +1,4 @@
-from flask import request, render_template, session, redirect
+from flask import request, render_template, session, redirect, jsonify
 from helpers import login_required
 from helpers import get_influence, error
 from database import invalidate_view_cache, reuse_or_new_cursor
@@ -484,6 +484,8 @@ def next_turn_rations(cId, prod_rations):
         return int(remaining_rations)
 
 
+
+
 def delete_news(id):
     with get_request_cursor() as db:
         db.execute("SELECT destination_id FROM news WHERE id=(%s)", (id,))
@@ -903,6 +905,45 @@ def country(cId):
                 news = []
                 news_amount = 0
 
+        interactive_events = []
+        if current_user_id and int(cId) == current_user_id:
+            try:
+                db.execute(
+                    "SELECT id, event_def_id, created_at FROM interactive_events WHERE user_id=%s AND resolved_at IS NULL",
+                    (cId,)
+                )
+                events_rows = db.fetchall()
+                if events_rows:
+                    from app_core.events.routes import load_events
+                    events_data = load_events()
+                    for row in events_rows:
+                        evt_id = row[0]
+                        def_id = row[1]
+                        created_at = row[2]
+                        
+                        event_def = events_data.get(def_id)
+                        if event_def:
+                            choices = []
+                            for opt in event_def.get("options", []):
+                                cost_strs = [f"{v} {k}" for k, v in opt.get("costs", {}).items()]
+                                reward_strs = [f"{v} {k}" for k, v in opt.get("rewards", {}).items()]
+                                choices.append({
+                                    "label": opt.get("text", ""),
+                                    "cost": ", ".join(cost_strs) if cost_strs else "None",
+                                    "reward": ", ".join(reward_strs) if reward_strs else "None"
+                                })
+                                
+                            interactive_events.append({
+                                "id": evt_id,
+                                "def_id": def_id,
+                                "title": event_def.get("title", f"Event: {def_id}"),
+                                "description": event_def.get("description", ""),
+                                "choices": choices,
+                                "created_at": created_at
+                            })
+            except Exception:
+                rollback_db_cursor(db)
+
         # Revenue stuff - expensive, so cached
         if status:
             try:
@@ -1009,6 +1050,7 @@ def country(cId):
         revenue=revenue,
         news=news,
         news_amount=news_amount,
+        interactive_events=interactive_events,
         cg_needed=cg_needed,
         rations_need=rations_need,
         distribution_status=distribution_status,
@@ -1672,6 +1714,7 @@ def register_countries_routes(app_instance):
         login_required(delete_news),
         methods=["POST"],
     )
+
 
     # Register reset_account route
     app_instance.add_url_rule(

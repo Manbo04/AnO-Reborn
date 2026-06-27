@@ -60,7 +60,7 @@ def test_persist_fight_results_updates_military_and_morale():
     # Insert an active war row with morale values
     now = int(time.time())
     db.execute(
-        "INSERT INTO wars (attacker,defender,war_type,agressor_message,start_date,attacker_supplies,defender_supplies,last_visited,attacker_morale,defender_morale) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+        "INSERT INTO wars (attacker,defender,war_type,aggressor_message,start_date,attacker_supplies,defender_supplies,last_visited,attacker_morale,defender_morale) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
         (uid1, uid2, "Test", "desc", now, 0, 0, now, 100, 100),
     )
     war_id = db.fetchone()[0]
@@ -160,7 +160,7 @@ def test_persist_fight_results_concludes_war_when_morale_reaches_zero():
 
     # Ensure loser has few morale points so win_type=2 ends the war
     db.execute(
-        "INSERT INTO wars (attacker,defender,war_type,agressor_message,start_date,attacker_supplies,defender_supplies,last_visited,attacker_morale,defender_morale) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+        "INSERT INTO wars (attacker,defender,war_type,aggressor_message,start_date,attacker_supplies,defender_supplies,last_visited,attacker_morale,defender_morale) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
         (uid1, uid2, "Test", "desc", int(time.time()), 0, 0, int(time.time()), 5, 5),
     )
     war_id = db.fetchone()[0]
