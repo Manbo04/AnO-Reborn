@@ -52,11 +52,12 @@ def get_province_map_nodes():
                    COALESCE(p.coordinate_x, 0) as coordinate_x, 
                    COALESCE(p.coordinate_y, 0) as coordinate_y,
                    COALESCE(p.pop_working, 0) + COALESCE(p.pop_children, 0) + COALESCE(p.pop_elderly, 0) as population, 
-                   COALESCE(p.tax_rate, 0.0) as tax_rate, 
-                   COALESCE(p.unrest, 0.0) as unrest, 
-                   COALESCE(p.corruption, 0.0) as corruption
+                   0.0 as tax_rate, 
+                   0.0 as unrest, 
+                   0.0 as corruption
             FROM provinces p
             JOIN users u ON p.userId = u.id
+            WHERE p.coordinate_x IS NOT NULL AND p.coordinate_y IS NOT NULL
         """)
         rows = db.fetchall()
         
