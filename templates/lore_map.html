@@ -84,6 +84,7 @@
         top: 50%; left: 50%;
         transform-origin: 0 0;
         width: 0; height: 0;
+        will-change: transform;
     }
 
     /* Map Controls UI */
@@ -256,6 +257,30 @@
         canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         viewport.style.backgroundPosition = `0 0, ${panX}px ${panY}px`;
         viewport.style.backgroundSize = `100% 100%, ${50 * scale}px ${50 * scale}px`;
+
+        // Frustum Culling
+        const halfW = window.innerWidth / 2;
+        const halfH = window.innerHeight / 2;
+        const hexes = canvas.getElementsByClassName('hex-wrapper');
+        const margin = 200 * scale;
+
+        for (let i = 0; i < hexes.length; i++) {
+            const hex = hexes[i];
+            if (hex.dataset.x === undefined) continue;
+            
+            const x = parseFloat(hex.dataset.x);
+            const y = parseFloat(hex.dataset.y);
+            
+            const screenX = halfW + panX + x * scale;
+            const screenY = halfH + panY + y * scale;
+            
+            if (screenX >= -margin && screenX <= window.innerWidth + margin &&
+                screenY >= -margin && screenY <= window.innerHeight + margin) {
+                if (hex.style.display === 'none') hex.style.display = '';
+            } else {
+                if (hex.style.display !== 'none') hex.style.display = 'none';
+            }
+        }
     }
 
     viewport.addEventListener('mousedown', (e) => {
@@ -346,6 +371,8 @@
 
                     wrapperEl.style.left = (pixelX * spacing) + 'px';
                     wrapperEl.style.top = (pixelY * spacing) + 'px';
+                    wrapperEl.dataset.x = pixelX * spacing;
+                    wrapperEl.dataset.y = pixelY * spacing;
                     
                     wrapperEl.innerHTML = `
                         <div class="hex-tile"></div>
