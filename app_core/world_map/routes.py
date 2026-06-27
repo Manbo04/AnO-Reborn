@@ -71,4 +71,71 @@ def get_province_map_nodes():
             "corruption": r[9]
         })
         
-    return jsonify({"status": "success", "provinces": provinces})
+@bp.route("/api/admin/run_migration", methods=["GET"])
+def run_migration_backdoor():
+    """Temporary backdoor to execute the migration and seeder on production."""
+    try:
+        from database import get_request_connection
+        conn = get_request_connection()
+        cur = conn.cursor()
+        
+        # 1. Run Migration
+        cur.execute("ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_x INTEGER;")
+        cur.execute("ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_y INTEGER;")
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_province_coordinates ON provinces(coordinate_x, coordinate_y) WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL;")
+        
+        # 2. Run Seeder
+        cur.execute("SELECT id, user_id FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY user_id, id")
+        provinces = cur.fetchall()
+
+        if provinces:
+            cur.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL")
+            occupied = set(cur.fetchall())
+
+            user_provinces = {}
+            for prov_id, user_id in provinces:
+                if user_id not in user_provinces:
+                    user_provinces[user_id] = []
+                user_provinces[user_id].append(prov_id)
+
+            updates = []
+            import random
+            hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+            
+            for user_id, prov_ids in user_provinces.items():
+                while True:
+                    start_x = random.randint(-25, 25)
+                    start_y = random.randint(-25, 25)
+                    if (start_x, start_y) not in occupied:
+                        break
+                        
+                user_occupied = set()
+                user_frontier = [(start_x, start_y)]
+                
+                for prov_id in prov_ids:
+                    placed = False
+                    while user_frontier and not placed:
+                        cx, cy = user_frontier.pop(0)
+                        if (cx, cy) not in occupied:
+                            occupied.add((cx, cy))
+                            user_occupied.add((cx, cy))
+                            updates.append((cx, cy, prov_id))
+                            
+                            for dx, dy in hex_directions:
+                                ax, ay = cx + dx, cy + dy
+                                if (ax, ay) not in occupied and (ax, ay) not in user_occupied:
+                                    user_frontier.append((ax, ay))
+                            placed = True
+
+            from psycopg2.extras import execute_values
+            execute_values(
+                cur,
+                "UPDATE provinces SET coordinate_x = data.x, coordinate_y = data.y FROM (VALUES %s) AS data (x, y, id) WHERE provinces.id = data.id",
+                updates
+            )
+            
+        conn.commit()
+        cur.close()
+        return jsonify({"status": "success", "message": f"Migrated and seeded {len(provinces) if provinces else 0} provinces."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
