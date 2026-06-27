@@ -45,9 +45,9 @@
 
 .material-icons-outlined {
     font-family: 'Material Icons Outlined';
-    position: relative;
-    top: 5px;
-    right: 5px;
+    vertical-align: middle;
+    margin-right: 5px;
+    padding-bottom: 2px;
     font-size: inherit;
     /* Preferred icon size */
     text-transform: none;
