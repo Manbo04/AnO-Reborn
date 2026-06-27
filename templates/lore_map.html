@@ -210,28 +210,9 @@
 <div id="viewport">
     <div id="canvas">
         <svg id="svg-layer">
-            <path d="M50000,50000 C 50200,50000 50200,50200 50400,50200" />
-            <path d="M50400,50200 C 50600,50200 50600,50000 50800,50000" />
         </svg>
 
-        <!-- Dummy Nodes -->
-        <div class="map-node" style="left: 0px; top: 0px;">
-            <h3>The Beginning</h3>
-            <p>This is where the story starts. A sleek, glassmorphic node on an infinite canvas.</p>
-            <div class="meta"><span>Event #1</span><span>Year 0</span></div>
-        </div>
-
-        <div class="map-node" style="left: 400px; top: 200px;">
-            <h3>The Expansion</h3>
-            <p>You can drag to pan, and scroll to zoom in and out just like Figma or Miro.</p>
-            <div class="meta"><span>Event #2</span><span>Year 15</span></div>
-        </div>
-
-        <div class="map-node" style="left: 800px; top: 0px;">
-            <h3>The Resolution</h3>
-            <p>Since these are just HTML divs, we can put inputs, buttons, and images right inside them.</p>
-            <div class="meta"><span>Event #3</span><span>Year 42</span></div>
-        </div>
+        <!-- Nodes will be injected here dynamically via JS -->
     </div>
 </div>
 
@@ -333,5 +314,33 @@
 
     // Init
     updateTransform();
+
+    // Fetch live map nodes
+    fetch('/api/world_map/nodes')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && data.nodes) {
+                data.nodes.forEach(node => {
+                    const nodeEl = document.createElement('div');
+                    nodeEl.className = 'map-node';
+                    
+                    // We can tweak position offsets later based on the game's actual coordinates
+                    nodeEl.style.left = node.x + 'px';
+                    nodeEl.style.top = node.y + 'px';
+                    
+                    nodeEl.innerHTML = `
+                        <h3>${node.name}</h3>
+                        <p><strong>${node.type || 'Region'}</strong><br/>
+                           Controlled by: ${node.coalition_name || 'Neutral'}</p>
+                        <div class="meta">
+                            <span>Tier ${node.tier || 1}</span>
+                            <span>HP: ${node.health || 100}</span>
+                        </div>
+                    `;
+                    canvas.appendChild(nodeEl);
+                });
+            }
+        })
+        .catch(err => console.error("Error loading nodes:", err));
 </script>
 {% endblock %}
