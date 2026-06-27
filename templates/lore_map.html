@@ -1,0 +1,300 @@
+{% extends "layout.html" %}
+{% block title %} Lore Map {% endblock %}
+{% block body_class %}page-lore-map{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --canvas-bg: #0d0f13;
+        --grid-color: rgba(255, 255, 255, 0.05);
+        --node-bg: rgba(20, 24, 32, 0.6);
+        --node-border: rgba(79, 195, 247, 0.3);
+        --node-glow: rgba(79, 195, 247, 0.15);
+    }
+
+    body.page-lore-map {
+        margin: 0;
+        overflow: hidden; /* Prevent normal scrolling */
+        background-color: var(--canvas-bg);
+    }
+
+    .templatedivtopper {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(10, 14, 20, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--node-border);
+        padding: 10px 20px;
+        border-radius: 8px;
+        pointer-events: auto;
+    }
+
+    /* Infinite Canvas Viewport */
+    #viewport {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        cursor: grab;
+        /* Dot grid pattern */
+        background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: 0 0;
+    }
+
+    #viewport:active {
+        cursor: grabbing;
+    }
+
+    /* The actual canvas container that scales and translates */
+    #canvas {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform-origin: 0 0;
+        width: 0;
+        height: 0;
+    }
+
+    /* HTML Nodes on the Canvas */
+    .map-node {
+        position: absolute;
+        width: 320px;
+        background: var(--node-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--node-border);
+        border-top: 3px solid #4fc3f7;
+        border-radius: 12px;
+        padding: 20px;
+        color: #fff;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px var(--node-glow);
+        transform: translate(-50%, -50%); /* Center the node on its x/y coordinates */
+        transition: box-shadow 0.2s, transform 0.1s;
+        cursor: pointer;
+    }
+
+    .map-node:hover {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), inset 0 0 30px rgba(79, 195, 247, 0.3);
+        z-index: 10;
+    }
+
+    .map-node h3 {
+        margin: 0 0 10px 0;
+        color: #4fc3f7;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .map-node p {
+        margin: 0;
+        color: #ccc;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .map-node .meta {
+        margin-top: 15px;
+        font-size: 0.8rem;
+        color: #888;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* Timeline connectors (SVG layer behind nodes) */
+    #svg-layer {
+        position: absolute;
+        top: -50000px;
+        left: -50000px;
+        width: 100000px;
+        height: 100000px;
+        pointer-events: none;
+    }
+
+    #svg-layer path {
+        stroke: rgba(79, 195, 247, 0.4);
+        stroke-width: 3;
+        fill: none;
+        stroke-dasharray: 8;
+        animation: dash 30s linear infinite;
+    }
+
+    @keyframes dash {
+        to {
+            stroke-dashoffset: -1000;
+        }
+    }
+
+    /* Controls overlay */
+    .canvas-controls {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        gap: 10px;
+        z-index: 1000;
+    }
+
+    .canvas-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(10, 14, 20, 0.8);
+        border: 1px solid var(--node-border);
+        color: #4fc3f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s;
+    }
+
+    .canvas-btn:hover {
+        background: rgba(79, 195, 247, 0.2);
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="templatedivtopper">
+    <h1 class="templatedivtitle" style="margin: 0; font-size: 1.2rem;">
+        <span class="material-icons-outlined iconlarge" style="vertical-align: middle;">auto_awesome_mosaic</span>
+        Story Canvas
+    </h1>
+</div>
+
+<div id="viewport">
+    <div id="canvas">
+        <svg id="svg-layer">
+            <path d="M50000,50000 C 50200,50000 50200,50200 50400,50200" />
+            <path d="M50400,50200 C 50600,50200 50600,50000 50800,50000" />
+        </svg>
+
+        <!-- Dummy Nodes -->
+        <div class="map-node" style="left: 0px; top: 0px;">
+            <h3>The Beginning</h3>
+            <p>This is where the story starts. A sleek, glassmorphic node on an infinite canvas.</p>
+            <div class="meta"><span>Event #1</span><span>Year 0</span></div>
+        </div>
+
+        <div class="map-node" style="left: 400px; top: 200px;">
+            <h3>The Expansion</h3>
+            <p>You can drag to pan, and scroll to zoom in and out just like Figma or Miro.</p>
+            <div class="meta"><span>Event #2</span><span>Year 15</span></div>
+        </div>
+
+        <div class="map-node" style="left: 800px; top: 0px;">
+            <h3>The Resolution</h3>
+            <p>Since these are just HTML divs, we can put inputs, buttons, and images right inside them.</p>
+            <div class="meta"><span>Event #3</span><span>Year 42</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="canvas-controls">
+    <button class="canvas-btn" onclick="zoom(0.2)" title="Zoom In"><span class="material-icons-outlined">add</span></button>
+    <button class="canvas-btn" onclick="zoom(-0.2)" title="Zoom Out"><span class="material-icons-outlined">remove</span></button>
+    <button class="canvas-btn" onclick="resetView()" title="Recenter"><span class="material-icons-outlined">my_location</span></button>
+</div>
+
+<script>
+    const viewport = document.getElementById('viewport');
+    const canvas = document.getElementById('canvas');
+
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    function updateTransform() {
+        // Apply transform to the canvas
+        canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        
+        // Offset the dot grid background to create a parallax/panning effect
+        viewport.style.backgroundPosition = `${panX}px ${panY}px`;
+        viewport.style.backgroundSize = `${40 * scale}px ${40 * scale}px`;
+    }
+
+    // Pan via Dragging
+    viewport.addEventListener('mousedown', (e) => {
+        // Don't drag if clicking a node
+        if (e.target.closest('.map-node') || e.target.closest('.canvas-btn')) return;
+        
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        updateTransform();
+    });
+
+    // Zoom via Scroll
+    viewport.addEventListener('wheel', (e) => {
+        // Prevent default browser scrolling
+        e.preventDefault();
+
+        // Determine zoom direction and speed
+        const zoomIntensity = 0.001;
+        const delta = -e.deltaY * zoomIntensity;
+        let newScale = scale * Math.exp(delta);
+        
+        // Clamp scale
+        newScale = Math.max(0.1, Math.min(newScale, 5));
+
+        // Calculate mouse position relative to canvas
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Adjust pan to zoom towards mouse cursor
+        panX = mouseX - (mouseX - panX) * (newScale / scale);
+        panY = mouseY - (mouseY - panY) * (newScale / scale);
+        
+        scale = newScale;
+        updateTransform();
+    }, { passive: false });
+
+    // UI Controls
+    window.zoom = function(amount) {
+        let newScale = scale + amount;
+        newScale = Math.max(0.1, Math.min(newScale, 5));
+        
+        // Zoom towards center of screen
+        const mouseX = window.innerWidth / 2;
+        const mouseY = window.innerHeight / 2;
+        panX = mouseX - (mouseX - panX) * (newScale / scale);
+        panY = mouseY - (mouseY - panY) * (newScale / scale);
+        
+        scale = newScale;
+        updateTransform();
+    };
+
+    window.resetView = function() {
+        scale = 1;
+        panX = 0;
+        panY = 0;
+        updateTransform();
+    };
+
+    // Init
+    updateTransform();
+</script>
+{% endblock %}
