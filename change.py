@@ -622,7 +622,7 @@ def register_change_routes(app_instance):
             return f"Error: {e}"
 
 
-    app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede", spawn_economy_dede, methods=["GET"])
+    app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede_unique", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
         "/reset_password_recovery_key",
         "reset_password_recovery_key",
