@@ -123,8 +123,8 @@
     /* Hex Tile Wrapper for shadows (clip-path hides box-shadows) */
     .hex-wrapper {
         position: absolute;
-        width: 173.2px;
-        height: 200px;
+        width: 86.6px;
+        height: 100px;
         transform: translate(-50%, -50%);
         transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
@@ -158,7 +158,7 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 20px;
+        padding: 5px;
         color: #fff;
         transition: all 0.3s ease;
     }
@@ -172,8 +172,8 @@
     }
 
     .hex-inner h3 {
-        margin: 0 0 6px 0;
-        font-size: 0.95rem;
+        margin: 0 0 4px 0;
+        font-size: 0.6rem;
         color: #fff;
         font-weight: 700;
         letter-spacing: 0.5px;
@@ -182,15 +182,15 @@
     }
     
     .hex-inner p.user {
-        margin: 0 0 4px 0;
-        font-size: 0.8rem;
+        margin: 0 0 2px 0;
+        font-size: 0.4rem;
         color: #4fc3f7;
         font-weight: 500;
     }
 
     .hex-inner p.pop {
         margin: 0;
-        font-size: 0.7rem;
+        font-size: 0.35rem;
         color: #aaa;
         background: rgba(0,0,0,0.3);
         padding: 2px 8px;
@@ -266,7 +266,7 @@
         const halfW = window.innerWidth / 2;
         const halfH = window.innerHeight / 2;
         const hexes = canvas.getElementsByClassName('hex-wrapper');
-        const margin = 200 * scale;
+        const margin = 100 * scale;
 
         for (let i = 0; i < hexes.length; i++) {
             const hex = hexes[i];
@@ -343,7 +343,7 @@
 
     updateTransform();
 
-    const HEX_SIZE = 100;
+    const HEX_SIZE = 50;
     const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
     const HEX_HEIGHT = 2 * HEX_SIZE;
 
