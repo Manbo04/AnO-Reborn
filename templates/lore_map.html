@@ -12,20 +12,23 @@
         --node-glow: rgba(79, 195, 247, 0.3);
     }
 
-    body.page-lore-map {
+    html, body.page-lore-map {
         margin: 0;
-        overflow: hidden; /* Prevent normal scrolling */
-        background: var(--canvas-bg);
+        overflow: hidden !important; /* Prevent normal scrolling */
+        background: var(--canvas-bg) !important;
+        height: 100vh;
     }
     
     /* Override standard AnO layout background */
-    #page-content-wrapper, .container-fluid {
+    .templatecontainer, .navbarparent:has(.templatecontainer), #page-content-wrapper, .container-fluid, .body-content {
         background: transparent !important;
         padding: 0 !important;
-    }
-    
-    .body-content {
-        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        min-height: 0 !important;
     }
 
     .templatedivtopper {
