@@ -135,7 +135,7 @@ def get_province_map_nodes():
 
     # 3. Format final planets
     planets = []
-    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien']
+    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien', 'oceanic', 'gas', 'cyberpunk', 'jungle', 'barren', 'crystal', 'ringed', 'machine', 'eldritch', 'archipelago', 'crimson']
     for p_data in planets_data:
         rng = random.Random(p_data["uid"]) # Use the primary user's ID as seed
         p_type = rng.choice(planet_types)
