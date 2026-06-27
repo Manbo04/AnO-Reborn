@@ -4364,6 +4364,53 @@ def global_tick():
             if total_duration_ms > 30000:
                 logger.warning(f"Global tick exceeded 30s total: {total_duration_ms}ms")
 
+            # --- Spawning Interactive Events ---
+            try:
+                import random
+                import json
+                import os
+                events_path = os.path.join(os.path.dirname(__file__), 'app_core', 'events', 'events.json')
+                if os.path.exists(events_path):
+                    with open(events_path, 'r') as f:
+                        events_data = json.load(f)
+                    if events_data:
+                        event_ids = list(events_data.keys())
+                        db.execute("""
+                            SELECT u.id, COUNT(p.id) 
+                            FROM users u 
+                            JOIN provinces p ON p.user_id = u.id 
+                            WHERE u.last_active >= NOW() - INTERVAL '3 days'
+                            GROUP BY u.id
+                        """)
+                        rows = db.fetchall()
+                        inserts = []
+                        base_chance = 0.05  # 5% chance per province
+                        for row in rows:
+                            user_id = row[0]
+                            province_count = row[1]
+                            
+                            # Check if they already have an unresolved event
+                            db.execute("SELECT 1 FROM interactive_events WHERE user_id = %s AND resolved_at IS NULL", (user_id,))
+                            if db.fetchone():
+                                continue
+                                
+                            spawned = False
+                            for _ in range(province_count):
+                                if random.random() < base_chance:
+                                    spawned = True
+                                    break
+                                    
+                            if spawned:
+                                event_id = random.choice(event_ids)
+                                inserts.append((user_id, event_id))
+                                
+                        if inserts:
+                            from psycopg2.extras import execute_batch
+                            execute_batch(db, "INSERT INTO interactive_events (user_id, event_def_id) VALUES (%s, %s)", inserts)
+            except Exception as ev_err:
+                logger.warning(f"Failed to spawn interactive events: {ev_err}")
+            # -----------------------------------
+
             _finalize_game_tick_log(
                 db,
                 tick_id,
