@@ -13,8 +13,7 @@ def run_patch():
     from database import QueryHelper
 
     with app.app_context():
-        try:
-            columns = [
+        columns = [
                 "aggressor_message VARCHAR(240)",
                 "peace_date TIMESTAMP WITH TIME ZONE",
                 "attacker_supplies INTEGER DEFAULT 200",
@@ -28,10 +27,11 @@ def run_patch():
                 "last_visited TIMESTAMP WITH TIME ZONE DEFAULT now()"
             ]
             for col in columns:
-                QueryHelper.execute(f"ALTER TABLE wars ADD COLUMN IF NOT EXISTS {col};")
+                try:
+                    QueryHelper.execute(f"ALTER TABLE wars ADD COLUMN IF NOT EXISTS {col};")
+                except Exception as e:
+                    print(f"Error adding {col}: {e}")
             print("Successfully patched 'wars' table! Added potentially missing columns.")
-        except Exception as e:
-            print(f"Error: {e}")
 
 if __name__ == '__main__':
     run_patch()
