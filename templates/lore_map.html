@@ -3,6 +3,9 @@
 {% block body_class %}page-lore-map{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/map_parallax.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/civ_borders.css') }}">
+<script src="{{ url_for('static', filename='js/civ_ui.js') }}"></script>
 <style>
     :root {
         --canvas-bg: #0b0e14;
