@@ -78,40 +78,71 @@ def get_province_map_nodes():
     import math
     import random
 
-    clusters = {}
+    # 1. Group by user first
+    user_clusters = {}
     for p in provinces:
         uid = p["user_id"]
-        if uid not in clusters:
-            clusters[uid] = []
-        clusters[uid].append(p)
+        if uid not in user_clusters:
+            user_clusters[uid] = []
+        user_clusters[uid].append(p)
 
-    planets = []
-    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien']
-
-    for uid, cluster_provinces in clusters.items():
-        if not cluster_provinces:
-            continue
-
+    planets_data = []
+    for uid, cluster_provinces in user_clusters.items():
         sum_x = sum(p["x"] for p in cluster_provinces)
         sum_y = sum(p["y"] for p in cluster_provinces)
         cx = sum_x / len(cluster_provinces)
         cy = sum_y / len(cluster_provinces)
-
-        max_dist = 0
-        for p in cluster_provinces:
-            dist = math.hypot(p["x"] - cx, p["y"] - cy)
-            if dist > max_dist:
-                max_dist = dist
-
-        radius = max_dist * 90 + 300
-
-        rng = random.Random(uid)
-        p_type = rng.choice(planet_types)
-
-        planets.append({
-            "x": cx,
-            "y": cy,
+        max_dist = max([math.hypot(p["x"] - cx, p["y"] - cy) for p in cluster_provinces] + [0])
+        
+        radius = max_dist * 60 + 200
+        planets_data.append({
+            "uid": uid,
+            "cx": cx,
+            "cy": cy,
             "radius": radius,
+            "provinces": cluster_provinces
+        })
+
+    # 2. Merge overlapping planets iteratively
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(planets_data)):
+            for j in range(i + 1, len(planets_data)):
+                p1 = planets_data[i]
+                p2 = planets_data[j]
+                
+                # Approximate pixel distance between centroids (Hex size ~ 50, spacing ~ 1)
+                dist_coords = math.hypot(p1["cx"] - p2["cx"], p1["cy"] - p2["cy"])
+                dist_pixels = dist_coords * 50 
+                
+                # If they overlap, merge them
+                if dist_pixels < (p1["radius"] + p2["radius"]):
+                    p1["provinces"].extend(p2["provinces"])
+                    
+                    sum_x = sum(p["x"] for p in p1["provinces"])
+                    sum_y = sum(p["y"] for p in p1["provinces"])
+                    p1["cx"] = sum_x / len(p1["provinces"])
+                    p1["cy"] = sum_y / len(p1["provinces"])
+                    p1["max_dist"] = max([math.hypot(p["x"] - p1["cx"], p["y"] - p1["cy"]) for p in p1["provinces"]] + [0])
+                    p1["radius"] = p1["max_dist"] * 60 + 200
+                    
+                    planets_data.pop(j)
+                    merged = True
+                    break
+            if merged:
+                break
+
+    # 3. Format final planets
+    planets = []
+    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien']
+    for p_data in planets_data:
+        rng = random.Random(p_data["uid"]) # Use the primary user's ID as seed
+        p_type = rng.choice(planet_types)
+        planets.append({
+            "x": p_data["cx"],
+            "y": p_data["cy"],
+            "radius": p_data["radius"],
             "type": p_type
         })
 
