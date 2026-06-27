@@ -195,6 +195,17 @@
         padding: 2px 8px;
         border-radius: 10px;
     }
+
+    /* Disable heavy filters during interaction */
+    body.dragging .hex-wrapper {
+        filter: none !important;
+    }
+    body.dragging .templatedivtopper,
+    body.dragging .control-btn {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -239,12 +250,14 @@
     viewport.addEventListener('mousedown', (e) => {
         if (e.target.closest('.hex-wrapper') || e.target.closest('.control-btn')) return;
         isDragging = true;
+        document.body.classList.add('dragging');
         startX = e.clientX - panX;
         startY = e.clientY - panY;
     });
 
     window.addEventListener('mouseup', () => {
         isDragging = false;
+        document.body.classList.remove('dragging');
     });
 
     window.addEventListener('mousemove', (e) => {
@@ -254,8 +267,18 @@
         updateTransform();
     });
 
+    let wheelTimeout;
     viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
+        
+        document.body.classList.add('dragging');
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+            if (!isDragging) {
+                document.body.classList.remove('dragging');
+            }
+        }, 150);
+
         const zoomIntensity = 0.001;
         const delta = -e.deltaY * zoomIntensity;
         let newScale = scale * Math.exp(delta);
