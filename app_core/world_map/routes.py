@@ -48,10 +48,10 @@ def get_province_map_nodes():
     from database import get_request_cursor
     with get_request_cursor(read_only=True) as db:
         db.execute("""
-            SELECT p.id, p.name, p.user_id, u.username, p.coordinate_x, p.coordinate_y,
-                   p.population, p.tax_rate, p.unrest, p.corruption
+            SELECT p.id, p.provinceName as name, p.userId as user_id, u.username, p.coordinate_x, p.coordinate_y,
+                   p.pop_working + p.pop_children + p.pop_elderly as population, p.tax_rate, p.unrest, p.corruption
             FROM provinces p
-            JOIN users u ON p.user_id = u.id
+            JOIN users u ON p.userId = u.id
             WHERE p.coordinate_x IS NOT NULL AND p.coordinate_y IS NOT NULL
         """)
         rows = db.fetchall()
@@ -85,7 +85,7 @@ def run_migration_backdoor():
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_province_coordinates ON provinces(coordinate_x, coordinate_y) WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL;")
         
         # 2. Run Seeder
-        cur.execute("SELECT id, user_id FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY user_id, id")
+        cur.execute("SELECT id, userId FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY userId, id")
         provinces = cur.fetchall()
 
         if provinces:
