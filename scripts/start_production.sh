@@ -44,6 +44,7 @@ _is_worker_service() {
 if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]] && _is_worker_service; then
   echo "[start] Worker boot: applying migrations and schema compat..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
+  python3 patch_wars.py || echo "[start] WARN: patch_wars exited non-zero"
   python3 scripts/apply_nextjs_compat_views.py || echo "[start] WARN: compat views script exited non-zero"
   python3 -c "
 from database import ensure_schema_compat, schema_compat_succeeded, schema_compat_failed_steps
@@ -56,6 +57,7 @@ print('[start] schema_compat', 'ok' if ok else 'failed', schema_compat_failed_st
 elif [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
   echo "[start] Running migrations on $SERVICE_NAME to guarantee execution..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
+  python3 patch_wars.py || echo "[start] WARN: patch_wars exited non-zero"
   python3 -c "
 from database import ensure_schema_compat, schema_compat_succeeded
 ensure_schema_compat()
