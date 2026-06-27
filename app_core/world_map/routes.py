@@ -34,3 +34,9 @@ def declare_siege(node_id):
     user_id = session.get("user_id")
     result = WorldMapService.declare_siege(user_id, node_id)
     return jsonify(result)
+
+@bp.route("/lore_map")
+@login_required
+def lore_map():
+    """Render the HTML/CSS infinite canvas story map."""
+    return render_template("lore_map.html")
