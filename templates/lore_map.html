@@ -5,17 +5,27 @@
 {% block head %}
 <style>
     :root {
-        --canvas-bg: #0d0f13;
-        --grid-color: rgba(255, 255, 255, 0.05);
-        --node-bg: rgba(20, 24, 32, 0.6);
-        --node-border: rgba(79, 195, 247, 0.3);
-        --node-glow: rgba(79, 195, 247, 0.15);
+        --canvas-bg: linear-gradient(135deg, #1f506e 0%, #3e1b6a 100%);
+        --grid-color: rgba(255, 255, 255, 0.1);
+        --node-bg: rgba(30, 40, 60, 0.4);
+        --node-border: rgba(255, 255, 255, 0.2);
+        --node-glow: rgba(79, 195, 247, 0.3);
     }
 
     body.page-lore-map {
         margin: 0;
         overflow: hidden; /* Prevent normal scrolling */
-        background-color: var(--canvas-bg);
+        background: var(--canvas-bg);
+    }
+    
+    /* Override standard AnO layout background */
+    #page-content-wrapper, .container-fluid {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    
+    .body-content {
+        background: transparent !important;
     }
 
     .templatedivtopper {
