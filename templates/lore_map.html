@@ -197,6 +197,13 @@
         border-radius: 10px;
     }
 
+    .planet-bg {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        pointer-events: none;
+    }
+
     /* Disable heavy filters during interaction */
     body.dragging .hex-wrapper {
         filter: none !important;
