@@ -391,12 +391,12 @@
                     const img = document.createElement('img');
                     img.src = `/static/img/planet_${planet.type}.jpg`;
                     
-                    const pixelX = HEX_SIZE * Math.sqrt(3) * (planet.x + planet.y/2);
-                    const pixelY = HEX_SIZE * 3/2 * planet.y;
+                    const pixelX = planet.x * Math.sqrt(3) + (planet.y * Math.sqrt(3))/2;
+                    const pixelY = planet.y * 1.5;
                     
-                    const px = pixelX * spacing;
-                    const py = pixelY * spacing;
-                    const rPix = planet.radius * HEX_SIZE * spacing;
+                    const px = pixelX * HEX_SIZE * spacing;
+                    const py = pixelY * HEX_SIZE * spacing;
+                    const rPix = planet.radius;
                     
                     img.className = 'planet-bg';
                     img.dataset.px = px;
