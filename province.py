@@ -942,7 +942,7 @@ def createprovince():
                 db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
                 occupied_coords = set(db.fetchall())
 
-                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE user_id = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (cId,))
+                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE userId = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (cId,))
                 user_coords = set(db.fetchall())
 
                 hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]

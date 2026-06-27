@@ -20,8 +20,8 @@ def seed_province_coordinates():
     cur = conn.cursor()
 
     print("Fetching provinces...")
-    # Group provinces by user_id
-    cur.execute("SELECT id, user_id FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY user_id, id")
+    # Group provinces by userId
+    cur.execute("SELECT id, userId FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY userId, id")
     provinces = cur.fetchall()
 
     if not provinces:
