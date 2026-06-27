@@ -75,8 +75,47 @@ def get_province_map_nodes():
             "unrest": float(r[8]) if r[8] is not None else 0.0,
             "corruption": float(r[9]) if r[9] is not None else 0.0
         })
-        
-    return jsonify({"status": "success", "provinces": provinces})
+    import math
+    import random
+
+    clusters = {}
+    for p in provinces:
+        uid = p["user_id"]
+        if uid not in clusters:
+            clusters[uid] = []
+        clusters[uid].append(p)
+
+    planets = []
+    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien']
+
+    for uid, cluster_provinces in clusters.items():
+        if not cluster_provinces:
+            continue
+
+        sum_x = sum(p["x"] for p in cluster_provinces)
+        sum_y = sum(p["y"] for p in cluster_provinces)
+        cx = sum_x / len(cluster_provinces)
+        cy = sum_y / len(cluster_provinces)
+
+        max_dist = 0
+        for p in cluster_provinces:
+            dist = math.hypot(p["x"] - cx, p["y"] - cy)
+            if dist > max_dist:
+                max_dist = dist
+
+        radius = max(max_dist + 2.0, 5.0)
+
+        rng = random.Random(uid)
+        p_type = rng.choice(planet_types)
+
+        planets.append({
+            "x": cx,
+            "y": cy,
+            "radius": radius,
+            "type": p_type
+        })
+
+    return jsonify({"status": "success", "provinces": provinces, "planets": planets})
 @bp.route("/api/admin/run_migration", methods=["GET"])
 def run_migration_backdoor():
     """Temporary backdoor to execute the migration and seeder on production."""
