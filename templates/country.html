@@ -1034,8 +1034,274 @@
                 .dismiss-notification:hover {
                     cursor: pointer;
                 }
+
+                /* Interactive Events Glassmorphism Styles */
+                .glass-panel {
+                    background: rgba(255, 255, 255, 0.08);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                    border-radius: 12px;
+                    color: inherit;
+                }
+
+                .events-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+
+                .event-card {
+                    padding: 20px;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .event-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+                    background: rgba(255, 255, 255, 0.12);
+                }
+
+                .event-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 4px;
+                    background: linear-gradient(90deg, #ff8a00, #e52e71);
+                }
+
+                .event-title {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    margin-top: 0;
+                }
+
+                .event-date {
+                    font-size: 0.85rem;
+                    opacity: 0.7;
+                    margin-bottom: 15px;
+                }
+
+                .event-excerpt {
+                    font-size: 0.95rem;
+                    line-height: 1.4;
+                    opacity: 0.9;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 3;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                /* Modal */
+                .event-modal-backdrop {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(5px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s;
+                }
+
+                .event-modal-backdrop.active {
+                    opacity: 1;
+                    pointer-events: all;
+                }
+
+                .event-modal {
+                    width: 90%;
+                    max-width: 500px;
+                    padding: 30px;
+                    transform: scale(0.95);
+                    transition: transform 0.3s;
+                    position: relative;
+                    /* Fallback background for browsers without backdrop-filter */
+                    background: rgba(30, 30, 30, 0.85); 
+                }
+
+                .event-modal-backdrop.active .event-modal {
+                    transform: scale(1);
+                }
+
+                .event-modal h3 {
+                    margin-top: 0;
+                    font-size: 1.5rem;
+                    margin-bottom: 15px;
+                }
+
+                .event-modal p.desc {
+                    font-size: 1.05rem;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                }
+
+                .event-choices {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .event-choice-btn {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 15px;
+                    border-radius: 8px;
+                    color: inherit;
+                    cursor: pointer;
+                    text-align: left;
+                    transition: all 0.2s;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .event-choice-btn:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-color: rgba(255, 255, 255, 0.4);
+                }
+
+                .choice-label {
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                    margin-bottom: 5px;
+                }
+
+                .choice-details {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.85rem;
+                    opacity: 0.8;
+                }
+
+                .choice-cost { color: #ff8a8a; }
+                .choice-reward { color: #8aff9e; }
+
+                .close-modal-btn {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    opacity: 0.7;
+                }
+
+                .close-modal-btn:hover {
+                    opacity: 1;
+                }
+
+                .event-loading {
+                    display: none;
+                    text-align: center;
+                    margin-top: 15px;
+                    font-weight: bold;
+                }
             </style>
+
+            {% if interactive_events and interactive_events|length > 0 %}
+            <h2 class="templatecontentheaderleft">Action Required</h2>
+            <div class="events-grid">
+                {% for evt in interactive_events %}
+                <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
+                    <h3 class="event-title">{{ evt.title }}</h3>
+                    <div class="event-date">{{ evt.created_at.strftime('%Y-%m-%d') if evt.created_at else 'Recent' }}</div>
+                    <div class="event-excerpt">{{ evt.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Event Modal -->
+            <div id="eventModalBackdrop" class="event-modal-backdrop">
+                <div class="event-modal glass-panel">
+                    <button class="close-modal-btn" onclick="closeEventModal()">&times;</button>
+                    <h3 id="modalEventTitle">Event Title</h3>
+                    <p class="desc" id="modalEventDesc">Event Description</p>
+                    <div class="event-choices" id="modalEventChoices">
+                        <!-- Choices injected here -->
+                    </div>
+                    <div class="event-loading" id="modalEventLoading">Processing...</div>
+                </div>
+            </div>
+
+            <script>
+                let currentEventId = null;
+
+                function openEventModal(eventId, title, desc, choices) {
+                    currentEventId = eventId;
+                    document.getElementById('modalEventTitle').innerText = title;
+                    document.getElementById('modalEventDesc').innerText = desc;
+                    
+                    const choicesContainer = document.getElementById('modalEventChoices');
+                    choicesContainer.innerHTML = '';
+                    
+                    choices.forEach((choice, index) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'event-choice-btn';
+                        btn.onclick = () => respondToEvent(index);
+                        
+                        btn.innerHTML = `
+                            <div class="choice-label">${choice.label}</div>
+                            <div class="choice-details">
+                                <span class="choice-cost">Cost: ${choice.cost}</span>
+                                <span class="choice-reward">Reward: ${choice.reward}</span>
+                            </div>
+                        `;
+                        choicesContainer.appendChild(btn);
+                    });
+                    
+                    document.getElementById('modalEventLoading').style.display = 'none';
+                    choicesContainer.style.display = 'flex';
+                    
+                    document.getElementById('eventModalBackdrop').classList.add('active');
+                }
+
+                function closeEventModal() {
+                    document.getElementById('eventModalBackdrop').classList.remove('active');
+                    currentEventId = null;
+                }
+
+                function respondToEvent(choiceIndex) {
+                    if (!currentEventId) return;
+                    
+                    document.getElementById('modalEventChoices').style.display = 'none';
+                    document.getElementById('modalEventLoading').style.display = 'block';
+                    
+                    fetch(`/api/events/${currentEventId}/respond`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ option_index: choiceIndex })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert(data.error || 'An error occurred.');
+                            closeEventModal();
+                        }
+                    })
+                    .catch(err => {
+                        alert('Network error.');
+                        closeEventModal();
+                    });
+                }
+            </script>
+            {% endif %}
+
             {% if news|length %}
+            <h2 class="templatecontentheaderleft">Reports & News</h2>
             <table class="templatetable">
 
                 {% for new in news %}
