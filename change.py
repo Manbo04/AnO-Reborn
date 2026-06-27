@@ -634,7 +634,7 @@ def register_change_routes(app_instance):
                 prov_count = db.fetchone()[0] or 0
                 
                 dummy_name = f"Dummy_{random.randint(1000,9999)}"
-                db.execute("INSERT INTO users (username, password, email) VALUES (%s, %s, %s) RETURNING id", (dummy_name, "test", f"{dummy_name}@test.com"))
+                db.execute("INSERT INTO users (username, hash, email, date, auth_type) VALUES (%s, %s, %s, %s, %s) RETURNING id", (dummy_name, "test", f"{dummy_name}@test.com", "2024-01-01", "normal"))
                 dummy_id = db.fetchone()[0]
                 db.execute("INSERT INTO stats (userId, userLevel, rank) VALUES (%s, 5, %s)", (dummy_id, dummy_id))
                 
