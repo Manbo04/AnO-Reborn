@@ -103,7 +103,7 @@ def get_province_map_nodes():
             if dist > max_dist:
                 max_dist = dist
 
-        radius = max(max_dist + 2.0, 5.0)
+        radius = min(max_dist * 60 + 200, 800)
 
         rng = random.Random(uid)
         p_type = rng.choice(planet_types)
