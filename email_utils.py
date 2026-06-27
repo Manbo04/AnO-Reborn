@@ -75,22 +75,21 @@ def verify_email_token(token):
         return None
 
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Find user with this token, check it's not expired (24 hour validity)
-        cur.execute(
-            """
-            SELECT email, token_created_at
-            FROM users
-            WHERE verification_token = %s
-        """,
-            (token,),
-        )
-
-        result = cur.fetchone()
-        cur.close()
-        conn.close()
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+    
+            # Find user with this token, check it's not expired (24 hour validity)
+            cur.execute(
+                """
+                SELECT email, token_created_at
+                FROM users
+                WHERE verification_token = %s
+            """,
+                (token,),
+            )
+    
+            result = cur.fetchone()
+            cur.close()
 
         if not result:
             return None
