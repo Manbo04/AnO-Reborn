@@ -283,6 +283,25 @@
                 if (hex.style.display !== 'none') hex.style.display = 'none';
             }
         }
+
+        const planets = canvas.getElementsByClassName('planet-bg');
+        for (let i = 0; i < planets.length; i++) {
+            const planet = planets[i];
+            const px = parseFloat(planet.dataset.px);
+            const py = parseFloat(planet.dataset.py);
+            const r = parseFloat(planet.dataset.r);
+            
+            const screenX = halfW + panX + px * scale;
+            const screenY = halfH + panY + py * scale;
+            const rScaled = r * scale;
+            
+            if (screenX + rScaled >= 0 && screenX - rScaled <= window.innerWidth &&
+                screenY + rScaled >= 0 && screenY - rScaled <= window.innerHeight) {
+                if (planet.style.display === 'none') planet.style.display = 'block';
+            } else {
+                if (planet.style.display !== 'none') planet.style.display = 'none';
+            }
+        }
     }
 
     viewport.addEventListener('mousedown', (e) => {
@@ -371,6 +390,11 @@
                     const px = pixelX * spacing;
                     const py = pixelY * spacing;
                     const rPix = planet.radius * HEX_SIZE * spacing;
+                    
+                    img.className = 'planet-bg';
+                    img.dataset.px = px;
+                    img.dataset.py = py;
+                    img.dataset.r = rPix;
                     
                     img.style.position = 'absolute';
                     img.style.width = (rPix * 2) + 'px';
