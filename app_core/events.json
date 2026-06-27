@@ -1,0 +1,342 @@
+[
+  {
+    "id": "event_001",
+    "title": "Tech Boom in the Silicon Valley",
+    "description": "A sudden surge in technology startups has led to an economic boom in our tech sectors. How should we capitalize on this?",
+    "options": [
+      {
+        "text": "Subsidize the startups to encourage growth.",
+        "costs": {"gold": 10},
+        "rewards": {"economy": 2, "innovation": 1}
+      },
+      {
+        "text": "Tax them heavily to fill state coffers.",
+        "costs": {"popularity": 1},
+        "rewards": {"gold": 50, "economy": -1}
+      }
+    ]
+  },
+  {
+    "id": "event_002",
+    "title": "Border Skirmish",
+    "description": "Minor clashes have been reported at the northern border. Tensions are high.",
+    "options": [
+      {
+        "text": "Send military reinforcements.",
+        "costs": {"gold": 20, "manpower": 5},
+        "rewards": {"security": 2, "morale": 1}
+      },
+      {
+        "text": "Open diplomatic channels to de-escalate.",
+        "costs": {"diplomacy": 1},
+        "rewards": {"security": 1, "relations": 2}
+      }
+    ]
+  },
+  {
+    "id": "event_003",
+    "title": "Global Economic Summit",
+    "description": "We have been invited to host the annual global economic summit. It will be expensive but prestigious.",
+    "options": [
+      {
+        "text": "Host the summit with grand preparations.",
+        "costs": {"gold": 30},
+        "rewards": {"prestige": 3, "relations": 2}
+      },
+      {
+        "text": "Decline politely.",
+        "costs": {"prestige": 1},
+        "rewards": {"gold": 10}
+      }
+    ]
+  },
+  {
+    "id": "event_004",
+    "title": "Protests in the Capital",
+    "description": "Citizens are taking to the streets protesting recent policy changes.",
+    "options": [
+      {
+        "text": "Address their concerns and promise reforms.",
+        "costs": {"gold": 15},
+        "rewards": {"morale": 2, "stability": 1}
+      },
+      {
+        "text": "Deploy riot police to disperse the crowds.",
+        "costs": {"morale": 2},
+        "rewards": {"stability": 2, "security": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_005",
+    "title": "Scientific Breakthrough",
+    "description": "Our national laboratory has made a significant breakthrough in renewable energy.",
+    "options": [
+      {
+        "text": "Keep the research classified for national advantage.",
+        "costs": {"diplomacy": 1},
+        "rewards": {"innovation": 3, "security": 1}
+      },
+      {
+        "text": "Share the findings with the world.",
+        "costs": {"innovation": 1},
+        "rewards": {"relations": 3, "prestige": 2}
+      }
+    ]
+  },
+  {
+    "id": "event_006",
+    "title": "Cybersecurity Threat",
+    "description": "A sophisticated state-sponsored hacker group has breached several government servers.",
+    "options": [
+      {
+        "text": "Invest in a massive cybersecurity overhaul.",
+        "costs": {"gold": 25},
+        "rewards": {"security": 3}
+      },
+      {
+        "text": "Launch a counter-hack.",
+        "costs": {"innovation": 1, "diplomacy": 1},
+        "rewards": {"security": 1, "prestige": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_007",
+    "title": "Natural Disaster",
+    "description": "A severe earthquake has struck the eastern provinces, causing widespread damage.",
+    "options": [
+      {
+        "text": "Deploy emergency services and relief funds immediately.",
+        "costs": {"gold": 40},
+        "rewards": {"morale": 3, "stability": 1}
+      },
+      {
+        "text": "Request international aid.",
+        "costs": {"prestige": 2},
+        "rewards": {"gold": 20, "relations": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_008",
+    "title": "Lucrative Trade Agreement",
+    "description": "A neighboring country is offering a very lucrative trade agreement, but it requires environmental concessions.",
+    "options": [
+      {
+        "text": "Accept the agreement for economic gain.",
+        "costs": {"environment": 2},
+        "rewards": {"economy": 3, "gold": 20}
+      },
+      {
+        "text": "Reject it to protect the environment.",
+        "costs": {"economy": 1},
+        "rewards": {"environment": 2, "morale": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_009",
+    "title": "Spy Uncovered",
+    "description": "Our counter-intelligence has captured a foreign spy operating in the defense ministry.",
+    "options": [
+      {
+        "text": "Publicly try the spy to embarrass their nation.",
+        "costs": {"relations": 2},
+        "rewards": {"prestige": 2, "morale": 1}
+      },
+      {
+        "text": "Quietly exchange the spy for one of our own.",
+        "costs": {"prestige": 1},
+        "rewards": {"security": 2, "relations": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_010",
+    "title": "Diplomatic Incident",
+    "description": "Our ambassador has caused a scandal at a state dinner abroad.",
+    "options": [
+      {
+        "text": "Recall the ambassador and apologize.",
+        "costs": {"prestige": 1},
+        "rewards": {"relations": 1}
+      },
+      {
+        "text": "Stand by our ambassador.",
+        "costs": {"relations": 2},
+        "rewards": {"prestige": 1, "morale": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_011",
+    "title": "New Pandemic Strain",
+    "description": "A new, highly contagious virus strain has been detected in a major city.",
+    "options": [
+      {
+        "text": "Enforce strict lockdowns and fund vaccine research.",
+        "costs": {"economy": 2, "gold": 20},
+        "rewards": {"health": 3, "security": 1}
+      },
+      {
+        "text": "Issue health warnings but keep the economy open.",
+        "costs": {"health": 2, "morale": 1},
+        "rewards": {"economy": 2}
+      }
+    ]
+  },
+  {
+    "id": "event_012",
+    "title": "Infrastructure Failure",
+    "description": "A major bridge has collapsed during rush hour, highlighting our aging infrastructure.",
+    "options": [
+      {
+        "text": "Launch a nationwide infrastructure renewal program.",
+        "costs": {"gold": 50},
+        "rewards": {"infrastructure": 3, "economy": 1}
+      },
+      {
+        "text": "Repair only the collapsed bridge.",
+        "costs": {"gold": 10},
+        "rewards": {"infrastructure": 1, "morale": -1}
+      }
+    ]
+  },
+  {
+    "id": "event_013",
+    "title": "National Cultural Festival",
+    "description": "It's time for the annual National Cultural Festival. How much should the state sponsor?",
+    "options": [
+      {
+        "text": "Sponsor a grand festival.",
+        "costs": {"gold": 15},
+        "rewards": {"morale": 3, "culture": 2}
+      },
+      {
+        "text": "Let the private sector handle it.",
+        "costs": {"morale": 1},
+        "rewards": {"gold": 5, "culture": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_014",
+    "title": "Corruption Scandal",
+    "description": "A high-ranking minister has been caught embezzling state funds.",
+    "options": [
+      {
+        "text": "Launch a public anti-corruption probe.",
+        "costs": {"stability": 1},
+        "rewards": {"morale": 2, "security": 1}
+      },
+      {
+        "text": "Cover it up to maintain government stability.",
+        "costs": {"morale": 2},
+        "rewards": {"stability": 2}
+      }
+    ]
+  },
+  {
+    "id": "event_015",
+    "title": "Energy Crisis",
+    "description": "Fuel shortages are leading to rolling blackouts across the nation.",
+    "options": [
+      {
+        "text": "Import expensive emergency fuel.",
+        "costs": {"gold": 30},
+        "rewards": {"stability": 2, "morale": 1}
+      },
+      {
+        "text": "Ration energy usage.",
+        "costs": {"morale": 2, "economy": 1},
+        "rewards": {"stability": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_016",
+    "title": "Space Agency Launch",
+    "description": "Our national space agency is ready to launch a new satellite.",
+    "options": [
+      {
+        "text": "Fund a high-profile, risky mission.",
+        "costs": {"gold": 25},
+        "rewards": {"prestige": 3, "innovation": 2}
+      },
+      {
+        "text": "Opt for a safe, routine launch.",
+        "costs": {"gold": 10},
+        "rewards": {"prestige": 1, "innovation": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_017",
+    "title": "Election Campaign Season",
+    "description": "Elections are approaching, and the political climate is tense.",
+    "options": [
+      {
+        "text": "Increase public spending to win favor.",
+        "costs": {"gold": 30},
+        "rewards": {"morale": 2, "popularity": 3}
+      },
+      {
+        "text": "Maintain fiscal responsibility.",
+        "costs": {"popularity": 1},
+        "rewards": {"economy": 2, "stability": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_018",
+    "title": "Healthcare Reform",
+    "description": "There is a strong push from the public for universal healthcare reform.",
+    "options": [
+      {
+        "text": "Implement sweeping healthcare reforms.",
+        "costs": {"gold": 40},
+        "rewards": {"health": 3, "morale": 2}
+      },
+      {
+        "text": "Offer minor subsidies instead.",
+        "costs": {"gold": 10},
+        "rewards": {"health": 1, "morale": -1}
+      }
+    ]
+  },
+  {
+    "id": "event_019",
+    "title": "Military Exercise",
+    "description": "Our generals want to conduct a massive military exercise to show off our strength.",
+    "options": [
+      {
+        "text": "Approve the grand military exercise.",
+        "costs": {"gold": 20},
+        "rewards": {"security": 2, "prestige": 2}
+      },
+      {
+        "text": "Scale it down to save costs.",
+        "costs": {"prestige": 1},
+        "rewards": {"gold": 10, "security": 1}
+      }
+    ]
+  },
+  {
+    "id": "event_020",
+    "title": "Global Market Crash",
+    "description": "International stock markets are crashing. Panic is spreading to our exchanges.",
+    "options": [
+      {
+        "text": "Bail out key national industries.",
+        "costs": {"gold": 50},
+        "rewards": {"economy": 2, "stability": 1}
+      },
+      {
+        "text": "Let the free market correct itself.",
+        "costs": {"economy": 2, "morale": 1},
+        "rewards": {"gold": 20, "innovation": 1}
+      }
+    ]
+  }
+]
