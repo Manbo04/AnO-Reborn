@@ -23,7 +23,9 @@ def run_patch():
                 "defender_morale INTEGER DEFAULT 100",
                 "peace_offer_id INTEGER",
                 "status VARCHAR(20) DEFAULT 'active'",
-                "winner_id INTEGER"
+                "winner_id INTEGER",
+                "start_date TIMESTAMP WITH TIME ZONE DEFAULT now()",
+                "last_visited TIMESTAMP WITH TIME ZONE DEFAULT now()"
             ]
             for col in columns:
                 QueryHelper.execute(f"ALTER TABLE wars ADD COLUMN IF NOT EXISTS {col};")
