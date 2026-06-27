@@ -319,14 +319,13 @@
     fetch('/api/world_map/nodes')
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success' && data.nodes) {
+            if (data.status === 'success' && data.nodes && data.nodes.length > 0) {
                 data.nodes.forEach(node => {
                     const nodeEl = document.createElement('div');
                     nodeEl.className = 'map-node';
                     
-                    // We can tweak position offsets later based on the game's actual coordinates
-                    nodeEl.style.left = node.x + 'px';
-                    nodeEl.style.top = node.y + 'px';
+                    nodeEl.style.left = (node.x || 0) + 'px';
+                    nodeEl.style.top = (node.y || 0) + 'px';
                     
                     nodeEl.innerHTML = `
                         <h3>${node.name}</h3>
@@ -339,8 +338,31 @@
                     `;
                     canvas.appendChild(nodeEl);
                 });
+            } else {
+                // Fallback / Debug node if DB is empty or fetch returned success but no nodes
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'map-node';
+                nodeEl.style.left = '0px';
+                nodeEl.style.top = '0px';
+                nodeEl.innerHTML = `
+                    <h3>Database Empty / Fetch Failed</h3>
+                    <p>No nodes were returned from /api/world_map/nodes.</p>
+                    <div class="meta"><span>Check console</span></div>
+                `;
+                canvas.appendChild(nodeEl);
             }
         })
-        .catch(err => console.error("Error loading nodes:", err));
+        .catch(err => {
+            console.error("Error loading nodes:", err);
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'map-node';
+            nodeEl.style.left = '0px';
+            nodeEl.style.top = '0px';
+            nodeEl.innerHTML = `
+                <h3>Javascript Error</h3>
+                <p>${err.message}</p>
+            `;
+            canvas.appendChild(nodeEl);
+        });
 </script>
 {% endblock %}
