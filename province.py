@@ -950,12 +950,23 @@ def createprovince():
 
                 if not user_coords:
                     import random
-                    # Drop them somewhere random
-                    while True:
-                        new_x = random.randint(-25, 25)
-                        new_y = random.randint(-25, 25)
-                        if (new_x, new_y) not in occupied_coords:
-                            break
+                    if occupied_coords:
+                        found = False
+                        occupied_list = list(occupied_coords)
+                        random.shuffle(occupied_list)
+                        for ox, oy in occupied_list:
+                            for dx, dy in hex_directions:
+                                nx, ny = ox + dx, oy + dy
+                                if (nx, ny) not in occupied_coords:
+                                    new_x, new_y = nx, ny
+                                    found = True
+                                    break
+                            if found:
+                                break
+                        if not found:
+                            new_x, new_y = 0, 0
+                    else:
+                        new_x, new_y = 0, 0
                 else:
                     # Find an adjacent free hex tile
                     found = False
