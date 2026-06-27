@@ -71,6 +71,7 @@ def get_province_map_nodes():
             "corruption": r[9]
         })
         
+    return jsonify({"status": "success", "provinces": provinces})
 @bp.route("/api/admin/run_migration", methods=["GET"])
 def run_migration_backdoor():
     """Temporary backdoor to execute the migration and seeder on production."""
