@@ -330,6 +330,7 @@
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
+        // Infinite panning: no hardcoded bounds restricting panX or panY
         panX = e.clientX - startX;
         panY = e.clientY - startY;
         requestUpdateTransform();
@@ -340,7 +341,8 @@
         const zoomIntensity = 0.001;
         const delta = -e.deltaY * zoomIntensity;
         let newScale = scale * Math.exp(delta);
-        newScale = Math.max(0.1, Math.min(newScale, 4));
+        // Allow zooming out significantly more to find distant planets
+        newScale = Math.max(0.01, Math.min(newScale, 10));
 
         const rect = viewport.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -355,7 +357,8 @@
 
     window.zoom = function(amount) {
         let newScale = scale + amount;
-        newScale = Math.max(0.1, Math.min(newScale, 4));
+        // Allow zooming out significantly more to find distant planets
+        newScale = Math.max(0.01, Math.min(newScale, 10));
         const mouseX = window.innerWidth / 2;
         const mouseY = window.innerHeight / 2;
         panX = mouseX - (mouseX - panX) * (newScale / scale);
