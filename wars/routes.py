@@ -970,7 +970,7 @@ def declare_war():
             db.execute(
                 (
                     "INSERT INTO wars (attacker, defender, "
-                    "war_type, aggressor_message, start_date, "
+                    "war_type, agressor_message, start_date, "
                     "last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
                 ),
                 (
