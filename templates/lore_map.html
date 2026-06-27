@@ -220,6 +220,10 @@
 
 <div id="viewport">
     <div id="canvas">
+        <!-- Background Map Image -->
+        <img src="{{ url_for('static', filename='img/world_map_bg.jpg') }}" 
+             style="position: absolute; top: -3000px; left: -3000px; width: 6000px; height: 6000px; z-index: -1; opacity: 0.35; object-fit: cover; pointer-events: none; border-radius: 50%; box-shadow: inset 0 0 1000px rgba(0,0,0,1);">
+
         <!-- Provinces will be injected here dynamically via JS -->
     </div>
 </div>
