@@ -4886,7 +4886,7 @@ body:has(.loginsignupdiv) .footer {
     margin: 16px 16px 0 0;
     border: none;
     background: transparent;
-    color: var(--colorOne);
+    color: #ffffff;
     cursor: pointer;
     display: flex;
     align-items: center;
