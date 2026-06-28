@@ -219,25 +219,131 @@
             </p>
 
             <div class="templatedivflex2 menuflex landing-community-row">
+                <style>
+                    /* Premium Community Panel */
+                    .landing-community-panel {
+                        background: linear-gradient(145deg, #1e2029, #15161d);
+                        border: 1px solid rgba(114, 137, 218, 0.3); /* Discord Blurple accent */
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+                        border-radius: 16px;
+                        padding: 30px;
+                        color: #e2e8f0;
+                        font-family: 'Inter', sans-serif;
+                        position: relative;
+                        overflow: hidden;
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    }
+
+                    .landing-community-panel:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 20px rgba(114, 137, 218, 0.2);
+                    }
+
+                    .landing-community-panel::before {
+                        content: '';
+                        position: absolute;
+                        top: 0; left: 0; right: 0; height: 4px;
+                        background: linear-gradient(90deg, #5865F2, #00d2ff);
+                    }
+
+                    .premium-community-header {
+                        font-size: 1.8rem;
+                        font-weight: 700;
+                        color: #ffffff;
+                        margin-top: 0;
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    
+                    .premium-community-desc {
+                        font-size: 1.05rem;
+                        line-height: 1.6;
+                        color: #94a3b8;
+                        margin-bottom: 25px;
+                    }
+
+                    .premium-community-list {
+                        list-style: none;
+                        padding: 0;
+                        margin: 0 0 30px 0;
+                    }
+
+                    .premium-community-list li {
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 12px;
+                        margin-bottom: 15px;
+                        font-size: 0.95rem;
+                        line-height: 1.5;
+                        color: #cbd5e1;
+                        background: rgba(255,255,255,0.03);
+                        padding: 12px 15px;
+                        border-radius: 8px;
+                        border: 1px solid rgba(255,255,255,0.05);
+                        transition: background 0.2s;
+                    }
+                    
+                    .premium-community-list li:hover {
+                        background: rgba(255,255,255,0.06);
+                    }
+
+                    .premium-community-list li span.material-icons-outlined {
+                        color: #5865F2;
+                        font-size: 1.2rem;
+                        margin-top: 2px;
+                    }
+
+                    .premium-social-links {
+                        display: flex;
+                        gap: 15px;
+                        align-items: center;
+                        border-top: 1px solid rgba(255,255,255,0.08);
+                        padding-top: 20px;
+                    }
+
+                    .premium-social-btn {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 8px 16px;
+                        border-radius: 20px;
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                        text-decoration: none;
+                        transition: all 0.2s;
+                        background: rgba(255,255,255,0.05);
+                        border: 1px solid rgba(255,255,255,0.1);
+                    }
+                    
+                    .premium-social-btn.discord { color: #5865F2; }
+                    .premium-social-btn.discord:hover { background: #5865F2; color: #fff; }
+                    
+                    .premium-social-btn.reddit { color: #FF4500; }
+                    .premium-social-btn.reddit:hover { background: #FF4500; color: #fff; }
+                    
+                    .premium-social-btn.twitter { color: #1DA1F2; }
+                    .premium-social-btn.twitter:hover { background: #1DA1F2; color: #fff; }
+
+                </style>
                 <div class="templatedivflex2left landing-community-panel animate floatUp">
-                    <h4 class="templatecontentheaderleft">Why join?</h4>
-                    <p class="templatecontentpleft">
+                    <h4 class="premium-community-header"><span class="material-icons-outlined">forum</span> Why join?</h4>
+                    <p class="premium-community-desc">
                         Affairs and Order is built around players helping each other grow. Our Discord is the best place to
                         meet coalition leaders, trade partners, and veterans who remember when “just one more province”
                         turned into an all-nighter.
                     </p>
-                    <ul class="templatecontentpleft landing-community-list">
-                        <li>Ask questions and get help when you are stuck on economy or war</li>
-                        <li>Find coalitions recruiting new members or post your own recruitment</li>
-                        <li>Stay ahead of balance changes, events, and downtime notices</li>
+                    <ul class="premium-community-list">
+                        <li><span class="material-icons-outlined">live_help</span> Ask questions and get help when you are stuck on economy or war</li>
+                        <li><span class="material-icons-outlined">group_add</span> Find coalitions recruiting new members or post your own recruitment</li>
+                        <li><span class="material-icons-outlined">campaign</span> Stay ahead of balance changes, events, and downtime notices</li>
                     </ul>
-                    <p class="templatecontentpleft landing-community-links">
-                        <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer" class="templatelink">Discord</a>
-                        ·
-                        <a href="https://www.reddit.com/r/AffairsandOrderReborn/?feed=home" target="_blank" rel="noopener noreferrer" class="templatelink">Reddit</a>
-                        ·
-                        <a href="https://x.com/Manbo04040404" target="_blank" rel="noopener noreferrer" class="templatelink">X / Twitter</a>
-                    </p>
+                    <div class="premium-social-links">
+                        <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer" class="premium-social-btn discord">Discord</a>
+                        <a href="https://www.reddit.com/r/AffairsandOrderReborn/?feed=home" target="_blank" rel="noopener noreferrer" class="premium-social-btn reddit">Reddit</a>
+                        <a href="https://x.com/Manbo04040404" target="_blank" rel="noopener noreferrer" class="premium-social-btn twitter">X / Twitter</a>
+                    </div>
                 </div>
                 <div class="templatedivflex2left">
                     <iframe src="https://discord.com/widget?id=708006319658893385&amp;theme=dark"
