@@ -220,6 +220,23 @@
 
             <div class="templatedivflex2 menuflex landing-community-row">
                 <style>
+                    .landing-community-row {
+                        align-items: stretch !important;
+                    }
+
+                    .landing-community-row > .templatedivflex2left {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: stretch;
+                    }
+
+                    .landing-community-row iframe.discordlink {
+                        flex-grow: 1;
+                        height: 100% !important;
+                        min-height: 400px;
+                        border-radius: 16px;
+                    }
+
                     /* Premium Community Panel */
                     .landing-community-panel {
                         background: linear-gradient(145deg, #1e2029, #15161d);
