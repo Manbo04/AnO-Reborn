@@ -604,7 +604,7 @@ def warTarget():
             "cruisers",
             "submarines",
         ]
-        units = {}
+        units = {t: "?" for t in needed_types}
         return render_template(
             "wartarget.html",
             units=units,
