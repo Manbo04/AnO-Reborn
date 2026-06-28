@@ -140,7 +140,7 @@ def peace_offers():
                             receiver_id, "Unknown"
                         )
         except (TypeError, AttributeError, IndexError, KeyError):
-            return "Something went wrong."
+            return error(500, "Something went wrong.")
 
     if request.method == "POST":
         offer_id = request.form.get("peace_offer", None)
@@ -304,7 +304,7 @@ def send_peace_offer(war_id, enemy_id):
             if len(resources) and len(resources_amount):
                 for res, amo in zip(resources, resources_amount):
                     if res not in validResources:
-                        raise Exception("Invalid resource")
+                        return error(400, "Invalid resource")
                     resources_string += res + ","
                     amount_string += str(amo) + ","
             db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
@@ -773,6 +773,7 @@ def warResult():
                     500, "An error occurred during the battle. Please try again."
                 )
             if len(war_type) > 0:
+                attack_effects = list(attack_effects)
                 if war_type == "Raze":
                     attack_effects[0] = attack_effects[0] * 10
                 elif war_type == "Loot":
@@ -1223,7 +1224,7 @@ def find_targets():
 
         if search:
             targets_list = [
-                t for t in targets_list if search.lower() in t["username"].lower()
+                t for t in targets_list if search.lower() in (t["username"] or "").lower()
             ]
 
         if sort == "influence":
@@ -1290,8 +1291,6 @@ def nuclear_strike():
         row = db.fetchone()
         if not row or row[0] <= 0:
             return error(400, f"You don't have any {weapon_name}!")
-            
-        row[0]
         unit_id = row[1]
 
         # Use 1 weapon
