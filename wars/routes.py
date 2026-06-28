@@ -966,7 +966,7 @@ def declare_war():
                     return error(
                         403, "You can't declare war because truce has not expired!"
                     )
-            start_dates = datetime.fromtimestamp(time.time())
+            start_dates = time.time()
             db.execute(
                 (
                     "INSERT INTO wars (attacker, defender, "
