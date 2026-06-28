@@ -360,7 +360,7 @@ def war_with_id(war_id):
         # Single query to get all war data
         db.execute(
             (
-                "SELECT id, attacker, defender, war_type, aggressor_message, "
+                "SELECT id, attacker, defender, war_type, agressor_message, "
                 "peace_date, attacker_supplies, attacker_morale, "
                 "defender_supplies, defender_morale FROM wars WHERE id=(%s)"
             ),
