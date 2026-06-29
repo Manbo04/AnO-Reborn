@@ -664,7 +664,7 @@
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label">Coalition tax</strong>
-        <span class="stat-value">-{{ revenue["coalition_tax"] | fmt }}</span>
+        <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
@@ -751,7 +751,7 @@
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label">Coalition tax</strong>
-        <span class="stat-value">-{{ revenue["coalition_tax"] | fmt }}</span>
+        <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
