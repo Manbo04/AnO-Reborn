@@ -197,48 +197,73 @@ def send_verification_email(to_email, username, token):
     config = get_email_config()
     verify_url = f"{config['base_url']}/verify?token={token}"
 
-    subject = "Verify your Affairs and Order account"
+    subject = "Affairs and Order - Welcome, please verify your email"
 
     html_content = textwrap.dedent(
         f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify your email</title>
         <style>
             body {{
-                font-family: Arial, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                 line-height: 1.6;
-                color: #333;
+                color: #e4e4e7;
+                background-color: #09090b;
+                margin: 0;
+                padding: 0;
             }}
             .container {{
                 max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
+                margin: 40px auto;
+                background: #18181b;
+                border: 1px solid #27272a;
+                border-radius: 8px;
+                overflow: hidden;
             }}
             .header {{
-                background: #1a1a2e;
+                background: linear-gradient(135deg, #1976D2, #1565C0);
                 color: white;
-                padding: 20px;
+                padding: 30px 20px;
                 text-align: center;
+                border-bottom: 2px solid #1e40af;
+            }}
+            .header h1 {{
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
             }}
             .content {{
-                padding: 30px;
-                background: #f9f9f9;
+                padding: 40px 30px;
+                background: #18181b;
+            }}
+            .content h2 {{
+                color: #f4f4f5;
+                font-size: 20px;
+                margin-top: 0;
             }}
             .button {{
                 display: inline-block;
-                background: #4CAF50;
-                color: white;
-                padding: 12px 30px;
+                background: #2563eb;
+                color: #ffffff !important;
+                padding: 14px 32px;
                 text-decoration: none;
-                border-radius: 5px;
-                margin: 20px 0;
+                border-radius: 6px;
+                margin: 25px 0;
+                font-weight: 600;
+                font-size: 16px;
             }}
             .footer {{
-                padding: 20px;
+                padding: 24px;
                 text-align: center;
-                color: #666;
-                font-size: 12px;
+                color: #a1a1aa;
+                font-size: 13px;
+                border-top: 1px solid #27272a;
+                background: #111113;
             }}
         </style>
     </head>
@@ -248,24 +273,25 @@ def send_verification_email(to_email, username, token):
                 <h1>Affairs and Order</h1>
             </div>
             <div class="content">
-                <h2>Welcome, {username}!</h2>
-                <p>Thank you for creating your nation in Affairs and Order.</p>
-                <p>
-                    Please verify your email address by clicking the button below:
-                </p>
-                <p style="text-align: center;">
-                    <a href="{verify_url}" class="button">Verify Email</a>
-                </p>
-                <p>Or copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; color: #666;">
+                <h2>Welcome to the game, {username}!</h2>
+                <p style="color: #d4d4d8; font-size: 15px;">Thank you for registering your nation in Affairs and Order. To ensure the security of your account and activate all game features, please verify your email address.</p>
+                
+                <div style="text-align: center;">
+                    <a href="{verify_url}" class="button">Verify My Account</a>
+                </div>
+                
+                <p style="color: #a1a1aa; font-size: 14px; margin-top: 30px;">If the button above does not work, you can copy and paste the following link into your browser:</p>
+                <p style="word-break: break-all; color: #60a5fa; font-size: 13px; background: #09090b; padding: 12px; border-radius: 4px; border: 1px solid #27272a;">
                     {verify_url}
                 </p>
-                <p><strong>This link expires in 24 hours.</strong></p>
-                <p>If you didn't create this account, you can safely ignore this
-                email.</p>
+                
+                <p style="color: #ef4444; font-size: 14px; margin-top: 20px;"><strong>Note: This verification link will expire in 24 hours.</strong></p>
+                
+                <p style="color: #71717a; font-size: 13px; margin-top: 30px;">If you did not create this account, please ignore this email. No further action is required.</p>
             </div>
             <div class="footer">
                 <p>© 2026 Affairs and Order. All rights reserved.</p>
+                <p>This is an automated message, please do not reply directly to this email.</p>
             </div>
         </div>
     </body>
