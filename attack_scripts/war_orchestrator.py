@@ -150,7 +150,7 @@ def persist_fight_results(
 
         # Read current morale value and apply delta
         if war_id is not None:
-            sel = f"SELECT {morale_column} FROM wars WHERE war_id=(%s)"
+            sel = f"SELECT {morale_column} FROM wars WHERE id=(%s)"
             db.execute(sel, (war_id,))
             current = fetchone_first(db, 0) or 0
 
@@ -255,7 +255,7 @@ def persist_fight_results(
 
             # Persist the new morale value
             db.execute(
-                f"UPDATE wars SET {morale_column}=(%s) WHERE war_id=(%s)",
+                f"UPDATE wars SET {morale_column}=(%s) WHERE id=(%s)",
                 (new_morale, war_id),
             )
 
