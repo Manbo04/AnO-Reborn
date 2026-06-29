@@ -1204,6 +1204,7 @@ def tax_income():
                 if user_id in coalition_tax_map:
                     col_id, tax_rate = coalition_tax_map[user_id]
                     tax_deducted = int(money * tax_rate / 100)
+                    tax_deducted = min(money, tax_deducted)
                     if tax_deducted > 0:
                         money -= tax_deducted
                         coalition_bank_deposits[col_id] = (
