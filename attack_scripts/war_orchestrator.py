@@ -132,14 +132,13 @@ def persist_fight_results(
         # legacy `morale_change` implementation.
         db.execute(
             "SELECT id FROM wars WHERE "
-            "(attacker=(%s) OR attacker=(%s)) "
-            "AND (defender=(%s) OR defender=(%s)) "
+            "((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) "
             " AND peace_date IS NULL",
             (
                 winner.user_id,
+                loser.user_id,
+                loser.user_id,
                 winner.user_id,
-                loser.user_id,
-                loser.user_id,
             ),
         )
         try:
@@ -153,10 +152,11 @@ def persist_fight_results(
             db.execute(sel, (war_id,))
             current = fetchone_first(db, 0) or 0
 
-            # Determine morale delta (prefer computed delta)
-            if computed_morale_delta is None:
-                if win_type is None:
-                    morale_delta = 5
+            # (Legacy compatibility) The old code checked if `win_type >= 4`
+            # and applied fixed morale drops instead of `computed_morale_delta`.
+            if win_type is not None:
+                if win_type >= 4:
+                    morale_delta = 20
                 elif win_type >= 3:
                     morale_delta = 15
                 elif win_type >= 2:
@@ -174,7 +174,8 @@ def persist_fight_results(
                 # Mark peace
                 from attack_scripts.Nations import Nation, Economy
 
-                Nation.set_peace(db, db.connection, war_id)
+                if win_type != "Sustained" and war_id is not None:
+                    Nation.set_peace(db, db.connection, war_id)
                 # Check for Looting Teams upgrade
                 from upgrades import get_upgrades
                 winner_upgrades = get_upgrades(winner.user_id, db=db)
