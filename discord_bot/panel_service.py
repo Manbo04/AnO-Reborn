@@ -18,6 +18,8 @@ from discord_bot.panels.builders import PANEL_BUILDERS
 logger = logging.getLogger(__name__)
 
 
+import asyncio
+
 async def refresh_guild_panels(
     bot: discord.Client,
     guild_id: int,
@@ -25,7 +27,7 @@ async def refresh_guild_panels(
     channel: Optional[discord.abc.Messageable] = None,
 ) -> int:
     """Update or create all bound panels for a guild. Returns count refreshed."""
-    settings = get_guild_settings(str(guild_id))
+    settings = await asyncio.to_thread(get_guild_settings, str(guild_id))
     if not settings or not settings.panels_enabled:
         return 0
     guild = bot.get_guild(guild_id)
@@ -45,7 +47,7 @@ async def refresh_guild_panels(
         if not builder:
             continue
         embed = builder()
-        msg_id = get_panel_message_id(str(guild_id), key)
+        msg_id = await asyncio.to_thread(get_panel_message_id, str(guild_id), key)
         try:
             if msg_id:
                 msg = await ch.fetch_message(int(msg_id))
@@ -53,7 +55,7 @@ async def refresh_guild_panels(
             else:
                 msg = await ch.send(embed=embed)
                 await msg.pin()
-                save_panel_message(str(guild_id), key, str(ch.id), str(msg.id))
+                await asyncio.to_thread(save_panel_message, str(guild_id), key, str(ch.id), str(msg.id))
             refreshed += 1
         except discord.NotFound:
             msg = await ch.send(embed=embed)
@@ -61,7 +63,7 @@ async def refresh_guild_panels(
                 await msg.pin()
             except discord.HTTPException:
                 pass
-            save_panel_message(str(guild_id), key, str(ch.id), str(msg.id))
+            await asyncio.to_thread(save_panel_message, str(guild_id), key, str(ch.id), str(msg.id))
             refreshed += 1
         except Exception as exc:
             logger.warning(
@@ -71,7 +73,8 @@ async def refresh_guild_panels(
 
 
 async def refresh_all_guild_panels(bot: discord.Client) -> None:
-    for gid in list_configured_guild_ids():
+    guild_ids = await asyncio.to_thread(list_configured_guild_ids)
+    for gid in guild_ids:
         try:
             count = await refresh_guild_panels(bot, int(gid))
             if count:
