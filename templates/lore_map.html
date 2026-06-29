@@ -113,14 +113,15 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
 
     .control-btn:hover {
-        background: rgba(79, 195, 247, 0.2);
-        border-color: rgba(79, 195, 247, 0.5);
-        transform: translateY(-2px);
+        background: rgba(79, 195, 247, 0.25);
+        border-color: rgba(79, 195, 247, 0.8);
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(79, 195, 247, 0.3);
     }
 
     /* Hex Tile Wrapper for shadows (clip-path hides box-shadows) */
