@@ -27,8 +27,11 @@ def get_nodes():
     nodes = WorldMapService.get_all_nodes()
     return jsonify({"status": "success", "nodes": nodes})
 
+from extensions import limiter
+
 @bp.route("/api/world_map/nodes/<int:node_id>/attack", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def declare_siege(node_id):
     """Declare an attack on a node. Costs Intel."""
     user_id = session.get("user_id")

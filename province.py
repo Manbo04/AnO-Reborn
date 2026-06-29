@@ -757,8 +757,11 @@ def province_slot_api(pId, slot_id):
     )
 
 
+from extensions import limiter
+
 @bp.route("/api/province/<int:pId>/quick_build", methods=["POST"])
 @login_required
+@limiter.limit("30 per minute")
 def province_quick_build_api(pId):
     """JSON quick-build (+1) from base sheet without full page reload."""
     from psycopg2.extras import RealDictCursor

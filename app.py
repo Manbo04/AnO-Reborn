@@ -7,6 +7,7 @@ import time as time_module
 from flask import Flask, request, render_template, session, redirect, send_from_directory
 from flask_compress import Compress
 import traceback
+from extensions import limiter
 
 # Root modules
 import upgrades
@@ -157,6 +158,13 @@ def create_app():
         return None
 
     Compress(app)
+    limiter.init_app(app)
+
+    @limiter.request_filter
+    def exempt_non_api_routes():
+        # True means the request is EXEMPT from rate limiting.
+        return not request.path.startswith("/api/")
+
     app.teardown_request(teardown_request_connection)
 
     @app.after_request
