@@ -149,7 +149,7 @@ def get_offers(db, filter_resource, offer_type, price_type, limit, offset):
 
 def get_offer_by_id(db, offer_id):
     db.execute(
-        "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=%s",
+        "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=%s FOR UPDATE",
         (offer_id,),
     )
     return db.fetchone()
