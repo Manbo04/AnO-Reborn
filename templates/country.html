@@ -565,21 +565,7 @@
                     {% endif %}
                 </div>
 
-            <h2 class="templatecontentheaderleft">Technologies</h2>
-            <div class="stat-grid">
-                {% if technology_rows and technology_rows|length > 0 %}
-                {% for tech_name in technology_rows %}
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label">{{ tech_name[0] }}</strong>
-                    <span class="stat-value" style="color: var(--success); font-weight: 700;">Unlocked</span>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="templatedivflex2left stat-card stat-card-wide">
-                    <em>None</em>
-                </div>
-                {% endif %}
-            </div>
+
 
             <h2 class="templatecontentheaderleft">Provinces</h2>
 
