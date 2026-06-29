@@ -466,7 +466,7 @@ class AdminRepository:
             db.execute("SELECT money, iron, coal, lumber, bauxite, oil, uranium, lead, copper, rations, steel, aluminium, gasoline, ammunition, consumer_goods, components FROM colBanks WHERE colId = %s", (colid,))
             out['bank'] = db.fetchone()
             
-            db.execute("SELECT t.offer_id, t.type, u.username, t.resource, t.amount, t.price FROM trades t JOIN users u ON t.offerer = u.id WHERE t.offerer = t.offeree")
+            db.execute("SELECT t.offer_id, t.type, u.username, t.resource, t.amount, t.price FROM trades t JOIN users u ON t.offerer = u.id WHERE t.offerer = t.offeree LIMIT 100")
             out['exploits'] = db.fetchall()
             
             db.execute("SELECT actor, action, user_id, details FROM admin_actions ORDER BY created_at DESC LIMIT 20")
