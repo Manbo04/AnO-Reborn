@@ -155,9 +155,9 @@
             </div>
         </div>
 
-        <p style="color: #fff; font-weight: 600; margin-bottom: 20px;">Do you want to keep your current resources or start from scratch?</p>
+        <p style="color: #fff; font-weight: 600; margin-bottom: 20px; text-align: center;">Do you want to keep your current resources or start from scratch?</p>
 
-        <form action="/reset_account" method="POST" id="resetAccountForm">
+        <form action="/reset_account" method="POST" id="resetAccountForm" style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
             <input type="hidden" name="reset_type" id="reset_type_field" value="keep">
             <button type="button" onclick="submitReset('keep')" class="reset-btn reset-btn-keep">Reset & Keep Resources</button>
             <button type="button" onclick="submitReset('scratch')" class="reset-btn reset-btn-full">Full Reset (Starter Kit)</button>

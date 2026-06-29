@@ -526,7 +526,7 @@ class Units(Military):
         else:
             return "Units are not attached!"
 
-    def save(self):
+    def save(self, db_cursor=None):
         """Persist post-fight state.
 
         Casualties are now handled by war_orchestrator.persist_fight_results(),
@@ -535,9 +535,7 @@ class Units(Military):
         if not self.supply_costs or not self.war_id:
             return
 
-        with get_db_connection() as connection:
-            db = connection.cursor()
-
+        def _do_save(db):
             # Determine whether this user is attacker or defender in the war
             db.execute(
                 "SELECT attacker, defender FROM wars WHERE id = %s",
@@ -558,9 +556,16 @@ class Units(Military):
                 f"UPDATE wars SET {supply_col} = "
                 f"GREATEST(0, {supply_col} - %s) "
                 f"WHERE id = %s",
-                (self.supply_costs, self.war_id),
+                (self.supply_costs, self.war_id)
             )
-            connection.commit()
+
+        if db_cursor is not None:
+            _do_save(db_cursor)
+        else:
+            with get_db_connection() as connection:
+                db = connection.cursor()
+                _do_save(db)
+                connection.commit()
 
     # Save casualties to the db and check for casualty validity
     # NOTE: to save the data to the db later on put it to the save method
