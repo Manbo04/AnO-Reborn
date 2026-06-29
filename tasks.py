@@ -3919,7 +3919,8 @@ def refresh_bot_offers():
 def market_bot_fight_wars():
     """Market Bot (ID 9999) automatically fights anyone it's at war with."""
     from database import get_db_connection
-    from attack_scripts.Nations import Units, Military
+    from attack_scripts.Nations import Military
+    from units import Units
     import random
     
     with get_db_connection() as conn:
