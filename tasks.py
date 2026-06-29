@@ -1087,6 +1087,7 @@ def tax_income():
                 # If colNames doesn't have tax_rate yet (migration pending),
                 # just skip coalition taxes this run
                 print(f"Coalition tax preload skipped: {e}")
+                conn.rollback()
 
             # Prepare batch updates
             money_updates = []
@@ -1247,6 +1248,7 @@ def tax_income():
                     )
                 except Exception as e:
                     print(f"Alliance tax deposit failed: {e}")
+                    conn.rollback()
             if cg_updates:
                 try:
                     # Get consumer_goods resource_id
@@ -1345,6 +1347,10 @@ def tax_income():
                         pass
             except Exception as e:
                 print(f"Failed to update task cursor for tax_income: {e}")
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
             duration = time.perf_counter() - start
             print(
@@ -4502,6 +4508,7 @@ def global_tick():
             err = str(e)
             total_duration_ms = int((time.time() - tick_start) * 1000)
             try:
+                conn.rollback() # MUST rollback the poisoned transaction first!
                 if tick_id is not None:
                     _finalize_game_tick_log(
                         db,
@@ -4517,10 +4524,7 @@ def global_tick():
                     )
                 conn.commit()
             except Exception:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
+                pass
             handle_exception(e)
             raise
         finally:
