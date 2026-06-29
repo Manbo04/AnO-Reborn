@@ -1648,7 +1648,7 @@ def get_global_events():
                 FROM user_tech ut 
                 JOIN tech_dictionary td ON ut.tech_id = td.tech_id 
                 JOIN users u ON ut.user_id = u.id 
-                ORDER BY ut.id DESC LIMIT 8
+                ORDER BY u.id DESC, td.tech_id DESC LIMIT 8
             """)
             for res in db.fetchall():
                 events.append(f"Scientific breakthrough: {res[0]} has developed {res[1]}.")
