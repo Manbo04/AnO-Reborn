@@ -877,10 +877,13 @@ def signup():
                 # Try to use email verification if columns exist
                 db.execute(
                     "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name = 'users' AND column_name = 'verification_token'"
+                    "WHERE table_name = 'users' AND column_name IN ('is_verified', 'verification_token')"
                 )
-                has_verification = db.fetchone() is not None
+                found = {row[0] for row in db.fetchall()}
+                has_is_verified = "is_verified" in found
+                has_verification = "verification_token" in found
             except Exception:
+                has_is_verified = False
                 has_verification = False
 
             if has_verification and is_email_configured():
@@ -902,11 +905,18 @@ def signup():
                 )
             else:
                 # Legacy flow without email verification
-                db.execute(
-                    "INSERT INTO users (username, email, hash, date, "
-                    "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (username, email, hashed, str(datetime.date.today()), "normal", True),
-                )
+                if has_is_verified:
+                    db.execute(
+                        "INSERT INTO users (username, email, hash, date, "
+                        "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                        (username, email, hashed, str(datetime.date.today()), "normal", True),
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO users (username, email, hash, date, "
+                        "auth_type) VALUES (%s, %s, %s, %s, %s)",
+                        (username, email, hashed, str(datetime.date.today()), "normal"),
+                    )
                 verification_token = None
 
             # Selects the id of the user that was just registered.
