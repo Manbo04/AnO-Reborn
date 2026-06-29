@@ -2946,8 +2946,8 @@ def generate_province_revenue():  # Runs each hour
 
                         # Function for _plus
                         for resource, amount in plus.items():
-                            amount += plus_amount
                             amount *= unit_amount
+                            amount += plus_amount
                             amount *= plus_amount_multiplier
                             # Normalize production to integer units so we don't
                             # persist fractional resources (e.g., 0.5 rations).
