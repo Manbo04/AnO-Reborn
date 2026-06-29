@@ -566,25 +566,20 @@
                 </div>
 
             <h2 class="templatecontentheaderleft">Technologies</h2>
-            <table class="templatetable">
-                <tr>
-                    <th>Technology</th>
-                    <th>Status</th>
-                </tr>
+            <div class="stat-grid">
                 {% if technology_rows and technology_rows|length > 0 %}
                 {% for tech_name in technology_rows %}
-                <tr>
-                    <td>{{ tech_name[0] }}</td>
-                    <td>Unlocked</td>
-                </tr>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label">{{ tech_name[0] }}</strong>
+                    <span class="stat-value" style="color: var(--success); font-weight: 700;">Unlocked</span>
+                </div>
                 {% endfor %}
                 {% else %}
-                <tr>
-                    <td>None</td>
-                    <td>0</td>
-                </tr>
+                <div class="templatedivflex2left stat-card stat-card-wide">
+                    <em>None</em>
+                </div>
                 {% endif %}
-            </table>
+            </div>
 
             <h2 class="templatecontentheaderleft">Provinces</h2>
 
