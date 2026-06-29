@@ -368,7 +368,7 @@ def callback():
         discord = make_session(token=token)
         user_info = discord.get(API_BASE_URL + '/users/@me').json()
         discord_user_id = user_info['id']
-        session['discord_email'] = user_info.get('email')
+        session['discord_email'] = user_info.get('email') if user_info.get('verified') else None
 
         intent = session.get('oauth2_intent', 'login')
         
@@ -383,8 +383,8 @@ def callback():
 
                     existing = None
                     db.execute(
-                        "SELECT id FROM users WHERE discord_id=%s LIMIT 1",
-                        (discord_user_id,),
+                        "SELECT id FROM users WHERE discord_id=%s OR (hash=%s AND auth_type='discord') LIMIT 1",
+                        (discord_user_id, discord_user_id),
                     )
                     row = db.fetchone()
                     if row:
@@ -570,7 +570,7 @@ def discord_register():
                 return error(400, "Discord API error: failed to fetch user info")
 
             discord_user_id = discord_user.get("id")
-            email = discord_user.get("email")
+            email = discord_user.get("email") if discord_user.get("verified") else None
 
             if not discord_user_id:
                 err = f"Discord API error: {discord_user}"
@@ -624,10 +624,17 @@ def discord_register():
                     if db.fetchone():
                         return error(400, "An account with this email already exists")
 
-                db.execute(
-                    "SELECT id FROM users WHERE hash=%s AND auth_type='discord'",
-                    (discord_auth,),
-                )
+                from database import users_table_has_column
+                if users_table_has_column("discord_id"):
+                    db.execute(
+                        "SELECT id FROM users WHERE discord_id=%s OR (hash=%s AND auth_type='discord')",
+                        (discord_auth, discord_auth),
+                    )
+                else:
+                    db.execute(
+                        "SELECT id FROM users WHERE hash=%s AND auth_type='discord'",
+                        (discord_auth,),
+                    )
                 if db.fetchone():
                     return error(
                         400, "This Discord account is already linked to another country"
@@ -785,7 +792,7 @@ def signup():
             db.execute(
                 """
                 INSERT INTO signup_attempts (ip_address, ip, attempt_time, successful)
-                VALUES (%s, %s, NOW(), FALSE)
+                VALUES (COALESCE(%s, 'unknown'), COALESCE(%s, 'unknown'), NOW(), FALSE)
             """,
                 (client_ip, client_ip),
             )
@@ -870,7 +877,7 @@ def signup():
                 # Try to use email verification if columns exist
                 db.execute(
                     "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name = 'users' AND column_name = 'is_verified'"
+                    "WHERE table_name = 'users' AND column_name = 'verification_token'"
                 )
                 has_verification = db.fetchone() is not None
             except Exception:
@@ -897,8 +904,8 @@ def signup():
                 # Legacy flow without email verification
                 db.execute(
                     "INSERT INTO users (username, email, hash, date, "
-                    "auth_type) VALUES (%s, %s, %s, %s, %s)",
-                    (username, email, hashed, str(datetime.date.today()), "normal"),
+                    "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (username, email, hashed, str(datetime.date.today()), "normal", True),
                 )
                 verification_token = None
 
@@ -927,24 +934,7 @@ def signup():
             init_user_game_data(db, user_id, continent)
             _complete_referral_signup(db, user_id)
 
-            # If verification is enabled, redirect to pending page.
-            # Otherwise, log them in and issue a one-time recovery key.
-            if verification_token:
-                return redirect(f"/verification_pending?email={email}")
-            else:
-                from change import create_recovery_key_for_user
-
-                session["user_id"] = user_id
-                raw_key = create_recovery_key_for_user(db, user_id)
-                from app_core.onboarding.service import post_signup_redirect
-
-                if raw_key:
-                    session["pending_recovery_key"] = raw_key
-                    return redirect("/save_recovery_key")
-                return redirect(post_signup_redirect(user_id))
-
-        # Mark attempt as successful
-        with get_request_cursor() as db:
+            # Mark attempt as successful
             db.execute(
                 """
                 UPDATE signup_attempts
@@ -959,7 +949,23 @@ def signup():
                 (client_ip,),
             )
 
-        return redirect("/")
+            # If verification is enabled, redirect to pending page.
+            # Otherwise, log them in and issue a one-time recovery key.
+            if verification_token:
+                import urllib.parse
+                safe_email = urllib.parse.quote(email)
+                return redirect(f"/verification_pending?email={safe_email}")
+            else:
+                from change import create_recovery_key_for_user
+
+                session["user_id"] = user_id
+                raw_key = create_recovery_key_for_user(db, user_id)
+                from app_core.onboarding.service import post_signup_redirect
+
+                if raw_key:
+                    session["pending_recovery_key"] = raw_key
+                    return redirect("/save_recovery_key")
+                return redirect(post_signup_redirect(user_id))
     elif request.method == "GET":
         from app_core.referrals.service import capture_referral_from_request
 
@@ -1015,7 +1021,7 @@ def verify_email():
             # Check if user exists and is not already verified
             cur.execute(
                 """
-                SELECT id, is_verified FROM users WHERE email = %s
+                SELECT id, is_verified FROM users WHERE email = %s FOR UPDATE
             """,
                 (email,),
             )
@@ -1041,6 +1047,7 @@ def verify_email():
 
             from change import create_recovery_key_for_user
 
+            session["user_id"] = user_id
             raw_key = create_recovery_key_for_user(cur, user_id)
             if raw_key:
                 session["pending_recovery_key"] = raw_key
