@@ -3909,12 +3909,77 @@ def refresh_bot_offers():
         print(f"Bot offers refreshed: {len(BOT_OFFERS)} offers created")
 
 
+def market_bot_fight_wars():
+    """Market Bot (ID 9999) automatically fights anyone it's at war with."""
+    from database import get_db_connection
+    from attack_scripts.Nations import Units, Military
+    import random
+    
+    with get_db_connection() as conn:
+        with conn.cursor() as db:
+            db.execute("SELECT id, attacker, defender, war_type FROM wars WHERE (attacker=9999 OR defender=9999) AND peace_date IS NULL")
+            active_wars = db.fetchall()
+            
+    if not active_wars:
+        return
+        
+    from app_core.app_setup import app
+    
+    for war in active_wars:
+        enemy_id = war[2] if war[1] == 9999 else war[1]
+        
+        # Ensure bot has massive army and supplies
+        bot_military = Military.get_military(9999)
+        if sum(bot_military.values()) < 100000:
+            with get_db_connection() as conn:
+                with conn.cursor() as db:
+                    db.execute("""
+                        INSERT INTO user_military (user_id, unit_id, quantity)
+                        SELECT 9999, unit_id, 1000000 
+                        FROM unit_dictionary WHERE is_active=TRUE
+                        ON CONFLICT (user_id, unit_id) DO UPDATE SET quantity = 1000000
+                    """)
+                    db.execute("""
+                        INSERT INTO user_economy (user_id, resource_id, quantity)
+                        SELECT 9999, resource_id, 10000000
+                        FROM resource_dictionary WHERE is_active=TRUE
+                        ON CONFLICT (user_id, resource_id) DO UPDATE SET quantity = 10000000
+                    """)
+            bot_military = Military.get_military(9999)
+            
+        available_units = [u for u, qty in bot_military.items() if qty > 0 and u not in ['spies']]
+        if not available_units:
+            continue
+            
+        random.shuffle(available_units)
+        selected_types = available_units[:3]
+        
+        send_units = {}
+        for u in selected_types:
+            send_units[u] = max(1, int(bot_military[u] * 0.15)) # Send 15% of bot's units
+            
+        bot_units = Units(9999, send_units, selected_units_list=selected_types)
+        bot_units.selected_units = send_units
+        
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess["user_id"] = 9999
+                sess["username"] = "System"
+                sess["enemy_id"] = enemy_id
+                sess["attack_units"] = bot_units.__dict__
+                
+            try:
+                client.get("/warResult")
+                print(f"Market bot attacked user {enemy_id}")
+            except Exception as e:
+                print(f"Market bot failed to attack user {enemy_id}: {e}")
+
 @celery.task
 @leader_only(ttl_seconds=300)
 def task_refresh_bot_offers():
     """Celery task to refresh bot market offers every 5 minutes."""
     _run_with_deadlock_retries(refresh_bot_offers, "refresh_bot_offers")
-
+    _run_with_deadlock_retries(market_bot_fight_wars, "market_bot_fight_wars")
 
 @celery.task()
 @leader_only(ttl_seconds=300)
