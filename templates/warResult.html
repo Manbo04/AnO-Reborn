@@ -1,96 +1,249 @@
 {% extends "layout.html"%} {% block title %} Attack Result {% endblock %} {% block body %}
 
+<style>
+.battle-report-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: space-around;
+}
+.combatant-panel {
+    flex: 1 1 45%;
+    background: rgba(26, 26, 46, 0.8);
+    border: 2px solid #444;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    color: #eee;
+}
+.combatant-header {
+    text-align: center;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.combatant-header i {
+    color: #e94560;
+}
+.unit-card {
+    background: rgba(22, 33, 62, 0.8);
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #e94560;
+}
+.unit-name {
+    font-weight: bold;
+    text-transform: capitalize;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+.progress-container {
+    background: #880000;
+    width: 100%;
+    height: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+.progress-fill {
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    height: 100%;
+    transition: width 1s ease-in-out;
+}
+.casualty-counter {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    color: #ddd;
+}
+.casualty-loss {
+    color: #ff5252;
+    font-weight: bold;
+}
+.infra-card, .loot-card {
+    background: rgba(15, 52, 96, 0.8);
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #4caf50;
+}
+.infra-card h4, .loot-card h4 {
+    margin-top: 0;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 5px;
+}
+.infra-item {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+.winner-banner {
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.winner-banner.victory {
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.8), transparent);
+    color: #e8f5e9;
+}
+.winner-banner.defeat {
+    background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.8), transparent);
+    color: #ffebee;
+}
+.winner-banner.neutral {
+    background: linear-gradient(90deg, transparent, rgba(158, 158, 158, 0.8), transparent);
+    color: #f5f5f5;
+}
+</style>
+
 <div class="templatediv">
-
     <div class="templatedivtopper wartopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-
-            </span>{{attacker_result["nation_name"]}} VS {{defender_result["nation_name"]}}</h1>
+        <h1 class="templatedivtitle"><i class="fas fa-crosshairs"></i> Battle Report</h1>
     </div>
 
     <div class="templatedivcontent">
-
-        <div class="game-war-result-banner {% if winner and winner == attacker_result['nation_name'] %}victory{% elif winner %}defeat{% endif %}">
+        <div class="winner-banner {% if winner and winner == attacker_result['nation_name'] %}victory{% elif winner %}defeat{% else %}neutral{% endif %}">
             {% if winner == None %}
-            <strong>No decisive winner</strong>
+            Draw - No decisive winner
             {% else %}
-            <strong>{{ winner }} wins</strong>
+            {{ winner }} Victorious
             {% endif %}
         </div>
 
-        {% if win_condition == None %}
-        <h3 class="templatecontentheaderleft">Special attack</h3>
-        {% else %}
-        <h3 class="templatecontentheaderleft">{{win_condition}}</h3>
-        {% endif %}
-        <div class="templatedivflex2 menuflex">
-            <div class="templatedivflex2left">
+        <h3 class="templatecontentheadercenter" style="color: #aaa; margin-bottom: 30px;">
+            {% if win_condition == None %}
+            Special Attack Operation
+            {% else %}
+            {{win_condition}}
+            {% endif %}
+        </h3>
 
-                {% if winner == None %}
-                <h2 class="templatecontentheadercenter">There is no winner</h2>
+        <div class="battle-report-container">
+            <!-- Attacker Panel -->
+            <div class="combatant-panel">
+                <div class="combatant-header">
+                    <i class="fas fa-shield-alt"></i> Attacker: {{ attacker_result["nation_name"] }}
+                </div>
+                
+                {% if attacker_result.get("unit_loss") %}
+                    {% for key, value in attacker_result["unit_loss"].items() %}
+                    <div class="unit-card">
+                        <div class="unit-name">
+                            <span><i class="fas fa-fighter-jet"></i> {{key}}</span>
+                            <span class="casualty-loss">-{{value}}</span>
+                        </div>
+                        {% if attacker_result.get('initial_units') and key in attacker_result['initial_units'] %}
+                            {% set init = attacker_result['initial_units'][key] %}
+                            {% set rem = attacker_result['remaining_units'][key] %}
+                            {% if init > 0 %}
+                                {% set pct = (rem / init * 100)|round %}
+                                <div class="progress-container">
+                                    <div class="progress-fill" style="width: {{pct}}%;"></div>
+                                </div>
+                                <div class="casualty-counter">
+                                    <span>Remaining: {{rem}}</span>
+                                    <span>Initial: {{init}}</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 {% else %}
-                <h2 class="templatecontentheadercenter">{{winner}} is the winner</h2>
+                    <p style="text-align: center; color: #888;">No unit casualties</p>
                 {% endif %}
 
-                <p class="templatecontentpleft landingpagecontent">
-                    {{attacker_result["nation_name"]}} Ambushed {{defender_result["nation_name"]}}, obliterating {% if defender_result.get("unit_loss", 0) %} {% for key,value in defender_result["unit_loss"].items() %} {{value}} {{key}} {% endfor %}. Your units destroyed
-                    {% if defender_result.get("infra_damage", 0) %} {% for key,value in defender_result["infra_damage"].items() %} {{value[1]}} {{key}} is {{value[0]}} {% endfor %} {% endif %} {% endif %}
+                {% if attacker_result.get("infra_damage") %}
+                    <div class="infra-card">
+                        <h4><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
+                        {% for key, value in attacker_result["infra_damage"].items() %}
+                        <div class="infra-item">
+                            <span>{{key}}</span>
+                            <span class="casualty-loss">{{value[1]}} {{value[0]}}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-                    <br /><br /> {{attacker_result["nation_name"]}} Suffered {% if attacker_result.get("unit_loss", 0) %} {% for key,value in attacker_result["unit_loss"].items() %} {{value}} {{key}} and {% endfor %} {% if attacker_result.get("infra_damage",
-                    0) %} {% for key,value in attacker_result["infra_damage"].items() %} {{value[1]}} {{key}} is {{value[0]}} {% endfor %} {% endif %} {% endif %}
-                </p>
-
+                {% if attacker_result.get("loot") %}
+                    <div class="loot-card">
+                        <h4><i class="fas fa-coins"></i> Spoils of War</h4>
+                        <div class="infra-item">
+                            <span>Money Looted</span>
+                            <span style="color: #ffd700; font-weight: bold;">+{{attacker_result["loot"]["money"] | commas}}</span>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
-            <div class="templatedivflex2left">
 
-                <table class="templatetable">
-                    <!--Your losses-->
-                    <tr>
-                        <th><i class="fas fa-flag" aria-hidden="true"></i>{{ attacker_result["nation_name"] }}</th>
-                    </tr>
-                    {% if attacker_result.get("unit_loss", 0) %} {% for key,value in attacker_result["unit_loss"].items() %}
-                    <tr>
-                        <td>{{key}} killed:</td>
-                        <td>{{value}}</td>
-                    </tr>
-                    {% endfor %} {% if attacker_result.get("infra_damage", 0) %} {% for key,value in attacker_result["infra_damage"].items() %}
-                    <tr>
-                        <td>{{value[1]}} {{value[0]}}</td>
-                        <td>{{key}}</td>
-                    </tr>
-                    {% endfor %} {% endif %} {% endif %}
+            <!-- Defender Panel -->
+            <div class="combatant-panel">
+                <div class="combatant-header">
+                    <i class="fas fa-chess-rook"></i> Defender: {{ defender_result["nation_name"] }}
+                </div>
+                
+                {% if defender_result.get("unit_loss") %}
+                    {% for key, value in defender_result["unit_loss"].items() %}
+                    <div class="unit-card">
+                        <div class="unit-name">
+                            <span><i class="fas fa-fighter-jet"></i> {{key}}</span>
+                            <span class="casualty-loss">-{{value}}</span>
+                        </div>
+                        {% if defender_result.get('initial_units') and key in defender_result['initial_units'] %}
+                            {% set init = defender_result['initial_units'][key] %}
+                            {% set rem = defender_result['remaining_units'][key] %}
+                            {% if init > 0 %}
+                                {% set pct = (rem / init * 100)|round %}
+                                <div class="progress-container">
+                                    <div class="progress-fill" style="width: {{pct}}%;"></div>
+                                </div>
+                                <div class="casualty-counter">
+                                    <span>Remaining: {{rem}}</span>
+                                    <span>Initial: {{init}}</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="text-align: center; color: #888;">No unit casualties</p>
+                {% endif %}
 
-                    {% if attacker_result.get("loot") != None %}
-                    <tr>
-                        <td>Looted money:</td>
-                        <td>{{attacker_result["loot"]["money"] | commas }}</td>
-                    </tr>
-                    {% endif %}
-
-                    <!-- Defender losses -->
-                    <tr>
-                        <th><i class="fas fa-flag" aria-hidden="true"></i>{{ defender_result["nation_name"] }}</th>
-                    </tr>
-                    {% if defender_result.get("unit_loss", 0) %} {% for key,value in defender_result["unit_loss"].items() %}
-                    <tr>
-                        <td>{{key}} killed:</td>
-                        <td>{{value}}</td>
-                    </tr>
-                    {% endfor %} {% if defender_result.get("infra_damage", 0) %} {% for key,value in defender_result["infra_damage"].items() %}
-                    <tr>
-                        <td>{{key}} {{value[0]}}:</td>
-                        <td>{{value[1]}}</td>
-                    </tr>
-                    {% endfor %} {% endif %} {% endif %}
-                </table>
-
+                {% if defender_result.get("infra_damage") %}
+                    <div class="infra-card">
+                        <h4><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
+                        {% for key, value in defender_result["infra_damage"].items() %}
+                        <div class="infra-item">
+                            <span>{{key}} {{value[0]}}</span>
+                            <span class="casualty-loss">{{value[1]}}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <a class="templatedivbutton templatecenteredbutton" href="/wars"><span class="material-icons-outlined">
-            arrow_forward
-            </span>Confirm</a>
-
+        <br>
+        <a class="templatedivbutton templatecenteredbutton" href="/wars" style="margin-top: 20px;">
+            <span class="material-icons-outlined">arrow_forward</span> Continue
+        </a>
     </div>
 </div>
 {% endblock %}
