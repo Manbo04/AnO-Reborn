@@ -238,7 +238,7 @@ def get_revenue(cId, db=None):
                         multiplier = (
                             1
                             + (productivity - 50)
-                            * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER
+                            * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER
                         )
                     else:
                         multiplier = 1
