@@ -101,7 +101,7 @@ def buy_market_offer(offer_id):
             return error(500, "Your nation data could not be found")
 
         total_price = amount_wanted * price_for_one
-        market_fee = int(total_price * 0.05)
+        market_fee = total_price * 5 // 100
         total_cost_to_buyer = total_price + market_fee
 
         if total_cost_to_buyer > buyers_gold:
