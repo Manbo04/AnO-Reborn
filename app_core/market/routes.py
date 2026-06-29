@@ -163,6 +163,8 @@ def sell_market_offer(offer_id):
             return error(400, "Offer not found")
         resource, total_amount, price_for_one, buyer_id = row
 
+        lock_users(db, [seller_id, buyer_id])
+
         if not is_active_resource(db, resource):
             return error(400, "This resource is not currently tradable.")
 

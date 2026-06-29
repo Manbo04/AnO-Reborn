@@ -93,7 +93,7 @@ def purchase_building(
     if f"{name}_price" not in prices:
         raise BuildingPurchaseError("No such building exists.")
 
-    db.execute("SELECT userId FROM provinces WHERE id = %s", (province_id,))
+    db.execute("SELECT userId FROM provinces WHERE id = %s FOR UPDATE", (province_id,))
     owner = db.fetchone()
     if not owner or owner[0] != user_id:
         raise BuildingPurchaseError("You do not own this province.")
