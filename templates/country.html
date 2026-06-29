@@ -354,23 +354,21 @@
                         <p class="country-demographics-empty">No province demographics available.</p>
                         {% endif %}
                     </div>
-                    <table class="templatetable">
-                        <tr>
-                            <th colspan="2"><span class="material-icons-outlined">people</span>Population Breakdown</th>
-                        </tr>
-                        <tr class="demographic-children">
-                            <td><span class="material-icons-outlined" >child_care</span>Children:</td>
-                            <td >{{ total_children | fmt }} <span >({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
-                        </tr>
-                        <tr class="demographic-working">
-                            <td><span class="material-icons-outlined" >work</span>Working Age:</td>
-                            <td >{{ total_working | fmt }} <span >({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
-                        </tr>
-                        <tr class="demographic-elderly">
-                            <td><span class="material-icons-outlined" >elderly</span>Elderly:</td>
-                            <td >{{ total_elderly | fmt }} <span >({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></td>
-                        </tr>
-                    </table>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">people</span>Population Breakdown</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >child_care</span>Children</strong>
+        <span class="stat-value">{{ total_children | fmt }} <span >({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >work</span>Working Age</strong>
+        <span class="stat-value">{{ total_working | fmt }} <span >({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >elderly</span>Elderly</strong>
+        <span class="stat-value">{{ total_elderly | fmt }} <span >({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+</div>
                 </div>
             </div>
 
@@ -590,43 +588,41 @@
                 <div class="warflexparent templatedivflex2 menuflex ">
                     <div class="templatedivflex2left vanilla">
 
-                        <table class="templatetable inverttable ">
-                            <tr>
-                                <th><span class="material-icons-outlined ">
+                        <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined ">
                                             account_balance
-                                                    </span>{{ provinceName}}</th>
-                            </tr>
-                            <tr>
-                                <td><span class="material-icons-outlined ">
+                                                    </span>{{ provinceName}}</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined ">
                                                     people_alt
-                                                    </span>Population:</td>
-                                <td>{{ provincePopulation| fmt }}</td>
-                            </tr>
-                            <tr>
-                                <td><span class="material-icons-outlined ">
+                                                    </span>Population</strong>
+        <span class="stat-value">{{ provincePopulation| fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined ">
                                                     sentiment_satisfied
-                                                    </span>Happiness:</td>
-                                <td>{{ provinceHappiness }}%</td>
-                            </tr>
-                            <tr>
-                                <td><span class="material-icons-outlined ">
+                                                    </span>Happiness</strong>
+        <span class="stat-value">{{ provinceHappiness }}%</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined ">
                                                     arrow_circle_up
-                                                    </span>Productivity:</td>
-                                <td>{{ provinceProductivity }}%</td>
-                            </tr>
-                            <tr>
-                                <td><span class="material-icons-outlined ">
+                                                    </span>Productivity</strong>
+        <span class="stat-value">{{ provinceProductivity }}%</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined ">
                                                     business
-                                                    </span>City slots:</td>
-                                <td>{{ provinceCityCount }}</td>
-                            </tr>
-                            <tr>
-                                <td><span class="material-icons-outlined ">
+                                                    </span>City slots</strong>
+        <span class="stat-value">{{ provinceCityCount }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined ">
                                                     landscape
-                                                    </span>Land slots:</td>
-                                <td>{{ provinceLand }}</td>
-                            </tr>
-                        </table>
+                                                    </span>Land slots</strong>
+        <span class="stat-value">{{ provinceLand }}</span>
+    </div>
+</div>
 
                     </div>
                     <div class="templatedivflex2left vanilla">
@@ -654,192 +650,176 @@
             <div class="templatedivflex2">
                 <div class="templatedivflex2left">
 
-                    <table class="templatetable">
-                        <tr>
-                            <th><span class="material-icons-outlined">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
-                                </span>Gross Raw <small class="font-normal-sub">(Hourly)</small></th>
-                        </tr>
-                        <!--
-                        <tr>
-                            <td>Gross:</td>
-                            <td>Not done yet.</td>
-                        </tr>
-                        -->
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Monetary gross:</td>
-                            <td>{{ revenue["gross"]["money"] | fmt }}</td>
-                        </tr>
-                        {% if revenue.get("coalition_tax") %}
-                        <tr style="opacity: 0; pointer-events: none;">
-                            <td>Coalition tax:</td>
-                            <td>-{{ revenue["coalition_tax"] | fmt }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations:</td>
-                            <td>{{ revenue["gross"]["rations"] | fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil:</td>
-                            <td>{{ show_gross('oil') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal:</td>
-                            <td>{{ show_gross('coal') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium:</td>
-                            <td>{{ show_gross('uranium') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron:</td>
-                            <td>{{ show_gross('iron') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead:</td>
-                            <td>{{ show_gross('lead') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite:</td>
-                            <td>{{ show_gross('bauxite') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper:</td>
-                            <td>{{ show_gross('copper') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber:</td>
-                            <td>{{ show_gross('lumber') }}</td>
-                        </tr>
-                    </table>
+                                </span>Gross Raw <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Gross</strong>
+        <span class="stat-value">Not done yet.</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary gross</strong>
+        <span class="stat-value">{{ revenue["gross"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue["coalition_tax"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue["gross"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ show_gross('oil') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ show_gross('coal') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ show_gross('uranium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ show_gross('iron') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ show_gross('lead') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ show_gross('bauxite') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ show_gross('copper') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ show_gross('lumber') }}</span>
+    </div>
+</div>
                     <br>
-                    <table class="templatetable">
-                        <tr>
-                            <th><span class="material-icons-outlined">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
-                                </span>Gross Processed <small class="font-normal-sub">(Hourly)</small></th>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components:</td>
-                            <td>{{ show_gross('components') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel:</td>
-                            <td>{{ show_gross('steel') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods:</td>
-                            <td>{{ show_gross('consumer_goods') }} </td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum:</td>
-                            <td>{{ show_gross('aluminium') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline:</td>
-                            <td>{{ show_gross('gasoline') }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition:</td>
-                            <td>{{ show_gross('ammunition') }}</td>
-                        </tr>
-                    </table>
+                                </span>Gross Processed <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ show_gross('components') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ show_gross('steel') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ show_gross('consumer_goods') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ show_gross('aluminium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ show_gross('gasoline') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ show_gross('ammunition') }}</span>
+    </div>
+</div>
 
                 </div>
                 <div class="templatedivflex2right">
 
-                    <table class="templatetable">
-                        <tr>
-                            <th><span class="material-icons-outlined">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
-                                </span>Net Raw <small class="font-normal-sub">(Hourly)</small></th>
-                        </tr>
-                        <!--
-                        <tr>
-                            <td>Net:</td>
-                            <td>Not done yet.</td>
-                        </tr>
-                        -->
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Monetary net:</td>
-                            <td>{{ revenue["net"]["money"] | fmt }}</td>
-                        </tr>
-                        {% if revenue.get("coalition_tax") %}
-                        <tr>
-                            <td>Coalition tax:</td>
-                            <td class="text-danger">-{{ revenue["coalition_tax"] | fmt }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations:</td>
-                            <td>{{ revenue["net"]["rations"] | fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil:</td>
-                            <td>{{ revenue["net"]["oil"] | fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal:</td>
-                            <td>{{ revenue["net"]["coal"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium:</td>
-                            <td>{{ revenue["net"]["uranium"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron:</td>
-                            <td>{{ revenue["net"]["iron"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead:</td>
-                            <td>{{ revenue["net"]["lead"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite:</td>
-                            <td>{{ revenue["net"]["bauxite"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper:</td>
-                            <td>{{ revenue["net"]["copper"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber:</td>
-                            <td>{{ revenue["net"]["lumber"] | weight_fmt }}</td>
-                        </tr>
-                    </table>
+                                </span>Net Raw <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Net</strong>
+        <span class="stat-value">Not done yet.</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
+        <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue["coalition_tax"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue["net"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ revenue["net"]["oil"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ revenue["net"]["coal"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ revenue["net"]["uranium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ revenue["net"]["iron"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ revenue["net"]["lead"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ revenue["net"]["bauxite"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ revenue["net"]["copper"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ revenue["net"]["lumber"] | weight_fmt }}</span>
+    </div>
+</div>
                     <br>
-                    <table class="templatetable">
-                        <tr>
-                            <th><span class="material-icons-outlined">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
-                                </span>Net Processed <small class="font-normal-sub">(Hourly)</small></th>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components:</td>
-                            <td>{{ revenue["net"]["components"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel:</td>
-                            <td>{{ revenue["net"]["steel"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods:</td>
-                            <td>{{ revenue["net"]["consumer_goods"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum:</td>
-                            <td>{{ revenue["net"]["aluminium"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline:</td>
-                            <td>{{ revenue["net"]["gasoline"] | weight_fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition:</td>
-                            <td>{{ revenue["net"]["ammunition"] | weight_fmt }}</td>
-                        </tr>
-                    </table>
+                                </span>Net Processed <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ revenue["net"]["components"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ revenue["net"]["steel"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ revenue["net"]["consumer_goods"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ revenue["net"]["aluminium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ revenue["net"]["gasoline"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ revenue["net"]["ammunition"] | weight_fmt }}</span>
+    </div>
+</div>
 
                 </div>
             </div>
@@ -900,28 +880,22 @@
             {% if expenses != [] %}
             <h2 class="templatecontentheaderleft">Purchases</h2>
             <div class="templateoutertablediv">
-                <table class="templatetable templatetable2">
-                    <tr>
-                        <th>Type</th>
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;">Type</th>
                         <th>Item / Resource</th>
                         <th>Amount</th>
-                        <th>Date</th>
-                    </tr>
-                    {% for name, type, resource, amount, date in expenses %}
-                    <tr>
-                        <td>
-                            {% if type == 'expense' %}
-                                <span class="text-danger" style="font-weight: bold;">Expense</span>
+                        <th>Date</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">{% if type == 'expense' %}
+                                <span class="text-danger" style="font-weight bold;">Expense</span>
                             {% else %}
-                                <span class="text-success" style="font-weight: bold;">Revenue</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ resource | formatname }}</td>
+                                <span class="text-success" style="font-weight bold;">Revenue</span>
+                            {% endif %}</strong>
+        <span class="stat-value">{{ resource | formatname }}</td>
                         <td>{{ amount }}</td>
-                        <td>{{ date }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                        <td>{{ date }}</span>
+    </div>
+</div>
             </div>
             {% endif %} {% endif %}
             <!--show this if user is in a coalition-->

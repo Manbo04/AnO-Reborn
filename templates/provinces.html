@@ -48,53 +48,33 @@
             <div class="templatedivflex2 menuflex warflexparentcolors card-align-row province-list-card">
                 <div class="templatedivflex2left province-list-card-stats">
 
-                    <table class="templatetable inverttable ">
-                        <tr>
-                            <th><span class="material-icons-outlined ">
-                                    account_balance
-                                            </span>{{ name }}</th>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined ">
-                                            people_alt
-                                            </span>Population:</td>
-                            <td>{{ population }}</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined ">
-                                            sentiment_satisfied
-                                            </span>Happiness:</td>
-                            <td>{{ happiness }}%</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined ">
-                                            arrow_circle_up
-                                            </span>Productivity:</td>
-                            <td>{{ productivity }}%</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined ">
-                                            business
-                                            </span>City slots:</td>
-                            <td>{{ cityCount }}</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined ">
-                                            landscape
-                                            </span>Land slots:</td>
-                            <td>{{ land }}</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">
-                                power
-                                </span>Powered:</td>
-                            {% if energy > 0 %}
-                            <td>Yes</td>
-                            {% else %}
-                            <td>No</td>
-                            {% endif %}
-                        </tr>
-                    </table>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
+                    <div class="stat-grid">
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">people_alt</span> Population</strong>
+                            <span class="stat-value">{{ population }}</span>
+                        </div>
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">sentiment_satisfied</span> Happiness</strong>
+                            <span class="stat-value">{{ happiness }}%</span>
+                        </div>
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">arrow_circle_up</span> Productivity</strong>
+                            <span class="stat-value">{{ productivity }}%</span>
+                        </div>
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">business</span> City slots</strong>
+                            <span class="stat-value">{{ cityCount }}</span>
+                        </div>
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">landscape</span> Land slots</strong>
+                            <span class="stat-value">{{ land }}</span>
+                        </div>
+                        <div class="templatedivflex2left stat-card">
+                            <strong class="stat-label"><span class="material-icons-outlined">power</span> Powered</strong>
+                            <span class="stat-value">{% if energy > 0 %}Yes{% else %}No{% endif %}</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="templatedivflex2right province-list-card-media">
 

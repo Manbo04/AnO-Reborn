@@ -45,73 +45,71 @@
 
             <h2 class="templatecontentheadercenter"><a href="/country/id={{ data['spyee'] }}">{{ data["username"] }}</a>'s Resources</h2>
 
-            <table class="templatetable">
-                <tr>
-                    <th><span class="material-icons-outlined">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                             article
-                            </span>Resources</th>
-                </tr>
-                <tr>
-                    <td>Rations:</td>
-                    <td>{{ data["rations"] }}</td>
-                </tr>
-                <tr>
-                    <td>Oil:</td>
-                    <td>{{ data["oil"] }}</td>
-                </tr>
-                <tr>
-                    <td>Coal:</td>
-                    <td>{{ data["coal"] }}</td>
-                </tr>
-                <tr>
-                    <td>Uranium:</td>
-                    <td>{{ data["uranium"] }}</td>
-                </tr>
-                <tr>
-                    <td>Iron:</td>
-                    <td>{{ data["iron"] }}</td>
-                </tr>
-                <tr>
-                    <td>Lead:</td>
-                    <td>{{ data["lead"] }}</td>
-                </tr>
-                <tr>
-                    <td>Bauxite:</td>
-                    <td>{{ data["bauxite"] }}</td>
-                </tr>
-                <tr>
-                    <td>Copper:</td>
-                    <td>{{ data["copper"] }}</td>
-                </tr>
-                <tr>
-                    <td>Lumber:</td>
-                    <td>{{ data["lumber"] }}</td>
-                </tr>
-                <tr>
-                    <td>Components:</td>
-                    <td>{{ data["components"] }}</td>
-                </tr>
-                <tr>
-                    <td>Steel:</td>
-                    <td>{{ data["steel"] }}</td>
-                </tr>
-                <tr>
-                    <td>Consumer goods:</td>
-                    <td>{{ data["consumer_goods"] }}</td>
-                </tr>
-                <tr>
-                    <td>Aluminium:</td>
-                    <td>{{ data["aluminium"] }}</td>
-                </tr>
-                <tr>
-                    <td>Gasoline:</td>
-                    <td>{{ data["gasoline"] }}</td>
-                </tr>
-                <tr>
-                    <td>Ammunition:</td>
-                    <td>{{ data["ammunition"] }}</td>
-                </tr>
-            </table>
+                            </span>Resources</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Rations</strong>
+        <span class="stat-value">{{ data["rations"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Oil</strong>
+        <span class="stat-value">{{ data["oil"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coal</strong>
+        <span class="stat-value">{{ data["coal"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Uranium</strong>
+        <span class="stat-value">{{ data["uranium"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Iron</strong>
+        <span class="stat-value">{{ data["iron"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Lead</strong>
+        <span class="stat-value">{{ data["lead"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Bauxite</strong>
+        <span class="stat-value">{{ data["bauxite"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Copper</strong>
+        <span class="stat-value">{{ data["copper"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Lumber</strong>
+        <span class="stat-value">{{ data["lumber"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Components</strong>
+        <span class="stat-value">{{ data["components"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Steel</strong>
+        <span class="stat-value">{{ data["steel"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Consumer goods</strong>
+        <span class="stat-value">{{ data["consumer_goods"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Aluminium</strong>
+        <span class="stat-value">{{ data["aluminium"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Gasoline</strong>
+        <span class="stat-value">{{ data["gasoline"] }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Ammunition</strong>
+        <span class="stat-value">{{ data["ammunition"] }}</span>
+    </div>
+</div>
             <!-- Remove this -->
             <h1>--------------------------------------------------------------------------------------------------------------------------------------------------------------------</h1>
             {% endfor %}
