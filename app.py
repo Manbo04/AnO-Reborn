@@ -449,11 +449,13 @@ def create_app():
             with get_request_cursor() as db:
                 try:
                     db.execute(
-                        "SELECT countryName FROM users WHERE id = %s",
+                        "SELECT countryName, username FROM users WHERE id = %s",
                         (user_id,),
                     )
                     row = db.fetchone()
                     ctx["country_name"] = row[0] if row else "Unknown"
+                    if row and row[1] == "Terra Homeworld":
+                        ctx["admin_user_ids"].append(user_id)
 
                     db.execute(
                         """

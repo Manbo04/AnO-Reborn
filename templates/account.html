@@ -238,7 +238,7 @@
 <div id="deleteAccountModal" class="confirmation-modal" style="display: none;">
     <div class="modal-content">
         <h2><span class="material-icons-outlined" style="color: #ff4444;">warning</span> Delete Account</h2>
-        <p>Are you sure you want to <strong>permanently delete</strong> your account?</p>
+        <p style="color: #ccc;">Are you sure you want to <strong>permanently delete</strong> your account?</p>
         <p style="color: #ff6666;">This action cannot be undone. All your data, including your nation, resources, and progress will be lost forever.</p>
         <div class="modal-input">
             <label>Type your country name to confirm: <strong>{{ user.username }}</strong></label>
@@ -255,7 +255,7 @@
 <div id="logoutModal" class="confirmation-modal" style="display: none;">
     <div class="modal-content">
         <h2><span class="material-icons-outlined">logout</span> Log Out</h2>
-        <p>Are you sure you want to log out?</p>
+        <p style="color: #ccc;">Are you sure you want to log out?</p>
         <div class="modal-buttons">
             <button onclick="closeLogoutModal()" class="templatedivbutton">Cancel</button>
             <a href="/logout" class="templatedivbutton redactionbutton">Yes, Log Out</a>

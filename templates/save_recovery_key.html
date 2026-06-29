@@ -1,41 +1,67 @@
 {% extends "layout.html" %} {% block title %} Save Recovery Key {% endblock %} {% block body %}
-<div class="templatediv noboxshadowtopper loginsignupdiv">
+<div class="templatediv noboxshadowtopper loginsignupdiv" style="max-width: 600px; margin: 40px auto; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
 
-    <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+    <div class="templatedivtopper noboxshadowtopper" style="justify-content: center; border-radius: 8px;">
+        <h1 class="templatedivtitle" style="margin: 0;"><span class="material-icons-outlined iconlarge" style="vertical-align: middle; margin-right: 8px;">
             key
             </span>Save Your Backup Recovery Key</h1>
     </div>
 
-    <p class="templatecontentpleft landingpagecontent">
+    <p class="templatecontentpleft landingpagecontent" style="text-align: center; margin-top: 25px; line-height: 1.6; max-width: 90%;">
         Your account is ready. Copy this recovery key and store it somewhere safe — it is shown only once.
         You can use it on the forgot-password page if you lose access to your email or Discord.
     </p>
 
-    <div class="infodiv" style="margin: 16px 0;">
+    <div class="infodiv" style="margin: 25px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
         <input
+            id="recoveryKeyInput"
             class="loginsignupinput"
             type="text"
             readonly
             value="{{ recovery_key }}"
             aria-label="Backup recovery key"
             onclick="this.select()"
-            style="font-family: monospace; letter-spacing: 0.05em;"
+            style="font-family: monospace; letter-spacing: 0.05em; margin: 0; width: 100%; max-width: 350px; text-align: center; font-size: 1.1rem; padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.9); color: #000;"
         />
+        <button type="button" onclick="copyRecoveryKey()" class="templatedivbutton" style="margin: 0; padding: 12px 20px; display: flex; align-items: center; justify-content: center; background: #2563eb; min-width: 120px;">
+            <span class="material-icons-outlined" id="copyIcon" style="margin-right: 5px;">content_copy</span>
+            <span id="copyText">Copy</span>
+        </button>
     </div>
 
-    <p class="templatecontentpleft landingpagecontent" style="opacity: 0.85;">
+    <p class="templatecontentpleft landingpagecontent" style="text-align: center; opacity: 0.85; margin-bottom: 30px; max-width: 90%;">
         After you leave this page, the key cannot be shown again. You can generate a new one later from Account settings.
     </p>
 
     {% if logged_in %}
-    <a href="/" class="templatedivbutton templatecenteredbutton" style="display: inline-flex; text-decoration: none;">
-        <span class="material-icons-outlined">arrow_forward</span>Continue to game
+    <a href="/" class="templatedivbutton templatecenteredbutton" style="display: inline-flex; text-decoration: none; padding: 12px 30px; font-size: 1.1rem;">
+        <span class="material-icons-outlined" style="margin-right: 8px;">arrow_forward</span>Continue to Game
     </a>
     {% else %}
-    <a href="/login?message=verified" class="templatedivbutton templatecenteredbutton" style="display: inline-flex; text-decoration: none;">
-        <span class="material-icons-outlined">login</span>Continue to login
+    <a href="/login?message=verified" class="templatedivbutton templatecenteredbutton" style="display: inline-flex; text-decoration: none; padding: 12px 30px; font-size: 1.1rem;">
+        <span class="material-icons-outlined" style="margin-right: 8px;">login</span>Continue to Login
     </a>
     {% endif %}
 </div>
+
+<script>
+function copyRecoveryKey() {
+    var copyText = document.getElementById("recoveryKeyInput");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+    
+    // Copy the text inside the text field
+    navigator.clipboard.writeText(copyText.value).then(function() {
+        // Update button UI
+        document.getElementById("copyIcon").innerText = "check";
+        document.getElementById("copyText").innerText = "Copied!";
+        
+        // Reset after 2 seconds
+        setTimeout(function() {
+            document.getElementById("copyIcon").innerText = "content_copy";
+            document.getElementById("copyText").innerText = "Copy";
+        }, 2000);
+    });
+}
+</script>
 {% endblock %}
