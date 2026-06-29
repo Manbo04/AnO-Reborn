@@ -1113,17 +1113,19 @@ def give_position():
         except TypeError:
             return error(400, "No such user found")
 
-        # A user cannot assign a role equal to or higher than their own, UNLESS they are a leader
-        # A user cannot edit the role of someone equal to or higher than them, UNLESS they are a leader
+        # Ensure users cannot grant roles higher than or equal to their own, and cannot edit users higher than or equal to them.
+        # Smaller index in the roles list means a HIGHER rank.
         if user_role != "leader":
-            if roles.index(role) <= roles.index(user_role) or roles.index(
-                current_roleer_role
-            ) <= roles.index(user_role):
+            # If the role they want to give has a smaller index (higher rank) than their own role, reject it.
+            if roles.index(role) <= roles.index(user_role):
                 return error(400, "Can't grant or edit roles equal to or higher than your own.")
+            
+            # If the user they are trying to edit has a smaller index (higher rank) than their own role, reject it.
+            if roles.index(current_roleer_role) <= roles.index(user_role):
+                return error(400, "Can't edit role for a person higher or equal rank to you.")
         else:
-            if roles.index(role) < roles.index(user_role) or roles.index(
-                current_roleer_role
-            ) < roles.index(user_role):
+            # Leaders can grant any role, but even they shouldn't be able to edit someone who is already a leader
+            if roles.index(current_roleer_role) < roles.index(user_role):
                 return error(400, "Can't edit role for a person higher rank than you.")
 
         if role == "kick":
