@@ -275,7 +275,7 @@ GENERIC_FLAVOR_EVENTS = [
     "A new initiative encourages urban dwellers to start rooftop gardens.",
     "The government passes a bill heavily taxing single-use plastics.",
     "Agricultural yields increase thanks to a new AI-driven irrigation system.",
-    "A massive sinkhole opens up in a rural area, swallowed several vehicles.",
+    "A massive sinkhole opens up in a rural area, swallowing several vehicles.",
     "Environmental groups praise the closure of an aging coal power plant.",
     "A record-breaking heatwave forces rolling blackouts across the continent.",
     "Farmers struggle to adapt as climate change alters traditional growing seasons.",

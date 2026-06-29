@@ -2730,7 +2730,7 @@ def generate_province_revenue():  # Runs each hour
                         if productivity is not None:
                             productivity_multiplier = 1 + (
                                 (productivity - 50)
-                                * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MUTLIPLIER
+                                * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER
                             )
                             plus_amount_multiplier *= productivity_multiplier
 

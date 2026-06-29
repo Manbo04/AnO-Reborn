@@ -58,7 +58,7 @@ class BlueprintUnit(ABC):
     """
     attack method:
 
-        Calculates the advantage or disagvantage based on the enemy unit type.
+        Calculates the advantage or disadvantage based on the enemy unit type.
 
         return: a tuple which contains (damage, bonus)
 
@@ -269,7 +269,7 @@ class SubmarineUnit(BlueprintUnit):
         pass
 
 
-# Special units attack method handeled differently (not using the fight method)
+# Special units attack method handled differently (not using the fight method)
 class IcbmUnit(BlueprintUnit):
     unit_type = "icbms"
     damage = 1000
