@@ -852,7 +852,9 @@ def warResult():
             defender_result["unit_loss"] = result[0]
             defender_result["infra_damage"] = result[1]
             session.pop("from_wartarget", None)
-    attacker.save()
+        
+        attacker.save(db_cursor=db)
+
     session.pop("attack_units", None)
     session.pop("enemy_id", None)
     try:
