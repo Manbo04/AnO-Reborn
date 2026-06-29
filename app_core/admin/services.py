@@ -121,24 +121,29 @@ def get_admin_command_center_data():
     }
 
 def process_add_resource(actor, target_user_id, amount, resource):
-    with get_request_cursor() as db:
-        AdminRepository.ensure_admin_tables(db)
-        target_row = AdminRepository.validate_target_user(db, target_user_id)
-        if not target_row:
-            return error(404, "Target user not found")
-
-        if resource in ["money", "gold"]:
-            AdminRepository.add_gold(db, target_user_id, amount)
-            money_row = AdminRepository.get_resource_id_by_name(db, "money")
-            if money_row:
-                AdminRepository.add_resource_quantity(db, target_user_id, money_row[0], amount)
-            AdminRepository.log_admin_action(db, actor, "admin_add_resource", target_user_id, f"resource=money amount={amount}")
-        else:
-            resource_row = AdminRepository.get_active_resource_id_by_name(db, resource)
-            if not resource_row:
-                return error(400, "Unknown or inactive resource")
-            AdminRepository.add_resource_quantity(db, target_user_id, resource_row[0], amount)
-            AdminRepository.log_admin_action(db, actor, "admin_add_resource", target_user_id, f"resource={resource} amount={amount}")
+    try:
+        with get_request_cursor() as db:
+            AdminRepository.ensure_admin_tables(db)
+            target_row = AdminRepository.validate_target_user(db, target_user_id)
+            if not target_row:
+                return error(404, "Target user not found")
+    
+            if resource in ["money", "gold"]:
+                AdminRepository.add_gold(db, target_user_id, amount)
+                money_row = AdminRepository.get_resource_id_by_name(db, "money")
+                if money_row:
+                    AdminRepository.add_resource_quantity(db, target_user_id, money_row[0], amount)
+                AdminRepository.log_admin_action(db, actor, "admin_add_resource", target_user_id, f"resource=money amount={amount}")
+            else:
+                resource_row = AdminRepository.get_active_resource_id_by_name(db, resource)
+                if not resource_row:
+                    return error(400, "Unknown or inactive resource")
+                AdminRepository.add_resource_quantity(db, target_user_id, resource_row[0], amount)
+                AdminRepository.log_admin_action(db, actor, "admin_add_resource", target_user_id, f"resource={resource} amount={amount}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error(500, "Database transaction failed. Please try again.")
 
     try:
         invalidate_user_cache(target_user_id)
