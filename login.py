@@ -91,38 +91,38 @@ def login():
                             (
                                 "SELECT id, username, email, description, "
                                 "password, auth_type, is_verified FROM users "
-                                "WHERE trim(username)=trim(%s) AND COALESCE(auth_type, 'normal') = 'normal'"
+                                "WHERE (trim(username)=trim(%s) OR LOWER(trim(email))=LOWER(trim(%s))) AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
-                            (username,),
+                            (username, username),
                         )
                     else:
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
                                 "hash, auth_type, "
-                                "is_verified FROM users WHERE trim(username)=trim(%s) "
+                                "is_verified FROM users WHERE (trim(username)=trim(%s) OR LOWER(trim(email))=LOWER(trim(%s))) "
                                 "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
-                            (username,),
+                            (username, username),
                         )
                 else:
                     if has_password:
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
-                                "password, auth_type FROM users WHERE trim(username)=trim(%s) "
+                                "password, auth_type FROM users WHERE (trim(username)=trim(%s) OR LOWER(trim(email))=LOWER(trim(%s))) "
                                 "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
-                            (username,),
+                            (username, username),
                         )
                     else:
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
-                                "hash, auth_type FROM users WHERE trim(username)=trim(%s) "
+                                "hash, auth_type FROM users WHERE (trim(username)=trim(%s) OR LOWER(trim(email))=LOWER(trim(%s))) "
                                 "AND COALESCE(auth_type, 'normal') = 'normal'"
                             ),
-                            (username,),
+                            (username, username),
                         )
                 user = db.fetchone()
                 logger.debug(
