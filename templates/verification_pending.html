@@ -20,28 +20,31 @@
 
     <div class="templatedivcontent">
         <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
-            <div class="templatedivflex2left" style="text-align: center; width: 100%;">
+            <div class="templatedivflex2left" style="text-align: center; width: 100%; background: rgba(15, 20, 25, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
 
                 {% if message %}
-                <div class="templatecontentheadercenter" style="color: #4CAF50; margin-bottom: 20px;">
+                <div class="templatecontentheadercenter" style="color: #4CAF50; margin-bottom: 25px; font-size: 1.2rem; font-weight: 600;">
                     {{ message }}
                 </div>
                 {% else %}
-                <div class="templatecontentheadercenter" style="margin-bottom: 20px;">
-                    We've sent a verification email to <strong>{{ email }}</strong>
+                <div class="templatecontentheadercenter" style="margin-bottom: 25px; color: #fff; font-size: 1.3rem; font-weight: 500;">
+                    We've sent a verification email to <strong style="color: #4da3ff;">{{ email }}</strong>
                 </div>
                 {% endif %}
 
-                <p style="color: #ccc; margin-bottom: 30px;">
+                <p style="color: #ddd; margin-bottom: 25px; font-size: 1.1rem; line-height: 1.5;">
                     Please check your inbox and click the verification link to activate your account.
-                    <br><br>
-                    Don't see it? Check your spam folder or request a new verification email below.
                 </p>
 
-                <form action="/resend_verification" method="POST" style="margin-bottom: 20px;">
+                <div style="background: rgba(255, 87, 34, 0.1); border-left: 4px solid #ff5722; padding: 15px; margin-bottom: 30px; text-align: left; border-radius: 4px;">
+                    <strong style="color: #ff5722; display: block; margin-bottom: 5px;"><span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.2rem;">warning</span> IMPORTANT: Check Your Spam Folder</strong>
+                    <span style="color: #ccc; font-size: 0.95rem;">If you don't see the email within a few minutes, it may have been flagged as spam. Please check your Spam or Junk folder and mark it as "Not Spam".</span>
+                </div>
+
+                <form action="/resend_verification" method="POST" style="margin-bottom: 25px;">
                     <input type="hidden" name="email" value="{{ email }}" />
-                    <button class="templatedivbutton" type="submit">
-                        <span class="material-icons-outlined">refresh</span>
+                    <button class="templatedivbutton" type="submit" style="background: linear-gradient(135deg, #1976D2, #1565C0); border: none; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4); padding: 12px 24px; font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s;">
+                        <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 5px;">refresh</span>
                         Resend Verification Email
                     </button>
                 </form>
