@@ -790,7 +790,16 @@ def bot_nation():
   user_id = _resolve_nation_identifier(identifier)
   if user_id is None:
     return jsonify({"error": "Nation not found"}), 404
-  snap = nation_snapshot_for_bot(user_id, full_detail=True)
+  
+  # Check ownership
+  discord_user_id = _discord_user_id_from_request()
+  is_owner = False
+  if discord_user_id:
+      requester_id = resolve_user_id_by_discord(discord_user_id)
+      if requester_id and str(requester_id) == str(user_id):
+          is_owner = True
+  
+  snap = nation_snapshot_for_bot(user_id, full_detail=is_owner)
   if not snap.get("id"):
     return jsonify({"error": "Could not load nation statistics."}), 500
   return jsonify(snap)
@@ -834,6 +843,17 @@ def bot_resources():
     user_id = resolve_user_id_by_discord(discord_user_id)
   if user_id is None:
     return jsonify({"error": "Nation not found or not registered"}), 404
+  # Check ownership
+  is_owner = False
+  discord_user_id = _discord_user_id_from_request()
+  if discord_user_id:
+      requester_id = resolve_user_id_by_discord(discord_user_id)
+      if requester_id and str(requester_id) == str(user_id):
+          is_owner = True
+
+  if not is_owner:
+      return jsonify({"error": "Forbidden. You can only view your own resources."}), 403
+
   snap = _nation_snapshot(user_id, include_resources=True)
   return jsonify(snap)
 
