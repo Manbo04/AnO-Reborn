@@ -614,13 +614,13 @@ def discord_register():
             # Create account
             with get_request_cursor() as db:
                 # Check if username exists
-                db.execute("SELECT id FROM users WHERE username=%s", (username,))
+                db.execute("SELECT id FROM users WHERE LOWER(username)=LOWER(%s)", (username,))
                 if db.fetchone():
                     return error(400, "Country name already taken")
 
                 # Check if email exists
                 if email:
-                    db.execute("SELECT id FROM users WHERE email=%s", (email,))
+                    db.execute("SELECT id FROM users WHERE LOWER(email)=LOWER(%s)", (email,))
                     if db.fetchone():
                         return error(400, "An account with this email already exists")
 
@@ -846,13 +846,13 @@ def signup():
         continent = continents[continent_number]
 
         with get_request_cursor() as db:
-            db.execute("SELECT username FROM users WHERE username=%s", (username,))
+            db.execute("SELECT username FROM users WHERE LOWER(username)=LOWER(%s)", (username,))
             result = db.fetchone()
             if result:
                 logger.debug(f"signup duplicate username: {username}")
                 return error(400, "Duplicate name, choose another one")
 
-            db.execute("SELECT email FROM users WHERE email=%s", (email,))
+            db.execute("SELECT email FROM users WHERE LOWER(email)=LOWER(%s)", (email,))
             result = db.fetchone()
             if result:
                 logger.debug(f"signup duplicate email: {email}")
