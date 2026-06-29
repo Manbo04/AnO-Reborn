@@ -85,8 +85,10 @@ def create_app():
     app.config["SERVER_NAME"] = None
     app.config["ALLOWED_HOSTS"] = ["affairsandorder.com", "www.affairsandorder.com", "web-production-55d7b.up.railway.app"]
     app.config["SESSION_COOKIE_DOMAIN"] = None
-    app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
-    app.config["SESSION_COOKIE_SECURE"] = (os.getenv("ENVIRONMENT") == "PROD" and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None)
+    is_prod = (os.getenv("ENVIRONMENT") == "PROD" and os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None)
+    app.config["SESSION_COOKIE_SECURE"] = is_prod
+    default_samesite = "None" if is_prod else "Lax"
+    app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", default_samesite)
 
     @app.before_request
     def before_request():
