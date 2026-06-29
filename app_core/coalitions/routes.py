@@ -777,7 +777,7 @@ def coalitions():
                     FROM provinces
                     WHERE userid IN (SELECT userid FROM {_members_tbl()})
                     GROUP BY userid
-                ) p ON p.user_id = u.id
+                ) p ON p.userId = u.id
                 LEFT JOIN (
                     SELECT
                         um.user_id,
@@ -856,7 +856,7 @@ def coalitions():
                     FROM provinces
                     WHERE userid IN (SELECT userid FROM {_members_tbl()})
                     GROUP BY userid
-                ) p ON p.user_id = u.id
+                ) p ON p.userId = u.id
                 LEFT JOIN (
                     SELECT
                         um.user_id,
