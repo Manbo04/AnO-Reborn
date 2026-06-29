@@ -3550,6 +3550,14 @@ def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
                 f"(attempt {attempt}/{max_retries})"
             )
             try:
+                from database import db_pool
+                try:
+                    db_pool.close_all()
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            try:
                 time.sleep(backoff)
             except Exception:
                 pass
@@ -3587,25 +3595,46 @@ def _run_with_deadlock_retries(fn, label: str, max_retries: int = 3):
 # another instance holds the lock.
 
 
+_redis_pool = None
+def _get_redis_client():
+    global _redis_pool
+    if _redis_pool is None:
+        import urllib.parse
+        url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+        if not url:
+            return None
+        parsed = urllib.parse.urlparse(url)
+        _redis_pool = redis.ConnectionPool(
+            host=parsed.hostname or "localhost",
+            port=parsed.port or 6379,
+            password=parsed.password,
+            max_connections=10
+        )
+    return redis.Redis(connection_pool=_redis_pool)
+
+_delete_lock_lua = """
+if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+else
+    return 0
+end
+"""
+
 def leader_only(ttl_seconds=60, key_prefix="task_lock"):
     def decorator(fn):
         def wrapper(*args, **kwargs):
             if redis is None:
-                # If redis not available, fall back to running the task
                 return fn(*args, **kwargs)
             try:
-                import urllib.parse
-                url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
-                if not url:
+                r = _get_redis_client()
+                if not r:
                     return fn(*args, **kwargs)
-                parsed = urllib.parse.urlparse(url)
-                r = redis.Redis(
-                    host=parsed.hostname or "localhost",
-                    port=parsed.port or 6379,
-                    password=parsed.password,
-                )
+                
                 key = f"{key_prefix}:{fn.__name__}"
-                got = r.set(key, "1", nx=True, ex=ttl_seconds)
+                import uuid
+                lock_id = str(uuid.uuid4())
+                
+                got = r.set(key, lock_id, nx=True, ex=ttl_seconds)
                 if not got:
                     print(f"{fn.__name__}: skipped (leader lock not acquired)")
                     return
@@ -3613,12 +3642,11 @@ def leader_only(ttl_seconds=60, key_prefix="task_lock"):
                     return fn(*args, **kwargs)
                 finally:
                     try:
-                        r.delete(key)
+                        r.eval(_delete_lock_lua, 1, key, lock_id)
                     except Exception:
                         pass
             except Exception as e:
                 print(f"leader_only decorator error for {fn.__name__}: {e}")
-                # If anything goes wrong, run the task to avoid data loss
                 return fn(*args, **kwargs)
 
         wrapper.__name__ = fn.__name__
