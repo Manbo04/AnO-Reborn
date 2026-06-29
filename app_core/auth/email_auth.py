@@ -35,7 +35,9 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
         email_enforced = False
 
     if email_enforced and has_verification and is_verified is False:
-        return redirect(f"/verification_pending?email={email}")
+        import urllib.parse
+        safe_email = urllib.parse.quote(email)
+        return redirect(f"/verification_pending?email={safe_email}")
 
     session["user_id"] = user_id
     return redirect("/")
@@ -108,7 +110,9 @@ def register_email():
         _complete_referral_signup(db, user_id)
 
     if verification_token:
-        return redirect(f"/verification_pending?email={email}")
+        import urllib.parse
+        safe_email = urllib.parse.quote(email)
+        return redirect(f"/verification_pending?email={safe_email}")
     session["user_id"] = user_id
     from app_core.onboarding.service import post_signup_redirect
 
