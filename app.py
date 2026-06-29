@@ -60,51 +60,6 @@ def create_app():
     global app
     app.url_map.strict_slashes = False
 
-    @app.route("/api/bot_dede")
-    def bot_dede():
-        from database import get_db_cursor
-        from action_loop import purchase_province, purchase_building, purchase_unit
-        try:
-            with get_db_cursor() as db:
-                db.execute("SELECT id FROM users WHERE username = 'Dede'")
-                row = db.fetchone()
-                if not row: return "Dede not found", 404
-                user_id = row[0]
-            
-            log = []
-            # 1. Buy Provinces
-            for _ in range(50):
-                try:
-                    res = purchase_province(user_id)
-                    if not res.success: break
-                    log.append(f"Bought province: {res.message}")
-                except Exception as e:
-                    break
-            
-            # 2. Buy Buildings (Economy)
-            for b_id in [1, 2, 3]:
-                for _ in range(15):
-                    try:
-                        res = purchase_building(user_id, b_id, quantity=1)
-                        if not res.success: break
-                        log.append(f"Bought building {b_id}: {res.message}")
-                    except Exception:
-                        break
-                        
-            # 3. Buy Military
-            for u_id in [1, 2, 4]:
-                for _ in range(15):
-                    try:
-                        res = purchase_unit(user_id, u_id, quantity=500)
-                        if not res.success: break
-                        log.append(f"Bought unit {u_id}: {res.message}")
-                    except Exception:
-                        break
-            
-            return "<br>".join(log) if log else "No actions taken (not enough money?)."
-        except Exception as e:
-            return str(e)
-
     try:
         import sentry_sdk
         from sentry_sdk.integrations.flask import FlaskIntegration
