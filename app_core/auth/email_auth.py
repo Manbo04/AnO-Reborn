@@ -45,13 +45,18 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
 
 @email_auth_bp.route("/register/email", methods=["POST"])
 def register_email():
-    username = request.form.get("username")
-    email = request.form.get("email")
+    username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip()
     password = request.form.get("password")
     confirmation = request.form.get("confirmation")
 
     if not username or not email or not password or not confirmation:
         flash("All fields are required.")
+        return redirect("/signup")
+
+    import re
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        flash("Invalid email format.")
         return redirect("/signup")
 
     if password != confirmation:
@@ -67,52 +72,58 @@ def register_email():
     continents = ["Tundra", "Savanna", "Desert", "Jungle", "Boreal Forest", "Grassland", "Mountain Range"]
     continent = continents[continent_number] if 0 <= continent_number < len(continents) else continents[0]
 
-    with get_request_cursor() as db:
-        db.execute("SELECT id FROM users WHERE username=%s OR email=%s", (username, email))
-        if db.fetchone():
-            flash("Username or email already taken.")
-            return redirect("/signup")
+    verification_token = None
+    try:
+        with get_request_cursor() as db:
+            db.execute("SELECT id FROM users WHERE username=%s OR email=%s", (username, email))
+            if db.fetchone():
+                flash("Username or email already taken.")
+                return redirect("/signup")
 
-        cols = _users_auth_columns(db)
+            cols = _users_auth_columns(db)
 
-        insert_cols = "username, email, date, auth_type"
-        insert_vals = "(%s, %s, %s, %s"
-        params = [username, email, str(datetime.date.today()), "email"]
+            insert_cols = "username, email, date, auth_type"
+            insert_vals = "(%s, %s, %s, %s"
+            params = [username, email, str(datetime.date.today()), "email"]
 
-        if cols["has_hash"]:
-            insert_cols += ", hash"
-            insert_vals += ", %s"
-            params.append(hashed_password)
-        if cols["has_password"]:
-            insert_cols += ", password"
-            insert_vals += ", %s"
-            params.append(hashed_password)
+            if cols["has_hash"]:
+                insert_cols += ", hash"
+                insert_vals += ", %s"
+                params.append(hashed_password)
+            if cols["has_password"]:
+                insert_cols += ", password"
+                insert_vals += ", %s"
+                params.append(hashed_password)
 
-        verification_token = None
-        from email_utils import is_email_configured, generate_verification_token, send_verification_email
-        if cols["has_verification"] and is_email_configured():
-            verification_token = generate_verification_token(email)
-            insert_cols += ", is_verified, verification_token, token_created_at"
-            insert_vals += ", %s, %s, NOW()"
-            params.extend([False, verification_token])
+            from email_utils import is_email_configured, generate_verification_token, send_verification_email
+            if cols["has_verification"] and is_email_configured():
+                verification_token = generate_verification_token(email)
+                insert_cols += ", is_verified, verification_token, token_created_at"
+                insert_vals += ", %s, %s, NOW()"
+                params.extend([False, verification_token])
 
-        insert_vals += ")"
+            insert_vals += ")"
 
-        db.execute(f"INSERT INTO users ({insert_cols}) VALUES {insert_vals} RETURNING id", params)
-        user_id = db.fetchone()[0]
+            db.execute(f"INSERT INTO users ({insert_cols}) VALUES {insert_vals} RETURNING id", params)
+            user_id = db.fetchone()[0]
 
-        if verification_token and is_email_configured():
-            send_verification_email(email, username, verification_token)
+            from signup import _complete_referral_signup, init_user_game_data
 
-        from signup import _complete_referral_signup, init_user_game_data
+            init_user_game_data(db, user_id, continent)
+            _complete_referral_signup(db, user_id)
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash("An internal error occurred during registration. Please try again later.")
+        return redirect("/signup")
 
-        init_user_game_data(db, user_id, continent)
-        _complete_referral_signup(db, user_id)
-
-    if verification_token:
+    if verification_token and is_email_configured():
+        send_verification_email(email, username, verification_token)
         import urllib.parse
         safe_email = urllib.parse.quote(email)
         return redirect(f"/verification_pending?email={safe_email}")
+
     session["user_id"] = user_id
     from app_core.onboarding.service import post_signup_redirect
 
