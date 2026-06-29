@@ -3587,6 +3587,7 @@ def leader_only(ttl_seconds=60, key_prefix="task_lock"):
                 # If redis not available, fall back to running the task
                 return fn(*args, **kwargs)
             try:
+                import urllib.parse
                 url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
                 if not url:
                     return fn(*args, **kwargs)
@@ -4443,7 +4444,7 @@ def global_tick():
                         db.execute("""
                             SELECT u.id, COUNT(p.id) 
                             FROM users u 
-                            JOIN provinces p ON p.user_id = u.id 
+                            JOIN provinces p ON p.userId = u.id 
                             WHERE u.last_active >= NOW() - INTERVAL '3 days'
                             GROUP BY u.id
                         """)
