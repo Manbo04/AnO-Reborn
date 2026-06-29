@@ -124,37 +124,31 @@
 
         <h2 class="templatecontentheaderleft">Espionage</h2>
 
-        <div class="infodiv">
-            <div class="stat-grid" style="gap: 10px; margin-bottom: 15px;">
-                <div class="templatedivflex2left stat-card" style="padding: 10px; flex-direction: column; align-items: stretch;">
-                    <label class="stat-label" for="warType" style="margin-bottom: 8px; text-align: center;">Choose operation</label>
-                    <select class="templateselect" style="margin: 0; padding: 8px; border-radius: 4px; border: 1px solid var(--border);" name="warType">
-                        <option class="templateoption">Spy on unit amounts</option>
-                        <option class="templateoption">Spy on defensive units</option>
-                        <option class="templateoption">Spy on resources</option>
-                        <option class="templateoption">Assasinate spies</option>
-                    </select>
-                </div>
-                <div class="templatedivflex2left stat-card" style="padding: 10px; flex-direction: column; align-items: stretch;">
-                    <label class="stat-label" for="countryName" style="margin-bottom: 8px; text-align: center;">Number of spies</label>
-                    <input class="loginsignupinput" style="margin: 0; padding: 8px; width: auto;" name="countryName" placeholder="{{ spyCount }}" />
-                </div>
-            </div> 
-            
-            <div style="text-align: center; margin-bottom: 15px;">
-                <label for="warType" style="font-weight: 600; color: var(--textSecondary);">{{ successChance }}% success chance</label>
+        <div class="stat-grid" style="gap: 10px; margin-bottom: 15px; margin-top: 10px;">
+            <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                <label class="stat-label" for="warType" style="margin: 0; font-weight: 600;">Choose operation</label>
+                <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--textPrimary);" name="warType">
+                    <option class="templateoption">Spy on unit amounts</option>
+                    <option class="templateoption">Spy on defensive units</option>
+                    <option class="templateoption">Spy on resources</option>
+                    <option class="templateoption">Assasinate spies</option>
+                </select>
             </div>
+            <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                <label class="stat-label" for="countryName" style="margin: 0; font-weight: 600;">Number of spies</label>
+                <input class="loginsignupinput" style="margin: 0; padding: 6px; width: 60%; text-align: left;" name="countryName" placeholder="{{ spyCount }}" />
+            </div>
+        </div> 
 
-            <button class="templatedivbutton templatecenteredbutton" type="submit" style="margin-top: 0;"><span class="material-icons-outlined">
-                check
-                </span>Perform</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <span class="stat-label" style="font-weight: 600; color: var(--textSecondary); background: var(--foregroundTwo); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border);">{{ successChance }}% success chance</span>
+            <button class="templatedivbutton" type="submit" style="margin: 0; padding: 8px 16px;"><span class="material-icons-outlined">check</span>Perform</button>
         </div>
 
         <h2 class="templatecontentheaderleft">Peace Offer</h2>
 
-        <form method="post" action="/send_peace_offer/{{war_id}}/{{peace_to_send}}" class="infodiv">
-
-            <h2 class="templatecontentheadercenter">Demand Resources</h2>
+        <form method="post" action="/send_peace_offer/{{war_id}}/{{peace_to_send}}">
+            <h2 class="templatecontentheadercenter" style="margin-top: 10px;">Demand Resources</h2>
 
             <div class="stat-grid" style="gap: 10px; margin-bottom: 20px;">
                 <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
