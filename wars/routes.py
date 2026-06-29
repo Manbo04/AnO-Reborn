@@ -826,16 +826,28 @@ def warResult():
                 winner = attacker_name
             defender_loss = {}
             attacker_loss = {}
+            defender_initial = {}
+            defender_remaining = {}
+            attacker_initial = {}
+            attacker_remaining = {}
             for unit in defender.selected_units_list:
-                defender_loss[unit] = (
-                    prev_defender[unit] - defender.selected_units[unit]
-                )
+                d_init = prev_defender.get(unit, 0)
+                d_rem = defender.selected_units.get(unit, 0)
+                defender_initial[unit] = d_init
+                defender_remaining[unit] = d_rem
+                defender_loss[unit] = d_init - d_rem
             for unit in attacker.selected_units_list:
-                attacker_loss[unit] = (
-                    prev_attacker[unit] - attacker.selected_units[unit]
-                )
+                a_init = prev_attacker.get(unit, 0)
+                a_rem = attacker.selected_units.get(unit, 0)
+                attacker_initial[unit] = a_init
+                attacker_remaining[unit] = a_rem
+                attacker_loss[unit] = a_init - a_rem
             defender_result["unit_loss"] = defender_loss
+            defender_result["initial_units"] = defender_initial
+            defender_result["remaining_units"] = defender_remaining
             attacker_result["unit_loss"] = attacker_loss
+            attacker_result["initial_units"] = attacker_initial
+            attacker_result["remaining_units"] = attacker_remaining
         else:
             defender_result["unit_loss"] = result[0]
             defender_result["infra_damage"] = result[1]
