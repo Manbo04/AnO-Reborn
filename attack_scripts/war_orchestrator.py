@@ -20,7 +20,7 @@ Implementation notes:
 """
 
 from typing import Iterable, Tuple, Optional
-from database import get_db_connection, fetchone_first
+from database import get_db_connection, get_request_cursor, fetchone_first
 from helpers import record_war_event
 from attack_scripts.combat_helpers import compute_user_army_strength
 import logging
@@ -115,8 +115,7 @@ def persist_fight_results(
 
     Returns the human-readable win condition string ("annihilation", etc.).
     """
-    with get_db_connection() as connection:
-        db = connection.cursor()
+    with get_request_cursor() as db:
 
         winner_strength_before = compute_user_army_strength(winner.user_id)
         loser_strength_before = compute_user_army_strength(loser.user_id)
@@ -175,10 +174,10 @@ def persist_fight_results(
                 # Mark peace
                 from attack_scripts.Nations import Nation, Economy
 
-                Nation.set_peace(db, connection, war_id)
+                Nation.set_peace(db, db.connection, war_id)
                 # Check for Looting Teams upgrade
                 from upgrades import get_upgrades
-                winner_upgrades = get_upgrades(winner.user_id, db=connection)
+                winner_upgrades = get_upgrades(winner.user_id, db=db)
                 loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
 
                 # Transfer resources from loser to winner
@@ -295,8 +294,7 @@ def persist_fight_results(
                 )
             except Exception:
                 pass
-
-        connection.commit()
+        # End of get_request_cursor context block
 
     return _determine_win_label(win_type)
 
