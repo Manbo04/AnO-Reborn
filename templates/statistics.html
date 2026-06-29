@@ -17,25 +17,23 @@
 
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
-                <table class="templatetable">
-                    <tr>
-                        <th><span class="material-icons-outlined">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                         groups
-                                        </span>Global Stats</th>
-                    </tr>
-                    <tr>
-                        <td>Total Nations:</td>
-                        <td>{{ total_nations | commas }}</td>
-                    </tr>
-                    <tr>
-                        <td>Average Influence:</td>
-                        <td>{{ avg_influence | commas }}</td>
-                    </tr>
-                    <tr>
-                        <td>Highest Influence:</td>
-                        <td>{{ max_influence | commas }}</td>
-                    </tr>
-                </table>
+                                        </span>Global Stats</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Total Nations</strong>
+        <span class="stat-value">{{ total_nations | commas }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Average Influence</strong>
+        <span class="stat-value">{{ avg_influence | commas }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Highest Influence</strong>
+        <span class="stat-value">{{ max_influence | commas }}</span>
+    </div>
+</div>
             </div>
             <div class="templatedivflex2left">
                 <div class="infodiv">
@@ -50,45 +48,43 @@
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
 
-                <table class="templatetable">
-                    <tr>
-                        <th><span class="material-icons-outlined">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                         insert_chart_outlined
-                                        </span>Average Price</th>
-                    </tr>
-                    <tr>
-                        <td>Rations:</td>
-                        <td>{{ market_stats.get('rations', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Oil:</td>
-                        <td>{{ market_stats.get('oil', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Coal:</td>
-                        <td>{{ market_stats.get('coal', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Uranium:</td>
-                        <td>{{ market_stats.get('uranium', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Steel:</td>
-                        <td>{{ market_stats.get('steel', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Aluminium:</td>
-                        <td>{{ market_stats.get('aluminium', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Lumber:</td>
-                        <td>{{ market_stats.get('lumber', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Components:</td>
-                        <td>{{ market_stats.get('components', {}).get('avg', 'N/A') }}</td>
-                    </tr>
-                </table>
+                                        </span>Average Price</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Rations</strong>
+        <span class="stat-value">{{ market_stats.get('rations', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Oil</strong>
+        <span class="stat-value">{{ market_stats.get('oil', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coal</strong>
+        <span class="stat-value">{{ market_stats.get('coal', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Uranium</strong>
+        <span class="stat-value">{{ market_stats.get('uranium', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Steel</strong>
+        <span class="stat-value">{{ market_stats.get('steel', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Aluminium</strong>
+        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Lumber</strong>
+        <span class="stat-value">{{ market_stats.get('lumber', {}).get('avg', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Components</strong>
+        <span class="stat-value">{{ market_stats.get('components', {}).get('avg', 'N/A') }}</span>
+    </div>
+</div>
             </div>
             <div class="templatedivflex2left">
                 <p class="templatecontentheadercenter">Chart of prices over last 100 days</p>
@@ -98,87 +94,83 @@
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
 
-                <table class="templatetable">
-                    <tr>
-                        <th><span class="material-icons-outlined">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                         arrow_circle_up
-                                        </span>Highest Price</th>
-                    </tr>
-                    <tr>
-                        <td>Rations:</td>
-                        <td>{{ market_stats.get('rations', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Oil:</td>
-                        <td>{{ market_stats.get('oil', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Coal:</td>
-                        <td>{{ market_stats.get('coal', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Uranium:</td>
-                        <td>{{ market_stats.get('uranium', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Steel:</td>
-                        <td>{{ market_stats.get('steel', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Aluminium:</td>
-                        <td>{{ market_stats.get('aluminium', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Lumber:</td>
-                        <td>{{ market_stats.get('lumber', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Components:</td>
-                        <td>{{ market_stats.get('components', {}).get('max', 'N/A') }}</td>
-                    </tr>
-                </table>
+                                        </span>Highest Price</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Rations</strong>
+        <span class="stat-value">{{ market_stats.get('rations', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Oil</strong>
+        <span class="stat-value">{{ market_stats.get('oil', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coal</strong>
+        <span class="stat-value">{{ market_stats.get('coal', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Uranium</strong>
+        <span class="stat-value">{{ market_stats.get('uranium', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Steel</strong>
+        <span class="stat-value">{{ market_stats.get('steel', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Aluminium</strong>
+        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Lumber</strong>
+        <span class="stat-value">{{ market_stats.get('lumber', {}).get('max', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Components</strong>
+        <span class="stat-value">{{ market_stats.get('components', {}).get('max', 'N/A') }}</span>
+    </div>
+</div>
             </div>
             <div class="templatedivflex2left">
 
-                <table class="templatetable">
-                    <tr>
-                        <th><span class="material-icons-outlined">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                         arrow_circle_down
-                                        </span>Lowest Price</th>
-                    </tr>
-                    <tr>
-                        <td>Rations:</td>
-                        <td>{{ market_stats.get('rations', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Oil:</td>
-                        <td>{{ market_stats.get('oil', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Coal:</td>
-                        <td>{{ market_stats.get('coal', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Uranium:</td>
-                        <td>{{ market_stats.get('uranium', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Steel:</td>
-                        <td>{{ market_stats.get('steel', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Aluminium:</td>
-                        <td>{{ market_stats.get('aluminium', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Lumber:</td>
-                        <td>{{ market_stats.get('lumber', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Components:</td>
-                        <td>{{ market_stats.get('components', {}).get('min', 'N/A') }}</td>
-                    </tr>
-                </table>
+                                        </span>Lowest Price</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Rations</strong>
+        <span class="stat-value">{{ market_stats.get('rations', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Oil</strong>
+        <span class="stat-value">{{ market_stats.get('oil', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coal</strong>
+        <span class="stat-value">{{ market_stats.get('coal', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Uranium</strong>
+        <span class="stat-value">{{ market_stats.get('uranium', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Steel</strong>
+        <span class="stat-value">{{ market_stats.get('steel', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Aluminium</strong>
+        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Lumber</strong>
+        <span class="stat-value">{{ market_stats.get('lumber', {}).get('min', 'N/A') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Components</strong>
+        <span class="stat-value">{{ market_stats.get('components', {}).get('min', 'N/A') }}</span>
+    </div>
+</div>
 
             </div>
         </div>
