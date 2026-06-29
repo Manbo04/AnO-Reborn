@@ -1624,7 +1624,8 @@ def get_global_events():
                 LIMIT 5
             """)
             for row in db.fetchall():
-                events.append(f"Global market crisis: {row[0]} supplies have been completely exhausted!")
+                resource_name = str(row[0]).replace("_", " ").title()
+                events.append(f"Global market crisis: {resource_name} supplies have been completely exhausted!")
                 
             # 4. Recent treaties/alliances
             db.execute("SELECT name FROM coalitions_normalized ORDER BY coalition_id DESC LIMIT 5")
@@ -1651,7 +1652,8 @@ def get_global_events():
                 ORDER BY u.id DESC, td.tech_id DESC LIMIT 8
             """)
             for res in db.fetchall():
-                events.append(f"Scientific breakthrough: {res[0]} has developed {res[1]}.")
+                tech_name = str(res[1]).replace("_", " ").title()
+                events.append(f"Scientific breakthrough: {res[0]} has developed {tech_name}.")
                 
             # 7. Dynamic Weather Reports
             weather_conditions = [
