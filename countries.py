@@ -1105,7 +1105,7 @@ def countries():
             search_filter = "AND u.id = %s"
             params.append(int(search))
         else:
-            search_filter = "AND LOWER(u.username) LIKE LOWER(%s)"
+            search_filter = "AND u.username ILIKE %s"
             params.append(f"%{search}%")
 
     # Sort mapping is constrained to safe SQL snippets only.
