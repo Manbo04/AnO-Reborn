@@ -679,7 +679,7 @@ def coalitions():
                 where_conditions.append("c.id = %s")
                 params.append(int(search))
             else:
-                where_conditions.append("LOWER(c.name) LIKE LOWER(%s)")
+                where_conditions.append("c.name ILIKE %s")
                 params.append(f"%{search}%")
 
         # Type filter
