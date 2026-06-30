@@ -8238,6 +8238,48 @@ body.page-country .country-lore-editor-wrap .editor-toolbar a.active {
     }
 }
 
+/* Revenue tab — compact stat rows */
+body.page-country .revenue .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin: 0 0 4px;
+    width: 100%;
+}
+body.page-country .revenue .stat-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    margin: 0;
+    border-bottom: 1px solid var(--border, rgba(0,0,0,0.07));
+    border-radius: 0;
+    text-align: left;
+}
+body.page-country .revenue .stat-card:first-child {
+    border-radius: 6px 6px 0 0;
+}
+body.page-country .revenue .stat-card:last-child {
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+}
+body.page-country .revenue .stat-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #888);
+    white-space: nowrap;
+}
+body.page-country .revenue .stat-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+    text-align: right;
+}
+
 
 /* --- static/css/game-province.css --- */
 /**
