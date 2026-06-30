@@ -270,6 +270,7 @@ def coalition(coalition_id):
                 )
                 pending_applications = db.fetchall()
             except Exception:
+                rollback_db_cursor(db)
                 pending_applications = []
 
             # Also include simple /join() requests (requests table) for Invite-Only coalitions
@@ -289,18 +290,20 @@ def coalition(coalition_id):
                             (None, req_id, req_username, req_message, None, None)
                         )
             except Exception:
-                # non-fatal; leave pending_applications as-is
-                pass
+                rollback_db_cursor(db)
 
-            # OPTIMIZATION: Fetch all role counts in ONE query instead of 7 queries
-            db.execute(
-                f"SELECT role, COUNT(userid) FROM {_members_tbl()} WHERE colid=%s GROUP BY role",
-                (coalition_id,),
-            )
-            role_counts = db.fetchall()
-            for role, count in role_counts:
-                if role in member_roles:
-                    member_roles[role] = count
+            # Fetch all role counts in ONE query instead of 7 queries
+            try:
+                db.execute(
+                    f"SELECT role, COUNT(userid) FROM {_members_tbl()} WHERE colid=%s GROUP BY role",
+                    (coalition_id,),
+                )
+                role_counts = db.fetchall()
+                for role, count in role_counts:
+                    if role in member_roles:
+                        member_roles[role] = count
+            except Exception:
+                rollback_db_cursor(db)
 
         else:
             member_roles = {}
