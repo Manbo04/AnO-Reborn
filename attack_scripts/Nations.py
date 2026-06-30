@@ -781,8 +781,8 @@ class Military(Nation):
             db = connection.cursor()
 
             db.execute(
-                "SELECT attacker FROM wars WHERE (attacker=(%s) OR defender=(%s)) AND peace_date IS NULL",
-                (winner.user_id, winner.user_id),
+                "SELECT attacker FROM wars WHERE ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) AND peace_date IS NULL",
+                (winner.user_id, loser.user_id, loser.user_id, winner.user_id),
             )
             abs_attacker = fetchone_first(db, 0)
 
