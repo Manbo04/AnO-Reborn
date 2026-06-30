@@ -240,11 +240,15 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Manpower</h3>
-                    <p class="templatecontentpleft">Manpower is required to recruit soldiers and operate military equipment.</p>
+                    <p class="templatecontentpleft">Manpower is required to recruit soldiers and operate military equipment. It regenerates each tick at <strong>10% of your total population</strong>.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Generation</strong></td><td>Based on population</td></tr>
-                        <tr><td><strong>Used For</strong></td><td>All military recruitment</td></tr>
-                        <tr><td><strong>Recovery</strong></td><td>Every 4 hours</td></tr>
+                        <tr><td><strong>Generation</strong></td><td>10% of population per tick</td></tr>
+                        <tr><td><strong>Soldiers</strong></td><td>1 manpower each</td></tr>
+                        <tr><td><strong>Artillery</strong></td><td>2 manpower each</td></tr>
+                        <tr><td><strong>Tanks</strong></td><td>4 manpower each</td></tr>
+                        <tr><td><strong>Air units</strong></td><td>1 manpower each</td></tr>
+                        <tr><td><strong>Destroyers / Submarines</strong></td><td>6 manpower each</td></tr>
+                        <tr><td><strong>Cruisers</strong></td><td>5 manpower each</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -260,6 +264,16 @@
 
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">home_work</span> Unit Caps per Building</h3>
+                    <p class="templatecontentpleft">Your military buildings determine how many units you can recruit. Build more to expand your army.</p>
+                    <table class="templatetable">
+                        <tr><td><strong>Army Base</strong></td><td>+150 soldiers, +12 tanks, +12 artillery</td></tr>
+                        <tr><td><strong>Aerodome</strong></td><td>+8 total air units (fighters + bombers + apaches combined)</td></tr>
+                        <tr><td><strong>Harbour</strong></td><td>+5 submarines/destroyers (combined), +3 cruisers</td></tr>
+                        <tr><td><strong>Admin Building</strong></td><td>+1 spy</td></tr>
+                    </table>
+                </div>
+                <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Units</h3>
                     <p class="templatecontentpleft">Ground units require fuel (gasoline) or food (rations) to maintain operational status.</p>
                     <table class="templatetable">
@@ -268,6 +282,9 @@
                         <tr><td><strong>Artillery</strong></td><td>Long-range bombardment requiring 8 kg gasoline/hour.</td></tr>
                     </table>
                 </div>
+            </div>
+
+            <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval Units</h3>
                     <p class="templatecontentpleft">Aircraft and naval units require fuel maintenance to stay operational.</p>
