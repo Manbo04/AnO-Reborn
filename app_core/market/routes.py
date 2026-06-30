@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, session, redirect, flash
 from helpers import login_required, error, get_valid_int, record_trade_event
 import variables
 import logging
-from database import get_request_cursor, invalidate_user_cache, rollback_db_cursor, cache_response
+from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
 
 from .repositories import (
     is_active_resource, get_user_resource_quantity, count_offers, get_offers,
@@ -135,6 +135,8 @@ def buy_market_offer(offer_id):
     try:
         invalidate_user_cache(cId)
         invalidate_user_cache(seller_id)
+        invalidate_view_cache("market", user_id=cId)
+        invalidate_view_cache("market", user_id=seller_id)
     except Exception:
         pass
 
@@ -204,6 +206,8 @@ def sell_market_offer(offer_id):
     try:
         invalidate_user_cache(seller_id)
         invalidate_user_cache(buyer_id)
+        invalidate_view_cache("market", user_id=seller_id)
+        invalidate_view_cache("market", user_id=buyer_id)
     except Exception:
         pass
 

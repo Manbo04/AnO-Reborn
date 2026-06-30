@@ -1219,6 +1219,9 @@ def province_sell_buy(way, units, province_id):
         except (ValueError, TypeError):
             return error(400, "You have to enter a unit amount")
 
+        if wantedUnits > 2147483647 or wantedUnits < -2147483647:
+            return error(400, "Amount out of range")
+
         if wantedUnits < 1:
             return error(400, "Units cannot be less than 1")
 
