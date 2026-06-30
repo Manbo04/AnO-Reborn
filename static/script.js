@@ -301,6 +301,23 @@ document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() { flash.remove(); }, 500);
         }, 3000 + (i * 500));
     });
+
+    // Restore scroll position after buy/sell redirect
+    var scrollKey = "province_scroll_restore";
+    if (window.location.search.indexOf("_=") !== -1) {
+        var saved = sessionStorage.getItem(scrollKey);
+        if (saved !== null) {
+            window.scrollTo(0, parseInt(saved, 10));
+            sessionStorage.removeItem(scrollKey);
+        }
+    }
+
+    // Save scroll position before any buy/sell form submission
+    document.querySelectorAll("button[formaction]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            sessionStorage.setItem(scrollKey, window.scrollY);
+        });
+    });
 });
 
 // Mobile resource menu toggle
