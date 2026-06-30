@@ -4486,7 +4486,7 @@ def global_tick():
                         """)
                         rows = db.fetchall()
                         inserts = []
-                        base_chance = 0.05  # 5% chance per province
+                        base_chance = 0.30  # 30% chance per province per tick
                         for row in rows:
                             user_id = row[0]
                             province_count = row[1]
