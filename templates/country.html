@@ -591,37 +591,12 @@
                         <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined ">
                                             account_balance
                                                     </span>{{ provinceName}}</h2>
-<div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined ">
-                                                    people_alt
-                                                    </span>Population</strong>
-        <span class="stat-value">{{ provincePopulation| fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined ">
-                                                    sentiment_satisfied
-                                                    </span>Happiness</strong>
-        <span class="stat-value">{{ provinceHappiness }}%</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined ">
-                                                    arrow_circle_up
-                                                    </span>Productivity</strong>
-        <span class="stat-value">{{ provinceProductivity }}%</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined ">
-                                                    business
-                                                    </span>City slots</strong>
-        <span class="stat-value">{{ provinceCityCount }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined ">
-                                                    landscape
-                                                    </span>Land slots</strong>
-        <span class="stat-value">{{ provinceLand }}</span>
-    </div>
+<div class="province-stat-row">
+    <span class="province-stat-pill"><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
+    <span class="province-stat-pill"><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
+    <span class="province-stat-pill"><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
+    <span class="province-stat-pill"><span class="material-icons-outlined">business</span> {{ provinceCityCount }} cities</span>
+    <span class="province-stat-pill"><span class="material-icons-outlined">landscape</span> {{ provinceLand }} land</span>
 </div>
 
                     </div>
