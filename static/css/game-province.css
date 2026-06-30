@@ -365,3 +365,27 @@ body.page-provinces .stat-card .stat-value {
     margin-left: auto;
     white-space: nowrap;
 }
+
+/* Country page — compact province stat pills */
+.province-stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0 4px;
+}
+.province-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--card-bg, rgba(0,0,0,0.05));
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+.province-stat-pill .material-icons-outlined {
+    font-size: 14px;
+    color: var(--colorOne);
+}
