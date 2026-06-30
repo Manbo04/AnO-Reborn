@@ -194,7 +194,7 @@ def persist_fight_results(
                         (loser.user_id, resource),
                     )
                     resource_amount = fetchone_first(db, 0) or 0
-                    transfer_amount = int(resource_amount * loot_multiplier)
+                    transfer_amount = int(float(resource_amount) * loot_multiplier)
 
                     db.execute(
                         """
