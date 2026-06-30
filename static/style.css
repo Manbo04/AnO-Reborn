@@ -3944,6 +3944,7 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     align-self: stretch;
     top: -5px;
     position: relative;
+    overflow: hidden;
     box-shadow: rgba(0, 0, 0, 0.12) 0px 6px 16px 1px, #00a9e140 0px 8px 0px 0px;
     transition: all 0.3s ease-in-out;
     background: var(--tableTwo);
@@ -3969,27 +3970,27 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 }
 
 .unitcardcheck {
-    width: 0%;
+    position: absolute;
+    bottom: -40px;
+    left: 0;
+    right: 0;
+    width: 100%;
     background: #00a9e1;
     color: white;
-    padding: 6px 50%;
-    margin: 8px auto;
-    position: static;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 12px 0;
+    padding: 8px 0;
+    text-align: center;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -2px 8px 0;
     opacity: 0;
-    margin-left: -15px;
     user-select: none;
-    transition: width 0.3s, opacity 0s, padding 0s;
+    transition: bottom 0.25s ease, opacity 0.25s ease;
     pointer-events: none;
-    border-radius: 4px;
+    font-size: 1.2rem;
 }
 
 .unitcard input[type=checkbox]:checked~.unitcardcheck {
     opacity: 1;
-    margin-left: 0;
-    width: 80%;
-    padding: 6px 0;
-    transition: opacity 0.3s, width 0.3s, padding 0.15s;
+    bottom: 0;
+    transition: bottom 0.25s ease, opacity 0.2s ease;
 }
 
 
