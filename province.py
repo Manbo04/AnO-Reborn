@@ -1003,10 +1003,13 @@ def createprovince():
                 # Invalidate cached provinces page for this user
                 # so the new province appears immediately
                 try:
-                    from database import query_cache, invalidate_user_cache
+                    from database import query_cache, invalidate_user_cache, invalidate_view_cache
 
                     pattern = f"provinces_{cId}_"
                     query_cache.invalidate(pattern=pattern)
+                    # Invalidate the response cache for the provinces list page
+                    # so the new province appears immediately on redirect
+                    invalidate_view_cache("provinces", user_id=cId)
                     # Also invalidate influence/resources cache so the
                     # new province is reflected in influence score
                     invalidate_user_cache(cId)
