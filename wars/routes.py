@@ -804,50 +804,51 @@ def warResult():
                     return error(400, "Something went wrong")
             else:
                 return error(500, "Something went wrong")
-                db.execute(
-                    "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
-                    (defender.user_id,),
+
+            db.execute(
+                "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+                (defender.user_id,),
+            )
+            province_id_fetch = db.fetchall()
+            if len(province_id_fetch) > 0:
+                random_province = province_id_fetch[
+                    random.randint(0, len(province_id_fetch) - 1)
+                ][0]
+                public_works = Nation.get_public_works(random_province)
+                infra_damage_effects = Military.infrastructure_damage(
+                    attack_effects[0], public_works, random_province
                 )
-                province_id_fetch = db.fetchall()
-                if len(province_id_fetch) > 0:
-                    random_province = province_id_fetch[
-                        random.randint(0, len(province_id_fetch) - 1)
-                    ][0]
-                    public_works = Nation.get_public_works(random_province)
-                    infra_damage_effects = Military.infrastructure_damage(
-                        attack_effects[0], public_works, random_province
-                    )
-                else:
-                    infra_damage_effects = {}
-                defender_result["infra_damage"] = infra_damage_effects
-                if winner == defender.user_id:
-                    winner = defender_name
-                else:
-                    winner = attacker_name
-                defender_loss = {}
-                attacker_loss = {}
-                defender_initial = {}
-                defender_remaining = {}
-                attacker_initial = {}
-                attacker_remaining = {}
-                for unit in defender.selected_units_list:
-                    d_init = prev_defender.get(unit, 0)
-                    d_rem = defender.selected_units.get(unit, 0)
-                    defender_initial[unit] = d_init
-                    defender_remaining[unit] = d_rem
-                    defender_loss[unit] = d_init - d_rem
-                for unit in attacker.selected_units_list:
-                    a_init = prev_attacker.get(unit, 0)
-                    a_rem = attacker.selected_units.get(unit, 0)
-                    attacker_initial[unit] = a_init
-                    attacker_remaining[unit] = a_rem
-                    attacker_loss[unit] = a_init - a_rem
-                defender_result["unit_loss"] = defender_loss
-                defender_result["initial_units"] = defender_initial
-                defender_result["remaining_units"] = defender_remaining
-                attacker_result["unit_loss"] = attacker_loss
-                attacker_result["initial_units"] = attacker_initial
-                attacker_result["remaining_units"] = attacker_remaining
+            else:
+                infra_damage_effects = {}
+            defender_result["infra_damage"] = infra_damage_effects
+            if winner == defender.user_id:
+                winner = defender_name
+            else:
+                winner = attacker_name
+            defender_loss = {}
+            attacker_loss = {}
+            defender_initial = {}
+            defender_remaining = {}
+            attacker_initial = {}
+            attacker_remaining = {}
+            for unit in defender.selected_units_list:
+                d_init = prev_defender.get(unit, 0)
+                d_rem = defender.selected_units.get(unit, 0)
+                defender_initial[unit] = d_init
+                defender_remaining[unit] = d_rem
+                defender_loss[unit] = d_init - d_rem
+            for unit in attacker.selected_units_list:
+                a_init = prev_attacker.get(unit, 0)
+                a_rem = attacker.selected_units.get(unit, 0)
+                attacker_initial[unit] = a_init
+                attacker_remaining[unit] = a_rem
+                attacker_loss[unit] = a_init - a_rem
+            defender_result["unit_loss"] = defender_loss
+            defender_result["initial_units"] = defender_initial
+            defender_result["remaining_units"] = defender_remaining
+            attacker_result["unit_loss"] = attacker_loss
+            attacker_result["initial_units"] = attacker_initial
+            attacker_result["remaining_units"] = attacker_remaining
         else:
             defender_result["unit_loss"] = result[0]
             defender_result["infra_damage"] = result[1]
