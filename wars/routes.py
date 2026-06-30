@@ -539,12 +539,11 @@ def warAmount():
     elif request.method == "POST":
         selected_units = attack_units.selected_units.copy()
         units_name = list(selected_units.keys())
-        incoming_unit = list(request.form)
-        if len(units_name) == 3 and len(incoming_unit) == 3:
-            for unit in incoming_unit:
+        if len(units_name) == 3:
+            for unit in units_name:
                 if unit not in Military.allUnits:
                     return error(400, "Invalid unit type!")
-                unit_amount = request.form[unit]
+                unit_amount = request.form.get(unit)
                 try:
                     selected_units[unit] = int(unit_amount)
                 except (ValueError, TypeError):
