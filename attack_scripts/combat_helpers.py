@@ -89,6 +89,8 @@ def compute_engagement_metrics(
     for attacker_unit in attacker.selected_units_list:
         for unit in defender.selected_units_list:
             attack_effects = attacker.attack(attacker_unit, unit)
+            if not isinstance(attack_effects, tuple):
+                continue
             attacker_bonus += calculate_bonuses(attack_effects, defender, unit)
             dealt_infra_damage += attack_effects[0]
 
@@ -96,6 +98,8 @@ def compute_engagement_metrics(
     for defender_unit in defender.selected_units_list:
         for unit in attacker.selected_units_list:
             defender_attack_effects = defender.attack(defender_unit, unit)
+            if not isinstance(defender_attack_effects, tuple):
+                continue
             defender_bonus += calculate_bonuses(defender_attack_effects, attacker, unit)
 
     return (
