@@ -326,3 +326,42 @@ body.page-provinces .province-list-card-media {
     flex: 0 0 38%;
     max-width: 42%;
 }
+
+/* Province list — compact stat grid */
+body.page-provinces .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px 8px;
+    margin: 8px 0 4px;
+    width: 100%;
+}
+body.page-provinces .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    text-align: left;
+    background: var(--card-bg, rgba(0,0,0,0.04));
+    border-radius: 6px;
+    min-width: 0;
+}
+body.page-provinces .stat-card .stat-label {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    font-size: 11px;
+    white-space: nowrap;
+    color: var(--text-muted, #888);
+    font-weight: 600;
+}
+body.page-provinces .stat-card .stat-label .material-icons-outlined {
+    font-size: 14px;
+}
+body.page-provinces .stat-card .stat-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--colorOne);
+    margin-left: auto;
+    white-space: nowrap;
+}
