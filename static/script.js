@@ -218,12 +218,30 @@ function assign_parameters() {
 }
 
 function submit_special(e) {
+    e.preventDefault();
     var special_unit = document.querySelector("input[name=special_unit]");
     if (!special_unit) return;
     var el11 = document.getElementById("11");
     var el10 = document.getElementById("10");
-    if (el11 && el11.checked) special_unit.value = "nukes";
-    else if (el10 && el10.checked) special_unit.value = "icbms";
+    var warning = document.getElementById("special-unit-selection-warning");
+    if (el11 && el11.checked) {
+        special_unit.value = "nukes";
+    } else if (el10 && el10.checked) {
+        special_unit.value = "icbms";
+    } else {
+        if (warning) {
+            warning.style.display = "block";
+        } else {
+            var msg = document.createElement("p");
+            msg.id = "special-unit-selection-warning";
+            msg.style.cssText = "color:#c0392b;font-weight:bold;text-align:center;margin:8px 0;";
+            msg.textContent = "Please select a special unit before continuing.";
+            e.target.parentElement.insertAdjacentElement("beforebegin", msg);
+        }
+        return;
+    }
+    if (warning) warning.style.display = "none";
+    e.target.parentElement.submit();
 }
 
 function submit_next(e) {
