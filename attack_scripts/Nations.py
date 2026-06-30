@@ -153,16 +153,31 @@ class Economy:
         with get_db_connection() as connection:
             db = connection.cursor()
 
-            db.execute(
-                "UPDATE stats SET (%s) = (%s) WHERE id(%s)",
-                (resource, amount, self.nationID),
-            )
+            if resource == "money":
+                db.execute(
+                    "UPDATE user_economy SET money = money + %s WHERE user_id = %s",
+                    (amount, self.nationID)
+                )
+            else:
+                db.execute(
+                    """
+                    UPDATE user_resources ur
+                    SET quantity = quantity + %s
+                    FROM resource_dictionary rd
+                    WHERE ur.resource_id = rd.resource_id
+                      AND ur.user_id = %s
+                      AND LOWER(rd.name) = LOWER(%s)
+                    """,
+                    (amount, self.nationID, resource)
+                )
 
             connection.commit()
 
         # Invalidate caches related to this nation so reads are refreshed
         try:
             invalidate_user_cache(self.nationID)
+        except NameError:
+            pass
         except Exception:
             pass
 
@@ -589,6 +604,9 @@ class Military(Nation):
         if target_amount is not None:
             special_unit = attacker.selected_units_list[0]
             attack_effects = attacker.attack(special_unit, target)
+
+            if isinstance(attack_effects, str):
+                return attack_effects
 
             # Surely destroy this percentage of the targeted units
             # NOTE: devided attack_effects[0] by 20 otherwise special units damage are too overpowered maybe give it other value
