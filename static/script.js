@@ -227,8 +227,21 @@ function submit_special(e) {
 }
 
 function submit_next(e) {
+    e.preventDefault();
+    var warning = document.getElementById("unit-selection-warning");
     if (assign_parameters()) {
+        if (warning) warning.style.display = "none";
         e.target.parentElement.submit();
+    } else {
+        if (warning) {
+            warning.style.display = "block";
+        } else {
+            var msg = document.createElement("p");
+            msg.id = "unit-selection-warning";
+            msg.style.cssText = "color:#c0392b;font-weight:bold;text-align:center;margin:8px 0;";
+            msg.textContent = "Please select exactly 3 units before continuing.";
+            e.target.parentElement.insertAdjacentElement("beforebegin", msg);
+        }
     }
 }
 
