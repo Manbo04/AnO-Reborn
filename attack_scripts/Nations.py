@@ -599,7 +599,7 @@ class Military(Nation):
 
     @staticmethod
     def special_fight(attacker, defender, target):  # Units, Units, int -> str, None
-        target_amount = defender.get_military(defender.user_id).get(target, None)
+        target_amount = Military.get_particular_units_list(defender.user_id, [target])[0]
 
         if target_amount is not None:
             special_unit = attacker.selected_units_list[0]

@@ -772,7 +772,7 @@ def warResult():
                 return error(
                     500, "An error occurred during the battle. Please try again."
                 )
-            if len(war_type) > 0:
+            if war_type:
                 attack_effects = list(attack_effects)
                 if war_type == "Raze":
                     attack_effects[0] = attack_effects[0] * 10
@@ -851,6 +851,7 @@ def warResult():
         else:
             defender_result["unit_loss"] = result[0]
             defender_result["infra_damage"] = result[1]
+            attacker_result["unit_loss"] = dict(attacker.selected_units)
             session.pop("from_wartarget", None)
         
         attacker.save(db_cursor=db)
@@ -861,8 +862,8 @@ def warResult():
         from app_core.discord_notify import notify_war_result
 
         notify_war_result(
-            attacker_name=getattr(attacker, "username", str(attacker.user_id)),
-            defender_name=getattr(defender, "username", str(defender.user_id)),
+            attacker_name=attacker_name,
+            defender_name=defender_name,
             winner=str(winner),
             win_condition=win_condition,
         )
