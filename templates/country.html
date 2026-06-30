@@ -852,25 +852,22 @@
                 </tr>
             </table>
 
-            {% if expenses != [] %}
+            {% if expenses %}
             <h2 class="templatecontentheaderleft">Purchases</h2>
             <div class="templateoutertablediv">
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;">Type</th>
-                        <th>Item / Resource</th>
-                        <th>Amount</th>
-                        <th>Date</h2>
-<div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">{% if type == 'expense' %}
-                                <span class="text-danger" style="font-weight bold;">Expense</span>
-                            {% else %}
-                                <span class="text-success" style="font-weight bold;">Revenue</span>
-                            {% endif %}</strong>
-        <span class="stat-value">{{ resource | formatname }}</td>
+                <table class="templatetable">
+                    <thead><tr><th>Type</th><th>Item / Resource</th><th>Amount</th><th>Date</th></tr></thead>
+                    <tbody>
+                    {% for name, type, resource, amount, date in expenses %}
+                    <tr>
+                        <td>{% if type == 'expense' %}<span class="text-danger">Expense</span>{% else %}<span class="text-success">Revenue</span>{% endif %}</td>
+                        <td>{{ resource | formatname }}</td>
                         <td>{{ amount }}</td>
-                        <td>{{ date }}</span>
-    </div>
-</div>
+                        <td>{{ date }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
             {% endif %} {% endif %}
             <!--show this if user is in a coalition-->
