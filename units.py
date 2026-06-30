@@ -402,15 +402,9 @@ class Units(Military):
         # create a copy before mutating.
         dic = dict(sess_dict)
         sort_out = ["supply_costs", "available_supplies"]
-        store_sort_values = []
-
-        for it in sort_out:
-            temp = dic.get(it, None)
-            if temp is None:
-                continue
-
-            store_sort_values.append(dic[it])
-            dic.pop(it)
+        # Always remove these from dic (they're not __init__ params) and
+        # restore them after construction, even when the value is None.
+        store_sort_values = [dic.pop(it, None) for it in sort_out]
 
         # Filter out private/cache attributes (e.g. _unusable_units_cache)
         # that are stored in __dict__ but are NOT __init__ parameters.
