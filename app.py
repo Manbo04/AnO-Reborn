@@ -81,6 +81,14 @@ def create_app():
         logger.warning(f"403 error handler triggered: {error_msg}")
         return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
 
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        import traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Unhandled exception:")
+        return f"<h1>Internal Server Error</h1><pre>{traceback.format_exc()}</pre>", 500
+
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.config["SERVER_NAME"] = None
     app.config["ALLOWED_HOSTS"] = ["affairsandorder.com", "www.affairsandorder.com", "web-production-55d7b.up.railway.app"]
