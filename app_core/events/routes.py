@@ -18,14 +18,16 @@ def load_events():
 
 @events_bp.route("/api/events/<int:event_id>/respond", methods=["POST"])
 @login_required
-def respond_event(cId, event_id):
+def respond_event(event_id):
+    from flask import session
+    cId = session.get("user_id")
     data = request.get_json()
     if not data or 'option_index' not in data:
         return jsonify({"success": False, "message": "Missing option_index"}), 400
-        
+
     option_index = int(data['option_index'])
     events_data = load_events()
-    
+
     with get_db_connection() as conn:
         db = conn.cursor()
         
