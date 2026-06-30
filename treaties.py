@@ -8,33 +8,37 @@ treaties_bp = Blueprint("treaties", __name__)
 @login_required
 def view_treaties():
     user_id = session.get("user_id")
+    active_treaties = []
+    incoming_treaties = []
+    outgoing_treaties = []
     with get_request_cursor() as db:
-        # Fetch active treaties
-        db.execute("""
-            SELECT t.id, t.treaty_type, t.created_at, u.username as other_nation, u.id as other_id, t.sender_id
-            FROM nation_treaties t
-            JOIN users u ON (u.id = t.recipient_id AND t.sender_id = %s) OR (u.id = t.sender_id AND t.recipient_id = %s)
-            WHERE t.status = 'active' AND (t.sender_id = %s OR t.recipient_id = %s)
-        """, (user_id, user_id, user_id, user_id))
-        active_treaties = db.fetchall()
+        try:
+            db.execute("""
+                SELECT t.id, t.treaty_type, t.created_at, u.username as other_nation, u.id as other_id, t.sender_id
+                FROM nation_treaties t
+                JOIN users u ON (u.id = t.recipient_id AND t.sender_id = %s) OR (u.id = t.sender_id AND t.recipient_id = %s)
+                WHERE t.status = 'active' AND (t.sender_id = %s OR t.recipient_id = %s)
+            """, (user_id, user_id, user_id, user_id))
+            active_treaties = db.fetchall()
 
-        # Fetch pending incoming treaties
-        db.execute("""
-            SELECT t.id, t.treaty_type, t.created_at, u.username as sender_name, u.id as sender_id
-            FROM nation_treaties t
-            JOIN users u ON u.id = t.sender_id
-            WHERE t.status = 'pending' AND t.recipient_id = %s
-        """, (user_id,))
-        incoming_treaties = db.fetchall()
+            db.execute("""
+                SELECT t.id, t.treaty_type, t.created_at, u.username as sender_name, u.id as sender_id
+                FROM nation_treaties t
+                JOIN users u ON u.id = t.sender_id
+                WHERE t.status = 'pending' AND t.recipient_id = %s
+            """, (user_id,))
+            incoming_treaties = db.fetchall()
 
-        # Fetch pending outgoing treaties
-        db.execute("""
-            SELECT t.id, t.treaty_type, t.created_at, u.username as recipient_name, u.id as recipient_id
-            FROM nation_treaties t
-            JOIN users u ON u.id = t.recipient_id
-            WHERE t.status = 'pending' AND t.sender_id = %s
-        """, (user_id,))
-        outgoing_treaties = db.fetchall()
+            db.execute("""
+                SELECT t.id, t.treaty_type, t.created_at, u.username as recipient_name, u.id as recipient_id
+                FROM nation_treaties t
+                JOIN users u ON u.id = t.recipient_id
+                WHERE t.status = 'pending' AND t.sender_id = %s
+            """, (user_id,))
+            outgoing_treaties = db.fetchall()
+        except Exception:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
 
     return render_template(
         "treaty.html",
