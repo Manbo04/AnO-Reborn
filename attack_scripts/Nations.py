@@ -153,23 +153,17 @@ class Economy:
         with get_db_connection() as connection:
             db = connection.cursor()
 
-            if resource == "money":
-                db.execute(
-                    "UPDATE user_economy SET money = money + %s WHERE user_id = %s",
-                    (amount, self.nationID)
-                )
-            else:
-                db.execute(
-                    """
-                    UPDATE user_resources ur
-                    SET quantity = quantity + %s
-                    FROM resource_dictionary rd
-                    WHERE ur.resource_id = rd.resource_id
-                      AND ur.user_id = %s
-                      AND LOWER(rd.name) = LOWER(%s)
-                    """,
-                    (amount, self.nationID, resource)
-                )
+            db.execute(
+                """
+                UPDATE user_economy ue
+                SET quantity = quantity + %s
+                FROM resource_dictionary rd
+                WHERE ue.resource_id = rd.resource_id
+                  AND ue.user_id = %s
+                  AND LOWER(rd.name) = LOWER(%s)
+                """,
+                (amount, getattr(self, "id", getattr(self, "nationID", getattr(self, "user_id", 0))), resource)
+            )
 
             connection.commit()
 
