@@ -183,3 +183,36 @@ body.page-military .templatedivcontent .infodiv {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* Battle report — mobile: stack panels, shrink header font */
+@media (max-width: 700px) {
+    .battle-report-container {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .combatant-panel {
+        flex: 1 1 100% !important;
+        padding: 12px !important;
+    }
+
+    .combatant-header {
+        font-size: 1.05em !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .winner-banner {
+        font-size: 1.3em !important;
+        padding: 10px !important;
+        letter-spacing: 1px !important;
+    }
+
+    .unit-name {
+        font-size: 0.95em !important;
+    }
+
+    .casualty-counter {
+        font-size: 0.8em !important;
+    }
+}
