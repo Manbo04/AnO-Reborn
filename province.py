@@ -5,6 +5,7 @@ from flask import (
     session,
     redirect,
     jsonify,
+    flash,
 )
 from helpers import (
     login_required,
@@ -1599,6 +1600,9 @@ def province_sell_buy(way, units, province_id):
     # response (can happen when multiple replicas keep separate in-memory caches).
     from time import time as _now
 
+    action = "Sold" if way == "sell" else "Purchased"
+    unit_display = units.replace("_", " ").title()
+    flash(f"{action}: {unit_display}")
     return redirect(f"/province/{province_id}?_={int(_now())}")
 from flask import jsonify
 from database import get_request_cursor
