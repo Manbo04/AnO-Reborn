@@ -650,6 +650,7 @@ class Military(Nation):
                         ),
                     )
 
+                defender.save(db_cursor=db)
                 connection.commit()
 
             # NOTE: put this on the warResult route and use it for both the special and regular attack
