@@ -8238,6 +8238,62 @@ body.page-country .country-lore-editor-wrap .editor-toolbar a.active {
     }
 }
 
+/* Overview tab — tighten General / Affairs / Other tables */
+.country-overview-column .templatetable {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* Section header row — slim accent bar instead of big blue block */
+.country-overview-column .templatetable tr:first-child th {
+    background: transparent;
+    border-bottom: 2px solid var(--accent, #4da8da);
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 8px 5px;
+    text-align: left;
+}
+
+/* Data rows */
+.country-overview-column .templatetable td {
+    padding: 5px 8px;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+    vertical-align: middle;
+}
+
+.country-overview-column .templatetable tr:last-child td {
+    border-bottom: none;
+}
+
+/* Label column — icon + text, never wraps */
+.country-overview-column .templatetable td:first-child {
+    white-space: nowrap;
+    color: var(--text-secondary);
+    width: 1%;
+    padding-right: 14px;
+}
+
+/* Value column — right-aligned, allows wrapping for long values */
+.country-overview-column .templatetable td:last-child {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Inline icon alignment */
+.country-overview-column .templatetable .material-icons-outlined {
+    font-size: 0.95rem;
+    vertical-align: middle;
+    margin-right: 4px;
+    color: var(--accent, #4da8da);
+    opacity: 0.85;
+}
+
 /* Revenue tab — compact stat rows */
 body.page-country .revenue .stat-grid {
     display: grid;
