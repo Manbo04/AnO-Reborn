@@ -79,15 +79,29 @@ def create_app():
     def forbidden_error(error_msg):
         logger = logging.getLogger(__name__)
         logger.warning(f"403 error handler triggered: {error_msg}")
-        return render_template("error.html", code=403, message="Forbidden: 403 error handler triggered."), 403
+        return render_template("error.html", code=403, message="You don't have permission to access this page."), 403
+
+    @app.errorhandler(404)
+    def not_found_error(error_msg):
+        return render_template("error.html", code=404, message="Page not found."), 404
 
     @app.errorhandler(Exception)
     def handle_exception(e):
         import traceback
         import logging
+        from werkzeug.exceptions import HTTPException
         logger = logging.getLogger(__name__)
+        # Pass HTTP exceptions (404, 403, etc.) through to their proper handlers
+        # instead of wrapping them as 500s with a raw traceback.
+        if isinstance(e, HTTPException):
+            return e
         logger.exception("Unhandled exception:")
-        return f"<h1>Internal Server Error</h1><pre>{traceback.format_exc()}</pre>", 500
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)
+        except Exception:
+            pass
+        return render_template("error.html", code=500, message="An unexpected error occurred. Please try again."), 500
 
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.config["SERVER_NAME"] = None
@@ -333,10 +347,21 @@ def create_app():
     environment = os.getenv("ENVIRONMENT", "DEV")
     app.secret_key = config.get_secret_key()
 
-    from flask_wtf.csrf import CSRFProtect
+    from flask_wtf.csrf import CSRFProtect, CSRFError
+
+    # 24-hour token lifetime so players who keep a tab open don't get 400s
+    app.config["WTF_CSRF_TIME_LIMIT"] = 86400
 
     csrf = CSRFProtect(app)
     csrf.exempt(bot_api.bp)
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        return render_template(
+            "error.html",
+            code=400,
+            message="Your session form expired. Please go back and try again.",
+        ), 400
     if environment == "PROD":
         handler = RequestsHandler()
         logger.addHandler(handler)
