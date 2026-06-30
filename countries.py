@@ -1169,7 +1169,7 @@ def countries():
                         COALESCE(SUM(land), 0) AS total_land
                     FROM provinces
                     GROUP BY userid
-                ) p ON p.userId = u.id
+                ) p ON p.user_id = u.id
                 LEFT JOIN (
                     SELECT
                         um.user_id,
@@ -1270,7 +1270,7 @@ def countries():
                         COALESCE(SUM(land), 0) AS total_land
                     FROM provinces
                     GROUP BY userid
-                ) p ON p.userId = u.id
+                ) p ON p.user_id = u.id
                 LEFT JOIN (
                     SELECT userid, MIN(colid) AS colid
                     FROM {coalition_src}
