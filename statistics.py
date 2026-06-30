@@ -135,62 +135,79 @@ def statistics():
 @cache_response(ttl_seconds=300)  # Cache rankings for 5 minutes — public leaderboard
 def rankings():
     """Display the top leaderboards for nations and alliances."""
-    with get_request_cursor(read_only=True) as db:
-        # Top 15 by Population
-        db.execute(
-            """
-            SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop, u.flag
-            FROM users u
-            JOIN provinces p ON u.id = p.userid
-            WHERE u.is_verified = TRUE
-            GROUP BY u.id, u.username, u.flag
-            ORDER BY total_pop DESC
-            LIMIT 10
-            """
-        )
-        top_population = db.fetchall()
+    with get_request_cursor() as db:
+        # Top by Population
+        try:
+            db.execute(
+                """
+                SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop
+                FROM users u
+                JOIN provinces p ON u.id = p.userid
+                GROUP BY u.id, u.username
+                ORDER BY total_pop DESC
+                LIMIT 10
+                """
+            )
+            top_population = db.fetchall()
+        except Exception:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
+            top_population = []
 
-        # Top 15 by Military Size (Total quantity of all units)
-        db.execute(
-            """
-            SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size, u.flag
-            FROM users u
-            JOIN user_military um ON u.id = um.user_id
-            WHERE u.is_verified = TRUE
-            GROUP BY u.id, u.username, u.flag
-            ORDER BY army_size DESC
-            LIMIT 10
-            """
-        )
-        top_military = db.fetchall()
-        
-        # Top 15 by Wealth (Money)
-        db.execute(
-            """
-            SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money, u.flag
-            FROM users u
-            JOIN stats s ON u.id = s.id
-            WHERE u.is_verified = TRUE
-            ORDER BY total_money DESC
-            LIMIT 10
-            """
-        )
-        top_wealth = db.fetchall()
-        
-        # Top 15 Alliances by Influence (Sum of member populations)
-        members_tbl = get_coalition_members_table() or "coalitions_legacy"
-        db.execute(
-            f"""
-            SELECT c.id, c.name, COALESCE(SUM(p.population), 0) as total_pop
-            FROM colNames c
-            JOIN {members_tbl} m ON c.id = m.colid
-            JOIN provinces p ON m.userid = p.userid
-            GROUP BY c.id, c.name
-            ORDER BY total_pop DESC
-            LIMIT 10
-            """
-        )
-        top_alliances = db.fetchall()
+        # Top by Military Size
+        try:
+            db.execute(
+                """
+                SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size
+                FROM users u
+                JOIN user_military um ON u.id = um.user_id
+                GROUP BY u.id, u.username
+                ORDER BY army_size DESC
+                LIMIT 10
+                """
+            )
+            top_military = db.fetchall()
+        except Exception:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
+            top_military = []
+
+        # Top by Wealth (Money)
+        try:
+            db.execute(
+                """
+                SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money
+                FROM users u
+                JOIN stats s ON u.id = s.id
+                ORDER BY total_money DESC
+                LIMIT 10
+                """
+            )
+            top_wealth = db.fetchall()
+        except Exception:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
+            top_wealth = []
+
+        # Top Alliances by Influence (Sum of member populations)
+        try:
+            members_tbl = get_coalition_members_table() or "coalitions_legacy"
+            db.execute(
+                f"""
+                SELECT c.id, c.name, COALESCE(SUM(p.population), 0) as total_pop
+                FROM colNames c
+                JOIN {members_tbl} m ON c.id = m.colid
+                JOIN provinces p ON m.userid = p.userid
+                GROUP BY c.id, c.name
+                ORDER BY total_pop DESC
+                LIMIT 10
+                """
+            )
+            top_alliances = db.fetchall()
+        except Exception:
+            from database import rollback_db_cursor
+            rollback_db_cursor(db)
+            top_alliances = []
 
     return render_template(
         "rankings.html",
