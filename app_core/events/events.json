@@ -5,8 +5,8 @@
         "options": [
             {
                 "text": "Buy goods",
-                "costs": {"gold": 100},
-                "rewards": {"food": 200}
+                "costs": {"money": 100},
+                "rewards": {"rations": 200}
             },
             {
                 "text": "Ignore",
