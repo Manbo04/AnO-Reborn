@@ -211,6 +211,27 @@ def create_app():
                 response.headers["Cache-Control"] = "public, max-age=604800, must-revalidate"
         else:
             response.headers["Cache-Control"] = "private, max-age=5, must-revalidate"
+
+        # Security headers
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # CSP: allow same-origin + trusted CDNs used by the game
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https: blob:; "
+            "media-src 'self' https:; "
+            "frame-src 'self' https://www.youtube.com https://player.vimeo.com; "
+            "connect-src 'self'; "
+            "object-src 'none'; "
+            "base-uri 'self';"
+        )
         return response
 
     def asset(filename):
