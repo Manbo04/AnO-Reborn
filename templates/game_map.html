@@ -1,0 +1,1220 @@
+{% extends "layout.html" %}
+{% block title %}Strategic Command Map{% endblock %}
+{% block body_class %}page-game-map{% endblock %}
+
+{% block head %}
+<style>
+/* ─── Full-screen override ─── */
+html, body.page-game-map {
+    margin: 0;
+    overflow: hidden !important;
+    background: #060810 !important;
+    height: 100vh;
+    font-family: 'Inter', sans-serif;
+}
+
+.templatecontainer, .navbarparent:has(.templatecontainer),
+#page-content-wrapper, .container-fluid, .body-content {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
+
+.footer, footer { display: none !important; }
+
+/* ─── Viewport ─── */
+#gm-viewport {
+    position: fixed;
+    inset: 0;
+    cursor: grab;
+    background-color: #060810;
+    background-image:
+        radial-gradient(ellipse at 30% 40%, rgba(15, 30, 60, 0.6) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 70%, rgba(30, 10, 50, 0.4) 0%, transparent 50%),
+        radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px;
+    overflow: hidden;
+}
+#gm-viewport:active { cursor: grabbing; }
+body.dragging #gm-viewport { cursor: grabbing; }
+
+#gm-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+/* ─── Hex tiles ─── */
+.gm-hex {
+    position: absolute;
+    width: 86.6px;
+    height: 100px;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.15s;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
+}
+
+.gm-hex:hover {
+    filter: drop-shadow(0 0 14px var(--hex-glow, rgba(79,195,247,0.6))) !important;
+    transform: translate(-50%, -50%) scale(1.08);
+    z-index: 100 !important;
+}
+
+.gm-hex-tile {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    transition: background 0.2s;
+}
+
+.gm-hex-inner {
+    position: absolute;
+    inset: 2px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 4px;
+    color: #fff;
+    font-size: 0.52rem;
+    background: rgba(10, 12, 22, 0.88);
+    transition: background 0.2s;
+    overflow: hidden;
+}
+
+.gm-hex:hover .gm-hex-inner { background: rgba(18, 22, 40, 0.95); }
+
+/* Ownership colors */
+.hex-mine       .gm-hex-tile { background: linear-gradient(135deg, rgba(0,180,255,0.8), rgba(0,80,200,0.4)); }
+.hex-mine       { --hex-glow: rgba(0,180,255,0.7); }
+.hex-enemy      .gm-hex-tile { background: linear-gradient(135deg, rgba(255,60,60,0.8), rgba(150,0,0,0.4)); }
+.hex-enemy      { --hex-glow: rgba(255,60,60,0.6); }
+.hex-neutral    .gm-hex-tile { background: linear-gradient(135deg, rgba(79,195,247,0.4), rgba(40,60,100,0.2)); }
+.hex-neutral    { --hex-glow: rgba(79,195,247,0.4); }
+.hex-selected   .gm-hex-tile { background: linear-gradient(135deg, rgba(255,215,0,0.9), rgba(200,150,0,0.5)) !important; }
+.hex-selected   { --hex-glow: rgba(255,215,0,0.9) !important; filter: drop-shadow(0 0 18px rgba(255,215,0,0.8)) !important; }
+.hex-attack-src .gm-hex-tile { background: linear-gradient(135deg, rgba(255,120,0,0.9), rgba(200,60,0,0.5)) !important; }
+.hex-adj-highlight .gm-hex-tile { background: linear-gradient(135deg, rgba(255,80,80,0.7), rgba(150,0,0,0.3)) !important; filter: brightness(1.3); }
+
+.gm-hex-name { font-weight: 700; font-size: 0.5rem; line-height: 1.1; margin-bottom: 1px; text-transform: uppercase; letter-spacing: 0.3px; }
+.gm-hex-owner { font-size: 0.4rem; color: rgba(255,255,255,0.6); margin-bottom: 1px; }
+.gm-hex-troops {
+    font-size: 0.42rem;
+    font-weight: 600;
+    background: rgba(0,0,0,0.5);
+    padding: 1px 5px;
+    border-radius: 8px;
+    margin-top: 2px;
+}
+.gm-hex-troops.has-troops { color: #ffd54f; }
+.gm-hex-troops.no-troops  { color: rgba(255,255,255,0.3); }
+
+/* ─── Planet backgrounds ─── */
+.planet-bg {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    box-shadow: inset -30px -30px 70px rgba(0,0,0,0.9), 0 0 50px rgba(0,0,0,0.6);
+    opacity: 0.7;
+    object-fit: cover;
+    z-index: -1;
+}
+
+/* ─── HUD Header ─── */
+#gm-hud {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 500;
+}
+
+.hud-badge {
+    background: rgba(6, 8, 16, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.hud-badge .hud-val { font-weight: 700; color: #4fc3f7; }
+.hud-badge.gold-badge .hud-val { color: #ffd54f; }
+.hud-badge.troops-badge .hud-val { color: #81c784; }
+
+/* ─── Mode indicator ─── */
+#gm-mode-bar {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 40px;
+    padding: 8px 24px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+#gm-mode-bar.visible { opacity: 1; }
+#gm-mode-bar .mode-icon { font-size: 1.1rem; }
+
+/* ─── Side Panel ─── */
+#gm-panel {
+    position: fixed;
+    right: -360px;
+    top: 80px;
+    bottom: 0;
+    width: 340px;
+    background: rgba(6, 8, 16, 0.95);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(79,195,247,0.25);
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 600;
+    transition: right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    color: #ddd;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(79,195,247,0.3) transparent;
+}
+#gm-panel.open { right: 0; }
+
+.panel-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    cursor: pointer;
+    color: #555;
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+.panel-close:hover { color: #fff; }
+
+.panel-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4fc3f7;
+    margin: 0 0 4px;
+    padding-right: 24px;
+}
+.panel-sub { font-size: 0.78rem; color: #888; margin-bottom: 16px; }
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.82rem;
+}
+.stat-row .lbl { color: #777; }
+.stat-row .val { color: #eee; font-weight: 600; }
+.stat-row .val.green { color: #81c784; }
+.stat-row .val.red { color: #ef5350; }
+.stat-row .val.gold { color: #ffd54f; }
+
+.action-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.action-section h4 {
+    font-size: 0.8rem;
+    color: #4fc3f7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 10px;
+}
+
+.gm-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.gm-input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: #fff;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    outline: none;
+    width: 100%;
+}
+.gm-input:focus { border-color: rgba(79,195,247,0.5); }
+
+.gm-btn {
+    background: rgba(79,195,247,0.15);
+    border: 1px solid rgba(79,195,247,0.4);
+    color: #4fc3f7;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.gm-btn:hover { background: rgba(79,195,247,0.3); border-color: #4fc3f7; color: #fff; }
+.gm-btn.danger { background: rgba(239,83,80,0.15); border-color: rgba(239,83,80,0.4); color: #ef5350; }
+.gm-btn.danger:hover { background: rgba(239,83,80,0.3); border-color: #ef5350; color: #fff; }
+.gm-btn.warning { background: rgba(255,152,0,0.15); border-color: rgba(255,152,0,0.4); color: #ffa726; }
+.gm-btn.warning:hover { background: rgba(255,152,0,0.3); border-color: #ffa726; color: #fff; }
+.gm-btn.success { background: rgba(129,199,132,0.15); border-color: rgba(129,199,132,0.4); color: #81c784; }
+.gm-btn.success:hover { background: rgba(129,199,132,0.3); border-color: #81c784; color: #fff; }
+.gm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.mode-hint {
+    font-size: 0.72rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* ─── Attack source selector ─── */
+#attack-src-selector {
+    display: none;
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(255,100,0,0.08);
+    border: 1px solid rgba(255,100,0,0.3);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #ffa726;
+}
+#attack-src-selector select {
+    width: 100%;
+    margin-top: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+}
+
+/* ─── Combat log panel ─── */
+#gm-log-toggle {
+    position: fixed;
+    bottom: 40px;
+    left: 20px;
+    z-index: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#gm-log-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: rgba(6, 8, 16, 0.95);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 500;
+    padding: 12px 20px;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(79,195,247,0.3) transparent;
+}
+#gm-log-panel.open { transform: translateY(0); }
+
+.log-entry {
+    font-size: 0.75rem;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #aaa;
+}
+.log-entry .log-win { color: #81c784; font-weight: 600; }
+.log-entry .log-lose { color: #ef5350; font-weight: 600; }
+.log-entry .log-time { color: #555; font-size: 0.65rem; }
+
+/* ─── Map controls ─── */
+.gm-controls {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 600;
+}
+
+.gm-ctrl-btn {
+    background: rgba(6,8,16,0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+}
+.gm-ctrl-btn:hover {
+    background: rgba(79,195,247,0.2);
+    border-color: rgba(79,195,247,0.6);
+    box-shadow: 0 0 15px rgba(79,195,247,0.3);
+}
+
+/* ─── Toast ─── */
+.gm-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(10,14,24,0.95);
+    border: 1px solid rgba(79,195,247,0.3);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 420px;
+    text-align: center;
+}
+.gm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.gm-toast.toast-win   { border-color: rgba(129,199,132,0.6); }
+.gm-toast.toast-lose  { border-color: rgba(239,83,80,0.6); }
+.gm-toast.toast-error { border-color: rgba(239,83,80,0.6); background: rgba(80,10,10,0.95); }
+
+/* ─── Loading overlay ─── */
+#gm-loading {
+    position: fixed;
+    inset: 0;
+    background: #060810;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    transition: opacity 0.5s;
+}
+#gm-loading h2 { color: #4fc3f7; font-size: 1.4rem; letter-spacing: 2px; }
+#gm-loading p { color: #555; font-size: 0.85rem; }
+.gm-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(79,195,247,0.15);
+    border-top-color: #4fc3f7;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+body.dragging .gm-hex { filter: none !important; }
+body.dragging .hud-badge, body.dragging #gm-mode-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Loading overlay -->
+<div id="gm-loading">
+    <div class="gm-spinner"></div>
+    <h2>STRATEGIC COMMAND</h2>
+    <p>Loading theatre of operations...</p>
+</div>
+
+<!-- HUD -->
+<div id="gm-hud">
+    <div class="hud-badge">
+        <span class="material-icons-outlined" style="font-size:1rem;color:#ffd54f;">monetization_on</span>
+        Treasury: <span class="hud-val gold-badge" id="hud-gold">{{ gold | commas }}</span>
+    </div>
+    <div class="hud-badge">
+        <span class="material-icons-outlined" style="font-size:1rem;color:#81c784;">military_tech</span>
+        Stockpile: <span class="hud-val troops-badge" id="hud-troops">{{ soldiers | commas }}</span>
+    </div>
+    <div class="hud-badge" id="hud-mode">
+        <span class="material-icons-outlined" style="font-size:1rem;">info</span>
+        Click a province to begin
+    </div>
+</div>
+
+<!-- Mode indicator bar -->
+<div id="gm-mode-bar">
+    <span class="material-icons-outlined mode-icon" id="mode-icon">touch_app</span>
+    <span id="mode-text">Select a province</span>
+    <button onclick="cancelMode()" style="background:none;border:1px solid rgba(255,255,255,0.2);color:#aaa;border-radius:20px;padding:3px 12px;font-size:0.75rem;cursor:pointer;margin-left:8px;">Cancel</button>
+</div>
+
+<!-- Viewport & canvas -->
+<div id="gm-viewport">
+    <div id="gm-canvas"></div>
+</div>
+
+<!-- Province detail panel -->
+<div id="gm-panel">
+    <span class="material-icons-outlined panel-close" onclick="closePanel()">close</span>
+    <div class="panel-title" id="pn-name">Province Name</div>
+    <div class="panel-sub" id="pn-sub">Owner · Coordinates</div>
+
+    <div class="stat-row"><span class="lbl">Population</span><span class="val" id="pn-pop">—</span></div>
+    <div class="stat-row"><span class="lbl">Deployed Troops</span><span class="val green" id="pn-troops">—</span></div>
+    <div class="stat-row"><span class="lbl">Status</span><span class="val" id="pn-status">—</span></div>
+
+    <div class="action-section" id="pn-actions-mine">
+        <h4>Manage Garrison</h4>
+
+        <div class="gm-input-row">
+            <input type="number" class="gm-input" id="deploy-amount" placeholder="Soldiers to deploy" min="1">
+            <button class="gm-btn success" onclick="doDeploy()">Deploy</button>
+        </div>
+        <div class="gm-input-row">
+            <input type="number" class="gm-input" id="retreat-amount" placeholder="Soldiers to retreat" min="1">
+            <button class="gm-btn warning" onclick="doRetreat()">Retreat</button>
+        </div>
+        <p class="mode-hint">Stockpile: <span id="pn-stockpile">—</span> available</p>
+
+        <div style="margin-top:14px;">
+            <button class="gm-btn" onclick="enterMoveMode()" id="btn-move">
+                <span class="material-icons-outlined" style="font-size:0.9rem;vertical-align:middle;">swap_horiz</span>
+                Move Troops to Adjacent
+            </button>
+        </div>
+
+        <div id="move-panel" style="display:none;margin-top:10px;padding:10px;background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.2);border-radius:8px;">
+            <div style="font-size:0.78rem;color:#4fc3f7;margin-bottom:8px;">Select adjacent province to move to:</div>
+            <div id="move-neighbor-list"></div>
+            <input type="number" class="gm-input" id="move-amount" placeholder="Soldiers to move" min="1" style="margin-top:8px;">
+            <button class="gm-btn" style="margin-top:6px;width:100%;" onclick="doMove()">Confirm Move</button>
+        </div>
+    </div>
+
+    <div class="action-section" id="pn-actions-enemy">
+        <h4>Attack Options</h4>
+        <p style="font-size:0.8rem;color:#888;margin-bottom:10px;">You must have troops deployed on an adjacent province. Attacker needs &gt;150% of defender's garrison to win.</p>
+
+        <div id="attack-src-selector">
+            <span>Choose attack origin:</span>
+            <select id="attack-src-select">
+                <option value="">— Select province —</option>
+            </select>
+            <div style="margin-top:8px;">
+                <div class="stat-row" style="border:none;padding:4px 0;">
+                    <span class="lbl">Target garrison</span><span class="val red" id="atk-def-troops">—</span>
+                </div>
+                <div class="stat-row" style="border:none;padding:4px 0;">
+                    <span class="lbl">Your attackers</span><span class="val green" id="atk-src-troops">—</span>
+                </div>
+                <div class="stat-row" style="border:none;padding:4px 0;">
+                    <span class="lbl">Odds</span><span class="val" id="atk-odds">—</span>
+                </div>
+            </div>
+            <button class="gm-btn danger" onclick="doAttack()" style="width:100%;margin-top:8px;" id="btn-attack-confirm">Launch Attack</button>
+        </div>
+
+        <div id="no-attack-msg" style="font-size:0.78rem;color:#555;font-style:italic;padding:8px 0;">
+            No adjacent provinces with deployed troops.
+        </div>
+    </div>
+
+    <div class="action-section" id="pn-actions-neutral" style="display:none;">
+        <h4>Unoccupied Territory</h4>
+        <p style="font-size:0.8rem;color:#666;">This province has no owner. Attack with troops from an adjacent province to claim it.</p>
+    </div>
+</div>
+
+<!-- Combat log -->
+<div id="gm-log-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:0.85rem;font-weight:700;color:#4fc3f7;">
+            <span class="material-icons-outlined" style="font-size:0.95rem;vertical-align:middle;">history</span>
+            Combat Log
+        </span>
+        <span class="material-icons-outlined" style="cursor:pointer;color:#555;font-size:1rem;" onclick="toggleLog()">close</span>
+    </div>
+    <div id="gm-log-entries"></div>
+</div>
+
+<!-- Controls -->
+<div class="gm-controls">
+    <div class="gm-ctrl-btn" onclick="zoomMap(0.2)" title="Zoom In"><span class="material-icons-outlined">add</span></div>
+    <div class="gm-ctrl-btn" onclick="zoomMap(-0.2)" title="Zoom Out"><span class="material-icons-outlined">remove</span></div>
+    <div class="gm-ctrl-btn" onclick="resetMapView()" title="Recenter"><span class="material-icons-outlined">my_location</span></div>
+    <div class="gm-ctrl-btn" onclick="toggleLog()" title="Combat Log"><span class="material-icons-outlined">history</span></div>
+</div>
+
+<!-- Toast -->
+<div class="gm-toast" id="gm-toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   AnO Strategic Game Map — Full Client
+═══════════════════════════════════════════════════ */
+
+const MY_USER_ID = {{ user_id }};
+const HEX_SIZE   = 50;
+const HEX_W      = Math.sqrt(3) * HEX_SIZE;
+const HEX_H      = 2 * HEX_SIZE;
+const SPACING    = 1.03;
+
+const viewport = document.getElementById('gm-viewport');
+const canvas   = document.getElementById('gm-canvas');
+
+let scale  = 1, panX = 0, panY = 0;
+let isDragging = false, dragStartX, dragStartY;
+let rafPending = false;
+
+// Game state
+let mapData      = {};      // province_id → province object
+let adjacency    = {};      // province_id → [neighbor ids]
+let selectedId   = null;    // currently selected province id
+let mode         = 'select'; // 'select' | 'move' | 'attack'
+let moveTargetId = null;    // province id to move to
+let stockpile    = 0;
+
+// ─── Transform ──────────────────────────────────────
+function applyTransform() {
+    canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    viewport.style.backgroundSize = `100% 100%, 100% 100%, ${40 * scale}px ${40 * scale}px`;
+    viewport.style.backgroundPosition = `0 0, 0 0, ${panX}px ${panY}px`;
+    frustumCull();
+}
+
+function requestTransform() {
+    if (!rafPending) { rafPending = true; requestAnimationFrame(() => { applyTransform(); rafPending = false; }); }
+}
+
+function frustumCull() {
+    const halfW = window.innerWidth / 2;
+    const halfH = window.innerHeight / 2;
+    const margin = 120 * scale;
+
+    document.querySelectorAll('.gm-hex').forEach(el => {
+        const x = parseFloat(el.dataset.wx);
+        const y = parseFloat(el.dataset.wy);
+        const sx = halfW + panX + x * scale;
+        const sy = halfH + panY + y * scale;
+        el.style.display = (sx > -margin && sx < window.innerWidth + margin &&
+                            sy > -margin && sy < window.innerHeight + margin) ? '' : 'none';
+    });
+
+    document.querySelectorAll('.planet-bg').forEach(el => {
+        const px = parseFloat(el.dataset.px);
+        const py = parseFloat(el.dataset.py);
+        const r  = parseFloat(el.dataset.r);
+        const sx = halfW + panX + px * scale;
+        const sy = halfH + panY + py * scale;
+        el.style.display = (sx + r * scale > 0 && sx - r * scale < window.innerWidth &&
+                            sy + r * scale > 0 && sy - r * scale < window.innerHeight) ? '' : 'none';
+    });
+}
+
+// ─── Pan & Zoom ─────────────────────────────────────
+viewport.addEventListener('mousedown', e => {
+    if (e.target.closest('.gm-hex') || e.target.closest('.gm-controls')) return;
+    isDragging = true;
+    dragStartX = e.clientX - panX;
+    dragStartY = e.clientY - panY;
+    document.body.classList.add('dragging');
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+    document.body.classList.remove('dragging');
+});
+
+window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    panX = e.clientX - dragStartX;
+    panY = e.clientY - dragStartY;
+    requestTransform();
+});
+
+// Touch support
+let lastTouchDist = null;
+viewport.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+        const t = e.touches[0];
+        isDragging = true;
+        dragStartX = t.clientX - panX;
+        dragStartY = t.clientY - panY;
+    } else if (e.touches.length === 2) {
+        lastTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY,
+        );
+    }
+}, { passive: true });
+
+viewport.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches.length === 1 && isDragging) {
+        panX = e.touches[0].clientX - dragStartX;
+        panY = e.touches[0].clientY - dragStartY;
+        requestTransform();
+    } else if (e.touches.length === 2) {
+        const d = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY,
+        );
+        if (lastTouchDist) {
+            const factor = d / lastTouchDist;
+            const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            doZoom(factor, mx, my);
+        }
+        lastTouchDist = d;
+    }
+}, { passive: false });
+
+viewport.addEventListener('touchend', () => { isDragging = false; lastTouchDist = null; });
+
+viewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = Math.exp(-e.deltaY * 0.001);
+    doZoom(factor, e.clientX, e.clientY);
+}, { passive: false });
+
+function doZoom(factor, mx, my) {
+    const oldScale = scale;
+    scale = Math.max(0.05, Math.min(scale * factor, 8));
+    panX = mx - (mx - panX) * (scale / oldScale);
+    panY = my - (my - panY) * (scale / oldScale);
+    requestTransform();
+}
+
+window.zoomMap = function(d) {
+    doZoom(1 + d, window.innerWidth / 2, window.innerHeight / 2);
+};
+
+window.resetMapView = function() {
+    scale = 1; panX = 0; panY = 0;
+    requestTransform();
+};
+
+// ─── Utilities ──────────────────────────────────────
+function hexPixel(q, r) {
+    return {
+        x: HEX_SIZE * Math.sqrt(3) * (q + r / 2) * SPACING,
+        y: HEX_SIZE * 1.5 * r * SPACING,
+    };
+}
+
+function showToast(msg, type = '') {
+    const t = document.getElementById('gm-toast');
+    t.textContent = msg;
+    t.className = `gm-toast ${type ? 'toast-' + type : ''}`;
+    void t.offsetWidth;
+    t.classList.add('show');
+    clearTimeout(t._tmr);
+    t._tmr = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function formatNum(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + 'k';
+    return n.toLocaleString();
+}
+
+// ─── Mode management ────────────────────────────────
+function setMode(m, text, icon) {
+    mode = m;
+    const bar = document.getElementById('gm-mode-bar');
+    document.getElementById('mode-text').textContent = text;
+    document.getElementById('mode-icon').textContent = icon || 'touch_app';
+    bar.classList.toggle('visible', m !== 'select');
+}
+
+window.cancelMode = function() {
+    mode = 'select';
+    moveTargetId = null;
+    document.getElementById('gm-mode-bar').classList.remove('visible');
+    document.getElementById('move-panel').style.display = 'none';
+    clearHighlights();
+};
+
+function clearHighlights() {
+    document.querySelectorAll('.hex-adj-highlight').forEach(el => el.classList.remove('hex-adj-highlight'));
+    document.querySelectorAll('.hex-attack-src').forEach(el => el.classList.remove('hex-attack-src'));
+}
+
+// ─── Panel ──────────────────────────────────────────
+window.closePanel = function() {
+    document.getElementById('gm-panel').classList.remove('open');
+    selectedId = null;
+    cancelMode();
+    document.querySelectorAll('.hex-selected').forEach(el => el.classList.remove('hex-selected'));
+};
+
+function openPanel(province) {
+    selectedId = province.id;
+
+    // Deselect previous
+    document.querySelectorAll('.hex-selected').forEach(el => el.classList.remove('hex-selected'));
+    const el = document.getElementById(`hex-${province.id}`);
+    if (el) el.classList.add('hex-selected');
+
+    clearHighlights();
+    cancelMode();
+
+    // Populate header
+    document.getElementById('pn-name').textContent = province.name;
+    document.getElementById('pn-sub').textContent =
+        `${province.owner_name}  ·  (${province.q}, ${province.r})`;
+
+    const pop = formatNum(province.population || 0);
+    document.getElementById('pn-pop').textContent = pop;
+
+    const troopsEl = document.getElementById('pn-troops');
+    const troops = province.deployed_soldiers || 0;
+    troopsEl.textContent = formatNum(troops) + (troops ? ' soldiers' : '');
+    troopsEl.className = 'val ' + (troops > 0 ? 'green' : '');
+
+    document.getElementById('pn-stockpile').textContent = formatNum(stockpile);
+
+    const statusEl = document.getElementById('pn-status');
+    const mineEl   = document.getElementById('pn-actions-mine');
+    const enemyEl  = document.getElementById('pn-actions-enemy');
+    const neutralEl = document.getElementById('pn-actions-neutral');
+
+    mineEl.style.display   = 'none';
+    enemyEl.style.display  = 'none';
+    neutralEl.style.display = 'none';
+
+    if (province.is_mine) {
+        statusEl.textContent = 'Your Province';
+        statusEl.className = 'val green';
+        mineEl.style.display = 'block';
+
+        // Build neighbor move list
+        const neighborIds = adjacency[province.id] || [];
+        const myNeighbors = neighborIds
+            .map(id => mapData[id])
+            .filter(p => p && p.is_mine);
+
+        const moveList = document.getElementById('move-neighbor-list');
+        moveList.innerHTML = myNeighbors.length
+            ? myNeighbors.map(p => `
+                <button class="gm-btn" style="margin-bottom:4px;width:100%;text-align:left;font-size:0.75rem;"
+                    onclick="selectMoveTarget(${p.id})">
+                    ${p.name} (${formatNum(p.deployed_soldiers || 0)} troops)
+                </button>`).join('')
+            : '<span style="color:#555;font-size:0.75rem;">No adjacent own provinces</span>';
+
+    } else if (province.owner_id) {
+        statusEl.textContent = `Hostile — ${province.owner_name}`;
+        statusEl.className = 'val red';
+        enemyEl.style.display = 'block';
+        populateAttackSources(province);
+    } else {
+        statusEl.textContent = 'Neutral / Unclaimed';
+        statusEl.className = 'val';
+        neutralEl.style.display = 'block';
+        enemyEl.style.display = 'block';
+        populateAttackSources(province);
+    }
+
+    document.getElementById('gm-panel').classList.add('open');
+}
+
+function populateAttackSources(targetProvince) {
+    const neighborIds = adjacency[targetProvince.id] || [];
+    const sources = neighborIds
+        .map(id => mapData[id])
+        .filter(p => p && p.is_mine && (p.deployed_soldiers || 0) > 0);
+
+    const srcSel  = document.getElementById('attack-src-selector');
+    const noAtk   = document.getElementById('no-attack-msg');
+    const selEl   = document.getElementById('attack-src-select');
+
+    if (sources.length === 0) {
+        srcSel.style.display = 'none';
+        noAtk.style.display  = 'block';
+        return;
+    }
+
+    srcSel.style.display = 'block';
+    noAtk.style.display  = 'none';
+
+    selEl.innerHTML = '<option value="">— Select attack origin —</option>' +
+        sources.map(p => `<option value="${p.id}">${p.name} (${formatNum(p.deployed_soldiers)} troops)</option>`).join('');
+
+    selEl.onchange = () => updateAttackOdds(targetProvince);
+    document.getElementById('atk-def-troops').textContent = formatNum(targetProvince.deployed_soldiers || 0);
+    document.getElementById('atk-src-troops').textContent = '—';
+    document.getElementById('atk-odds').textContent = '—';
+}
+
+function updateAttackOdds(target) {
+    const srcId = parseInt(document.getElementById('attack-src-select').value);
+    if (!srcId) { document.getElementById('atk-src-troops').textContent = '—'; return; }
+    const src = mapData[srcId];
+    const atk = src ? (src.deployed_soldiers || 0) : 0;
+    const def = target.deployed_soldiers || 0;
+    document.getElementById('atk-src-troops').textContent = formatNum(atk);
+    const odds = def === 0 ? 'Uncontested' : atk > def * 1.5 ? '✓ Favorable' : '✗ Unfavorable';
+    const oddsEl = document.getElementById('atk-odds');
+    oddsEl.textContent = odds;
+    oddsEl.className = odds.startsWith('✓') ? 'val green' : odds === 'Uncontested' ? 'val gold' : 'val red';
+}
+
+// ─── Move mode ──────────────────────────────────────
+window.enterMoveMode = function() {
+    if (!selectedId) return;
+    document.getElementById('move-panel').style.display = 'block';
+    setMode('move', 'Select destination province', 'swap_horiz');
+
+    // Highlight adjacent owned provinces
+    clearHighlights();
+    (adjacency[selectedId] || []).forEach(id => {
+        const p = mapData[id];
+        if (p && p.is_mine) {
+            const el = document.getElementById(`hex-${id}`);
+            if (el) el.classList.add('hex-adj-highlight');
+        }
+    });
+};
+
+window.selectMoveTarget = function(toId) {
+    moveTargetId = toId;
+    clearHighlights();
+    const el = document.getElementById(`hex-${toId}`);
+    if (el) el.classList.add('hex-adj-highlight');
+    showToast(`Moving to: ${mapData[toId]?.name || toId}`, '');
+};
+
+// ─── Actions ────────────────────────────────────────
+async function apiPost(url, body) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    return res.json();
+}
+
+window.doDeploy = async function() {
+    const amount = parseInt(document.getElementById('deploy-amount').value);
+    if (!selectedId || !amount || amount <= 0) return showToast('Enter a valid number.', 'error');
+    const data = await apiPost('/api/game_map/deploy', { province_id: selectedId, soldiers: amount });
+    showToast(data.message, data.status === 'success' ? '' : 'error');
+    if (data.status === 'success') { document.getElementById('deploy-amount').value = ''; await reloadMap(); }
+};
+
+window.doRetreat = async function() {
+    const amount = parseInt(document.getElementById('retreat-amount').value);
+    if (!selectedId || !amount || amount <= 0) return showToast('Enter a valid number.', 'error');
+    const data = await apiPost('/api/game_map/retreat', { province_id: selectedId, soldiers: amount });
+    showToast(data.message, data.status === 'success' ? '' : 'error');
+    if (data.status === 'success') { document.getElementById('retreat-amount').value = ''; await reloadMap(); }
+};
+
+window.doMove = async function() {
+    const amount = parseInt(document.getElementById('move-amount').value);
+    if (!selectedId || !moveTargetId || !amount || amount <= 0)
+        return showToast('Select destination and enter an amount.', 'error');
+    const data = await apiPost('/api/game_map/move', {
+        from_province_id: selectedId,
+        to_province_id: moveTargetId,
+        soldiers: amount,
+    });
+    showToast(data.message, data.status === 'success' ? '' : 'error');
+    if (data.status === 'success') { document.getElementById('move-amount').value = ''; await reloadMap(); }
+};
+
+window.doAttack = async function() {
+    const fromId = parseInt(document.getElementById('attack-src-select').value);
+    if (!fromId || !selectedId) return showToast('Select an attack origin province.', 'error');
+
+    const btn = document.getElementById('btn-attack-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Attacking...';
+
+    const data = await apiPost('/api/game_map/attack', {
+        from_province_id: fromId,
+        target_province_id: selectedId,
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Launch Attack';
+
+    const type = data.result === 'attacker_won' ? 'win' : data.result === 'defender_won' ? 'lose' : 'error';
+    showToast(data.message, type);
+
+    if (data.status === 'success') {
+        await reloadMap();
+        if (data.result === 'attacker_won') closePanel();
+    }
+};
+
+// ─── Log ────────────────────────────────────────────
+window.toggleLog = function() {
+    document.getElementById('gm-log-panel').classList.toggle('open');
+};
+
+function renderCombatLog(log) {
+    const el = document.getElementById('gm-log-entries');
+    if (!log.length) {
+        el.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:8px 0;">No battles yet.</div>';
+        return;
+    }
+    el.innerHTML = log.map(e => {
+        const cls  = e.result === 'attacker_won' ? 'log-win' : 'log-lose';
+        const verb = e.result === 'attacker_won' ? 'captured' : 'repelled from';
+        const ts   = e.occurred_at ? new Date(e.occurred_at).toLocaleString() : '';
+        return `<div class="log-entry">
+            <span class="${cls}">${e.attacker}</span> ${verb} <strong>${e.province}</strong>
+            (${formatNum(e.attacker_soldiers)} vs ${formatNum(e.defender_soldiers)})
+            <span class="log-time"> · ${ts}</span>
+        </div>`;
+    }).join('');
+}
+
+// ─── Map render ─────────────────────────────────────
+let planetRendered = false;
+
+function renderMap(resp) {
+    const provinces = resp.provinces;
+    stockpile = resp.soldiers_stockpile || 0;
+
+    // Update HUD
+    document.getElementById('hud-gold').textContent   = formatNum(resp.gold || 0);
+    document.getElementById('hud-troops').textContent = formatNum(stockpile);
+    document.getElementById('pn-stockpile').textContent = formatNum(stockpile);
+
+    // Rebuild data index
+    mapData   = {};
+    adjacency = resp.adjacency || {};
+    provinces.forEach(p => { mapData[p.id] = p; });
+
+    // Convert adjacency keys from string to int (JSON keys are strings)
+    const adjInt = {};
+    Object.entries(adjacency).forEach(([k, v]) => { adjInt[parseInt(k)] = v; });
+    adjacency = adjInt;
+
+    // Render planets once
+    if (!planetRendered) {
+        renderPlanets(provinces);
+        planetRendered = true;
+    }
+
+    // Update or create hex elements
+    provinces.forEach(p => {
+        let el = document.getElementById(`hex-${p.id}`);
+        if (!el) {
+            el = buildHex(p);
+            canvas.appendChild(el);
+        } else {
+            updateHex(el, p);
+        }
+    });
+
+    renderCombatLog(resp.combat_log || []);
+
+    // Re-open panel for currently selected province if still valid
+    if (selectedId && mapData[selectedId]) {
+        openPanel(mapData[selectedId]);
+    }
+}
+
+function buildHex(p) {
+    const pos = hexPixel(p.q, p.r);
+    const el  = document.createElement('div');
+    el.className = 'gm-hex ' + hexClass(p);
+    el.id = `hex-${p.id}`;
+    el.dataset.wx = pos.x;
+    el.dataset.wy = pos.y;
+    el.style.left = pos.x + 'px';
+    el.style.top  = pos.y + 'px';
+    el.style.zIndex = 2;
+    el.innerHTML = hexHTML(p);
+    el.addEventListener('click', () => onHexClick(p.id));
+    return el;
+}
+
+function updateHex(el, p) {
+    el.className = 'gm-hex ' + hexClass(p);
+    el.innerHTML = hexHTML(p);
+    // re-attach click handler
+    el.onclick = () => onHexClick(p.id);
+    // re-apply selected state
+    if (p.id === selectedId) el.classList.add('hex-selected');
+}
+
+function hexClass(p) {
+    if (p.is_mine) return 'hex-mine';
+    if (p.owner_id) return 'hex-enemy';
+    return 'hex-neutral';
+}
+
+function hexHTML(p) {
+    const troops = p.deployed_soldiers || 0;
+    const troopClass = troops > 0 ? 'has-troops' : 'no-troops';
+    const troopText  = troops > 0 ? `⚔ ${formatNum(troops)}` : '—';
+    const ownerShort = p.owner_name ? p.owner_name.substring(0, 10) : 'Neutral';
+    return `
+        <div class="gm-hex-tile"></div>
+        <div class="gm-hex-inner">
+            <div class="gm-hex-name">${escHtml(p.name.substring(0, 12))}</div>
+            <div class="gm-hex-owner">${escHtml(ownerShort)}</div>
+            <div class="gm-hex-troops ${troopClass}">${troopText}</div>
+        </div>`;
+}
+
+function escHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function onHexClick(id) {
+    const p = mapData[id];
+    if (!p) return;
+
+    if (mode === 'move') {
+        // clicking an adjacent own province in move mode jumps straight to it
+        const neighbors = adjacency[selectedId] || [];
+        if (neighbors.includes(id) && p.is_mine) {
+            selectMoveTarget(id);
+        }
+        return;
+    }
+
+    openPanel(p);
+}
+
+function renderPlanets(provinces) {
+    // Group by owner, compute planet centers
+    const userClusters = {};
+    provinces.forEach(p => {
+        if (!userClusters[p.owner_id]) userClusters[p.owner_id] = [];
+        userClusters[p.owner_id].push(p);
+    });
+
+    const PLANET_TYPES = ['terran','volcanic','frozen','desert','alien','oceanic','gas',
+                          'cyberpunk','jungle','barren','crystal','ringed','machine',
+                          'eldritch','archipelago','crimson'];
+
+    Object.entries(userClusters).forEach(([uid, cluster]) => {
+        const sumX = cluster.reduce((s, p) => s + p.q, 0);
+        const sumY = cluster.reduce((s, p) => s + p.r, 0);
+        const cx = sumX / cluster.length;
+        const cy = sumY / cluster.length;
+        const maxDist = Math.max(0, ...cluster.map(p => Math.hypot(p.q - cx, p.r - cy)));
+        const radius = maxDist * 60 + 180;
+
+        const pos = hexPixel(cx, cy);
+        const rng = simpleRng(parseInt(uid) || 0);
+        const type = PLANET_TYPES[Math.floor(rng() * PLANET_TYPES.length)];
+
+        const img = document.createElement('img');
+        img.src = `/static/img/planet_${type}.jpg`;
+        img.className = 'planet-bg';
+        img.dataset.px = pos.x;
+        img.dataset.py = pos.y;
+        img.dataset.r  = radius;
+        img.style.width  = (radius * 2) + 'px';
+        img.style.height = (radius * 2) + 'px';
+        img.style.left   = (pos.x - radius) + 'px';
+        img.style.top    = (pos.y - radius) + 'px';
+        canvas.prepend(img);
+    });
+}
+
+function simpleRng(seed) {
+    let s = seed + 1;
+    return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+// ─── Data loading ───────────────────────────────────
+async function loadMap() {
+    const resp = await fetch('/api/game_map/data');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.status !== 'success') throw new Error(data.message || 'API error');
+    return data;
+}
+
+async function reloadMap() {
+    try {
+        const data = await loadMap();
+        renderMap(data);
+    } catch (e) {
+        showToast('Failed to refresh: ' + e.message, 'error');
+    }
+}
+
+// ─── Boot ────────────────────────────────────────────
+(async () => {
+    try {
+        const data = await loadMap();
+
+        // Hide loading overlay
+        const loading = document.getElementById('gm-loading');
+        loading.style.opacity = '0';
+        setTimeout(() => loading.style.display = 'none', 500);
+
+        renderMap(data);
+        applyTransform();
+
+        // Center on the first owned province
+        const mine = data.provinces.find(p => p.is_mine);
+        if (mine) {
+            const pos = hexPixel(mine.q, mine.r);
+            panX = -pos.x;
+            panY = -pos.y;
+            requestTransform();
+        }
+
+        // Auto-refresh every 30s
+        setInterval(reloadMap, 30000);
+
+    } catch (e) {
+        document.getElementById('gm-loading').innerHTML = `
+            <div style="color:#ef5350;font-size:1.1rem;">Failed to load map</div>
+            <div style="color:#555;margin-top:8px;">${e.message}</div>
+            <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:rgba(79,195,247,0.15);border:1px solid #4fc3f7;color:#4fc3f7;border-radius:6px;cursor:pointer;">Retry</button>
+        `;
+    }
+})();
+
+// ─── Window resize ──────────────────────────────────
+window.addEventListener('resize', requestTransform);
+</script>
+{% endblock %}
