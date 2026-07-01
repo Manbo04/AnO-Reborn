@@ -405,9 +405,10 @@ function initImmersion() {
         setInterval(fetchEventsAndAnimate, 60000);
     }
 
-    // 2. Subtle Background Animations
+    // 2. Subtle Background Animations (transform-based, GPU composited — no paint jank)
     const bgElements = document.querySelectorAll('.countrytopper, .provincestopper, .militarytopper, .markettopper, .tutorial-chapter-banner, .game-war-result-banner');
     bgElements.forEach(el => {
+        el.style.willChange = 'transform';
         el.style.animation = 'subtleDrift 60s infinite alternate linear';
     });
 
