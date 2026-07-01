@@ -12,13 +12,27 @@ _DEFAULT_TOKEN = "3f8a92e1b4d6c7"
 
 
 def _ensure_tables():
-    """Create game-map tables if they don't exist (idempotent)."""
+    """Create/alter game-map schema. Idempotent — safe to run on every boot."""
     try:
         import psycopg2
-        import os
         conn = psycopg2.connect(os.environ["DATABASE_PUBLIC_URL"])
         conn.autocommit = True
         cur = conn.cursor()
+
+        # --- coordinate columns on provinces (migration 0037) ---
+        cur.execute("""
+            ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_x INTEGER;
+        """)
+        cur.execute("""
+            ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_y INTEGER;
+        """)
+        cur.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_province_coordinates
+            ON provinces(coordinate_x, coordinate_y)
+            WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL;
+        """)
+
+        # --- unit deployments (migration 0038) ---
         cur.execute("""
             CREATE TABLE IF NOT EXISTS map_unit_deployments (
                 id SERIAL PRIMARY KEY,
@@ -32,6 +46,8 @@ def _ensure_tables():
         """)
         cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_prov ON map_unit_deployments(province_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_user ON map_unit_deployments(user_id)")
+
+        # --- combat log (migration 0038) ---
         cur.execute("""
             CREATE TABLE IF NOT EXISTS map_combat_log (
                 id SERIAL PRIMARY KEY,
@@ -46,10 +62,61 @@ def _ensure_tables():
         """)
         cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_prov ON map_combat_log(province_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_time ON map_combat_log(occurred_at DESC)")
+
+        # --- auto-assign hex coordinates to any province that has none ---
+        _seed_coordinates(cur)
+
         cur.close()
         conn.close()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error("game_map _ensure_tables failed: %s", e)
+
+
+def _seed_coordinates(cur):
+    """Assign hex grid positions to provinces that don't have them yet."""
+    cur.execute("""
+        SELECT id FROM provinces
+        WHERE coordinate_x IS NULL OR coordinate_y IS NULL
+        ORDER BY "userId", id
+    """)
+    unplaced = [row[0] for row in cur.fetchall()]
+    if not unplaced:
+        return
+
+    # Collect occupied positions
+    cur.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL")
+    occupied = {(r[0], r[1]) for r in cur.fetchall()}
+
+    # Spiral outward from origin to find free hexes
+    def spiral_hex():
+        yield (0, 0)
+        ring = 1
+        while True:
+            q, r = 0, -ring
+            for dq, dr in [(1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)]:
+                for _ in range(ring):
+                    yield (q, r)
+                    q += dq
+                    r += dr
+            ring += 1
+
+    gen = spiral_hex()
+    assignments = []
+    for province_id in unplaced:
+        pos = next(gen)
+        while pos in occupied:
+            pos = next(gen)
+        occupied.add(pos)
+        assignments.append((pos[0], pos[1], province_id))
+
+    if assignments:
+        from psycopg2.extras import execute_batch
+        execute_batch(
+            cur,
+            "UPDATE provinces SET coordinate_x = %s, coordinate_y = %s WHERE id = %s",
+            assignments,
+        )
 
 
 @bp.record_once
@@ -99,9 +166,18 @@ def game_map_view():
 @bp.route("/api/game_map/data")
 def game_map_data():
     if not _is_authorized():
-        abort(404)
+        return jsonify({"status": "error", "message": "Not authorized. Visit the map token URL first."}), 403
 
     user_id = session.get("user_id")
+    try:
+        return _game_map_data_inner(user_id)
+    except Exception as e:
+        import logging, traceback
+        logging.getLogger(__name__).error("game_map_data error: %s\n%s", e, traceback.format_exc())
+        return jsonify({"status": "error", "message": f"Server error: {type(e).__name__}: {e}"}), 500
+
+
+def _game_map_data_inner(user_id):
     with get_request_cursor(read_only=True) as db:
         # All provinces with coordinates, owner info, and deployment counts
         db.execute("""
