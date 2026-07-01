@@ -613,21 +613,18 @@ body:has(.navbarparent .templatecontainer) {
 
 .barclick1 {
     background-color: #00a7e1;
-    top: 8px;
-    transform: rotate(-30deg);
-    width: 20px;
+    transform: translateY(13px) rotate(45deg);
+    width: 30px;
 }
 
 .barclick2 {
-    background-color: #00a7e1;
-    width: 40px;
+    opacity: 0;
 }
 
 .barclick3 {
     background-color: #00a7e1;
-    top: -8px;
-    transform: rotate(30deg);
-    width: 20px;
+    transform: translateY(-13px) rotate(-45deg);
+    width: 30px;
 }
 
 .menubardiv {
@@ -710,7 +707,8 @@ body:has(.navbarparent .templatecontainer) {
     color: rgba(255, 255, 255, 0.8);
     display: block;
     transition: all 0.2s ease;
-    line-height: 40px;
+    line-height: 48px;
+    min-height: 48px;
     text-align: left;
     padding: 0px 20px;
     cursor: pointer;
@@ -720,7 +718,8 @@ body:has(.navbarparent .templatecontainer) {
     font-weight: normal;
 }
 
-.menubara:hover {
+.menubara:hover,
+.menubara:active {
     color: rgb(255, 255, 255);
     background: rgba(0, 167, 225, 0.15);
     border-left: 3px solid var(--accent);
@@ -3038,6 +3037,21 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 @media all and (max-width: 600px) {
     .landingcontent {
         width: 90%;
+    }
+
+    .landingtopper {
+        min-height: auto;
+    }
+
+    .landingparent {
+        min-height: auto;
+        padding-bottom: 40px;
+    }
+
+    .landingheader {
+        font-size: 30px;
+        margin-top: 24px;
+        margin-bottom: 20px;
     }
 }
 
@@ -5519,18 +5533,30 @@ body.game-shell-active .templatediv {
     padding: var(--game-space-sm) var(--game-space-md);
     gap: var(--game-space-sm);
     align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.game-hud::-webkit-scrollbar {
-    display: none;
 }
 
 body.game-shell-active .game-hud {
     display: flex;
+}
+
+/* Scrollable strip of resource chips, separate from the pinned expand button
+   so "view all resources" is always reachable without scrolling sideways. */
+.game-hud-scroll {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+}
+
+.game-hud-scroll::-webkit-scrollbar {
+    display: none;
 }
 
 .game-hud-chip {
@@ -5583,7 +5609,6 @@ body.game-shell-active .game-hud {
 }
 
 .game-hud-expand {
-    margin-left: auto;
     flex-shrink: 0;
 }
 

@@ -29,18 +29,30 @@ body.game-shell-active .templatediv {
     padding: var(--game-space-sm) var(--game-space-md);
     gap: var(--game-space-sm);
     align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.game-hud::-webkit-scrollbar {
-    display: none;
 }
 
 body.game-shell-active .game-hud {
     display: flex;
+}
+
+/* Scrollable strip of resource chips, separate from the pinned expand button
+   so "view all resources" is always reachable without scrolling sideways. */
+.game-hud-scroll {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+}
+
+.game-hud-scroll::-webkit-scrollbar {
+    display: none;
 }
 
 .game-hud-chip {
@@ -93,7 +105,6 @@ body.game-shell-active .game-hud {
 }
 
 .game-hud-expand {
-    margin-left: auto;
     flex-shrink: 0;
 }
 

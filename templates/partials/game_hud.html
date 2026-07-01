@@ -1,16 +1,18 @@
 {% if FEATURE_GAME_SHELL and session.get('user_id') %}
 {% set resources = get_resources() %}
 <div class="game-hud" id="game-hud" role="region" aria-label="Resources" style="z-index: 999999 !important;">
-    {% for res_key in HUD_STRIP_RESOURCES %}
-    <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}" onclick="toggleResourceDrawer()">
-        <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
-        <span class="game-hud-value">
-            {% if res_key == 'gold' %}${{ resources[res_key] | fmt }}{% else %}{{ resources[res_key] | weight_fmt }}{% endif %}
-        </span>
-    </button>
-    {% endfor %}
-    <span class="game-tick-badge" data-game-tick-countdown data-economy-heartbeat aria-live="polite" title="Economy tick status"></span>
-    
+    <div class="game-hud-scroll">
+        {% for res_key in HUD_STRIP_RESOURCES %}
+        <button type="button" class="game-hud-chip" title="{{ res_key | replace('_', ' ') | title }}" onclick="toggleResourceDrawer()">
+            <img src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="" class="resource" loading="lazy" />
+            <span class="game-hud-value">
+                {% if res_key == 'gold' %}${{ resources[res_key] | fmt }}{% else %}{{ resources[res_key] | weight_fmt }}{% endif %}
+            </span>
+        </button>
+        {% endfor %}
+        <span class="game-tick-badge" data-game-tick-countdown data-economy-heartbeat aria-live="polite" title="Economy tick status"></span>
+    </div>
+
     <button type="button" class="game-hud-chip game-hud-expand" data-game-hud-expand aria-label="All resources" onclick="toggleResourceDrawer()">
         <span class="material-icons-outlined">expand_more</span>
     </button>

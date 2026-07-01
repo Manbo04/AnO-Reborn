@@ -1579,8 +1579,8 @@ body.page-rankings .rankings-table tbody td a {
 
 /* Immersion & Engagement Styles */
 @keyframes subtleDrift {
-    0% { background-position: left center; }
-    100% { background-position: right center; }
+    0%   { transform: scale(1.04) translateX(0); }
+    100% { transform: scale(1.04) translateX(-3%); }
 }
 
 @keyframes popIn {
