@@ -12,6 +12,7 @@ BOT_API_SECRET or SECRET_KEY (for derived API auth).
 
 import os
 import sys
+import urllib.parse
 
 # Ensure parent directory is in sys.path so discord_bot module can be imported
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
