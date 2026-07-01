@@ -330,6 +330,7 @@ def create_app():
     from app_core.admin.routes import admin_bp
     from app_core.ads.routes import bp as ads_bp
     from app_core.world_map.routes import bp as world_map_bp
+    from app_core.game_map.routes import bp as game_map_bp
     from app_core.market.routes import market_bp
     from app_core.military.routes import bp as military_bp
     from app_core.coalitions.routes import register_coalitions_routes
@@ -348,6 +349,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(ads_bp)
     app.register_blueprint(world_map_bp)
+    app.register_blueprint(game_map_bp)
     app.register_blueprint(market_bp)
     app.register_blueprint(military_bp)
     app.register_blueprint(tutorial_api_bp)
