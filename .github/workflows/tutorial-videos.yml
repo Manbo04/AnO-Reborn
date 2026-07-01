@@ -17,7 +17,6 @@ on:
       - "templates/country.html"
       - "templates/province.html"
       - "templates/market.html"
-      - "app.py"
 
 jobs:
   record-and-pr:
