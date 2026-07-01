@@ -430,34 +430,35 @@
 
                 {% if contributions_by_user %}
                 <h2 class="templatecontentheaderleft" style="margin-top:20px;">Contribution History</h2>
-                <p style="margin-bottom:10px; color: var(--text-secondary); font-size:0.9em;">Cumulative deposits per member since tracking was enabled.</p>
+                <p style="margin-bottom:12px; color: var(--text-secondary); font-size:0.9em;">Cumulative deposits per member since tracking was enabled.</p>
                 {% if user_role in ["leader", "deputy_leader", "banker"] %}
                 {% set show_ids = contributions_by_user.keys() | list %}
                 {% else %}
                 {% set show_ids = [current_user_id] %}
                 {% endif %}
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Member</th>
-                            <th>Resource</th>
-                            <th>Total Deposited</th>
-                        </tr>
-                        {% for uid in show_ids %}
-                        {% if uid in contributions_by_user %}
-                        {% set contrib = contributions_by_user[uid] %}
-                        {% for res, amt in contrib.resources.items() %}
-                        <tr>
-                            {% if loop.first %}
-                            <td rowspan="{{ contrib.resources | length }}"><a href="/country/id={{ uid }}">{{ contrib.username }}</a></td>
+                <div class="contrib-grid">
+                    {% for uid in show_ids %}
+                    {% if uid in contributions_by_user %}
+                    {% set contrib = contributions_by_user[uid] %}
+                    <div class="contrib-card">
+                        <div class="contrib-card-header">
+                            {% if contrib.flag_data %}
+                            <img src="/flag/country/{{ uid }}" alt="Flag" class="contrib-flag" />
                             {% endif %}
-                            <td>{{ res | replace('_', ' ') | title }}</td>
-                            <td>{{ amt | commas }}</td>
-                        </tr>
-                        {% endfor %}
-                        {% endif %}
-                        {% endfor %}
-                    </table>
+                            <a href="/country/id={{ uid }}" class="contrib-name">{{ contrib.username }}</a>
+                        </div>
+                        <div class="contrib-resources">
+                            {% for res, amt in contrib.resources.items() %}
+                            <div class="contrib-res-row">
+                                <img src="{{ url_for('static', filename=game_asset_path('resources', res)) }}" alt="{{ res }}" class="contrib-res-icon" />
+                                <span class="contrib-res-name">{{ res | replace('_', ' ') | title }}</span>
+                                <span class="contrib-res-amt">{{ amt | commas }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>

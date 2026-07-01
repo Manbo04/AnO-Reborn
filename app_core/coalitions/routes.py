@@ -551,9 +551,10 @@ def coalition(coalition_id):
             try:
                 db.execute(
                     """
-                    SELECT cbc.user_id, u.username, cbc.resource, cbc.total_deposited
+                    SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited
                     FROM col_bank_contributions cbc
                     JOIN users u ON u.id = cbc.user_id
+                    LEFT JOIN stats s ON s.userid = cbc.user_id
                     WHERE cbc.coalition_id = %s
                     ORDER BY u.username, cbc.resource
                     """,
@@ -563,12 +564,12 @@ def coalition(coalition_id):
             except Exception:
                 rollback_db_cursor(db)
 
-        # Group contributions by user: {user_id: {username, resources: {res: amount}}}
+        # Group contributions by user: {user_id: {username, flag_data, resources: {res: amount}}}
         contributions_by_user = {}
         for row in bank_contributions:
-            uid, uname, res, amt = row
+            uid, uname, flag_data, res, amt = row
             if uid not in contributions_by_user:
-                contributions_by_user[uid] = {"username": uname, "resources": {}}
+                contributions_by_user[uid] = {"username": uname, "flag_data": flag_data, "resources": {}}
             contributions_by_user[uid]["resources"][res] = amt
 
         return render_template(
