@@ -65,176 +65,70 @@
             {% if description != None %}
             <h2 class="templatecontentheaderleft">About</h2>
 
-            <div class="strongpadding">{{ description|e|markdown }}</div>
+            <div class="strongpadding">{{ description|markdown }}</div>
             {% endif %}
 
             <h2 class="templatecontentheaderleft">Coalition Info</h2>
 
-            <div class="templatedivflex2 card-align-row">
-                <div class="templatedivflex2left">
-
-                    <table class="templatetable">
+            <div class="coalition-info-grid">
+                <!-- GENERAL -->
+                <div class="coalition-info-card">
+                    <table class="templatetable" style="width:100%;margin:0;">
                         <tr>
-                            <th><span class="material-icons-outlined">
-                                info
-                                </span>General</th>
+                            <th colspan="2"><span class="material-icons-outlined">info</span>General</th>
                         </tr>
                         <tr>
                             {% if leaders|length == 0 %}
-                                <td>Leader:</td>
-                                <td>None</td>
+                                <td>Leader:</td><td>None</td>
                             {% elif leaders|length == 1 %}
-                                <td>Leader:</td>
-                                <td><a href="/country/id={{ leaders[0][0] }}">{{ leaders[0][1] }}</a></td>
+                                <td>Leader:</td><td><a href="/country/id={{ leaders[0][0] }}">{{ leaders[0][1] }}</a></td>
                             {% else %}
                                 <td>Leaders:</td>
-                                <td>
-                                    {% for leader_id, username in leaders %}
-                                        {% if loop.last %}
-                                            <a href="/country/id={{ leader_id }}">{{ username }}</a>
-                                        {% else %}
-                                            <a href="/country/id={{ leader_id }}">{{ username }}, </a>
-                                        {% endif %}
-                                    {% endfor %}
-                                </td>
+                                <td>{% for leader_id, username in leaders %}{% if loop.last %}<a href="/country/id={{ leader_id }}">{{ username }}</a>{% else %}<a href="/country/id={{ leader_id }}">{{ username }}, </a>{% endif %}{% endfor %}</td>
                             {% endif %}
                         </tr>
-                        <!--
-                        <tr>
-                            <td>Deputy Leaders:</td>
-                            <td>[[deputy leaders]]</td>
-                        </tr>
-                        <tr>
-                            <td>Ministers:</td>
-                            <td>[[ministers]]</td>
-                        </tr>
-                        -->
-                        <tr>
-                            <td>Members:</td>
-                            <td>
-                                <a href="#members">{{ members|length }}</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Influence:</td>
-                            <td>{{ total_influence | fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average Influence:</td>
-                            <td>{{ average_influence | fmt }}</td>
-                        </tr>
-                        <tr>
-                            <td>Coalition type:</td>
-                            <td>{{ colType }}</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">
-                                library_music
-                                </span>Anthem:</td>
-                            <td>
-                                <img alt="Image" src="{{ countryAnthem }}" class="countryanthem" />
-                            </td>
-                        </tr>
+                        <tr><td>Members:</td><td><a href="#members">{{ members|length }}</a></td></tr>
+                        <tr><td>Influence:</td><td>{{ total_influence | fmt }}</td></tr>
+                        <tr><td>Avg Influence:</td><td>{{ average_influence | fmt }}</td></tr>
+                        <tr><td>Type:</td><td>{{ colType }}</td></tr>
                     </table>
-                    <table class="templatetable">
-                        <tr>
-                            <th><span class="material-icons-outlined">
-                                military_tech
-                                </span>Military</th>
-                        </tr>
-                        <tr>
-                            <td>Military power:</td>
-                            <td>power#</td>
-                        </tr>
-                        <tr>
-                            <td>Land Military:</td>
-                            <td>30%</td>
-                        </tr>
-                        <tr>
-                            <td>Air Military:</td>
-                            <td>60%</td>
-                        </tr>
-                        <tr>
-                            <td>Water Military:</td>
-                            <td>10%</td>
-                        </tr>
-                        <tr>
-                            <td class="anchor"><a class="forgotpasscode loginsignupforgot" href="#">View stats</a></td>
-                        </tr>
-                        <tr>
-                    </table>
-
                 </div>
-                <div class="templatedivflex2left">
-
-                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
-                            public
-                            </span>Affairs</h2>
-<div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Allied</strong>
-        <span class="stat-value">Y / N</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Ally Type</strong>
-        <span class="stat-value">{{ treatyType }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Allies</strong>
-        <span class="stat-value">View allies</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Bloc</strong>
-        <span class="stat-value">{{ block }}</span>
-    </div>
-</div>
-                    <table class="templatetable">
-                        <th><span class="material-icons-outlined">
-                            article
-                            </span>More Info</th>
-                        </tr>
+                <!-- MILITARY -->
+                <div class="coalition-info-card">
+                    <table class="templatetable" style="width:100%;margin:0;">
                         <tr>
-                            <td>Total Provinces:</td>
-                            <td>{{ coalitionProvinces }}</td>
+                            <th colspan="2"><span class="material-icons-outlined">military_tech</span>Military</th>
                         </tr>
-                        <tr>
-                            <td>Average Provinces:</td>
-                            <td>{{ coalitionAverageProvinces }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total Cities:</td>
-                            <td>{{ coalitionCities }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average Cities:</td>
-                            <td>{{ coalitionAverageCities }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total Land:</td>
-                            <td>{{ coalitionLand }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average Land:</td>
-                            <td>{{ coalitionAverageLand }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total Population:</td>
-                            <td>{{ total_influence }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average Population:</td>
-                            <td>{{ average_influence }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total GPD:</td>
-                            <td>{{ coalitiongpd }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average GPD:</td>
-                            <td>{{ coalitiongpdPerCapita }}</td>
-                        </tr>
+                        <tr><td>Military Power:</td><td>—</td></tr>
+                        <tr><td>Land:</td><td>—</td></tr>
+                        <tr><td>Air:</td><td>—</td></tr>
+                        <tr><td>Naval:</td><td>—</td></tr>
                     </table>
-
+                </div>
+                <!-- AFFAIRS -->
+                <div class="coalition-info-card">
+                    <table class="templatetable" style="width:100%;margin:0;">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">public</span>Affairs</th>
+                        </tr>
+                        <tr><td>Allied:</td><td>{{ "Yes" if active_length > 0 else "No" }}</td></tr>
+                        <tr><td>Active Allies:</td><td>{{ active_length }}</td></tr>
+                        <tr><td>Pending Treaties:</td><td>{{ ingoing_length }}</td></tr>
+                    </table>
+                </div>
+                <!-- MORE INFO -->
+                <div class="coalition-info-card">
+                    <table class="templatetable" style="width:100%;margin:0;">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">article</span>More Info</th>
+                        </tr>
+                        <tr><td>Total Provinces:</td><td>{{ coalitionProvinces }}</td></tr>
+                        <tr><td>Avg Provinces:</td><td>{{ coalitionAverageProvinces }}</td></tr>
+                        <tr><td>Total Cities:</td><td>{{ coalitionCities }}</td></tr>
+                        <tr><td>Total Land:</td><td>{{ coalitionLand }}</td></tr>
+                        <tr><td>Total Population:</td><td>{{ total_influence | fmt }}</td></tr>
+                        <tr><td>Avg Population:</td><td>{{ average_influence | fmt }}</td></tr>
+                    </table>
                 </div>
             </div>
 
