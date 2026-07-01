@@ -126,11 +126,21 @@ def create_app():
 
         if request.host:
             host_only = request.host.split(":")[0].lower()
+            port = request.host.split(":", 1)[1] if ":" in request.host else ""
+            canonical_host = None
             if host_only.startswith("www."):
-                apex = host_only[4:]
-                port = request.host.split(":", 1)[1] if ":" in request.host else ""
+                canonical_host = host_only[4:]
+            # affairsandorder.org resolves to this same app, but Discord/Google
+            # OAuth redirect URIs and the session cookie are only valid for
+            # .com. Without this, logging in from .org sends the OAuth
+            # callback to .com with no session, which looks like a broken
+            # "session expired" login loop. Canonicalize before any session
+            # state (or OAuth) can be created.
+            if host_only in ("affairsandorder.org", "www.affairsandorder.org"):
+                canonical_host = "affairsandorder.com"
+            if canonical_host and canonical_host != host_only:
                 canonical = request.url.replace(
-                    f"://{request.host}", f"://{apex}" + (f":{port}" if port else ""), 1
+                    f"://{request.host}", f"://{canonical_host}" + (f":{port}" if port else ""), 1
                 )
                 return redirect(canonical, code=301)
 
