@@ -1384,6 +1384,21 @@ def ensure_schema_compat() -> None:
         )
         # Discord bot tables are optional; do not fail readiness if they cannot be created.
         _run_schema_step("discord_bot_tables", _ensure_discord_bot_tables)
+        # Coalition bank contribution tracking (cumulative per member per resource)
+        _run_schema_step(
+            "col_bank_contributions",
+            lambda db: db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS col_bank_contributions (
+                    coalition_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    resource TEXT NOT NULL,
+                    total_deposited BIGINT NOT NULL DEFAULT 0,
+                    PRIMARY KEY (coalition_id, user_id, resource)
+                )
+                """
+            ),
+        )
         _schema_compat_succeeded = core_ok
         _coalition_members_table_cache = None
         _table_column_cache.clear()

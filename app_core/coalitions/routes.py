@@ -545,6 +545,32 @@ def coalition(coalition_id):
             flush=True,
         )
 
+        # Fetch bank contribution history (visible to leaders and each member for their own row)
+        bank_contributions = []
+        if userInCurCol:
+            try:
+                db.execute(
+                    """
+                    SELECT cbc.user_id, u.username, cbc.resource, cbc.total_deposited
+                    FROM col_bank_contributions cbc
+                    JOIN users u ON u.id = cbc.user_id
+                    WHERE cbc.coalition_id = %s
+                    ORDER BY u.username, cbc.resource
+                    """,
+                    (coalition_id,),
+                )
+                bank_contributions = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+
+        # Group contributions by user: {user_id: {username, resources: {res: amount}}}
+        contributions_by_user = {}
+        for row in bank_contributions:
+            uid, uname, res, amt = row
+            if uid not in contributions_by_user:
+                contributions_by_user[uid] = {"username": uname, "resources": {}}
+            contributions_by_user[uid]["resources"][res] = amt
+
         return render_template(
             "coalition.html",
             name=name,
@@ -572,6 +598,8 @@ def coalition(coalition_id):
             members=members,
             pending_applications=pending_applications,
             name_changes_used=name_changes_used,
+            contributions_by_user=contributions_by_user,
+            current_user_id=cId,
             # Coalition statistics
             coalitionProvinces=coalition_provinces,
             coalitionAverageProvinces=coalition_avg_provinces,
@@ -1506,6 +1534,20 @@ def deposit_into_bank(coalition_id):
         # Gives the coalition the resource
         update_statement = f"UPDATE colBanks SET {resource}={resource}+%s WHERE colId=%s"
         db.execute(update_statement, (amount, coalition_id))
+
+        # Track cumulative contribution for this member
+        try:
+            db.execute(
+                """
+                INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (coalition_id, user_id, resource)
+                DO UPDATE SET total_deposited = col_bank_contributions.total_deposited + EXCLUDED.total_deposited
+                """,
+                (coalition_id, cId, resource, amount),
+            )
+        except Exception:
+            pass  # non-fatal — bank balance already updated
 
     with get_request_cursor() as db:
         for resource in deposited_resources:
