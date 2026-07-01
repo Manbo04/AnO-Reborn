@@ -3166,7 +3166,7 @@ def generate_province_revenue():  # Runs each hour
                     if gold_updates:
                         execute_batch(
                             db,
-                            "UPDATE stats SET gold = gold - %s WHERE id = %s",
+                            "UPDATE stats SET gold = GREATEST(gold - %s, 0) WHERE id = %s",
                             gold_updates,
                             page_size=100,
                         )
@@ -3960,8 +3960,6 @@ def market_bot_fight_wars():
     if not active_wars:
         return
         
-    from app_core.app_setup import app
-    
     for war in active_wars:
         enemy_id = war[2] if war[1] == 9999 else war[1]
         
