@@ -57,8 +57,11 @@ var TAB_GROUPS = {
     coalition: [
         { tab: "coalitiongeneral", content: "general" },
         { tab: "coalitionjoin", content: "join" },
-        { tab: "coalitionleader", content: "leader" },
-        { tab: "coalitionmember", content: "member" }
+        { tab: "coalitionbank", content: "bank" },
+        { tab: "coalitiongov", content: "government" },
+        { tab: "coalitiondiplomacy", content: "diplomacy" },
+        { tab: "coalitiontax", content: "tax" },
+        { tab: "coalitionsettings", content: "settings" }
     ],
     upgrades: [
         { tab: "upgradeseconomic", content: "economic" },
