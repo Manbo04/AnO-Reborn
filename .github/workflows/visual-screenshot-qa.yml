@@ -6,7 +6,7 @@ on:
       deploy_url:
         description: "Target URL to snapshot"
         required: false
-        default: "https://affairsandorder.com"
+        default: "https://affairsandorder.org"
   push:
     branches: [master]
     paths:
@@ -40,13 +40,13 @@ jobs:
 
       - name: Capture screenshots
         env:
-          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.com' }}
+          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.org' }}
           SNAPSHOT_OUT: artifacts/visual-snapshots
         run: python scripts/capture_visual_snapshots.py
 
       - name: Verify deploy visual markers
         env:
-          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.com' }}
+          DEPLOY_URL: ${{ github.event.inputs.deploy_url || 'https://affairsandorder.org' }}
         run: python scripts/verify_visual_batch_live.py
 
       - name: Upload screenshots
