@@ -14,34 +14,40 @@ _DEFAULT_TOKEN = "3f8a92e1b4d6c7"
 def _ensure_tables():
     """Create game-map tables if they don't exist (idempotent)."""
     try:
-        with get_request_cursor() as db:
-            db.execute("""
-                CREATE TABLE IF NOT EXISTS map_unit_deployments (
-                    id SERIAL PRIMARY KEY,
-                    province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
-                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    soldiers INTEGER NOT NULL DEFAULT 0 CHECK (soldiers >= 0),
-                    deployed_at TIMESTAMPTZ DEFAULT NOW(),
-                    updated_at TIMESTAMPTZ DEFAULT NOW(),
-                    UNIQUE(province_id, user_id)
-                )
-            """)
-            db.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_prov ON map_unit_deployments(province_id)")
-            db.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_user ON map_unit_deployments(user_id)")
-            db.execute("""
-                CREATE TABLE IF NOT EXISTS map_combat_log (
-                    id SERIAL PRIMARY KEY,
-                    attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                    province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
-                    attacker_soldiers INTEGER NOT NULL DEFAULT 0,
-                    defender_soldiers INTEGER NOT NULL DEFAULT 0,
-                    result VARCHAR(20) NOT NULL DEFAULT 'attacker_won',
-                    occurred_at TIMESTAMPTZ DEFAULT NOW()
-                )
-            """)
-            db.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_prov ON map_combat_log(province_id)")
-            db.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_time ON map_combat_log(occurred_at DESC)")
+        import psycopg2
+        import os
+        conn = psycopg2.connect(os.environ["DATABASE_PUBLIC_URL"])
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS map_unit_deployments (
+                id SERIAL PRIMARY KEY,
+                province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                soldiers INTEGER NOT NULL DEFAULT 0 CHECK (soldiers >= 0),
+                deployed_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(province_id, user_id)
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_prov ON map_unit_deployments(province_id)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_user ON map_unit_deployments(user_id)")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS map_combat_log (
+                id SERIAL PRIMARY KEY,
+                attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
+                attacker_soldiers INTEGER NOT NULL DEFAULT 0,
+                defender_soldiers INTEGER NOT NULL DEFAULT 0,
+                result VARCHAR(20) NOT NULL DEFAULT 'attacker_won',
+                occurred_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_prov ON map_combat_log(province_id)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_time ON map_combat_log(occurred_at DESC)")
+        cur.close()
+        conn.close()
     except Exception:
         pass
 
