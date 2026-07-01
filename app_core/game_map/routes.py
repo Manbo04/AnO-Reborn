@@ -33,7 +33,6 @@ def game_map_auth(token: str):
 
 
 @bp.route("/game_map")
-@login_required
 def game_map_view():
     if not _is_authorized():
         abort(404)
