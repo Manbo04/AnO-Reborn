@@ -126,17 +126,20 @@ def create_app():
 
         if request.host:
             host_only = request.host.split(":")[0].lower()
+            port = request.host.split(":", 1)[1] if ":" in request.host else ""
+            canonical_host = None
             if host_only.startswith("www."):
-                apex = host_only[4:]
-                port = request.host.split(":", 1)[1] if ":" in request.host else ""
+                canonical_host = host_only[4:]
+            # affairsandorder.org resolves to this app but OAuth redirect URIs
+            # and session cookies are registered for .com only. Redirect .org
+            # → .com before any session/OAuth state is created.
+            if host_only in ("affairsandorder.org", "www.affairsandorder.org"):
+                canonical_host = "affairsandorder.com"
+            if canonical_host and canonical_host != host_only:
                 canonical = request.url.replace(
-                    f"://{request.host}", f"://{apex}" + (f":{port}" if port else ""), 1
+                    f"://{request.host}", f"://{canonical_host}" + (f":{port}" if port else ""), 1
                 )
                 return redirect(canonical, code=301)
-
-            # Bridge page: .com visitors are shown a "we moved" page pointing to .org
-            if host_only == "affairsandorder.com" and request.path not in ("/health", "/ready"):
-                return render_template("domain_bridge.html", path=request.path)
 
         if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
             forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
