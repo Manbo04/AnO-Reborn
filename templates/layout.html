@@ -224,6 +224,13 @@
         </button>
         {% endif %}
 
+        {% if session.get('user_id') == None %}
+        <div class="mobile-guest-nav">
+            <a class="mobile-guest-btn" href="/login">Login</a>
+            <a class="mobile-guest-btn mobile-guest-btn--primary" href="/signup">Sign Up</a>
+        </div>
+        {% endif %}
+
         <div class="navbarparentloginsignupdiv">
             {% if session.get('user_id') == None %}
             <a class="loginsignup" href="/login"><span class="material-icons-outlined">
@@ -593,6 +600,31 @@
         </div>
 
     </footer>
+
+    {% if session.get('user_id') != None %}
+    <nav class="mobile-bottom-nav" aria-label="Main navigation" id="mobile-bottom-nav">
+        <a class="mobile-bottom-nav__item {% if request.path.startswith('/country/id=' + session['user_id']|string) %}mobile-bottom-nav__item--active{% endif %}" href="/country/id={{ session['user_id'] }}">
+            <span class="material-icons-outlined">language</span>
+            <span>Nation</span>
+        </a>
+        <a class="mobile-bottom-nav__item {% if request.path == '/provinces' or 'province_view' in request.path %}mobile-bottom-nav__item--active{% endif %}" href="/provinces">
+            <span class="material-icons-outlined">account_balance</span>
+            <span>Provinces</span>
+        </a>
+        <a class="mobile-bottom-nav__item {% if request.path == '/market' %}mobile-bottom-nav__item--active{% endif %}" href="/market">
+            <span class="material-icons-outlined">local_grocery_store</span>
+            <span>Market</span>
+        </a>
+        <a class="mobile-bottom-nav__item {% if request.path == '/wars' or request.path == '/military' %}mobile-bottom-nav__item--active{% endif %}" href="/wars">
+            <span class="material-icons-outlined">military_tech</span>
+            <span>Wars</span>
+        </a>
+        <button type="button" class="mobile-bottom-nav__item" onclick="menubardrop()" aria-label="More navigation options">
+            <span class="material-icons-outlined">menu</span>
+            <span>More</span>
+        </button>
+    </nav>
+    {% endif %}
 
     {% if session.get('user_id') %}
     <script>
