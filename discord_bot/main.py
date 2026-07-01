@@ -65,6 +65,39 @@ async def _auto_bind_panels(bot: "AnOBot", guild: discord.Guild) -> None:
         logger.info("Auto-configured %d panel(s) for guild %s (%s)", bound, guild.name, guild.id)
 
 
+# Channel name fragments that should be visible to Certified Human (excludes staff)
+_PUBLIC_PANEL_FRAGMENTS = {
+    "bot-guide", "influence-board", "war-feed",
+    "nation-inspector", "global-affairs", "realm-alerts",
+}
+
+
+async def _setup_panel_permissions(guild: discord.Guild) -> None:
+    """Grant VIEW_CHANNEL to Certified Human role for all public panel channels."""
+    certified_human = discord.utils.find(
+        lambda r: "certified human" in r.name.lower(), guild.roles
+    )
+    if not certified_human:
+        logger.info("No 'Certified Human' role found in %s — skipping permission setup", guild.name)
+        return
+
+    for ch in guild.text_channels:
+        name = ch.name.lower()
+        if not any(frag in name for frag in _PUBLIC_PANEL_FRAGMENTS):
+            continue
+        overwrite = ch.overwrites_for(certified_human)
+        if overwrite.view_channel is True:
+            continue  # already set
+        overwrite.view_channel = True
+        try:
+            await ch.set_permissions(certified_human, overwrite=overwrite)
+            logger.info("Granted VIEW_CHANNEL to Certified Human for #%s", ch.name)
+        except discord.Forbidden:
+            logger.warning("Missing permissions to edit #%s — grant Manage Channels to bot", ch.name)
+        except Exception as exc:
+            logger.warning("Permission setup failed for #%s: %s", ch.name, exc)
+
+
 class AnOBot(commands.Bot):
     def __init__(self, backend) -> None:
         intents = discord.Intents.default()
@@ -93,6 +126,10 @@ class AnOBot(commands.Bot):
                 await _auto_bind_panels(self, guild)
             except Exception as exc:
                 logger.warning("Auto-bind failed for guild %s: %s", guild.id, exc)
+            try:
+                await _setup_panel_permissions(guild)
+            except Exception as exc:
+                logger.warning("Permission setup failed for guild %s: %s", guild.id, exc)
         if not self.panel_refresh_loop.is_running():
             self.panel_refresh_loop.start()
 
