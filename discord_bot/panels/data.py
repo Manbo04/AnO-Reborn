@@ -7,13 +7,16 @@ from database import QueryHelper, get_coalition_members_table
 
 
 def fetch_leaderboard(limit: int = 10) -> List[Dict[str, Any]]:
+    # influence is computed; use gold as a fast proxy for the panel
     rows = QueryHelper.fetch_all(
         """
-        SELECT u.id, u.username, s.influence, s.location
+        SELECT u.id, u.username,
+               COALESCE(s.gold, 0) AS influence,
+               s.location
         FROM users u
         INNER JOIN stats s ON s.id = u.id
         WHERE COALESCE(u.auth_type, 'normal') = 'normal'
-        ORDER BY s.influence DESC NULLS LAST
+        ORDER BY s.gold DESC NULLS LAST
         LIMIT %s
         """,
         (limit,),
@@ -90,7 +93,7 @@ def fetch_realm_inspector() -> Dict[str, Any]:
     return {
         "nations": int(nations[0]) if nations else 0,
         "provinces": int(provinces[0]) if provinces else 0,
-        "active_wars": int(active_wars[0]) if active_wars else 0,
+        "active_wars": active_wars,
         "coalitions": int(coalitions[0]) if coalitions else 0,
         "coalition_members": coalition_members,
         "discord_linked": int(linked_discord[0]) if linked_discord else 0,

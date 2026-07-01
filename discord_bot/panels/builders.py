@@ -53,7 +53,7 @@ def build_leaderboard_embed(rows: Optional[List[Dict[str, Any]]] = None) -> disc
     rows = rows if rows is not None else data.fetch_leaderboard(10)
     embed = discord.Embed(
         title="🏆 Influence Board — Top Nations",
-        description="Ranked by **influence** (updates on panel refresh).",
+        description="Ranked by **treasury** (gold held).",
         color=ANO_GOLD,
     )
     if not rows:
