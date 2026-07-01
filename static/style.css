@@ -3884,30 +3884,42 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 
 .general,
 .join,
-.leader,
-.member {
+.bank,
+.government,
+.diplomacy,
+.tax,
+.settings {
     display: none;
 }
 
 .generalclick,
 .joinclick,
-.leaderclick,
-.memberclick {
+.bankclick,
+.governmentclick,
+.diplomacyclick,
+.taxclick,
+.settingsclick {
     display: initial;
 }
 
 .coalitiongeneralclick,
 .coalitionjoinclick,
-.coalitionleaderclick,
-.coalitionmemberclick {
+.coalitionbankclick,
+.coalitiongovclick,
+.coalitiondiplomacyclick,
+.coalitiontaxclick,
+.coalitionsettingsclick {
     background: #00a7e1 !important;
     color: white !important;
 }
 
 .coalitiongeneralclick h3,
 .coalitionjoinclick h3,
-.coalitionleaderclick h3,
-.coalitionmemberclick h3 {
+.coalitionbankclick h3,
+.coalitiongovclick h3,
+.coalitiondiplomacyclick h3,
+.coalitiontaxclick h3,
+.coalitionsettingsclick h3 {
     color: var(--colorTwo) !important;
 }
 

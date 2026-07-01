@@ -18,57 +18,38 @@
 
         <div class="templatedivflex2 menuflex2">
             <div class="templatedivflex2left" id="coalitiongeneral" onclick="coalitiongeneral()">
-
                 <h3 class="smallheader">General</h3>
-
             </div>
-            {% if userInCol %}
-            <!-- if user isnt in coalition, maybe this is wrong ?-->
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    joinhide();
-
-                });
-            </script>
-            {% endif %}
-
+            {% if not userInCurCol %}
             <div class="templatedivflex2left" id="coalitionjoin" onclick="coalitionjoin()">
                 <h3 class="smallheader">Join</h3>
-                <!--HIDE THIS WHEN USER IS A COALITION MEMBER-->
-            </div>
-
-            {% if not userInCurCol or user_role not in ["leader", "deputy_leader", "banker", "tax_collector", "foreign_ambassador", "general"] %}
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    leaderhide();
-
-                });
-            </script>
-            {% endif %}
-
-            <div class="templatedivflex2left" id="coalitionleader" onclick="coalitionleader()">
-                <h3 class="smallheader">Leader Panel</h3>
-                <!--SHOW THIS TO GOVERNMENT ONLY-->
-                <!-- somewhy doesnt work, no idea why -->
-            </div>
-
-            {% if not userInCol %}
-            <!--TODO: fix this lul-->
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-
-                    memberhide();
-
-                });
-            </script>
-            {% endif %} {% if userInCurCol and user_role not in ["leader", "deputy_leader"] %}
-            <div class="templatedivflex2left" id="coalitionmember" onclick="coalitionmember()">
-                <h3 class="smallheader">Member Panel</h3>
             </div>
             {% endif %}
-
+            {% if userInCurCol %}
+            <div class="templatedivflex2left" id="coalitionbank" onclick="coalitionbank()">
+                <h3 class="smallheader">Bank</h3>
+            </div>
+            {% endif %}
+            {% if userInCurCol and user_role in ["leader", "deputy_leader", "domestic_minister"] %}
+            <div class="templatedivflex2left" id="coalitiongov" onclick="coalitiongov()">
+                <h3 class="smallheader">Government</h3>
+            </div>
+            {% endif %}
+            {% if userInCurCol and user_role in ["leader", "deputy_leader", "foreign_ambassador"] %}
+            <div class="templatedivflex2left" id="coalitiondiplomacy" onclick="coalitiondiplomacy()">
+                <h3 class="smallheader">Diplomacy</h3>
+            </div>
+            {% endif %}
+            {% if userInCurCol and user_role in ["leader", "deputy_leader", "tax_collector"] %}
+            <div class="templatedivflex2left" id="coalitiontax" onclick="coalitiontax()">
+                <h3 class="smallheader">Tax</h3>
+            </div>
+            {% endif %}
+            {% if userInCurCol and user_role == "leader" %}
+            <div class="templatedivflex2left" id="coalitionsettings" onclick="coalitionsettings()">
+                <h3 class="smallheader">Settings</h3>
+            </div>
+            {% endif %}
         </div>
         <!--GENERAL-->
         <div class="general" id="general">
@@ -386,6 +367,16 @@
                 }
             </script>
 
+            {% if userInCurCol and user_role != "leader" %}
+            <div class="infodiv" style="margin-top: 20px;">
+                <form action="/leave/{{ colId }}" method="POST">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" onclick="return confirm('Are you sure you want to leave this coalition?')">
+                        <span class="material-icons-outlined">exit_to_app</span>Leave Coalition
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
         </div>
         <!--JOIN-->
         <div class="join" id="join">
@@ -446,314 +437,107 @@
             </div>
         </div>
 
-        <!--LEADER PANEL-->
-
-        <div class="leader" id="leader">
-
-            {% if user_role in ["leader", "deputy_leader", "domestic_minister"] %}
-            <h2 class="templatecontentheaderleft">Government</h2>
-
-            <div class="infodiv">
-
-                <form action="/give_position" method="POST">
-                    <div class="templatedivflex2 divflex2center menuflex">
-                        <div class="templatedivflex2left">
-
-                            <select class="templateselect" name="role" required>
-                            <option class="templateoption" selected disabled>Choose Position</option>
-                            <option value="leader" class="templateoption">Leader</option>
-                            <option value="deputy_leader" class="templateoption">Deputy Leader</option>
-                            <option value="banker" class="templateoption">Banker</option>
-                            <option value="tax_collector" class="templateoption">Tax Collector</option>
-                            <option value="foreign_ambassador" class="templateoption">Foreign Ambassadors</option>
-                            <option value="general" class="templateoption">General</option>
-                            <option value="domestic_minister" class="templateoption">Domestic Minister</option>
-                            <option value="member" class="templateoption">Member</option>
-                            <option value="kick" class="templateoption" style="color: #ff4d4d; font-weight: bold;">Kick Member</option>
-                        </select>
-
-                        </div>
-                        <div class="templatedivflex2left">
-                            <select class="templateselect" name="username" required>
-                                <option class="templateoption" selected disabled value="">Choose Member</option>
-                                {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=1) %}
-                                <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
-                    check
-                        </span>Give Position</button>
-                </form>
-                <!--max lenth of 10-->
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Role</th>
-                            <th>About</th>
-                            <th>Members</th>
-                        </tr>
-                        <tr>
-                            <td>Leaders:</td>
-                            <td>Power over all aspects of the coalition.</td>
-                            <td>{{ member_roles["leader"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Deputy Leader:</td>
-                            <td>Power over all aspects of the coalition, excluding coalition name and flag.</td>
-                            <td>{{ member_roles["deputy_leader"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Domestic Ministers:</td>
-                            <td>Permission to add and remove members, and change roles of people below them.</td>
-                            <td>{{ member_roles["domestic_minister"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Bankers:</td>
-                            <td>Able to accept widthdraw requests, edit automatic deposits, and withdraw resources.</td>
-                            <td>{{ member_roles["banker"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Tax Collectors:</td>
-                            <td>Permission to edit tax brackets, and change who are in brackets.</td>
-                            <td>{{ member_roles["tax_collector"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Foreign Ambassadors:</td>
-                            <td>Power to add and remove treaties.</td>
-                            <td>{{ member_roles["foreign_ambassador"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Generals:</td>
-                            <td>Ability to declare coalition wars, edit war message, and edit war range.</td>
-                            <td>{{ member_roles["general"] }}</td>
-                        </tr>
-                        <tr>
-                            <td>Members:</td>
-                            <td>Can deposit into the bank, and make requests to withdraw from it.</td>
-                            <td>{{ member_roles["member"] }}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                {% if pending_applications and pending_applications|length > 0 %}
-                <h2 class="templatecontentheaderleft">Pending applications</h2>
-                <div class="infodiv">
-                    <div class="templateoutertablediv inverttable">
-                        <table class="templatetable templatetable2">
-                            <tr>
-                                <th>Applicant</th>
-                                <th>Message</th>
-                                <th>When</th>
-                                <th>Action</th>
-                            </tr>
-                            {% for app in pending_applications %}
-                            <tr>
-                                <td><a href="/country/id={{ app[1] }}">{{ app[2] }}</a></td>
-                                <td>{{ app[3] }}</td>
-                                <td>{{ app[5] }}</td>
-                                <td>
-                                    <form method="POST" action="/add/{{ app[1] }}">
-                                        <button class="templatedivbutton">Accept</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!--
-                <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                    check
-                    </span>Update</button>
-                    -->
-            </div>
-            {% endif %} {% if user_role in ["leader", "deputy_leader", "banker"] %}
+        <!--BANK TAB — all members-->
+        <div class="bank" id="bank">
+            {% if userInCurCol %}
             <h2 class="templatecontentheaderleft">Bank</h2>
-
             <div class="infodiv">
-
                 <form method="POST">
                     <div class="templateoutertablediv inverttable">
                         <table class="templatetable templatetable2">
                             <tr>
                                 <th>Resource</th>
-                                <th>Bank's resources</th>
-                                <th>Your resources</th>
-                                <th>Action</th>
+                                <th>Bank Balance</th>
+                                <th>Your Resources</th>
+                                <th>Amount</th>
                             </tr>
+                            {% set res_list = [
+                                ("Money", "money", resources.get("money", 0)),
+                                ("Rations", "rations", resources.get("rations", 0)),
+                                ("Oil", "oil", resources.get("oil", 0)),
+                                ("Coal", "coal", resources.get("coal", 0)),
+                                ("Uranium", "uranium", resources.get("uranium", 0)),
+                                ("Iron", "iron", resources.get("iron", 0)),
+                                ("Lead", "lead", resources.get("lead", 0)),
+                                ("Bauxite", "bauxite", resources.get("bauxite", 0)),
+                                ("Copper", "copper", resources.get("copper", 0)),
+                                ("Lumber", "lumber", resources.get("lumber", 0)),
+                                ("Components", "components", resources.get("components", 0)),
+                                ("Steel", "steel", resources.get("steel", 0)),
+                                ("Consumer Goods", "consumer_goods", resources.get("consumer_goods", 0)),
+                                ("Aluminum", "aluminium", resources.get("aluminium", 0)),
+                                ("Gasoline", "gasoline", resources.get("gasoline", 0)),
+                                ("Ammunition", "ammunition", resources.get("ammunition", 0))
+                            ] %}
+                            {% for label, key, my_amt in res_list %}
                             <tr>
-                                <td>Money:</td>
-                                <td>{{ bankRaw['money'] }}</td>
-                                <td>{{ resources["money"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="money" placeholder="Amount" /></td>
+                                <td>{{ label }}:</td>
+                                <td>{{ bankRaw.get(key, 0) | commas if bankRaw else "—" }}</td>
+                                <td>{{ my_amt | commas }}</td>
+                                <td><input class="loginsignupinput" autocomplete="on" name="{{ key }}" placeholder="Amount" /></td>
                             </tr>
-                            <tr>
-                                <td>Rations:</td>
-                                <td>{{ bankRaw['rations'] }}</td>
-                                <td>{{ resources["rations"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="rations" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Oil:</td>
-                                <td>{{ bankRaw['oil'] }}</td>
-                                <td>{{ resources["oil"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="oil" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Coal:</td>
-                                <td>{{ bankRaw['coal'] }}</td>
-                                <td>{{ resources["coal"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="coal" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Uranium:</td>
-                                <td>{{ bankRaw['uranium'] }}</td>
-                                <td>{{ resources["uranium"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="uranium" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Iron:</td>
-                                <td>{{ bankRaw['iron'] }}</td>
-                                <td>{{ resources["iron"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="iron" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Lead:</td>
-                                <td>{{ bankRaw['lead'] }}</td>
-                                <td>{{ resources["lead"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="lead" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Bauxite:</td>
-                                <td>{{ bankRaw['bauxite'] }}</td>
-                                <td>{{ resources["bauxite"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="bauxite" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Copper:</td>
-                                <td>{{ bankRaw['copper'] }}</td>
-                                <td>{{ resources["copper"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="copper" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Lumber:</td>
-                                <td>{{ bankRaw['lumber'] }}</td>
-                                <td>{{ resources["lumber"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="lumber" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Components:</td>
-                                <td>{{ bankRaw['components'] }}</td>
-                                <td>{{ resources["components"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="components" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Steel:</td>
-                                <td>{{ bankRaw['steel'] }}</td>
-                                <td>{{ resources["steel"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="steel" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Consumer goods:</td>
-                                <td>{{ bankRaw['consumer_goods'] }}</td>
-                                <td>{{ resources["consumer_goods"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="consumer_goods" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Aluminum:</td>
-                                <td>{{ bankRaw['aluminium'] }}</td>
-                                <td>{{ resources["aluminium"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="aluminium" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Gasoline:</td>
-                                <td>{{ bankRaw['gasoline'] }}</td>
-                                <td>{{ resources["gasoline"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="gasoline" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Ammunition:</td>
-                                <td>{{ bankRaw['ammunition'] }}</td>
-                                <td>{{ resources["ammunition"] }}</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="ammunition" placeholder="Amount" /></td>
-                            </tr>
+                            {% endfor %}
                         </table>
                     </div>
-
                     <div class="templatedivflex2 divflex2center">
                         <div class="templatedivflex2left">
-
-                            <button formaction="/deposit_into_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                            arrow_downward
-                            </span>Deposit</button>
-
+                            <button formaction="/deposit_into_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                                <span class="material-icons-outlined">arrow_downward</span>Deposit
+                            </button>
                         </div>
+                        {% if user_role in ["leader", "deputy_leader", "banker"] %}
                         <div class="templatedivflex2left">
-
-                            <button formaction="/withdraw_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                            arrow_forward
-                            </span>Withdraw</button>
-
+                            <button formaction="/withdraw_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                                <span class="material-icons-outlined">arrow_upward</span>Withdraw
+                            </button>
                         </div>
+                        {% else %}
+                        <div class="templatedivflex2left">
+                            <button formaction="/request_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                                <span class="material-icons-outlined">feedback</span>Request Withdrawal
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
                 </form>
 
+                {% if user_role in ["leader", "deputy_leader", "banker"] and bankRequests %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Pending Withdrawal Requests</h2>
                 <form method="POST">
                     <div class="templateoutertablediv inverttable">
                         <table class="templatetable templatetable2">
                             <tr>
-                                <th>Name</th>
+                                <th>Member</th>
                                 <th>Request</th>
                                 <th>Action</th>
                             </tr>
                             {% for data in bankRequests %}
                             <tr>
                                 <td><a href="/country/id={{ data[0] }}">{{ data[4] }}</a></td>
-                                <td>
-                                    <!--for every resource requested-->
-                                    {{ data[1] }} {{ data[2] }}<br/>
-                                    <!---->
-                                </td>
+                                <td>{{ data[1] | commas }} {{ data[2] }}</td>
                                 <td>
                                     <div class="templatedivflex2 menuflex">
                                         <div class="templatedivflex2left">
-
-                                            <button type="submit" formaction="/accept_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconblue">
-                                            check_circle_outline
-                                        </span></button>
-
+                                            <button type="submit" formaction="/accept_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconblue">check_circle_outline</span></button>
                                         </div>
                                         <div class="templatedivflex2left">
-
-                                            <button type="submit" formaction="/remove_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconred">
-                                            remove_circle_outline
-                                            </span></button>
-
+                                            <button type="submit" formaction="/remove_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconred">remove_circle_outline</span></button>
                                         </div>
                                     </div>
                                 </td>
-
                             </tr>
                             {% endfor %}
                         </table>
                     </div>
                 </form>
-            </div>
-            {% endif %}
+                {% endif %}
 
-            {% if userInCurCol and contributions_by_user %}
-            <h2 class="templatecontentheaderleft">Bank Contribution History</h2>
-            <div class="infodiv">
+                {% if contributions_by_user %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Contribution History</h2>
                 <p style="margin-bottom:10px; color: var(--text-secondary); font-size:0.9em;">Cumulative deposits per member since tracking was enabled.</p>
                 {% if user_role in ["leader", "deputy_leader", "banker"] %}
-                {# Leaders/bankers see all members #}
                 {% set show_ids = contributions_by_user.keys() | list %}
                 {% else %}
-                {# Regular members only see themselves #}
                 {% set show_ids = [current_user_id] %}
                 {% endif %}
                 <div class="templateoutertablediv inverttable">
@@ -779,18 +563,187 @@
                         {% endfor %}
                     </table>
                 </div>
+                {% endif %}
             </div>
             {% endif %}
+        </div>
 
+        <!--GOVERNMENT TAB — leader, deputy_leader, domestic_minister-->
+        <div class="government" id="government">
+            {% if user_role in ["leader", "deputy_leader", "domestic_minister"] %}
+            <h2 class="templatecontentheaderleft">Manage Roles</h2>
+            <div class="infodiv">
+                <form action="/give_position" method="POST">
+                    <div class="templatedivflex2 divflex2center menuflex">
+                        <div class="templatedivflex2left">
+                            <select class="templateselect" name="role" required>
+                                <option class="templateoption" selected disabled>Choose Position</option>
+                                <option value="leader" class="templateoption">Leader</option>
+                                <option value="deputy_leader" class="templateoption">Deputy Leader</option>
+                                <option value="banker" class="templateoption">Banker</option>
+                                <option value="tax_collector" class="templateoption">Tax Collector</option>
+                                <option value="foreign_ambassador" class="templateoption">Foreign Ambassador</option>
+                                <option value="general" class="templateoption">General</option>
+                                <option value="domestic_minister" class="templateoption">Domestic Minister</option>
+                                <option value="member" class="templateoption">Member</option>
+                                <option value="kick" class="templateoption" style="color:#ff4d4d;font-weight:bold;">Kick Member</option>
+                            </select>
+                        </div>
+                        <div class="templatedivflex2left">
+                            <select class="templateselect" name="username" required>
+                                <option class="templateoption" selected disabled value="">Choose Member</option>
+                                {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=1) %}
+                                <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button class="templatedivbutton templatecenteredbutton" required>
+                        <span class="material-icons-outlined">check</span>Give Position
+                    </button>
+                </form>
+                <div class="templateoutertablediv inverttable" style="margin-top:15px;">
+                    <table class="templatetable templatetable2">
+                        <tr><th>Role</th><th>About</th><th>Members</th></tr>
+                        <tr><td>Leaders</td><td>Power over all aspects of the coalition.</td><td>{{ member_roles.get("leader") }}</td></tr>
+                        <tr><td>Deputy Leader</td><td>Power over all aspects of the coalition, excluding coalition name and flag.</td><td>{{ member_roles.get("deputy_leader") }}</td></tr>
+                        <tr><td>Domestic Minister</td><td>Permission to add and remove members, and change roles of people below them.</td><td>{{ member_roles.get("domestic_minister") }}</td></tr>
+                        <tr><td>Banker</td><td>Able to accept withdrawal requests and withdraw resources from the bank.</td><td>{{ member_roles.get("banker") }}</td></tr>
+                        <tr><td>Tax Collector</td><td>Permission to edit tax brackets and change who is in them.</td><td>{{ member_roles.get("tax_collector") }}</td></tr>
+                        <tr><td>Foreign Ambassador</td><td>Power to add and remove treaties.</td><td>{{ member_roles.get("foreign_ambassador") }}</td></tr>
+                        <tr><td>General</td><td>Ability to declare coalition wars, edit war message, and edit war range.</td><td>{{ member_roles.get("general") }}</td></tr>
+                        <tr><td>Member</td><td>Can deposit into the bank and request withdrawals.</td><td>{{ member_roles.get("member") }}</td></tr>
+                    </table>
+                </div>
+
+                {% if pending_applications and pending_applications|length > 0 %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Pending Applications</h2>
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <tr><th>Applicant</th><th>Message</th><th>When</th><th>Action</th></tr>
+                        {% for app in pending_applications %}
+                        <tr>
+                            <td><a href="/country/id={{ app[1] }}">{{ app[2] }}</a></td>
+                            <td>{{ app[3] }}</td>
+                            <td>{{ app[5] }}</td>
+                            <td>
+                                <form method="POST" action="/add/{{ app[1] }}">
+                                    <button class="templatedivbutton">Accept</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if colType == "Invite Only" %}
+            <h2 class="templatecontentheaderleft">Applicants</h2>
+            <h2 class="templatecontentheadercenter">You have {{ requestIds|length }} applicant(s)</h2>
+            <div class="infodiv">
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2 scrolltable">
+                        <tr><th>Name</th><th>Influence</th><th>Message</th><th>Action</th></tr>
+                        {% for id, name, message in join_requests %}
+                        <tr>
+                            <td><a href="/country/id={{ id[0] }}">{{ name }}</a></td>
+                            <td></td>
+                            <td class="templatesmalltd">{{ message }}</td>
+                            <td>
+                                <form method="POST">
+                                    <div class="templatedivflex2 menuflex">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            <button type="submit" formaction="/add/{{ id[0] }}"><span class="material-icons iconblue">check_circle_outline</span></button>
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            <button type="submit" formaction="/remove/{{ id[0] }}"><span class="material-icons iconred">highlight_off</span></button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!--DIPLOMACY TAB — leader, deputy_leader, foreign_ambassador-->
+        <div class="diplomacy" id="diplomacy">
+            {% if user_role in ["leader", "deputy_leader", "foreign_ambassador"] %}
+            <h2 class="templatecontentheaderleft">Diplomacy</h2>
+            <div class="infodiv">
+                <form action="/offer_treaty" method="POST" style="max-width:480px;margin:0 auto;text-align:center;">
+                    <h2 class="templatecontentheadercenter">Add Ally</h2>
+                    <input class="loginsignupinput" autocomplete="off" name="coalition_name" placeholder="Coalition name" />
+                    <input class="loginsignupinput" autocomplete="off" name="treaty_name" placeholder="Treaty name" />
+                    <textarea class="templatetextarea" name="treaty_message" placeholder="Describe the treaty" maxlength="5000" style="height:120px;"></textarea>
+                    <button class="templatedivbutton templatecenteredbutton" required>
+                        <span class="material-icons-outlined">arrow_forward</span>Send Offer
+                    </button>
+                </form>
+
+                {% if ingoing_length == 0 %}
+                <h2 class="templatecontentheadercenter">No incoming treaty requests</h2>
+                {% else %}
+                <h2 class="templatecontentheadercenter">Treaty Requests</h2>
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <tr><th>Coalition</th><th>Treaty Name</th><th>Description</th><th>Action</th></tr>
+                        {% for id, col_id, col_name, treaty_name, treaty_description in zip(ingoing_treaties["ids"], ingoing_treaties["col_ids"], ingoing_treaties["col_names"], ingoing_treaties["treaty_names"], ingoing_treaties["treaty_descriptions"]) %}
+                        <tr>
+                            <td><a href="/coalition/{{ col_id[0] }}">{{ col_name[0] }}</a></td>
+                            <td>{{ treaty_name[0] }}</td>
+                            <td>{{ treaty_description }}</td>
+                            <form method="POST">
+                                <td>
+                                    <button type="submit" formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">check_circle_outline</span></button>
+                                    <button type="submit" formaction="/decline_treaty/{{ id[0] }}" onclick="return confirm('Decline this treaty offer?')"><span class="material-icons iconred">remove_circle_outline</span></button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if active_length == 0 %}
+                <h2 class="templatecontentheadercenter">No active allies</h2>
+                {% else %}
+                <h2 class="templatecontentheadercenter">Current Allies</h2>
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <tr><th>Ally</th><th>Treaty</th><th>Description</th><th>Action</th></tr>
+                        {% for id, col_id, col_name, treaty_name, treaty_description in zip(active_treaties["ids"], active_treaties["col_ids"], active_treaties["col_names"], active_treaties["treaty_names"], active_treaties["treaty_descriptions"]) %}
+                        <tr>
+                            <td><a href="/coalition/{{ col_id }}">{{ col_name }}</a></td>
+                            <td>{{ treaty_name }}</td>
+                            <td>{{ treaty_description }}</td>
+                            <form method="POST">
+                                <td><button type="submit" formaction="/break_treaty/{{ id }}" onclick="return confirm('Break treaty with {{ col_name }}? This may have diplomatic consequences!')"><span class="material-icons iconred">remove_circle_outline</span></button></td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!--TAX TAB — leader, deputy_leader, tax_collector-->
+        <div class="tax" id="tax">
             {% if user_role in ["leader", "deputy_leader", "tax_collector"] %}
             <h2 class="templatecontentheaderleft">Alliance Tax</h2>
-
             <div class="infodiv">
                 <p style="margin-bottom:10px;">Set a tax rate on members' gold income. Taxed gold is automatically deposited into the coalition bank each income tick.</p>
                 <form action="/set_tax_rate/{{ colId }}" method="POST">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:15px;">
                         <label>Current Tax Rate: <strong>{{ tax_rate }}%</strong></label>
-                        <select class="templateselect" name="tax_rate" required style="margin: 0;">
+                        <select class="templateselect" name="tax_rate" required style="margin:0;">
                             <option value="0" {% if tax_rate == 0 %}selected{% endif %}>0% (No Tax)</option>
                             <option value="2" {% if tax_rate == 2 %}selected{% endif %}>2%</option>
                             <option value="5" {% if tax_rate == 5 %}selected{% endif %}>5%</option>
@@ -806,524 +759,68 @@
                     </button>
                 </form>
             </div>
-            {% endif %} {% if user_role in ["leader", "deputy_leader", "foreign_ambassador"] %}
-            <h2 class="templatecontentheaderleft">Diplomacy</h2>
-
-            <div class="infodiv">
-
-                <form action="/offer_treaty" method="POST" style="max-width:480px;margin:0 auto;text-align:center;">
-                    <h2 class="templatecontentheadercenter">Add Ally</h2>
-
-                    <input class="loginsignupinput" autocomplete="off" name="coalition_name" placeholder="Coalition name" />
-
-                    <input class="loginsignupinput" autocomplete="off" name="treaty_name" placeholder="Treaty name" />
-
-                    <textarea class="templatetextarea" name="treaty_message" placeholder="Describe the treaty" maxlength="5000" style="height:120px;"></textarea>
-
-                    <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
-                    arrow_forward
-                        </span>Send Offer</button>
-                </form>
-                <!--if no requests-->
-                {% if ingoing_length == 0 %}
-                <h2 class="templatecontentheadercenter">No incoming treaty requests</h2>
-                <!--if requests-->
-                {% elif ingoing_length != 0 %}
-                <h2 class="templatecontentheadercenter">Treaty Requests</h2>
-
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Coalition Name</th>
-                            <th>Treaty name</th>
-                            <th>Treaty description</th>
-                            <th>Action</th>
-                        </tr>
-                        <!--for every coalition make a row with 10 max-->
-                        {% for id, col_id, col_name, treaty_name, treaty_description in zip(ingoing_treaties["ids"], ingoing_treaties["col_ids"],ingoing_treaties["col_names"],ingoing_treaties["treaty_names"],ingoing_treaties["treaty_descriptions"]) %}
-                        <tr>
-                            <td><a href="/coalition/{{ col_id[0] }}">{{ col_name[0] }}</a></td>
-                            <td>{{ treaty_name[0] }}</td>
-                            <td>{{ treaty_description }}</td>
-                            <form method="POST">
-                                <td>
-                                    <button type="submit" formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">
-                                check_circle_outline
-                                            </span></button>
-                                    <button type="submit" formaction="/decline_treaty/{{ id[0] }}" onclick="return confirm('Decline this treaty offer?')"><span class="material-icons iconred">
-                                remove_circle_outline
-                                            </span></button>
-                                </td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                {% endif %}
-                <!--If no allies-->
-                {% if active_length == 0 %}
-                <h2 class="templatecontentheadercenter">No allies</h2>
-                <!--if allies-->
-                {% elif active_length != 0 %}
-                <h2 class="templatecontentheadercenter">Current Allies</h2>
-
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Ally</th>
-                            <th>Treaty</th>
-                            <th>Description</th>
-                            <th>Action</th>
-                        </tr>
-                        <!--for every ally make a row-->
-                        {% for id, col_id, col_name, treaty_name, treaty_description in zip(active_treaties["ids"], active_treaties["col_ids"], active_treaties["col_names"], active_treaties["treaty_names"], active_treaties["treaty_descriptions"]) %}
-                        <tr>
-                            <td><a href="/coalition/{{ col_id }}">{{ col_name }}</a></td>
-                            <td>{{ treaty_name }}</td>
-                            <td>{{ treaty_description }}</td>
-                            <form method="POST">
-                                <td><button type="submit" formaction="/break_treaty/{{ id }}" onclick="return confirm('Break treaty with {{ col_name }}? This may have diplomatic consequences!')"><span class="material-icons iconred">
-                                                remove_circle_outline
-                                                    </span></button></td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                {% endif %}
-
-            </div>
-
-            <!-- Temporarily disabled, because taxes will be added after beta-->
-            <!--
-            <h2 class="templatecontentheaderleft">Taxes</h2>
-
-            <div class="infodiv">
-
-
-                <h2 class="templatecontentheadercenter">New Bracket</h2>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" name="bracketName" placeholder="Bracket Name" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <label class="vanilla mediumsmall">Members in bracket include</label>
-                        <select class="templateselect" name="diplomacy">
-
-                            <option class="templateoption" selected disabled>Set Operator</option>
-                            <option class="templateoption">influence amount</option>
-                            <option class="templateoption">provinces count</option>
-
-                        </select>
-
-                    </div>
-                </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" placeholder="From" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <input class="loginsignupinput" placeholder="To" />
-
-                    </div>
-                </div>
-                <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
-                    add_circle_outline
-                    </span>Create Bracket</button>
-
-
-            <div class="templateoutertablediv inverttable">
-                <table class="templatetable templatetable2">
-                    <tr>
-                        <th>Name</th>
-                        <th>Bracket</th>
-                        <th>Action</th>
-                    </tr>
-                    <tr>
-                        <td>[[ bracketName]]:</td>
-            <td>[[ bracketInfo ]]</td>
-            <td><span class="material-icons iconred">
-                                remove_circle_outline
-                                        </span></td>
-            </tr>
-            </table>
+            {% endif %}
         </div>
 
-        <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                    check
-                    </span>Update</button>
-    </div>
-    {% endif %}
-
-            <h2 class="templatecontentheaderleft">War Range</h2>
-
-            <div class="infodiv">
-
-                <h2 class="templatecontentheadercenter">New Canon</h2>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" name="canonName" placeholder="Canon Name" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <label class="vanilla mediumsmall">Members in canon may not</label>
-                        <select class="templateselect" name="diplomacy">
-
-                            <option class="templateoption" selected disabled>Set Operator</option>
-                            <option class="templateoption">Attack influence</option>
-                            <option class="templateoption">Attack coalitions</option>
-                            <option class="templateoption">Attack provinces</option>
-
-                        </select>
-
-                    </div>
-                </div>
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
-
-                        <input class="loginsignupinput" name="canonName" placeholder="From" />
-
-                    </div>
-                    <div class="templatedivflex2right">
-
-                        <input class="loginsignupinput" name="canonName" placeholder="To" />
-
-                    </div>
-                </div>
-                <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
-                    add_circle_outline
-                    </span>Create Canon</button>
-
-                <!- max lenth of 10 ->
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Name</th>
-                            <th>Canon</th>
-                            <th>Action</th>
-                        </tr>
-                        <tr>
-                            <td>[[ canonName ]]:</td>
-                            <!- Example: "may not attack 1-20 provinces" ->
-                            <td>[[ canon ]]</td>
-                            <td><span class="material-icons iconred">
-                                remove_circle_outline
-                                        </span></td>
-                        </tr>
-                    </table>
-                </div>
-
-            </div>
-        -->
-
-            <!--HIDE ALL OF THIS infodiv and header if coalition type is "open"-->
-            {% if colType == "Invite Only" and user_role in ["leader", "deputy_leader", "domestic_minister"] %}
-            <h2 class="templatecontentheaderleft">Applicants</h2>
-            <!--show if coalition has 0 applicants-->
-            <h2 class="templatecontentheadercenter">You have {{ requestIds|length }} applicants</h2>
-            <!--hide is coalition has 0 applicants-->
-            <div class="infodiv">
-                <div class="templatedivflex2 menuflex">
-                    <div class="templatedivflex2 divflex2center menuflex">
-                        <div class="templatedivflex2left">
-
-                            <input class="loginsignupinput" autocomplete="off" name="apllicantsearch" placeholder="Filter Applicants" />
-
-                        </div>
-                        <div class="templatedivflex2left">
-
-                            <button class="templatedivbutton templatecenteredbutton" required><span class="material-icons-outlined">
-                                    check
-                                    </span>Go</button>
-
-                        </div>
-                    </div>
-                </div>
-                <div class="templateoutertablediv inverttable">
-                    <table class="templatetable templatetable2 scrolltable">
-                        <tr>
-                            <th>Name</th>
-                            <th>Influence</th>
-                            <th>Message</th>
-                            <th>Action</th>
-                        </tr>
-                        <!--for every applicant make a row-->
-                        {% for id, name, message in join_requests %}
-                        <tr>
-                            <td><a href="/country/id={{ id[0] }}">{{ name }}</a></td>
-                            <td></td>
-                            <td class="templatesmalltd">{{ message }}</td>
-                            <td>
-                                <form method="POST">
-                                    <div class="templatedivflex2 menuflex">
-                                        <!-- plus sign-->
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            <button type="submit" formaction="/add/{{ id[0] }}"><span class="material-icons iconblue">
-                                                check_circle_outline
-                                                    </span></button>
-
-                                        </div>
-                                        <!-- minus sign-->
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            <button type="submit" formaction="/remove/{{ id[0] }}"><span class="material-icons iconred">
-                                                    highlight_off
-                                                    </span></button>
-
-                                        </div>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-            </div>
-            {% endif %} {% if user_role == "leader" %}
-            <h2 class="templatecontentheaderleft">General</h2>
-
+        <!--SETTINGS TAB — leader only-->
+        <div class="settings" id="settings">
+            {% if user_role == "leader" %}
+            <h2 class="templatecontentheaderleft">Coalition Info</h2>
             <form action="/update_col_info/{{ colId }}" method="POST" enctype="multipart/form-data">
-                <div class="infodiv" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+                <div class="infodiv" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;">
                     <script>
                         const flagItselfUpload = function(event) {
                             var output = document.getElementById('imageBackground');
                             output.src = URL.createObjectURL(event.target.files[0]);
-                            output.style.width = "20vw";
-                            output.style.height = "11.25vw";
-                            output.onload = function() {
-                                URL.revokeObjectURL(output.src) //free memory
-                            }
-                        };
-                        var flagBackgroundUpload = function(event) {
-                            var output = document.getElementById('imageBackground2');
-                            output.src = URL.createObjectURL(event.target.files[0]);
-                            output.style.width = "20vw";
-                            output.style.height = "11.25vw";
-                            output.onload = function() {
-                                URL.revokeObjectURL(output.src) // free memory
-                            }
+                            output.style.width = "20vw"; output.style.height = "11.25vw";
+                            output.onload = function() { URL.revokeObjectURL(output.src); }
                         };
                     </script>
-
                     <div>
-                        <div class="coalitionimagepreview" style="margin: 0 auto 10px auto;">
+                        <div class="coalitionimagepreview" style="margin:0 auto 10px auto;">
                             <img alt="Image" id="imageBackground" />
                         </div>
-                        <label for="bgimage" style="display: block; margin-bottom: 10px;">Upload coalition flag</label>
-                        <label class="imageinput fit center" style="margin: 0 auto;"><span class="material-icons-outlined">
-                        wallpaper
-                        </span>Choose Image
-                        <input type="file" name="flag_input" id="imageinput" accept="image/*" onchange="flagItselfUpload(event)">
+                        <label for="bgimage" style="display:block;margin-bottom:10px;">Upload coalition flag</label>
+                        <label class="imageinput fit center" style="margin:0 auto;">
+                            <span class="material-icons-outlined">wallpaper</span>Choose Image
+                            <input type="file" name="flag_input" id="imageinput" accept="image/*" onchange="flagItselfUpload(event)">
                         </label>
                     </div>
-
-                    <div style="display: none;">
-                        <div class="coalitionimagepreview">
-                            <img alt="Image" id="imageBackground2" />
-                        </div>
-                    </div>
-
-                    <div style="width: 100%; max-width: 400px;">
-                        <label style="display: block; margin-bottom: 10px;">Application type</label>
-                        <select class="templateselect" name="application_type" style="width: 100%; margin: 0 auto;">
+                    <div style="width:100%;max-width:400px;">
+                        <label style="display:block;margin-bottom:10px;">Application type</label>
+                        <select class="templateselect" name="application_type" style="width:100%;margin:0 auto;">
                             <option value="" selected="true" class="templateoption">Type</option>
                             <option value="Invite Only" class="templateoption">Invite Only</option>
                             <option value="Open" class="templateoption">Open</option>
                         </select>
                     </div>
-
-                    <div style="width: 100%; max-width: 400px;">
-                        <label for="name" style="display: block; margin-bottom: 10px;">Coalition Name</label>
-                        <input type="text" class="loginsignupinput" name="name" placeholder="Coalition Name" maxlength="50" style="width: 100%; box-sizing: border-box;" />
-                        <p style="font-size: 0.9em; color: {% if name_changes_used > 0 %}#ff6b6b{% else %}#51cf66{% endif %}; margin-top: 5px;" id="rename_note">
-                            {% if name_changes_used > 0 %}
-                                ⚠️ Renaming costs 500,000 gold
-                            {% else %}
-                                ✓ Next rename is FREE
-                            {% endif %}
+                    <div style="width:100%;max-width:400px;">
+                        <label for="name" style="display:block;margin-bottom:10px;">Coalition Name</label>
+                        <input type="text" class="loginsignupinput" name="name" placeholder="Coalition Name" maxlength="50" style="width:100%;box-sizing:border-box;" />
+                        <p style="font-size:0.9em;color:{% if name_changes_used > 0 %}#ff6b6b{% else %}#51cf66{% endif %};margin-top:5px;">
+                            {% if name_changes_used > 0 %}⚠️ Renaming costs 500,000 gold{% else %}✓ Next rename is FREE{% endif %}
                         </p>
                     </div>
-
-                    <div style="width: 100%; max-width: 400px;">
-                        <label for="description" style="display: block; margin-bottom: 10px;">Description</label>
-                        <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240" style="width: 100%; box-sizing: border-box; margin: 0;"></textarea>
+                    <div style="width:100%;max-width:400px;">
+                        <label for="description" style="display:block;margin-bottom:10px;">Description</label>
+                        <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240" style="width:100%;box-sizing:border-box;margin:0;height:80px;"></textarea>
                     </div>
-
-                    <button class="templatedivbutton templatecenteredbutton" type="submit" style="margin-top: 10px;"><span class="material-icons-outlined">
-                    check
-                        </span>Update</button>
+                    <button class="templatedivbutton templatecenteredbutton" type="submit" style="margin-top:10px;">
+                        <span class="material-icons-outlined">check</span>Update
+                    </button>
                 </div>
             </form>
 
             <h2 class="templatecontentheaderleft">Danger Zone</h2>
-
-            <form method="POST">
-                <div class="infodiv">
-                    <div class="templatedivflex2 divflex2center menuflex">
-                        {% if user_role == "leader" %}
-                        <div class="templatedivflex2left">
-
-                            <button type="submit" formaction="/delete_coalition/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to DELETE this coalition? This cannot be undone!')"><span class="material-icons-outlined">
-                                highlight_off
-                                </span>Delete Coalition</button>
-
-                        </div>
-                        {% endif %} {% if userInCurCol and user_role != "leader" %}
-                        <div class="templatedivflex2left">
-
-                            <button type="submit" formaction="/leave/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to leave this coalition?')"><span class="material-icons-outlined">
-                                arrow_forward
-                                </span>Leave Coalition</button>
-
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </form>
-            {% endif %}
-        </div>
-        <!--MEMBER-->
-        <div class="member" id="member">
-
-            <h2 class="templatecontentheaderleft">Bank</h2>
-
             <div class="infodiv">
-
                 <form method="POST">
-                    <div class="templateoutertablediv inverttable">
-                        <table class="templatetable templatetable2">
-                            <tr>
-                                <th>Resource</th>
-                                <th>My Resources</th>
-                                <th>Action</th>
-                            </tr>
-                            <tr>
-                                <td>Money:</td>
-                                <td>{{ gross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="money" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Rations:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="rations" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Oil:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="oil" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Coal:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="coal" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Uranium:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="uranium" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Iron:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="iron" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Lead:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="lead" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Bauxite:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="bauxite" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Copper:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="copper" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Lumber:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="lumber" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Components:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="components" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Steel:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="steel" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Consumer goods:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="consumer_goods" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Aluminum:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="aluminium" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Gasoline:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="gasoline" placeholder="Amount" /></td>
-                            </tr>
-                            <tr>
-                                <td>Ammunition:</td>
-                                <td>{{ rationsGross }}%</td>
-                                <td><input class="loginsignupinput" autocomplete="on" name="ammunition" placeholder="Amount" /></td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <div class="templatedivflex2 divflex2center">
-                        <div class="templatedivflex2left">
-
-                            <button formaction="/request_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                            feedback
-                            </span>Request</button>
-
-                        </div>
-                        <div class="templatedivflex2left">
-
-                            <button formaction="/deposit_into_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                            arrow_downward
-                            </span>Deposit</button>
-
-                        </div>
-                    </div>
-            </div>
-            </form>
-
-            <h2 class="templatecontentheaderleft">Danger Zone</h2>
-
-            <div class="infodiv">
-                <form action="/leave/{{ colId }}" method="POST">
-
-                    <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" value="submit" onclick="return confirm('Are you sure you want to leave this coalition?')"><span class="material-icons-outlined">
-                    arrow_forward
-                    </span>Leave Coalition</button>
-
+                    <button type="submit" formaction="/delete_coalition/{{ colId }}" class="templatedivbutton templatecenteredbutton redactionbutton" onclick="return confirm('Are you sure you want to DELETE this coalition? This cannot be undone!')">
+                        <span class="material-icons-outlined">highlight_off</span>Delete Coalition
+                    </button>
                 </form>
             </div>
-
+            {% endif %}
         </div>
-
-        <!-- currently disabled this because of bug, moved it elsewhere-->
-        <!--END-->
 
 
     </div>
