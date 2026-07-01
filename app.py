@@ -134,6 +134,10 @@ def create_app():
                 )
                 return redirect(canonical, code=301)
 
+            # Bridge page: .com visitors are shown a "we moved" page pointing to .org
+            if host_only == "affairsandorder.com" and request.path not in ("/health", "/ready"):
+                return render_template("domain_bridge.html", path=request.path)
+
         if os.getenv("RAILWAY_ENVIRONMENT_NAME") and request.path != "/health":
             forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
             if forwarded_proto != "https" and not request.is_secure:

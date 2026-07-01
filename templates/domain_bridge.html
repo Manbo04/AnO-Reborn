@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Affairs and Order — We've Moved</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d0f14;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #c9d1e0;
+            padding: 24px;
+        }
+
+        .card {
+            background: #161b27;
+            border: 1px solid #2a3045;
+            border-radius: 16px;
+            padding: 56px 48px 48px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+
+        .emblem {
+            font-size: 52px;
+            margin-bottom: 24px;
+            line-height: 1;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e8eaf0;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #7a8499;
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+
+        .new-domain {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e2d4d 0%, #1a2640 100%);
+            border: 1px solid #3a5080;
+            border-radius: 10px;
+            padding: 20px 32px;
+            margin-bottom: 36px;
+            width: 100%;
+        }
+
+        .new-domain-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #5a7299;
+            margin-bottom: 8px;
+        }
+
+        .new-domain-url {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #6ab0f5;
+            letter-spacing: -0.01em;
+        }
+
+        .go-btn {
+            display: block;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 32px;
+            border-radius: 10px;
+            transition: opacity 0.15s, transform 0.1s;
+            letter-spacing: 0.01em;
+            border: none;
+            cursor: pointer;
+        }
+
+        .go-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .go-btn:active {
+            transform: translateY(0);
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 0.78rem;
+            color: #4a5568;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 40px 24px 36px; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+    <meta http-equiv="refresh" content="8;url=https://affairsandorder.org{{ path }}">
+</head>
+<body>
+    <div class="card">
+        <div class="emblem">🌍</div>
+        <h1>We've moved to a new domain</h1>
+        <p class="subtitle">
+            Affairs and Order now lives at a new address.<br>
+            Update your bookmarks — the game, your nation, everything is over there.
+        </p>
+
+        <div class="new-domain">
+            <div class="new-domain-label">New home</div>
+            <div class="new-domain-url">affairsandorder.org</div>
+        </div>
+
+        <a href="https://affairsandorder.org{{ path }}" class="go-btn">
+            Take me there &rarr;
+        </a>
+
+        <p class="note">You'll be redirected automatically in a few seconds.</p>
+    </div>
+</body>
+</html>
