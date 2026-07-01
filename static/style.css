@@ -3956,6 +3956,75 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     overflow: scroll;
 }
 
+/* Coalition bank contribution cards */
+.contrib-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 0 0 20px;
+}
+@media all and (max-width: 700px) {
+    .contrib-grid { grid-template-columns: 1fr; }
+}
+.contrib-card {
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.contrib-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--foreground2);
+    border-bottom: 1px solid var(--border);
+}
+.contrib-flag {
+    width: 36px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.contrib-name {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--colorOne);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.contrib-name:hover { color: var(--accent); }
+.contrib-resources {
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.contrib-res-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88em;
+}
+.contrib-res-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.contrib-res-name {
+    flex: 1;
+    color: var(--text-secondary);
+}
+.contrib-res-amt {
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
 
 /*DEFENSE*/
 
