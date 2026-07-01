@@ -3884,6 +3884,7 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 .coalition-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
     gap: 10px;
     margin: 10px 0 20px;
 }
@@ -3892,15 +3893,18 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     flex-direction: column;
     border-radius: 6px;
     overflow: hidden;
+    min-height: 200px;
 }
-.coalition-info-card .templatetable {
-    flex: 1;
+.coalition-info-table {
+    width: 100% !important;
     margin: 0 !important;
+    flex: 1;
     height: 100%;
 }
 @media all and (max-width: 768px) {
     .coalition-info-grid {
         grid-template-columns: 1fr;
+        grid-auto-rows: auto;
     }
 }
 
