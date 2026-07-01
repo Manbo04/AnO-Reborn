@@ -27,10 +27,20 @@ html, body.page-game-map {
 
 .footer, footer { display: none !important; }
 
+/* ─── Hide site navbar on game map ─── */
+body.page-game-map .navbarparenttitle,
+body.page-game-map .navbarparentloginsignupdiv,
+body.page-game-map .menubar,
+body.page-game-map .navbar-theme-toggle,
+body.page-game-map .navbarparent::after {
+    display: none !important;
+}
+
 /* ─── Viewport ─── */
 #gm-viewport {
     position: fixed;
     inset: 0;
+    z-index: 9000;
     cursor: grab;
     background-color: #060810;
     background-image:
