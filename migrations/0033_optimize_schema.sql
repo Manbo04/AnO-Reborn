@@ -18,8 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_treaties_status ON treaties(status);
 -- Peace
 CREATE INDEX IF NOT EXISTS idx_peace_author ON peace(author);
 
--- Coalition Applications
-CREATE INDEX IF NOT EXISTS idx_col_applications_col_id ON col_applications("colId");
+-- Coalition Applications (colId index already created in 0017)
 CREATE INDEX IF NOT EXISTS idx_col_applications_user_id ON col_applications(user_id);
 
 -- Coalition Banks Requests

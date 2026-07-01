@@ -22,6 +22,6 @@
 -- FROM "User" u
 -- LEFT JOIN "Nation" n ON n."userId" = u.id;
 
--- Mark applied when script succeeds (optional tracking):
--- INSERT INTO schema_migrations (name) VALUES ('0024_nextjs_compat_views.sql')
--- ON CONFLICT DO NOTHING;
+-- Views are applied via scripts/apply_nextjs_compat_views.py (introspective).
+-- This file is a no-op placeholder so the migration runner records it as applied.
+SELECT 1;
