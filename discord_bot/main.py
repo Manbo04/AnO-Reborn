@@ -1,6 +1,7 @@
 """Entry point: python -m discord_bot.main"""
 
 
+import asyncio
 import logging
 
 import discord
@@ -20,6 +21,48 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger("ano_discord_bot")
+
+# Map channel name substrings → panel keys (order matters: first match wins)
+_CHANNEL_PANEL_MAP = [
+    ("bot-guide",        "readme"),
+    ("influence-board",  "leaderboard"),
+    ("war-feed",         "war_feed"),
+    ("nation-inspector", "inspector"),
+    ("global-affairs",   "world_status"),
+    ("realm-alerts",     "alerts"),
+]
+
+
+async def _auto_bind_panels(bot: "AnOBot", guild: discord.Guild) -> None:
+    """Bind panel channels by name convention if no bindings exist yet."""
+    from discord_bot.guild_store import (
+        bind_panel_channel,
+        get_guild_settings,
+    )
+
+    settings = await asyncio.to_thread(get_guild_settings, str(guild.id))
+    if settings and settings.panel_channels:
+        return  # already configured
+
+    bound = 0
+    for ch in guild.text_channels:
+        name = ch.name.lower()
+        for fragment, panel_key in _CHANNEL_PANEL_MAP:
+            if fragment in name:
+                try:
+                    await asyncio.to_thread(
+                        bind_panel_channel, str(guild.id), panel_key, str(ch.id)
+                    )
+                    logger.info(
+                        "Auto-bound panel '%s' → #%s (%s)", panel_key, ch.name, ch.id
+                    )
+                    bound += 1
+                except Exception as exc:
+                    logger.warning("Auto-bind %s failed: %s", panel_key, exc)
+                break
+
+    if bound:
+        logger.info("Auto-configured %d panel(s) for guild %s (%s)", bound, guild.name, guild.id)
 
 
 class AnOBot(commands.Bot):
@@ -45,6 +88,11 @@ class AnOBot(commands.Bot):
             backend_mode_label(),
             EMBED_UI_VERSION,
         )
+        for guild in self.guilds:
+            try:
+                await _auto_bind_panels(self, guild)
+            except Exception as exc:
+                logger.warning("Auto-bind failed for guild %s: %s", guild.id, exc)
         if not self.panel_refresh_loop.is_running():
             self.panel_refresh_loop.start()
 
