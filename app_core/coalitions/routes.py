@@ -1535,8 +1535,10 @@ def deposit_into_bank(coalition_id):
         update_statement = f"UPDATE colBanks SET {resource}={resource}+%s WHERE colId=%s"
         db.execute(update_statement, (amount, coalition_id))
 
-        # Track cumulative contribution for this member
+        # Track cumulative contribution — use SAVEPOINT so a failure here doesn't
+        # corrupt the cursor and roll back the bank UPDATE above.
         try:
+            db.execute("SAVEPOINT contrib_track")
             db.execute(
                 """
                 INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
@@ -1547,7 +1549,7 @@ def deposit_into_bank(coalition_id):
                 (coalition_id, cId, resource, amount),
             )
         except Exception:
-            pass  # non-fatal — bank balance already updated
+            db.execute("ROLLBACK TO SAVEPOINT contrib_track")
 
     with get_request_cursor() as db:
         for resource in deposited_resources:
@@ -1574,7 +1576,8 @@ def withdraw(resource, amount, user_id, coalition_id):
         db.execute(update_statement, (amount, coalition_id, amount))
         row = db.fetchone()
         if not row:
-            return error(400, f"Your coalition doesn't have enough {resource}")
+            flash(f"Your coalition doesn't have enough {resource}.", "warning")
+            return redirect(f"/coalition/{coalition_id}")
         new_resource = row[0]
 
         current_app.logger.info(
