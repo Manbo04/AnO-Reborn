@@ -130,11 +130,12 @@ def create_app():
             canonical_host = None
             if host_only.startswith("www."):
                 canonical_host = host_only[4:]
-            # affairsandorder.org resolves to this app but OAuth redirect URIs
-            # and session cookies are registered for .com only. Redirect .org
-            # → .com before any session/OAuth state is created.
-            if host_only in ("affairsandorder.org", "www.affairsandorder.org"):
-                canonical_host = "affairsandorder.com"
+            # .com is kept ONLY for OAuth callbacks (registered there in Discord/Google portals).
+            # All other .com traffic redirects to .org (the primary domain).
+            # OAuth callbacks complete on .com then hand off to .org via /auth_handoff.
+            _OAUTH_PATHS = {"/callback", "/login/google/callback", "/auth_handoff", "/health", "/ready"}
+            if host_only == "affairsandorder.com" and request.path not in _OAUTH_PATHS:
+                canonical_host = "affairsandorder.org"
             if canonical_host and canonical_host != host_only:
                 canonical = request.url.replace(
                     f"://{request.host}", f"://{canonical_host}" + (f":{port}" if port else ""), 1
@@ -699,6 +700,55 @@ def create_app():
         if value.lower() == "citycount": return "City"
         return value.replace("_", " ").title()
     # --- END RESTORED FILTERS ---
+
+    # ── Cross-domain OAuth handoff ──────────────────────────────────────────
+    # OAuth redirect URIs are registered for .com but .org is the primary domain.
+    # After a successful OAuth callback on .com, the callback redirects here
+    # (on .org) with a short-lived HMAC token so the user lands logged in on .org.
+    @app.route("/auth_handoff")
+    def auth_handoff():
+        import time as _time, hmac as _hmac, hashlib as _hashlib
+        uid_str = request.args.get("uid", "")
+        ts_str  = request.args.get("ts", "")
+        sig     = request.args.get("sig", "")
+        try:
+            uid = int(uid_str)
+            ts  = int(ts_str)
+        except (ValueError, TypeError):
+            return redirect("/login")
+        if abs(_time.time() - ts) > 90:               # 90-second window
+            return redirect("/login?discord_error=session")
+        secret  = (app.config.get("SECRET_KEY") or "").encode()
+        expected = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
+        if not _hmac.compare_digest(sig, expected):
+            return redirect("/login?discord_error=session")
+        session["user_id"] = uid
+        session.permanent  = True
+        session.modified   = True
+        return redirect("/")
+
+    @app.after_request
+    def _maybe_org_handoff(response):
+        """After OAuth callback on .com succeeds, redirect to .org with a handoff token."""
+        import time as _time, hmac as _hmac, hashlib as _hashlib
+        if response.status_code not in (301, 302):
+            return response
+        host_only = (request.host or "").split(":")[0].lower()
+        if host_only != "affairsandorder.com":
+            return response
+        if request.path not in ("/callback", "/login/google/callback"):
+            return response
+        uid = session.get("user_id")
+        if not uid:
+            return response
+        ts  = int(_time.time())
+        secret   = (app.config.get("SECRET_KEY") or "").encode()
+        sig      = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
+        response.headers["Location"] = (
+            f"https://affairsandorder.org/auth_handoff?uid={uid}&ts={ts}&sig={sig}"
+        )
+        return response
+
     return app
 
 create_app()
