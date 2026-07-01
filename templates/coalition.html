@@ -743,7 +743,46 @@
                     </div>
                 </form>
             </div>
-            {% endif %} {% if user_role in ["leader", "deputy_leader", "tax_collector"] %}
+            {% endif %}
+
+            {% if userInCurCol and contributions_by_user %}
+            <h2 class="templatecontentheaderleft">Bank Contribution History</h2>
+            <div class="infodiv">
+                <p style="margin-bottom:10px; color: var(--text-secondary); font-size:0.9em;">Cumulative deposits per member since tracking was enabled.</p>
+                {% if user_role in ["leader", "deputy_leader", "banker"] %}
+                {# Leaders/bankers see all members #}
+                {% set show_ids = contributions_by_user.keys() | list %}
+                {% else %}
+                {# Regular members only see themselves #}
+                {% set show_ids = [current_user_id] %}
+                {% endif %}
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <tr>
+                            <th>Member</th>
+                            <th>Resource</th>
+                            <th>Total Deposited</th>
+                        </tr>
+                        {% for uid in show_ids %}
+                        {% if uid in contributions_by_user %}
+                        {% set contrib = contributions_by_user[uid] %}
+                        {% for res, amt in contrib.resources.items() %}
+                        <tr>
+                            {% if loop.first %}
+                            <td rowspan="{{ contrib.resources | length }}"><a href="/country/id={{ uid }}">{{ contrib.username }}</a></td>
+                            {% endif %}
+                            <td>{{ res | replace('_', ' ') | title }}</td>
+                            <td>{{ amt | commas }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if user_role in ["leader", "deputy_leader", "tax_collector"] %}
             <h2 class="templatecontentheaderleft">Alliance Tax</h2>
 
             <div class="infodiv">
