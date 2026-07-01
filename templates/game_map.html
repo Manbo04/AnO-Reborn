@@ -1217,9 +1217,9 @@ async function reloadMap() {
 
     } catch (e) {
         document.getElementById('gm-loading').innerHTML = `
-            <div style="color:#ef5350;font-size:1.1rem;">Failed to load map</div>
-            <div style="color:#555;margin-top:8px;">${e.message}</div>
-            <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:rgba(79,195,247,0.15);border:1px solid #4fc3f7;color:#4fc3f7;border-radius:6px;cursor:pointer;">Retry</button>
+            <div style="color:#ef5350;font-size:1.2rem;font-weight:700;text-align:center;">⚠ Failed to load map</div>
+            <div style="color:#aaa;margin-top:10px;font-size:0.9rem;max-width:380px;text-align:center;word-break:break-word;">${e.message}</div>
+            <button onclick="location.reload()" style="margin-top:20px;padding:10px 28px;background:rgba(79,195,247,0.15);border:1px solid #4fc3f7;color:#4fc3f7;border-radius:6px;cursor:pointer;font-size:1rem;">Retry</button>
         `;
     }
 })();
