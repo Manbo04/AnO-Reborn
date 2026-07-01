@@ -71,9 +71,9 @@
             <h2 class="templatecontentheaderleft">Coalition Info</h2>
 
             <div class="coalition-info-grid">
-                <!-- GENERAL -->
+                <!-- GENERAL (top-left) -->
                 <div class="coalition-info-card">
-                    <table class="templatetable" style="width:100%;margin:0;">
+                    <table class="templatetable coalition-info-table">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">info</span>General</th>
                         </tr>
@@ -93,41 +93,43 @@
                         <tr><td>Type:</td><td>{{ colType }}</td></tr>
                     </table>
                 </div>
-                <!-- MILITARY -->
+                <!-- AFFAIRS (top-right) -->
                 <div class="coalition-info-card">
-                    <table class="templatetable" style="width:100%;margin:0;">
-                        <tr>
-                            <th colspan="2"><span class="material-icons-outlined">military_tech</span>Military</th>
-                        </tr>
-                        <tr><td>Military Power:</td><td>—</td></tr>
-                        <tr><td>Land:</td><td>—</td></tr>
-                        <tr><td>Air:</td><td>—</td></tr>
-                        <tr><td>Naval:</td><td>—</td></tr>
-                    </table>
-                </div>
-                <!-- AFFAIRS -->
-                <div class="coalition-info-card">
-                    <table class="templatetable" style="width:100%;margin:0;">
+                    <table class="templatetable coalition-info-table">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">public</span>Affairs</th>
                         </tr>
                         <tr><td>Allied:</td><td>{{ "Yes" if active_length > 0 else "No" }}</td></tr>
                         <tr><td>Active Allies:</td><td>{{ active_length }}</td></tr>
                         <tr><td>Pending Treaties:</td><td>{{ ingoing_length }}</td></tr>
+                        <tr><td>Members:</td><td>{{ members|length }}</td></tr>
+                        <tr><td>Coalition type:</td><td>{{ colType }}</td></tr>
                     </table>
                 </div>
-                <!-- MORE INFO -->
+                <!-- MILITARY (bottom-left) -->
                 <div class="coalition-info-card">
-                    <table class="templatetable" style="width:100%;margin:0;">
+                    <table class="templatetable coalition-info-table">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">military_tech</span>Military</th>
+                        </tr>
+                        <tr><td>Total Provinces:</td><td>{{ coalitionProvinces }}</td></tr>
+                        <tr><td>Total Cities:</td><td>{{ coalitionCities }}</td></tr>
+                        <tr><td>Total Land:</td><td>{{ coalitionLand }}</td></tr>
+                        <tr><td>Military Power:</td><td>—</td></tr>
+                        <tr><td>Land / Air / Naval:</td><td>—</td></tr>
+                    </table>
+                </div>
+                <!-- MORE INFO (bottom-right) -->
+                <div class="coalition-info-card">
+                    <table class="templatetable coalition-info-table">
                         <tr>
                             <th colspan="2"><span class="material-icons-outlined">article</span>More Info</th>
                         </tr>
-                        <tr><td>Total Provinces:</td><td>{{ coalitionProvinces }}</td></tr>
-                        <tr><td>Avg Provinces:</td><td>{{ coalitionAverageProvinces }}</td></tr>
-                        <tr><td>Total Cities:</td><td>{{ coalitionCities }}</td></tr>
-                        <tr><td>Total Land:</td><td>{{ coalitionLand }}</td></tr>
                         <tr><td>Total Population:</td><td>{{ total_influence | fmt }}</td></tr>
                         <tr><td>Avg Population:</td><td>{{ average_influence | fmt }}</td></tr>
+                        <tr><td>Avg Provinces:</td><td>{{ coalitionAverageProvinces }}</td></tr>
+                        <tr><td>Avg Cities:</td><td>{{ coalitionAverageCities }}</td></tr>
+                        <tr><td>Avg Land:</td><td>{{ coalitionAverageLand }}</td></tr>
                     </table>
                 </div>
             </div>
