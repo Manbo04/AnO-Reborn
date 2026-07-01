@@ -51,7 +51,6 @@ def game_map_view():
 
 
 @bp.route("/api/game_map/data")
-@login_required
 def game_map_data():
     if not _is_authorized():
         abort(404)
