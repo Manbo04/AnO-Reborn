@@ -2259,6 +2259,9 @@ def generate_province_revenue():  # Runs each hour
                 )
                 infra_ids = db.fetchall()
                 if not infra_ids:
+                    # Cursor reached end — reset for next scheduled run and STOP.
+                    # Do NOT re-fetch from the beginning; that would re-apply production
+                    # multiple times within a single hourly tick.
                     db.execute(
                         "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
                         ("generate_province_revenue",),
@@ -2267,13 +2270,7 @@ def generate_province_revenue():  # Runs each hour
                         conn.commit()
                     except Exception:
                         pass
-                    db.execute(
-                        "SELECT p.id, p.userId, p.land, p.productivity "
-                        "FROM provinces p "
-                        "WHERE p.id > 0 ORDER BY p.id ASC LIMIT %s",
-                        (chunk_size,),
-                    )
-                    infra_ids = db.fetchall()
+                    break
             except Exception:
                 rollback_db_cursor(db)
                 infra_ids = []
@@ -2554,8 +2551,14 @@ def generate_province_revenue():  # Runs each hour
 
                         if jobs_needed > 0:
                             employment_ratio = jobs_available / jobs_needed
-                            efficiency_multiplier = max(
-                                variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio
+                            # Clamp: workforce shortage floors at PRODUCTION_EFFICIENCY_MIN;
+                            # workforce surplus does NOT boost production above 1.0.
+                            efficiency_multiplier = min(
+                                1.0,
+                                max(
+                                    variables.PRODUCTION_EFFICIENCY_MIN,
+                                    employment_ratio,
+                                ),
                             )
                         else:
                             efficiency_multiplier = 1.0
