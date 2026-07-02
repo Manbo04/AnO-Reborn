@@ -408,7 +408,10 @@ def get_revenue(cId, db=None):
             revenue["gross"]["consumer_goods"] - citizen_cg_need
         )
 
-        prod_rations = revenue["gross"]["rations"]
+        # Use net rations production (respects gold check — farms can't operate at $0 gold).
+        # Using gross here would hide starvation risk: display would show +282 rations
+        # even though farms are offline, masking that the stockpile is actually depleting.
+        prod_rations = revenue["net"]["rations"]
         # Calculate next turn rations inline using already-fetched data
         current_rations_for_calc = current_rations + prod_rations
         # Calculate consumption from already-fetched province_rows
