@@ -793,10 +793,15 @@ def warResult():
                             max_loot = 0
                         loot = random.randint(0, max_loot)
                         attacker_result["loot"] = {"money": loot}
-                        db.execute(
-                            "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                            (loot, attacker.user_id),
-                        )
+                        if loot > 0:
+                            db.execute(
+                                "UPDATE stats SET gold = gold + %s WHERE id = %s",
+                                (loot, attacker.user_id),
+                            )
+                            db.execute(
+                                "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
+                                (loot, defender.user_id),
+                            )
                 elif war_type == "Sustained":
                     pass
                 else:
