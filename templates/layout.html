@@ -224,13 +224,6 @@
         </button>
         {% endif %}
 
-        {% if session.get('user_id') == None %}
-        <div class="mobile-guest-nav">
-            <a class="mobile-guest-btn" href="/login">Login</a>
-            <a class="mobile-guest-btn mobile-guest-btn--primary" href="/signup">Sign Up</a>
-        </div>
-        {% endif %}
-
         <div class="navbarparentloginsignupdiv">
             {% if session.get('user_id') == None %}
             <a class="loginsignup" href="/login"><span class="material-icons-outlined">
