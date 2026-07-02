@@ -4644,6 +4644,40 @@ def task_economy_snapshot():
 # ---------------------------------------------------------------------------
 
 
+@celery.task(name="tasks.task_update_war_supplies")
+def task_update_war_supplies():
+    """Regenerate war supplies for all active wars (50 supply/hour per side).
+
+    Previously this was only triggered when a player visited the war page, which
+    meant supplies never ticked for players who weren't actively checking.  This
+    task runs hourly so supplies regenerate regardless of page visits.
+    """
+    try:
+        from wars.service import update_supply
+        from database import get_db_connection
+
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id FROM wars WHERE peace_date IS NULL OR peace_date > NOW()"
+            )
+            active_war_ids = [row[0] for row in cur.fetchall()]
+
+        updated = 0
+        errors = 0
+        for war_id in active_war_ids:
+            try:
+                update_supply(war_id)
+                updated += 1
+            except Exception as e:
+                print(f"task_update_war_supplies: war {war_id} failed — {e}")
+                errors += 1
+
+        print(f"task_update_war_supplies: updated {updated} wars, {errors} errors")
+    except Exception as e:
+        print(f"task_update_war_supplies: fatal — {e}")
+
+
 @celery.task(name="tasks.task_ai_agent")
 def task_ai_agent():
     """Run the AI nation agent for configured user(s).

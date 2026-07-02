@@ -74,4 +74,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_ai_agent",
         "schedule": get_crontab_env("AI_AGENT_CRON", crontab(minute="30", hour="*/1")),
     },
+    "update_war_supplies": {
+        "task": "tasks.task_update_war_supplies",
+        "schedule": get_crontab_env("WAR_SUPPLIES_CRON", crontab(minute="55")),
+    },
 }
