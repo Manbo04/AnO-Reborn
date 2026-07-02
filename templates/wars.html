@@ -10,49 +10,39 @@
 
     <div class="templatedivcontent">
 
-        <div class="templatedivflex2 divflex2full">
+        <div class="templatedivflex2 divflex2full wars-action-strip">
             <div class="templatedivflex2left">
-
-                <a class="center templatedivbutton smallactionbutton" href="/military"><span
-                            class="material-icons-outlined">
-                            payments
-                        </span>Purchase Military</a>
-
+                <a class="center templatedivbutton smallactionbutton" href="/military"><span class="material-icons-outlined">payments</span>Purchase Military</a>
             </div>
             <div class="templatedivflex2left">
-
-                <a class="center templatedivbutton smallactionbutton" href="/find_targets"><span
-                            class="material-icons-outlined">
-                            track_changes
-                        </span>Find Target</a>
-
+                <a class="center templatedivbutton smallactionbutton" href="/find_targets"><span class="material-icons-outlined">track_changes</span>Find Target</a>
             </div>
             <div class="templatedivflex2left">
-                <a class="center templatedivbutton smallactionbutton" href="/defense"><span
-                            class="material-icons-outlined">
-                            shield
-                        </span>Organize Defense</a>
+                <a class="center templatedivbutton smallactionbutton" href="/defense"><span class="material-icons-outlined">shield</span>Organize Defense</a>
             </div>
             <div class="templatedivflex2right">
-
-                <a class="center templatedivbutton smallactionbutton" href="/peace_offers"><span
-                            class="material-icons-outlined">
-                            favorite_border
-                        </span>Peace Offers</a>
-
+                <a class="center templatedivbutton smallactionbutton" href="/peace_offers"><span class="material-icons-outlined">favorite_border</span>Peace Offers</a>
             </div>
             <div class="templatedivflex2right">
-
-                <a class="center templatedivbutton smallactionbutton" href="/intelligence"><span
-                            class="material-icons-outlined">
-                            person_search
-                        </span>Intelligence</a>
-
+                <a class="center templatedivbutton smallactionbutton" href="/intelligence"><span class="material-icons-outlined">person_search</span>Intelligence</a>
             </div>
         </div>
 
         <h2 class="templatecontentheaderleft">Standing Military</h2>
-        <div class="templateoutertablediv">
+
+        <!-- Mobile: 2-column chip grid -->
+        <div class="wars-mil-grid game-table-fallback--hide-mobile" style="display:none"></div>
+        <div class="wars-mil-grid game-card-list--mobile-only">
+            {% for label, key in [('Soldiers','soldiers'),('Artillery','artillery'),('Tanks','tanks'),('Fighter Jets','fighters'),('Bombers','bombers'),('Attack Helicopters','apaches'),('Submarines','submarines'),('Cruisers','cruisers'),('Destroyers','destroyers'),('Spies','spies'),('Ballistic Missiles','icbms'),('Nukes','nukes')] %}
+            <div class="wars-mil-chip">
+                <span class="material-icons-outlined">military_tech</span>
+                <span><strong>{{ units[key] }}</strong> {{ label }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="templateoutertablediv game-table-fallback--hide-mobile">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>Army</th>

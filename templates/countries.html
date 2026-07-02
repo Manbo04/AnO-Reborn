@@ -73,7 +73,28 @@
         {% set influence_sortway = 'asc' if sort == 'influence' and sortway == 'desc' else 'desc' %}
         {% set age_sortway = 'asc' if sort == 'age' and sortway == 'desc' else 'desc' %}
         {% set provinces_sortway = 'asc' if sort == 'provinces' and sortway == 'desc' else 'desc' %}
-        <div class="templateoutertablediv">
+        <!-- Mobile card list -->
+        <div class="nations-mobile-list">
+            {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
+            <a class="nation-card {% if id == current_user_id %}highlight-row{% endif %}" href="/country/id={{ id }}">
+                <span class="nation-card__rank">{{ loop.index }}</span>
+                <img class="nation-card__flag" src="/flag/country/{{ id }}" onerror="this.style.display='none'" alt="">
+                <div class="nation-card__main">
+                    <div class="nation-card__name">{{ username }}</div>
+                    <div class="nation-card__sub">{% if colName %}{{ colName }}{% else %}No coalition{% endif %} · {{ province_count }} prov.</div>
+                </div>
+                <div class="nation-card__chips">
+                    <span class="nation-card__chip nation-card__chip--accent">{{ influence | fmt }} inf</span>
+                    {% if join_number %}<span class="nation-card__chip">#{{ join_number }}</span>{% endif %}
+                </div>
+            </a>
+            {% else %}
+            <p style="padding:16px;text-align:center;color:var(--text-secondary)">No nations found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="templateoutertablediv nations-desktop-table">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>#</th>
@@ -86,12 +107,6 @@
 
                     {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
                     <tr {% if id == current_user_id %}class="highlight-row"{% endif %}>
-
-                        <!--
-                        {% if flag != None %}
-                        {% endif %}
-                        -->
-
                         <td>{{ loop.index }})</td>
                         <td><a href="/country/id={{ id }}">{{ username }}</a></td>
                         <td>{% if join_number %}#{{ join_number }}{% else %}—{% endif %}</td>
@@ -103,11 +118,8 @@
                         <td><a href="/coalition/{{ colId }}">{{ colName }}</a></td>
                         {% endif %}
                         <td>{{ province_count }}</td>
-
-
                     </tr>
                     {% endfor %}
-
             </table>
         </div>
 

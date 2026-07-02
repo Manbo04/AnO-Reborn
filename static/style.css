@@ -9549,3 +9549,351 @@ body.page-game-map .mobile-bottom-nav {
     }
 }
 
+/* ==========================================================================
+   MOBILE INFORMATION DENSITY v2 — page-specific patterns
+   ========================================================================== */
+
+/* --- Universal: all data tables get horizontal scroll on mobile --- */
+@media (max-width: 768px) {
+    .templateoutertablediv {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 6px;
+        /* Hint that there's more to scroll */
+        background:
+            linear-gradient(to right, var(--foreground, #1c2029) 30%, transparent),
+            linear-gradient(to left,  var(--foreground, #1c2029) 30%, transparent) 100% 0,
+            radial-gradient(farthest-side at 0%   50%, rgba(0,0,0,.3), transparent),
+            radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.3), transparent) 100% 0;
+        background-repeat: no-repeat;
+        background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+        background-attachment: local, local, scroll, scroll;
+    }
+
+    /* Freeze first column in scrollable tables */
+    .templateoutertablediv .templatetable td:first-child,
+    .templateoutertablediv .templatetable th:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--foreground, #1c2029);
+        z-index: 2;
+    }
+
+    /* Don't freeze if there's a full-width header span */
+    .templateoutertablediv .templatetable th[colspan] {
+        position: static;
+    }
+
+    /* Enforce minimum column width so table has something to scroll */
+    .templateoutertablediv .templatetable {
+        min-width: 480px;
+        width: max-content;
+        max-width: none !important;
+    }
+}
+
+/* --- Wars page: compact action button strip --- */
+@media (max-width: 768px) {
+    /* Convert the 5-button flex row to a wrapping chip strip */
+    .wars-action-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 12px;
+    }
+
+    .wars-action-strip .templatedivflex2left,
+    .wars-action-strip .templatedivflex2right {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .wars-action-strip .smallactionbutton {
+        padding: 7px 12px !important;
+        font-size: 12px !important;
+        white-space: nowrap;
+        min-height: 36px !important;
+        gap: 4px !important;
+    }
+
+    .wars-action-strip .smallactionbutton .material-icons-outlined {
+        font-size: 16px !important;
+    }
+
+    /* War cards: compact 2-col side-by-side layout on mobile */
+    .warflexparent.templatedivflex2 {
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important;
+        align-items: center;
+        gap: 0 !important;
+        padding: 8px !important;
+    }
+
+    .warflexparent .templatedivflex2left {
+        margin: 0 !important;
+        padding: 4px !important;
+        text-align: center;
+    }
+
+    /* VS column — minimal */
+    .warflexparent .min.templatedivflex2left {
+        flex: 0 0 28px !important;
+        width: 28px !important;
+        font-size: 11px;
+        padding: 0 !important;
+    }
+
+    /* Flag images in war cards: compact */
+    .warflexparent .unitimage {
+        height: 50px !important;
+        width: 80px !important;
+        object-fit: cover;
+        border-radius: 3px;
+        margin: 4px auto;
+        display: block;
+    }
+
+    .warflexparent .templatecontentheadercenter {
+        font-size: 12px !important;
+        margin: 2px 0 !important;
+        padding-bottom: 2px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Progress bars in war cards */
+    .warflexparent .progressbarparent {
+        margin: 2px 0 !important;
+    }
+
+    .warflexparent .progressbarchildtext {
+        font-size: 10px !important;
+    }
+}
+
+/* --- Military tabs: pill-style row instead of stacked blocks --- */
+@media (max-width: 768px) {
+    .menuflex2.templatedivflex2 {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        padding: 8px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .menuflex2 .templatedivflex2left {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 8px 14px !important;
+        border-radius: 20px !important;
+        background: var(--foregroundTwo, #232a38) !important;
+        border: 1px solid var(--border, #2a3045) !important;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .menuflex2 .templatedivflex2left .smallheader {
+        font-size: 13px !important;
+        margin: 0 !important;
+    }
+
+    /* Infodiv on military page: compact single line */
+    .infodiv {
+        padding: 6px 12px !important;
+    }
+
+    .infodiv .templatecontentpleft {
+        margin: 2px auto !important;
+        font-size: 13px !important;
+    }
+}
+
+/* --- Market mobile cards: improved visual hierarchy --- */
+@media (max-width: 857px) {
+    .game-market-card {
+        padding: 10px 12px !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
+    }
+
+    .game-market-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+
+    .game-market-card-type {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(93, 173, 226, 0.15);
+        color: var(--accent, #5dade2);
+    }
+
+    .game-market-resource {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .game-market-amount,
+    .game-market-price {
+        font-size: 12px !important;
+        display: block;
+        color: var(--text-secondary, #8899aa);
+    }
+
+    .game-market-card-form {
+        margin-top: 8px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .market-purchase-input {
+        flex: 1;
+        height: 36px !important;
+        font-size: 14px !important;
+        min-width: 0;
+    }
+
+    .market-purchase-btn {
+        flex: 0 0 auto;
+        height: 36px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        white-space: nowrap;
+    }
+}
+
+/* --- Countries mobile card list (shown by class on mobile only) --- */
+.nations-mobile-list {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .nations-mobile-list {
+        display: block;
+    }
+
+    .nations-desktop-table {
+        display: none !important;
+    }
+
+    .nation-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border, #2a3045);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .nation-card:first-child {
+        border-top: 1px solid var(--border, #2a3045);
+    }
+
+    .nation-card__rank {
+        font-size: 11px;
+        color: var(--text-secondary, #8899aa);
+        width: 28px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .nation-card__flag {
+        width: 32px;
+        height: 20px;
+        object-fit: cover;
+        border-radius: 2px;
+        border: 1px solid var(--border, #2a3045);
+        flex-shrink: 0;
+    }
+
+    .nation-card__main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .nation-card__name {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .nation-card__sub {
+        font-size: 11px;
+        color: var(--text-secondary, #8899aa);
+        margin-top: 1px;
+    }
+
+    .nation-card__chips {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        flex-shrink: 0;
+    }
+
+    .nation-card__chip {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary, #8899aa);
+        white-space: nowrap;
+    }
+
+    .nation-card__chip--accent {
+        color: var(--accent, #5dade2);
+    }
+}
+
+/* --- Rankings: on mobile stack to 1 col, each table full-width, scrollable --- */
+@media (max-width: 768px) {
+    .rankings-table {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    .rankings-table th[colspan],
+    .rankings-table th:not([colspan]) {
+        position: static !important;
+    }
+}
+
+/* --- Standing military table on wars page: compact chip grid --- */
+@media (max-width: 768px) {
+    .wars-mil-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 4px !important;
+        padding: 8px !important;
+    }
+
+    .wars-mil-chip {
+        background: var(--foregroundTwo, #232a38);
+        border: 1px solid var(--border, #2a3045);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .wars-mil-chip .material-icons-outlined {
+        font-size: 14px;
+        color: var(--accent, #5dade2);
+    }
+}
+
