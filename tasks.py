@@ -4658,8 +4658,11 @@ def task_update_war_supplies():
 
         with get_db_connection() as conn:
             cur = conn.cursor()
+            # peace_date is stored as a real (epoch seconds), not a timestamp,
+            # so compare against EXTRACT(EPOCH FROM NOW()).
             cur.execute(
-                "SELECT id FROM wars WHERE peace_date IS NULL OR peace_date > NOW()"
+                "SELECT id FROM wars WHERE peace_date IS NULL "
+                "OR peace_date > EXTRACT(EPOCH FROM NOW())"
             )
             active_war_ids = [row[0] for row in cur.fetchall()]
 
