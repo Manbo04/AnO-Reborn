@@ -17,6 +17,8 @@ CITY_UNITS = frozenset(
         "hydro_dams",
         "nuclear_reactors",
         "solar_fields",
+        "wind_farms",
+        "geothermal_plants",
         "gas_stations",
         "general_stores",
         "farmers_markets",
@@ -28,6 +30,9 @@ CITY_UNITS = frozenset(
         "libraries",
         "universities",
         "monorails",
+        "primary_school",
+        "high_school",
+        "industrial_district",
     }
 )
 
