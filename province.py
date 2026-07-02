@@ -1144,6 +1144,9 @@ def province_sell_buy(way, units, province_id):
             "libraries",
             "universities",
             "monorails",
+            "primary_school",
+            "high_school",
+            "industrial_district",
             "army_bases",
             "harbours",
             "aerodomes",
@@ -1184,6 +1187,9 @@ def province_sell_buy(way, units, province_id):
             "libraries",
             "universities",
             "monorails",
+            "primary_school",
+            "high_school",
+            "industrial_district",
         ]
 
         land_units = [
