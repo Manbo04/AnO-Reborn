@@ -97,7 +97,7 @@ DEMO_AGING_RATES = {
 # Education distribution (when children graduate)
 # Determined by available school/university capacity in province
 EDUCATION_GRADUATION_PRIORITY = [
-    "university",  # If capacity available -> edu_college
+    "universities",  # If capacity available -> edu_college
     "high_school",  # Else if capacity available -> edu_highschool
     # Else -> edu_none (default)
 ]
@@ -146,7 +146,7 @@ BUILDING_EMPLOYMENT_MATRICES = {
         "worker_count": 40000,
         "education": {"edu_none": 1.0},
     },
-    "university": {
+    "universities": {
         "worker_count": 50000,
         "education": {
             "edu_highschool": 0.8,

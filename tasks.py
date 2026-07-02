@@ -1887,14 +1887,14 @@ def apply_population_aging(province_id):
                 JOIN building_dictionary bd
                     ON bd.building_id = ub.building_id
                 WHERE ub.province_id = %s
-                    AND bd.name IN ('high_school', 'university')
+                    AND bd.name IN ('high_school', 'universities')
                 GROUP BY bd.name
                 """,
                 (province_id,),
             )
             school_rows = {r[0]: int(r[1]) for r in db.fetchall()}
             hs_buildings = school_rows.get("high_school", 0)
-            uni_buildings = school_rows.get("university", 0)
+            uni_buildings = school_rows.get("universities", 0)
             # Each school building can graduate 500 students per tick
             hs_capacity = hs_buildings * 500
             uni_capacity = uni_buildings * 500
@@ -2643,7 +2643,7 @@ def generate_province_revenue():  # Runs each hour
                             pop_children, int(round(pop_children * graduation_rate))
                         )
                         hs_buildings = int(province_buildings.get("high_school", 0) or 0)
-                        uni_buildings = int(province_buildings.get("university", 0) or 0)
+                        uni_buildings = int(province_buildings.get("universities", 0) or 0)
                         # Each school building can graduate 500 students per tick
                         hs_capacity = hs_buildings * 500
                         uni_capacity = uni_buildings * 500
@@ -2758,8 +2758,20 @@ def generate_province_revenue():  # Runs each hour
                         operating_costs = int(operating_costs)
 
                         # Boolean for whether a player has enough resources, energy,
-                        # money to power his building
+                        # money to power his building. All-or-nothing: any failed
+                        # check means the building doesn't operate this tick, and
+                        # we must NOT charge upkeep or consume resources/energy.
                         has_enough_stuff = {"status": True, "issues": []}
+
+                        # Pending state — only committed to gold_deductions,
+                        # provinces_data energy, and resource_deltas AFTER all
+                        # checks pass. Prior versions applied upkeep before
+                        # checking energy/resources, so failed buildings still
+                        # drained gold and could bankrupt idle nations
+                        # (e.g. when a power grid collapse zeroed energy).
+                        pending_gold_cost = 0
+                        pending_energy_delta = 0
+                        pending_resource_deltas_local = {}
 
                         if current_money < operating_costs:
                             log_verbose(
@@ -2768,46 +2780,31 @@ def generate_province_revenue():  # Runs each hour
                             has_enough_stuff["status"] = False
                             has_enough_stuff["issues"].append("money")
                         else:
-                            # Track deduction for batch update at end
-                            gold_deductions[user_id] = (
-                                gold_deductions.get(user_id, 0) + operating_costs
-                            )
+                            pending_gold_cost = operating_costs
 
                         # Use tracked energy in provinces_data instead of
                         # per-building SELECT
                         if unit in energy_consumers:
                             prov_data = provinces_data.get(province_id, {})
                             current_energy = prov_data.get("energy", 0)
+                            energy_needed = unit_amount  # Each unit consumes 1 energy
 
-                            new_energy = (
-                                current_energy - unit_amount
-                            )  # Each unit consumes 1 energy
-
-                            if new_energy < 0:
+                            if current_energy < energy_needed:
                                 has_enough_stuff["status"] = False
                                 has_enough_stuff["issues"].append("energy")
-                                new_energy = 0
+                            else:
+                                pending_energy_delta = -energy_needed
 
-                            # Track energy in provinces_data for batch update
-                            if province_id in provinces_data:
-                                provinces_data[province_id]["energy"] = new_energy
-                                
                         elif unit == "steel_mills" and upgrades.get("electricarcfurnace"):
                             prov_data = provinces_data.get(province_id, {})
                             current_energy = prov_data.get("energy", 0)
+                            energy_needed = unit_amount * 2  # EAF consumes 2 energy per mill
 
-                            new_energy = (
-                                current_energy - (unit_amount * 2)
-                            )  # EAF consumes 2 energy per mill
-
-                            if new_energy < 0:
+                            if current_energy < energy_needed:
                                 has_enough_stuff["status"] = False
                                 has_enough_stuff["issues"].append("energy")
-                                new_energy = 0
-
-                            # Track energy in provinces_data for batch update
-                            if province_id in provinces_data:
-                                provinces_data[province_id]["energy"] = new_energy
+                            else:
+                                pending_energy_delta = -energy_needed
 
                         # Use preloaded resources instead of per-building queries
                         resources = resources_map.get(user_id, {})
@@ -2831,11 +2828,11 @@ def generate_province_revenue():  # Runs each hour
                             # LARGER FORGES
                             if unit == "steel_mills" and upgrades.get("largerforges"):
                                 amount *= 0.7
-                                
+
                             # INTEGRATED STEELMAKING
                             if unit == "steel_mills" and upgrades.get("integratedsteelmaking"):
                                 amount *= 1.36
-                                
+
                             # ELECTRIC ARC FURNACE
                             if unit == "steel_mills" and upgrades.get("electricarcfurnace"):
                                 amount *= 0.5
@@ -2861,26 +2858,9 @@ def generate_province_revenue():  # Runs each hour
                                     )
                                 )
                             else:
-                                # Track delta for atomic batch update
-                                if user_id not in resource_deltas:
-                                    resource_deltas[user_id] = {}
-                                resource_deltas[user_id][resource] = (
-                                    resource_deltas[user_id].get(resource, 0) - amount
-                                )
-                                log_verbose(
-                                    (
-                                        "S | MINUS | USER: %s | PROVINCE: %s | %s (%s) | "
-                                        "%s %s delta=-%s"
-                                    )
-                                    % (
-                                        user_id,
-                                        province_id,
-                                        unit,
-                                        unit_amount,
-                                        resource,
-                                        effective_current,
-                                        amount,
-                                    )
+                                pending_resource_deltas_local[resource] = (
+                                    pending_resource_deltas_local.get(resource, 0)
+                                    - amount
                                 )
 
                         if not has_enough_stuff["status"]:
@@ -2890,6 +2870,36 @@ def generate_province_revenue():  # Runs each hour
                                 % (user_id, province_id, unit, unit_amount, issues_str)
                             )
                             continue
+
+                        # All checks passed — commit pending state atomically
+                        if pending_gold_cost:
+                            gold_deductions[user_id] = (
+                                gold_deductions.get(user_id, 0) + pending_gold_cost
+                            )
+                        if pending_energy_delta and province_id in provinces_data:
+                            provinces_data[province_id]["energy"] = (
+                                provinces_data[province_id].get("energy", 0)
+                                + pending_energy_delta
+                            )
+                        if pending_resource_deltas_local:
+                            if user_id not in resource_deltas:
+                                resource_deltas[user_id] = {}
+                            for res_name, delta in pending_resource_deltas_local.items():
+                                resource_deltas[user_id][res_name] = (
+                                    resource_deltas[user_id].get(res_name, 0) + delta
+                                )
+                                log_verbose(
+                                    "S | MINUS | USER: %s | PROVINCE: %s | %s (%s) | "
+                                    "%s delta=%s"
+                                    % (
+                                        user_id,
+                                        province_id,
+                                        unit,
+                                        unit_amount,
+                                        res_name,
+                                        delta,
+                                    )
+                                )
 
                         plus = dict(infra[unit].get("plus", {}))
 
