@@ -649,6 +649,24 @@ def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, s
   return True, "Nation linked successfully.", user_id
 
 
+def is_coalition_leader(user_id: int) -> bool:
+    """True when the nation is recorded as a leader in the coalition members table."""
+    if not user_id:
+        return False
+    members_tbl = get_coalition_members_table()
+    if not members_tbl:
+        return False
+    try:
+        row = QueryHelper.fetch_one(
+            f"SELECT 1 FROM {members_tbl} WHERE userid = %s AND role = 'leader' LIMIT 1",
+            (user_id,),
+        )
+        return bool(row)
+    except Exception as exc:
+        logger.warning("is_coalition_leader(%s): %s", user_id, exc)
+        return False
+
+
 def _embed_to_dict(embed) -> Dict[str, Any]:
     data = embed.to_dict()
     color = data.get("color")
@@ -757,8 +775,15 @@ def bot_register():
     )
     if urow:
       username = urow.get("username")
+  is_leader = is_coalition_leader(user_id) if user_id else False
   return jsonify(
-      {"ok": True, "message": message, "user_id": user_id, "username": username}
+      {
+          "ok": True,
+          "message": message,
+          "user_id": user_id,
+          "username": username,
+          "is_coalition_leader": is_leader,
+      }
   )
 
 
