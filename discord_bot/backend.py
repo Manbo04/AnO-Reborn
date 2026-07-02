@@ -31,7 +31,7 @@ class DirectDatabaseBackend:
     """Use game DB directly — only needs DATABASE_URL + DISCORD_BOT_TOKEN on Railway."""
 
     def register(self, discord_user_id: str, code: str) -> Dict[str, Any]:
-        from bot_api import register_discord_with_code
+        from bot_api import is_coalition_leader, register_discord_with_code
 
         from database import QueryHelper
 
@@ -52,6 +52,7 @@ class DirectDatabaseBackend:
             "message": message,
             "user_id": user_id,
             "username": username,
+            "is_coalition_leader": bool(is_coalition_leader(user_id) if user_id else False),
         }
 
     def me(self, discord_user_id: str) -> Dict[str, Any]:
