@@ -6,7 +6,7 @@ from database import get_request_cursor, cache_response, get_coalition_members_t
 
 
 @login_required
-@cache_response(ttl_seconds=120)  # Cache statistics for 2 minutes
+@cache_response(ttl_seconds=120, public=True)  # Cache statistics for 2 minutes — same data for everyone
 def statistics():
     """Display market statistics and nation stats"""
 
@@ -132,7 +132,7 @@ def statistics():
     )
 
 
-@cache_response(ttl_seconds=300)  # Cache rankings for 5 minutes — public leaderboard
+@cache_response(ttl_seconds=300, public=True)  # Cache rankings for 5 minutes — public leaderboard
 def rankings():
     """Display the top leaderboards for nations and alliances."""
     with get_request_cursor() as db:
