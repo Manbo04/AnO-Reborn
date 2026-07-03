@@ -132,7 +132,7 @@
             {% if win_condition == None %}
             Special Attack Operation
             {% else %}
-            <span data-tippy-content="<strong>Battle intensity: {{win_condition}}</strong><br>&bull; <em>Close victory</em> &rarr; loser's morale drops 5<br>&bull; <em>Definite victory</em> &rarr; drops 10<br>&bull; <em>Annihilation</em> &rarr; drops 15&ndash;20<br>Starting morale is 100. War ends when a side hits 0 &mdash; the winner loots 20% (or 30% with Looting Teams upgrade) of every enemy resource.<br><br><a href='/mechanics#war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help; border-bottom: 1px dotted #888;">{{win_condition}}</span>
+            <span data-tippy-content="<strong>Battle intensity: {{win_condition}}</strong><br>&bull; <em>Close victory</em> &rarr; loser's morale drops 5<br>&bull; <em>Definite victory</em> &rarr; drops 10<br>&bull; <em>Annihilation</em> &rarr; drops 15&ndash;20<br>Starting morale is 100. War ends when a side hits 0 &mdash; the winner loots 20% (or 30% with Looting Teams upgrade) of every enemy resource.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help; border-bottom: 1px dotted #888;">{{win_condition}}</span>
             {% endif %}
         </h3>
 
@@ -145,7 +145,7 @@
                 
                 {% if attacker_result.get("unit_loss") %}
                     {% for key, value in attacker_result["unit_loss"].items() %}
-                    <div class="unit-card" data-tippy-content="Casualties are computed from relative army strength: each side's total combat power is compared, then losses are scaled by the enemy's power fraction and the unit's individual weight. Bringing mismatched units (e.g. only infantry vs. armour) increases your losses.<br><br><a href='/mechanics#war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>">
+                    <div class="unit-card" data-tippy-content="Casualties are computed from relative army strength: each side's total combat power is compared, then losses are scaled by the enemy's power fraction and the unit's individual weight. Bringing mismatched units (e.g. only infantry vs. armour) increases your losses.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>">
                         <div class="unit-name">
                             <span><i class="fas fa-fighter-jet"></i> {{key}}</span>
                             <span class="casualty-loss">-{{value}}</span>
@@ -172,7 +172,7 @@
 
                 {% if attacker_result.get("infra_damage") %}
                     <div class="infra-card">
-                        <h4 data-tippy-content="Infrastructure damage lands on <strong>one random province</strong> of the defender. The amount scales with the winner's raw attack power &mdash; higher-tier winners hit harder. Public works (bunkers, walls) reduce the damage taken. Buildings destroyed are chosen weighted by cost.<br><br><a href='/mechanics#war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
+                        <h4 data-tippy-content="Infrastructure damage lands on <strong>one random province</strong> of the defender. The amount scales with the winner's raw attack power &mdash; higher-tier winners hit harder. Public works (bunkers, walls) reduce the damage taken. Buildings destroyed are chosen weighted by cost.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
                         {% for key, value in attacker_result["infra_damage"].items() %}
                         <div class="infra-item">
                             <span>{{key}}</span>
@@ -184,7 +184,7 @@
 
                 {% if attacker_result.get("loot") %}
                     <div class="loot-card">
-                        <h4 data-tippy-content="Only <em>Loot</em>-type wars pay out per fight. The winner takes a <strong>random amount between 0 and 10%</strong> of the defender's current gold. A very low roll can happen &mdash; the cap is per-fight, not per-war. When the war ends (morale hits 0) the winner also takes 20% (or 30% with the Looting Teams upgrade) of every other resource.<br><br><a href='/mechanics#war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-coins"></i> Spoils of War</h4>
+                        <h4 data-tippy-content="Only <em>Loot</em>-type wars pay out per fight. The winner takes a <strong>random amount between 0 and 10%</strong> of the defender's current gold. A very low roll can happen &mdash; the cap is per-fight, not per-war. When the war ends (morale hits 0) the winner also takes 20% (or 30% with the Looting Teams upgrade) of every other resource.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-coins"></i> Spoils of War</h4>
                         <div class="infra-item">
                             <span>Money Looted</span>
                             <span style="color: #ffd700; font-weight: bold;">+{{attacker_result["loot"]["money"] | commas}}</span>
@@ -228,7 +228,7 @@
 
                 {% if defender_result.get("infra_damage") %}
                     <div class="infra-card">
-                        <h4 data-tippy-content="Infrastructure damage lands on <strong>one random province</strong> of the defender. The amount scales with the winner's raw attack power &mdash; higher-tier winners hit harder. Public works (bunkers, walls) reduce the damage taken. Buildings destroyed are chosen weighted by cost.<br><br><a href='/mechanics#war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
+                        <h4 data-tippy-content="Infrastructure damage lands on <strong>one random province</strong> of the defender. The amount scales with the winner's raw attack power &mdash; higher-tier winners hit harder. Public works (bunkers, walls) reduce the damage taken. Buildings destroyed are chosen weighted by cost.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-building"></i> Infrastructure Damage Taken</h4>
                         {% for key, value in defender_result["infra_damage"].items() %}
                         <div class="infra-item">
                             <span>{{key}} {{value[0]}}</span>
