@@ -245,12 +245,6 @@ def google_signup_route():
                     return error(500, "Signup failed: could not create user")
                 user_id = google_user_row[0]
 
-                session["user_id"] = user_id
-                current_app.config["SESSION_PERMANENT"] = True
-                current_app.permanent_session_lifetime = datetime.timedelta(days=365)
-                session.permanent = True
-                session.modified = True
-
                 from signup import _complete_referral_signup, init_user_game_data
 
                 init_user_game_data(db, user_id, continent)
@@ -260,6 +254,12 @@ def google_signup_route():
                     "UPDATE signup_attempts SET successful = TRUE WHERE id = (SELECT id FROM signup_attempts WHERE ip_address = %s ORDER BY attempt_time DESC LIMIT 1)",
                     (client_ip,),
                 )
+
+            session["user_id"] = user_id
+            current_app.config["SESSION_PERMANENT"] = True
+            current_app.permanent_session_lifetime = datetime.timedelta(days=365)
+            session.permanent = True
+            session.modified = True
 
             session.pop("google_oauth2_state", None)
             session.pop("google_oauth2_token", None)

@@ -656,10 +656,6 @@ def discord_register():
                     return error(500, "Signup failed: could not create user")
                 user_id = discord_user_row[0]
 
-                session["user_id"] = user_id
-                session.permanent = True
-                session.modified = True
-
                 # Create all user tables (idempotent)
                 # NOTE: resources and upgrades tables were removed in Economy 2.0
                 # migration; their data now lives in user_economy / user_buildings.
@@ -676,6 +672,10 @@ def discord_register():
                 # Initialize Economy 2.0 normalized tables
                 _init_economy_tables(db, user_id)
                 _complete_referral_signup(db, user_id)
+
+            session["user_id"] = user_id
+            session.permanent = True
+            session.modified = True
 
             # Mark attempt as successful
             with get_request_cursor() as db:
