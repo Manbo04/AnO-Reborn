@@ -1472,6 +1472,21 @@ body:has(.navbarparent .templatecontainer) {
     background-position: center;
 }
 
+.rankingstopper {
+    overflow: hidden;
+    text-align: center;
+    background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url("images/washington.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    object-fit: cover;
+    background-position: center;
+}
+
+.rankingstopper .templatedivtitle {
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
 .militarytopper {
     overflow: hidden;
     text-align: center;
@@ -1666,6 +1681,7 @@ body:has(.navbarparent .templatecontainer) {
 .recruitmentdivtopper .templatedivtitle,
 .businessestopper .templatedivtitle,
 .assemblytopper .templatedivtitle,
+.rankingstopper .templatedivtitle,
 .upgradestopper .templatedivtitle {
     position: relative;
     z-index: 1;
