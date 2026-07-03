@@ -130,10 +130,22 @@ def create_app():
             canonical_host = None
             if host_only.startswith("www."):
                 canonical_host = host_only[4:]
-            # .com is kept ONLY for OAuth callbacks (registered there in Discord/Google portals).
+            # .com is kept ONLY for the OAuth flow (redirect URIs are registered there).
             # All other .com traffic redirects to .org (the primary domain).
-            # OAuth callbacks complete on .com then hand off to .org via /auth_handoff.
-            _OAUTH_PATHS = {"/callback", "/login/google/callback", "/auth_handoff", "/health", "/ready"}
+            # The OAuth flow includes: the callback itself, the Discord-signup form
+            # (needs session["oauth2_token"] set by the callback), the Discord-login
+            # bridge, and /auth_handoff which finishes the transition to .org.
+            # Any path that reads session["oauth2_token"] MUST stay on .com so the
+            # session cookie set by /callback is sent by the browser.
+            _OAUTH_PATHS = {
+                "/callback",
+                "/login/google/callback",
+                "/discord_signup",
+                "/discord_login/",
+                "/auth_handoff",
+                "/health",
+                "/ready",
+            }
             if host_only == "affairsandorder.com" and request.path not in _OAUTH_PATHS:
                 canonical_host = "affairsandorder.org"
             if canonical_host and canonical_host != host_only:
@@ -729,14 +741,25 @@ def create_app():
 
     @app.after_request
     def _maybe_org_handoff(response):
-        """After OAuth callback on .com succeeds, redirect to .org with a handoff token."""
+        """After any OAuth-hosted step on .com sets user_id, redirect to .org.
+
+        Fires for the callback itself AND for /discord_signup and /discord_login/
+        since those paths finish the login/signup while still on .com (they read
+        session["oauth2_token"] set by /callback and can't move to .org until the
+        session has user_id).
+        """
         import time as _time, hmac as _hmac, hashlib as _hashlib
         if response.status_code not in (301, 302):
             return response
         host_only = (request.host or "").split(":")[0].lower()
         if host_only != "affairsandorder.com":
             return response
-        if request.path not in ("/callback", "/login/google/callback"):
+        if request.path not in (
+            "/callback",
+            "/login/google/callback",
+            "/discord_signup",
+            "/discord_login/",
+        ):
             return response
         uid = session.get("user_id")
         if not uid:
