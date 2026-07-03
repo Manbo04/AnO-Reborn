@@ -115,7 +115,13 @@ def persist_fight_results(
 
     Returns the human-readable win condition string ("annihilation", etc.).
     """
-    with get_request_cursor() as db:
+    # Use an INDEPENDENT connection so casualties + morale drop persist even if
+    # a later step in the request (loot transfer, infra damage, discord notify,
+    # warResult render) raises and the request-scoped transaction rolls back.
+    # Previously this used get_request_cursor() and downstream failures wiped
+    # every fight's outcome — see 2026-07-03 Terra Homeworld report.
+    with get_db_connection() as conn:
+        db = conn.cursor()
 
         winner_strength_before = compute_user_army_strength(winner.user_id)
         loser_strength_before = compute_user_army_strength(loser.user_id)
@@ -295,7 +301,7 @@ def persist_fight_results(
                 )
             except Exception:
                 pass
-        # End of get_request_cursor context block
+        # End of get_db_connection context block — commits automatically on exit
 
     return _determine_win_label(win_type)
 
