@@ -168,6 +168,10 @@ def create_app():
             if _ctrl_stale:
                 try:
                     with get_request_cursor() as _db:
+                        _db.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
+                        if _db.fetchone() is None:
+                            session.clear()
+                            return None
                         _db.execute("SELECT COALESCE(is_banned, FALSE), COALESCE(ban_reason, ''), COALESCE(kick_pending, FALSE) FROM admin_user_controls WHERE user_id = %s", (user_id,))
                         control_row = _db.fetchone()
                     session["_admin_ctrl"] = list(control_row) if control_row else None
@@ -734,6 +738,14 @@ def create_app():
         expected = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
         if not _hmac.compare_digest(sig, expected):
             return redirect("/login?discord_error=session")
+
+        with get_request_cursor(read_only=True) as db:
+            db.execute("SELECT 1 FROM users WHERE id=%s", (uid,))
+            exists = db.fetchone() is not None
+        if not exists:
+            session.pop("user_id", None)
+            return redirect("/signup")
+
         session["user_id"] = uid
         session.permanent  = True
         session.modified   = True
@@ -764,6 +776,11 @@ def create_app():
         uid = session.get("user_id")
         if not uid:
             return response
+            
+        loc = response.headers.get("Location", "")
+        if "/discord_signup" in loc or "/google_signup" in loc:
+            return response
+            
         ts  = int(_time.time())
         secret   = (app.config.get("SECRET_KEY") or "").encode()
         sig      = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
