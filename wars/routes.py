@@ -778,30 +778,37 @@ def warResult():
                 elif war_type == "Loot":
                     attack_effects[0] = attack_effects[0] * 0.2
                     if winner == attacker.user_id:
-                        db.execute(
-                            "SELECT gold FROM stats WHERE id=(%s)", (defender.user_id,)
-                        )
-                        fetched = db.fetchone()
-                        available_resource = 0
-                        if fetched and fetched[0] is not None:
-                            try:
-                                available_resource = float(fetched[0])
-                            except Exception:
-                                available_resource = 0
-                        max_loot = int(math.floor(max(0, available_resource * 0.1)))
-                        if max_loot < 0:
-                            max_loot = 0
-                        loot = random.randint(0, max_loot)
+                        # Independent connection so loot survives request rollback
+                        # if a later step (infra damage, template render) raises.
+                        from database import get_db_connection as _loot_gdc
+                        loot = 0
+                        with _loot_gdc() as _loot_conn:
+                            _loot_cur = _loot_conn.cursor()
+                            _loot_cur.execute(
+                                "SELECT gold FROM stats WHERE id=(%s)",
+                                (defender.user_id,),
+                            )
+                            fetched = _loot_cur.fetchone()
+                            available_resource = 0
+                            if fetched and fetched[0] is not None:
+                                try:
+                                    available_resource = float(fetched[0])
+                                except Exception:
+                                    available_resource = 0
+                            max_loot = int(math.floor(max(0, available_resource * 0.1)))
+                            if max_loot < 0:
+                                max_loot = 0
+                            loot = random.randint(0, max_loot)
+                            if loot > 0:
+                                _loot_cur.execute(
+                                    "UPDATE stats SET gold = gold + %s WHERE id = %s",
+                                    (loot, attacker.user_id),
+                                )
+                                _loot_cur.execute(
+                                    "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
+                                    (loot, defender.user_id),
+                                )
                         attacker_result["loot"] = {"money": loot}
-                        if loot > 0:
-                            db.execute(
-                                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                                (loot, attacker.user_id),
-                            )
-                            db.execute(
-                                "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                                (loot, defender.user_id),
-                            )
                 elif war_type == "Sustained":
                     pass
                 else:
@@ -809,21 +816,29 @@ def warResult():
             else:
                 return error(500, "Something went wrong")
 
-            db.execute(
-                "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
-                (defender.user_id,),
-            )
-            province_id_fetch = db.fetchall()
-            if len(province_id_fetch) > 0:
-                random_province = province_id_fetch[
-                    random.randint(0, len(province_id_fetch) - 1)
-                ][0]
-                public_works = Nation.get_public_works(random_province)
-                infra_damage_effects = Military.infrastructure_damage(
-                    attack_effects[0], public_works, random_province
+            # Best-effort infra damage — failures here must NOT undo the fight
+            # results (morale/loot/casualties) which now commit independently.
+            infra_damage_effects = {}
+            try:
+                db.execute(
+                    "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
+                    (defender.user_id,),
                 )
-            else:
-                infra_damage_effects = {}
+                province_id_fetch = db.fetchall()
+                if len(province_id_fetch) > 0:
+                    random_province = province_id_fetch[
+                        random.randint(0, len(province_id_fetch) - 1)
+                    ][0]
+                    public_works = Nation.get_public_works(random_province)
+                    infra_damage_effects = Military.infrastructure_damage(
+                        attack_effects[0], public_works, random_province
+                    )
+            except Exception:
+                rollback_db_cursor(db)
+                logger.exception(
+                    "infra_damage step failed for defender=%s (fight result already committed)",
+                    defender.user_id,
+                )
             defender_result["infra_damage"] = infra_damage_effects
             if winner == defender.user_id:
                 winner = defender_name
