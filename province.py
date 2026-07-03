@@ -1507,13 +1507,22 @@ def province_sell_buy(way, units, province_id):
         elif way == "buy":
             if units in ["land", "cityCount"]:
                 if totalPrice > gold:
-                    return error(400, "You don't have enough money.")
+                    shortfall = totalPrice - gold
+                    return error(
+                        400,
+                        f"Not enough money: {units} cost {totalPrice:,} gold, "
+                        f"you have {gold:,} (missing {shortfall:,}).",
+                    )
 
                 res_error = resource_stuff(resources_data, way)
                 if res_error:
                     missing_count = res_error["difference"] * -1
                     missing_res = res_error["resource"]
-                    return error(400, f"Missing {missing_count} {missing_res}")
+                    return error(
+                        400,
+                        f"Not enough {missing_res}: missing {missing_count:,}. "
+                        f"Produce or buy on the market before building.",
+                    )
 
                 db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
                 gold_before_row = db.fetchone()

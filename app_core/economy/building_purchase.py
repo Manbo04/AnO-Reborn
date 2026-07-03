@@ -112,14 +112,19 @@ def purchase_building(
     gold_before = int(gold_row[0] or 0)
 
     if total_gold > gold_before:
-        raise BuildingPurchaseError("You don't have enough money.")
+        shortfall = total_gold - gold_before
+        raise BuildingPurchaseError(
+            f"Not enough money: need {total_gold:,} gold, you have {gold_before:,} "
+            f"(missing {shortfall:,})."
+        )
 
     slot_type = get_slot_type(name)
     if slot_type and not skip_slot_check:
         free_slots = get_free_slots(db, province_id, slot_type)
         if free_slots < quantity:
             raise BuildingPurchaseError(
-                f"Not enough {slot_type} slots for {quantity}"
+                f"Not enough {slot_type} slots: {free_slots} free, needs {quantity}. "
+                f"Buy more {slot_type} or demolish an existing building."
             )
 
     res_map = _resource_id_map(db)
@@ -137,7 +142,10 @@ def purchase_building(
         current = int(row[0]) if row else 0
         if current < qty:
             missing = qty - current
-            raise BuildingPurchaseError(f"Missing {missing} {resource}")
+            raise BuildingPurchaseError(
+                f"Not enough {resource}: need {qty:,}, you have {current:,} "
+                f"(missing {missing:,}). Produce or buy on the market."
+            )
 
     for resource, per_unit in resources_data.items():
         qty = int(per_unit) * quantity
