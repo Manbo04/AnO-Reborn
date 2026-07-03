@@ -277,7 +277,9 @@
                         <tr>
                             <td><span class="material-icons-outlined">
                                 sentiment_satisfied
-                                </span>Average happiness:</td>
+                                </span>Average happiness:
+                                <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help; vertical-align: middle;" data-tippy-content="<strong>Happiness modifiers</strong><br>&bull; Unemployment &gt; 30% &rarr; <em>&minus;10 happiness</em> (build production to hire workers)<br>&bull; Pension crisis (elderly &gt; 40%) &rarr; <em>&minus;5 happiness</em> and <em>&minus;5,000 gold/turn</em><br>&bull; Pollution &rarr; each 1% reduces happiness &amp; caps max population<br>&bull; Active policies &amp; retail/entertainment buildings adjust the baseline<br>&bull; Low happiness cuts tax income and slows population growth<br><br><a href='/mechanics#revenue' style='color:#4da8da;text-decoration:underline;'>&#128214; View mechanics</a>">info</span>
+                            </td>
                             {% if happiness != None %}
                             <td>{{ happiness|round }}%</td>
                             {% else %}
@@ -287,7 +289,9 @@
                         <tr>
                             <td><span class="material-icons-outlined">
                                 arrow_circle_up
-                                </span>Average productivity:</td>
+                                </span>Average productivity:
+                                <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help; vertical-align: middle;" data-tippy-content="<strong>Productivity modifiers</strong><br>&bull; Buildings without power run at reduced efficiency<br>&bull; Buildings without required workers idle &mdash; check demographics (working-age)<br>&bull; Chernobyl / disaster events impose a <em>20% minimum</em> production floor for a period<br>&bull; Happiness &lt; 50% drags productivity down<br>&bull; Policies and research modify this globally<br><br><a href='/mechanics#revenue' style='color:#4da8da;text-decoration:underline;'>&#128214; View mechanics</a>">info</span>
+                            </td>
                             {% if productivity != None %}
                             <td>{{ productivity|round }}%</td>
                             {% else %}
@@ -637,7 +641,7 @@
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary gross</strong>
         <span class="stat-value">{{ revenue["gross"]["money"] | fmt }}</span>
     </div>
-    <div class="templatedivflex2left stat-card">
+    <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
@@ -724,7 +728,7 @@
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
         <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
     </div>
-    <div class="templatedivflex2left stat-card">
+    <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
