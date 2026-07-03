@@ -119,7 +119,7 @@ class QueryCache:
                 self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
 
 
-def cache_response(ttl_seconds=60):
+def cache_response(ttl_seconds=60, public=False):
     """
     Decorator to cache full page responses
     Useful for read-only pages that don't change frequently
@@ -129,6 +129,10 @@ def cache_response(ttl_seconds=60):
         def my_page():
             # expensive DB queries
             return render_template(...)
+
+    Set public=True for pages whose response does not depend on the logged-in
+    user (public leaderboards, statistics, mechanics). Public entries share a
+    single cache slot across all users so the first hit warms it for everyone.
     """
 
     def decorator(f):
@@ -155,7 +159,7 @@ def cache_response(ttl_seconds=60):
             # Create cache key from function name and user session
             from flask import session, request
 
-            user_id = session.get("user_id", "anon")
+            user_id = "public" if public else session.get("user_id", "anon")
             # Include full URL with query string so different
             # pages/filters get cached separately
             page_id = request.full_path if hasattr(request, "full_path") else ""
