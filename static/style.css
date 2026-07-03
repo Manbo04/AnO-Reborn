@@ -1419,7 +1419,6 @@ body:has(.navbarparent .templatecontainer) {
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
-    background-position-y: 150%;
 }
 
 .provincestopper {
