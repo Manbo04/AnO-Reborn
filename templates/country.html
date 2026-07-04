@@ -580,7 +580,7 @@
                     <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
                     <span><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
                 </div>
-                <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" alt="" />
+                <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
             </a>
             {% endfor %}
             </div>
@@ -589,7 +589,7 @@
             {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness
             = province[5] %} {% set provinceProductivity = province[6] %} {% set has_image = provinceId in (provinces_with_images|default([])) %}
             <a href="/province/{{ provinceId }}" class="province-banner">
-                <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" />
+                <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" />
                 <div class="province-banner__body">
                     <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h2>
                     <div class="province-stat-row">

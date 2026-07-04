@@ -36,7 +36,7 @@
                 <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
                 <span><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
             </div>
-            <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" alt="" />
+            <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
         </a>
         {% endfor %}
         </div>
@@ -45,7 +45,7 @@
         {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
         %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
         <a href="/province/{{ pId }}" class="province-banner">
-            <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" />
+            <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" />
             <div class="province-banner__body">
                 <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
                 <div class="province-stat-row">
