@@ -189,6 +189,14 @@ def login():
 
                     _ensure_policies_row(db, user[0])
 
+                    try:
+                        from signup import ensure_user_provisioned
+                        ensure_user_provisioned(db, user[0])
+                        from database import get_request_connection
+                        get_request_connection().commit()
+                    except Exception as e:
+                        logger.error("ensure_user_provisioned failed in login: %s", e)
+
                     # Update last_active timestamp on login
                     try:
                         db.execute(
@@ -375,6 +383,13 @@ def discord_login():
                 "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s",
                 (user_id,),
             )
+            try:
+                from signup import ensure_user_provisioned
+                ensure_user_provisioned(db, user_id)
+                from database import get_request_connection
+                get_request_connection().commit()
+            except Exception:
+                pass
     except Exception:
         pass  # best-effort; don't block login
 
