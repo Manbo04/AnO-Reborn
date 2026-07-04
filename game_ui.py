@@ -332,8 +332,8 @@ BIOME_THEMES: dict[str, dict[str, str]] = {
         "ground": "#1e5c38",
     },
     "tundra": {
-        "sky": "linear-gradient(180deg, #2a3d52 0%, #6b8aa8 50%, #c8dce8 100%)",
-        "ground": "#5a6d78",
+        "sky": "linear-gradient(180deg, #35506e 0%, #5f83a6 55%, #8aabc7 100%)",
+        "ground": "#3b5064",
     },
     "desert": {
         "sky": "linear-gradient(180deg, #4a2808 0%, #c9862a 45%, #f0d080 100%)",
@@ -348,20 +348,20 @@ BIOME_THEMES: dict[str, dict[str, str]] = {
         "ground": "#6b8f2a",
     },
     "boreal forest": {
-        "sky": "linear-gradient(180deg, #1a2838 0%, #3d5a6e 55%, #2d4a32 100%)",
-        "ground": "#2a4030",
+        "sky": "linear-gradient(180deg, #223449 0%, #3c5d72 55%, #3a6350 100%)",
+        "ground": "#27442f",
     },
     "borealforest": {
-        "sky": "linear-gradient(180deg, #1a2838 0%, #3d5a6e 55%, #2d4a32 100%)",
-        "ground": "#2a4030",
+        "sky": "linear-gradient(180deg, #223449 0%, #3c5d72 55%, #3a6350 100%)",
+        "ground": "#27442f",
     },
     "mountain range": {
-        "sky": "linear-gradient(180deg, #1c2029 0%, #5c6b7f 45%, #9eb0c4 100%)",
-        "ground": "#4a5568",
+        "sky": "linear-gradient(180deg, #2f3d52 0%, #647a94 55%, #8fa4ba 100%)",
+        "ground": "#3d4b61",
     },
     "mountainrange": {
-        "sky": "linear-gradient(180deg, #1c2029 0%, #5c6b7f 45%, #9eb0c4 100%)",
-        "ground": "#4a5568",
+        "sky": "linear-gradient(180deg, #2f3d52 0%, #647a94 55%, #8fa4ba 100%)",
+        "ground": "#3d4b61",
     },
 }
 
