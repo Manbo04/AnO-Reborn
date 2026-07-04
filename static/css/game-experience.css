@@ -1616,3 +1616,7 @@ body.page-rankings .rankings-table tbody td a {
     0% { transform: translate(0, 0); }
     100% { transform: translate(-100%, 0); }
 }
+
+.province-base-building-row > div:first-child {
+    min-width: 0;
+}
