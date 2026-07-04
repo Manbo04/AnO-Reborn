@@ -774,26 +774,33 @@ def country(cId):
         try:
             db.execute(
                 """
-                SELECT bd.display_name, SUM(ub.quantity) AS quantity
+                SELECT bd.display_name, SUM(ub.quantity) AS quantity, bd.name
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
                 WHERE ub.user_id = %s
                   AND ub.quantity > 0
-                GROUP BY bd.display_name
+                GROUP BY bd.display_name, bd.name
                 HAVING SUM(ub.quantity) > 0
                 ORDER BY bd.display_name
                 """,
                 (cId,),
             )
-            building_rows = db.fetchall() or []
+            building_rows_raw = db.fetchall() or []
+            building_rows = [(r[0], r[1]) for r in building_rows_raw]
+            
+            target_silos = 0
+            for r in building_rows_raw:
+                if r[2] == 'silos':
+                    target_silos = r[1]
         except Exception:
             rollback_db_cursor(db)
             building_rows = []
+            target_silos = 0
 
         try:
             db.execute(
                 """
-                SELECT td.display_name
+                SELECT td.display_name, td.name
                 FROM user_tech ut
                 JOIN tech_dictionary td ON td.tech_id = ut.tech_id
                 WHERE ut.user_id = %s
@@ -802,10 +809,17 @@ def country(cId):
                 """,
                 (cId,),
             )
-            technology_rows = db.fetchall() or []
+            technology_rows_raw = db.fetchall() or []
+            technology_rows = [(r[0],) for r in technology_rows_raw]
+            
+            target_has_nuclear_facility = False
+            for r in technology_rows_raw:
+                if r[1] == 'nuclear_testing_facility':
+                    target_has_nuclear_facility = True
         except Exception:
             rollback_db_cursor(db)
             technology_rows = []
+            target_has_nuclear_facility = False
 
         # Calculate CG need from already-fetched population
         cg_needed = (
@@ -819,38 +833,22 @@ def country(cId):
             status = int(cId) == int(session["user_id"])
         except (KeyError, TypeError, ValueError):
             status = False
-        spy = {}
+        spy = {"count": 0}
         nuke_count = 0
         icbm_count = 0
-
+        attacker_bombers = 0
+        
         uId = session.get("user_id")
         
-        # We also need the attacker's bombers and fighters to display in the UI
-        attacker_bombers = 0
-        if uId:
-            try:
-                db.execute(
-                    "SELECT COALESCE(SUM(um.quantity), 0) FROM user_military um "
-                    "JOIN unit_dictionary ud ON um.unit_id = ud.unit_id "
-                    "WHERE um.user_id=%s AND ud.name = 'bombers'",
-                    (uId,)
-                )
-                b_row = db.fetchone()
-                if b_row:
-                    attacker_bombers = b_row[0]
-            except Exception:
-                rollback_db_cursor(db)
-                
         if uId:
             try:
                 db.execute(
                     "SELECT ud.name, COALESCE(SUM(um.quantity), 0) FROM user_military um "
                     "JOIN unit_dictionary ud ON um.unit_id = ud.unit_id "
-                    "WHERE um.user_id=%s AND ud.name IN ('spies', 'nukes', 'icbms') GROUP BY ud.name",
+                    "WHERE um.user_id=%s AND ud.name IN ('spies', 'nukes', 'icbms', 'bombers') GROUP BY ud.name",
                     (uId,),
                 )
                 military_rows = db.fetchall()
-                spy["count"] = 0
                 for unit_name, qty in military_rows:
                     if unit_name == 'spies':
                         spy["count"] = qty
@@ -858,38 +856,10 @@ def country(cId):
                         nuke_count = qty
                     elif unit_name == 'icbms':
                         icbm_count = qty
+                    elif unit_name == 'bombers':
+                        attacker_bombers = qty
             except Exception:
                 rollback_db_cursor(db)
-                spy["count"] = 0
-                nuke_count = 0
-                icbm_count = 0
-        else:
-            spy["count"] = 0
-
-        # Fetch target's silos and tech to know if they are valid airstrike targets
-        target_silos = 0
-        target_has_nuclear_facility = False
-        try:
-            db.execute(
-                "SELECT COALESCE(SUM(quantity), 0) FROM user_buildings ub "
-                "JOIN building_dictionary bd ON ub.building_id = bd.building_id "
-                "WHERE ub.user_id = %s AND bd.name = 'silos'",
-                (cId,)
-            )
-            s_row = db.fetchone()
-            if s_row:
-                target_silos = s_row[0]
-                
-            db.execute(
-                "SELECT 1 FROM user_tech ut "
-                "JOIN tech_dictionary td ON ut.tech_id = td.tech_id "
-                "WHERE ut.user_id = %s AND td.name = 'nuclear_testing_facility' AND ut.is_unlocked = TRUE",
-                (cId,)
-            )
-            if db.fetchone():
-                target_has_nuclear_facility = True
-        except Exception:
-            rollback_db_cursor(db)
 
         # News page - only for own country
         news = []
