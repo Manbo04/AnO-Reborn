@@ -106,6 +106,10 @@
     <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=8"></script>
     <script defer src="{{ url_for('static', filename='onboarding.js') }}?v=1"></script>
     {% endif %}
+    {% if session.get('user_id') %}
+    <script defer src="{{ url_for('static', filename='tutorial.js') }}?v=1"></script>
+    <link href="{{ url_for('static', filename='tutorial.css') }}?v=1" rel="stylesheet" type="text/css" />
+    {% endif %}
     
     <!-- Interactive Tooltips -->
     <script src="https://unpkg.com/@popperjs/core@2"></script>
@@ -195,7 +199,9 @@
     {% block head %} {% endblock %}
 </head>
 
-<body class="{% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% block body_class %}{% endblock %}">
+<body class="has-side-ads {% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% block body_class %}{% endblock %}">
+
+    {% include 'partials/side_ads.html' %}
 
     <!--
     <script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
