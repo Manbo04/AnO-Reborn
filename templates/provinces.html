@@ -44,42 +44,17 @@
         <div class="game-table-fallback--hide-mobile">
         {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
         %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
-        <a href="/province/{{ pId }}" class="province-list-card-link">
-            <div class="templatedivflex2 menuflex warflexparentcolors card-align-row province-list-card">
-                <div class="templatedivflex2left province-list-card-stats">
-
-                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
-                    <div class="stat-grid">
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">people_alt</span> Pop</strong>
-                            <span class="stat-value">{{ population }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">sentiment_satisfied</span> Happy</strong>
-                            <span class="stat-value">{{ happiness }}%</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">arrow_circle_up</span> Prod</strong>
-                            <span class="stat-value">{{ productivity }}%</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">business</span> Cities</strong>
-                            <span class="stat-value">{{ cityCount }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">landscape</span> Land</strong>
-                            <span class="stat-value">{{ land }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong class="stat-label"><span class="material-icons-outlined">power</span> Power</strong>
-                            <span class="stat-value">{% if energy > 0 %}Yes{% else %}No{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="templatedivflex2right province-list-card-media">
-
-                    <img alt="Image" tabindex="0" class="province-list-card-image" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" />
-
+        <a href="/province/{{ pId }}" class="province-banner">
+            <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=2{% endif %}" />
+            <div class="province-banner__body">
+                <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
+                <div class="province-stat-row">
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}%</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}%</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ cityCount }} cities</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">landscape</span> {{ land }} land</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto{% if energy <= 0 %} province-stat-pill--warn{% endif %}"><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
                 </div>
             </div>
         </a>
