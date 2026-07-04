@@ -9914,3 +9914,7 @@ body.page-game-map .mobile-bottom-nav {
     }
 }
 
+
+.province-base-building-row > div:first-child {
+    min-width: 0;
+}
