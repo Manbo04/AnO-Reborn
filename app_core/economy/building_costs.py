@@ -71,21 +71,21 @@ def format_money(value) -> str:
     if num < 10000:
         if num == int(num):
             return "{:,}".format(int(num))
-        return "{:,.1f}".format(num)
+        return "{:,.2f}".format(num)
     if num < 1000000:
         k = num / 1000
         if k == int(k):
             return "{:,}K".format(int(k))
-        return "{:,.1f}".format(k).rstrip("0").rstrip(".") + "K"
+        return "{:,.2f}".format(k).rstrip("0").rstrip(".") + "K"
     if num < 1000000000:
         m = num / 1000000
         if m == int(m):
             return "{}M".format(int(m))
-        return "{:.1f}M".format(m).rstrip("0").rstrip(".")
+        return "{:.2f}M".format(m).rstrip("0").rstrip(".")
     b = num / 1000000000
     if b == int(b):
         return "{}B".format(int(b))
-    return "{:.1f}B".format(b).rstrip("0").rstrip(".")
+    return "{:.2f}B".format(b).rstrip("0").rstrip(".")
 
 
 def format_weight(value) -> str:
@@ -98,17 +98,17 @@ def format_weight(value) -> str:
     if num < 1000:
         if num == int(num):
             return "{:,} kg".format(int(num))
-        return "{:,.1f} kg".format(num)
+        return "{:,.2f} kg".format(num)
     if num < 1000000:
         t = num / 1000
         if t == int(t):
             return "{:,} t".format(int(t))
-        return "{:,.1f} t".format(t)
+        return "{:,.2f} t".format(t)
     if num < 1000000000:
         kt = num / 1000000
         if kt == int(kt):
             return "{:,} kt".format(int(kt))
-        return "{:,.1f} kt".format(kt)
+        return "{:,.2f} kt".format(kt)
     mt = num / 1000000000
     if mt == int(mt):
         return "{:,} Mt".format(int(mt))
