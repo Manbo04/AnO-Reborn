@@ -108,6 +108,25 @@ At the end of each session or major task, document:
 
 ## 📝 Current Session Log
 
+### Session: 2026-07-04
+
+**Task**: Ticket-0020 ghost account, signup hardening, tasks.py refactor fallout, province UI overhaul
+
+**What Was Done**:
+- **Ghost session root cause** (player Kurai, uid 69697638): failed Discord signup rolled back the users row but left session["user_id"] set; `_maybe_org_handoff` then hijacked every retry into auth_handoff, locking them out of the signup form. Fixed: session set only after commit, auth_handoff verifies uid exists, before_request self-clears dead sessions, handoff never overrides signup-form redirects (`96598821`)
+- **Signup hardening** (`0cc74736`): all 3 signup paths share init_user_game_data; referral bonus wrapped in SAVEPOINTs; commit+verify+retry before login; ensure_user_provisioned self-heals on all login paths; backfill task extended
+- **CI/deploy unblock** (`708de0ea`): 31b929a5 swept email_utils.py + init_db_railway.py into untracked debug_scripts/ — restored both (email_utils is imported by signup/login/change; init_db_railway is run by CI)
+- **Celery fallout from game_ticks refactor**: leader_only wrapper lost __module__ → all leader-locked tasks unregistered, economy frozen (`60cd86ff`); market_bot_fight_wars NameError on app — latent since before refactor (`8d75ead2`); BOT_API_SECRET copied to celery-worker service env. Verified: global_tick + refresh_bot_offers succeeded 14:10/14:25 UTC
+- **Province UI**: photo-as-card banner lists (`c55457bb`), province.jpg 538KB→204KB progressive (`67fd7972`), theme-aware dock + aligned Build buttons (`42693f27`), light header text + hub/scenery fixes (`2285e978`), command-map redesign: rings + dotted spokes, scenery/blob removed, biome palettes brightened (`e7e95e06`)
+
+**What To Watch**:
+- rankings/statistics `cache_response(public=True)` (`40410dda`) is a cross-user leak: layout.html bakes session chrome (own-country link, admin menu) into a shared cache slot — revert public=True or cache data, not pages
+- Original signup-crash exception never recovered from logs; if a signup 500s again the traceback will now surface cleanly ("Discord signup error" in web logs)
+- backfill_missing_resources now CROSS JOINs users×resources every run (correct via ON CONFLICT, wasteful at scale)
+- venvs untracked but still on disk; debug_scripts/ remains untracked
+
+---
+
 ### Session: 2026-06-03
 
 **Task**: My Coalition tab 500 (`/my_coalition` → `/coalition/{id}`, error id `a6z4rc2miwgvtwbv2jkw-1780517862`)
