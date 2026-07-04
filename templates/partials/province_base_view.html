@@ -46,6 +46,7 @@
     {% endif %}
 
     <div class="province-base-arena">
+        <div class="province-map-stage">
         <svg class="province-map-svg" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
             <defs>
                 <pattern id="province-grid" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -93,6 +94,7 @@
         </div>
 
         {% include 'partials/province_base_slots.html' %}
+        </div>
     </div>
 
     <div class="province-dock" id="province-dock" hidden>

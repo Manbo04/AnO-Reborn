@@ -124,16 +124,22 @@ body.game-shell-active.province-base-view-active .templatediv {
 
 .province-base-arena {
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto;
-    gap: 10px 14px;
+    display: flex;
     align-items: center;
-    justify-items: center;
+    justify-content: center;
     min-height: min(58vh, 520px);
-    padding: 16px 12px 20px;
+    padding: 20px 12px 24px;
     background: var(--province-biome-sky, linear-gradient(180deg, #1a3a5c, #1e5c38));
     overflow: hidden;
+}
+
+/* Square stage shared by the SVG (rings/spokes) and the DOM nodes, so the
+   districts sit exactly on the spoke endpoints instead of being flung to the
+   container edges by a grid. Coordinates mirror the 400x400 viewBox. */
+.province-map-stage {
+    position: relative;
+    width: min(100%, 620px);
+    aspect-ratio: 1 / 1;
 }
 
 .province-base-arena::before {
@@ -302,11 +308,12 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 /* Map scenery */
-/* Central capital hub — grid cell in center column */
+/* Central capital hub — pinned to the exact center of the stage */
 .province-map-hub {
-    position: relative;
-    grid-column: 2;
-    grid-row: 2 / 4;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
     z-index: 1;
     display: flex;
     flex-direction: column;
@@ -393,13 +400,15 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-map-node {
     --slot-gradient: linear-gradient(145deg, #333, #555);
     --slot-glow: rgba(0, 167, 225, 0.4);
-    position: relative;
+    position: absolute;
+    /* positioned via left/top per district; translate composes with the
+       transform used by hover/pop animations */
+    translate: -50% -50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    width: 100%;
-    max-width: 112px;
+    width: 112px;
     padding: 0;
     border: none;
     background: transparent;
@@ -424,13 +433,15 @@ body.game-shell-active.province-base-view-active .templatediv {
     from { opacity: 0; transform: scale(0.7); }
 }
 
-.province-map-node--power { grid-column: 2; grid-row: 1; }
-.province-map-node--food { grid-column: 1; grid-row: 2; }
-.province-map-node--retail { grid-column: 3; grid-row: 2; }
-.province-map-node--mines { grid-column: 1; grid-row: 3; }
-.province-map-node--industry { grid-column: 3; grid-row: 3; }
-.province-map-node--civic { grid-column: 1; grid-row: 4; }
-.province-map-node--military { grid-column: 3; grid-row: 4; }
+/* Spoke-endpoint coordinates, as % of the 400x400 viewBox:
+   (200,70) (90,115) (310,115) (55,205) (345,205) (115,330) (285,330) */
+.province-map-node--power { left: 50%; top: 17.5%; }
+.province-map-node--food { left: 22.5%; top: 28.75%; }
+.province-map-node--retail { left: 77.5%; top: 28.75%; }
+.province-map-node--mines { left: 13.75%; top: 51.25%; }
+.province-map-node--industry { left: 86.25%; top: 51.25%; }
+.province-map-node--civic { left: 28.75%; top: 82.5%; }
+.province-map-node--military { left: 71.25%; top: 82.5%; }
 
 .province-map-node:hover,
 .province-map-node:focus-visible,
@@ -756,7 +767,7 @@ body.game-shell-active.province-base-view-active .templatediv {
     }
 
     .province-map-node {
-        max-width: 96px;
+        width: 96px;
     }
 
     .province-map-node-pin {
