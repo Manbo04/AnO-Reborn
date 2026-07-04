@@ -58,9 +58,51 @@ def sitemap():
     body = "\n".join(lines)
     return Response(body, mimetype="application/xml")
 
+_TUTORIAL_CHAPTERS_CACHE: list | None = None
+
+
+def _load_tutorial_chapters() -> list:
+    """Chapter metadata for tutorial.html (video stems, posters, follow links).
+
+    tutorial.html indexes tutorial_chapters[0..9], so this always returns a
+    10-entry list — padded with inert placeholders if chapters.json is short
+    or unreadable — so the page can never 500 on missing metadata.
+    """
+    global _TUTORIAL_CHAPTERS_CACHE
+    if _TUTORIAL_CHAPTERS_CACHE is None:
+        import json
+        import os
+
+        from flask import current_app
+
+        chapters: list = []
+        try:
+            path = os.path.join(
+                current_app.static_folder, "tutorial", "chapters.json"
+            )
+            with open(path, encoding="utf-8") as f:
+                chapters = json.load(f).get("chapters", []) or []
+        except Exception:
+            chapters = []
+        while len(chapters) < 10:
+            chapters.append(
+                {
+                    "stem": "ch00-missing",
+                    "title": "Tutorial chapter",
+                    "poster": "images/province.jpg",
+                    "aria_label": "Tutorial chapter",
+                    "follow_links": [],
+                }
+            )
+        _TUTORIAL_CHAPTERS_CACHE = chapters
+    return _TUTORIAL_CHAPTERS_CACHE
+
+
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
-    return render_template("tutorial.html")
+    return render_template(
+        "tutorial.html", tutorial_chapters=_load_tutorial_chapters()
+    )
 
 @bp.route("/dev/reset_tutorial", methods=["GET"])
 @login_required
