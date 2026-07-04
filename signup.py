@@ -31,8 +31,14 @@ def _complete_referral_signup(db, user_id: int) -> None:
     )
 
     code = referral_code_from_signup_request()
-    link_referrer_on_signup(db, user_id, code)
-    apply_signup_referral_bonus(db, user_id)
+    db.execute("SAVEPOINT referral_signup")
+    try:
+        link_referrer_on_signup(db, user_id, code)
+        apply_signup_referral_bonus(db, user_id)
+        db.execute("RELEASE SAVEPOINT referral_signup")
+    except Exception:
+        logger.exception("Referral signup step failed for user_id=%s", user_id)
+        db.execute("ROLLBACK TO SAVEPOINT referral_signup")
     try:
         session.pop("referral_code", None)
     except RuntimeError:
@@ -88,6 +94,28 @@ def _init_economy_tables(db, user_id):
         (user_id,),
     )
     logger.info("Economy 2.0 tables initialized for user_id=%s", user_id)
+
+
+def ensure_user_provisioned(db, user_id):
+    db.execute(
+        "SELECT "
+        "(SELECT COUNT(*) FROM stats WHERE id=%s), "
+        "(SELECT COUNT(*) FROM user_economy WHERE user_id=%s), "
+        "(SELECT COUNT(*) FROM policies WHERE user_id=%s), "
+        "(SELECT COUNT(*) FROM user_military WHERE user_id=%s), "
+        "(SELECT location FROM stats WHERE id=%s)"
+        "", (user_id, user_id, user_id, user_id, user_id)
+    )
+    row = db.fetchone()
+    stats_c, econ_c, pol_c, mil_c, loc = row
+    continent = loc if loc else 'Grassland'
+    if not stats_c or not econ_c or not pol_c or not mil_c:
+        import logging
+        logging.getLogger(__name__).warning("ensure_user_provisioned: repairing missing data for user_id=%s", user_id)
+        if not stats_c or not pol_c:
+            init_user_game_data(db, user_id, continent)
+        else:
+            _init_economy_tables(db, user_id)
 
 def init_user_game_data(db, user_id, continent):
     """Initialize all game-related data for a new user across all providers."""
@@ -398,6 +426,12 @@ def callback():
                     assign_discord_id_to_user(session["user_id"], discord_user_id)
                 else:
                     rollback_db_cursor(db)
+                try:
+                    ensure_user_provisioned(db, session["user_id"])
+                    from database import get_request_connection
+                    get_request_connection().commit()
+                except Exception as e:
+                    logger.error("ensure_user_provisioned failed in discord callback: %s", e)
                 session.pop('oauth2_intent', None)
                 return redirect("/account")
                 
@@ -659,19 +693,22 @@ def discord_register():
                 # Create all user tables (idempotent)
                 # NOTE: resources and upgrades tables were removed in Economy 2.0
                 # migration; their data now lives in user_economy / user_buildings.
-                db.execute(
-                    "INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s) "
-                    "ON CONFLICT DO NOTHING",
-                    (user_id, continent, 80_000_000),
-                )
-                db.execute(
-                    "INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING",
-                    (user_id,),
-                )
-
-                # Initialize Economy 2.0 normalized tables
-                _init_economy_tables(db, user_id)
+                init_user_game_data(db, user_id, continent)
                 _complete_referral_signup(db, user_id)
+
+                from database import get_request_connection
+                get_request_connection().commit()
+                db.execute("SELECT (SELECT COUNT(*) FROM stats WHERE id=%s), (SELECT COUNT(*) FROM user_economy WHERE user_id=%s)", (user_id, user_id))
+                stats_c, econ_c = db.fetchone()
+                if not stats_c or not econ_c:
+                    init_user_game_data(db, user_id, continent)
+                    get_request_connection().commit()
+                    db.execute("SELECT (SELECT COUNT(*) FROM stats WHERE id=%s), (SELECT COUNT(*) FROM user_economy WHERE user_id=%s)", (user_id, user_id))
+                    stats_c, econ_c = db.fetchone()
+                    if not stats_c or not econ_c:
+                        logger.error(f"Failed to provision user_id={user_id}")
+                        session.pop("user_id", None)
+                        return error(500, "Account provisioning failed, please try again.")
 
             session["user_id"] = user_id
             session.permanent = True
@@ -943,6 +980,20 @@ def signup():
             # migration; their data now lives in user_economy / user_buildings.
             init_user_game_data(db, user_id, continent)
             _complete_referral_signup(db, user_id)
+
+            from database import get_request_connection
+            get_request_connection().commit()
+            db.execute("SELECT (SELECT COUNT(*) FROM stats WHERE id=%s), (SELECT COUNT(*) FROM user_economy WHERE user_id=%s)", (user_id, user_id))
+            stats_c, econ_c = db.fetchone()
+            if not stats_c or not econ_c:
+                init_user_game_data(db, user_id, continent)
+                get_request_connection().commit()
+                db.execute("SELECT (SELECT COUNT(*) FROM stats WHERE id=%s), (SELECT COUNT(*) FROM user_economy WHERE user_id=%s)", (user_id, user_id))
+                stats_c, econ_c = db.fetchone()
+                if not stats_c or not econ_c:
+                    logger.error(f"Failed to provision user_id={user_id}")
+                    session.pop("user_id", None)
+                    return error(500, "Account provisioning failed, please try again.")
 
             # Mark attempt as successful
             db.execute(

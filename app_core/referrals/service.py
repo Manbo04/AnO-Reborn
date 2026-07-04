@@ -145,10 +145,14 @@ def apply_signup_referral_bonus(db, user_id: int) -> dict[str, int] | None:
     row = db.fetchone()
     if not row or not row[0]:
         return None
+    db.execute("SAVEPOINT apply_signup_referral_bonus")
     try:
-        return _apply_rewards(db, user_id, INVITEE_SIGNUP_BONUS)
+        res = _apply_rewards(db, user_id, INVITEE_SIGNUP_BONUS)
+        db.execute("RELEASE SAVEPOINT apply_signup_referral_bonus")
+        return res
     except Exception:
         logger.exception("Failed signup referral bonus for user_id=%s", user_id)
+        db.execute("ROLLBACK TO SAVEPOINT apply_signup_referral_bonus")
         return None
 
 

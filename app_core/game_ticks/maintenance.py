@@ -137,7 +137,6 @@ BOT_OFFERS = [
 
 def backfill_missing_resources():
     from database import get_db_connection
-    from psycopg2.extras import execute_batch, RealDictCursor
 
     # Clean up stale user-linked rows first so backfill never tries to
     # operate around orphaned records from deleted users.
@@ -145,45 +144,62 @@ def backfill_missing_resources():
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        dbdict = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Find users missing user_economy rows (users who don't have all resource_ids)
-        dbdict.execute(
+        
+        # 1. Backfill stats
+        db.execute(
             """
-            SELECT DISTINCT u.id
+            INSERT INTO stats (id, location, gold)
+            SELECT u.id, 'Grassland', 80000000
             FROM users u
-            CROSS JOIN resource_dictionary rd
-            LEFT JOIN user_economy ue
-                ON ue.user_id = u.id
-               AND ue.resource_id = rd.resource_id
-            WHERE ue.user_id IS NULL
+            LEFT JOIN stats s ON u.id = s.id
+            WHERE s.id IS NULL
+            ON CONFLICT DO NOTHING
             """
         )
-        missing_users = {row["id"] for row in dbdict.fetchall()}
-        if not missing_users:
-            return
+        stats_inserted = db.rowcount
+        
+        # 2. Backfill policies
+        db.execute(
+            """
+            INSERT INTO policies (user_id)
+            SELECT u.id
+            FROM users u
+            LEFT JOIN policies p ON u.id = p.user_id
+            WHERE p.user_id IS NULL
+            ON CONFLICT DO NOTHING
+            """
+        )
+        policies_inserted = db.rowcount
+        
+        # 3. Backfill user_military (init to 0)
+        db.execute(
+            """
+            INSERT INTO user_military (user_id, unit_id, quantity)
+            SELECT u.id, ud.unit_id, 0
+            FROM users u
+            CROSS JOIN unit_dictionary ud
+            WHERE ud.is_active = TRUE
+            ON CONFLICT DO NOTHING
+            """
+        )
+        military_inserted = db.rowcount
 
-        # Get all resource_ids
-        dbdict.execute("SELECT resource_id FROM resource_dictionary")
-        resource_ids = [row["resource_id"] for row in dbdict.fetchall()]
+        # 4. Backfill user_economy
+        db.execute(
+            """
+            INSERT INTO user_economy (user_id, resource_id, quantity)
+            SELECT u.id, rd.resource_id, 0
+            FROM users u
+            CROSS JOIN resource_dictionary rd
+            ON CONFLICT DO NOTHING
+            """
+        )
+        economy_inserted = db.rowcount
+        
+        if stats_inserted or policies_inserted or military_inserted or economy_inserted:
+            print(f"Backfill complete: stats={stats_inserted}, policies={policies_inserted}, military={military_inserted}, economy={economy_inserted}")
 
-        # Build (user_id, resource_id, 0) tuples for all missing combinations
-        params = [
-            (user_id, resource_id, 0)
-            for user_id in missing_users
-            for resource_id in resource_ids
-        ]
-
-        try:
-            execute_batch(
-                db,
-                "INSERT INTO user_economy (user_id, resource_id, quantity) "
-                "VALUES (%s, %s, %s) ON CONFLICT (user_id, resource_id) DO NOTHING",
-                params,
-            )
-            print(f"Backfilled user_economy for {len(missing_users)} users")
-        except Exception as e:
-            handle_exception(e)
+        conn.commit()
 
 
 
