@@ -119,6 +119,10 @@ At the end of each session or major task, document:
 - **Celery fallout from game_ticks refactor**: leader_only wrapper lost __module__ → all leader-locked tasks unregistered, economy frozen (`60cd86ff`); market_bot_fight_wars NameError on app — latent since before refactor (`8d75ead2`); BOT_API_SECRET copied to celery-worker service env. Verified: global_tick + refresh_bot_offers succeeded 14:10/14:25 UTC
 - **Province UI**: photo-as-card banner lists (`c55457bb`), province.jpg 538KB→204KB progressive (`67fd7972`), theme-aware dock + aligned Build buttons (`42693f27`), light header text + hub/scenery fixes (`2285e978`), command-map redesign: rings + dotted spokes, scenery/blob removed, biome palettes brightened (`e7e95e06`)
 
+**Player Feature Requests (2026-07-04, from Sirius/Terra Homeworld — Dede said "eventually, not right away")**:
+- Small flag badge in the corner of the nation view banner
+- Custom nation banner background: NOTE half-built already — users.bg_flag column + upload handling exist in countries.py (~line 1391), but the Edit tab has no bg_flag_input field and .countryimagediv hardcodes tundra.jpg; finishing = add form field + render bg_flag as the banner background
+
 **What To Watch**:
 - rankings/statistics `cache_response(public=True)` (`40410dda`) is a cross-user leak: layout.html bakes session chrome (own-country link, admin menu) into a shared cache slot — revert public=True or cache data, not pages
 - Original signup-crash exception never recovered from logs; if a signup 500s again the traceback will now surface cleanly ("Discord signup error" in web logs)
