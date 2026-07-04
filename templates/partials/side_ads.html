@@ -1,0 +1,113 @@
+{# Side ad rails — house ads for the game itself, shuffled per rail, with
+   approved player banner ads (rotating_ads) mixed into the deck when present.
+   Rails only render on wide viewports (CSS hides below 1500px). #}
+{% set house_ads = [
+    {"id": "invite", "icon": "group_add", "title": "Bring your friends",
+     "sub": "They start with +15,000 lumber and $5,000,000 gold — you earn rewards while they play.",
+     "cta": "Get your invite link", "href": "/account"},
+    {"id": "discord", "icon": "forum", "title": "Found a bug? Got ideas?",
+     "sub": "Report bugs and drop suggestions on our Discord — the devs actually read it.",
+     "cta": "Join the Discord", "href": "https://discord.gg/SEae3Ua"},
+    {"id": "coalitions", "icon": "diversity_3", "title": "Stronger together",
+     "sub": "Join a coalition, share a bank, wage wars side by side — or found your own.",
+     "cta": "Browse coalitions", "href": "/coalitions"},
+    {"id": "market", "icon": "storefront", "title": "Buy low. Sell high.",
+     "sub": "The global market never sleeps. Someone is always overpaying.",
+     "cta": "Trade now", "href": "/market"},
+    {"id": "wars", "icon": "military_tech", "title": "Peace was never an option?",
+     "sub": "Plan raids, break morale, loot up to 30% of everything they own.",
+     "cta": "To the war room", "href": "/wars"},
+    {"id": "rankings", "icon": "leaderboard", "title": "How high can you climb?",
+     "sub": "Every nation in Terra, ranked. Yours included.",
+     "cta": "View rankings", "href": "/rankings"},
+    {"id": "mass", "icon": "payments", "title": "Build faster",
+     "sub": "Queue buildings across every province at once with Mass Purchase.",
+     "cta": "Try Mass Purchase", "href": "/mass_purchase"},
+    {"id": "mechanics", "icon": "menu_book", "title": "Master the mechanics",
+     "sub": "Revenue, war math, demographics — every system, explained.",
+     "cta": "Read the guides", "href": "/mechanics"},
+    {"id": "giveaways", "icon": "redeem", "title": "Gold giveaways",
+     "sub": "Drops, events and prizes for Discord members. 50M gold has already been won.",
+     "cta": "Claim your luck", "href": "https://discord.gg/SEae3Ua"},
+    {"id": "advertise", "icon": "campaign", "title": "Your ad here",
+     "sub": "Nations can run their own banners in this space. Propaganda welcome.",
+     "cta": "Upload an ad", "href": "/ads"}
+] %}
+{% set rotating = rotating_ads | default({}) %}
+<aside class="side-ad-rail side-ad-rail--left" data-ad-rail data-rail-seed="0" aria-label="Game tips">
+    {% for ad in house_ads %}
+    <a class="house-ad house-ad--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
+        <span class="house-ad-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
+        <strong class="house-ad-title">{{ ad.title }}</strong>
+        <span class="house-ad-sub">{{ ad.sub }}</span>
+        <span class="house-ad-cta">{{ ad.cta }}</span>
+    </a>
+    {% endfor %}
+    {% if rotating.side_ad_left %}
+    <a class="house-ad house-ad--player" href="{{ rotating.side_ad_left.target_url }}" target="_blank" rel="noopener" hidden>
+        <img src="{{ rotating.side_ad_left.image_url }}" alt="Player advertisement" loading="lazy" />
+        <span class="house-ad-playertag">Player ad</span>
+    </a>
+    {% endif %}
+</aside>
+<aside class="side-ad-rail side-ad-rail--right" data-ad-rail data-rail-seed="5" aria-label="Game tips">
+    {% for ad in house_ads %}
+    <a class="house-ad house-ad--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
+        <span class="house-ad-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
+        <strong class="house-ad-title">{{ ad.title }}</strong>
+        <span class="house-ad-sub">{{ ad.sub }}</span>
+        <span class="house-ad-cta">{{ ad.cta }}</span>
+    </a>
+    {% endfor %}
+    {% if rotating.side_ad_right %}
+    <a class="house-ad house-ad--player" href="{{ rotating.side_ad_right.target_url }}" target="_blank" rel="noopener" hidden>
+        <img src="{{ rotating.side_ad_right.image_url }}" alt="Player advertisement" loading="lazy" />
+        <span class="house-ad-playertag">Player ad</span>
+    </a>
+    {% endif %}
+</aside>
+<script>
+(function () {
+    'use strict';
+    var rails = document.querySelectorAll('[data-ad-rail]');
+    if (!rails.length) return;
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ROTATE_MS = 12000;
+
+    rails.forEach(function (rail) {
+        var ads = Array.prototype.slice.call(rail.querySelectorAll('.house-ad'));
+        if (!ads.length) return;
+        // Shuffle once per page load; offset the two rails so they differ.
+        for (var i = ads.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = ads[i]; ads[i] = ads[j]; ads[j] = t;
+        }
+        var idx = parseInt(rail.getAttribute('data-rail-seed') || '0', 10) % ads.length;
+        var current = null;
+
+        function show(next) {
+            if (current) {
+                current.classList.remove('is-showing');
+                current.classList.add('is-leaving');
+                (function (el) {
+                    setTimeout(function () {
+                        el.hidden = true;
+                        el.classList.remove('is-leaving');
+                    }, reduced ? 0 : 450);
+                })(current);
+            }
+            next.hidden = false;
+            // force reflow so the entrance transition runs
+            void next.offsetWidth;
+            next.classList.add('is-showing');
+            current = next;
+        }
+
+        show(ads[idx]);
+        setInterval(function () {
+            idx = (idx + 1) % ads.length;
+            show(ads[idx]);
+        }, ROTATE_MS);
+    });
+})();
+</script>
