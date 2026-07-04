@@ -56,9 +56,15 @@
                     <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
                 </radialGradient>
             </defs>
-            <rect width="400" height="400" fill="url(#province-grid)" opacity="0.5"/>
-            <ellipse cx="200" cy="260" rx="150" ry="70" fill="url(#province-ground-glow)"/>
-            <g class="province-map-paths" stroke="rgba(255,255,255,0.2)" stroke-width="3" stroke-linecap="round" fill="none">
+            <rect width="400" height="400" fill="url(#province-grid)" opacity="0.4"/>
+            <!-- Command-map composition: districts orbit the capital on faint
+                 rings, connected by dotted supply spokes. -->
+            <g fill="none" stroke="rgba(255,255,255,0.16)">
+                <circle cx="200" cy="200" r="70" stroke-width="1.5"/>
+                <circle cx="200" cy="200" r="115" stroke-opacity="0.7"/>
+                <circle cx="200" cy="200" r="160" stroke-opacity="0.45"/>
+            </g>
+            <g class="province-map-paths" stroke="rgba(255,255,255,0.34)" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 9" fill="none">
                 <path d="M 200 200 L 200 70"/>
                 <path d="M 200 200 L 90 115"/>
                 <path d="M 200 200 L 310 115"/>
@@ -69,15 +75,6 @@
             </g>
             <circle cx="200" cy="200" r="36" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
         </svg>
-        <div class="province-map-scenery" aria-hidden="true">
-            <div class="province-map-cloud province-map-cloud--1"></div>
-            <div class="province-map-cloud province-map-cloud--2"></div>
-            <div class="province-map-cloud province-map-cloud--3"></div>
-            <div class="province-map-tree province-map-tree--1"></div>
-            <div class="province-map-tree province-map-tree--2"></div>
-            <div class="province-map-tree province-map-tree--3"></div>
-            <div class="province-map-road"></div>
-        </div>
 
         <div class="province-map-hub" data-province-hub aria-label="Capital district">
             <div class="province-map-hub-platform">
