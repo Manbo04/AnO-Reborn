@@ -563,14 +563,7 @@ def create_app():
                         ctx["country_name"] = "Unknown"
                         ctx["coalition_id"], ctx["coalition_name"] = None, None
                         
-                    try:
-                        db.execute("SELECT has_unseen_combat_logs FROM users WHERE id = %s", (user_id,))
-                        c_row = db.fetchone()
-                        if c_row:
-                            has_combat = bool(c_row[0])
-                    except Exception:
-                        rollback_db_cursor(db)
-                    ctx["game_ui"] = {"has_unseen_combat_logs": has_combat}
+                    ctx["game_ui"] = {"has_unseen_combat_logs": False}
                     try:
                         from app_core.onboarding.service import get_onboarding_status
 
