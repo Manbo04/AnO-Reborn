@@ -660,12 +660,13 @@ body.game-shell-active.province-base-view-active .templatediv {
     box-shadow: 0 0 0 2px rgba(0, 167, 225, 0.35);
 }
 
-/* Inline dock (desktop / tablet) */
+/* Inline dock (desktop / tablet) — follows the page theme; a hardcoded dark
+   background here made light-theme text and cards unreadable/clashing. */
 .province-dock {
     margin: 0;
     padding: var(--game-space-md);
-    background: rgba(28, 32, 41, 0.95);
-    border-top: 1px solid rgba(0, 167, 225, 0.25);
+    background: var(--game-panel-bg, var(--foregroundTwo));
+    border-top: 1px solid var(--game-panel-border, var(--border));
 }
 
 .province-dock[hidden] {
@@ -697,6 +698,7 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-dock-titles h3 {
     margin: 0;
     font-size: 1.05rem;
+    color: var(--text-color);
 }
 
 .province-dock-titles p {
@@ -736,7 +738,6 @@ body.game-shell-active.province-base-view-active .templatediv {
     overflow: hidden;
 }
 
-.province-dock-card::after,
 .province-base-building-row::after {
     content: "";
     position: absolute;
@@ -991,22 +992,35 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-base-build-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 52px;
     min-height: 44px;
     border: none;
     border-radius: var(--game-radius-md);
-    background: linear-gradient(180deg, #00b8f5, #0088bb);
+    background: var(--accent);
     color: #fff;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    line-height: 1;
     cursor: pointer;
-    box-shadow: 0 4px 0 #006a94;
-    transition: transform 0.1s, box-shadow 0.1s;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.province-base-build-btn:hover {
+    background: var(--accent-hover);
 }
 
 .province-base-build-btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 #006a94;
+    transform: translateY(1px);
+}
+
+/* Pin the button to the card's bottom edge so every card in a row aligns,
+   regardless of how many lines the cost description wraps to. */
+.province-dock-card .province-base-build-btn {
+    margin-top: auto;
+    width: 100%;
 }
 
 .province-base-build-btn:disabled {
