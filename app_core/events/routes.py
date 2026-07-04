@@ -6,15 +6,24 @@ from helpers import login_required
 
 events_bp = Blueprint('events_bp', __name__)
 
+_cached_events = None
+
 def load_events():
+    global _cached_events
+    if _cached_events is not None:
+        return _cached_events
+        
     events_path = os.path.join(os.path.dirname(__file__), 'events.json')
     if os.path.exists(events_path):
         with open(events_path, 'r') as f:
             data = json.load(f)
             if isinstance(data, list):
-                return {item.get('id'): item for item in data if 'id' in item}
-            return data
-    return {}
+                _cached_events = {item.get('id'): item for item in data if 'id' in item}
+            else:
+                _cached_events = data
+            return _cached_events
+    _cached_events = {}
+    return _cached_events
 
 @events_bp.route("/api/events/<int:event_id>/respond", methods=["POST"])
 @login_required
