@@ -100,8 +100,16 @@ def _load_tutorial_chapters() -> list:
 
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
+    # Values mirror static/tutorial.js fallbacks; the quiz answers reference
+    # them, so keep the two places in sync if game balance changes.
+    tutorial_constants = {
+        "tax_per_citizen": 0.5,
+        "min_attack_supplies": 200,
+    }
     return render_template(
-        "tutorial.html", tutorial_chapters=_load_tutorial_chapters()
+        "tutorial.html",
+        tutorial_chapters=_load_tutorial_chapters(),
+        tutorial_constants=tutorial_constants,
     )
 
 @bp.route("/dev/reset_tutorial", methods=["GET"])
