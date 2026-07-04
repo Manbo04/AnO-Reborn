@@ -59,13 +59,13 @@
                 <td><strong class="tooltipparent">
                     <div class="tooltip">Each city slot allows construction of one additional city infrastructure, and increases max population by 750,000</div>
                     <span class="material-icons-outlined">business</span>City slots:</strong></td>
-                <td>{{ province['free_cityCount'] }} / {{ province['citycount'] }}</td>
+                <td>{{ province['citycount'] - province['free_cityCount'] }} used / {{ province['citycount'] }}</td>
             </tr>
             <tr>
                 <td><strong class="tooltipparent">
                     <div class="tooltip">Each land slot allows construction of one additional land infrastructure, increases max population by 120,000 and increases tax income by 2%</div>
                     <span class="material-icons-outlined">landscape</span>Land slots:</strong></td>
-                <td>{{ province['free_land'] }} / {{ province['land'] }}</td>
+                <td>{{ province['land'] - province['free_land'] }} used / {{ province['land'] }}</td>
             </tr>
             <tr>
                 <td><strong class="tooltipparent">
