@@ -1694,7 +1694,8 @@ body:has(.navbarparent .templatecontainer) {
 
 .templatedivtitle {
     text-align: center;
-    color: rgb(255, 255, 255);
+    color: #ffffff !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
     font-size: 40px;
     animation: templatedivtitleload 1.5s;
     margin: 0;
