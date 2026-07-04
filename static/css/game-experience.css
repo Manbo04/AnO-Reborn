@@ -138,7 +138,7 @@ body.game-shell-active.province-base-view-active .templatediv {
    container edges by a grid. Coordinates mirror the 400x400 viewBox. */
 .province-map-stage {
     position: relative;
-    width: min(100%, 620px);
+    width: min(100%, 680px);
     aspect-ratio: 1 / 1;
 }
 
@@ -146,11 +146,13 @@ body.game-shell-active.province-base-view-active .templatediv {
     content: "";
     position: absolute;
     inset: 0;
-    /* Low, crisp ground plane at the very bottom + a soft spotlight anchoring
-       the capital hub. The old mid-height ground blob muddied the whole map. */
+    /* Layered depth: hub spotlight, wide halo behind the stage, an even
+       vignette framing the arena edges, and a low ground plane. */
     background:
-        radial-gradient(ellipse 130% 38% at 50% 108%, var(--province-biome-ground, #1e5c38) 0%, transparent 62%),
-        radial-gradient(circle 190px at 50% 47%, rgba(255, 255, 255, 0.10) 0%, transparent 72%);
+        radial-gradient(circle 190px at 50% 47%, rgba(255, 255, 255, 0.10) 0%, transparent 72%),
+        radial-gradient(circle 46% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 74%),
+        radial-gradient(ellipse 145% 125% at 50% 50%, transparent 54%, rgba(10, 18, 30, 0.32) 100%),
+        radial-gradient(ellipse 130% 38% at 50% 108%, var(--province-biome-ground, #1e5c38) 0%, transparent 62%);
     pointer-events: none;
 }
 
@@ -308,7 +310,8 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 /* Map scenery */
-/* Central capital hub — pinned to the exact center of the stage */
+/* Central capital hub — anchored by the PLATFORM so the disc sits exactly on
+   the SVG landing pad; the label hangs below without shifting the center. */
 .province-map-hub {
     position: absolute;
     left: 50%;
@@ -316,11 +319,10 @@ body.game-shell-active.province-base-view-active .templatediv {
     translate: -50% -50%;
     z-index: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    max-width: 130px;
+    width: 96px;
+    height: 96px;
     pointer-events: none;
 }
 
@@ -366,7 +368,13 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-hub-label {
-    margin-top: 8px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    translate: -50% 0;
+    width: max-content;
+    max-width: 160px;
+    margin-top: 2px;
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -378,12 +386,16 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-map-hub-empty {
+    position: absolute;
+    top: calc(100% + 22px);
+    left: 50%;
+    translate: -50% 0;
+    width: max-content;
     font-size: 0.68rem;
     color: rgba(255, 255, 255, 0.75);
-    margin-top: 4px;
     text-align: center;
     line-height: 1.25;
-    max-width: 120px;
+    max-width: 140px;
     animation: pulse-hint 2s ease infinite;
 }
 
@@ -754,7 +766,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     }
 
     .province-map-hub {
-        max-width: 110px;
+        width: 84px;
+        height: 84px;
     }
 
     .province-map-hub-platform {
