@@ -102,6 +102,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     width: 100%;
 }
 
+/* The header sits on dark glass in BOTH themes, so its text must be light —
+   theme text vars go dark-on-dark in light mode. */
 .province-stat-chip {
     display: inline-flex;
     align-items: center;
@@ -109,8 +111,8 @@ body.game-shell-active.province-base-view-active .templatediv {
     font-size: 0.72rem;
     padding: 4px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .province-stat-chip .material-icons-outlined {
@@ -208,6 +210,7 @@ body.game-shell-active.province-base-view-active .templatediv {
     display: flex;
     align-items: center;
     gap: 8px;
+    color: #fff;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -233,7 +236,7 @@ body.game-shell-active.province-base-view-active .templatediv {
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     margin-bottom: 4px;
 }
 
@@ -304,17 +307,18 @@ body.game-shell-active.province-base-view-active .templatediv {
     z-index: 1;
 }
 
+/* Soft atmosphere, not white smudges: big, heavily blurred, barely-there. */
 .province-map-cloud {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.12);
-    filter: blur(2px);
+    background: rgba(255, 255, 255, 0.10);
+    filter: blur(14px);
     animation: cloud-drift 24s ease-in-out infinite;
 }
 
-.province-map-cloud--1 { width: 80px; height: 28px; left: 8%; top: 12%; }
-.province-map-cloud--2 { width: 110px; height: 36px; right: 10%; top: 18%; animation-delay: -8s; }
-.province-map-cloud--3 { width: 60px; height: 22px; left: 42%; top: 8%; animation-delay: -14s; }
+.province-map-cloud--1 { width: 160px; height: 44px; left: 4%; top: 10%; }
+.province-map-cloud--2 { width: 220px; height: 56px; right: 6%; top: 16%; animation-delay: -8s; }
+.province-map-cloud--3 { width: 130px; height: 36px; left: 40%; top: 6%; animation-delay: -14s; }
 
 @keyframes cloud-drift {
     0%, 100% { transform: translateX(0); }
@@ -347,16 +351,23 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-map-tree--2 { right: 8%; transform: scale(1.15); }
 .province-map-tree--3 { left: 22%; bottom: 22%; transform: scale(0.85); opacity: 0.7; }
 
+/* Ground path: fades out at both ends so it reads as terrain, not a stray
+   gray bar cutting across the district pills. */
 .province-map-road {
     position: absolute;
-    left: 15%;
-    right: 15%;
+    left: 10%;
+    right: 10%;
     bottom: 28%;
-    height: 8px;
-    background: rgba(60, 50, 40, 0.45);
+    height: 6px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(60, 50, 40, 0.30) 22%,
+        rgba(60, 50, 40, 0.30) 78%,
+        transparent 100%
+    );
     border-radius: 4px;
     transform: perspective(200px) rotateX(55deg);
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Central capital hub — grid cell in center column */
@@ -378,12 +389,14 @@ body.game-shell-active.province-base-view-active .templatediv {
     width: 76px;
     height: 76px;
     border-radius: 50%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.25));
-    border: 3px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(180deg, var(--accent, #00a7e1), #036a92);
+    border: 3px solid rgba(255, 255, 255, 0.75);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 -6px 12px rgba(0, 0, 0, 0.2);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        0 0 0 8px rgba(255, 255, 255, 0.12);
 }
 
 .province-map-hub-icon {
