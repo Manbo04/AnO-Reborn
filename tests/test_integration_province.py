@@ -74,7 +74,7 @@ class FakeConn:
         pass
 
 
-def fake_get_db_connection_factory(state):
+def fake_get_request_cursor_factory(state):
     class CM:
         def __enter__(self):
             return FakeConn(state)

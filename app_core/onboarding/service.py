@@ -25,24 +25,26 @@ def _farm_count(db, user_id: int) -> int:
 
 
 def _tutorial_claimed_count(db, user_id: int) -> int:
-    db.execute(
-        """
-        SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'stats' AND column_name = 'tutorial_chapters_claimed'
-        """
-    )
-    if not db.fetchone():
+    try:
+        db.execute(
+            "SELECT tutorial_chapters_claimed FROM stats WHERE id = %s",
+            (user_id,),
+        )
+        row = db.fetchone()
+        claimed = row[0] if row else None
+        return len(list(claimed or []))
+    except Exception:
+        db.connection.rollback()
         return 0
-    db.execute(
-        "SELECT tutorial_chapters_claimed FROM stats WHERE id = %s",
-        (user_id,),
-    )
-    row = db.fetchone()
-    claimed = row[0] if row else None
-    return len(list(claimed or []))
 
 
 def get_onboarding_status(db, user_id: int) -> dict:
+    from database import query_cache
+    cache_key = f"onboarding_status_{user_id}"
+    cached = query_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     provinces = _province_count(db, user_id)
     farms = _farm_count(db, user_id)
     chapters = _tutorial_claimed_count(db, user_id)
@@ -69,7 +71,8 @@ def get_onboarding_status(db, user_id: int) -> dict:
     ]
     done_count = sum(1 for s in steps if s["done"])
     tutorial_done = chapters >= 1
-    return {
+    
+    result = {
         "steps": steps,
         "completed": done_count,
         "total": len(steps),
@@ -79,6 +82,11 @@ def get_onboarding_status(db, user_id: int) -> dict:
         "tutorial_href": "/tutorial?onboard=1",
         "next_href": next((s["href"] for s in steps if not s["done"]), "/country"),
     }
+    
+    # If done_count == len(steps), cache for longer since they won't see checklist again
+    ttl = 600 if result["show_checklist"] is False else 30
+    query_cache.set(cache_key, result, ttl_seconds=ttl)
+    return result
 
 
 def post_signup_redirect(user_id: int, *, has_recovery_key: bool = False) -> str:

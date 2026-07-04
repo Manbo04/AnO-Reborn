@@ -1,5 +1,5 @@
 from flask import Flask
-from tests.test_integration_market_edgecases import fake_get_db_connection_factory
+from tests.test_integration_market_edgecases import fake_get_request_cursor_factory
 from app_core import market
 
 
@@ -21,7 +21,7 @@ def test_accept_sell_trade_where_seller_already_had_resource_removed(monkeypatch
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
