@@ -138,7 +138,7 @@ body.game-shell-active.province-base-view-active .templatediv {
    container edges by a grid. Coordinates mirror the 400x400 viewBox. */
 .province-map-stage {
     position: relative;
-    width: min(100%, 680px);
+    width: min(100%, 540px);
     aspect-ratio: 1 / 1;
 }
 
@@ -146,13 +146,16 @@ body.game-shell-active.province-base-view-active .templatediv {
     content: "";
     position: absolute;
     inset: 0;
-    /* Layered depth: hub spotlight, wide halo behind the stage, an even
-       vignette framing the arena edges, and a low ground plane. */
+    /* Layered depth: hub spotlight, halo behind the stage, edge vignette,
+       a cartographic dot grid across the WHOLE arena (the vignette fades it
+       toward the edges), and a low ground plane. */
     background:
-        radial-gradient(circle 190px at 50% 47%, rgba(255, 255, 255, 0.10) 0%, transparent 72%),
-        radial-gradient(circle 46% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 74%),
-        radial-gradient(ellipse 145% 125% at 50% 50%, transparent 54%, rgba(10, 18, 30, 0.32) 100%),
+        radial-gradient(circle 170px at 50% 47%, rgba(255, 255, 255, 0.10) 0%, transparent 72%),
+        radial-gradient(circle 340px at 50% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 74%),
+        radial-gradient(ellipse 145% 125% at 50% 50%, transparent 50%, rgba(10, 18, 30, 0.38) 100%),
+        radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1.5px),
         radial-gradient(ellipse 130% 38% at 50% 108%, var(--province-biome-ground, #1e5c38) 0%, transparent 62%);
+    background-size: auto, auto, auto, 26px 26px, auto;
     pointer-events: none;
 }
 
