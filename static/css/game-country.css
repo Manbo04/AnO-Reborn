@@ -770,19 +770,19 @@ body.page-country .revenue .stat-value {
 .province-banner .province-stat-row {
     margin: 0;
 }
-.province-stat-pill--onphoto {
+.province-banner .province-stat-pill--onphoto {
     background: rgba(8, 16, 30, 0.55);
     color: #f2f6fa;
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
 }
-.province-stat-pill--onphoto .material-icons-outlined {
+.province-banner .province-stat-pill--onphoto .material-icons-outlined {
     color: var(--accent, #00a7e1);
 }
-.province-stat-pill--warn {
+.province-banner .province-stat-pill--warn {
     background: rgba(122, 32, 32, 0.68);
 }
-.province-stat-pill--warn .material-icons-outlined {
+.province-banner .province-stat-pill--warn .material-icons-outlined {
     color: #ffb4a8;
 }
 .province-banner:hover .province-banner__img,
