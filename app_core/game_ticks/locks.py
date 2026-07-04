@@ -152,6 +152,10 @@ def leader_only(ttl_seconds=60, key_prefix="task_lock"):
 
         wrapper.__name__ = fn.__name__
         wrapper.__doc__ = fn.__doc__
+        # Celery derives task names from the wrapped function's __module__.
+        # Without this, tasks decorated in tasks.py register under
+        # app_core.game_ticks.locks.* and beat's tasks.* sends go unregistered.
+        wrapper.__module__ = fn.__module__
         return wrapper
 
     return decorator
