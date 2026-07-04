@@ -541,7 +541,7 @@ def create_app():
                 try:
                     db.execute(
                         """
-                        SELECT u.countryName, u.username,
+                        SELECT u.username,
                                c.id as col_id, c.name as col_name
                         FROM users u
                         LEFT JOIN colNames c ON c.id = u.coalitionId
@@ -554,11 +554,11 @@ def create_app():
                     has_combat = False
                     if row:
                         ctx["country_name"] = row[0] if row[0] else "Unknown"
-                        if row[1] == "Terra Homeworld":
+                        if row[0] == "Terra Homeworld":
                             ctx["admin_user_ids"].append(user_id)
                             
-                        ctx["coalition_id"] = row[2]
-                        ctx["coalition_name"] = row[3]
+                        ctx["coalition_id"] = row[1]
+                        ctx["coalition_name"] = row[2]
                     else:
                         ctx["country_name"] = "Unknown"
                         ctx["coalition_id"], ctx["coalition_name"] = None, None
