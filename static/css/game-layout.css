@@ -262,3 +262,119 @@ body.page-country .templatedivcontent .infodiv {
         width: 100%;
     }
 }
+
+/* --- Side ad rails (house ads + player banners) -------------------------- */
+.side-ad-rail {
+    position: fixed;
+    top: 50%;
+    translate: 0 -50%;
+    width: 168px;
+    z-index: 40;
+    display: none;
+}
+.side-ad-rail--left { left: 14px; }
+.side-ad-rail--right { right: 14px; }
+
+@media (min-width: 1500px) {
+    .side-ad-rail { display: block; }
+    body.has-side-ads .templatediv { width: calc(90% - 380px); }
+}
+
+.house-ad {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 290px;
+    padding: 18px 16px;
+    border-radius: 16px;
+    color: #fff;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, #23324a, #101a2b);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 28px rgba(4, 10, 22, 0.35);
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.house-ad.is-showing { opacity: 1; transform: none; }
+.house-ad.is-leaving { position: absolute; inset: 0; opacity: 0; transform: translateY(-14px) scale(0.97); }
+
+/* shine sweep — the flash in "flashy" */
+.house-ad::after {
+    content: "";
+    position: absolute;
+    top: -60%;
+    bottom: -60%;
+    left: -80%;
+    width: 42%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    transform: rotate(12deg);
+    animation: house-ad-shine 5.5s ease-in-out infinite;
+}
+@keyframes house-ad-shine {
+    0%, 55% { left: -80%; }
+    85%, 100% { left: 130%; }
+}
+
+.house-ad-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.16);
+    animation: house-ad-bob 3.2s ease-in-out infinite;
+}
+.house-ad-icon .material-icons-outlined { font-size: 1.6rem; color: #fff; position: static; }
+@keyframes house-ad-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.house-ad-title { font-size: 1.02rem; font-weight: 800; line-height: 1.25; }
+.house-ad-sub { font-size: 0.8rem; line-height: 1.45; color: rgba(255, 255, 255, 0.82); flex: 1; }
+.house-ad-cta {
+    align-self: flex-start;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.92);
+    color: #14213d;
+}
+.house-ad:hover .house-ad-cta { background: #fff; }
+.house-ad:hover { transform: translateY(-3px) scale(1.01); }
+
+/* per-ad palettes */
+.house-ad--invite      { background: linear-gradient(160deg, #14532d, #22c55e 130%); }
+.house-ad--discord     { background: linear-gradient(160deg, #2b2f77, #5865f2 130%); }
+.house-ad--coalitions  { background: linear-gradient(160deg, #713f12, #eab308 145%); }
+.house-ad--market      { background: linear-gradient(160deg, #134e4a, #14b8a6 135%); }
+.house-ad--wars        { background: linear-gradient(160deg, #7f1d1d, #ef4444 140%); }
+.house-ad--rankings    { background: linear-gradient(160deg, #4c1d95, #a855f7 135%); }
+.house-ad--mass        { background: linear-gradient(160deg, #1e3a8a, #3b82f6 135%); }
+.house-ad--mechanics   { background: linear-gradient(160deg, #164e63, #06b6d4 135%); }
+.house-ad--giveaways   { background: linear-gradient(160deg, #831843, #f97316 150%); }
+.house-ad--advertise   { background: linear-gradient(160deg, #111827, #00a7e1 160%); }
+
+.house-ad--player { padding: 0; min-height: 0; }
+.house-ad--player img { width: 100%; display: block; border-radius: 16px; }
+.house-ad--player .house-ad-playertag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .house-ad, .house-ad.is-leaving { transition: none; }
+    .house-ad::after, .house-ad-icon { animation: none; }
+}
