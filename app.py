@@ -529,40 +529,31 @@ def create_app():
             with get_request_cursor() as db:
                 try:
                     db.execute(
-                        "SELECT countryName, username FROM users WHERE id = %s",
-                        (user_id,),
-                    )
-                    row = db.fetchone()
-                    ctx["country_name"] = row[0] if row else "Unknown"
-                    if row and row[1] == "Terra Homeworld":
-                        ctx["admin_user_ids"].append(user_id)
-
-                    db.execute(
                         """
-                        SELECT id, name FROM colNames
-                        WHERE id = (SELECT coalitionId FROM users WHERE id=%s)
+                        SELECT u.countryName, u.username, u.has_unseen_combat_logs,
+                               c.id as col_id, c.name as col_name
+                        FROM users u
+                        LEFT JOIN colNames c ON c.id = u.coalitionId
+                        WHERE u.id = %s
                         """,
                         (user_id,),
                     )
-                    coalition = db.fetchone()
-                    if coalition:
-                        ctx["coalition_id"], ctx["coalition_name"] = (
-                            coalition[0],
-                            coalition[1],
-                        )
-                    else:
-                        ctx["coalition_id"], ctx["coalition_name"] = None, None
-
+                    row = db.fetchone()
+                    
                     has_combat = False
-                    try:
-                        db.execute(
-                            "SELECT has_unseen_combat_logs FROM users WHERE id = %s",
-                            (user_id,),
-                        )
-                        combat_row = db.fetchone()
-                        has_combat = combat_row[0] if combat_row else False
-                    except Exception:
-                        rollback_db_cursor(db)
+                    if row:
+                        ctx["country_name"] = row[0] if row[0] else "Unknown"
+                        if row[1] == "Terra Homeworld":
+                            ctx["admin_user_ids"].append(user_id)
+                            
+                        ctx["coalition_id"] = row[3]
+                        ctx["coalition_name"] = row[4]
+                        
+                        has_combat = bool(row[2])
+                    else:
+                        ctx["country_name"] = "Unknown"
+                        ctx["coalition_id"], ctx["coalition_name"] = None, None
+                        
                     ctx["game_ui"] = {"has_unseen_combat_logs": has_combat}
                     try:
                         from app_core.onboarding.service import get_onboarding_status
