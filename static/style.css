@@ -6832,12 +6832,13 @@ body.game-shell-active.province-base-view-active .templatediv {
     box-shadow: 0 0 0 2px rgba(0, 167, 225, 0.35);
 }
 
-/* Inline dock (desktop / tablet) */
+/* Inline dock (desktop / tablet) — follows the page theme; a hardcoded dark
+   background here made light-theme text and cards unreadable/clashing. */
 .province-dock {
     margin: 0;
     padding: var(--game-space-md);
-    background: rgba(28, 32, 41, 0.95);
-    border-top: 1px solid rgba(0, 167, 225, 0.25);
+    background: var(--game-panel-bg, var(--foregroundTwo));
+    border-top: 1px solid var(--game-panel-border, var(--border));
 }
 
 .province-dock[hidden] {
@@ -6869,6 +6870,7 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-dock-titles h3 {
     margin: 0;
     font-size: 1.05rem;
+    color: var(--text-color);
 }
 
 .province-dock-titles p {
@@ -6908,7 +6910,6 @@ body.game-shell-active.province-base-view-active .templatediv {
     overflow: hidden;
 }
 
-.province-dock-card::after,
 .province-base-building-row::after {
     content: "";
     position: absolute;
@@ -7163,22 +7164,35 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 .province-base-build-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 52px;
     min-height: 44px;
     border: none;
     border-radius: var(--game-radius-md);
-    background: linear-gradient(180deg, #00b8f5, #0088bb);
+    background: var(--accent);
     color: #fff;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    line-height: 1;
     cursor: pointer;
-    box-shadow: 0 4px 0 #006a94;
-    transition: transform 0.1s, box-shadow 0.1s;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.province-base-build-btn:hover {
+    background: var(--accent-hover);
 }
 
 .province-base-build-btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 #006a94;
+    transform: translateY(1px);
+}
+
+/* Pin the button to the card's bottom edge so every card in a row aligns,
+   regardless of how many lines the cost description wraps to. */
+.province-dock-card .province-base-build-btn {
+    margin-top: auto;
+    width: 100%;
 }
 
 .province-base-build-btn:disabled {
@@ -8506,6 +8520,102 @@ body.page-country .revenue .stat-value {
 }
 
 
+/* --- Province banner cards (country + provinces lists) ------------------ */
+/* The photo IS the card: full-bleed image, navy scrim rising from the left,
+   name + statline overlaid. Replaces the old half-empty two-column card. */
+.province-banner {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 128px;
+    margin: 14px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    isolation: isolate;
+    background: #0a1526;
+    box-shadow: 0 1px 3px rgba(4, 10, 22, 0.28);
+    text-decoration: none;
+}
+.province-banner__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    transition: transform 0.25s ease;
+}
+.province-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(10, 21, 38, 0.92) 0%,
+        rgba(10, 21, 38, 0.62) 46%,
+        rgba(10, 21, 38, 0.12) 100%
+    );
+    z-index: 0;
+}
+.province-banner__body {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 14px 18px 12px;
+}
+.province-banner__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(4, 10, 22, 0.55);
+}
+.province-banner__name .material-icons-outlined {
+    font-size: 1.25rem;
+    color: var(--accent, #00a7e1);
+}
+.province-banner .province-stat-row {
+    margin: 0;
+}
+.province-stat-pill--onphoto {
+    background: rgba(8, 16, 30, 0.55);
+    color: #f2f6fa;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.province-stat-pill--onphoto .material-icons-outlined {
+    color: var(--accent, #00a7e1);
+}
+.province-stat-pill--warn {
+    background: rgba(122, 32, 32, 0.68);
+}
+.province-stat-pill--warn .material-icons-outlined {
+    color: #ffb4a8;
+}
+.province-banner:hover .province-banner__img,
+.province-banner:focus-visible .province-banner__img {
+    transform: scale(1.03);
+}
+.province-banner:focus-visible {
+    outline: 2px solid var(--accent, #00a7e1);
+    outline-offset: 2px;
+}
+@media (max-width: 700px) {
+    .province-banner { min-height: 104px; }
+    .province-banner__body { padding: 10px 12px 9px; }
+    .province-banner__name { font-size: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .province-banner__img { transition: none; }
+    .province-banner:hover .province-banner__img,
+    .province-banner:focus-visible .province-banner__img { transform: none; }
+}
+
+
 /* --- static/css/game-province.css --- */
 /**
  * Province page — classic + base view alignment
@@ -9136,98 +9246,3 @@ body.page-military .templatedivcontent .infodiv {
     }
 }
 
-
-/* --- Province banner cards (country + provinces lists) ------------------ */
-/* The photo IS the card: full-bleed image, navy scrim rising from the left,
-   name + statline overlaid. Replaces the old half-empty two-column card. */
-.province-banner {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 128px;
-    margin: 14px 0;
-    border-radius: 12px;
-    overflow: hidden;
-    isolation: isolate;
-    background: #0a1526;
-    box-shadow: 0 1px 3px rgba(4, 10, 22, 0.28);
-    text-decoration: none;
-}
-.province-banner__img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -1;
-    transition: transform 0.25s ease;
-}
-.province-banner::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(10, 21, 38, 0.92) 0%,
-        rgba(10, 21, 38, 0.62) 46%,
-        rgba(10, 21, 38, 0.12) 100%
-    );
-    z-index: 0;
-}
-.province-banner__body {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    padding: 14px 18px 12px;
-}
-.province-banner__name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 8px;
-    font-size: 1.3rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(4, 10, 22, 0.55);
-}
-.province-banner__name .material-icons-outlined {
-    font-size: 1.25rem;
-    color: var(--accent, #00a7e1);
-}
-.province-banner .province-stat-row {
-    margin: 0;
-}
-.province-stat-pill--onphoto {
-    background: rgba(8, 16, 30, 0.55);
-    color: #f2f6fa;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-}
-.province-stat-pill--onphoto .material-icons-outlined {
-    color: var(--accent, #00a7e1);
-}
-.province-stat-pill--warn {
-    background: rgba(122, 32, 32, 0.68);
-}
-.province-stat-pill--warn .material-icons-outlined {
-    color: #ffb4a8;
-}
-.province-banner:hover .province-banner__img,
-.province-banner:focus-visible .province-banner__img {
-    transform: scale(1.03);
-}
-.province-banner:focus-visible {
-    outline: 2px solid var(--accent, #00a7e1);
-    outline-offset: 2px;
-}
-@media (max-width: 700px) {
-    .province-banner { min-height: 104px; }
-    .province-banner__body { padding: 10px 12px 9px; }
-    .province-banner__name { font-size: 1.1rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-    .province-banner__img { transition: none; }
-    .province-banner:hover .province-banner__img,
-    .province-banner:focus-visible .province-banner__img { transform: none; }
-}
