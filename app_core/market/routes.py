@@ -401,7 +401,7 @@ def decline_trade_endpoint(trade_id):
 
 @market_bp.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
-def accept_trade_endpoint(trade_id):
+def accept_trade(trade_id):
     cId = session["user_id"]
     with get_request_cursor() as db:
         lock_blocked = False

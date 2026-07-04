@@ -536,45 +536,59 @@ def create_app():
             return ctx
 
         user_id = session["user_id"]
+        cache_key = f"layout_user_{user_id}"
+        cached_user = query_cache.get(cache_key)
+
         try:
             with get_request_cursor() as db:
-                try:
-                    db.execute(
-                        """
-                        SELECT u.username,
-                               c.id as col_id, c.name as col_name
-                        FROM users u
-                        LEFT JOIN colNames c ON c.id = u.coalitionId
-                        WHERE u.id = %s
-                        """,
-                        (user_id,),
-                    )
-                    row = db.fetchone()
-                    
-                    has_combat = False
-                    if row:
-                        ctx["country_name"] = row[0] if row[0] else "Unknown"
-                        if row[0] == "Terra Homeworld":
-                            ctx["admin_user_ids"].append(user_id)
-                            
-                        ctx["coalition_id"] = row[1]
-                        ctx["coalition_name"] = row[2]
-                    else:
-                        ctx["country_name"] = "Unknown"
-                        ctx["coalition_id"], ctx["coalition_name"] = None, None
-                        
-                    ctx["game_ui"] = {"has_unseen_combat_logs": False}
+                if cached_user is None:
                     try:
-                        from app_core.onboarding.service import get_onboarding_status
-
-                        ctx["onboarding_checklist"] = get_onboarding_status(db, user_id)
+                        db.execute(
+                            """
+                            SELECT u.username,
+                                   c.id as col_id, c.name as col_name
+                            FROM users u
+                            LEFT JOIN colNames c ON c.id = u.coalitionId
+                            WHERE u.id = %s
+                            """,
+                            (user_id,),
+                        )
+                        row = db.fetchone()
+                        
+                        if row:
+                            cached_user = {
+                                "country_name": row[0] if row[0] else "Unknown",
+                                "coalition_id": row[1],
+                                "coalition_name": row[2]
+                            }
+                        else:
+                            cached_user = {
+                                "country_name": "Unknown",
+                                "coalition_id": None,
+                                "coalition_name": None
+                            }
+                        query_cache.set(cache_key, cached_user, ttl_seconds=60)
                     except Exception:
-                        ctx["onboarding_checklist"] = None
+                        rollback_db_cursor(db)
+                        cached_user = {
+                            "country_name": "Error",
+                            "coalition_id": None,
+                            "coalition_name": None
+                        }
+                
+                ctx["country_name"] = cached_user["country_name"]
+                if ctx["country_name"] == "Terra Homeworld":
+                    ctx["admin_user_ids"].append(user_id)
+                ctx["coalition_id"] = cached_user["coalition_id"]
+                ctx["coalition_name"] = cached_user["coalition_name"]
+                
+                ctx["game_ui"] = {"has_unseen_combat_logs": False}
+                try:
+                    from app_core.onboarding.service import get_onboarding_status
+
+                    ctx["onboarding_checklist"] = get_onboarding_status(db, user_id)
                 except Exception:
-                    rollback_db_cursor(db)
-                    ctx["country_name"] = "Error"
-                    ctx["coalition_id"], ctx["coalition_name"] = None, None
-                    ctx["game_ui"] = {"has_unseen_combat_logs": False}
+                    ctx["onboarding_checklist"] = None
         except Exception:
             ctx["country_name"] = "Error"
             ctx["coalition_id"], ctx["coalition_name"] = None, None

@@ -11,7 +11,7 @@ except Exception:
     from app_core import market
     import tasks
 
-from tests.test_integration_market_edgecases import fake_get_db_connection_factory
+from tests.test_integration_market_edgecases import fake_get_request_cursor_factory
 
 
 def test_accept_trade_records_trade(monkeypatch):
@@ -24,7 +24,7 @@ def test_accept_trade_records_trade(monkeypatch):
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     called = {"ok": False}
@@ -61,7 +61,7 @@ def test_generate_province_revenue_records_metric(monkeypatch):
 
     # The functions import get_db_connection from the database module, so patch that
     monkeypatch.setattr(
-        "database.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "database.get_db_connection", lambda: fake_get_request_cursor_factory(state)()
     )
 
     called = {"ok": False}
