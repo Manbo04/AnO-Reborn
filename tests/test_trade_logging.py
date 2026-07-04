@@ -11,7 +11,10 @@ except Exception:
     from app_core import market
     import trade_agreements
 
-from tests.test_integration_market_edgecases import fake_get_db_connection_factory
+from tests.test_integration_market_edgecases import (
+    fake_get_request_cursor_factory,
+    fake_get_db_connection_factory,
+)
 
 
 def test_market_accept_trade_emits_log(monkeypatch):
@@ -24,15 +27,15 @@ def test_market_accept_trade_emits_log(monkeypatch):
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     calls = []
 
-    def fake_logger(msg, *args, **kwargs):
-        calls.append((msg, kwargs))
-
-    monkeypatch.setattr(market, "logger", type("L", (), {"info": fake_logger}))
+    class MockLogger:
+        def info(self, msg, *args, **kwargs):
+            calls.append((msg, kwargs))
+    monkeypatch.setattr("app_core.market.routes.logger", MockLogger())
 
     test_app = Flask(__name__)
     test_app.secret_key = "test-secret"

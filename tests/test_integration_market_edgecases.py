@@ -111,6 +111,8 @@ class FakeCursor:
                     "trade_agreements", {}
                 ).get(int(aid))
                 self._last = agr
+            elif "from resource_dictionary" in sql_lower and "update user_economy" not in sql_lower and "insert into user_economy" not in sql_lower:
+                self._last = (1,)
             # UPDATE offers SET amount=(%s) WHERE offer_id=(%s)
             elif "update offers set amount" in sql_lower:
                 new_amount = params[0]
@@ -249,6 +251,31 @@ class FakeCursor:
                     left = sql.split("SET", 1)[1].split("WHERE")[0].strip()
                     resource = left.split("=")[0].strip()
                     self.state["resources"][uid][resource] = new_amount
+            # user_economy updates
+            elif "update user_economy ue" in sql_lower and "-" in sql_lower and "returning ue.quantity" in sql_lower:
+                print("MATCHED UPDATE USER ECONOMY MINUS")
+                resource = params[0]
+                amt = params[1]
+                uid = params[2]
+                required = params[3]
+                if self.state["resources"][uid].get(resource, 0) < required:
+                    self._last = None
+                else:
+                    self.state["resources"][uid][resource] -= amt
+                    self._last = (self.state["resources"][uid][resource],)
+            elif "update user_economy ue" in sql_lower and "+" in sql_lower and "returning ue.quantity" in sql_lower:
+                print("MATCHED UPDATE USER ECONOMY PLUS")
+                resource = params[0]
+                amt = params[1]
+                uid = params[2]
+                self.state["resources"][uid][resource] = self.state["resources"][uid].get(resource, 0) + amt
+                self._last = (self.state["resources"][uid][resource],)
+            elif "insert into user_economy" in sql_lower:
+                uid = params[0]
+                resource = params[1]
+                if resource not in self.state["resources"][uid]:
+                    self.state["resources"][uid][resource] = 0
+                self._last = None
             # Parameterized updates with RETURNING (atomic checks)
             elif "update resources set" in sql_lower and "returning" in sql_lower:
                 # Expect params like (amt, id, amt) for '-' case or (amt, id) for '+'
@@ -373,7 +400,7 @@ def fake_get_db_connection_factory(state):
 
 def test_fake_delete_returning_pops_trade_sequential(monkeypatch):
     state = {"trades": {99: (300, "sell", 400, "rations", 5, 10)}}
-    cm = fake_get_db_connection_factory(state)()
+    cm = fake_get_request_cursor_factory(state)()
     with cm as conn:
         db1 = conn.cursor()
         sql = (
@@ -408,13 +435,13 @@ def test_fake_delete_returning_under_concurrency(monkeypatch):
         },
     }
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     results = []
 
     def do_delete():
-        cm = fake_get_db_connection_factory(state)()
+        cm = fake_get_request_cursor_factory(state)()
         with cm as conn:
             db = conn.cursor()
             sql = (
@@ -442,7 +469,7 @@ def test_fake_delete_returning_under_concurrency(monkeypatch):
     query_cache.set("resources_200", {"rations": 50}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -481,7 +508,7 @@ def test_buy_market_offer_partial_fill_success(monkeypatch):
     query_cache.set("resources_200", {"rations": 10}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -519,7 +546,7 @@ def test_sell_market_offer_insufficient_resources(monkeypatch):
     query_cache.set("resources_400", {"lumber": 0}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     # avoid Jinja template rendering in tests for error paths
@@ -554,7 +581,7 @@ def test_sell_market_offer_full_match_success(monkeypatch):
     query_cache.set("resources_400", {"lumber": 0}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     # avoid Jinja template rendering in tests for error paths
@@ -594,7 +621,7 @@ def test_concurrent_transfers_invalidate_cache(monkeypatch):
     query_cache.set("resources_500", {"rations": 100}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -639,7 +666,7 @@ def test_transfer_insufficient_resources(monkeypatch):
     query_cache.set("resources_700", {"lumber": 5}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -680,12 +707,12 @@ def test_buy_market_offer_give_resource_failure(monkeypatch):
     query_cache.set("resources_2000", {"rations": 10}, ttl_seconds=30)
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     # Make give_resource fail for the bank -> buyer transfer
     monkeypatch.setattr(
-        "market.give_resource", lambda *a, **kw: "insufficient funds in bank"
+        "app_core.market.routes.give_resource", lambda *a, **kw: "insufficient funds in bank"
     )
 
     test_app = Flask(__name__)
@@ -758,11 +785,11 @@ def test_accept_trade_give_resource_failure(monkeypatch):
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     # Force give_resource to fail (e.g., money transfer fails)
-    monkeypatch.setattr("market.give_resource", lambda *a, **kw: "transfer failed")
+    monkeypatch.setattr("app_core.market.routes.give_resource", lambda *a, **kw: "transfer failed")
 
     test_app = Flask(__name__)
     test_app.secret_key = "test-secret"
@@ -795,13 +822,13 @@ def test_accept_trade_give_resource_raises_exception(monkeypatch):
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     def raising_give(*a, **kw):
         raise Exception("boom")
 
-    monkeypatch.setattr("market.give_resource", raising_give)
+    monkeypatch.setattr("app_core.market.routes.give_resource", raising_give)
 
     test_app = Flask(__name__)
     test_app.secret_key = "test-secret"
@@ -836,7 +863,7 @@ def test_accept_buy_offer_seller_lacks_resource_does_not_double_charge(monkeypat
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -862,3 +889,19 @@ def test_accept_buy_offer_seller_lacks_resource_does_not_double_charge(monkeypat
     assert state["stats"][200]["gold"] == 0
     # Ensure no resource mutation occurred
     assert state["resources"][200]["rations"] == 0
+def fake_get_request_cursor_factory(state):
+    class CM:
+        def __enter__(self):
+            self._conn = FakeConn(state)
+            self._cursor = self._conn.cursor()
+            return self._cursor
+
+        def __exit__(self, exc_type, exc, tb):
+            if exc_type is None:
+                try:
+                    self._conn.commit()
+                except Exception:
+                    pass
+            return False
+
+    return CM
