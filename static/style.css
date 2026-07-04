@@ -7149,6 +7149,8 @@ body.game-shell-active.province-base-view-active .templatediv {
 .province-base-building-meta {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    white-space: normal;
+    word-break: break-word;
 }
 
 .province-base-building-qty {
