@@ -3477,24 +3477,22 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 }
 
 .countryimage {
-    flex: 2 1 380px;
-    min-width: 0;
-    max-width: 760px;
+    flex: 0 1 auto;
+    width: auto;
+    max-width: min(100%, 760px);
     height: clamp(180px, 24vw, 340px);
     object-fit: contain;
-    background: rgba(10, 16, 26, 0.45);
     box-shadow: rgba(0, 0, 0, 0.2) 0 3px 4px 1px, rgba(0, 0, 0, 0.4) 0 12px 32px 0;
     border-radius: 4px;
     user-select: initial;
 }
 
 .countrycoalitionimage {
-    flex: 1 1 220px;
-    min-width: 0;
-    max-width: 380px;
+    flex: 0 1 auto;
+    width: auto;
+    max-width: min(100%, 380px);
     height: clamp(180px, 24vw, 340px);
     object-fit: contain;
-    background: rgba(10, 16, 26, 0.45);
     box-shadow: 0 0.5rem 2rem 0.2rem rgba(58, 59, 69, 0.3);
     border: 6px solid #1c202990;
     border-radius: 4px;
