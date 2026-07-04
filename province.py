@@ -234,8 +234,7 @@ def province(pId):
             "citycount": result["citycount"],
             "land": result["land"],
             "electricity": result["electricity"],
-            "location": result["location"]
-            or "Grassland",  # Default to Grassland if NULL
+            "location": (result["location"] or "Grassland").strip(),
         }
 
         # Build units dict from user_buildings (Economy 2.0 normalized schema)
@@ -320,6 +319,8 @@ def province(pId):
             "libraries",
             "universities",
             "monorails",
+            "primary_school",
+            "high_school",
         ]
         land_buildings = [
             "army_bases",
@@ -341,6 +342,7 @@ def province(pId):
             "ammunition_factories",
             "aluminium_refineries",
             "oil_refineries",
+            "industrial_district",
         ]
 
         used_city_slots = sum(units.get(b, 0) or 0 for b in city_buildings)
@@ -653,7 +655,7 @@ def province_layout_api(pId):
             return jsonify({"error": "Forbidden"}), 403
 
         province = dict(row)
-        province["location"] = province.get("location") or "Grassland"
+        province["location"] = (province.get("location") or "Grassland").strip()
 
         db.execute(
             """
@@ -813,7 +815,7 @@ def province_quick_build_api(pId):
         )
         province_row = db.fetchone()
         province = dict(province_row) if province_row else {}
-        province["location"] = province.get("location") or "Grassland"
+        province["location"] = (province.get("location") or "Grassland").strip()
         province["own"] = province.get("owner_id") == cId
 
         db.execute(
