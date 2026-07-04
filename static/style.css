@@ -6312,9 +6312,11 @@ body.game-shell-active.province-base-view-active .templatediv {
     content: "";
     position: absolute;
     inset: 0;
+    /* Low, crisp ground plane at the very bottom + a soft spotlight anchoring
+       the capital hub. The old mid-height ground blob muddied the whole map. */
     background:
-        radial-gradient(ellipse 90% 55% at 50% 88%, var(--province-biome-ground, #1e5c38) 0%, transparent 72%),
-        radial-gradient(ellipse 40% 30% at 50% 45%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+        radial-gradient(ellipse 130% 38% at 50% 108%, var(--province-biome-ground, #1e5c38) 0%, transparent 62%),
+        radial-gradient(circle 190px at 50% 47%, rgba(255, 255, 255, 0.10) 0%, transparent 72%);
     pointer-events: none;
 }
 
@@ -6472,76 +6474,6 @@ body.game-shell-active.province-base-view-active .templatediv {
 }
 
 /* Map scenery */
-.province-map-scenery {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Soft atmosphere, not white smudges: big, heavily blurred, barely-there. */
-.province-map-cloud {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.10);
-    filter: blur(14px);
-    animation: cloud-drift 24s ease-in-out infinite;
-}
-
-.province-map-cloud--1 { width: 160px; height: 44px; left: 4%; top: 10%; }
-.province-map-cloud--2 { width: 220px; height: 56px; right: 6%; top: 16%; animation-delay: -8s; }
-.province-map-cloud--3 { width: 130px; height: 36px; left: 40%; top: 6%; animation-delay: -14s; }
-
-@keyframes cloud-drift {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(18px); }
-}
-
-.province-map-tree {
-    position: absolute;
-    bottom: 18%;
-    width: 0;
-    height: 0;
-    border-left: 14px solid transparent;
-    border-right: 14px solid transparent;
-    border-bottom: 36px solid rgba(20, 60, 35, 0.85);
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
-}
-
-.province-map-tree::after {
-    content: "";
-    position: absolute;
-    left: -3px;
-    top: 34px;
-    width: 6px;
-    height: 14px;
-    background: #3d2818;
-    border-radius: 2px;
-}
-
-.province-map-tree--1 { left: 6%; }
-.province-map-tree--2 { right: 8%; transform: scale(1.15); }
-.province-map-tree--3 { left: 22%; bottom: 22%; transform: scale(0.85); opacity: 0.7; }
-
-/* Ground path: fades out at both ends so it reads as terrain, not a stray
-   gray bar cutting across the district pills. */
-.province-map-road {
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    bottom: 28%;
-    height: 6px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(60, 50, 40, 0.30) 22%,
-        rgba(60, 50, 40, 0.30) 78%,
-        transparent 100%
-    );
-    border-radius: 4px;
-    transform: perspective(200px) rotateX(55deg);
-}
-
 /* Central capital hub — grid cell in center column */
 .province-map-hub {
     position: relative;
@@ -7268,7 +7200,6 @@ body.province-base-phaser-active .province-map-nodes {
 }
 
 body.game-reduced-motion .province-map-node,
-body.game-reduced-motion .province-map-cloud,
 body.game-reduced-motion .province-hub-block,
 body.game-reduced-motion .province-base-particles span {
     animation: none;
