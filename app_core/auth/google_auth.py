@@ -133,6 +133,13 @@ def google_callback_route():
         if user:
             # User exists, log them in
             session["user_id"] = user[0]
+            try:
+                from signup import ensure_user_provisioned
+                ensure_user_provisioned(db, user[0])
+                from database import get_request_connection
+                get_request_connection().commit()
+            except Exception as e:
+                logger.error("ensure_user_provisioned failed in google callback: %s", e)
             current_app.config["SESSION_PERMANENT"] = True
             current_app.permanent_session_lifetime = datetime.timedelta(days=365)
             session.permanent = True
