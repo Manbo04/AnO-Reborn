@@ -368,6 +368,8 @@ def market_bot_fight_wars():
         bot_units = Units(9999, send_units, selected_units_list=selected_types)
         bot_units.selected_units = send_units
         
+        from app import app  # lazy: avoid circular import at worker boot
+
         with app.test_client() as client:
             with client.session_transaction() as sess:
                 sess["user_id"] = 9999
