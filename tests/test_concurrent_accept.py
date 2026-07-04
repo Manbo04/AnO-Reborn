@@ -1,7 +1,7 @@
 import threading
 from flask import Flask
 from app_core import market
-from tests.test_integration_market_edgecases import fake_get_db_connection_factory
+from tests.test_integration_market_edgecases import fake_get_request_cursor_factory
 
 
 def test_concurrent_accept_sell_offer(monkeypatch):
@@ -19,7 +19,7 @@ def test_concurrent_accept_sell_offer(monkeypatch):
     }
 
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
@@ -51,6 +51,7 @@ def test_concurrent_accept_sell_offer(monkeypatch):
 
     # Validate final state: trade removed and balances updated exactly once
     assert 99 not in state["trades"]
+    print("FINAL STATE:", state)
     assert state["resources"][300]["rations"] == 5
     assert state["resources"][400]["rations"] == 5
     assert state["stats"][400]["gold"] == 50  # 5*10

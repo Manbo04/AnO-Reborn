@@ -133,7 +133,7 @@ class FakeConn:
         pass
 
 
-def fake_get_db_connection_factory(state):
+def fake_get_request_cursor_factory(state):
     class CM:
         def __enter__(self):
             return FakeConn(state)
@@ -157,7 +157,7 @@ def test_give_resource_integration(monkeypatch):
 
     # monkeypatch DB connection
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     # perform a transfer from bank to user 42: add 100 rations
@@ -173,7 +173,7 @@ def test_give_resource_integration(monkeypatch):
     # test money transfer from user to bank
     query_cache.set("resources_42", {"rations": 600})
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
     res2 = give_resource(42, "bank", "money", 200)
     assert res2 is True

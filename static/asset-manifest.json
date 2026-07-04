@@ -7,12 +7,20 @@
       "path": "images/game/buildings/coal_burners.png"
     },
     "oil_burners": {
-      "legacy": "oilburner.jpg",
+      "legacy": "oilpowerplant.jpg",
       "path": "images/game/buildings/oil_burners.png"
     },
     "solar_fields": {
       "legacy": "solarfield.jpg",
       "path": "images/game/buildings/solar_fields.png"
+    },
+    "wind_farms": {
+      "legacy": "windfarm.jpg",
+      "path": "images/game/buildings/wind_farms.png"
+    },
+    "geothermal_plants": {
+      "legacy": "geothermal.jpg",
+      "path": "images/game/buildings/geothermal_plants.png"
     },
     "hydro_dams": {
       "legacy": "hydrodam.jpg",

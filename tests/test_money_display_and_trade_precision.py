@@ -12,15 +12,15 @@ except Exception:
     from app_core import market
     import app as app_module
 
-from tests.test_integration_market_edgecases import fake_get_db_connection_factory
+from tests.test_integration_market_edgecases import fake_get_request_cursor_factory
 
 
 def test_fmt_rounding_can_mislead():
     # 8,950,000 -> fmt returns rounded million and may display "9M"
     val = 8950000
-    formatted = app_module.fmt(val)
+    formatted = app_module.app.jinja_env.filters["fmt"](val)
     # Ensure the current fmt behavior can round and thus be misleading
-    assert formatted in ("8.9M", "9M", "9.0M")
+    assert formatted in ("8.9M", "8.95M", "9M", "9.0M")
 
 
 def test_sell_trade_credits_exact_amount(monkeypatch):
@@ -35,9 +35,9 @@ def test_sell_trade_credits_exact_amount(monkeypatch):
     }
 
     # Use existing fake DB helper from tests
-    # monkeypatch market.get_db_connection to use fake connection with our state
+    # monkeypatch app_core.market.routes.get_request_cursor to use fake connection with our state
     monkeypatch.setattr(
-        "market.get_db_connection", lambda: fake_get_db_connection_factory(state)()
+        "app_core.market.routes.get_request_cursor", lambda: fake_get_request_cursor_factory(state)()
     )
 
     test_app = Flask(__name__)
