@@ -414,6 +414,17 @@ def create_app():
         logger.addHandler(handler)
 
     @app.context_processor
+    def inject_rotating_ads():
+        """Approved player banner ads for the side rails (cached in helper)."""
+        try:
+            from app_core.ads.helpers import load_rotating_ads
+            from database import get_db_cursor
+
+            return {"rotating_ads": load_rotating_ads(get_db_cursor)}
+        except Exception:
+            return {"rotating_ads": {}}
+
+    @app.context_processor
     def utility_processor():
         def humanize_number(value):
             if value is None: return "0"
@@ -530,7 +541,7 @@ def create_app():
                 try:
                     db.execute(
                         """
-                        SELECT u.countryName, u.username, u.has_unseen_combat_logs,
+                        SELECT u.countryName, u.username,
                                c.id as col_id, c.name as col_name
                         FROM users u
                         LEFT JOIN colNames c ON c.id = u.coalitionId
@@ -546,14 +557,19 @@ def create_app():
                         if row[1] == "Terra Homeworld":
                             ctx["admin_user_ids"].append(user_id)
                             
-                        ctx["coalition_id"] = row[3]
-                        ctx["coalition_name"] = row[4]
-                        
-                        has_combat = bool(row[2])
+                        ctx["coalition_id"] = row[2]
+                        ctx["coalition_name"] = row[3]
                     else:
                         ctx["country_name"] = "Unknown"
                         ctx["coalition_id"], ctx["coalition_name"] = None, None
                         
+                    try:
+                        db.execute("SELECT has_unseen_combat_logs FROM users WHERE id = %s", (user_id,))
+                        c_row = db.fetchone()
+                        if c_row:
+                            has_combat = bool(c_row[0])
+                    except Exception:
+                        rollback_db_cursor(db)
                     ctx["game_ui"] = {"has_unseen_combat_logs": has_combat}
                     try:
                         from app_core.onboarding.service import get_onboarding_status
