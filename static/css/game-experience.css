@@ -66,6 +66,17 @@ body.game-shell-active.province-base-view-active .templatediv {
     pointer-events: none;
 }
 
+/* District zone map: canvas fills the stage; zones grow cell-by-cell. */
+.province-zone-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 10px;
+}
+
 .province-map-paths {
     animation: path-pulse 4s ease-in-out infinite;
 }
@@ -417,8 +428,10 @@ body.game-shell-active.province-base-view-active .templatediv {
     --slot-glow: rgba(0, 167, 225, 0.4);
     position: absolute;
     /* positioned via left/top per district; translate composes with the
-       transform used by hover/pop animations */
+       transform used by hover/pop animations. left/top transition lets pins
+       drift smoothly as their zone's centroid moves during growth. */
     translate: -50% -50%;
+    transition: left 0.9s ease, top 0.9s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
