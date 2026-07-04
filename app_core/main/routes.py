@@ -60,8 +60,7 @@ def sitemap():
 
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
-    from flask import redirect, url_for
-    return redirect("/provinces")
+    return render_template("tutorial.html")
 
 @bp.route("/dev/reset_tutorial", methods=["GET"])
 @login_required
