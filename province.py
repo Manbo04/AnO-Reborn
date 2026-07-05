@@ -466,6 +466,11 @@ def province(pId):
             province["own"] = province.get("own", province["user"] == cId)
             province_base_layout = build_province_layout_payload(province, units)
 
+        if province.get("location"):
+            # Normalize location to avoid strict case-sensitive and whitespace template mismatch errors
+            # which cause missing mines and shifted quick-links in province.html
+            province["location"] = province["location"].strip().title()
+
         province["has_image"] = bool(province.get("has_image"))
         province["image_url"] = province_image_url(
             province["id"], province["has_image"]
