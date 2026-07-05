@@ -4,6 +4,19 @@ This document defines preferences, standards, and context for all AI sessions wo
 
 ---
 
+## ⛔ NEVER `railway up` against prod-validator
+
+`prod-validator` is the **production Postgres database** (despite the name), and
+it is this project's DEFAULT linked service. On 2026-07-05 a stray `railway up`
+deployed the app repo onto it, replacing postgres:17 and taking the whole game
+down for ~1 hour (recovered by redeploying the old postgres:17 deployment via
+the API; clean shutdown, no data loss). Before ANY `railway up` or `railway
+redeploy`, run `railway status` and confirm the linked service is `web` (or
+`bot`/`celery-worker`) — never `prod-validator`. Deploys normally happen by
+pushing to master, not by `railway up`.
+
+---
+
 ## 🔧 Available Tools & Access
 
 The AI has access to:
@@ -107,6 +120,16 @@ At the end of each session or major task, document:
 ---
 
 ## 📝 Current Session Log
+
+### Session: 2026-07-05
+
+**Task**: Production outage — 502 sitewide
+
+**What Was Done**: `prod-validator` (the Postgres service) got a stray `railway up` at 09:34 UTC that replaced postgres:17 with a crash-looping app build. Rolled back to the June 7 postgres:17 deployment via Railway GraphQL (`deploymentRedeploy`); postgres logged a clean shutdown → no data loss; site down ~09:35–10:34 UTC. Relinked repo CLI to `web`; added the warning section at the top of this file. Also: granted admin panel to Terra Homeworld via `SUPER_ADMIN_USER_IDS` env on web (69697588); tutorial fixed for real (second missing var `tutorial_constants`, verified 200 + 10 chapter videos rendering).
+
+**What To Watch**: lock the prod-validator service source in the Railway dashboard (only Dede can); consider renaming it to postgres-db. Name-based "Terra Homeworld" admin bypass in `admin_only_guard` should be removed now that the ID allowlist covers him.
+
+---
 
 ### Session: 2026-07-04
 
