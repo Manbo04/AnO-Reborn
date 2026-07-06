@@ -2898,6 +2898,28 @@ button {
 
 .richDescription img {
     margin: auto;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.rich-video {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    margin: 14px auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.rich-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
 }
 
 .editor-toolbar {
