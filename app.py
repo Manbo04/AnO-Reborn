@@ -315,6 +315,60 @@ def create_app():
 
     Markdown(app)
 
+    @app.template_filter("richmedia")
+    def richmedia_filter(text):
+        """Render a rich page description: markdown (links, images, formatting)
+        plus responsive YouTube/Vimeo embeds for bare video links.
+
+        Video iframes are built only from a validated id extracted from
+        whitelisted hosts, so the src can never be attacker-controlled beyond
+        those hosts (which the CSP frame-src already permits).
+        """
+        import re
+        import markdown as _md
+        from markupsafe import Markup
+
+        if not text:
+            return Markup("")
+
+        yt = re.compile(
+            r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)"
+            r"([A-Za-z0-9_-]{11})[^\s]*"
+        )
+        vimeo = re.compile(r"(?:https?://)?(?:www\.)?vimeo\.com/(\d+)[^\s]*")
+
+        placeholders = []
+
+        def _stash(html):
+            token = f"\n\nVIDEOEMBED{len(placeholders)}ENDEMBED\n\n"
+            placeholders.append(html)
+            return token
+
+        def _yt(m):
+            vid = m.group(1)
+            return _stash(
+                '<div class="rich-video"><iframe src="https://www.youtube.com/embed/'
+                f'{vid}" title="YouTube video" frameborder="0" allowfullscreen '
+                'loading="lazy"></iframe></div>'
+            )
+
+        def _vimeo(m):
+            vid = m.group(1)
+            return _stash(
+                '<div class="rich-video"><iframe src="https://player.vimeo.com/video/'
+                f'{vid}" title="Vimeo video" frameborder="0" allowfullscreen '
+                'loading="lazy"></iframe></div>'
+            )
+
+        text = yt.sub(_yt, text)
+        text = vimeo.sub(_vimeo, text)
+
+        html = _md.markdown(text, extensions=["nl2br"])
+        for i, embed in enumerate(placeholders):
+            html = html.replace(f"<p>VIDEOEMBED{i}ENDEMBED</p>", embed)
+            html = html.replace(f"VIDEOEMBED{i}ENDEMBED", embed)
+        return Markup(html)
+
     # Initialize province defaults
     try:
         with get_db_connection() as conn:

@@ -65,7 +65,7 @@
             {% if description != None %}
             <h2 class="templatecontentheaderleft">About</h2>
 
-            <div class="strongpadding">{{ description|markdown }}</div>
+            <div class="strongpadding richDescription">{{ description|richmedia }}</div>
             {% endif %}
 
             <h2 class="templatecontentheaderleft">Coalition Info</h2>
@@ -700,7 +700,8 @@
                     </div>
                     <div style="width:100%;max-width:400px;">
                         <label for="description" style="display:block;margin-bottom:10px;">Description</label>
-                        <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240" style="width:100%;box-sizing:border-box;margin:0;height:80px;"></textarea>
+                        <textarea class="templatetextarea" name="description" placeholder="Describe your coalition. Markdown supported: **bold**, [links](https://…), ![image](https://…/pic.png), and paste a YouTube/Vimeo link on its own line to embed a video." maxlength="2000" style="width:100%;box-sizing:border-box;margin:0;height:140px;"></textarea>
+                        <p class="province-customize-intro" style="margin-top:6px;">Supports <strong>markdown</strong> — links, images, and YouTube/Vimeo embeds. Up to 2000 characters.</p>
                     </div>
                     <button class="templatedivbutton templatecenteredbutton" type="submit" style="margin-top:10px;">
                         <span class="material-icons-outlined">check</span>Update
