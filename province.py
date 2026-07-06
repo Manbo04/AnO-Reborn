@@ -782,8 +782,10 @@ def province_quick_build_api(pId):
     except (TypeError, ValueError):
         return jsonify({"ok": False, "error": "Invalid request"}), 400
 
-    if quantity < 1 or quantity > 50:
-        return jsonify({"ok": False, "error": "Quantity must be 1–50"}), 400
+    if quantity == 0 or quantity > 50 or quantity < -50:
+        return jsonify(
+            {"ok": False, "error": "Quantity must be 1–50 (negative to demolish)"}
+        ), 400
 
     with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
         db.execute(
@@ -797,7 +799,12 @@ def province_quick_build_api(pId):
             return jsonify({"ok": False, "error": "Forbidden"}), 403
 
     try:
-        build_structure(cId, building_id, quantity, province_id=pId)
+        if quantity < 0:
+            from action_loop import demolish_structure
+
+            demolish_structure(cId, building_id, -quantity, province_id=pId)
+        else:
+            build_structure(cId, building_id, quantity, province_id=pId)
     except ActionLoopError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 
@@ -877,12 +884,22 @@ def build_structure_action():
                 return error(403, "You do not own this province")
 
     try:
-        build_structure(
-            cId,
-            building_id,
-            quantity,
-            province_id=int(province_id) if province_id else None,
-        )
+        if quantity < 0:
+            from action_loop import demolish_structure
+
+            demolish_structure(
+                cId,
+                building_id,
+                -quantity,
+                province_id=int(province_id) if province_id else None,
+            )
+        else:
+            build_structure(
+                cId,
+                building_id,
+                quantity,
+                province_id=int(province_id) if province_id else None,
+            )
     except ActionLoopError as e:
         return error(400, str(e))
 
