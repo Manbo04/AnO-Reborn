@@ -1621,10 +1621,44 @@ def reset_account():
             db.execute("DELETE FROM policies WHERE user_id=%s", (cId,))
             db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
             if reset_type == "scratch":
+                # Exploit guard (player-reported): deposit everything into the
+                # coalition bank, reset, collect a fresh starter package,
+                # repeat. Track resets on the users row (survives the stats
+                # wipe below) and only grant the full starter package once.
+                db.execute(
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_count INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execute(
+                    "UPDATE users SET reset_count = COALESCE(reset_count, 0) + 1 "
+                    "WHERE id=%s RETURNING reset_count",
+                    (cId,),
+                )
+                reset_count = db.fetchone()[0]
+                first_reset = reset_count <= 1
                 db.execute("DELETE FROM stats WHERE id=%s", (cId,))
                 db.execute("DELETE FROM user_economy WHERE user_id=%s", (cId,))
-                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", 70000000))
-                _init_economy_tables(db, cId)
+                starting_gold = 70000000 if first_reset else 1000000
+                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", starting_gold))
+                if first_reset:
+                    _init_economy_tables(db, cId)
+                else:
+                    # Zeroed economy rows only — no starter care package.
+                    db.execute(
+                        "INSERT INTO user_economy (user_id, resource_id, quantity) "
+                        "SELECT %s, resource_id, 0 FROM resource_dictionary "
+                        "ON CONFLICT DO NOTHING",
+                        (cId,),
+                    )
+                    db.execute(
+                        "INSERT INTO user_military (user_id, unit_id, quantity) "
+                        "SELECT %s, unit_id, 0 FROM unit_dictionary WHERE is_active = TRUE "
+                        "ON CONFLICT DO NOTHING",
+                        (cId,),
+                    )
+                    flash(
+                        "Repeat resets start with $1,000,000 and no starter "
+                        "resources (the full starter package is one-time)."
+                    )
             else:
                 db.execute("INSERT INTO user_military (user_id, unit_id, quantity) SELECT %s, unit_id, 0 FROM unit_dictionary WHERE is_active = TRUE ON CONFLICT DO NOTHING", (cId,))
                 db.execute("INSERT INTO policies (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (cId,))
