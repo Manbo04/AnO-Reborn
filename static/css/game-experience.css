@@ -931,6 +931,10 @@ body.game-shell-active.province-base-view-active .templatediv {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
+    /* Rows live in a height-capped flex column (.province-base-building-list);
+       without this they COMPRESS to fit instead of scrolling, clipping their
+       text and buttons (player-reported on mobile). */
+    flex-shrink: 0;
     gap: 10px;
     padding: 12px 14px;
     border-radius: var(--game-radius-md);
