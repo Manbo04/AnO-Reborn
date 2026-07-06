@@ -1284,6 +1284,22 @@ def ensure_schema_compat() -> None:
                 """
             ),
         )
+        # Widen coalition description for rich media (links, images, embeds).
+        core_ok &= _run_schema_step(
+            "colnames_description_widen",
+            lambda db: db.execute(
+                """
+                DO $$
+                BEGIN
+                    IF (SELECT character_maximum_length
+                        FROM information_schema.columns
+                        WHERE table_name='colnames' AND column_name='description') < 2000 THEN
+                        ALTER TABLE colNames ALTER COLUMN description TYPE varchar(2000);
+                    END IF;
+                END $$;
+                """
+            ),
+        )
         core_ok &= _run_schema_step(
             "users_recovery_key",
             lambda db: db.execute(
