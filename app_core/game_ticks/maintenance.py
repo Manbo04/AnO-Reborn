@@ -717,23 +717,46 @@ def global_tick():
             # -----------------------------------------------------------------
             # Consumption phase
             # -----------------------------------------------------------------
+            # global_tick fires every 10 min, but military maintenance costs are
+            # calibrated per HOUR (matching hourly production in
+            # generate_province_revenue). Gate the deduction to once per hour so
+            # armies aren't charged 6x their intended upkeep (which was silently
+            # starving any nation with a standing army — player-reported).
             consumption_start = time.time()
-            dbdict.execute(
-                """
-                SELECT
-                    um.user_id,
-                    ud.maintenance_cost_resource_id AS resource_id,
-                    SUM((um.quantity::numeric * ud.maintenance_cost_amount))::bigint
-                        AS required_amount
-                FROM user_military um
-                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                WHERE um.quantity > 0
-                  AND ud.maintenance_cost_resource_id IS NOT NULL
-                  AND ud.maintenance_cost_amount > 0
-                GROUP BY um.user_id, ud.maintenance_cost_resource_id
-                """
+            db.execute(
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+                "ON CONFLICT DO NOTHING",
+                ("military_maintenance",),
             )
-            cost_rows = dbdict.fetchall()
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
+                ("military_maintenance",),
+            )
+            maint_row = db.fetchone()
+            run_maintenance = not should_skip_task(maint_row, "military_maintenance")
+
+            cost_rows = []
+            if run_maintenance:
+                db.execute(
+                    "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                    ("military_maintenance",),
+                )
+                dbdict.execute(
+                    """
+                    SELECT
+                        um.user_id,
+                        ud.maintenance_cost_resource_id AS resource_id,
+                        SUM((um.quantity::numeric * ud.maintenance_cost_amount))::bigint
+                            AS required_amount
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                    WHERE um.quantity > 0
+                      AND ud.maintenance_cost_resource_id IS NOT NULL
+                      AND ud.maintenance_cost_amount > 0
+                    GROUP BY um.user_id, ud.maintenance_cost_resource_id
+                    """
+                )
+                cost_rows = dbdict.fetchall()
 
             if cost_rows:
                 impacted_users = sorted({row["user_id"] for row in cost_rows})
