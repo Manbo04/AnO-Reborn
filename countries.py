@@ -86,6 +86,30 @@ def get_econ_statistics(cId, db=None):
             check_for_resource_upkeep(unit, amount)
             check_for_monetary_upkeep(unit, amount)
 
+    # Military maintenance upkeep (rations for troops, etc.). The global tick
+    # deducts this every hour from user_economy, but it was missing from the
+    # revenue display — so a nation feeding a large army saw a net-positive
+    # food number while actually running a deficit. Mirror the tick's query.
+    with reuse_or_new_cursor(db, cursor_factory=RealDictCursor) as mil_db:
+        mil_db.execute(
+            """
+            SELECT rd.name AS resource, SUM(um.quantity * ud.maintenance_cost_amount) AS required
+            FROM user_military um
+            JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+            JOIN resource_dictionary rd ON rd.resource_id = ud.maintenance_cost_resource_id
+            WHERE um.user_id = %s
+              AND um.quantity > 0
+              AND ud.maintenance_cost_resource_id IS NOT NULL
+              AND ud.maintenance_cost_amount > 0
+            GROUP BY rd.name
+            """,
+            (cId,),
+        )
+        for row in mil_db.fetchall() or []:
+            required = int(row.get("required") or 0)
+            if required:
+                expenses["military"][row["resource"]] += required
+
     # Cache the result
     query_cache.set(cache_key, expenses)
     return expenses
