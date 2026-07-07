@@ -19,6 +19,10 @@ TASK_RUN_THRESHOLDS = {
     "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "100")),
     "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
     "global_tick": int(os.getenv("GLOBAL_TICK_MIN_INTERVAL", "540")),
+    # Military maintenance is deducted inside global_tick but must run at most
+    # once per hour to match hourly production — otherwise upkeep is charged 6x
+    # (global_tick fires every 10 min) and armies starve their own nations.
+    "military_maintenance": int(os.getenv("MILITARY_MAINT_MIN_INTERVAL", "3300")),
 }
 
 CELERY_BEAT_SCHEDULE = {
