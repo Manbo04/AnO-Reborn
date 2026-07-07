@@ -332,8 +332,10 @@ def create_app():
             return Markup("")
 
         yt = re.compile(
-            r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)"
-            r"([A-Za-z0-9_-]{11})[^\s]*"
+            r"(?:https?://)?(?:www\.|m\.)?(?:"
+            r"youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|"
+            r"youtube\.com/shorts/|youtube\.com/live/"
+            r")([A-Za-z0-9_-]{11})[^\s]*"
         )
         vimeo = re.compile(r"(?:https?://)?(?:www\.)?vimeo\.com/(\d+)[^\s]*")
 
