@@ -511,6 +511,27 @@ def apply_population_aging(province_id):
 
             pop_children, pop_working, pop_elderly, user_id = row
 
+            # Self-heal: a province with working population but zero recorded
+            # education is corrupt state (workers must belong to an education
+            # tier, or jobs_available=0 floors every building at 20% efficiency —
+            # e.g. power plants underproduce and can't run factories). This
+            # happened to a couple of provinces whose starting workforce was
+            # never counted into edu_none. Treat unaccounted workers as base
+            # (uneducated) so they can be employed. Idempotent: only fires when
+            # education is fully zero.
+            if (pop_working or 0) > 0:
+                db.execute(
+                    """
+                    UPDATE provinces
+                    SET edu_none = pop_working
+                    WHERE id = %s
+                      AND COALESCE(edu_none,0)+COALESCE(edu_highschool,0)
+                          +COALESCE(edu_college,0) = 0
+                      AND pop_working > 0
+                    """,
+                    (province_id,),
+                )
+
             # Check policies for Universal Healthcare
             db.execute(
                 "SELECT education FROM policies WHERE user_id = %s",
