@@ -141,12 +141,23 @@ def create_app():
                 "/callback",
                 "/login/google/callback",
                 "/discord_signup",
+                "/google_signup",
                 "/discord_login/",
                 "/auth_handoff",
                 "/health",
                 "/ready",
             }
-            if host_only == "affairsandorder.com" and request.path not in _OAUTH_PATHS:
+            # OAuth signup/login pages are served on .com (they read the session
+            # cookie set by /callback). Their CSS/images load via relative
+            # /static/ URLs, so /static MUST also serve directly on .com — else
+            # each asset 301-redirects to .org and browsers don't apply the
+            # redirected stylesheet, leaving the signup page completely unstyled
+            # with giant unscaled images (player-reported on the biome page).
+            if (
+                host_only == "affairsandorder.com"
+                and request.path not in _OAUTH_PATHS
+                and not request.path.startswith("/static/")
+            ):
                 canonical_host = "affairsandorder.org"
             if canonical_host and canonical_host != host_only:
                 canonical = request.url.replace(
