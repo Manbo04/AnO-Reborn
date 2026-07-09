@@ -264,6 +264,11 @@ body.page-country .templatedivcontent .infodiv {
 }
 
 /* --- Side ad rails (house ads + player banners) -------------------------- */
+/* Desktop-only: fixed rails on the flanks. They MUST NOT appear on tablets or
+   phones (some tablets report a wide layout viewport, which used to leak the
+   rails full-width into the page — player-reported). Gate on both a wide
+   viewport AND a fine pointer so touch devices never show them, and force-hide
+   below the breakpoint as a belt-and-suspenders override. */
 .side-ad-rail {
     position: fixed;
     top: 50%;
@@ -275,9 +280,14 @@ body.page-country .templatedivcontent .infodiv {
 .side-ad-rail--left { left: 14px; }
 .side-ad-rail--right { right: 14px; }
 
-@media (min-width: 1500px) {
+@media (min-width: 1500px) and (pointer: fine) {
     .side-ad-rail { display: block; }
     body.has-side-ads .templatediv { width: calc(90% - 380px); }
+}
+
+@media (max-width: 1499px), (pointer: coarse) {
+    .side-ad-rail { display: none !important; }
+    body.has-side-ads .templatediv { width: 90%; }
 }
 
 .house-ad {
