@@ -254,16 +254,22 @@ def create_app():
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        # CSP: allow same-origin + trusted CDNs used by the game
+        # CSP: allow same-origin + trusted CDNs used by the game.
+        # Both apex domains are whitelisted for scripts/styles/fonts/xhr because
+        # the OAuth signup pages are served on .com while their /static assets
+        # 301-redirect to .org (Cloudflare-cached). Without the sibling domain
+        # in style-src/script-src, those redirected assets are CSP-blocked and
+        # the signup page renders completely unstyled (player-reported).
+        _sites = "https://affairsandorder.org https://affairsandorder.com"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            f"script-src 'self' 'unsafe-inline' {_sites} https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            f"style-src 'self' 'unsafe-inline' {_sites} https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
             "img-src 'self' data: https: blob:; "
             "media-src 'self' https:; "
             "frame-src 'self' https://www.youtube.com https://player.vimeo.com; "
-            "connect-src 'self'; "
+            f"connect-src 'self' {_sites}; "
             "object-src 'none'; "
             "base-uri 'self';"
         )
