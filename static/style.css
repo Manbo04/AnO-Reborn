@@ -3479,45 +3479,53 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 /* Country banner: flex layout with bounded height. The old float + raw-vw
    sizing let tall flags crop their artwork (object-fit: cover) and behave
    unpredictably across viewports; contain + letterbox never crops. */
+/* Country banner: a wide biome backdrop with the nation flag as a small
+   framed badge tucked into the top-left (inset from the edge), and the
+   coalition flag mirrored top-right. */
 .countryimagediv {
-    padding: 10px;
+    position: relative;
+    padding: 0;
     margin: 15px auto;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
+    display: block;
     width: 95%;
+    height: clamp(150px, 20vw, 240px);
     overflow: hidden;
     background-image: url("images/tundra.jpg");
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
     user-select: none;
-    border-radius: 4px;
+    border-radius: 8px;
     transition: none;
 }
 
 .countryimage {
-    flex: 0 1 auto;
+    position: absolute;
+    top: 16px;
+    left: 16px;
     width: auto;
-    max-width: min(100%, 760px);
-    height: clamp(180px, 24vw, 340px);
-    object-fit: contain;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 3px 4px 1px, rgba(0, 0, 0, 0.4) 0 12px 32px 0;
-    border-radius: 4px;
+    height: clamp(84px, 11vw, 132px);
+    max-width: 40%;
+    object-fit: cover;
+    background: rgba(10, 16, 26, 0.35);
+    border: 3px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    border-radius: 6px;
     user-select: initial;
 }
 
 .countrycoalitionimage {
-    flex: 0 1 auto;
+    position: absolute;
+    top: 16px;
+    right: 16px;
     width: auto;
-    max-width: min(100%, 380px);
-    height: clamp(180px, 24vw, 340px);
-    object-fit: contain;
-    box-shadow: 0 0.5rem 2rem 0.2rem rgba(58, 59, 69, 0.3);
-    border: 6px solid #1c202990;
-    border-radius: 4px;
+    height: clamp(84px, 11vw, 132px);
+    max-width: 40%;
+    object-fit: cover;
+    background: rgba(10, 16, 26, 0.35);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
     user-select: initial;
 }
 
