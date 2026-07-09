@@ -158,6 +158,33 @@ def get_revenue(cId, db=None):
         )
         province_rows = db.fetchall()
         provinces = [row[0] for row in province_rows]
+
+        # Load unlocked upgrades so the projection reflects project effects
+        # (e.g. Stronger Explosives +45% bauxite). The hourly tick applies these
+        # but the display used to ignore them, so a player's projection never
+        # changed after buying a production project — player-reported.
+        upgrades = {}
+        try:
+            db.execute(
+                """
+                SELECT td.name FROM user_tech ut
+                JOIN tech_dictionary td ON td.tech_id = ut.tech_id
+                WHERE ut.user_id = %s AND ut.is_unlocked = TRUE
+                """,
+                (cId,),
+            )
+            _tech_to_legacy = {
+                "better_engineering": "betterengineering",
+                "advanced_machinery": "advancedmachinery",
+                "stronger_explosives": "strongerexplosives",
+                "integrated_steelmaking": "integratedsteelmaking",
+            }
+            for (tech_name,) in db.fetchall() or []:
+                legacy = _tech_to_legacy.get(tech_name)
+                if legacy:
+                    upgrades[legacy] = True
+        except Exception:
+            upgrades = {}
         land_by_id = {row[0]: row[1] for row in province_rows}
         prod_by_id = {row[0]: row[2] for row in province_rows}
 
@@ -266,6 +293,15 @@ def get_revenue(cId, db=None):
                         )
                     else:
                         multiplier = 1
+
+                    # Production project multipliers (mirror app_core/game_ticks/
+                    # revenue.py so the projection matches actual generation).
+                    if building == "bauxite_mines" and upgrades.get("strongerexplosives"):
+                        multiplier += 0.45
+                    if building == "farms" and upgrades.get("advancedmachinery"):
+                        multiplier += 0.5
+                    if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
+                        multiplier += 0.36
 
                     adjusted_total = build_count * amount * multiplier
                     # Normalize to integer to mirror production rounding
