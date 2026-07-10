@@ -111,10 +111,15 @@
     <link href="{{ url_for('static', filename='tutorial.css') }}?v=1" rel="stylesheet" type="text/css" />
     {% endif %}
     
-    <!-- Interactive Tooltips -->
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
+    <!-- Interactive Tooltips — self-hosted + deferred. Previously these loaded
+         synchronously from unpkg.com (with 302 redirects), which BLOCKED page
+         rendering on every page until that flaky CDN responded — the cause of
+         extraordinarily slow loads. tippy-bundle includes popper, so one file.
+         defer keeps them non-blocking and still runs them (in order) before
+         DOMContentLoaded, where tooltips.js initialises tippy. -->
+    <script defer src="{{ url_for('static', filename='vendor/tippy-bundle.umd.min.js') }}?v=6.3.7"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/tippy-scale.css') }}?v=6.3.7" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='vendor/tippy-scale.css') }}?v=6.3.7" /></noscript>
     <script defer src="{{ url_for('static', filename='tooltips.js') }}?v=1"></script>
 
     {% block extra_head %}{% endblock %}
