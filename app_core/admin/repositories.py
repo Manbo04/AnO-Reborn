@@ -90,9 +90,13 @@ class AdminRepository:
                    aa.details,
                    aa.created_at
             FROM admin_actions aa
+            -- Compare as text on both sides: aa.actor may hold either a numeric
+            -- user id or a username (e.g. "dede"). Casting a non-numeric actor to
+            -- INTEGER throws (Postgres doesn't short-circuit the cast), which used
+            -- to 500 the whole admin panel. Casting users.id to TEXT is always safe.
             LEFT JOIN users actor_u
-                ON (CAST(aa.actor AS TEXT) ~ '^[0-9]+$' AND actor_u.id = CAST(aa.actor AS INTEGER))
-                OR (CAST(aa.actor AS TEXT) !~ '^[0-9]+$' AND actor_u.username = CAST(aa.actor AS TEXT))
+                ON CAST(actor_u.id AS TEXT) = CAST(aa.actor AS TEXT)
+                OR actor_u.username = CAST(aa.actor AS TEXT)
             LEFT JOIN users target_u ON target_u.id = aa.user_id
             ORDER BY aa.created_at DESC
             LIMIT 50
