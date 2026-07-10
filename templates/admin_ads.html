@@ -80,7 +80,7 @@
         <div class="templatedivcontent">
             <div style="margin-bottom: 20px; text-align: center;">
                 <a href="/admin" class="admin-nav-link"><span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.2em;">arrow_back</span> Back to Admin</a>
-                <a href="{{ url_for('ads_bp.upload_ad') if 'ads_bp.upload_ad' else '/ads/upload' }}" class="admin-nav-link"><span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.2em;">add</span> Upload New Ad</a>
+                <a href="{{ url_for('ads.upload_ad') }}" class="admin-nav-link"><span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.2em;">add</span> Upload New Ad</a>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -128,7 +128,7 @@
                     <div style="grid-column: 1 / -1;" class="empty-state">
                         <span class="material-icons-outlined" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">find_in_page</span>
                         <p>No advertisements found.</p>
-                        <a href="{{ url_for('ads_bp.upload_ad') if 'ads_bp.upload_ad' else '/ads/upload' }}" class="templatelink" style="margin-top: 10px; display: inline-block;">Upload the first ad</a>
+                        <a href="{{ url_for('ads.upload_ad') }}" class="templatelink" style="margin-top: 10px; display: inline-block;">Upload the first ad</a>
                     </div>
                 {% endif %}
             </div>
