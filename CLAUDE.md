@@ -4,6 +4,32 @@ This document defines preferences, standards, and context for all AI sessions wo
 
 ---
 
+## 📱 MOBILE-FIRST UI (non-negotiable)
+
+The game UI **must be built mobile-first** — most players are on phones/tablets.
+Design and verify every UI change at mobile width FIRST (~390px phone, ~820px
+tablet), then enhance for desktop. Do not build desktop-first.
+
+Every mobile bug shipped so far came from ignoring this: signup/biome page
+rendered fully unstyled on tablet, desktop side-ad rails leaked full-width onto
+touch devices, cramped province building lists, oversized banner/flag images
+filling the screen.
+
+- Cap all images (`max-width:100%`, bounded height, `object-fit`) — nothing may
+  fill the screen on mobile.
+- Desktop-only chrome (side ad rails, wide multi-column layouts) gated behind
+  BOTH `min-width` and `pointer:fine`; must never affect mobile flow.
+- Overflowing lists scroll, they don't shrink-to-fit (`flex-shrink:0` on rows).
+- `.com` serves OAuth signup/login pages, `.org` is primary, both behind
+  Cloudflare. CSP must allow BOTH apex domains in script-src/style-src/connect-src
+  or `.com` signup pages render unstyled on mobile.
+- CSS is bundled: edit `static/css/*.css` then run
+  `python3 scripts/bundle_game_css.py`; never hand-edit `style.min.css`.
+
+(Same rule mirrored in `GEMINI.md` for the Gemini CLI / agy.)
+
+---
+
 ## ⛔ NEVER `railway up` against prod-validator
 
 `prod-validator` is the **production Postgres database** (despite the name), and
