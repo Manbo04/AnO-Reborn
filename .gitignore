@@ -46,3 +46,5 @@ static/tutorial/videos/_tmp/
 venv310/
 myvenv/
 .venv_test/
+.ano_monitor_state.json
+monitor.log
