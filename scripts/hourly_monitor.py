@@ -164,9 +164,13 @@ def check_discord(state: dict) -> tuple[list[str], set[str]]:
                 continue  # seed state without alerting on history
             if m["id"] in seen or m["author"].get("bot"):
                 continue
-            content = m["content"].replace("\n", " ")[:200]
+            content = m["content"].replace("\n", " ")[:220]
             att = " [+img/video]" if m.get("attachments") else ""
-            findings.append(f"🐞 {name} — {m['author']['username']}: {content}{att}")
+            # Include channel_id and author_id so the agent can reply/@mention.
+            findings.append(
+                f"🐞 [channel_id={cid} author_id={m['author']['id']} "
+                f"channel={name!r} author={m['author']['username']!r}] {content}{att}"
+            )
 
     return (findings, new_seen)
 
