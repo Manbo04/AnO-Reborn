@@ -9844,47 +9844,54 @@ body.page-military .templatedivcontent .infodiv {
     }
 }
 
-/* Mobile First Base Fixes */
+/* Mobile First Base Fixes — scoped to the wars page so these broad
+   element selectors never leak onto other pages. */
 @media (max-width: 768px) {
     /* No horizontal scroll for tables */
-    .templateoutertablediv, .templatetable, table {
+    body.page-war .templateoutertablediv,
+    body.page-war .templatetable,
+    body.page-war table {
         display: block;
         width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     /* Minimum tap targets */
-    input[type="number"], input[type="text"], select, button, .btn, .unitcard {
+    body.page-war input[type="number"],
+    body.page-war input[type="text"],
+    body.page-war select,
+    body.page-war button,
+    body.page-war .btn,
+    body.page-war .unitcard {
         min-height: 44px;
-        min-width: 44px;
     }
-    
+
     /* Full width forms and stack buttons */
-    form {
+    body.page-war form {
         display: flex;
         flex-direction: column;
         width: 100%;
     }
-    input, select, button, .btn {
+    body.page-war form input,
+    body.page-war form select,
+    body.page-war form button,
+    body.page-war form .btn {
         width: 100%;
         box-sizing: border-box;
     }
-    button, .btn {
+    body.page-war form button,
+    body.page-war form .btn {
         margin-top: 8px;
     }
 }
 
 @media (max-width: 480px) {
-    /* Images max-width */
-    img, .unitimage {
-        max-width: 100% !important;
-        height: auto !important;
-    }
-    
-    /* Font readability */
-    body {
-        font-size: 14px;
+    /* Images bounded (no !important so deliberately-sized art can override) */
+    body.page-war img,
+    body.page-war .unitimage {
+        max-width: 100%;
+        height: auto;
     }
 }
 
