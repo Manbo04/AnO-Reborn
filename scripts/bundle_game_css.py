@@ -13,6 +13,7 @@ FILES = [
     "static/css/game-country.css",
     "static/css/game-province.css",
     "static/css/game-war.css",
+    "static/css/game-touch.css",
 ]
 
 
