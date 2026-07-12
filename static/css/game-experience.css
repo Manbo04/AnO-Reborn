@@ -1667,3 +1667,63 @@ body.page-rankings .rankings-table tbody td a {
 .province-base-building-row > div:first-child {
     min-width: 0;
 }
+
+/* Market Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-market .templateoutertablediv,
+    body.page-market .templatetable,
+    body.page-market table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-market input[type="number"], 
+    body.page-market input[type="text"], 
+    body.page-market select, 
+    body.page-market button, 
+    body.page-market .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-market form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-market input, 
+    body.page-market select, 
+    body.page-market button, 
+    body.page-market .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-market button, 
+    body.page-market .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-market .market-purchase-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    body.page-market .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-market img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-market {
+        font-size: 14px;
+    }
+}
