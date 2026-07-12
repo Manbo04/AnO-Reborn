@@ -388,3 +388,47 @@ body.page-country .templatedivcontent .infodiv {
     .house-ad, .house-ad.is-leaving { transition: none; }
     .house-ad::after, .house-ad-icon { animation: none; }
 }
+
+/* Mobile First Enhancements (Agent) */
+@media (max-width: 768px) {
+    .templatetable, .templatetable2, .templatetable3 {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .menuflex2, .menuflex {
+        display: flex;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .loginsignupinput, .templateselect, .templatedivbutton,
+    .templatedivbutton-secondary, .templatedivbutton-danger, .templatedivbutton-success {
+        width: 100% !important;
+        box-sizing: border-box;
+        min-height: 44px;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .templatedivflex2, .warflexparentcolors, .warflexparent {
+        flex-direction: column !important;
+    }
+    
+    .warflexparentcolors > div, .warflexparent > div {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    .templatedivcontent img {
+        max-width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+}
