@@ -8097,6 +8097,76 @@ body.page-rankings .rankings-table tbody td a {
     }
 }
 
+/* Coalition Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-coalition .templateoutertablediv,
+    body.page-coalition .templatetable,
+    body.page-coalition table,
+    body.page-coalitions .templateoutertablediv,
+    body.page-coalitions .templatetable,
+    body.page-coalitions table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-coalition input[type="number"], 
+    body.page-coalition input[type="text"], 
+    body.page-coalition select, 
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions input[type="number"], 
+    body.page-coalitions input[type="text"], 
+    body.page-coalitions select, 
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-coalition form, body.page-coalitions form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-coalition input, 
+    body.page-coalition select, 
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions input, 
+    body.page-coalitions select, 
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-coalition .templatedivflex2,
+    body.page-coalitions .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-coalition img, body.page-coalitions img, .coalitionimage {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-coalition, body.page-coalitions {
+        font-size: 14px;
+    }
+}
+
 
 /* --- static/css/game-country.css --- */
 /**
