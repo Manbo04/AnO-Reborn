@@ -405,3 +405,50 @@ body.page-provinces .stat-card .stat-value {
     font-size: 14px;
     color: var(--colorOne);
 }
+
+/* --- Fix Purchase Cities / Purchase Land button overlapping the amount input ---
+   The legacy .divflex2center forces max-content column widths (input + button),
+   which overlap in the constrained card, hiding the Land amount field behind the
+   Purchase button (player-reported). Give these forms a clean side-by-side flex
+   that wraps on mobile: input takes the space, button sizes to its label. */
+body.page-province .templatedivflex2.divflex2center {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+}
+body.page-province .templatedivflex2.divflex2center > div {
+    width: auto !important;      /* undo .divflex2center div { width: max-content } */
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 0;
+}
+body.page-province .templatedivflex2.divflex2center .templatedivflex2left {
+    flex: 1 1 200px;
+}
+body.page-province .templatedivflex2.divflex2center .templatedivflex2right {
+    flex: 0 0 auto;
+}
+body.page-province .templatedivflex2.divflex2center .templatedivflex2left input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+body.page-province .templatedivflex2.divflex2center .templatedivflex2right button {
+    margin: 0;
+    white-space: nowrap;
+}
+@media (max-width: 480px) {
+    /* Stack on phones so the button never crowds the input */
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2left,
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2right {
+        flex: 1 1 100%;
+    }
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2right button {
+        width: 100%;
+    }
+}
