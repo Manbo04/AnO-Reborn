@@ -8167,6 +8167,76 @@ body.page-rankings .rankings-table tbody td a {
     }
 }
 
+/* Rankings/Statistics Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-rankings .templateoutertablediv,
+    body.page-rankings .templatetable,
+    body.page-rankings table,
+    body.page-statistics .templateoutertablediv,
+    body.page-statistics .templatetable,
+    body.page-statistics table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-rankings input[type="number"], 
+    body.page-rankings input[type="text"], 
+    body.page-rankings select, 
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics input[type="number"], 
+    body.page-statistics input[type="text"], 
+    body.page-statistics select, 
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-rankings form, body.page-statistics form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-rankings input, 
+    body.page-rankings select, 
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics input, 
+    body.page-statistics select, 
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-rankings .templatedivflex2,
+    body.page-statistics .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-rankings img, body.page-statistics img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-rankings, body.page-statistics {
+        font-size: 14px;
+    }
+}
+
 
 /* --- static/css/game-country.css --- */
 /**
