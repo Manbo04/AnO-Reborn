@@ -1,0 +1,123 @@
+/* =====================================================================
+ * game-touch.css — touch / gesture polish for Affairs and Order
+ * Scoped to html.has-touch (set by touch-gestures.js) so desktop is
+ * completely unaffected. Mobile-first: these rules only ever apply on
+ * touch-capable devices.
+ * ===================================================================== */
+
+/* Kill the grey tap flash and clean up touch callouts everywhere. */
+html.has-touch {
+    -webkit-tap-highlight-color: transparent;
+}
+html.has-touch button,
+html.has-touch .button,
+html.has-touch .btn,
+html.has-touch a,
+html.has-touch [role="button"],
+html.has-touch .templatebutton,
+html.has-touch .card {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Instant press feedback (added by touch-gestures.js on touchstart). */
+html.has-touch .touch-active {
+    transform: scale(0.97);
+    filter: brightness(0.94);
+    transition: transform .06s ease, filter .06s ease;
+}
+html.has-touch.game-reduced-motion .touch-active {
+    transform: none;
+    filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    html.has-touch .touch-active { transform: none; }
+}
+
+/* Comfortable tap targets on real touch devices (belt-and-suspenders on
+   top of the per-page @media rules). */
+@media (pointer: coarse) {
+    .navbardropbtn,
+    .menubardiv a,
+    .templatebutton,
+    .button,
+    .btn,
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        min-height: 44px;
+    }
+    /* +/- steppers and small icon buttons need a real hit area */
+    .stepper-btn,
+    .qty-btn,
+    .icon-btn,
+    .amount-stepper button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Momentum scrolling for any horizontally-scrollable region on touch. */
+@media (pointer: coarse) {
+    .templatetable,
+    .templatetable2,
+    .templatetable3,
+    .table-scroll,
+    [data-scroll-x] {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    /* subtle affordance that a table scrolls sideways */
+    .table-scroll { position: relative; }
+}
+
+/* ---------------------------------------------------------------------
+ * Zoomable media ([data-zoomable]) — pinch / pan / double-tap zoom.
+ * The element is transformed by JS; keep it clipped and above siblings
+ * while zoomed so panning doesn't reveal page chrome underneath.
+ * ------------------------------------------------------------------- */
+[data-zoomable] {
+    touch-action: none;
+    cursor: grab;
+    max-width: 100%;
+}
+[data-zoomable].is-zoomed {
+    cursor: grabbing;
+    position: relative;
+    z-index: 5;
+    -webkit-user-select: none;
+    user-select: none;
+}
+/* wrap zoomable media in .zoomable-wrap to clip the panned overflow */
+.zoomable-wrap {
+    overflow: hidden;
+    position: relative;
+    max-width: 100%;
+    border-radius: 8px;
+    touch-action: none;
+}
+.zoomable-wrap::after {
+    content: "pinch to zoom";
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    pointer-events: none;
+    opacity: .0;
+    transition: opacity .3s ease;
+}
+@media (pointer: coarse) {
+    .zoomable-wrap::after { opacity: .8; }
+    .zoomable-wrap:has(.is-zoomed)::after { opacity: 0; }
+}
+
+/* Swipe-nav zones get a horizontal touch-action so vertical scroll still
+   works but horizontal swipes are ours to interpret. */
+[data-swipe-nav] {
+    touch-action: pan-y;
+}

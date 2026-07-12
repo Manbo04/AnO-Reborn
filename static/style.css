@@ -6321,6 +6321,50 @@ body.page-country .templatedivcontent .infodiv {
     .house-ad::after, .house-ad-icon { animation: none; }
 }
 
+/* Mobile First Enhancements (Agent) */
+@media (max-width: 768px) {
+    .templatetable, .templatetable2, .templatetable3 {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .menuflex2, .menuflex {
+        display: flex;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .loginsignupinput, .templateselect, .templatedivbutton,
+    .templatedivbutton-secondary, .templatedivbutton-danger, .templatedivbutton-success {
+        width: 100% !important;
+        box-sizing: border-box;
+        min-height: 44px;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .templatedivflex2, .warflexparentcolors, .warflexparent {
+        flex-direction: column !important;
+    }
+    
+    .warflexparentcolors > div, .warflexparent > div {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    .templatedivcontent img {
+        max-width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+}
+
 
 /* --- static/css/game-experience.css --- */
 /**
@@ -6337,6 +6381,51 @@ body.page-country .templatedivcontent .infodiv {
     right: auto;
     vertical-align: middle;
 }
+
+@media (max-width: 480px) {
+    .province-dock-buildings {
+        grid-template-columns: 1fr !important;
+    }
+    .province-base-building-row {
+        min-height: 44px;
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    .province-dock-card {
+        min-height: 44px;
+    }
+    .province-base-build-btn {
+        width: 100%;
+        margin-top: 8px;
+    }
+    .province-base-header {
+        display: flex;
+        flex-direction: column;
+    }
+    .province-base-vitals {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .province-base-toggle,
+    .province-view-nudge-btn,
+    .province-base-sheet-close,
+    .province-dock-expand,
+    .province-base-build-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    .province-base-arena {
+        overflow: hidden;
+    }
+    .province-map-stage {
+        max-width: 100%;
+    }
+}
+
 
 #province-classic-view[hidden],
 #province-base-view[hidden] {
@@ -7948,6 +8037,206 @@ body.page-rankings .rankings-table tbody td a {
     min-width: 0;
 }
 
+/* Market Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-market .templateoutertablediv,
+    body.page-market .templatetable,
+    body.page-market table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-market input[type="number"], 
+    body.page-market input[type="text"], 
+    body.page-market select, 
+    body.page-market button, 
+    body.page-market .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-market form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-market input, 
+    body.page-market select, 
+    body.page-market button, 
+    body.page-market .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-market button, 
+    body.page-market .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-market .market-purchase-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    body.page-market .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-market img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-market {
+        font-size: 14px;
+    }
+}
+
+/* Coalition Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-coalition .templateoutertablediv,
+    body.page-coalition .templatetable,
+    body.page-coalition table,
+    body.page-coalitions .templateoutertablediv,
+    body.page-coalitions .templatetable,
+    body.page-coalitions table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-coalition input[type="number"], 
+    body.page-coalition input[type="text"], 
+    body.page-coalition select, 
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions input[type="number"], 
+    body.page-coalitions input[type="text"], 
+    body.page-coalitions select, 
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-coalition form, body.page-coalitions form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-coalition input, 
+    body.page-coalition select, 
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions input, 
+    body.page-coalitions select, 
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-coalition button, 
+    body.page-coalition .btn,
+    body.page-coalitions button, 
+    body.page-coalitions .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-coalition .templatedivflex2,
+    body.page-coalitions .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-coalition img, body.page-coalitions img, .coalitionimage {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-coalition, body.page-coalitions {
+        font-size: 14px;
+    }
+}
+
+/* Rankings/Statistics Mobile First Base Fixes */
+@media (max-width: 768px) {
+    body.page-rankings .templateoutertablediv,
+    body.page-rankings .templatetable,
+    body.page-rankings table,
+    body.page-statistics .templateoutertablediv,
+    body.page-statistics .templatetable,
+    body.page-statistics table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    body.page-rankings input[type="number"], 
+    body.page-rankings input[type="text"], 
+    body.page-rankings select, 
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics input[type="number"], 
+    body.page-statistics input[type="text"], 
+    body.page-statistics select, 
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    body.page-rankings form, body.page-statistics form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    body.page-rankings input, 
+    body.page-rankings select, 
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics input, 
+    body.page-statistics select, 
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    body.page-rankings button, 
+    body.page-rankings .btn,
+    body.page-statistics button, 
+    body.page-statistics .btn {
+        margin-top: 8px;
+    }
+    
+    body.page-rankings .templatedivflex2,
+    body.page-statistics .templatedivflex2 {
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.page-rankings img, body.page-statistics img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    body.page-rankings, body.page-statistics {
+        font-size: 14px;
+    }
+}
+
 
 /* --- static/css/game-country.css --- */
 /**
@@ -9286,8 +9575,51 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
     body.page-province .templatedivflex2.divflex2center .templatedivflex2right {
         flex: 1 1 100%;
     }
-    body.page-province .templatedivflex2.divflex2center .templatedivflex2right button {
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2right button,
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2left button {
         width: 100%;
+    }
+    body.page-province .purchasemilitarydiv .templatedivflex2.divflex2center {
+        flex-direction: column;
+        gap: 8px;
+    }
+    body.page-province .purchasemilitarydiv input,
+    body.page-province .province-owner-build input,
+    body.page-province .province-owner-build select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    body.page-province .templatedivflex2.menuflex {
+        flex-direction: column;
+    }
+    body.page-province .province-card-media {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 16px;
+        max-width: 100%;
+    }
+    body.page-province .province-card-media img.unitimage {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+    }
+    body.page-province button,
+    body.page-province .templatedivbutton,
+    body.page-province input,
+    body.page-province select,
+    body.page-province .smallheader,
+    body.page-province .templatedivflex2left[onclick] {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    body.page-province input {
+        justify-content: flex-start;
     }
 }
 
@@ -9510,5 +9842,182 @@ body.page-military .templatedivcontent .infodiv {
     .casualty-counter {
         font-size: 0.8em !important;
     }
+}
+
+/* Mobile First Base Fixes — scoped to the wars page so these broad
+   element selectors never leak onto other pages. */
+@media (max-width: 768px) {
+    /* No horizontal scroll for tables */
+    body.page-war .templateoutertablediv,
+    body.page-war .templatetable,
+    body.page-war table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Minimum tap targets */
+    body.page-war input[type="number"],
+    body.page-war input[type="text"],
+    body.page-war select,
+    body.page-war button,
+    body.page-war .btn,
+    body.page-war .unitcard {
+        min-height: 44px;
+    }
+
+    /* Full width forms and stack buttons */
+    body.page-war form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    body.page-war form input,
+    body.page-war form select,
+    body.page-war form button,
+    body.page-war form .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    body.page-war form button,
+    body.page-war form .btn {
+        margin-top: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Images bounded (no !important so deliberately-sized art can override) */
+    body.page-war img,
+    body.page-war .unitimage {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+
+/* --- static/css/game-touch.css --- */
+/* =====================================================================
+ * game-touch.css — touch / gesture polish for Affairs and Order
+ * Scoped to html.has-touch (set by touch-gestures.js) so desktop is
+ * completely unaffected. Mobile-first: these rules only ever apply on
+ * touch-capable devices.
+ * ===================================================================== */
+
+/* Kill the grey tap flash and clean up touch callouts everywhere. */
+html.has-touch {
+    -webkit-tap-highlight-color: transparent;
+}
+html.has-touch button,
+html.has-touch .button,
+html.has-touch .btn,
+html.has-touch a,
+html.has-touch [role="button"],
+html.has-touch .templatebutton,
+html.has-touch .card {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Instant press feedback (added by touch-gestures.js on touchstart). */
+html.has-touch .touch-active {
+    transform: scale(0.97);
+    filter: brightness(0.94);
+    transition: transform .06s ease, filter .06s ease;
+}
+html.has-touch.game-reduced-motion .touch-active {
+    transform: none;
+    filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    html.has-touch .touch-active { transform: none; }
+}
+
+/* Comfortable tap targets on real touch devices (belt-and-suspenders on
+   top of the per-page @media rules). */
+@media (pointer: coarse) {
+    .navbardropbtn,
+    .menubardiv a,
+    .templatebutton,
+    .button,
+    .btn,
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        min-height: 44px;
+    }
+    /* +/- steppers and small icon buttons need a real hit area */
+    .stepper-btn,
+    .qty-btn,
+    .icon-btn,
+    .amount-stepper button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Momentum scrolling for any horizontally-scrollable region on touch. */
+@media (pointer: coarse) {
+    .templatetable,
+    .templatetable2,
+    .templatetable3,
+    .table-scroll,
+    [data-scroll-x] {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    /* subtle affordance that a table scrolls sideways */
+    .table-scroll { position: relative; }
+}
+
+/* ---------------------------------------------------------------------
+ * Zoomable media ([data-zoomable]) — pinch / pan / double-tap zoom.
+ * The element is transformed by JS; keep it clipped and above siblings
+ * while zoomed so panning doesn't reveal page chrome underneath.
+ * ------------------------------------------------------------------- */
+[data-zoomable] {
+    touch-action: none;
+    cursor: grab;
+    max-width: 100%;
+}
+[data-zoomable].is-zoomed {
+    cursor: grabbing;
+    position: relative;
+    z-index: 5;
+    -webkit-user-select: none;
+    user-select: none;
+}
+/* wrap zoomable media in .zoomable-wrap to clip the panned overflow */
+.zoomable-wrap {
+    overflow: hidden;
+    position: relative;
+    max-width: 100%;
+    border-radius: 8px;
+    touch-action: none;
+}
+.zoomable-wrap::after {
+    content: "pinch to zoom";
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    pointer-events: none;
+    opacity: .0;
+    transition: opacity .3s ease;
+}
+@media (pointer: coarse) {
+    .zoomable-wrap::after { opacity: .8; }
+    .zoomable-wrap:has(.is-zoomed)::after { opacity: 0; }
+}
+
+/* Swipe-nav zones get a horizontal touch-action so vertical scroll still
+   works but horizontal swipes are ours to interpret. */
+[data-swipe-nav] {
+    touch-action: pan-y;
 }
 
