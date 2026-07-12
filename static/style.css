@@ -9644,6 +9644,50 @@ body.page-military .templatedivcontent .infodiv {
     }
 }
 
+/* Mobile First Base Fixes */
+@media (max-width: 768px) {
+    /* No horizontal scroll for tables */
+    .templateoutertablediv, .templatetable, table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Minimum tap targets */
+    input[type="number"], input[type="text"], select, button, .btn, .unitcard {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Full width forms and stack buttons */
+    form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    input, select, button, .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    button, .btn {
+        margin-top: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Images max-width */
+    img, .unitimage {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* Font readability */
+    body {
+        font-size: 14px;
+    }
+}
+
 
 /* --- static/css/game-touch.css --- */
 /* =====================================================================
