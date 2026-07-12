@@ -448,7 +448,50 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
     body.page-province .templatedivflex2.divflex2center .templatedivflex2right {
         flex: 1 1 100%;
     }
-    body.page-province .templatedivflex2.divflex2center .templatedivflex2right button {
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2right button,
+    body.page-province .templatedivflex2.divflex2center .templatedivflex2left button {
         width: 100%;
+    }
+    body.page-province .purchasemilitarydiv .templatedivflex2.divflex2center {
+        flex-direction: column;
+        gap: 8px;
+    }
+    body.page-province .purchasemilitarydiv input,
+    body.page-province .province-owner-build input,
+    body.page-province .province-owner-build select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    body.page-province .templatedivflex2.menuflex {
+        flex-direction: column;
+    }
+    body.page-province .province-card-media {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 16px;
+        max-width: 100%;
+    }
+    body.page-province .province-card-media img.unitimage {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+    }
+    body.page-province button,
+    body.page-province .templatedivbutton,
+    body.page-province input,
+    body.page-province select,
+    body.page-province .smallheader,
+    body.page-province .templatedivflex2left[onclick] {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    body.page-province input {
+        justify-content: flex-start;
     }
 }
