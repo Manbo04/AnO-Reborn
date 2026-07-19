@@ -1252,6 +1252,15 @@ def province_sell_buy(way, units, province_id):
         if wantedUnits > 2147483647 or wantedUnits < -2147483647:
             return error(400, "Amount out of range")
 
+        # Player report (ticket-0020): the classic land/city purchase form only
+        # has a "Purchase" button (no separate sell button), so entering a
+        # negative amount there — the same demolish-via-negative-number pattern
+        # already used for buildings — silently failed. Mirror that pattern
+        # here: a negative amount on the buy route sells that many instead.
+        if way == "buy" and units in ("land", "cityCount") and wantedUnits < 0:
+            way = "sell"
+            wantedUnits = -wantedUnits
+
         if wantedUnits < 1:
             return error(400, "Units cannot be less than 1")
 
