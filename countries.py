@@ -1525,6 +1525,27 @@ def delete_own_account():
         # Track how many rows we delete from key tables for observability
         deleted_counts = {}
 
+        # Clean up the referral system (migrations/0036_referrals.sql) first.
+        # Its three FKs to users(id) have no ON DELETE action, so deleting a
+        # player who ever referred someone or was referred raised an
+        # unhandled IntegrityError and the whole account deletion silently
+        # failed (Discord report, ticket-0022).
+        db.execute(
+            "DELETE FROM referral_active_days WHERE referred_user_id=%s", (cId,)
+        )
+        deleted_counts["referral_active_days"] = db.rowcount
+        db.execute(
+            "DELETE FROM referral_milestone_payouts "
+            "WHERE referrer_user_id=%s OR referred_user_id=%s",
+            (cId, cId),
+        )
+        deleted_counts["referral_milestone_payouts"] = db.rowcount
+        db.execute(
+            "UPDATE users SET referred_by_user_id=NULL WHERE referred_by_user_id=%s",
+            (cId,),
+        )
+        deleted_counts["referred_by_user_id_cleared"] = db.rowcount
+
         # Deletes all the info from database created upon signup
         db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
         deleted_counts["users"] = db.rowcount
