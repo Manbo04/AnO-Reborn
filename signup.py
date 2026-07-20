@@ -30,11 +30,27 @@ def _complete_referral_signup(db, user_id: int) -> None:
         referral_code_from_signup_request,
     )
 
+    # Diagnostic logging (ticket-0022): a referrer reported 0 invitees despite
+    # a completed referral signup. Log every input/output of this step so the
+    # next occurrence tells us exactly where the code got lost — form vs.
+    # session, resolution to a referrer, or the UPDATE itself — instead of
+    # guessing again.
+    form_code = request.form.get("referral_code")
+    session_code = session.get("referral_code")
     code = referral_code_from_signup_request()
+    logger.info(
+        "Referral signup debug: user_id=%s form_code=%r session_code=%r "
+        "resolved_code=%r",
+        user_id, form_code, session_code, code,
+    )
     db.execute("SAVEPOINT referral_signup")
     try:
-        link_referrer_on_signup(db, user_id, code)
-        apply_signup_referral_bonus(db, user_id)
+        referrer_id = link_referrer_on_signup(db, user_id, code)
+        bonus = apply_signup_referral_bonus(db, user_id)
+        logger.info(
+            "Referral signup debug: user_id=%s referrer_id=%s bonus=%r",
+            user_id, referrer_id, bonus,
+        )
         db.execute("RELEASE SAVEPOINT referral_signup")
     except Exception:
         logger.exception("Referral signup step failed for user_id=%s", user_id)
