@@ -5,7 +5,7 @@ from database import get_request_cursor
 
 
 def _province_count(db, user_id: int) -> int:
-    db.execute("SELECT COUNT(*)::int FROM provinces WHERE \"userId\" = %s", (user_id,))
+    db.execute("SELECT COUNT(*)::int FROM provinces WHERE userId = %s", (user_id,))
     row = db.fetchone()
     return int(row[0]) if row else 0
 
