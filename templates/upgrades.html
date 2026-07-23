@@ -69,17 +69,16 @@
             -->
         </div>
 
-        {% if tech_rows and tech_rows|length > 0 %}
+        {% if available_techs and available_techs|length > 0 %}
         <div class="infodiv" class="mb-md">
-            <h3 class="templatecontentheadercenter">All Technologies</h3>
+            <h3 class="templatecontentheadercenter">Available Technologies</h3>
             <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
             <form method="POST" action="/start_research">
                 <label for="tech_id">Technology</label>
                 <select class="templateselect" name="tech_id" id="tech_id" required>
-                    {% for tech in tech_rows %}
+                    {% for tech in available_techs %}
                     <option value="{{ tech[0] }}">
                         {{ tech[1] }} ({{ tech[2] | weight_fmt }} {{ research_cost_resource }})
-                        {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
                     </option>
                     {% endfor %}
                 </select>

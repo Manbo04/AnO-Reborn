@@ -108,11 +108,13 @@ def upgrades():
             (cId,),
         )
         unlocked_ids = {row[0] for row in db.fetchall()}
+        available_techs = [row for row in tech_rows if row[0] not in unlocked_ids]
 
     return render_template(
         "upgrades.html",
         upgrades=upgrades,
         tech_rows=tech_rows,
+        available_techs=available_techs,
         unlocked_ids=unlocked_ids,
         research_cost_resource=RESEARCH_COST_RESOURCE,
         tech_costs=tech_costs,
