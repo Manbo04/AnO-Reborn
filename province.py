@@ -1297,16 +1297,18 @@ def province_sell_buy(way, units, province_id):
         current_cityCount = int(_prov_row[0] or 0) if _prov_row else 0
         current_land = int(_prov_row[1] or 0) if _prov_row else 0
 
+        start_cityCount = current_cityCount if way == "buy" else current_cityCount - wantedUnits
         if units == "cityCount":
             cityCount_price = sum_cost_capped_linear(
-                750000, 50000, current_cityCount, wantedUnits, cap_threshold=200
+                750000, 50000, start_cityCount, wantedUnits, cap_threshold=200
             )
         else:
             cityCount_price = 0
 
+        start_land = current_land if way == "buy" else current_land - wantedUnits
         if units == "land":
             land_price = sum_cost_capped_linear(
-                520000, 25000, current_land, wantedUnits, cap_threshold=100
+                520000, 25000, start_land, wantedUnits, cap_threshold=100
             )
         else:
             land_price = 0
