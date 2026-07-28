@@ -109,8 +109,13 @@ def calc_pg(pId, rations):
         if rations_needed_percent > 1:
             rations_needed_percent = 1
 
-        # Slower, controlled population growth (prevents snowballing)
-        base_growth_rate = rations_needed_percent * 0.15
+        # Slower, controlled population growth (prevents snowballing).
+        # Squared so growth falls off steeply once distribution capacity
+        # can't keep up with population, not just linearly (Discord report:
+        # nation fed for 9.5M but at 15M pop still "grows enormously
+        # quickly" — a 63%-fed nation was only losing 37% of its growth
+        # rate under the old linear scaling).
+        base_growth_rate = (rations_needed_percent**2) * 0.15
 
         # Diminishing returns: growth slows as population approaches max
         pop_ratio = curPop / maxPop if maxPop > 0 else 1
@@ -319,7 +324,9 @@ def population_growth():  # Function for growing population
             if rations_ratio > 1:
                 rations_ratio = 1
 
-            base_growth_rate = rations_ratio * 0.15
+            # Squared: see calc_pg() above for the reasoning (player-reported
+            # over-fast growth while significantly under distribution capacity).
+            base_growth_rate = (rations_ratio**2) * 0.15
 
             pop_ratio = curPop / maxPop if maxPop > 0 else 1
             diminishing_factor = max(0.05, 1 - (pop_ratio**2))
