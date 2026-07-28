@@ -23,6 +23,9 @@ TASK_RUN_THRESHOLDS = {
     # once per hour to match hourly production — otherwise upkeep is charged 6x
     # (global_tick fires every 10 min) and armies starve their own nations.
     "military_maintenance": int(os.getenv("MILITARY_MAINT_MIN_INTERVAL", "3300")),
+    # War supply regen (see maintenance.py global_tick) is also hourly-gated,
+    # same reasoning as military_maintenance above.
+    "war_supply_regen": int(os.getenv("WAR_SUPPLY_REGEN_MIN_INTERVAL", "3300")),
 }
 
 CELERY_BEAT_SCHEDULE = {
