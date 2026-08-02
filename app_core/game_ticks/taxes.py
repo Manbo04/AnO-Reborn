@@ -398,7 +398,7 @@ def tax_income():
                         ON bd.building_id = ub.building_id
                     WHERE ub.user_id = ANY(%s)
                       AND bd.name IN (
-                          'distribution_centers', 'malls',
+                          'distribution_centers', 'food_banks', 'malls',
                           'general_stores', 'gas_stations', 'farmers_markets'
                       )
                     GROUP BY ub.user_id, bd.name
