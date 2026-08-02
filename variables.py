@@ -33,6 +33,7 @@ RATIONS_PER = 50000  # 1 Ration per x population (lower = more rations needed)
 # NOTE: enabled by default following 2026‑02‑24 deployment.
 FEATURE_RATIONS_DISTRIBUTION = True  # toggle the new mechanic on/off
 RATIONS_DISTRIBUTION_BUILDINGS = [
+    "food_banks",
     "distribution_centers",
     "gas_stations",
     "general_stores",
@@ -41,6 +42,7 @@ RATIONS_DISTRIBUTION_BUILDINGS = [
 ]
 # Tiered capacity: expensive buildings serve more population
 RATIONS_DISTRIBUTION_PER_BUILDING = {
+    "food_banks": 250000,  # 250k — extremely cheap
     "distribution_centers": 1500000,  # 1.5M — cheapest, purpose-built
     "gas_stations": 1000000,  # 1.0M — moderate, secondary purpose
     "general_stores": 2500000,  # 2.5M — expensive, high capacity
@@ -69,6 +71,7 @@ DEMO_CONSUMER_GOODS_CONSUMPTION = {
 # Distribution capacity for different building types
 # These cap how much rations/CG can actually be consumed even if available
 CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
+    "food_banks",
     "distribution_centers",
     "malls",
     "general_stores",
@@ -76,6 +79,7 @@ CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
 ]
 # Tiered capacity: mirrors rations distribution tiers
 CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = {
+    "food_banks": 250000,  # 250k
     "distribution_centers": 1500000,  # 1.5M
     "gas_stations": 1000000,  # 1.0M
     "general_stores": 2500000,  # 2.5M
@@ -247,7 +251,8 @@ ENERGY_UNITS = [
 ]
 
 ENERGY_CONSUMERS = [
-    "distribution_centers",
+        "distribution_centers",
+        "food_banks",
     "gas_stations",
     "general_stores",
     "farmers_markets",
@@ -291,6 +296,7 @@ INFRA_TYPE_BUILDINGS = {
         "farmers_markets",
         "malls",
         "banks",
+        "food_banks",
         "distribution_centers",
         "industrial_district",
     ],
@@ -357,6 +363,7 @@ BUILDINGS = [
     "ammunition_factories",
     "aluminium_refineries",
     "oil_refineries",
+    "food_banks",
     "distribution_centers",
     "army_bases",
     "harbours",
@@ -393,6 +400,8 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "geothermal_plants_money": 20000,
     ####################
     # Retail — synced to NEW_INFRA engine values
+    "food_banks_plus": {"consumer_goods": 2},
+    "food_banks_money": 2500,
     "distribution_centers_plus": {"consumer_goods": 8},
     "distribution_centers_money": 15000,
     "gas_stations_plus": {"consumer_goods": 12},
@@ -590,6 +599,8 @@ PROVINCE_UNIT_PRICES = {
     "industrial_district_price": 280000000,
     "industrial_district_resource": {"steel": 800000, "components": 200000},
     # Distribution Centers (Tier 1 — key early-game building for rations/CG flow)
+    "food_banks_price": 250000,
+    "food_banks_resource": {"lumber": 10000},
     "distribution_centers_price": 2500000,
     "distribution_centers_resource": {"lumber": 25000, "iron": 5000},
     # Public Works (Tier 2-3)
@@ -682,6 +693,10 @@ NEW_INFRA = {  # (NEW INFRA)
     "wind_farms": {"plus": {"energy": 2}, "money": 8000},
     "geothermal_plants": {"plus": {"energy": 5}, "money": 20000},
     # RETAIL
+    "food_banks": {
+        "plus": {"consumer_goods": 2},
+        "money": 2500,
+    },
     "distribution_centers": {
         "plus": {"consumer_goods": 8},
         "money": 15000,

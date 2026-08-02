@@ -350,8 +350,8 @@ def create_app():
 
         yt = re.compile(
             r"(?:https?://)?(?:www\.|m\.)?(?:"
-            r"youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|"
-            r"youtube\.com/shorts/|youtube\.com/live/"
+            r"youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/)|"
+            r"youtu\.be/"
             r")([A-Za-z0-9_-]{11})[^\s]*"
         )
         vimeo = re.compile(r"(?:https?://)?(?:www\.)?vimeo\.com/(\d+)[^\s]*")

@@ -1,0 +1,1 @@
+ALTER TABLE infra ADD COLUMN food_banks INTEGER DEFAULT 0;

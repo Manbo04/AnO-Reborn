@@ -312,6 +312,18 @@ def get_referral_dashboard(db, user_id: int) -> dict[str, Any]:
                 "summary": reward_summary_text(rewards),
             }
         )
+        
+    db.execute(
+        """
+        SELECT r.username 
+        FROM users u
+        JOIN users r ON r.id = u.referred_by_user_id
+        WHERE u.id = %s
+        """,
+        (user_id,)
+    )
+    referrer_row = db.fetchone()
+    referred_by_username = referrer_row[0] if referrer_row else None
 
     return {
         "referral_code": code,
@@ -320,4 +332,5 @@ def get_referral_dashboard(db, user_id: int) -> dict[str, Any]:
         "invitees": invitees,
         "milestone_goals": milestone_goals,
         "total_invitees": len(invitees),
+        "referred_by_username": referred_by_username,
     }

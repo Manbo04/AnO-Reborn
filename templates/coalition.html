@@ -377,19 +377,19 @@
                     </div>
                     <div class="templatedivflex2 divflex2center">
                         <div class="templatedivflex2left">
-                            <button formaction="/deposit_into_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                            <button formaction="/deposit_into_bank/{{ colId }}" onclick="return confirm('Are you sure you want to deposit these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
                                 <span class="material-icons-outlined">arrow_downward</span>Deposit
                             </button>
                         </div>
                         {% if user_role in ["leader", "deputy_leader", "banker"] %}
                         <div class="templatedivflex2left">
-                            <button formaction="/withdraw_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                            <button formaction="/withdraw_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
                                 <span class="material-icons-outlined">arrow_upward</span>Withdraw
                             </button>
                         </div>
                         {% else %}
                         <div class="templatedivflex2left">
-                            <button formaction="/request_from_bank/{{ colId }}" class="templatedivbutton templatecenteredbutton" type="submit">
+                            <button formaction="/request_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to request these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
                                 <span class="material-icons-outlined">feedback</span>Request Withdrawal
                             </button>
                         </div>
