@@ -32,3 +32,7 @@ Every mobile bug we've shipped came from building desktop-first:
 CSS is bundled: edit `static/css/*.css` and run `python3 scripts/bundle_game_css.py`
 (regenerates `static/style.css` and the minified `static/style.min.css` that
 production serves). Do not hand-edit `style.min.css`.
+
+## 🤖 DISCORD AUTOMATION
+
+When reading Discord messages to generate replies or fix bugs, completely ignore messages that just contain an emote or are otherwise non-actionable. Do not generate generic 'Recommendation: Ignore' replies, as this clutters the chat.
