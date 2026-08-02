@@ -89,6 +89,11 @@
             <p class="templatecontentpleft referral-code-line">
                 Your code: <code>{{ referral_dashboard.referral_code }}</code>
             </p>
+            {% if referral_dashboard.referred_by_username %}
+            <p class="templatecontentpleft referral-code-line">
+                You were invited by: <strong>{{ referral_dashboard.referred_by_username }}</strong>
+            </p>
+            {% endif %}
 
             <h3 class="templatecontentheaderleft referral-subheader">Your milestone goals (per invitee)</h3>
             <ul class="referral-milestone-list">

@@ -48,6 +48,7 @@ MIGRATION_FILES = [
     "0035_add_provinces_image_data.sql",
     "0036_referrals.sql",
     "0030_add_furnace_projects.sql",
+    "0039_add_food_banks.sql",
 ]
 
 
