@@ -1480,6 +1480,7 @@ def deposit_into_bank(coalition_id):
             resource = ""
 
         if resource is not None and resource != "":
+            resource = resource.replace(",", "")
             try:
                 resource_amount = int(resource)
             except (ValueError, TypeError):
@@ -1700,38 +1701,30 @@ def request_from_bank(coalition_id):
                 resource = ""
 
             if resource is not None and resource != "":
+                resource = resource.replace(",", "")
                 try:
                     request_amount = int(resource)
                 except (ValueError, TypeError):
                     return error(400, f"Invalid amount for {res}")
-                res_tuple = (res, request_amount)
-                requested_resources.append(res_tuple)
-
-        if len(requested_resources) > 1:
-            return error(400, "You can only request one resource at a time")
+                if request_amount > 0:
+                    res_tuple = (res, request_amount)
+                    requested_resources.append(res_tuple)
 
         if not requested_resources:
             return error(400, "You must specify a resource and amount to request")
 
-        requested_resources = tuple(requested_resources[0])
-
-        amount = requested_resources[1]
-
-        if amount < 1:
-            return error(400, "Amount cannot be 0 or less")
-
-        resource = requested_resources[0]
-
-        try:
-            db.execute(
-                "INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)",
-                (cId, coalition_id, amount, resource),
-            )
-        except Exception as e:
-            current_app.logger.warning("colBanksRequests insert failed: %s", e)
-            return error(
-                500, "Error submitting bank request; please try again or contact admins"
-            )
+        for requested_resource in requested_resources:
+            resource, amount = requested_resource
+            try:
+                db.execute(
+                    "INSERT INTO colBanksRequests (reqId, colId, amount, resource) VALUES (%s, %s, %s, %s)",
+                    (cId, coalition_id, amount, resource),
+                )
+            except Exception as e:
+                current_app.logger.warning("colBanksRequests insert failed: %s", e)
+                return error(
+                    500, "Error submitting bank request; please try again or contact admins"
+                )
 
     return redirect(f"/coalition/{coalition_id}")
 
