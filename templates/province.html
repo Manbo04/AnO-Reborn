@@ -273,7 +273,7 @@
                         </tr>
                         <tr>
                             <td>{{ units["wind_farms"] }} Wind Farms</td>
-                            <td>{{ units["distribution_centers"] }} Distribution Centers</td>
+                            <td>{{ units["distribution_centers"] }} Dist. Centers <br/> {{ units["food_banks"] }} Food Banks</td>
                             <td>{{ units["high_school"] }} High Schools</td>
                         </tr>
                         <tr>
@@ -633,6 +633,32 @@
                 </div>
                 <!--Retail-->
                 <div id="retail" class="retail">
+
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Food Banks</h2>
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+                                <h3 class="templatecontentheadercenter">You have {{ units["food_banks"] }} Food Banks</h3>
+                                <p class="templatecontentpleft">Basic distribution centers to feed the populace. Very cheap to construct.</p>
+                                <ul>Food Banks cost {{ infra["food_banks_money"] | fmt }} per hour and provide 250,000 capacity for Rations and Consumer Goods distribution.</ul>
+                                <ul>{{ "food_banks" | prores }}</ul>
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="food_banks" type="number" placeholder="Amount" />
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/food_banks/{{ province['id'] }}"><span class="material-icons-outlined">add_circle_outline</span>Buy</button>
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/food_banks/{{ province['id'] }}"><span class="material-icons-outlined">remove_circle_outline</span>Sell</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'distribution_centers')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="menudiv">
 
