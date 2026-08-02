@@ -128,7 +128,7 @@ def rations_distribution_capacity(user_id):
                 ON bd.building_id = ub.building_id
             WHERE ub.user_id = %s
               AND bd.name IN (
-                  'distribution_centers', 'gas_stations', 'general_stores',
+                  'distribution_centers', 'food_banks', 'gas_stations', 'general_stores',
                   'farmers_markets', 'malls'
               )
             GROUP BY bd.name
@@ -180,7 +180,7 @@ def food_stats(user_id, db=None):
                 FROM user_buildings ub
                 JOIN building_dictionary bd ON bd.building_id = ub.building_id
                 WHERE ub.user_id = %s
-                  AND bd.name IN ('distribution_centers', 'gas_stations',
+                  AND bd.name IN ('distribution_centers', 'food_banks', 'gas_stations',
                                   'general_stores', 'farmers_markets', 'malls')
                 GROUP BY bd.name
                 """,
@@ -247,7 +247,7 @@ def nation_distribution_status(
     stock = int(rations_stockpile or 0)
     uncovered = max(0, pop - cap)
     coverage_pct = min(100, int(100 * cap / pop)) if pop > 0 else 100
-    dc_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING["distribution_centers"]
+    dc_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING["food_banks"]
     dc_suggested = (uncovered + dc_cap - 1) // dc_cap if uncovered > 0 else 0
     stockpile_bottleneck = stock >= need and cap < pop
     return {
@@ -329,7 +329,7 @@ def consumer_goods_distribution_capacity(user_id, db=None):
                 ON bd.building_id = ub.building_id
             WHERE ub.user_id = %s
               AND bd.name IN (
-                  'distribution_centers', 'malls',
+                  'distribution_centers', 'food_banks', 'malls',
                   'general_stores', 'gas_stations'
               )
             GROUP BY bd.name
