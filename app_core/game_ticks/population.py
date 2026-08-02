@@ -250,7 +250,7 @@ def population_growth():  # Function for growing population
                     ON bd.building_id = ub.building_id
                 WHERE ub.user_id = ANY(%s)
                   AND bd.name IN (
-                      'distribution_centers', 'gas_stations',
+                      'distribution_centers', 'food_banks', 'gas_stations',
                       'general_stores', 'farmers_markets', 'malls'
                   )
                 GROUP BY ub.user_id, bd.name
