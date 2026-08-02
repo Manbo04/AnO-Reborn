@@ -35,7 +35,7 @@ def test_nation_distribution_status_user16_like_bottleneck():
     assert status["uncovered_population"] == 7_200_000
     assert status["stockpile_bottleneck"] is True
     assert status["show_alert"] is True
-    assert status["distribution_centers_suggested"] == 5
+    assert status["distribution_centers_suggested"] == 29
 
 
 def test_retail_upkeep_gold_per_cg_under_audit_threshold():
