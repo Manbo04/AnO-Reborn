@@ -1,5 +1,5 @@
 {% if onboarding_checklist and onboarding_checklist.show_checklist %}
-<div class="onboarding-checklist" role="region" aria-label="Getting started">
+<div class="onboarding-checklist" role="region" aria-label="Getting started" data-user-id="{{ session.get('user_id') }}">
     <h3 class="onboarding-checklist-title">Getting started ({{ onboarding_checklist.completed }}/{{ onboarding_checklist.total }})</h3>
     <ol class="onboarding-checklist-steps">
         {% for step in onboarding_checklist.steps %}
