@@ -46,58 +46,25 @@ bp = Blueprint("province", __name__)
 load_dotenv()
 
 
+from services.province_service import ProvinceService
+
 @bp.route("/provinces", methods=["GET"])
 @login_required
 @cache_response(ttl_seconds=30)
 def provinces():
-    with get_request_cursor(read_only=True) as db:
-        cId = session["user_id"]
+    cId = session["user_id"]
+    page = request.args.get('page', 1, type=int)
+    
+    data = ProvinceService.get_user_provinces_paginated(cId, page)
 
-        page = request.args.get('page', 1, type=int)
-        per_page = 30
-        
-        db.execute("SELECT COUNT(*) FROM provinces WHERE userId=(%s)", (cId,))
-        total_count = db.fetchone()
-        total_count = total_count[0] if total_count else 0
-        total_pages = max(1, (total_count + per_page - 1) // per_page)
-        
-        if page < 1:
-            page = 1
-        elif page > total_pages:
-            page = total_pages
-            
-        offset = (page - 1) * per_page
-
-        has_image_col = ""
-        if provinces_has_image_data():
-            has_image_col = ", (image_data IS NOT NULL AND image_data <> '') AS has_image"
-
-        db.execute(
-            (
-                f"SELECT CAST(citycount AS INTEGER) AS citycount, population, "
-                f"provinceName, id, land, happiness, "
-                f"productivity, energy{has_image_col} "
-                f"FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
-            ),
-            (cId, per_page, offset),
-        )
-        provinces_raw = db.fetchall()
-
-        provinces = []
-        provinces_with_images = set()
-        for row in provinces_raw:
-            provinces.append(row[:8])
-            if len(row) > 8 and row[8]:
-                provinces_with_images.add(row[3])
-
-        return render_template(
-            "provinces.html",
-            provinces=provinces,
-            provinces_with_images=provinces_with_images,
-            current_page=page,
-            total_pages=total_pages,
-            total_count=total_count,
-        )
+    return render_template(
+        "provinces.html",
+        provinces=data["provinces"],
+        provinces_with_images=data["provinces_with_images"],
+        current_page=data["current_page"],
+        total_pages=data["total_pages"],
+        total_count=data["total_count"],
+    )
 
 
 @bp.route("/province/<pId>", methods=["GET"])
