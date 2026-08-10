@@ -1101,6 +1101,8 @@ def country(cId):
     )
 
 
+from services.country_service import CountryService
+
 def countries():
     cId = session["user_id"]
 
@@ -1123,245 +1125,25 @@ def countries():
         upperinf = float(target.get("upper", 0))
         province_range = int(target.get("province_range", 0))
 
-    # Default sort
-    if not sort:
-        sort = "influence"
-        sortway = "desc"
-    if not sortway:
-        sortway = "desc"
-
-    search_filter = ""
-    params = []
-
-    if search:
-        if search.isdigit():
-            search_filter = "AND u.id = %s"
-            params.append(int(search))
-        else:
-            search_filter = "AND u.username ILIKE %s"
-            params.append(f"%{search}%")
-
-    # Sort mapping is constrained to safe SQL snippets only.
-    sort_map = {
-        "influence": "influence",
-        "age": "date",
-        "population": "province_population",
-        "provinces": "provinces_count",
-    }
-    sort_column = sort_map.get(sort, "influence")
-    sort_direction = "DESC" if sortway == "desc" else "ASC"
-
-    members_tbl = get_coalition_members_table()
-    coalition_src = (
-        members_tbl
-        if members_tbl
-        else "(SELECT NULL::integer AS userid, NULL::integer AS colid WHERE FALSE)"
+    data = CountryService.get_countries_paginated(
+        cId=cId,
+        search=search,
+        lowerinf=lowerinf,
+        upperinf=upperinf,
+        province_range=province_range,
+        sort=sort,
+        sortway=sortway,
+        page=page,
+        per_page=per_page
     )
-
-    with get_request_cursor(read_only=True) as db:
-        filter_sql = f"""
-            WITH country_rows AS (
-                SELECT
-                    u.id,
-                    u.username,
-                    u.date,
-                    u.flag,
-                    COALESCE(p.province_population, 0) AS province_population,
-                    cm.colid,
-                    c.name,
-                    COALESCE(p.provinces_count, 0) AS provinces_count,
-                    NULL::integer AS join_number,
-                    ROUND(
-                        COALESCE(p.provinces_count, 0) * 300
-                        + COALESCE(m.soldiers, 0) * 0.02
-                        + COALESCE(m.artillery, 0) * 1.6
-                        + COALESCE(m.tanks, 0) * 0.8
-                        + COALESCE(m.fighters, 0) * 3.5
-                        + COALESCE(m.bombers, 0) * 2.5
-                        + COALESCE(m.apaches, 0) * 3.2
-                        + COALESCE(m.submarines, 0) * 4.5
-                        + COALESCE(m.destroyers, 0) * 3
-                        + COALESCE(m.cruisers, 0) * 5.5
-                        + COALESCE(m.icbms, 0) * 250
-                        + COALESCE(m.nukes, 0) * 500
-                        + COALESCE(m.spies, 0) * 25
-                        + COALESCE(p.city_count, 0) * 10
-                        + COALESCE(p.total_land, 0) * 10
-                        + COALESCE(r.total_resources, 0) * 0.001
-                        + COALESCE(s.gold, 0) * 0.00001
-                    )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{4}-\\d{2}-\\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
-                FROM users u
-                LEFT JOIN stats s ON s.id = u.id
-                LEFT JOIN (
-                    SELECT
-                        userid AS user_id,
-                        COUNT(id) AS provinces_count,
-                        COALESCE(SUM(population), 0) AS province_population,
-                        COALESCE(SUM(citycount), 0) AS city_count,
-                        COALESCE(SUM(land), 0) AS total_land
-                    FROM provinces
-                    GROUP BY userid
-                ) p ON p.user_id = u.id
-                LEFT JOIN (
-                    SELECT
-                        um.user_id,
-                        SUM(
-                            CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END
-                        ) AS soldiers,
-                        SUM(
-                            CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END
-                        ) AS artillery,
-                        SUM(
-                            CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END
-                        ) AS tanks,
-                        SUM(
-                            CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END
-                        ) AS fighters,
-                        SUM(
-                            CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END
-                        ) AS bombers,
-                        SUM(
-                            CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END
-                        ) AS apaches,
-                        SUM(
-                            CASE
-                                WHEN ud.name='submarines' THEN um.quantity
-                                ELSE 0
-                            END
-                        ) AS submarines,
-                        SUM(
-                            CASE
-                                WHEN ud.name='destroyers' THEN um.quantity
-                                ELSE 0
-                            END
-                        ) AS destroyers,
-                        SUM(
-                            CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END
-                        ) AS cruisers,
-                        SUM(
-                            CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END
-                        ) AS icbms,
-                        SUM(
-                            CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END
-                        ) AS nukes,
-                        SUM(
-                            CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END
-                        ) AS spies
-                    FROM user_military um
-                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                    GROUP BY um.user_id
-                ) m ON m.user_id = u.id
-                LEFT JOIN (
-                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
-                    FROM user_economy
-                    GROUP BY user_id
-                ) r ON r.user_id = u.id
-                LEFT JOIN (
-                    SELECT userid, MIN(colid) AS colid
-                    FROM {coalition_src}
-                    GROUP BY userid
-                ) cm ON cm.userid = u.id
-                LEFT JOIN colNames c ON c.id = cm.colid
-                WHERE 1=1
-                {search_filter}
-            )
-            SELECT *
-            FROM country_rows
-            WHERE provinces_count >= %s
-              AND (%s::numeric IS NULL OR influence >= %s)
-              AND (%s::numeric IS NULL OR influence <= %s)
-        """
-
-        filter_sql_simple = f"""
-            WITH country_rows AS (
-                SELECT
-                    u.id,
-                    u.username,
-                    u.date,
-                    u.flag,
-                    COALESCE(p.province_population, 0) AS province_population,
-                    cm.colid,
-                    c.name,
-                    COALESCE(p.provinces_count, 0) AS provinces_count,
-                    NULL::integer AS join_number,
-                    ROUND(
-                        COALESCE(p.provinces_count, 0) * 300
-                        + COALESCE(p.city_count, 0) * 10
-                        + COALESCE(p.total_land, 0) * 10
-                        + COALESCE(s.gold, 0) * 0.00001
-                    )::bigint AS influence,
-                    COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{4}-\\d{2}-\\d{2}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
-                FROM users u
-                LEFT JOIN stats s ON s.id = u.id
-                LEFT JOIN (
-                    SELECT
-                        userid AS user_id,
-                        COUNT(id) AS provinces_count,
-                        COALESCE(SUM(population), 0) AS province_population,
-                        COALESCE(SUM(citycount), 0) AS city_count,
-                        COALESCE(SUM(land), 0) AS total_land
-                    FROM provinces
-                    GROUP BY userid
-                ) p ON p.user_id = u.id
-                LEFT JOIN (
-                    SELECT userid, MIN(colid) AS colid
-                    FROM {coalition_src}
-                    GROUP BY userid
-                ) cm ON cm.userid = u.id
-                LEFT JOIN colNames c ON c.id = cm.colid
-                WHERE 1=1
-                {search_filter}
-            )
-            SELECT * FROM country_rows
-        """
-
-        filter_params = list(params)
-        filter_params.extend(
-            [
-                province_range,
-                lowerinf,
-                lowerinf,
-                upperinf,
-                upperinf,
-            ]
-        )
-        def _run_count_and_page(active_filter_sql):
-            db.execute(
-                f"SELECT COUNT(*) FROM ({active_filter_sql}) AS filtered",
-                tuple(filter_params),
-            )
-            count_row = db.fetchone()
-            nonlocal total_count, total_pages, page, offset, paginated_results
-            total_count = (count_row[0] or 0) if count_row else 0
-            total_pages = max(1, (total_count + per_page - 1) // per_page)
-            if page < 1:
-                page = 1
-            if page > total_pages:
-                page = total_pages
-            offset = (page - 1) * per_page
-            page_query = (
-                f"{active_filter_sql} ORDER BY {sort_column} {sort_direction}, "
-                "id ASC LIMIT %s OFFSET %s"
-            )
-            page_params = list(filter_params)
-            page_params.extend([per_page, offset])
-            db.execute(page_query, tuple(page_params))
-            paginated_results = db.fetchall()
-
-        total_count = 0
-        total_pages = 1
-        offset = 0
-        paginated_results = []
-        _run_count_and_page(filter_sql)
 
     return render_template(
         "countries.html",
-        countries=paginated_results,
+        countries=data["countries"],
         current_user_id=cId,
-        current_page=page,
-        total_pages=total_pages,
-        total_count=total_count,
+        current_page=data["current_page"],
+        total_pages=data["total_pages"],
+        total_count=data["total_count"],
         per_page=per_page,
         sort=sort,
         sortway=sortway,
