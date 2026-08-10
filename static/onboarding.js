@@ -28,6 +28,8 @@
         modal.setAttribute("aria-hidden", "true");
         modal.hidden = true;
         document.body.classList.remove("onboarding-tutorial-open");
+        var checklist = document.querySelector(".onboarding-checklist");
+        if (checklist) checklist.style.display = "none";
     }
 
     function showModal(modal) {
@@ -39,13 +41,26 @@
     }
 
     function initTutorialPopup() {
+        var checklist = document.querySelector(".onboarding-checklist");
         var modal = document.getElementById("onboarding-tutorial-popup");
-        if (!modal) return;
+        
+        var userId = null;
+        if (modal) {
+            userId = modal.getAttribute("data-user-id");
+        } else if (checklist) {
+            userId = checklist.getAttribute("data-user-id");
+        }
 
-        var userId = modal.getAttribute("data-user-id");
         var path = window.location.pathname || "";
-        if (path === "/tutorial" || path.indexOf("/tutorial/") === 0) return;
-        if (userId && isSnoozed(userId)) return;
+        var inTutorial = path === "/tutorial" || path.indexOf("/tutorial/") === 0;
+
+        // If snoozed, hide checklist regardless of modal presence
+        if (userId && isSnoozed(userId) && !inTutorial) {
+            if (checklist) checklist.style.display = "none";
+            if (!modal) return;
+        }
+
+        if (!modal || inTutorial) return;
 
         showModal(modal);
 
