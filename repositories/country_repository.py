@@ -127,3 +127,121 @@ class CountryRepository:
             raw_data = db.fetchall()
             
             return raw_data, total_count, total_pages, page
+
+    @staticmethod
+    def delete_news(news_id: int, user_id: int):
+        with get_request_cursor() as db:
+            db.execute(
+                "DELETE FROM news WHERE id=%s AND destination_id=%s",
+                (news_id, user_id)
+            )
+
+    @staticmethod
+    def delete_own_account(cId: int):
+        with get_request_cursor() as db:
+            # Track how many rows we delete from key tables for observability
+            deleted_counts = {}
+
+            db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (cId,))
+            deleted_counts["referral_active_days"] = db.rowcount
+            db.execute(
+                "DELETE FROM referral_milestone_payouts "
+                "WHERE referrer_user_id=%s OR referred_user_id=%s",
+                (cId, cId),
+            )
+            deleted_counts["referral_milestone_payouts"] = db.rowcount
+            db.execute(
+                "UPDATE users SET referred_by_user_id=NULL WHERE referred_by_user_id=%s",
+                (cId,),
+            )
+            deleted_counts["referred_by_user_id_cleared"] = db.rowcount
+
+            db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
+            deleted_counts["users"] = db.rowcount
+            db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
+            deleted_counts["stats"] = db.rowcount
+            db.execute("DELETE FROM user_military WHERE user_id=(%s)", (cId,))
+            deleted_counts["user_military"] = db.rowcount
+            db.execute("DELETE FROM user_economy WHERE user_id=(%s)", (cId,))
+            deleted_counts["user_economy"] = db.rowcount
+
+            db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
+            deleted_counts["offers"] = db.rowcount
+            db.execute(
+                "DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId)
+            )
+            deleted_counts["wars"] = db.rowcount
+
+            db.execute("SELECT id FROM provinces WHERE userid=%s", (cId,))
+            province_ids = db.fetchall()
+            if province_ids:
+                ids = [p[0] for p in province_ids]
+                placeholders = ",".join(["%s"] * len(ids))
+                db.execute(
+                    f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids)
+                )
+                deleted_counts["provinces"] = db.rowcount
+
+            db.execute("DELETE FROM user_buildings WHERE user_id=(%s)", (cId,))
+            deleted_counts["user_buildings"] = db.rowcount
+            db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
+            deleted_counts["trades"] = db.rowcount
+            db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
+            deleted_counts["spyinfo"] = db.rowcount
+            db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
+            deleted_counts["requests"] = db.rowcount
+            db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
+            deleted_counts["reparation_tax"] = db.rowcount
+            db.execute("DELETE FROM peace WHERE author=%s", (cId,))
+            deleted_counts["peace"] = db.rowcount
+
+            try:
+                from coalitions import get_user_role
+                coalition_role = get_user_role(cId)
+            except Exception:
+                coalition_role = None
+                
+            from database import get_coalition_members_table
+            members_tbl = get_coalition_members_table()
+            
+            if coalition_role == "leader" and members_tbl:
+                col_colid = "coalition_id" if members_tbl == "coalition_members" else "colid"
+                col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
+                
+                db.execute(
+                    f"SELECT {col_colid} FROM {members_tbl} WHERE {col_userid}=%s", (cId,)
+                )
+                coalition_row = db.fetchone()
+                if coalition_row:
+                    user_coalition = coalition_row[0]
+                    db.execute(
+                        f"SELECT COUNT({col_userid}) FROM {members_tbl} "
+                        f"WHERE role='leader' AND {col_colid}=%s",
+                        (user_coalition,),
+                    )
+                    leader_row = db.fetchone()
+                    leader_count = leader_row[0] if leader_row else 0
+                    if leader_count == 1:
+                        db.execute(
+                            f"DELETE FROM {members_tbl} WHERE {col_colid}=%s",
+                            (user_coalition,),
+                        )
+                        db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
+                        db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
+                        db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
+
+            if members_tbl:
+                col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
+                db.execute(f"DELETE FROM {members_tbl} WHERE {col_userid}=%s", (cId,))
+            db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
+
+            db.execute("DELETE FROM user_tech WHERE user_id=%s", (cId,))
+            deleted_counts["user_tech"] = db.rowcount
+            db.execute("DELETE FROM policies WHERE user_id=%s", (cId,))
+            deleted_counts["policies"] = db.rowcount
+            db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
+            deleted_counts["news"] = db.rowcount
+            db.execute("DELETE FROM interactive_events WHERE user_id=%s", (cId,))
+            deleted_counts["interactive_events"] = db.rowcount
+            
+            return True, deleted_counts
