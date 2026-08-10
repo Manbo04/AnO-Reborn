@@ -57,7 +57,7 @@
         // If snoozed, hide checklist regardless of modal presence
         if (userId && isSnoozed(userId) && !inTutorial) {
             if (checklist) checklist.style.display = "none";
-            if (!modal) return;
+            return;
         }
 
         if (!modal || inTutorial) return;
