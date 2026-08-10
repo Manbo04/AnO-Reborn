@@ -1154,6 +1154,12 @@ def countries():
     )
 
 
+def delete_news(id):
+    from repositories.country_repository import CountryRepository
+    CountryRepository.delete_news(id, session["user_id"])
+    return redirect("/account")
+
+
 def update_info():
     with get_request_cursor() as db:
         cId = session["user_id"]
@@ -1301,156 +1307,14 @@ def update_info():
 
 # TODO: check if you can DELETE with one statement
 def delete_own_account():
-    with get_request_cursor() as db:
-        cId = session["user_id"]
-
-        # Track how many rows we delete from key tables for observability
-        deleted_counts = {}
-
-        # Clean up the referral system (migrations/0036_referrals.sql) first.
-        # Its three FKs to users(id) have no ON DELETE action, so deleting a
-        # player who ever referred someone or was referred raised an
-        # unhandled IntegrityError and the whole account deletion silently
-        # failed (Discord report, ticket-0022).
-        db.execute(
-            "DELETE FROM referral_active_days WHERE referred_user_id=%s", (cId,)
-        )
-        deleted_counts["referral_active_days"] = db.rowcount
-        db.execute(
-            "DELETE FROM referral_milestone_payouts "
-            "WHERE referrer_user_id=%s OR referred_user_id=%s",
-            (cId, cId),
-        )
-        deleted_counts["referral_milestone_payouts"] = db.rowcount
-        db.execute(
-            "UPDATE users SET referred_by_user_id=NULL WHERE referred_by_user_id=%s",
-            (cId,),
-        )
-        deleted_counts["referred_by_user_id_cleared"] = db.rowcount
-
-        # Deletes all the info from database created upon signup
-        db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
-        deleted_counts["users"] = db.rowcount
-        db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))
-        deleted_counts["stats"] = db.rowcount
-        db.execute("DELETE FROM user_military WHERE user_id=(%s)", (cId,))
-        deleted_counts["user_military"] = db.rowcount
-        db.execute("DELETE FROM user_economy WHERE user_id=(%s)", (cId,))
-        deleted_counts["user_economy"] = db.rowcount
-
-        # Deletes all market things the user is associated with
-        db.execute("DELETE FROM offers WHERE user_id=(%s)", (cId,))
-        deleted_counts["offers"] = db.rowcount
-        db.execute(
-            "DELETE FROM wars WHERE defender=%s OR attacker=%s", (cId, cId)
-        )
-        deleted_counts["wars"] = db.rowcount
-
-        # Deletes all the users provinces and their infrastructure
-        # OPTIMIZATION: Batch delete instead of N+1 queries
-        db.execute("SELECT id FROM provinces WHERE userid=%s", (cId,))
-        province_ids = db.fetchall()
-        if province_ids:
-            ids = [p[0] for p in province_ids]
-            placeholders = ",".join(["%s"] * len(ids))
-            db.execute(
-                f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids)
-            )
-            deleted_counts["provinces"] = db.rowcount
-
-        # Delete user buildings (keyed by user_id, not province_id)
-        db.execute("DELETE FROM user_buildings WHERE user_id=(%s)", (cId,))
-        deleted_counts["user_buildings"] = db.rowcount
-        db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
-        deleted_counts["trades"] = db.rowcount
-        db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
-        deleted_counts["spyinfo"] = db.rowcount
-        db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
-        deleted_counts["requests"] = db.rowcount
-        db.execute("DELETE FROM reparation_tax WHERE loser=%s OR winner=%s", (cId, cId))
-        deleted_counts["reparation_tax"] = db.rowcount
-        db.execute("DELETE FROM peace WHERE author=%s", (cId,))
-        deleted_counts["peace"] = db.rowcount
-
-        try:
-            from coalitions import get_user_role
-
-            coalition_role = get_user_role(cId)
-        except Exception:
-            coalition_role = None
-        members_tbl = get_coalition_members_table()
-        if coalition_role != "leader":
-            pass
-        elif members_tbl:
-            col_colid = "coalition_id" if members_tbl == "coalition_members" else "colid"
-            col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
-            
-            db.execute(
-                f"SELECT {col_colid} FROM {members_tbl} WHERE {col_userid}=%s", (cId,)
-            )
-            coalition_row = db.fetchone()
-            if coalition_row:
-                user_coalition = coalition_row[0]
-                db.execute(
-                    f"SELECT COUNT({col_userid}) FROM {members_tbl} "
-                    f"WHERE role='leader' AND {col_colid}=%s",
-                    (user_coalition,),
-                )
-                leader_row = db.fetchone()
-                leader_count = leader_row[0] if leader_row else 0
-                if leader_count == 1:
-                    db.execute(
-                        f"DELETE FROM {members_tbl} WHERE {col_colid}=%s",
-                        (user_coalition,),
-                    )
-                    db.execute("DELETE FROM colNames WHERE id=%s", (user_coalition,))
-                    db.execute("DELETE FROM colBanks WHERE colId=%s", (user_coalition,))
-                    db.execute("DELETE FROM requests WHERE colId=%s", (user_coalition,))
-
-        if members_tbl:
-            col_userid = "user_id" if members_tbl == "coalition_members" else "userid"
-            db.execute(f"DELETE FROM {members_tbl} WHERE {col_userid}=%s", (cId,))
-        db.execute("DELETE FROM colBanksRequests WHERE reqId=%s", (cId,))
-
-        # Clean up Economy 2.0 normalized tables
-        db.execute("DELETE FROM user_tech WHERE user_id=%s", (cId,))
-        deleted_counts["user_tech"] = db.rowcount
-        db.execute("DELETE FROM policies WHERE user_id=%s", (cId,))
-        deleted_counts["policies"] = db.rowcount
-        db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
-        deleted_counts["news"] = db.rowcount
-
-        try:
-
-            logging.getLogger(__name__).info(
-                "delete_own_account: deleted_counts=%s", deleted_counts
-            )
-        except Exception:
-            pass
-
-        # --- CACHE INVALIDATION ------------------------------------------------
-        # Removing a nation should immediately purge any leaderboard / country
-        # page HTML that might still reference the departed player. Without this
-        # the /countries view (cached for 60s) can continue to serve a stale
-        # copy with links pointing at the old id. Players who quickly delete and
-        # re‑roll would see their new name on the leaderboard, click it, and hit
-        # "Country doesn't exist".  The Discord bug report describes exactly
-        # that behaviour.
-        #
-        # Invalidate the entire countries listing (affects all users) and clear
-        # any cached individual country pages for the deleted id.  We also kick
-        # the my_country cache for good measure.
-        try:
-            invalidate_view_cache("countries")
-            invalidate_view_cache("country", page=f"/country/id={cId}")
-            invalidate_view_cache("my_country", user_id=cId)
-        except Exception:
-            pass
-        # ----------------------------------------------------------------------
-
+    cId = session["user_id"]
+    from repositories.country_repository import CountryRepository
+    
+    CountryRepository.delete_own_account(cId)
     session.clear()
-
     return redirect("/")
+
+
 
 
 
