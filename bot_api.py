@@ -883,5 +883,41 @@ def bot_resources():
   return jsonify(snap)
 
 
+@bp.route("/api/bot/heuristics/sync", methods=["POST"])
+def bot_heuristics_sync():
+    err = _require_bot_secret()
+    if err:
+        return err
+    payload = request.get_json(silent=True) or {}
+    discord_user_id = str(payload.get("discord_user_id") or "").strip()
+    action = str(payload.get("action") or "").strip()
+    
+    if not discord_user_id:
+        return jsonify({"error": "discord_user_id required"}), 400
+        
+    user_id = resolve_user_id_by_discord(discord_user_id)
+    if not user_id:
+        return jsonify({"error": "User not linked"}), 404
+        
+    if action == "spam_warning":
+        try:
+            QueryHelper.execute("INSERT INTO events (user_id, title, message, created_at) VALUES (%s, %s, %s, NOW())", 
+                (user_id, "Discord Warning", "You received a spam warning on our Discord server. Continued violations may affect your in-game standing."))
+        except:
+            pass
+        return jsonify({"ok": True, "message": "Spam warning synced"})
+        
+    elif action == "xp_gain":
+        xp_amount = int(payload.get("xp_amount", 0))
+        try:
+            QueryHelper.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (xp_amount * 10, user_id))
+        except:
+            pass
+        return jsonify({"ok": True, "message": "XP synced to game economy"})
+        
+    return jsonify({"error": "Unknown action"}), 400
+
+
 def register_bot_api_routes(app_instance):
   app_instance.register_blueprint(bp)
+
