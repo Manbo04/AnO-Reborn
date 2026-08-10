@@ -883,8 +883,12 @@ def bot_resources():
   return jsonify(snap)
 
 
+_heuristics_rate_limits = {}
+_heuristics_cleanup_time = 0.0
+
 @bp.route("/api/bot/heuristics/sync", methods=["POST"])
 def bot_heuristics_sync():
+    global _heuristics_cleanup_time
     err = _require_bot_secret()
     if err:
         return err
@@ -894,6 +898,19 @@ def bot_heuristics_sync():
     
     if not discord_user_id:
         return jsonify({"error": "discord_user_id required"}), 400
+        
+    if action == "xp_gain":
+        now = time.time()
+        if now - _heuristics_cleanup_time > 300:
+            expired = [k for k, v in _heuristics_rate_limits.items() if now - v > 60]
+            for k in expired:
+                del _heuristics_rate_limits[k]
+            _heuristics_cleanup_time = now
+            
+        last_time = _heuristics_rate_limits.get(discord_user_id, 0)
+        if now - last_time < 55:
+            return jsonify({"error": "Rate limit exceeded"}), 429
+        _heuristics_rate_limits[discord_user_id] = now
         
     user_id = resolve_user_id_by_discord(discord_user_id)
     if not user_id:
