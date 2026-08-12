@@ -6,7 +6,10 @@
     <meta charset="utf-8">
     <title>{% block seo_title %}{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game{% endblock %}</title>
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
     <meta name="description" content="{% block seo_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries, and wage war on adversaries.{% endblock %}">
     <link rel="canonical" href="{% block seo_canonical %}https://affairsandorder.com{{ request.path if request else '/' }}{% endblock %}">
@@ -616,27 +619,29 @@
     </footer>
 
     {% if session.get('user_id') != None %}
-    <nav class="mobile-bottom-nav" aria-label="Main navigation" id="mobile-bottom-nav">
-        <a class="mobile-bottom-nav__item {% if request.path.startswith('/country/id=' + session['user_id']|string) %}mobile-bottom-nav__item--active{% endif %}" href="/country/id={{ session['user_id'] }}">
-            <span class="material-icons-outlined">language</span>
-            <span>Nation</span>
-        </a>
-        <a class="mobile-bottom-nav__item {% if request.path == '/provinces' or 'province_view' in request.path %}mobile-bottom-nav__item--active{% endif %}" href="/provinces">
-            <span class="material-icons-outlined">account_balance</span>
-            <span>Provinces</span>
-        </a>
-        <a class="mobile-bottom-nav__item {% if request.path == '/market' %}mobile-bottom-nav__item--active{% endif %}" href="/market">
-            <span class="material-icons-outlined">local_grocery_store</span>
-            <span>Market</span>
-        </a>
-        <a class="mobile-bottom-nav__item {% if request.path == '/wars' or request.path == '/military' %}mobile-bottom-nav__item--active{% endif %}" href="/wars">
-            <span class="material-icons-outlined">military_tech</span>
-            <span>Wars</span>
-        </a>
-        <button type="button" class="mobile-bottom-nav__item" onclick="menubardrop()" aria-label="More navigation options">
-            <span class="material-icons-outlined">menu</span>
-            <span>More</span>
-        </button>
+    <nav class="game-bottom-nav" aria-label="Main navigation" id="game-bottom-nav">
+        <div class="game-bottom-nav-inner">
+            <a class="game-nav-item {% if request.path.startswith('/country/id=' + session['user_id']|string) %}is-active{% endif %}" href="/country/id={{ session['user_id'] }}">
+                <span class="material-icons-outlined">language</span>
+                <span>Nation</span>
+            </a>
+            <a class="game-nav-item {% if request.path == '/provinces' or 'province_view' in request.path %}is-active{% endif %}" href="/provinces">
+                <span class="material-icons-outlined">account_balance</span>
+                <span>Provinces</span>
+            </a>
+            <a class="game-nav-item {% if request.path == '/market' %}is-active{% endif %}" href="/market">
+                <span class="material-icons-outlined">local_grocery_store</span>
+                <span>Market</span>
+            </a>
+            <a class="game-nav-item {% if request.path == '/wars' or request.path == '/military' %}is-active{% endif %}" href="/wars">
+                <span class="material-icons-outlined">military_tech</span>
+                <span>Wars</span>
+            </a>
+            <button type="button" class="game-nav-item" onclick="menubardrop()" aria-label="More navigation options">
+                <span class="material-icons-outlined">menu</span>
+                <span>More</span>
+            </button>
+        </div>
     </nav>
     {% endif %}
 
