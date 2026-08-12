@@ -123,4 +123,59 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         await refresh_all_guild_panels(interaction.client)
         await interaction.followup.send("Panel refresh job completed.", ephemeral=True)
 
+    @admin_group.command(
+        name="restore_provinces",
+        description="Restore province count for a user (fixes the 182M single province bug)",
+    )
+    @app_commands.describe(user_id="Numeric game ID of the user")
+    @require_guild_admin()
+    async def restore_provinces(interaction: discord.Interaction, user_id: int) -> None:
+        await interaction.response.defer(ephemeral=True)
+        try:
+            import os
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            
+            db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
+            if not db_url:
+                await interaction.followup.send("DB not configured.", ephemeral=True)
+                return
+                
+            conn = psycopg2.connect(db_url)
+            with conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute("SELECT id, population, provincename FROM provinces WHERE userId = %s ORDER BY population DESC LIMIT 1", (user_id,))
+                    row = cur.fetchone()
+                    if not row:
+                        await interaction.followup.send(f"No provinces found for user {user_id}", ephemeral=True)
+                        return
+                    
+                    pop = int(row["population"])
+                    if pop <= 1000000:
+                        await interaction.followup.send(f"User {user_id} only has {pop} pop in their largest province, no need to restore.", ephemeral=True)
+                        return
+                        
+                    target_provinces = max(1, pop // 1000000)
+                    to_add = target_provinces - 1
+                    
+                    if to_add <= 0:
+                        await interaction.followup.send("Nothing to add.", ephemeral=True)
+                        return
+                        
+                    # Reset the original province's pop to 1 million
+                    cur.execute("UPDATE provinces SET population = 1000000 WHERE id = %s", (row["id"],))
+                    
+                    # Create the rest of the provinces
+                    for i in range(to_add):
+                        new_name = f"{row['provincename']} {i+2}"
+                        cur.execute(
+                            "INSERT INTO provinces (userId, provinceName, population, citycount, land, energy, happiness, pollution, productivity, consumer_spending) VALUES (%s, %s, 1000000, 1, 1, 0, 50, 0, 50, 50)",
+                            (user_id, new_name)
+                        )
+            conn.close()
+            await interaction.followup.send(f"Successfully restored {to_add} provinces for user {user_id} based on their {pop} population.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"Failed to restore: {e}", ephemeral=True)
+
     tree.add_command(admin_group)
+
