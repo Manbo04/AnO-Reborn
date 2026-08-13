@@ -99,6 +99,8 @@ function menubardrop() {
     var menudiv = _el("menubardiv");
     if (menubar) menubar.classList.toggle("menubarclick");
     if (menudiv) menudiv.classList.toggle("menubardivshow");
+    var backdrop = _el("menubar-backdrop");
+    if (backdrop) backdrop.classList.toggle("menubar-backdrop-show");
     var bar1 = _el("bar1");
     var bar2 = _el("bar2");
     var bar3 = _el("bar3");

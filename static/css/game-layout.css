@@ -486,10 +486,24 @@ body.page-country .templatedivcontent .infodiv {
     .smallactionbutton {
         width: 100% !important;
         margin: 0 !important;
-        padding: 12px 8px !important;
-        min-height: 52px;
-        font-size: 0.8rem !important;
+        padding: 8px 10px !important;
+        min-height: 44px;
+        font-size: 0.84375rem !important; /* 13.5px */
         letter-spacing: 0 !important;
+        border-radius: 6px !important;
+        background: var(--foreground) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--colorOne) !important;
+        box-shadow: none !important;
+    }
+    .smallactionbutton .material-icons-outlined {
+        font-size: 16px !important;
+        color: var(--accent);
+    }
+    .smallactionbutton:hover,
+    .smallactionbutton:active {
+        transform: none;
+        box-shadow: none;
     }
 
     /* Standing-military chips: a real 2-column grid (was unstyled → a
@@ -507,10 +521,11 @@ body.page-country .templatedivcontent .infodiv {
         padding: 9px 10px;
         min-height: 44px;
         box-sizing: border-box;
-        background: var(--surface, #ffffff);
-        border: 1px solid var(--border, #e5e7eb);
-        border-radius: 8px;
-        font-size: 0.82rem;
+        background: var(--foreground);
+        border: 1px solid var(--border);
+        color: var(--colorOne);
+        border-radius: 6px;
+        font-size: 0.875rem;
     }
     .wars-mil-chip .material-icons-outlined {
         font-size: 18px;
