@@ -188,36 +188,25 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 /* Shell: sidebar + stage */
 .tutorial-shell {
     display: grid;
-    grid-template-columns: minmax(200px, 232px) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 20px;
     align-items: start;
 }
 
-@media (max-width: 860px) {
-    .tutorial-shell {
-        grid-template-columns: 1fr;
-    }
 
-    .tutorial-sidebar {
-        position: static !important;
-    }
+.tutorial-sidebar { position: static !important; }
+.tutorial-chapter-nav { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tutorial-chapter-btn { flex-direction: column !important; text-align: center !important; padding: 12px 8px !important; }
+.tutorial-chapter-text { align-items: center !important; }
 
-    .tutorial-chapter-nav {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-
-    .tutorial-chapter-btn {
-        flex-direction: column !important;
-        text-align: center !important;
-        padding: 12px 8px !important;
-    }
-
-    .tutorial-chapter-text {
-        align-items: center !important;
-    }
+@media (min-width: 861px) {
+    .tutorial-shell { grid-template-columns: minmax(200px, 232px) minmax(0, 1fr); }
+    .tutorial-sidebar { position: sticky !important; top: 100px; }
+    .tutorial-chapter-nav { display: flex !important; flex-direction: column; }
+    .tutorial-chapter-btn { flex-direction: row !important; text-align: left !important; padding: 10px 10px !important; }
+    .tutorial-chapter-text { align-items: flex-start !important; }
 }
+
 
 .tutorial-sidebar {
     position: sticky;
@@ -368,17 +357,11 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-chapter-banner {
-    min-height: 140px;
-    background-size: cover;
-    background-position: center;
+    min-height: 120px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     position: relative;
-}
-
-.tutorial-chapter-banner::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(15, 20, 30, 0.92) 0%, rgba(15, 20, 30, 0.55) 55%, rgba(15, 20, 30, 0.35) 100%);
+    border-radius: 12px 12px 0 0;
+    border-bottom: 2px solid #3b82f6;
 }
 
 .tutorial-chapter-banner-inner {
@@ -557,16 +540,16 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 /* Insight cards (replaces broken flip cards) */
 .tutorial-insight-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 12px;
     margin: 16px 0 20px;
 }
 
-@media (max-width: 560px) {
-    .tutorial-insight-grid {
-        grid-template-columns: 1fr;
-    }
+@media (min-width: 561px) {
+    .tutorial-insight-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+
 
 .tutorial-insight-card {
     padding: 16px;
@@ -704,16 +687,16 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 
 .tutorial-media-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 18px;
     margin: 16px 0;
 }
 
-@media (max-width: 640px) {
-    .tutorial-media-row {
-        grid-template-columns: 1fr;
-    }
+@media (min-width: 641px) {
+    .tutorial-media-row { grid-template-columns: 1fr 1fr; }
 }
+
+
 
 .tutorial-media-row img {
     width: 100%;

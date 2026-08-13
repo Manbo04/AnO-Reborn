@@ -1,5 +1,36 @@
 {% extends "layout.html"%} {% block title %} {{ name }} {% endblock %}{% block body_class %} page-coalition{% endblock %} {% block body %}
 
+<style>
+/* Mobile-First touch targets */
+button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextarea, .iconbutton, .templatedivflex2left[id^="coalition"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.menuflex2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+.menuflex2 > div {
+    flex: 1 1 auto;
+    text-align: center;
+    border-radius: 8px;
+}
+@media (min-width: 768px) {
+    .menuflex2 {
+        flex-wrap: nowrap;
+    }
+}
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+</style>
+
 <div class="templatediv">
 
     <div class="templatedivtopper coalitiontopper">
@@ -20,7 +51,7 @@
             <div class="templatedivflex2left" id="coalitiongeneral" onclick="coalitiongeneral()">
                 <h3 class="smallheader">General</h3>
             </div>
-            {% if not userInCurCol %}
+            {% if not userInCol %}
             <div class="templatedivflex2left" id="coalitionjoin" onclick="coalitionjoin()">
                 <h3 class="smallheader">Join</h3>
             </div>

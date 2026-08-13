@@ -1,5 +1,17 @@
 {% extends "layout.html" %} {% block title %} Coalitions {% endblock %}{% block body_class %} page-coalitions{% endblock %} {% block body %}
 
+<style>
+/* Mobile-First touch targets */
+button, .templatedivbutton, .loginsignupinput, .templateselect, .pagination a, .pagination span {
+    min-height: 44px;
+    min-width: 44px;
+}
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+</style>
+
 <div class="templatediv">
 
     <div class="templatedivtopper coalitionstopper">
