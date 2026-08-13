@@ -92,7 +92,7 @@ class CountryRepository:
                     LEFT JOIN coalitions c ON c.id = cm.colid
                     WHERE u.id > 0 {search_filter}
                 )
-                SELECT * FROM country_rows
+                SELECT * FROM country_rows WHERE 1=1
             """
 
             range_filter = ""
