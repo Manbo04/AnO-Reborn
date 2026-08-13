@@ -43,6 +43,7 @@ def add_indexes():
         password=db_params["password"],
         host=db_params["host"],
         port=db_params["port"],
+        sslmode="require" if "interchange" in db_params.get("host", "") else "prefer",
     )
 
     db = connection.cursor()

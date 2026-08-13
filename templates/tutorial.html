@@ -95,7 +95,7 @@
 
                 <!-- Chapter 1 -->
                 <article class="tutorial-chapter-panel is-visible" data-chapter-index="0">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename=game_asset_path('buildings', 'admin_buildings')) }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Welcome &amp; The Game Loop</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -178,7 +178,7 @@
 
                 <!-- Chapter 2 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="1">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}?v=3');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Provinces &amp; Buildings</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -198,7 +198,6 @@
                                 <div class="tutorial-result-box" data-prov-result></div>
                             </div>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/province.jpg') }}?v=3" alt="Province management" />
                     </div>
                     <div class="tutorial-callout tip-warn">
                         <strong>Early-game order (power is not urgent):</strong> You start with a <strong>Grace Period</strong> where your citizens won't starve and you face no food tax penalties (lasts while you have &le; 1 province and &le; 20 land blocks). Build a <strong>Lumber Mill</strong> first — it only costs cash. <strong>Lumber is now required</strong> for Tier 2 buildings (Component Factories, Schools, Refineries) and Farms. Use lumber (or cheap Market buys) to build farms before your Grace Period ends. Add a coal power plant when you want more buildings. Quick Build and classic pages now show the same costs.
@@ -228,7 +227,7 @@
 
                 <!-- Chapter 3 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="2">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename=game_asset_path('buildings', 'coal_mines')) }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Resources &amp; Production Chains</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -290,7 +289,7 @@
 
                 <!-- Chapter 4 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="3">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename=game_asset_path('buildings', 'banks')) }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Economy &amp; Tax Income</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -317,7 +316,6 @@
                                 <div class="tutorial-result-box" data-tax-result></div>
                             </div>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/country.jpg') }}?v=2" alt="Country resources and revenue" />
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[3]) }}
                     <div class="tutorial-quiz">
@@ -344,7 +342,7 @@
 
                 <!-- Chapter 5 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="4">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/washington.jpg') }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Population &amp; Welfare</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -385,7 +383,7 @@
 
                 <!-- Chapter 6 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="5">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename=game_asset_path('units', 'cruisers')) }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Military &amp; Supplies</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -409,7 +407,6 @@
                                 <div class="tutorial-result-box" data-sup-result></div>
                             </div>
                         </div>
-                        <img class="unitimage imageborder" src="{{ url_for('static', filename='images/military.jpg') }}?v=2" alt="Military interface" />
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[5]) }}
                     <div class="tutorial-quiz">
@@ -435,7 +432,7 @@
 
                 <!-- Chapter 7 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="6">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Market &amp; Trade</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -471,7 +468,7 @@
 
                 <!-- Chapter 8 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="7">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/upgrades.jpg') }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Upgrades &amp; Technology</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -508,7 +505,7 @@
 
                 <!-- Chapter 9 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="8">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">War &amp; Combat</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
@@ -551,7 +548,7 @@
 
                 <!-- Chapter 10 -->
                 <article class="tutorial-chapter-panel" data-chapter-index="9">
-                    <div class="tutorial-chapter-banner" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}?v=2');">
+                    <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
                             <h2 class="tutorial-chapter-title">Coalitions &amp; Mastery</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>

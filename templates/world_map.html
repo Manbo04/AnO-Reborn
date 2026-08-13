@@ -461,9 +461,13 @@
         linesLayer.lineStyle(2, 0x4fc3f7, 0.2); 
         
         for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < Math.min(i + 3, nodes.length); j++) {
-                linesLayer.moveTo(nodes[i].x, nodes[i].y);
-                linesLayer.lineTo(nodes[j].x, nodes[j].y);
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dx = nodes[i].x - nodes[j].x;
+                const dy = nodes[i].y - nodes[j].y;
+                if (dx * dx + dy * dy < 20000) {
+                    linesLayer.moveTo(nodes[i].x, nodes[i].y);
+                    linesLayer.lineTo(nodes[j].x, nodes[j].y);
+                }
             }
         }
 

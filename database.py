@@ -384,7 +384,7 @@ class DatabasePool:
             try:
                 # In multi-region deployments (EU, Singapore, ...),
                 # use fewer connections per instance
-                maxconn = int(os.getenv("DB_MAX_CONNECTIONS", "20"))
+                maxconn = int(os.getenv("DB_MAX_CONNECTIONS", "50"))
                 # Use psycopg2's ThreadedConnectionPool if available; otherwise
                 # fall back to a lightweight compatibility pool (useful in some
                 # CI environments where a minimal psycopg2 shim may be present).
