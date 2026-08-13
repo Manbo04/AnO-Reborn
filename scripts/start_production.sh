@@ -82,7 +82,7 @@ elif [[ "$SERVICE_NAME" == *"bot"* ]] || [[ "$SERVICE_NAME" == *"discord"* ]]; t
   echo "[start] WARN: dedicated bot service is deprecated — use DISCORD_BOT_SIDECAR=1 on web."
   exec python3 scripts/run_discord_bot_if_leader.py
 else
-  GUNICORN_WORKERS="${GUNICORN_WORKERS:-4}"
+  GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
   GUNICORN_THREADS="${GUNICORN_THREADS:-10}"
   echo "[start] Starting gunicorn on :${PORT} (workers=${GUNICORN_WORKERS} threads=${GUNICORN_THREADS})..."
   exec gunicorn \
