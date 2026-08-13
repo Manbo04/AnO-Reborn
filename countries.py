@@ -595,6 +595,7 @@ def country(cId):
     return render_template("country.html", **data)
 
 def countries():
+    from services.country_service import CountryService
     cId = session["user_id"]
 
     # Parse and coerce query params
