@@ -62,6 +62,13 @@ def create_app():
     app.url_map.strict_slashes = False
 
     try:
+        from database import ensure_schema_compat
+        ensure_schema_compat()
+    except Exception:
+        pass
+
+
+    try:
         import sentry_sdk
         from sentry_sdk.integrations.flask import FlaskIntegration
         sentry_dsn = os.getenv("SENTRY_DSN")
@@ -621,7 +628,7 @@ def create_app():
                             SELECT u.username,
                                    c.id as col_id, c.name as col_name
                             FROM users u
-                            LEFT JOIN colNames c ON c.id = u.coalitionId
+                            LEFT JOIN colNames c ON c.id = u.coalition_id
                             WHERE u.id = %s
                             """,
                             (user_id,),
