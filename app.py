@@ -796,12 +796,13 @@ def create_app():
                 change_price = float(split_unit[1])
             price = MILDICT[unit]["price"]
             if change_price: price = price * change_price
+            manpower = MILDICT[unit].get("manpower", 0)
             try:
                 res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
                 resources = ", ".join(res_parts)
-                return f"{unit.capitalize()} cost {fmt(price)} manpower, {resources} each"
+                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower, {resources} each"
             except KeyError:
-                return f"{unit.capitalize()} cost {fmt(price)} manpower each"
+                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower each"
         except Exception: return unit
 
     @app.template_filter()
