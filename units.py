@@ -203,7 +203,7 @@ class ApacheUnit(BlueprintUnit):
             self.bonus += 1 * self.amount
         elif defending_units == "bombers":
             self.bonus += 2 * self.amount
-        elif defending_units == "fighter":
+        elif defending_units == "fighters":
             self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
