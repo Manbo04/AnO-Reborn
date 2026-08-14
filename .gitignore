@@ -48,3 +48,4 @@ myvenv/
 .venv_test/
 .ano_monitor_state.json
 monitor.log
+.local/
