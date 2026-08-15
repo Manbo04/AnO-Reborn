@@ -42,6 +42,8 @@ def sitemap():
         ("/forgot_password", "yearly", "0.4"),
         ("/rankings", "daily", "0.7"),
         ("/countries", "daily", "0.7"),
+        ("/privacy", "yearly", "0.3"),
+        ("/terms", "yearly", "0.3"),
     ]
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -130,6 +132,12 @@ def dev_reset_tutorial():
 
 @bp.route("/mechanics", methods=["GET"])
 def mechanics(): return render_template("mechanics.html")
+
+@bp.route("/privacy", methods=["GET"])
+def privacy(): return render_template("privacy.html")
+
+@bp.route("/terms", methods=["GET"])
+def terms(): return render_template("terms.html")
 
 @bp.route("/mechanics/consumer_goods", methods=["GET"])
 def mechanics_consumer_goods(): return render_template("mechanics/consumer_goods.html")

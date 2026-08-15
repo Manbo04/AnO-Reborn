@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block seo_title %}Privacy Policy · Affairs and Order{% endblock %}
+{% block seo_description %}What Affairs and Order collects, why, and how you can access, correct, or delete it.{% endblock %}
+{% block seo_canonical %}https://affairsandorder.com/privacy{% endblock %}
+{% block title %} Privacy Policy {% endblock %} {% block body %}
+<div class="templatediv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            privacy_tip
+            </span>Privacy Policy</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft">Last updated: 2026-08-15</p>
+
+        <p class="templatecontentpleft">This explains what Affairs and Order actually collects and why, in plain language.
+        This is a small independent project, not a company with a legal department — if anything here is
+        unclear, ask in the <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noreferrer">Discord</a>.</p>
+
+        <h2 class="templatecontentheaderleft">What we collect</h2>
+        <ul class="templatecontentpleft">
+            <li><strong>Account info</strong> — your username and email address, and a securely hashed
+                version of your password (we never store or see your actual password).</li>
+            <li><strong>Discord account link</strong> — if you connect Discord, we store your Discord
+                user ID so bot commands and role syncing can find your nation. We don't receive your
+                Discord password or messages.</li>
+            <li><strong>Gameplay data</strong> — your nation's stats, resources, buildings, military,
+                province ownership, coalition membership, and market/trade activity. This is the actual
+                game.</li>
+            <li><strong>Session cookie</strong> — a cookie that keeps you logged in. It's required for
+                the site to work; it isn't used for tracking or advertising.</li>
+            <li><strong>Activity timestamp</strong> — when you last used the game, so we can show
+                accurate online/activity numbers and detect abandoned accounts.</li>
+            <li><strong>Support (Patreon)</strong> — if you support the game on Patreon, we can see your
+                patron status and pledge amount through Patreon's API to grant in-game perks. We never
+                see or store your card/payment details — that's handled entirely by Patreon.</li>
+        </ul>
+
+        <h2 class="templatecontentheaderleft">What we don't do</h2>
+        <ul class="templatecontentpleft">
+            <li>We don't sell your data.</li>
+            <li>We don't use third-party advertising trackers.</li>
+            <li>We don't share your email or Discord ID with other players.</li>
+        </ul>
+
+        <h2 class="templatecontentheaderleft">Why we collect it</h2>
+        <p class="templatecontentpleft">To run your account and let you play the game (contract necessity),
+        to keep the game secure and prevent abuse (legitimate interest), and — for anything genuinely
+        optional, like Discord linking or Patreon — because you chose to connect it (consent, which you
+        can withdraw any time).</p>
+
+        <h2 class="templatecontentheaderleft">Your data, your control</h2>
+        <p class="templatecontentpleft">You can permanently delete your account and its data at any time
+        from <a href="/delete_own_account">your account settings</a> — this removes your nation and
+        account record. If you'd rather just export or check what we hold on you first, or have any
+        other request about your data, reach out in the
+        <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noreferrer">Discord</a> and we'll sort
+        it out directly.</p>
+
+        <h2 class="templatecontentheaderleft">Where data lives</h2>
+        <p class="templatecontentpleft">Game data is hosted with our infrastructure provider (Railway).
+        Discord linking uses Discord's own systems; Patreon support uses Patreon's own systems — both are
+        governed by their own privacy policies for the data they hold directly.</p>
+
+        <h2 class="templatecontentheaderleft">Changes</h2>
+        <p class="templatecontentpleft">If this policy changes in a way that matters, we'll announce it in
+        Discord. Continuing to play after a change means you've accepted the update.</p>
+
+        <p class="templatecontentpleft">See also: <a href="/terms">Terms of Service</a>.</p>
+    </div>
+</div>
+{% endblock %}
