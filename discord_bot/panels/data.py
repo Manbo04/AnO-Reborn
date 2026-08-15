@@ -101,6 +101,40 @@ def fetch_realm_inspector() -> Dict[str, Any]:
     }
 
 
+def fetch_analytics_snapshot() -> Dict[str, Any]:
+    """Real player growth numbers for the #analytics panel -- total nations,
+    24h activity/signups, and a daily-signups time series for the chart."""
+    total = QueryHelper.fetch_one(
+        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') = 'normal'"
+    )
+    dau = QueryHelper.fetch_one(
+        "SELECT COUNT(*) FROM users WHERE last_active > NOW() - INTERVAL '24 hours'"
+    )
+    signups_24h = QueryHelper.fetch_one(
+        "SELECT COUNT(*) FROM users WHERE date >= to_char(NOW() - INTERVAL '24 hours', 'YYYY-MM-DD')"
+    )
+    daily_rows = QueryHelper.fetch_all(
+        """
+        SELECT date, COUNT(*) AS cnt
+        FROM users
+        WHERE date >= to_char(NOW() - INTERVAL '14 days', 'YYYY-MM-DD')
+        GROUP BY date
+        ORDER BY date
+        """
+    )
+    daily_signups = [
+        ((r[0] if isinstance(r, (list, tuple)) else r.get("date")),
+         int(r[1] if isinstance(r, (list, tuple)) else r.get("cnt")))
+        for r in daily_rows or []
+    ]
+    return {
+        "total_nations": int(total[0]) if total else 0,
+        "dau": int(dau[0]) if dau else 0,
+        "signups_24h": int(signups_24h[0]) if signups_24h else 0,
+        "daily_signups": daily_signups,
+    }
+
+
 def fetch_world_snapshot() -> Dict[str, Any]:
     terrain = QueryHelper.fetch_all(
         """
