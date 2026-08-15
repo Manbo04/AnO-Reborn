@@ -612,22 +612,23 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .barclick1 {
-    background-color: #00a7e1;
-    top: 8px;
-    transform: rotate(-30deg);
-    width: 20px;
+    background-color: rgb(240, 240, 240);
+    top: 0;
+    transform: translateY(13px) rotate(45deg);
+    width: 30px;
 }
 
 .barclick2 {
-    background-color: #00a7e1;
-    width: 40px;
+    background-color: rgb(240, 240, 240);
+    width: 30px;
+    opacity: 0;
 }
 
 .barclick3 {
-    background-color: #00a7e1;
-    top: -8px;
-    transform: rotate(30deg);
-    width: 20px;
+    background-color: rgb(240, 240, 240);
+    top: 0;
+    transform: translateY(-13px) rotate(-45deg);
+    width: 30px;
 }
 
 .menubardiv {
@@ -669,9 +670,29 @@ body:has(.navbarparent .templatecontainer) {
 
 .menubardivshow {
     margin: 0;
-    box-shadow: 0px 0px 300px 10000px rgba(0, 0, 0, 0.75);
+    /* Dimming is handled by .menubar-backdrop now, scoped to below the fixed
+       navbar. The old giant box-shadow used to paint over the navbar too,
+       darkening the title/icons that should stay legible while open. */
     overflow-x: hidden;
     overflow-y: auto;
+}
+
+/* Tap-anywhere-outside-to-close backdrop. Scoped to below the fixed navbar
+   (top: 55px) so the title/icons stay legible while the drawer is open. */
+.menubar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 55px;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.55);
+    border: none;
+    padding: 0;
+    cursor: default;
+}
+
+.menubar-backdrop.menubar-backdrop-show {
+    display: block;
 }
 
 .menubardiv::-webkit-scrollbar {
@@ -708,16 +729,32 @@ body:has(.navbarparent .templatecontainer) {
 .menubara {
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     transition: all 0.2s ease;
-    line-height: 40px;
+    line-height: 1.2;
     text-align: left;
-    padding: 0px 20px;
+    padding: 11px 20px;
+    min-height: 44px;
+    box-sizing: border-box;
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
     position: relative;
     font-weight: normal;
+    font-size: 15px;
+    /* button.menubara (Theme / Toggle HUD) must not show native button chrome */
+    background: none;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: inherit;
+}
+
+.menubara .material-icons-outlined {
+    font-size: 20px;
+    flex-shrink: 0;
 }
 
 .menubara:hover {
@@ -6418,10 +6455,24 @@ body.page-country .templatedivcontent .infodiv {
     .smallactionbutton {
         width: 100% !important;
         margin: 0 !important;
-        padding: 12px 8px !important;
-        min-height: 52px;
-        font-size: 0.8rem !important;
+        padding: 8px 10px !important;
+        min-height: 44px;
+        font-size: 0.84375rem !important; /* 13.5px */
         letter-spacing: 0 !important;
+        border-radius: 6px !important;
+        background: var(--foreground) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--colorOne) !important;
+        box-shadow: none !important;
+    }
+    .smallactionbutton .material-icons-outlined {
+        font-size: 16px !important;
+        color: var(--accent);
+    }
+    .smallactionbutton:hover,
+    .smallactionbutton:active {
+        transform: none;
+        box-shadow: none;
     }
 
     /* Standing-military chips: a real 2-column grid (was unstyled → a
@@ -6439,10 +6490,11 @@ body.page-country .templatedivcontent .infodiv {
         padding: 9px 10px;
         min-height: 44px;
         box-sizing: border-box;
-        background: var(--surface, #ffffff);
-        border: 1px solid var(--border, #e5e7eb);
-        border-radius: 8px;
-        font-size: 0.82rem;
+        background: var(--foreground);
+        border: 1px solid var(--border);
+        color: var(--colorOne);
+        border-radius: 6px;
+        font-size: 0.875rem;
     }
     .wars-mil-chip .material-icons-outlined {
         font-size: 18px;
@@ -9216,6 +9268,101 @@ body.page-country .revenue .stat-value {
         padding: 10px 8px; 
     }
 }
+
+/* --- Coalition Recommendation Widget --- */
+.coalition-recommendations-widget {
+    margin-bottom: 24px;
+}
+
+.coalition-rec-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+@media (min-width: 768px) {
+    .coalition-rec-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.coalition-rec-card {
+    background-color: var(--foreground, #252b36);
+    border: 1px solid var(--border, #373e4f);
+    border-radius: var(--game-radius-md, 12px);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.coalition-rec-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.coalition-rec-flag {
+    width: 40px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.coalition-rec-icon {
+    font-size: 32px;
+    color: var(--accent, #90caf9);
+}
+
+.coalition-rec-title-group {
+    flex: 1;
+}
+
+.coalition-rec-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.coalition-rec-name a {
+    color: var(--text-primary, #ffffff);
+    text-decoration: none;
+}
+
+.coalition-rec-name a:hover {
+    color: var(--accent, #90caf9);
+}
+
+.coalition-rec-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #9aa0a6);
+}
+
+.coalition-rec-desc {
+    font-size: 0.85rem;
+    color: var(--text-primary, #d1d5db);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.coalition-rec-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.coalition-rec-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
+}
+
 
 
 /* --- static/css/game-province.css --- */
