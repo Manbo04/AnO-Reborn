@@ -740,6 +740,7 @@ from extensions import limiter
 def province_quick_build_api(pId):
     """JSON quick-build (+1) from base sheet without full page reload."""
     from psycopg2.extras import RealDictCursor
+    from database import invalidate_view_cache
 
     cId = session["user_id"]
     payload = request.get_json(silent=True) or {}
@@ -777,6 +778,8 @@ def province_quick_build_api(pId):
 
     try:
         invalidate_user_cache(cId)
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
     except Exception:
         pass
 
@@ -871,7 +874,11 @@ def build_structure_action():
         return error(400, str(e))
 
     try:
+        from database import invalidate_view_cache
+
         invalidate_user_cache(cId)
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
     except Exception:
         pass
 
