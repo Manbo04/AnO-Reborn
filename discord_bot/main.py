@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 
 from discord_bot.backend import backend_mode_label, get_backend
 from discord_bot.commands import admin_cmds
+from discord_bot.commands import community as community_cmds
 from discord_bot.commands import guild_setup as guild_setup_cmds
 from discord_bot.commands import info as info_cmds
 from discord_bot.commands import register as register_cmds
@@ -30,6 +31,7 @@ _CHANNEL_PANEL_MAP = [
     ("nation-inspector", "inspector"),
     ("global-affairs",   "world_status"),
     ("realm-alerts",     "alerts"),
+    ("analytics",        "analytics"),
 ]
 
 
@@ -110,6 +112,7 @@ class AnOBot(commands.Bot):
         info_cmds.register_commands(self.tree, self.backend)
         guild_setup_cmds.register_commands(self.tree)
         admin_cmds.register_commands(self.tree, self.backend)
+        community_cmds.register_commands(self.tree, self.backend)
         synced = await self.tree.sync()
         logger.info("Synced %s global slash command(s)", len(synced))
 
