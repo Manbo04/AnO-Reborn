@@ -620,7 +620,12 @@ def discord_register():
                 return error(400, "Discord API error: failed to fetch user info")
 
             discord_user_id = discord_user.get("id")
-            email = discord_user.get("email") if discord_user.get("verified") else None
+            # users.email is NOT NULL; Discord accounts without a verified
+            # email still return an `email` field for most users, but some
+            # (no email on file, or the scope wasn't granted) return None.
+            # Falling back to None here throws an uncaught NotNullViolation
+            # on the INSERT below and surfaces as a generic signup failure.
+            email = discord_user.get("email") or f"discord_{discord_user_id}@no-email.affairsandorder.local"
 
             if not discord_user_id:
                 err = f"Discord API error: {discord_user}"
