@@ -181,6 +181,8 @@ class FighterUnit(BlueprintUnit):
         if defending_units == "bombers":
             # self.damage += 55
             self.bonus += 4 * self.amount
+        elif defending_units == "apaches":
+            self.bonus += 3 * self.amount
         return [self.damage * self.amount, self.bonus]
 
     def buy(amount):
@@ -201,10 +203,6 @@ class ApacheUnit(BlueprintUnit):
             self.bonus += 1 * self.amount
         elif defending_units == "tanks":
             self.bonus += 1 * self.amount
-        elif defending_units == "bombers":
-            self.bonus += 2 * self.amount
-        elif defending_units == "fighters":
-            self.bonus += 2 * self.amount
         return [self.damage * self.amount, self.bonus]
 
     def buy():
