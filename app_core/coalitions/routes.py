@@ -1983,7 +1983,7 @@ def send_coalition_invite(nation_id):
             (coalition_id, nation_id, user_id),
         )
 
-    return redirect(f"/nation/{nation_id}")
+    return redirect(f"/country/id={nation_id}")
 
 
 def view_coalition_invites():

@@ -592,7 +592,24 @@ def country(cId):
     if isinstance(data, dict) and data.get("error"):
         return error(data["code"], data["msg"])
 
-    return render_template("country.html", **data)
+    can_invite_to_coalition = False
+    viewer_id = session.get("user_id")
+    if viewer_id and str(viewer_id) != str(cId) and not data.get("colId"):
+        from database import get_request_cursor, get_coalition_members_table
+
+        members_tbl = get_coalition_members_table()
+        if members_tbl:
+            with get_request_cursor() as db:
+                db.execute(
+                    f"SELECT role FROM {members_tbl} WHERE userid=%s", (viewer_id,)
+                )
+                row = db.fetchone()
+                if row and row[0] in ("leader", "deputy_leader"):
+                    can_invite_to_coalition = True
+
+    return render_template(
+        "country.html", can_invite_to_coalition=can_invite_to_coalition, **data
+    )
 
 def countries():
     from services.country_service import CountryService
