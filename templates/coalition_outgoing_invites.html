@@ -1,0 +1,62 @@
+{% extends "layout.html" %} {% block title %} Outgoing Invites {% endblock %}{% block body_class %} page-coalition-outgoing-invites{% endblock %} {% block body %}
+
+<style>
+/* Mobile-First touch targets */
+button, .templatedivbutton {
+    min-height: 44px;
+    min-width: 44px;
+}
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.status-pending { color: #d4a017; }
+.status-accepted { color: #2e8b57; }
+.status-rejected, .status-revoked { color: #b03030; }
+</style>
+
+<div class="templatediv">
+
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            outgoing_mail
+            </span>Outgoing Invitations</h1>
+    </div>
+
+    <div class="templatedivcontent">
+
+        {% if not outgoing_invites %}
+        <p class="text-muted text-center mt-sm">Your coalition hasn't sent any invitations yet.</p>
+        {% else %}
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Nation</th>
+                    <th>Sent</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                {% for invite in outgoing_invites %}
+                <tr>
+                    <td><a href="/country/id={{ invite[1] }}">{{ invite[2] }}</a></td>
+                    <td>{{ invite[3] }}</td>
+                    <td><span class="status-{{ invite[4] }}">{{ invite[4] | capitalize }}</span></td>
+                    <td>
+                        {% if invite[4] == 'pending' %}
+                        <form action="/coalition_invite/{{ invite[0] }}/revoke" method="post">
+                            <button type="submit" class="templatedivbutton smallactionbutton">
+                                <span class="material-icons-outlined">cancel</span>Revoke
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
