@@ -49,6 +49,7 @@ MIGRATION_FILES = [
     "0036_referrals.sql",
     "0030_add_furnace_projects.sql",
     "0039_add_food_banks.sql",
+    "0040_discord_analytics_panel.sql",
 ]
 
 
