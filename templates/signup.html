@@ -62,6 +62,9 @@
             You were invited to Affairs and Order — sign up for a bonus of +5M gold and +15k lumber.
         </p>
         {% endif %}
+        <p class="templatecontentpleft" style="font-size: 0.85em;">By signing up (with email, Discord, or
+            Google), you agree to our <a href="/terms" target="_blank">Terms of Service</a> and
+            <a href="/privacy" target="_blank">Privacy Policy</a>.</p>
         <div class="auth-columns">
             {% if way != "discord" and way != "google" %}
             <div class="auth-panel">
@@ -337,10 +340,6 @@
         <input class="hidden" id="imagesliderresult" name="continent" value="1" />
 
         <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
-
-        <p class="templatecontentpleft" style="font-size: 0.85em;">By signing up, you agree to our
-            <a href="/terms" target="_blank">Terms of Service</a> and
-            <a href="/privacy" target="_blank">Privacy Policy</a>.</p>
 
         <div class="form-actions">
             <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
