@@ -78,12 +78,24 @@ def test_aerodrome_spelling_mismatch_fallback():
         db.execute("UPDATE building_dictionary SET name = %s WHERE building_id = %s", (original_name, building_id))
         db.connection.commit()
 
-def test_apache_fighter_combat_typo_fix():
-    """Verify that ApacheUnit correctly matches 'fighters' plural in combat bonus check."""
-    from units import ApacheUnit
+def test_fighter_helicopter_combat_balance():
+    """Verify that FighterUnit gets a bonus against apaches, and ApacheUnit gets no bonus against fighters or bombers."""
+    from units import FighterUnit, ApacheUnit
+    
+    # Fighter vs Apache
+    fighter = FighterUnit(5)
+    fighter_effects = fighter.attack("apaches")
+    assert fighter_effects[0] == 500
+    assert fighter_effects[1] == 15  # +3 bonus per unit -> 15
+
+    # Apache vs Fighter and Bomber (should be 0 bonus)
     apache = ApacheUnit(5)
-    # Check that it awards a bonus against 'fighters'
-    bonus_effects = apache.attack("fighters")
-    # Base damage is 100 * amount, bonus should be 2 * amount
-    assert bonus_effects[0] == 500
-    assert bonus_effects[1] == 10  # 2 * 5 = 10
+    apache_vs_fighter = apache.attack("fighters")
+    assert apache_vs_fighter[1] == 0
+    
+    apache_vs_bomber = apache.attack("bombers")
+    assert apache_vs_bomber[1] == 0
+
+    # Apache vs Land (should still have bonus)
+    apache_vs_tank = apache.attack("tanks")
+    assert apache_vs_tank[1] == 5
