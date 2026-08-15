@@ -13,7 +13,7 @@ from discord_bot.guild_store import (
     list_configured_guild_ids,
     save_panel_message,
 )
-from discord_bot.panels.builders import PANEL_BUILDERS
+from discord_bot.panels.builders import ANALYTICS_CHART_FILENAME, PANEL_BUILDERS, PANEL_FILE_BUILDERS
 
 logger = logging.getLogger(__name__)
 
@@ -43,22 +43,40 @@ async def refresh_guild_panels(
         if ch is None or not hasattr(ch, "send"):
             logger.warning("Panel %s channel %s missing in guild %s", key, channel_id, guild_id)
             continue
-        builder = PANEL_BUILDERS.get(key)
-        if not builder:
-            continue
-        embed = builder()
+        file_builder = PANEL_FILE_BUILDERS.get(key)
+        if file_builder:
+            embed, chart_buf = file_builder()
+        else:
+            builder = PANEL_BUILDERS.get(key)
+            if not builder:
+                continue
+            embed = builder()
+            chart_buf = None
+
+        def _make_file() -> Optional[discord.File]:
+            if chart_buf is None:
+                return None
+            chart_buf.seek(0)
+            return discord.File(chart_buf, filename=ANALYTICS_CHART_FILENAME)
+
         msg_id = await asyncio.to_thread(get_panel_message_id, str(guild_id), key)
         try:
             if msg_id:
                 msg = await ch.fetch_message(int(msg_id))
-                await msg.edit(embed=embed, content=None)
+                file = _make_file()
+                if file is not None:
+                    await msg.edit(embed=embed, content=None, attachments=[file])
+                else:
+                    await msg.edit(embed=embed, content=None)
             else:
-                msg = await ch.send(embed=embed)
+                file = _make_file()
+                msg = await ch.send(embed=embed, file=file) if file is not None else await ch.send(embed=embed)
                 await msg.pin()
                 await asyncio.to_thread(save_panel_message, str(guild_id), key, str(ch.id), str(msg.id))
             refreshed += 1
         except discord.NotFound:
-            msg = await ch.send(embed=embed)
+            file = _make_file()
+            msg = await ch.send(embed=embed, file=file) if file is not None else await ch.send(embed=embed)
             try:
                 await msg.pin()
             except discord.HTTPException:
