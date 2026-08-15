@@ -1,0 +1,38 @@
+{% if status and not coalition_id and recommended_coalitions %}
+<div class="coalition-recommendations-widget" role="region" aria-label="Coalition Recommendations">
+    <h2 class="templatecontentheaderleft">Recommended Coalitions</h2>
+    <div class="coalition-rec-grid">
+        {% for col in recommended_coalitions %}
+        <div class="coalition-rec-card">
+            <div class="coalition-rec-header">
+                {% if col.flag %}
+                <img class="coalition-rec-flag" src="/flag/coalition/{{ col.id }}" alt="{{ col.name }} flag">
+                {% else %}
+                <span class="material-icons-outlined coalition-rec-icon" aria-hidden="true">groups</span>
+                {% endif %}
+                <div class="coalition-rec-title-group">
+                    <h3 class="coalition-rec-name"><a href="/coalition/{{ col.id }}">{{ col.name }}</a></h3>
+                    <span class="coalition-rec-meta">{{ col.members }}/15 members · {{ col.type }}</span>
+                </div>
+            </div>
+            {% if col.description %}
+            <p class="coalition-rec-desc">{{ col.description | truncate(100) }}</p>
+            {% endif %}
+            <div class="coalition-rec-actions">
+                <form action="/join/{{ col.id }}" method="POST" style="display: inline;">
+                    {% if col.type == 'Open' %}
+                    <button type="submit" class="templatedivbutton coalition-rec-btn">
+                        <span class="material-icons-outlined" aria-hidden="true">person_add</span> Join
+                    </button>
+                    {% else %}
+                    <button type="submit" class="templatedivbutton coalition-rec-btn coalition-rec-btn--apply" formaction="/coalition/{{ col.id }}">
+                        <span class="material-icons-outlined" aria-hidden="true">visibility</span> View
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
