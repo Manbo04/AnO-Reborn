@@ -326,6 +326,8 @@ def invalidate_user_cache(user_id: int) -> None:
     """
     key_res = f"resources_{user_id}"
     key_inf = f"influence_{user_id}"
+    key_rev = f"revenue_{user_id}"
+    key_econ = f"econ_stats_{user_id}"
     try:
         # Directly remove exact keys when present
         if key_res in query_cache.cache:
@@ -342,6 +344,29 @@ def invalidate_user_cache(user_id: int) -> None:
             query_cache.invalidate(pattern=key_inf)
     except Exception as e:
         logger.exception("Failed to invalidate influence cache for %s: %s", user_id, e)
+
+    # revenue_{user_id} (get_revenue) and econ_stats_{user_id}
+    # (get_econ_statistics) share query_cache's 5-minute TTL and read
+    # from user_buildings -- without invalidation here, a build/trade/
+    # upgrade left the country page's production/expense figures showing
+    # a stale pre-mutation snapshot for up to 5 minutes (player-reported:
+    # "why does it say I produce no Lumber even though I have 100 Lumber
+    # Mills... same goes for my coal expenses... fine like a minute ago").
+    try:
+        if key_rev in query_cache.cache:
+            del query_cache.cache[key_rev]
+        else:
+            query_cache.invalidate(pattern=key_rev)
+    except Exception as e:
+        logger.exception("Failed to invalidate revenue cache for %s: %s", user_id, e)
+
+    try:
+        if key_econ in query_cache.cache:
+            del query_cache.cache[key_econ]
+        else:
+            query_cache.invalidate(pattern=key_econ)
+    except Exception as e:
+        logger.exception("Failed to invalidate econ_stats cache for %s: %s", user_id, e)
 
 
 class DatabasePool:
