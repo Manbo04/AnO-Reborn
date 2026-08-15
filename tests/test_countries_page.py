@@ -9,10 +9,10 @@ def create_test_user(username_prefix="ctest", provinces=1, soldiers=0, gold=0):
         db = conn.cursor()
         db.execute(
             (
-                "INSERT INTO users (username, email, hash, date, auth_type) "
-                "VALUES (%s,%s,%s,%s,%s) RETURNING id"
+                "INSERT INTO users (username, email, hash, date, auth_type, recovery_key) "
+                "VALUES (%s,%s,%s,%s,%s,%s) RETURNING id"
             ),
-            (username, f"{username}@example.com", "x", "2020-01-01", "normal"),
+            (username, f"{username}@example.com", "x", "2020-01-01", "normal", "test_key"),
         )
         uid = db.fetchone()[0]
         db.execute(

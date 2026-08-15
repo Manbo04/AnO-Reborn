@@ -78,7 +78,7 @@ def _seed_coordinates(cur):
     cur.execute("""
         SELECT id FROM provinces
         WHERE coordinate_x IS NULL OR coordinate_y IS NULL
-        ORDER BY "userId", id
+        ORDER BY userid, id
     """)
     unplaced = [row[0] for row in cur.fetchall()]
     if not unplaced:
@@ -462,7 +462,7 @@ def game_map_attack():
 
         else:
             # Defender wins. Attacker loses 75% of troops; defender loses 30%
-            attacker_losses = max(int(attacker_soldiers * 0.75), attacker_soldiers)
+            attacker_losses = max(int(attacker_soldiers * 0.75), 1)  # lose 75%, minimum 1
             remaining_attackers = attacker_soldiers - attacker_losses
 
             defender_losses = max(int(defender_soldiers * 0.3), 0)

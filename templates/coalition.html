@@ -379,7 +379,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                                 <th>Amount</th>
                             </tr>
                             {% set res_list = [
-                                ("Money", "money", resources.get("money", 0)),
+                                ("Money", "money", resources.get("gold", 0)),
                                 ("Rations", "rations", resources.get("rations", 0)),
                                 ("Oil", "oil", resources.get("oil", 0)),
                                 ("Coal", "coal", resources.get("coal", 0)),

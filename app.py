@@ -62,6 +62,13 @@ def create_app():
     app.url_map.strict_slashes = False
 
     try:
+        from database import ensure_schema_compat
+        ensure_schema_compat()
+    except Exception:
+        pass
+
+
+    try:
         import sentry_sdk
         from sentry_sdk.integrations.flask import FlaskIntegration
         sentry_dsn = os.getenv("SENTRY_DSN")
@@ -621,7 +628,7 @@ def create_app():
                             SELECT u.username,
                                    c.id as col_id, c.name as col_name
                             FROM users u
-                            LEFT JOIN colNames c ON c.id = u.coalitionId
+                            LEFT JOIN colNames c ON c.id = u.coalition_id
                             WHERE u.id = %s
                             """,
                             (user_id,),
@@ -789,12 +796,13 @@ def create_app():
                 change_price = float(split_unit[1])
             price = MILDICT[unit]["price"]
             if change_price: price = price * change_price
+            manpower = MILDICT[unit].get("manpower", 0)
             try:
                 res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
                 resources = ", ".join(res_parts)
-                return f"{unit.capitalize()} cost {fmt(price)} manpower, {resources} each"
+                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower, {resources} each"
             except KeyError:
-                return f"{unit.capitalize()} cost {fmt(price)} manpower each"
+                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower each"
         except Exception: return unit
 
     @app.template_filter()
