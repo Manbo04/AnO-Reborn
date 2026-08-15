@@ -184,8 +184,17 @@ def get_building_counts(db, cId):
                 SUM(CASE WHEN bd.name='harbours' THEN ub.quantity ELSE 0 END),
                 0
             ) AS harbours,
+            -- 'aerodromes' vs 'aerodomes': an old one-off migration script
+            -- (migrations/010_economy_rebalance.py) renamed this building to
+            -- the 'aerodomes' typo, but it's NOT part of the tracked
+            -- migration pipeline (scripts/apply_all_pending_migrations.py),
+            -- so whether it ever actually ran against production is
+            -- unverified. Matching attack_scripts/infra_helpers.py's
+            -- existing defensive handling of both spellings, since a
+            -- player with a real aerodrome getting told they have none
+            -- (and can't buy planes) is worse than a redundant IN clause.
             COALESCE(
-                SUM(CASE WHEN bd.name='aerodromes' THEN ub.quantity ELSE 0 END),
+                SUM(CASE WHEN bd.name IN ('aerodromes', 'aerodomes') THEN ub.quantity ELSE 0 END),
                 0
             ) AS aerodromes,
             COALESCE(
