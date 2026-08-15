@@ -10,15 +10,39 @@ def _province_count(db, user_id: int) -> int:
     return int(row[0]) if row else 0
 
 
-def _farm_count(db, user_id: int) -> int:
+def _first_province_id(db, user_id: int) -> int | None:
+    db.execute("SELECT id FROM provinces WHERE userId = %s ORDER BY id LIMIT 1", (user_id,))
+    row = db.fetchone()
+    return row[0] if row else None
+
+
+def _food_bank_count(db, user_id: int) -> int:
     db.execute(
         """
         SELECT COALESCE(SUM(ub.quantity), 0)::int
         FROM user_buildings ub
         JOIN building_dictionary bd ON bd.building_id = ub.building_id
-        WHERE ub.user_id = %s AND bd.name = 'farms'
+        WHERE ub.user_id = %s AND bd.name = 'food_banks'
         """,
         (user_id,),
+    )
+    row = db.fetchone()
+    return int(row[0]) if row else 0
+
+
+def _joined_coalition(db, user_id: int) -> bool:
+    db.execute("SELECT coalition_id FROM users WHERE id = %s", (user_id,))
+    row = db.fetchone()
+    return (row[0] is not None) if row else False
+
+
+def _active_treaties_count(db, user_id: int) -> int:
+    db.execute(
+        """
+        SELECT COUNT(*)::int FROM nation_treaties
+        WHERE status = 'active' AND (sender_id = %s OR recipient_id = %s)
+        """,
+        (user_id, user_id),
     )
     row = db.fetchone()
     return int(row[0]) if row else 0
@@ -46,44 +70,60 @@ def get_onboarding_status(db, user_id: int) -> dict:
         return cached
 
     provinces = _province_count(db, user_id)
-    farms = _farm_count(db, user_id)
-    chapters = _tutorial_claimed_count(db, user_id)
+    food_banks = _food_bank_count(db, user_id)
+
+    # Check coalition membership
+    db.execute("SELECT coalition_id FROM users WHERE id = %s", (user_id,))
+    row = db.fetchone()
+    in_coalition = row[0] is not None if row else False
+
+    # Check allies (active treaties)
+    db.execute(
+        """
+        SELECT COUNT(*)::int FROM nation_treaties
+        WHERE status = 'active' AND (sender_id = %s OR recipient_id = %s)
+        """,
+        (user_id, user_id),
+    )
+    row = db.fetchone()
+    allies = row[0] if row else 0
+    has_ally = allies >= 1
 
     steps = [
         {
-            "id": "tutorial",
-            "label": "Read tutorial chapter 1",
-            "done": chapters >= 1,
-            "href": "/tutorial?onboard=1",
+            "id": "food_bank",
+            "label": "Build a Food Bank",
+            "done": food_banks >= 1,
+            "href": "/provinces",
         },
         {
-            "id": "province",
-            "label": "Create your first province",
-            "done": provinces >= 1,
-            "href": "/createprovince",
+            "id": "coalition",
+            "label": "Join a Coalition",
+            "done": in_coalition,
+            "href": "/coalitions",
         },
         {
-            "id": "farm",
-            "label": "Build a farm",
-            "done": farms >= 1,
-            "href": "/provinces" if provinces else "/createprovince",
+            "id": "ally",
+            "label": "Recruit an Ally",
+            "done": has_ally,
+            "href": "/treaties",
         },
     ]
     done_count = sum(1 for s in steps if s["done"])
-    tutorial_done = chapters >= 1
-    
+    show_checklist = provinces >= 1 and (done_count < len(steps))
+
     result = {
         "steps": steps,
         "completed": done_count,
         "total": len(steps),
-        "show_checklist": done_count < len(steps),
-        "tutorial_done": tutorial_done,
-        "show_tutorial_prompt": not tutorial_done,
+        "show_checklist": show_checklist,
+        "tutorial_done": True,
+        "show_tutorial_prompt": False,
         "tutorial_href": "/tutorial?onboard=1",
         "next_href": next((s["href"] for s in steps if not s["done"]), "/country"),
     }
-    
-    # If done_count == len(steps), cache for longer since they won't see checklist again
+
+    # If show_checklist is False, cache for longer since they won't see checklist again
     ttl = 600 if result["show_checklist"] is False else 30
     query_cache.set(cache_key, result, ttl_seconds=ttl)
     return result
@@ -94,6 +134,9 @@ def post_signup_redirect(user_id: int, *, has_recovery_key: bool = False) -> str
     if has_recovery_key:
         return "/save_recovery_key"
     with get_request_cursor() as db:
+        provinces = _province_count(db, user_id)
+        if provinces == 0:
+            return "/createprovince"
         status = get_onboarding_status(db, user_id)
     if status["show_checklist"]:
         return status["next_href"]
