@@ -531,8 +531,38 @@ class CountryService:
                 rollback_db_cursor(db)
                 active_treaties = []
 
-    
+            recommended_coalitions = []
+            if status and not coalition_id:
+                try:
+                    members_tbl = get_coalition_members_table() or "coalitions_legacy"
+                    db.execute(
+                        f"""
+                        SELECT cn.id, cn.name, cn.type, cn.description, cn.flag, COUNT(cm.userid)::int AS members
+                        FROM colNames cn
+                        LEFT JOIN {members_tbl} cm ON cn.id = cm.colid
+                        WHERE cn.recruiting = TRUE
+                        GROUP BY cn.id, cn.name, cn.type, cn.description, cn.flag
+                        ORDER BY members DESC, cn.id ASC
+                        LIMIT 3
+                        """
+                    )
+                    recommended_coalitions = [
+                        {
+                            "id": r[0],
+                            "name": r[1],
+                            "type": r[2],
+                            "description": r[3] or "",
+                            "flag": r[4],
+                            "members": r[5]
+                        }
+                        for r in db.fetchall()
+                    ]
+                except Exception:
+                    rollback_db_cursor(db)
+                    recommended_coalitions = []
+
         return {
+            "recommended_coalitions": recommended_coalitions,
             "username": username,
             "join_number": join_number,
             "cId": cId,
