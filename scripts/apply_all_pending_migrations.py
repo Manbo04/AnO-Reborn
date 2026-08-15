@@ -50,6 +50,7 @@ MIGRATION_FILES = [
     "0030_add_furnace_projects.sql",
     "0039_add_food_banks.sql",
     "0040_rebalance_naval_special_costs.sql",
+    "0041_discord_analytics_panel.sql",
 ]
 
 
