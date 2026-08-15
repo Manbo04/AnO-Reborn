@@ -200,7 +200,11 @@ def google_signup_route():
             google_api = make_google_session(token=oauth_token)
             user_info = google_api.get(USERINFO_URL).json()
             google_user_id = user_info.get("sub")
-            email = user_info.get("email")
+            # users.email is NOT NULL. The "email" scope is requested, but a
+            # user can decline it in Google's granular consent screen, which
+            # would otherwise throw an uncaught NotNullViolation on the
+            # INSERT below (same failure mode fixed for Discord signup).
+            email = user_info.get("email") or f"google_{google_user_id}@no-email.affairsandorder.local"
 
             if not google_user_id:
                 flash("Could not fetch Google profile.")
