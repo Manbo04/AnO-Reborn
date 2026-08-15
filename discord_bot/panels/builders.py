@@ -1,13 +1,17 @@
 """AnO-themed Discord embed panels for guild channels."""
 
 
+import io
+import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import discord
 
 from discord_bot.config import GAME_BASE_URL
 from discord_bot.panels import data
+
+logger = logging.getLogger(__name__)
 
 ANO_BLUE = discord.Color.from_rgb(45, 95, 145)
 ANO_GOLD = discord.Color.from_rgb(201, 162, 39)
@@ -28,6 +32,9 @@ def build_readme_embed() -> discord.Embed:
             f"{GAME_BASE_URL}/account))\n"
             "• `/me` — your nation dashboard\n"
             "• `/nation` · `/wars` · `/resources` — lookups\n\n"
+            "**Info commands** (anyone)\n"
+            "• `/stats` · `/patreon` · `/status` · `/changelog` — server/community numbers\n"
+            "• `/site` · `/bugreport` · `/suggest` — links, bugs, feedback\n\n"
             "**Staff commands** — administrators only (`/guild_*`, `/admin_*`)\n"
             "Configure panels and broadcasts in the staff channel; "
             "non-admins cannot run those commands."
@@ -41,7 +48,8 @@ def build_readme_embed() -> discord.Embed:
             "⚔️ **war-feed** — active conflicts\n"
             "🔬 **nation-inspector** — realm statistics\n"
             "🌍 **global-affairs** — world snapshot\n"
-            "📢 **realm-alerts** — staff announcements"
+            "📢 **realm-alerts** — staff announcements\n"
+            "📊 **analytics** — growth chart (staff)"
         ),
         inline=False,
     )
@@ -167,6 +175,66 @@ def build_alerts_embed(
     return embed
 
 
+ANALYTICS_CHART_FILENAME = "signups_chart.png"
+
+
+def _render_signup_chart(daily_signups: List[Any]) -> Optional[io.BytesIO]:
+    """Real bar chart of daily signups -- returns None (never fabricated
+    placeholder data) if there's nothing to plot or matplotlib isn't
+    available, so the panel just falls back to text-only stats."""
+    if not daily_signups:
+        return None
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        logger.warning("matplotlib not installed -- analytics panel will be text-only")
+        return None
+
+    dates = [str(d) for d, _ in daily_signups]
+    counts = [c for _, c in daily_signups]
+
+    try:
+        fig, ax = plt.subplots(figsize=(7, 3), dpi=130)
+        ax.bar(dates, counts, color="#2D5F91")
+        ax.set_title("New signups per day (last 14 days)", fontsize=11, color="#222222")
+        ax.tick_params(axis="x", rotation=45, labelsize=7)
+        ax.tick_params(axis="y", labelsize=8)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        fig.tight_layout()
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor="white")
+        plt.close(fig)
+        buf.seek(0)
+        return buf
+    except Exception:
+        logger.exception("Failed to render signup chart")
+        return None
+
+
+def build_analytics_embed(
+    stats: Optional[Dict[str, Any]] = None,
+) -> Tuple[discord.Embed, Optional[io.BytesIO]]:
+    stats = stats if stats is not None else data.fetch_analytics_snapshot()
+    embed = discord.Embed(
+        title="📊 Analytics — Growth Snapshot",
+        description="Real player growth, pulled live from the game database.",
+        color=ANO_BLUE,
+    )
+    embed.add_field(name="Total nations", value=f"{stats['total_nations']:,}", inline=True)
+    embed.add_field(name="Active (24h)", value=f"{stats['dau']:,}", inline=True)
+    embed.add_field(name="New signups (24h)", value=f"{stats['signups_24h']:,}", inline=True)
+
+    chart = _render_signup_chart(stats.get("daily_signups") or [])
+    if chart is not None:
+        embed.set_image(url="attachment://signups_chart.png")
+    embed.set_footer(text=_footer())
+    return embed, chart
+
+
 PANEL_BUILDERS = {
     "readme": lambda: build_readme_embed(),
     "leaderboard": lambda: build_leaderboard_embed(),
@@ -174,4 +242,11 @@ PANEL_BUILDERS = {
     "inspector": lambda: build_inspector_embed(),
     "world_status": lambda: build_world_embed(),
     "alerts": lambda: build_alerts_embed(),
+}
+
+# Panels that also produce an image attachment -- kept separate from
+# PANEL_BUILDERS so every existing builder's (embed-only) signature stays
+# untouched; panel_service.py checks this dict first.
+PANEL_FILE_BUILDERS = {
+    "analytics": lambda: build_analytics_embed(),
 }

@@ -13,6 +13,7 @@ PANEL_KEYS = (
     "inspector",
     "world_status",
     "alerts",
+    "analytics",
 )
 
 PANEL_CHANNEL_COLUMNS = {
@@ -22,6 +23,7 @@ PANEL_CHANNEL_COLUMNS = {
     "inspector": "panel_inspector_channel_id",
     "world_status": "panel_world_channel_id",
     "alerts": "panel_alerts_channel_id",
+    "analytics": "panel_analytics_channel_id",
 }
 
 
@@ -74,6 +76,7 @@ def get_guild_settings(guild_id: str) -> Optional[GuildSettings]:
                panel_readme_channel_id, panel_leaderboard_channel_id,
                panel_war_feed_channel_id, panel_inspector_channel_id,
                panel_world_channel_id, panel_alerts_channel_id,
+               panel_analytics_channel_id,
                panels_enabled, panels_refresh_minutes
         FROM discord_guild_settings
         WHERE guild_id = %s
