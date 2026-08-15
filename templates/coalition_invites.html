@@ -1,0 +1,69 @@
+{% extends "layout.html" %} {% block title %} Coalition Invites {% endblock %}{% block body_class %} page-coalition-invites{% endblock %} {% block body %}
+
+<style>
+/* Mobile-First touch targets */
+button, .templatedivbutton {
+    min-height: 44px;
+    min-width: 44px;
+}
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.invite-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+</style>
+
+<div class="templatediv">
+
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            mail
+            </span>Coalition Invites</h1>
+    </div>
+
+    <div class="templatedivcontent">
+
+        {% if not incoming_invites %}
+        <p class="text-muted text-center mt-sm">You have no pending coalition invitations.</p>
+        {% else %}
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Coalition</th>
+                    <th>Invited By</th>
+                    <th>Sent</th>
+                    <th>Actions</th>
+                </tr>
+                {% for invite in incoming_invites %}
+                <tr>
+                    <td><a href="/coalition/{{ invite[1] }}">{{ invite[2] }}</a></td>
+                    <td>{{ invite[3] }}</td>
+                    <td>{{ invite[4] }}</td>
+                    <td>
+                        <div class="invite-actions">
+                            <form action="/coalition_invite/{{ invite[0] }}/accept" method="post">
+                                <button type="submit" class="templatedivbutton smallactionbutton">
+                                    <span class="material-icons-outlined">check</span>Accept
+                                </button>
+                            </form>
+                            <form action="/coalition_invite/{{ invite[0] }}/reject" method="post">
+                                <button type="submit" class="templatedivbutton smallactionbutton">
+                                    <span class="material-icons-outlined">close</span>Reject
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

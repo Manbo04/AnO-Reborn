@@ -254,21 +254,12 @@
                         </tr>
                         -->
                     </table>
-                    <!-- Invite to Coalition button for logged-in users viewing other players -->
-                    {% if session.get('user_id') and session['user_id']|string != cId|string %}
-                    <table class="templatetable">
-                        <tr>
-                            <td class="pt-cell">
-                                <form method="POST" action="/nation/{{ cId }}/invite" class="inline-form">
-                                    <button type="submit" class="templatedivbutton" class="w-full">
-                                        <span class="material-icons-outlined">mail</span>
-                                        Invite to Coalition
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    </table>
-                    {% endif %}
+                    <!-- The coalition-invite button lives further down, gated by
+                         can_invite_to_coalition (computed in countries.py's
+                         country() route). This location previously had a duplicate
+                         gated only on "viewing someone else", with no check for
+                         inviter role or whether the target already has a coalition
+                         -- it rendered even on your own profile page. -->
                     <table class="templatetable">
                         <tr>
                             <th><span class="material-icons-outlined">
@@ -2266,7 +2257,17 @@
                 <input class="templatedivbutton templatecenteredbutton" type="submit" value="Declare">
                 -->
         </form>
-        
+
+        {% if can_invite_to_coalition %}
+        <form action="/nation/{{ cId }}/invite" method="post" class="infodiv">
+            <h2 class="templatecontentheaderleft">Coalition</h2>
+            <p>This nation isn't in a coalition yet.</p>
+            <button type="submit" class="templatedivbutton templatecenteredbutton">
+                <span class="material-icons-outlined">group_add</span>Invite to Coalition
+            </button>
+        </form>
+        {% endif %}
+
         {% if (nuke_count and nuke_count > 0) or (icbm_count and icbm_count > 0) %}
         <form action="/nuclear_strike" method="POST" onsubmit="return confirm('WARNING: Launching a nuclear strike will wipe out a massive portion of the target\'s population and infrastructure, but will reduce your own happiness to 0 and incur a massive diplomatic penalty. Are you absolutely sure?');">
             <input type="hidden" name="target_id" value="{{ cId }}">
