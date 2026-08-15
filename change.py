@@ -322,7 +322,13 @@ def change():
 
         if bcrypt.checkpw(password, hash_value):
             if email:
-                db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
+                try:
+                    db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
+                except Exception as e:
+                    import psycopg2
+                    if isinstance(e, psycopg2.errors.UniqueViolation):
+                        return error(400, "That email is already in use.")
+                    return error(500, "An error occurred while updating your email.")
             if name:
                 try:
                     db.execute("UPDATE users SET username=%s WHERE id=%s", (name, cId))

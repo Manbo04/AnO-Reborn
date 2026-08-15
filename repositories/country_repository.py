@@ -195,7 +195,7 @@ class CountryRepository:
             deleted_counts["peace"] = db.rowcount
 
             try:
-                from coalitions import get_user_role
+                from app_core.coalitions.repositories import get_user_role
                 coalition_role = get_user_role(cId)
             except Exception:
                 coalition_role = None
@@ -240,7 +240,5 @@ class CountryRepository:
             deleted_counts["policies"] = db.rowcount
             db.execute("DELETE FROM news WHERE destination_id=%s", (cId,))
             deleted_counts["news"] = db.rowcount
-            db.execute("DELETE FROM interactive_events WHERE user_id=%s", (cId,))
-            deleted_counts["interactive_events"] = db.rowcount
-            
+
             return True, deleted_counts
