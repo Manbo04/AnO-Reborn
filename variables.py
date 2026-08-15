@@ -536,33 +536,33 @@ MILDICT = {
     # WATER
     "destroyers": {
         "price": 26000,
-        "resources": {"rations": 500, "components": 400, "steel": 300, "gasoline": 100},
+        "resources": {"steel": 120000, "components": 15000, "gasoline": 4000},
         "manpower": 6,
     },
     "cruisers": {
         "price": 48000,
-        "resources": {"rations": 600, "components": 500, "steel": 400, "gasoline": 150},
+        "resources": {"steel": 200000, "components": 25000, "gasoline": 6000},
         "manpower": 5,
     },
     "submarines": {
         "price": 40000,
-        "resources": {"rations": 700, "components": 600, "steel": 500, "gasoline": 200},
+        "resources": {"steel": 150000, "components": 20000, "gasoline": 5000},
         "manpower": 6,
     },
     # SPECIAL
     "spies": {
         "price": 25000,
-        "resources": {"rations": 100, "components": 200},
+        "resources": {"rations": 100, "components": 2000},
         "manpower": 0,
     },
     "icbms": {
         "price": 16000000,
-        "resources": {"rations": 1000, "components": 800, "steel": 600, "gasoline": 300},
+        "resources": {"steel": 80000, "components": 50000, "gasoline": 15000},
         "manpower": 0,
     },
     "nukes": {
         "price": 80000000,
-        "resources": {"rations": 2000, "components": 1500, "steel": 1000, "gasoline": 500},
+        "resources": {"steel": 120000, "components": 100000, "gasoline": 25000},
         "manpower": 0,
     },
 }
