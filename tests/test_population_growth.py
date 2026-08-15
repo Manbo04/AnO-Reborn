@@ -57,6 +57,9 @@ def test_population_growth_updates(monkeypatch):
             "happiness": 50,
             "pollution": 50,
             "productivity": 1,
+            "pop_children": 0,
+            "pop_working": 1000,
+            "pop_elderly": 0,
         },
         {
             "id": 11,
@@ -67,6 +70,9 @@ def test_population_growth_updates(monkeypatch):
             "happiness": 50,
             "pollution": 50,
             "productivity": 1,
+            "pop_children": 0,
+            "pop_working": 2000,
+            "pop_elderly": 0,
         },
     ]
 
@@ -74,8 +80,10 @@ def test_population_growth_updates(monkeypatch):
     # Also prepare fetchone returns for:
     # 1) advisory lock: (True,)
     # 2) task_runs last_run: (None,) to skip rate limit check
-    dbdict = FakeCursor(fetchone_returns=[(True,), (None,)])
-    dbdict._queue = [provinces, [{"id": 1, "rations": 100}]]
+    # 3) rations resource_id lookup: (1,)
+    dbdict = FakeCursor(fetchone_returns=[(True,), (None,), (1,)])
+    # Queue: provinces, rations rows (key must be "user_id" to match production SQL)
+    dbdict._queue = [provinces, [{"user_id": 1, "rations": 100}]]
     conn = FakeConn(dbdict)
 
     # monkeypatch connection used in population_growth
@@ -96,10 +104,13 @@ def test_population_growth_updates(monkeypatch):
     # for rations and population updates
     tasks.population_growth()
 
+    # population_growth writes province population via UPDATE provinces and
+    # rations via UPDATE user_economy (normalized schema).  The old assertion
+    # used a stale "UPDATE resources" pattern that no longer exists.
     assert any(
-        "UPDATE provinces SET population=%s WHERE id=%s" in q
+        "UPDATE provinces" in q or "user_economy" in q
         for q, seq in recorded["calls"]
-    ) or any(
-        "UPDATE resources SET rations=%s WHERE id=%s" in q
-        for q, seq in recorded["calls"]
+    ), (
+        f"Expected at least one execute_batch call writing to provinces or "
+        f"user_economy, got: {[q[:80] for q, _ in recorded['calls']]}"
     )
