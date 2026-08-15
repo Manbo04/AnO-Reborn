@@ -19,7 +19,10 @@ class CountryRepository:
     ) -> tuple:
         with get_request_cursor(read_only=True) as db:
             filter_sql = f"""
-                WITH country_rows AS (
+                WITH user_ids AS (
+                    SELECT id FROM users u WHERE u.id > 0 {search_filter}
+                ),
+                country_rows AS (
                     SELECT
                         u.id,
                         u.username,
@@ -51,20 +54,19 @@ class CountryRepository:
                         )::bigint AS influence,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u
+                    JOIN user_ids ui ON u.id = ui.id
                     LEFT JOIN stats s ON s.id = u.id
-                    LEFT JOIN (
+                    LEFT JOIN LATERAL (
                         SELECT
-                            userid AS user_id,
                             COUNT(id) AS provinces_count,
                             COALESCE(SUM(population), 0) AS province_population,
                             COALESCE(SUM(citycount), 0) AS city_count,
                             COALESCE(SUM(land), 0) AS total_land
                         FROM provinces
-                        GROUP BY userid
-                    ) p ON p.user_id = u.id
-                    LEFT JOIN (
+                        WHERE userid = u.id
+                    ) p ON true
+                    LEFT JOIN LATERAL (
                         SELECT
-                            um.user_id,
                             SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
                             SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
                             SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
@@ -77,20 +79,17 @@ class CountryRepository:
                             SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
                             SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
                             SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
-                        FROM unit_members um
-                        JOIN unit_dictionary ud ON um.unit_id = ud.id
-                        GROUP BY um.user_id
-                    ) m ON m.user_id = u.id
-                    LEFT JOIN (
-                        SELECT
-                            user_id,
-                            COALESCE(SUM(quantity), 0) AS total_resources
-                        FROM resource_members
-                        GROUP BY user_id
-                    ) r ON r.user_id = u.id
+                        FROM user_military um
+                        JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                        WHERE um.user_id = u.id
+                    ) m ON true
+                    LEFT JOIN LATERAL (
+                        SELECT COALESCE(SUM(quantity), 0) AS total_resources
+                        FROM user_economy
+                        WHERE user_id = u.id
+                    ) r ON true
                     LEFT JOIN {coalition_src} cm ON cm.userid = u.id
-                    LEFT JOIN coalitions c ON c.id = cm.colid
-                    WHERE u.id > 0 {search_filter}
+                    LEFT JOIN coalitions c ON c.coalition_id = cm.colid
                 )
                 SELECT * FROM country_rows WHERE 1=1
             """

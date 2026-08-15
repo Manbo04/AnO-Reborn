@@ -1026,26 +1026,26 @@ class Military(Nation):
 
         # TODO: maybe clear this mess a bit up
         # Land units
-        soldiers = max(0, army_bases * 100 - military["soldiers"])
-        tanks = max(0, army_bases * 8 - military["tanks"])
-        artillery = max(0, army_bases * 8 - military["artillery"])
+        soldiers = max(0, army_bases * 5000 - military["soldiers"])
+        tanks = max(0, army_bases * 200 - military["tanks"])
+        artillery = max(0, army_bases * 200 - military["artillery"])
 
         # Air units - all aircraft share aerodome capacity
         air_units = (
             military["fighters"] + military["bombers"] + military.get("apaches", 0)
         )
-        air_limit = max(0, aerodomes * 5 - air_units)
+        air_limit = max(0, aerodomes * 100 - air_units)
         bombers = air_limit
         fighters = air_limit
         apaches = air_limit
 
         # Naval units
         naval_units = military["submarines"] + military["destroyers"]
-        naval_limit = max(0, harbours * 3 - naval_units)
+        naval_limit = max(0, harbours * 20 - naval_units)
         submarines = naval_limit
         destroyers = naval_limit
 
-        cruisers = max(0, harbours * 2 - military["cruisers"])
+        cruisers = max(0, harbours * 10 - military["cruisers"])
 
         # Special
         special_units = Military.get_special(cId)

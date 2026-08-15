@@ -16,6 +16,9 @@ class _FakeUnit:
         self.selected_units = selected_units
         self._damage = damage
         self._effect = effect
+        # Required by compute_engagement_metrics to filter unusable units;
+        # in tests all units are fully operational.
+        self.unusable_units = frozenset()
 
     def attack(self, unit_from, unit_to):
         # deterministic simple attack signature for tests

@@ -185,7 +185,7 @@ def get_building_counts(db, cId):
                 0
             ) AS harbours,
             COALESCE(
-                SUM(CASE WHEN bd.name='aerodromes' THEN ub.quantity ELSE 0 END),
+                SUM(CASE WHEN bd.name IN ('aerodromes', 'aerodomes') THEN ub.quantity ELSE 0 END),
                 0
             ) AS aerodromes,
             COALESCE(

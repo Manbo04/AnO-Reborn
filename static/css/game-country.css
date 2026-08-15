@@ -881,3 +881,98 @@ body.page-country .revenue .stat-value {
         padding: 10px 8px; 
     }
 }
+
+/* --- Coalition Recommendation Widget --- */
+.coalition-recommendations-widget {
+    margin-bottom: 24px;
+}
+
+.coalition-rec-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+@media (min-width: 768px) {
+    .coalition-rec-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.coalition-rec-card {
+    background-color: var(--foreground, #252b36);
+    border: 1px solid var(--border, #373e4f);
+    border-radius: var(--game-radius-md, 12px);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.coalition-rec-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.coalition-rec-flag {
+    width: 40px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.coalition-rec-icon {
+    font-size: 32px;
+    color: var(--accent, #90caf9);
+}
+
+.coalition-rec-title-group {
+    flex: 1;
+}
+
+.coalition-rec-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.coalition-rec-name a {
+    color: var(--text-primary, #ffffff);
+    text-decoration: none;
+}
+
+.coalition-rec-name a:hover {
+    color: var(--accent, #90caf9);
+}
+
+.coalition-rec-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #9aa0a6);
+}
+
+.coalition-rec-desc {
+    font-size: 0.85rem;
+    color: var(--text-primary, #d1d5db);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.coalition-rec-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.coalition-rec-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
+}
+
