@@ -75,11 +75,22 @@
             if (typeof window.toggleResourceDrawer === 'function') window.toggleResourceDrawer();
         }
 
+        // Interactive full-bleed content that can legitimately sit right at
+        // the screen edge on narrow/portrait phones (e.g. the province
+        // district map) -- a tap there with any natural finger micro-drift
+        // was crossing the edge-swipe threshold and hijacking the tap as a
+        // "open nav menu" gesture instead of the map's own tap-to-select.
+        // Real reported bug: tapping the district map's empty/unbuilt
+        // ("dark") areas opened the side menu on mobile portrait only,
+        // because that's exactly when the map spans edge-to-edge.
+        var EDGE_SWIPE_EXCLUDE_SEL = '[data-province-hub], [data-zoomable]';
+
         document.addEventListener('touchstart', function (e) {
             if (e.touches.length !== 1) { tracking = null; return; }
             var t = e.touches[0];
             startX = t.clientX; startY = t.clientY; t0 = Date.now();
             var w = window.innerWidth;
+            if (closest(e.target, EDGE_SWIPE_EXCLUDE_SEL)) { tracking = null; return; }
             if (startX <= EDGE && !menuIsOpen())      tracking = 'menu-open';
             else if (startX >= w - EDGE && !drawerIsOpen()) tracking = 'drawer-open';
             else if (menuIsOpen())                    tracking = 'menu-close';
