@@ -123,6 +123,58 @@ The AI has access to:
 - **Missing data**: Check LEFT JOINs, some users have incomplete data
 - **Performance**: Watch for N+1 queries, use the optimized patterns in database.py
 
+### Known Gotchas (found 2026-08-15, real, verified)
+- **`aerodromes` vs `aerodomes` building name**: an old, UNTRACKED migration
+  script (`migrations/010_economy_rebalance.py`) renamed the aerodrome
+  building to the `aerodomes` typo, but that script isn't in
+  `scripts/apply_all_pending_migrations.py`'s `MIGRATION_FILES` list, so
+  whether it ever actually ran against production is unverified (staging's
+  schema still has the correct `aerodromes` spelling). Any new SQL that
+  filters on this building's name should match both spellings
+  (`WHERE bd.name IN ('aerodromes', 'aerodomes')`) rather than assume one --
+  `get_building_counts()` in `app_core/military/repositories.py` was
+  silently reading 0 aerodromes for every player because of exactly this.
+- **Two migration numbering schemes coexist**: newer `00XX_name.sql` files
+  (tracked, auto-applied via `scripts/apply_all_pending_migrations.py`'s
+  explicit `MIGRATION_FILES` list) and older `XXX_name.py` scripts
+  (untracked, meant to be run manually, easy to forget). **A new migration
+  file existing on disk does NOT mean it ran in production** -- it must be
+  added to `MIGRATION_FILES` or it silently never applies. There's also
+  been at least one real numbering collision (two different `0040_*.sql`
+  files from separate branches) -- check the current max number in
+  `MIGRATION_FILES` before naming a new one, not just the highest filename
+  on disk.
+- **`.com` vs `.org` domains**: `affairsandorder.com` is the real backend/
+  Railway custom domain (health checks, Discord OAuth callback, API);
+  `.org` is a separate front-facing domain. Discord login specifically
+  requires `.com` to be reachable -- if a player reports a broken
+  Discord-login cert/connection error, it's very likely their own ISP/
+  network DNS filtering `.com` (confirmed real case, Whalebone DNS
+  security sinkholing it for one player's ISP), not a real outage --
+  cross-check with `dig affairsandorder.com @1.1.1.1` for the real IP
+  before assuming a server problem.
+- **Railway PR Environments were a real security incident**: they used to
+  auto-deploy full `bot`/`web`/`celery-worker` copies for every open PR,
+  inheriting production's `DISCORD_BOT_TOKEN` and `DATABASE_URL` (no base-
+  environment scoping was configured) -- every PR silently hijacked the
+  live Discord bot's Gateway connection from production. **Disabled**
+  2026-08-15 (Project Settings -> Environments -> PR Environments ->
+  Disable). Don't re-enable without first scoping a restricted base
+  environment for previews, or configuring `DISCORD_BOT_SIDECAR=0` /
+  removing those variables from whatever base environment previews use.
+- **Discord bot runs as a "web sidecar" by default**: `scripts/
+  start_production.sh` starts `scripts/run_discord_bot_if_leader.py` as a
+  background process INSIDE the `web` service when `DISCORD_BOT_TOKEN` is
+  set and `DISCORD_BOT_SIDECAR` isn't `"0"` -- there's also a separate
+  dedicated `bot` Railway service in some environments. Check which one is
+  actually live (`DISCORD_BOT_SIDECAR` value + whether a `bot` service has
+  active deployments) before assuming only one exists.
+- **Auto-deploy "not working" was often just "nothing new to deploy"**:
+  Railway's native GitHub auto-deploy for `production` does fire on a real
+  push to master -- if `web`'s latest deployment looks stale, check
+  whether master actually has new commits first (a redeploy can be forced
+  manually with `railway redeploy --service web` if genuinely needed).
+
 ---
 
 ## 🔄 Session Handoff Protocol
