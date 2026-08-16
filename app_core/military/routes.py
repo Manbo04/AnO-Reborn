@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
 from upgrades import get_upgrades
 
@@ -64,5 +64,11 @@ def military_sell_buy(way, units):
                     return error(400, msg)
             else:
                 return error(404, "Page not found")
+
+        try:
+            invalidate_user_cache(cId)
+            invalidate_view_cache("military", user_id=cId)
+        except Exception:
+            pass
 
         return redirect("/military")
