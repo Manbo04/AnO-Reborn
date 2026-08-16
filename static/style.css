@@ -5626,15 +5626,23 @@ body.game-shell-active .game-hud {
 .game-hud-chip {
     display: flex;
     align-items: center;
-    gap: 6px;
-    min-height: 44px;
-    padding: 6px 10px;
+    gap: 4px;
+    /* Read-only status display, not a primary action control -- the
+       44px touch-target minimum is for things you tap to DO something.
+       This is tappable (opens more detail) but doesn't need a full
+       button's footprint; a real single tap on a slightly-shorter chip
+       is still comfortably reliable. Compare Politics & War, which
+       fits 10+ resources in one strip using small icon+number pairs
+       instead of full button chips -- this is the same idea, just less
+       extreme so it stays easy to tap. */
+    min-height: 30px;
+    padding: 4px 8px;
     background: var(--foregroundThree);
     border-radius: var(--game-radius-md);
     border: 1px solid var(--border);
     flex-shrink: 0;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--colorOne);
     position: relative;
     overflow: hidden;
@@ -5646,8 +5654,8 @@ body.game-shell-active .game-hud {
 
 .game-hud-chip img.resource,
 .game-hud-chip .game-hud-icon {
-    width: 28px;
-    height: 28px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
 }
 
