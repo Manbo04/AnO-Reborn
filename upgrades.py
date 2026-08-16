@@ -4,6 +4,7 @@ from database import (
     get_request_cursor,
     query_cache,
     invalidate_user_cache,
+    invalidate_view_cache,
     reuse_or_new_cursor,
 )
 from action_loop import start_research, ActionLoopError, RESEARCH_COST_RESOURCE
@@ -136,6 +137,7 @@ def start_research_action():
     try:
         invalidate_user_cache(cId)
         query_cache.invalidate(pattern=f"upgrades_{cId}")
+        invalidate_view_cache("military", user_id=cId)
     except Exception:
         pass
 
@@ -172,6 +174,7 @@ def upgrade_sell_buy(ttype, thing):
     try:
         invalidate_user_cache(cId)
         query_cache.invalidate(pattern=f"upgrades_{cId}")
+        invalidate_view_cache("military", user_id=cId)
     except Exception:
         pass
 

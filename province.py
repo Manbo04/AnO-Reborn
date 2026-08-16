@@ -780,6 +780,7 @@ def province_quick_build_api(pId):
         invalidate_user_cache(cId)
         invalidate_view_cache("province", user_id=cId)
         invalidate_view_cache("provinces", user_id=cId)
+        invalidate_view_cache("military", user_id=cId)
     except Exception:
         pass
 
@@ -879,6 +880,7 @@ def build_structure_action():
         invalidate_user_cache(cId)
         invalidate_view_cache("province", user_id=cId)
         invalidate_view_cache("provinces", user_id=cId)
+        invalidate_view_cache("military", user_id=cId)
     except Exception:
         pass
 
