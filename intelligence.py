@@ -6,7 +6,7 @@ import time
 from dotenv import load_dotenv
 import variables
 import random as rand
-from database import get_request_cursor, cache_response
+from database import get_request_cursor, cache_response, invalidate_view_cache
 from psycopg2.extras import RealDictCursor
 
 load_dotenv()
@@ -315,4 +315,9 @@ def spyResult():
 
             _decrease_unit_quantity(db, cId, "spies", executed_spies)
 
-            return redirect("/intelligence")
+        try:
+            invalidate_view_cache("intelligence", user_id=cId)
+        except Exception:
+            pass
+
+        return redirect("/intelligence")
