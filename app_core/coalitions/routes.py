@@ -1658,6 +1658,7 @@ def withdraw_from_bank(coalition_id):
             resource = ""
 
         if resource is not None and resource != "":
+            resource = resource.replace(",", "")
             try:
                 amt = int(resource)
             except Exception:
