@@ -92,13 +92,23 @@ def upgrades():
         )
         tech_rows = db.fetchall() or []
 
-        # Build legacy_key → research_cost mapping for template cards
+        # Build legacy_key → research_cost / prerequisite display-name
+        # mappings for template cards. Players had no way to see a tech's
+        # prerequisite before attempting to research it and hitting a
+        # generic error -- surface it up front instead.
+        tech_id_to_display_name = {row[0]: row[1] for row in tech_rows}
         tech_costs = {}
+        tech_prereq_names = {}
         for row in tech_rows:
-            tech_name = row[4]  # name column
+            tech_id, display_name, research_cost, prerequisite_tech_id, tech_name = row
             legacy_key = TECH_TO_LEGACY_UPGRADE.get(tech_name)
-            if legacy_key:
-                tech_costs[legacy_key] = int(row[2])  # research_cost
+            if not legacy_key:
+                continue
+            tech_costs[legacy_key] = int(research_cost)
+            if prerequisite_tech_id:
+                tech_prereq_names[legacy_key] = tech_id_to_display_name.get(
+                    prerequisite_tech_id, "an earlier technology"
+                )
 
         db.execute(
             """
@@ -117,6 +127,7 @@ def upgrades():
         unlocked_ids=unlocked_ids,
         research_cost_resource=RESEARCH_COST_RESOURCE,
         tech_costs=tech_costs,
+        tech_prereq_names=tech_prereq_names,
     )
 
 

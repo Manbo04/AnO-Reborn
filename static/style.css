@@ -6427,7 +6427,43 @@ body.page-country .templatedivcontent .infodiv {
         width: 100%;
         -webkit-overflow-scrolling: touch;
     }
-    
+
+    /* Freeze the first column (row label -- name, unit, etc.) so scrolling
+       a wide table horizontally never loses the thing each row is about.
+       Needs an explicit opaque background since sticky cells paint over
+       whatever scrolls underneath them; matched to the existing
+       odd/even row striping and header/hover backgrounds so it's
+       invisible as a seam, not a new visual element. */
+    .templatetable th:first-child,
+    .templatetable2 th:first-child,
+    .templatetable3 th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
+    .templatetable td:first-child,
+    .templatetable2 td:first-child,
+    .templatetable3 td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
+    .templatetable tr:nth-child(odd) td:first-child,
+    .templatetable2 tr:nth-child(odd) td:first-child,
+    .templatetable3 tr:nth-child(odd) td:first-child {
+        background: var(--tableOne);
+    }
+    .templatetable tr:nth-child(even) td:first-child,
+    .templatetable2 tr:nth-child(even) td:first-child,
+    .templatetable3 tr:nth-child(even) td:first-child {
+        background: var(--tableTwo);
+    }
+    .templatetable tbody tr:hover td:first-child,
+    .templatetable2 tbody tr:hover td:first-child,
+    .templatetable3 tbody tr:hover td:first-child {
+        background: var(--accent-subtle);
+    }
+
     .menuflex2, .menuflex {
         display: flex;
         flex-wrap: wrap;
