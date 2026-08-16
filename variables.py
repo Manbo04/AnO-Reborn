@@ -517,20 +517,22 @@ MILDICT = {
         "resources": {"components": 3000, "steel": 30000, "gasoline": 1000},
         "manpower": 2,
     },
-    # AIR
+    # AIR -- aluminium, not steel: planes are built from aluminium, and this
+    # is the only place that made aluminium a viable resource to produce
+    # (player feedback, 2026-08-16, migration 0043).
     "bombers": {
         "price": 22000,
-        "resources": {"components": 15000, "steel": 25000, "gasoline": 8000},
+        "resources": {"components": 15000, "aluminium": 25000, "gasoline": 8000},
         "manpower": 1,
     },
     "fighters": {
         "price": 30000,
-        "resources": {"components": 10000, "steel": 20000, "gasoline": 5000},
+        "resources": {"components": 10000, "aluminium": 20000, "gasoline": 5000},
         "manpower": 1,
     },
     "apaches": {
         "price": 28000,
-        "resources": {"components": 8000, "steel": 15000, "gasoline": 3000},
+        "resources": {"components": 8000, "aluminium": 15000, "gasoline": 3000},
         "manpower": 1,
     },
     # WATER
@@ -557,12 +559,12 @@ MILDICT = {
     },
     "icbms": {
         "price": 16000000,
-        "resources": {"steel": 80000, "components": 50000, "gasoline": 15000},
+        "resources": {"aluminium": 80000, "components": 50000, "gasoline": 15000},
         "manpower": 0,
     },
     "nukes": {
         "price": 80000000,
-        "resources": {"steel": 120000, "components": 100000, "gasoline": 25000},
+        "resources": {"aluminium": 120000, "components": 100000, "gasoline": 25000},
         "manpower": 0,
     },
 }
