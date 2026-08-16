@@ -52,6 +52,7 @@ MIGRATION_FILES = [
     "0040_rebalance_naval_special_costs.sql",
     "0041_discord_analytics_panel.sql",
     "0042_coalition_invites.sql",
+    "0043_planes_missiles_use_aluminium.sql",
 ]
 
 
