@@ -157,8 +157,16 @@ def upgrade_sell_buy(ttype, thing):
 
     with get_request_cursor() as db:
         cId = session["user_id"]
+        # tech_dictionary has had duplicate rows under the same `name` in
+        # production (one active, one not) -- an unqualified lookup could
+        # nondeterministically grab the inactive one and fail with "not
+        # currently available" even though /upgrades shows the tech as
+        # researchable (that page's query already filters is_active=TRUE).
+        # Prefer the active row explicitly, and pick deterministically if
+        # duplicates still exist.
         db.execute(
-            "SELECT tech_id FROM tech_dictionary WHERE name=%s",
+            "SELECT tech_id FROM tech_dictionary WHERE name=%s "
+            "ORDER BY is_active DESC, tech_id DESC LIMIT 1",
             (tech_name,),
         )
         row = db.fetchone()
