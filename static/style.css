@@ -2765,6 +2765,27 @@ button {
     height: 45px;
 }
 
+/* This is a horizontal tab strip (coalition page section switcher,
+   General/Bank/Government/Diplomacy/Tax/Settings), but something
+   (couldn't pin down exactly what -- not found in any matched CSS
+   rule via direct inspection) was forcing it to stack vertically on
+   mobile, turning a 45px-tall tab bar into 6 full-width stacked rows.
+   Forcing row + horizontal scroll directly, since 6 tab labels don't
+   all fit one mobile screen width either way. */
+.templatedivflex2.menuflex2 {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.templatedivflex2.menuflex2 > div {
+    flex-shrink: 0 !important;
+    padding: 0 14px;
+}
+
 .menuflex2 div {
     cursor: pointer;
     margin: 0px;
@@ -5641,6 +5662,14 @@ body.game-shell-active .game-hud {
     border-radius: var(--game-radius-md);
     border: 1px solid var(--border);
     flex-shrink: 0;
+    /* On at least the coalition page, this chip's computed width
+       balloons to ~468px (nearly the full HUD strip) even though
+       nothing in the stylesheets sets a width on it and flex-grow is
+       0 -- couldn't pin the exact source. Forcing it explicitly is a
+       direct, verified fix regardless of the cause. */
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: max-content !important;
     cursor: pointer;
     font-size: 0.78rem;
     color: var(--colorOne);
