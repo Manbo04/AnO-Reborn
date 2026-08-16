@@ -2765,16 +2765,16 @@ button {
     height: 45px;
 }
 
-/* This is a horizontal tab strip (coalition page section switcher,
-   General/Bank/Government/Diplomacy/Tax/Settings), but something
-   (couldn't pin down exactly what -- not found in any matched CSS
-   rule via direct inspection) was forcing it to stack vertically on
-   mobile, turning a 45px-tall tab bar into 6 full-width stacked rows.
-   Forcing row + horizontal scroll directly, since 6 tab labels don't
-   all fit one mobile screen width either way. */
+/* Horizontal tab strip (coalition page section switcher,
+   General/Bank/Government/Diplomacy/Tax/Settings). 6 tab labels don't
+   all fit one mobile screen width, so this scrolls horizontally.
+   justify-content: flex-start overrides .menuflex2's centered layout
+   above -- centering an overflowing flex row starts the scroll
+   position mid-content, clipping both the first and last tab labels. */
 .templatedivflex2.menuflex2 {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
