@@ -370,6 +370,7 @@
                             </p>
 
                             <ul>Costs {{ tech_costs.get("widespreadpropaganda", 0) | weight_fmt }} components</ul>
+                            {% if tech_prereq_names.get("widespreadpropaganda") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("widespreadpropaganda") }}</p>{% endif %}
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["widespreadpropaganda"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/widespreadPropaganda">
@@ -560,6 +561,7 @@
                         </p>
 
                         <ul>Costs {{ tech_costs.get("lootingteams", 0) | weight_fmt }} components</ul>
+                        {% if tech_prereq_names.get("lootingteams") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("lootingteams") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["lootingteams"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/lootingTeams">
@@ -654,6 +656,7 @@
                         </p>
 
                         <ul>Costs {{ tech_costs.get("ballisticmissilesilo", 0) | weight_fmt }} components</ul>
+                        {% if tech_prereq_names.get("ballisticmissilesilo") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("ballisticmissilesilo") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["ballisticmissilesilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ballisticMissileSilo">
@@ -687,6 +690,7 @@
                         </p>
 
                         <ul>Costs {{ tech_costs.get("icbmsilo", 0) | weight_fmt }} components</ul>
+                        {% if tech_prereq_names.get("icbmsilo") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("icbmsilo") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["icbmsilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ICBMsilo">
@@ -719,6 +723,7 @@
                         </p>
 
                         <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} components</ul>
+                        {% if tech_prereq_names.get("nucleartestingfacility") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("nucleartestingfacility") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["nucleartestingfacility"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nuclearTestingFacility">
