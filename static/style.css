@@ -689,10 +689,20 @@ body:has(.navbarparent .templatecontainer) {
     border: none;
     padding: 0;
     cursor: default;
+    /* Belt-and-braces beyond `display`: a real report (province pages
+       specifically, cause not pinned down) had this backdrop rendering
+       and intercepting every tap on page load despite lacking the
+       -show class -- opacity/pointer-events give a second, independent
+       gate so a `display` override elsewhere can no longer make the
+       whole page untappable on its own. */
+    opacity: 0;
+    pointer-events: none;
 }
 
 .menubar-backdrop.menubar-backdrop-show {
     display: block;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .menubardiv::-webkit-scrollbar {
