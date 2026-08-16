@@ -2776,9 +2776,17 @@ button {
     flex-wrap: nowrap !important;
     justify-content: flex-start !important;
     width: 100% !important;
+    padding-right: 20px !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
+    /* Whatever tab label sits at the right edge gets hard-clipped
+       mid-word as the strip scrolls (e.g. "Government" -> "GOVERNM").
+       Fade it out instead of chopping it off flush against the card
+       border, and add trailing space so the last tab isn't flush
+       against the edge once fully scrolled into view either. */
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
 }
 
 .templatedivflex2.menuflex2 > div {
@@ -5634,6 +5642,11 @@ body.game-shell-active .templatediv {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    /* Whichever resource chip sits at the edge gets sliced mid-icon/
+       mid-number as the strip scrolls. Fade it out instead of a hard
+       cut, since this strip is visible on nearly every page. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
 }
 
 .game-hud::-webkit-scrollbar {
