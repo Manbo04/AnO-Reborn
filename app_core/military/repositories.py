@@ -85,7 +85,8 @@ def get_unit_costs(db, unit_name, mildict):
             COALESCE(production_cost_rations, 0) AS production_cost_rations,
             COALESCE(production_cost_components, 0) AS production_cost_components,
             COALESCE(production_cost_steel, 0) AS production_cost_steel,
-            COALESCE(production_cost_fuel, 0) AS production_cost_fuel
+            COALESCE(production_cost_fuel, 0) AS production_cost_fuel,
+            COALESCE(production_cost_aluminium, 0) AS production_cost_aluminium
         FROM unit_dictionary
         WHERE name=%s AND is_active=TRUE
         """,
@@ -102,12 +103,14 @@ def get_unit_costs(db, unit_name, mildict):
         cost_components,
         cost_steel,
         cost_fuel,
+        cost_aluminium,
     ) = row
     costs = {
         "rations": int(cost_rations or 0),
         "components": int(cost_components or 0),
         "steel": int(cost_steel or 0),
         "gasoline": int(cost_fuel or 0),
+        "aluminium": int(cost_aluminium or 0),
     }
     costs = {k: v for k, v in costs.items() if v > 0}
 
