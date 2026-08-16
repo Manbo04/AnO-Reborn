@@ -245,7 +245,15 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
             user_id,
             prerequisite_tech_id,
         ):
-            raise ActionLoopError("Prerequisite technology is not unlocked.")
+            db.execute(
+                "SELECT display_name FROM tech_dictionary WHERE tech_id=%s",
+                (prerequisite_tech_id,),
+            )
+            prereq_row = db.fetchone()
+            prereq_name = prereq_row[0] if prereq_row else "an earlier technology"
+            raise ActionLoopError(
+                f"You need to research {prereq_name} before {display_name}."
+            )
 
         resource_id = _get_resource_id(db, RESEARCH_COST_RESOURCE)
         if resource_id is None:
