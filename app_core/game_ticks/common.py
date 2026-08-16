@@ -109,8 +109,18 @@ def is_task_stale(task_name: str, stale_seconds: int) -> bool:
 
 # Handles exception for an error
 def handle_exception(e, task_name=None):
-    filename = __file__
-    line = e.__traceback__.tb_lineno if e.__traceback__ else "?"
+    import traceback as _traceback
+
+    frames = _traceback.extract_tb(e.__traceback__)
+    if frames:
+        # Deepest frame is where the exception actually originated, not
+        # this handler's own file -- reporting __file__ here made every
+        # logged error look like it came from common.py regardless of
+        # where it really happened.
+        origin = frames[-1]
+        filename, line = origin.filename, origin.lineno
+    else:
+        filename, line = __file__, "?"
     print("\n-----------------START OF EXCEPTION-------------------")
     print(f"Filename: {filename}")
     print(f"Error: {e}")
