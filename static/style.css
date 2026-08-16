@@ -8343,8 +8343,8 @@ body.page-rankings .rankings-table tbody td a {
         margin-top: 8px;
     }
     
-    body.page-coalition .templatedivflex2,
-    body.page-coalitions .templatedivflex2 {
+    body.page-coalition .templatedivflex2:not(.menuflex2),
+    body.page-coalitions .templatedivflex2:not(.menuflex2) {
         flex-direction: column !important;
     }
 }
