@@ -46,7 +46,12 @@ celery.conf.update(
 
 
 # Centralized helper for last_run threshold check
-from app_core.game_ticks.common import should_skip_task, handle_exception, log_verbose
+from app_core.game_ticks.common import (
+    should_skip_task,
+    handle_exception,
+    log_verbose,
+    MAX_INT_32,
+)
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.population import find_unit_category
 
