@@ -33,6 +33,11 @@ body.game-shell-active .templatediv {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    /* Whichever resource chip sits at the edge gets sliced mid-icon/
+       mid-number as the strip scrolls. Fade it out instead of a hard
+       cut, since this strip is visible on nearly every page. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
 }
 
 .game-hud::-webkit-scrollbar {
