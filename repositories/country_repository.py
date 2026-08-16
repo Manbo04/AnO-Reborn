@@ -89,7 +89,7 @@ class CountryRepository:
                         WHERE user_id = u.id
                     ) r ON true
                     LEFT JOIN {coalition_src} cm ON cm.userid = u.id
-                    LEFT JOIN coalitions c ON c.coalition_id = cm.colid
+                    LEFT JOIN colNames c ON c.id = cm.colid
                 )
                 SELECT * FROM country_rows WHERE 1=1
             """
