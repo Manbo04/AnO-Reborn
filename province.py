@@ -389,9 +389,18 @@ def province(pId):
         new_infra = variables.NEW_INFRA
 
         energy_consumption = sum(units.get(c, 0) or 0 for c in consumers)
-        energy_production = sum(
-            (units.get(p, 0) or 0) * new_infra[p]["plus"]["energy"] for p in producers
-        )
+        energy_production = 0
+        for p in producers:
+            per_unit_energy = new_infra[p]["plus"]["energy"]
+            # BETTER ENGINEERING -- must match the bonus generate_province_revenue()
+            # actually applies each tick (app_core/game_ticks/revenue.py), or this
+            # display permanently under-reports real production. Real player report:
+            # /province showed 60 (4 reactors x 15 base, no bonus) even with Better
+            # Engineering researched, because this was a second, independent energy
+            # formula that never had the bonus added to it in the first place.
+            if p == "nuclear_reactors" and upgrades.get("betterengineering"):
+                per_unit_energy += 6
+            energy_production += (units.get(p, 0) or 0) * per_unit_energy
         energy = {"consumption": energy_consumption, "production": energy_production}
         has_power = energy_production >= energy_consumption
 
