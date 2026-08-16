@@ -657,62 +657,89 @@ def generate_province_revenue():  # Runs each hour
 
                         operating_costs = int(operating_costs)
 
-                        # Boolean for whether a player has enough resources, energy,
-                        # money to power his building. All-or-nothing: any failed
-                        # check means the building doesn't operate this tick, and
-                        # we must NOT charge upkeep or consume resources/energy.
+                        # How many of this province's `unit_amount` buildings can
+                        # actually afford to run this tick. Partial, not
+                        # all-or-nothing: if there's only enough uranium for 7 of
+                        # your 10 nuclear reactors, 7 run and produce/consume
+                        # normally, 3 sit idle -- rather than every single one
+                        # producing nothing because the fleet as a whole came up
+                        # short (player-reported real problem: scaling up a
+                        # building type made an existing shortfall affect 100% of
+                        # output instead of the unaffordable fraction).
+                        affordable_units = unit_amount
                         has_enough_stuff = {"status": True, "issues": []}
 
                         # Pending state — only committed to gold_deductions,
-                        # provinces_data energy, and resource_deltas AFTER all
-                        # checks pass. Prior versions applied upkeep before
-                        # checking energy/resources, so failed buildings still
-                        # drained gold and could bankrupt idle nations
-                        # (e.g. when a power grid collapse zeroed energy).
+                        # provinces_data energy, and resource_deltas AFTER
+                        # affordable_units is finalized, scaled to that count
+                        # (not the full unit_amount). Prior versions applied
+                        # upkeep before checking energy/resources, so failed
+                        # buildings still drained gold and could bankrupt idle
+                        # nations (e.g. when a power grid collapse zeroed energy)
+                        # -- still true here, just per-unit instead of per-type.
                         pending_gold_cost = 0
                         pending_energy_delta = 0
                         pending_resource_deltas_local = {}
 
-                        if current_money < operating_costs:
-                            log_verbose(
-                                f"Skip {unit} province {province_id}: not enough money"
+                        cost_per_unit = operating_costs / unit_amount
+                        if cost_per_unit > 0:
+                            affordable_units = min(
+                                affordable_units, int(current_money // cost_per_unit)
                             )
-                            has_enough_stuff["status"] = False
-                            has_enough_stuff["issues"].append("money")
-                        else:
-                            pending_gold_cost = operating_costs
+                            if affordable_units < unit_amount:
+                                has_enough_stuff["issues"].append("money")
 
                         # Use tracked energy in provinces_data instead of
                         # per-building SELECT
+                        energy_per_unit = 0
                         if unit in energy_consumers:
-                            prov_data = provinces_data.get(province_id, {})
-                            current_energy = prov_data.get("energy", 0)
-                            energy_needed = unit_amount  # Each unit consumes 1 energy
-
-                            if current_energy < energy_needed:
-                                has_enough_stuff["status"] = False
-                                has_enough_stuff["issues"].append("energy")
-                            else:
-                                pending_energy_delta = -energy_needed
-
+                            energy_per_unit = 1  # Each unit consumes 1 energy
                         elif unit == "steel_mills" and upgrades.get("electricarcfurnace"):
+                            energy_per_unit = 2  # EAF consumes 2 energy per mill
+
+                        if energy_per_unit:
                             prov_data = provinces_data.get(province_id, {})
                             current_energy = prov_data.get("energy", 0)
-                            energy_needed = unit_amount * 2  # EAF consumes 2 energy per mill
-
-                            if current_energy < energy_needed:
-                                has_enough_stuff["status"] = False
+                            affordable_by_energy = int(current_energy // energy_per_unit)
+                            if affordable_by_energy < affordable_units:
                                 has_enough_stuff["issues"].append("energy")
-                            else:
-                                pending_energy_delta = -energy_needed
+                            affordable_units = min(affordable_units, affordable_by_energy)
 
                         # Use preloaded resources instead of per-building queries
                         resources = resources_map.get(user_id, {})
                         # Resources is now a dict of resource_name -> quantity
                         # (no fallback query needed, all loaded upfront)
 
-                        for resource, amount in minus.items():
-                            amount *= unit_amount
+                        # Per-unit resource cost, after unit-specific multipliers
+                        # (computed once against a single unit, independent of
+                        # unit_amount, so it can be scaled by affordable_units
+                        # below once every resource's ceiling is known).
+                        per_unit_minus = {}
+                        for resource, base_amount in minus.items():
+                            amount_per_unit = base_amount
+
+                            # AUTOMATION INTEGRATION
+                            if unit == "component_factories" and upgrades.get(
+                                "automationintegration"
+                            ):
+                                amount_per_unit *= 0.75
+                            # LARGER FORGES
+                            if unit == "steel_mills" and upgrades.get("largerforges"):
+                                amount_per_unit *= 0.7
+
+                            # INTEGRATED STEELMAKING
+                            if unit == "steel_mills" and upgrades.get("integratedsteelmaking"):
+                                amount_per_unit *= 1.36
+
+                            # ELECTRIC ARC FURNACE
+                            if unit == "steel_mills" and upgrades.get("electricarcfurnace"):
+                                amount_per_unit *= 0.5
+
+                            per_unit_minus[resource] = amount_per_unit
+
+                            if amount_per_unit <= 0:
+                                continue
+
                             current_resource = resources.get(resource, 0)
                             # Account for any pending deltas in this run
                             pending_delta = resource_deltas.get(user_id, {}).get(
@@ -720,48 +747,15 @@ def generate_province_revenue():  # Runs each hour
                             )
                             effective_current = current_resource + pending_delta
 
-                            # AUTOMATION INTEGRATION
-                            if unit == "component_factories" and upgrades.get(
-                                "automationintegration"
-                            ):
-                                amount *= 0.75
-                            # LARGER FORGES
-                            if unit == "steel_mills" and upgrades.get("largerforges"):
-                                amount *= 0.7
-
-                            # INTEGRATED STEELMAKING
-                            if unit == "steel_mills" and upgrades.get("integratedsteelmaking"):
-                                amount *= 1.36
-
-                            # ELECTRIC ARC FURNACE
-                            if unit == "steel_mills" and upgrades.get("electricarcfurnace"):
-                                amount *= 0.5
-
-                            new_resource = effective_current - amount
-
-                            if new_resource < 0:
-                                has_enough_stuff["status"] = False
+                            affordable_by_resource = int(
+                                effective_current // amount_per_unit
+                            )
+                            if affordable_by_resource < affordable_units:
                                 has_enough_stuff["issues"].append(resource)
-                                log_verbose(
-                                    (
-                                        "F | USER: %s | PROVINCE: %s | %s (%s) | "
-                                        "Failed to minus %s of %s (%s)"
-                                    )
-                                    % (
-                                        user_id,
-                                        province_id,
-                                        unit,
-                                        unit_amount,
-                                        amount,
-                                        resource,
-                                        effective_current,
-                                    )
-                                )
-                            else:
-                                pending_resource_deltas_local[resource] = (
-                                    pending_resource_deltas_local.get(resource, 0)
-                                    - amount
-                                )
+                            affordable_units = min(affordable_units, affordable_by_resource)
+
+                        affordable_units = max(0, affordable_units)
+                        has_enough_stuff["status"] = affordable_units > 0
 
                         if not has_enough_stuff["status"]:
                             issues_str = ", ".join(has_enough_stuff["issues"])
@@ -771,7 +765,35 @@ def generate_province_revenue():  # Runs each hour
                             )
                             continue
 
-                        # All checks passed — commit pending state atomically
+                        if affordable_units < unit_amount:
+                            issues_str = ", ".join(has_enough_stuff["issues"])
+                            log_verbose(
+                                "P | USER: %s | PROVINCE: %s | %s (%s/%s) | "
+                                "Partial -- short on %s"
+                                % (
+                                    user_id,
+                                    province_id,
+                                    unit,
+                                    affordable_units,
+                                    unit_amount,
+                                    issues_str,
+                                )
+                            )
+
+                        # Scale pending state to how many units actually run,
+                        # then commit.
+                        if cost_per_unit > 0:
+                            pending_gold_cost = int(round(cost_per_unit * affordable_units))
+                        if energy_per_unit:
+                            pending_energy_delta = -(energy_per_unit * affordable_units)
+                        for resource, amount_per_unit in per_unit_minus.items():
+                            if amount_per_unit <= 0:
+                                continue
+                            pending_resource_deltas_local[resource] = (
+                                pending_resource_deltas_local.get(resource, 0)
+                                - amount_per_unit * affordable_units
+                            )
+
                         if pending_gold_cost:
                             gold_deductions[user_id] = (
                                 gold_deductions.get(user_id, 0) + pending_gold_cost
@@ -795,7 +817,7 @@ def generate_province_revenue():  # Runs each hour
                                         user_id,
                                         province_id,
                                         unit,
-                                        unit_amount,
+                                        affordable_units,
                                         res_name,
                                         delta,
                                     )
@@ -856,7 +878,7 @@ def generate_province_revenue():  # Runs each hour
 
                         # Function for _plus
                         for resource, amount in plus.items():
-                            amount *= unit_amount
+                            amount *= affordable_units
                             amount += plus_amount
                             amount *= plus_amount_multiplier
                             # Normalize production to integer units so we don't
@@ -966,11 +988,11 @@ def generate_province_revenue():  # Runs each hour
                                 provinces_data[province_id][eff_name] = new_effect
 
                         for effect, amount in eff.items():
-                            amount *= unit_amount
+                            amount *= affordable_units
                             do_effect(effect, amount, "+")
 
                         for effect, amount in effminus.items():
-                            amount *= unit_amount
+                            amount *= affordable_units
                             do_effect(effect, amount, "-")
 
                     except Exception as e:
