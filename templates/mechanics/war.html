@@ -36,6 +36,49 @@
             </div>
         </div>
 
+        <!-- War Types -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">rule</span> War Types</th>
+            </tr>
+        </table>
+
+        <p class="templatecontentpleft">You pick a war type when you declare war, and it stays fixed for that war. It changes what a winning attack does to the defender.</p>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">local_fire_department</span> Raze</h3>
+                <p class="templatecontentpleft">Maximizes damage to the enemy's buildings. No gold is looted.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Province damage</strong></td><td>10&times; normal</td></tr>
+                    <tr><td><strong>Gold looted</strong></td><td>None</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">balance</span> Sustained</h3>
+                <p class="templatecontentpleft">The baseline option &mdash; no bonus and no penalty to province damage, no gold looted per attack.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Province damage</strong></td><td>Normal</td></tr>
+                    <tr><td><strong>Gold looted</strong></td><td>None</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">payments</span> Loot</h3>
+                <p class="templatecontentpleft">Trades destruction for profit &mdash; much lighter on the enemy's buildings, but every attack you win has a chance to steal some of their gold.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Province damage</strong></td><td>Only 20% of normal</td></tr>
+                    <tr><td><strong>Gold looted</strong></td><td>Random amount, 0&ndash;10% of the defender's current gold, per winning attack</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">info</span> All war types, always</h3>
+                <p class="templatecontentpleft">Regardless of war type, when a war ends (either side's morale hits 0) the winner takes 20% of every resource the loser has (30% with the Looting Teams project). That end-of-war plunder is separate from the per-attack gold steal Loot-type wars get.</p>
+            </div>
+        </div>
+
         <!-- Military Units -->
         <table class="templatetable">
             <tr>
