@@ -130,10 +130,8 @@ def format_econ_statistics(statistics):
             else:
                 expense_string = f"{amount} {resource}"
 
-            if (
-                resource == "money"
-            ):  # Bit of a hack but the simplest and cleanest approach
-                expense_string = expense_string.replace(" money", "")
+            if resource == "money":
+                expense_string = "$" + expense_string.replace(" money", "")
 
             formatted[unit_type] += expense_string
             idx += 1
