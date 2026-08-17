@@ -83,7 +83,9 @@ Any `opacity: 0` + `pointer-events: none` pattern gated behind `:hover` (e.g. th
 
 **6. Hardcoded background+text color pairs break silently on theme switch.** A component that sets `background: #1e293b` without also setting an explicit `color:` (relying on the page's `--colorOne` for text) can render text nearly invisible when the site's light/dark theme doesn't match what the author had in mind. Found live on `/military`'s inactive sub-tabs. Grep pattern for an audit: `background: #[0-9a-f]{6}` in an inline `<style>` block or component CSS with no paired `color:` in the same rule.
 
-**7. `!important` on a shared class can silently lose to a more specific selector elsewhere.** Don't trust a grep-based "no conflicting rule found" — check computed styles / matched CSSOM rules on the live page when a `!important` rule doesn't seem to be applying.
+**7. `static/style.min.css`, if present, silently wins over `static/style.css` for local verification.** `game_ui.py`'s `game_stylesheet_filename()` prefers the minified file whenever it exists on disk. Production always regenerates it fresh at deploy time (`nixpacks.toml` build phase runs `scripts/bundle_game_css.py`), so this is harmless in production — but a locally-committed or locally-stale copy will make your local dev server silently serve old CSS while you edit `style.css`/`static/css/*.css`, making a real fix look like it isn't working. If a local CSS check doesn't reflect an edit you just made, run `python3 scripts/bundle_game_css.py` before assuming the fix is wrong.
+
+**8. `!important` on a shared class can silently lose to a more specific selector elsewhere.** Don't trust a grep-based "no conflicting rule found" — check computed styles / matched CSSOM rules on the live page when a `!important` rule doesn't seem to be applying.
 
 ## Research-backed rules (full detail + sources in memory, see below)
 
