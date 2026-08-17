@@ -49,3 +49,11 @@ myvenv/
 .ano_monitor_state.json
 monitor.log
 .local/
+
+# Regenerated fresh from static/style.css + static/css/*.css on every deploy
+# (nixpacks.toml build phase runs scripts/bundle_game_css.py). A committed
+# copy silently goes stale between deploys and gets served locally in
+# preference to style.css (see game_ui.py:game_stylesheet_filename), which
+# can mask CSS edits during local verification. Run
+# `python3 scripts/bundle_game_css.py` locally if you need it for dev.
+static/style.min.css
