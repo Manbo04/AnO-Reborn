@@ -401,7 +401,7 @@
                 const provinces = [
                     {% for province in provinces %}
                     {
-                        name: '{{ province[0] }}',
+                        name: {{ province[0] | tojson }},
                         children: {{ province[7] if province[7] else 0 }},
                         working: {{ province[8] if province[8] else 0 }},
                         elderly: {{ province[9] if province[9] else 0 }}
@@ -616,10 +616,6 @@
                                 </span>Gross Raw <small class="font-normal-sub">(Hourly)</small></h2>
 <div class="stat-grid">
     <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Gross</strong>
-        <span class="stat-value">Not done yet.</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary gross</strong>
         <span class="stat-value">{{ revenue["gross"]["money"] | fmt }}</span>
     </div>
@@ -702,10 +698,6 @@
                                 article
                                 </span>Net Raw <small class="font-normal-sub">(Hourly)</small></h2>
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Net</strong>
-        <span class="stat-value">Not done yet.</span>
-    </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
         <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
