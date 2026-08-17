@@ -148,29 +148,33 @@ def task_manpower_increase():
         for row in dbdict.fetchall():
             manpower_map[row["id"]] = row["manpower"]
 
-        # Prepare batch updates
+        # Manpower tracks a moving target tied to current population (the
+        # eligible military-age pool), rather than accumulating forever.
+        # Each tick it moves partway toward that target in either direction:
+        # up when population has grown and there's room to recruit more,
+        # down when population has shrunk (attrition/aging out of the
+        # reserve), instead of only ever increasing until spent.
+        ADJUSTMENT_RATE = 0.15
+        ELIGIBLE_POOL_FRACTION = 0.2
+
         manpower_updates = []
         for user_id in user_ids:
             population = pop_map.get(user_id)
             if not population:
                 continue
 
-            capable_population = float(population) * 0.2
-            army_tradition = 0.5  # Increased for faster regeneration
-            produced_manpower = int(capable_population * army_tradition)
-
+            target_manpower = float(population) * ELIGIBLE_POOL_FRACTION
             manpower = manpower_map.get(user_id, 0)
-            if manpower + produced_manpower >= population:
-                produced_manpower = 0
+            delta = int((target_manpower - manpower) * ADJUSTMENT_RATE)
 
-            if produced_manpower > 0:
-                manpower_updates.append((produced_manpower, user_id))
+            if delta != 0:
+                manpower_updates.append((delta, user_id))
 
         # Batch update all manpower at once
         if manpower_updates:
             execute_batch(
                 db,
-                "UPDATE stats SET manpower = manpower + %s WHERE id=%s",
+                "UPDATE stats SET manpower = GREATEST(0, manpower + %s) WHERE id=%s",
                 manpower_updates,
                 page_size=100,
             )
