@@ -2202,6 +2202,20 @@ body:has(.navbarparent .templatecontainer) {
     transition: all 0.4s ease;
 }
 
+/* Touch devices can't hover, so the reveal-on-hover .radioright description
+   would otherwise stay invisible (opacity: 0) while still reserving its
+   layout height in the flex column — visible as large empty gaps. */
+@media (hover: none) {
+    .radioright {
+        opacity: 0.8;
+        pointer-events: all;
+    }
+
+    .radioright div {
+        top: 0;
+    }
+}
+
 .templateselect {
     padding: 10px 12px;
     margin: 8px auto;
