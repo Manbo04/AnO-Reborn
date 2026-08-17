@@ -28,9 +28,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1e293b;
-    color: #f4f6fa;
-    border: 1px solid #334155;
+    background: var(--foreground);
+    color: var(--colorOne);
+    border: 1px solid var(--border);
     border-radius: 8px;
     cursor: pointer;
     touch-action: manipulation;
@@ -40,7 +40,8 @@
 }
 .page-military .menuflex2 .templatedivflex2left:hover,
 .page-military .menuflex2 .templatedivflex2left:active {
-    background: #3b82f6;
+    background: var(--accent);
+    color: white;
 }
 .page-military .menuflex2 .smallheader {
     margin: 0;
@@ -66,7 +67,7 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 16px;
-    background: rgba(0,0,0,0.2);
+    background: var(--foregroundTwo);
     padding: 16px;
     border-radius: 8px;
 }
@@ -76,9 +77,12 @@
     font-size: 1.1rem;
     padding: 8px 12px;
     border-radius: 6px;
-    border: 1px solid #475569;
-    background: #0f172a;
-    color: white;
+    border: 1.5px solid var(--border);
+    background: var(--foreground);
+    color: var(--colorOne);
+}
+.page-military .loginsignupinput::placeholder {
+    color: var(--text-secondary);
 }
 .page-military .divflex2center {
     display: flex;
@@ -102,12 +106,12 @@
     padding: 0 16px;
 }
 .page-military .combat-stats-box {
-    background: #1e293b;
-    color: #f4f6fa;
+    background: var(--foregroundTwo);
+    color: var(--colorOne);
     padding: 12px;
     border-radius: 8px;
     margin: 12px 0;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--accent);
 }
 .page-military .combat-stats-inline {
     display: flex;
@@ -117,8 +121,8 @@
     margin-bottom: 8px;
 }
 .page-military .stat-badge {
-    background: #0f172a;
-    color: #f4f6fa;
+    background: var(--foregroundThree);
+    color: var(--colorOne);
     padding: 4px 8px;
     border-radius: 4px;
     font-family: monospace;
@@ -126,7 +130,7 @@
 }
 .page-military .limit-text {
     font-size: 0.9rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-align: center;
     margin-top: 8px;
     display: block;
