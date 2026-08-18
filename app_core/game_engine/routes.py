@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
-from helpers import login_required
+from helpers import login_required, empty_state
 from database import get_request_cursor
 
 bp = Blueprint('game_engine_bp', __name__)
@@ -15,7 +15,11 @@ def recruitments():
 @bp.route("/businesses", methods=["GET"])
 @login_required
 def businesses():
-    return render_template("businesses.html")
+    return empty_state(
+        "Businesses",
+        "Businesses aren't available yet — check back later.",
+        icon="business",
+    )
 
 @bp.route("/country", methods=["GET"])
 @login_required
