@@ -3456,6 +3456,10 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     right: 0;
 }
 
+.arrowleft {
+    left: 0;
+}
+
 .arrowparent {
     cursor: pointer;
     position: absolute;

@@ -202,6 +202,7 @@ body.dragging #gm-viewport { cursor: grabbing; }
     top: 80px;
     bottom: 0;
     width: 340px;
+    max-width: 100vw;
     background: rgba(6, 8, 16, 0.95);
     backdrop-filter: blur(20px);
     border-left: 1px solid rgba(79,195,247,0.25);
@@ -473,13 +474,13 @@ body.dragging .hud-badge, body.dragging #gm-mode-bar {
 
 <!-- HUD -->
 <div id="gm-hud">
-    <div class="hud-badge">
+    <div class="hud-badge gold-badge">
         <span class="material-icons-outlined" style="font-size:1rem;color:#ffd54f;">monetization_on</span>
-        Treasury: <span class="hud-val gold-badge" id="hud-gold">{{ gold | commas }}</span>
+        Treasury: <span class="hud-val" id="hud-gold">{{ gold | commas }}</span>
     </div>
-    <div class="hud-badge">
+    <div class="hud-badge troops-badge">
         <span class="material-icons-outlined" style="font-size:1rem;color:#81c784;">military_tech</span>
-        Stockpile: <span class="hud-val troops-badge" id="hud-troops">{{ soldiers | commas }}</span>
+        Stockpile: <span class="hud-val" id="hud-troops">{{ soldiers | commas }}</span>
     </div>
     <div class="hud-badge" id="hud-mode">
         <span class="material-icons-outlined" style="font-size:1rem;">info</span>

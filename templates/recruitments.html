@@ -19,8 +19,8 @@
                     <p class="templatecontentpleft">{{ col[3] }}</p>
                     <p class="templatecontentpleft">Type: {{ col[2] }}</p>
                     <p class="templatecontentpleft"><a class="templatelink" href="/coalition/{{ col[0] }}">View coalition</a></p>
-                    {% if session.user_id and not (session.user_id in [] ) %}
-                        <!-- user is logged in, show apply button -->
+                    {% if session.user_id and col[0] != own_coalition_id %}
+                        <!-- user is logged in and not already in this coalition -->
                         <p><a class="templatedivbutton" href="/coalition/{{ col[0] }}/apply">Apply to join</a></p>
                     {% endif %}
                 </div>

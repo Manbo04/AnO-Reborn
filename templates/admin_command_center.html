@@ -29,11 +29,11 @@
     }
     .audit-details-list .detail-key {
         font-weight: 600;
-        color: #90caf9;
+        color: var(--accent);
         margin-right: 4px;
     }
     .audit-details-list .detail-val {
-        color: #cfd8dc;
+        color: var(--colorOne);
     }
     .actor-target-cell {
         white-space: nowrap;
@@ -43,7 +43,7 @@
     }
     .actor-target-cell .id-tag {
         font-size: 0.8em;
-        color: #78909c;
+        color: var(--text-secondary);
     }
     .admin-nav-link {
         display: inline-block;
@@ -125,7 +125,7 @@
                     </tr>
                     {% endfor %}
                     {% if not new_accounts_by_day %}
-                    <tr><td colspan="2" style="text-align:center;color:#78909c;">No new accounts this week</td></tr>
+                    <tr><td colspan="2" style="text-align:center;color:var(--text-secondary);">No new accounts this week</td></tr>
                     {% endif %}
                 </table>
             </div>
@@ -215,12 +215,12 @@
                     </td>
                     <td class="actor-target-cell">
                         {% if row.target_id %}
-                            <a href="/country/id={{ row.target_id }}" style="color:#90caf9;text-decoration:none;">
+                            <a href="/country/id={{ row.target_id }}" style="color:var(--accent);text-decoration:none;">
                                 <span class="name">{{ row.target_name }}</span>
                             </a><br>
                             <span class="id-tag">#{{ row.target_id }}</span>
                         {% else %}
-                            <span style="color:#78909c;">—</span>
+                            <span style="color:var(--text-secondary);">—</span>
                         {% endif %}
                     </td>
                     <td>
@@ -234,7 +234,7 @@
                             {% endfor %}
                         </ul>
                         {% else %}
-                        <span style="color:#78909c;">—</span>
+                        <span style="color:var(--text-secondary);">—</span>
                         {% endif %}
                     </td>
                     <td>{{ row.time.strftime('%Y-%m-%d %H:%M') if row.time else '—' }}</td>
