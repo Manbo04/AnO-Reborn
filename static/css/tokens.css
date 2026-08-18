@@ -18,6 +18,7 @@
     --game-navbar-height: 55px;
     --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --game-ticker-height: 34px;
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
 }

@@ -231,6 +231,13 @@
     <div class="navbarparent" id="navbarparent">
 
         {% if session.get('user_id') != None %}
+        <button type="button" class="navbar-back-btn" onclick="history.back()" aria-label="Go back" title="Go back" style="display:none" id="navbarBackBtn">
+            <span class="material-icons-outlined">arrow_back</span>
+        </button>
+        <script>if (window.location.pathname !== '/') { document.getElementById('navbarBackBtn').style.display = 'flex'; }</script>
+        {% endif %}
+
+        {% if session.get('user_id') != None %}
         <div class="menubar" onclick="menubardrop()" id="menubar">
             <div class="bar1" id="bar1"></div>
             <div class="bar2" id="bar2"></div>

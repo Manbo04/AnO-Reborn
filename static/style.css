@@ -594,6 +594,37 @@ body:has(.navbarparent .templatecontainer) {
     opacity: 0.5;
 }
 
+.navbar-back-btn {
+    width: 45px;
+    height: 45px;
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    float: left;
+    transition: opacity 0.2s;
+}
+
+.navbar-back-btn:hover {
+    opacity: 0.5;
+}
+
+.navbar-back-btn .material-icons-outlined {
+    font-size: 26px;
+}
+
+@media all and (min-width: 856px) {
+    .navbar-back-btn {
+        display: none;
+    }
+}
+
 .menubarclick {
     margin-left: 0;
     margin-right: 5px;
@@ -5624,6 +5655,7 @@ html.page-tutorial .resourcedivcontent {
     --game-navbar-height: 55px;
     --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --game-ticker-height: 34px;
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
 }
@@ -5995,6 +6027,93 @@ body.game-reduced-motion .game-market-card::after {
     object-fit: cover;
     border-radius: var(--game-radius-md);
     border: 2px solid var(--border);
+}
+
+/* Nations list mobile cards (countries.html). This component previously
+   shipped with template markup but no CSS at all, so .nation-card__flag
+   rendered at its natural image size instead of a small thumbnail. */
+.nations-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm);
+}
+
+.nation-card {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm);
+    padding: var(--game-space-sm) var(--game-space-md);
+    background: var(--game-panel-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    text-decoration: none;
+    color: inherit;
+}
+
+.nation-card.highlight-row {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+.nation-card__rank {
+    flex: 0 0 auto;
+    width: 1.75rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.nation-card__flag {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: var(--game-radius-sm);
+    border: 1px solid var(--border);
+}
+
+.nation-card__main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.nation-card__name {
+    font-weight: 600;
+    color: var(--colorOne);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nation-card__sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nation-card__chips {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.nation-card__chip {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--foregroundTwo);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.nation-card__chip--accent {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-weight: 600;
 }
 
 @media (min-width: 858px) {
@@ -7813,6 +7932,15 @@ body.game-reduced-motion .province-map-node-pin::after {
     display: none !important;
 }
 
+/* One explicit flex item for all the running text + inline button, instead
+   of relying on the browser to auto-generate anonymous flex items from bare
+   text nodes mixed with inline elements — that split behaves inconsistently
+   across engines and can fragment the sentence into oddly-spaced pieces. */
+.province-view-nudge-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .province-view-nudge-btn {
     background: var(--accent, #00a7e1);
     color: #fff;
@@ -8035,6 +8163,29 @@ body.page-rankings .rankings-table tbody td a {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+/* Below 768px, .templatetable already goes display:block + overflow-x:auto
+   with a sticky first column (game-layout.css). This table's own
+   width:100%/table-layout:fixed/ellipsis rules fight that and silently
+   clip the rightmost column instead of letting it scroll — reset them so
+   the table can size to its natural content width again. */
+@media (max-width: 768px) {
+    body.page-rankings .rankings-table {
+        width: max-content;
+        min-width: 100%;
+        table-layout: auto;
+    }
+
+    body.page-rankings .rankings-table tbody td {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: nowrap;
+    }
+
+    body.page-rankings .rankings-table tbody td:last-child {
+        width: auto;
+    }
 }
 
 .onboarding-checklist {
@@ -8284,11 +8435,18 @@ body.page-rankings .rankings-table tbody td a {
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
     font-family: monospace;
-    padding: 5px 0;
+    padding: 5px 0 calc(5px + var(--game-safe-bottom));
     z-index: 10000;
     overflow: hidden;
     white-space: nowrap;
     border-top: 1px solid #333;
+}
+
+/* Reserve space so the fixed ticker never covers the last bit of page
+   content — it renders on every page via static/script.js, so this has
+   to live on body rather than any one template's content wrapper. */
+body:has(.news-ticker) {
+    padding-bottom: calc(var(--game-ticker-height) + var(--game-safe-bottom));
 }
 
 .news-ticker-content {
