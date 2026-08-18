@@ -117,7 +117,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .pagination a, .
 
             <!-- Pagination controls -->
             {% if total_pages and total_pages > 1 %}
-            <div class="pagination" class="pagination-bar">
+            <div class="pagination pagination-bar">
                 {% if current_page > 1 %}
                     <a href="{{ url_for('coalitions', page=1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
                     <a href="{{ url_for('coalitions', page=current_page - 1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
@@ -129,7 +129,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .pagination a, .
 
                 {% for p in range(start_page, end_page + 1) %}
                     {% if p == current_page %}
-                        <span class="templatedivbutton smallactionbutton" class="is-current">{{ p }}</span>
+                        <span class="templatedivbutton smallactionbutton is-current">{{ p }}</span>
                     {% else %}
                         <a href="{{ url_for('coalitions', page=p, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
                     {% endif %}
