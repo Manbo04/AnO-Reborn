@@ -5,13 +5,12 @@
 {% block body %}
 <style>
     .ad-card {
-        background: rgba(28, 32, 41, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--foregroundTwo);
+        border: 1px solid var(--border);
         border-radius: 8px;
         padding: 15px;
         margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        box-shadow: var(--shadow-card);
     }
     .ad-image-preview {
         max-width: 100%;
@@ -19,11 +18,11 @@
         object-fit: contain;
         border-radius: 4px;
         margin-bottom: 10px;
-        background: rgba(0,0,0,0.5);
+        background: var(--foregroundThree);
     }
     .ad-details p {
         margin: 5px 0;
-        color: #cfd8dc;
+        color: var(--colorOne);
         word-break: break-all;
     }
     .ad-actions {
@@ -35,37 +34,38 @@
         display: inline-block;
         margin: 8px 4px;
         padding: 6px 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--foreground);
+        border: 1px solid var(--border);
         border-radius: 4px;
-        color: #90caf9;
+        color: var(--accent);
         text-decoration: none;
         transition: background 0.2s, border-color 0.2s;
     }
     .admin-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
+        background: var(--accent-subtle);
+        border-color: var(--accent);
     }
     .btn-danger {
-        background: rgba(183, 28, 28, 0.8) !important;
-        border-color: #d32f2f !important;
+        background: var(--danger) !important;
+        border-color: var(--danger) !important;
+        color: white !important;
     }
     .btn-danger:hover {
-        background: #d32f2f !important;
+        opacity: 0.85;
     }
     .stats-badge {
         display: inline-block;
         padding: 2px 8px;
         border-radius: 12px;
-        background: rgba(93, 173, 226, 0.2);
-        color: #5dade2;
+        background: var(--accent-subtle);
+        color: var(--accent);
         font-size: 0.85em;
         font-weight: 600;
     }
     .empty-state {
         text-align: center;
         padding: 40px 20px;
-        color: #78909c;
+        color: var(--text-secondary);
     }
 </style>
 
@@ -86,7 +86,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="templatecontentheadercenter" style="color: {{ '#a5d6a7' if category == 'success' else '#ef9a9a' }}; margin-bottom: 15px;">
+                        <div class="templatecontentheadercenter" style="color: {{ 'var(--success)' if category == 'success' else 'var(--danger)' }}; margin-bottom: 15px;">
                             {{ message }}
                         </div>
                     {% endfor %}
@@ -102,7 +102,7 @@
                         </div>
                         <div class="ad-details">
                             <p><strong>ID:</strong> {{ ad.id }}</p>
-                            <p><strong>URL:</strong> <a href="{{ ad.target_url }}" target="_blank" style="color: #5dade2;">{{ ad.target_url }}</a></p>
+                            <p><strong>URL:</strong> <a href="{{ ad.target_url }}" target="_blank" style="color: var(--accent);">{{ ad.target_url }}</a></p>
                             <div style="display: flex; justify-content: space-between; margin-top: 10px;">
                                 <span class="stats-badge" title="Impressions"><span class="material-icons-outlined" style="font-size: 1em; vertical-align: middle;">visibility</span> {{ ad.impressions|default(0) }}</span>
                                 <span class="stats-badge" title="Clicks"><span class="material-icons-outlined" style="font-size: 1em; vertical-align: middle;">ads_click</span> {{ ad.clicks|default(0) }}</span>
@@ -111,7 +111,7 @@
                         <div class="ad-actions">
                             <form action="/admin/ads/{{ ad.id }}/toggle" method="POST" style="flex: 1;">
                                 {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-                                <button type="submit" class="templatedivbutton w-full" style="padding: 5px; font-size: 0.9em; {{ 'background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);' if not ad.is_active else '' }}">
+                                <button type="submit" class="templatedivbutton w-full" style="padding: 5px; font-size: 0.9em; {{ 'background: var(--text-secondary); border-color: var(--border);' if not ad.is_active else '' }}">
                                     {{ 'Enable' if not ad.is_active else 'Disable' }}
                                 </button>
                             </form>

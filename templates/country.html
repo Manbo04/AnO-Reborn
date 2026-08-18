@@ -1117,7 +1117,7 @@
             <h2 class="templatecontentheaderleft">Action Required</h2>
             <div class="events-grid">
                 {% for evt in interactive_events %}
-                <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
+                <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
                     <h3 class="event-title">{{ evt.title }}</h3>
                     <div class="event-date">{{ evt.created_at.strftime('%Y-%m-%d') if evt.created_at else 'Recent' }}</div>
                     <div class="event-excerpt">{{ evt.description }}</div>
@@ -1620,7 +1620,7 @@
                 let value = policies[key]
                 let checkbox = document.getElementsByName(key)[0]
                 if (value) checkbox.checked = true;
-                else checkbox.unchecked = true;
+                else checkbox.checked = false;
             }
         </script>
         {% endif %}

@@ -176,7 +176,8 @@
     
     /* Device-specific visibility rules */
     @media (max-width: 768px) {
-        .resourcediv, .resourcedivcontent {
+        body.game-shell-active .resourcediv,
+        body.game-shell-active .resourcedivcontent {
             display: none !important;
         }
         body.game-shell-active .game-hud {
