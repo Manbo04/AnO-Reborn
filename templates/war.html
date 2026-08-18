@@ -120,26 +120,30 @@
 
         <h2 class="templatecontentheaderleft">Espionage</h2>
 
-        <div class="stat-grid" style="gap: 10px; margin-bottom: 15px; margin-top: 10px;">
-            <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                <label class="stat-label" for="warType" style="margin: 0; font-weight: 600;">Choose operation</label>
-                <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--textPrimary);" name="warType">
-                    <option class="templateoption">Spy on unit amounts</option>
-                    <option class="templateoption">Spy on defensive units</option>
-                    <option class="templateoption">Spy on resources</option>
-                    <option class="templateoption">Assasinate spies</option>
-                </select>
+        <form method="post" action="/spyResult">
+            <input type="hidden" name="country" value="{{ peace_to_send }}" />
+            <input type="hidden" name="prep" value="1" />
+            <div class="stat-grid" style="gap: 10px; margin-bottom: 15px; margin-top: 10px;">
+                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                    <label class="stat-label" for="warType" style="margin: 0; font-weight: 600;">Choose operation</label>
+                    <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--colorOne);" name="spy_type" id="warType">
+                        <option class="templateoption" value="units">Spy on unit amounts</option>
+                        <option class="templateoption" value="units">Spy on defensive units</option>
+                        <option class="templateoption" value="resources">Spy on resources</option>
+                        <option class="templateoption" value="resources">Assasinate spies</option>
+                    </select>
+                </div>
+                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                    <label class="stat-label" for="spyCountInput" style="margin: 0; font-weight: 600;">Number of spies</label>
+                    <input class="loginsignupinput" style="margin: 0; padding: 6px; width: 60%; text-align: left;" id="spyCountInput" name="spies" type="number" min="1" max="{{ spyCount }}" placeholder="Max: {{ spyCount }}" required />
+                </div>
             </div>
-            <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                <label class="stat-label" for="countryName" style="margin: 0; font-weight: 600;">Number of spies</label>
-                <input class="loginsignupinput" style="margin: 0; padding: 6px; width: 60%; text-align: left;" name="countryName" placeholder="{{ spyCount }}" />
-            </div>
-        </div> 
 
-        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 15px;">
-            <span class="stat-label" style="font-weight: 600; color: var(--textSecondary); background: var(--foregroundTwo); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border);">{{ successChance }}% success chance</span>
-            <button class="templatedivbutton" type="submit" style="margin: 0; padding: 8px 16px;"><span class="material-icons-outlined">check</span>Perform</button>
-        </div>
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 15px;">
+                <span class="stat-label" style="font-weight: 600; color: var(--text-secondary); background: var(--foregroundTwo); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border);">{{ successChance }}% success chance</span>
+                <button class="templatedivbutton" type="submit" style="margin: 0; padding: 8px 16px;"><span class="material-icons-outlined">check</span>Perform</button>
+            </div>
+        </form>
 
         <h2 class="templatecontentheaderleft">Peace Offer</h2>
 

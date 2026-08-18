@@ -333,13 +333,11 @@
         var landInput = taxCalc.querySelector("[data-tax-land]");
         var cgCheck = taxCalc.querySelector("[data-tax-cg]");
         var foodCheck = taxCalc.querySelector("[data-tax-food]");
-        var energyCheck = taxCalc.querySelector("[data-tax-energy]");
         var resultEl = taxCalc.querySelector("[data-tax-result]");
 
-        var base = constants.tax_per_citizen || 0.5;
+        var base = constants.tax_per_citizen || 0.75;
         var cgMult = constants.cg_tax_multiplier || 1.5;
         var noFood = constants.no_food_tax_multiplier || 0.7;
-        var noEnergy = constants.no_energy_tax_multiplier || 0.85;
         var landMult = constants.land_tax_multiplier || 0.02;
 
         function updateTax() {
@@ -348,7 +346,6 @@
             var hourly = pop * base;
             if (cgCheck && cgCheck.checked) hourly *= cgMult;
             if (foodCheck && !foodCheck.checked) hourly *= noFood;
-            if (energyCheck && !energyCheck.checked) hourly *= noEnergy;
             hourly *= 1 + Math.min(land * landMult, 1);
             if (resultEl) {
                 resultEl.innerHTML =
@@ -360,7 +357,7 @@
             }
         }
 
-        [popInput, landInput, cgCheck, foodCheck, energyCheck].forEach(function (el) {
+        [popInput, landInput, cgCheck, foodCheck].forEach(function (el) {
             if (el) el.addEventListener("input", updateTax);
             if (el) el.addEventListener("change", updateTax);
         });

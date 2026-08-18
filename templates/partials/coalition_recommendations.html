@@ -25,7 +25,7 @@
                         <span class="material-icons-outlined" aria-hidden="true">person_add</span> Join
                     </button>
                     {% else %}
-                    <button type="submit" class="templatedivbutton coalition-rec-btn coalition-rec-btn--apply" formaction="/coalition/{{ col.id }}">
+                    <button type="submit" class="templatedivbutton coalition-rec-btn coalition-rec-btn--apply" formaction="/coalition/{{ col.id }}" formmethod="GET">
                         <span class="material-icons-outlined" aria-hidden="true">visibility</span> View
                     </button>
                     {% endif %}

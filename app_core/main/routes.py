@@ -103,7 +103,7 @@ def tutorial():
     # Values mirror static/tutorial.js fallbacks; the quiz answers reference
     # them, so keep the two places in sync if game balance changes.
     tutorial_constants = {
-        "tax_per_citizen": 0.5,
+        "tax_per_citizen": 0.75,
         "min_attack_supplies": 200,
     }
     return render_template(
