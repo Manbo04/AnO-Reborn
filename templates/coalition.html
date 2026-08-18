@@ -626,12 +626,12 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             <td><a href="/coalition/{{ col_id[0] }}">{{ col_name[0] }}</a></td>
                             <td>{{ treaty_name[0] }}</td>
                             <td>{{ treaty_description }}</td>
-                            <form method="POST">
-                                <td>
+                            <td>
+                                <form method="POST">
                                     <button type="submit" formaction="/accept_treaty/{{ id[0] }}"><span class="material-icons iconblue">check_circle_outline</span></button>
                                     <button type="submit" formaction="/decline_treaty/{{ id[0] }}" onclick="return confirm('Decline this treaty offer?')"><span class="material-icons iconred">remove_circle_outline</span></button>
-                                </td>
-                            </form>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </table>
@@ -650,9 +650,11 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             <td><a href="/coalition/{{ col_id }}">{{ col_name }}</a></td>
                             <td>{{ treaty_name }}</td>
                             <td>{{ treaty_description }}</td>
-                            <form method="POST">
-                                <td><button type="submit" formaction="/break_treaty/{{ id }}" onclick="return confirm('Break treaty with {{ col_name }}? This may have diplomatic consequences!')"><span class="material-icons iconred">remove_circle_outline</span></button></td>
-                            </form>
+                            <td>
+                                <form method="POST">
+                                    <button type="submit" formaction="/break_treaty/{{ id }}" onclick="return confirm('Break treaty with {{ col_name }}? This may have diplomatic consequences!')"><span class="material-icons iconred">remove_circle_outline</span></button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </table>
