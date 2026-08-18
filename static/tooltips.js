@@ -1,14 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialize generic tooltips
     if (typeof tippy !== 'undefined') {
-        tippy('[data-tippy-content]', {
-            allowHTML: true,
-            interactive: true,
-            theme: 'light-border',
-            placement: 'bottom',
-            arrow: true,
-            animation: 'scale',
-            delay: [100, 50]
+        // Popper (bundled inside tippy) throws "Cannot read properties of
+        // undefined (reading 'applyStyles')" if asked to position a tooltip
+        // against a reference element that's still 0x0 at init time (e.g.
+        // the resource HUD chip strip mid-layout on page load). tippy()
+        // doesn't guard against this itself, so skip those and wrap each
+        // call — one bad reference shouldn't kill tooltips for the rest of
+        // the page.
+        const isRenderable = (el) => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+        };
+        const safeTippy = (target, opts) => {
+            try {
+                tippy(target, opts);
+            } catch (e) {
+                console.warn('[tooltips] skipped tippy init:', e);
+            }
+        };
+
+        document.querySelectorAll('[data-tippy-content]').forEach(el => {
+            if (isRenderable(el)) {
+                safeTippy(el, {
+                    allowHTML: true,
+                    interactive: true,
+                    theme: 'light-border',
+                    placement: 'bottom',
+                    arrow: true,
+                    animation: 'scale',
+                    delay: [100, 50]
+                });
+            }
         });
 
         const mechanicsLink = `<br><br><a href='/mechanics' style='color: #4da8da; text-decoration: underline; font-size: 0.9em; font-weight: 500;'>📖 View Mechanics</a>`;
@@ -22,18 +45,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rawName = img.title || img.alt || 'Resource';
                 const name = rawName.toLowerCase().trim();
                 resourceDict[name] = info.innerHTML;
-                
-                tippy(el, {
-                    content: `<strong>${rawName}</strong><br>${info.innerHTML}${mechanicsLink}`,
-                    allowHTML: true,
-                    interactive: true,
-                    theme: 'light-border',
-                    placement: 'bottom',
-                    arrow: true,
-                    animation: 'scale',
-                    appendTo: document.body,
-                    delay: [100, 50]
-                });
+
+                if (isRenderable(el)) {
+                    safeTippy(el, {
+                        content: `<strong>${rawName}</strong><br>${info.innerHTML}${mechanicsLink}`,
+                        allowHTML: true,
+                        interactive: true,
+                        theme: 'light-border',
+                        placement: 'bottom',
+                        arrow: true,
+                        animation: 'scale',
+                        appendTo: document.body,
+                        delay: [100, 50]
+                    });
+                }
                 // Disable the old CSS-based hover
                 info.style.setProperty('display', 'none', 'important');
             }
@@ -43,14 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img.resource, img.resourcesmall').forEach(img => {
             // Skip if inside resourcetagparent (already handled)
             if (img.closest('.resourcetagparent')) return;
-            
+            if (!isRenderable(img)) return;
+
             let name = (img.alt || img.title || '').toLowerCase().trim();
             // Handle some mismatches (e.g. "money" vs "gold")
             if (name === 'gold') name = 'money';
-            
+
             if (name && resourceDict[name]) {
                 const displayName = name.charAt(0).toUpperCase() + name.slice(1);
-                tippy(img, {
+                safeTippy(img, {
                     content: `<strong>${displayName}</strong><br>${resourceDict[name]}${mechanicsLink}`,
                     allowHTML: true,
                     interactive: true,
