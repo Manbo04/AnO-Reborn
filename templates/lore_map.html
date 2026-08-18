@@ -233,7 +233,7 @@
     </h1>
 </div>
 
-<div id="viewport" style="background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);">
+<div id="viewport">
     <div id='starfield-bg'></div>
     <div id='nebula-bg'></div>
     <div id="canvas">
@@ -250,6 +250,10 @@
 </div>
 
 <script>
+    function escHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
     const viewport = document.getElementById('viewport');
     const canvas = document.getElementById('canvas');
 
@@ -448,8 +452,8 @@
                     wrapperEl.innerHTML = `
                         <div class="hex-tile"></div>
                         <div class="hex-inner">
-                            <h3>${prov.name}</h3>
-                            <p class="user">${prov.username}</p>
+                            <h3>${escHtml(prov.name)}</h3>
+                            <p class="user">${escHtml(prov.username)}</p>
                             <p class="pop">Pop: ${prov.population.toLocaleString()}</p>
                         </div>
                     `;
