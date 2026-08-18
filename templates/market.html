@@ -144,11 +144,9 @@
                     <td><a href="/country/id={{ id }}">{{ name }}</a></td>
                     <!--Buying or Selling-->
                     {% if type == "buy" %}
-                    <td>Buying</a>
-                    </td>
+                    <td>Buying</td>
                     {% elif type == "sell" %}
-                    <td>Selling</a>
-                    </td>
+                    <td>Selling</td>
                     {% endif %}
                     <td>
                         <div class="middle">
@@ -213,7 +211,7 @@
 
         <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
-        <div class="pagination" class="pagination-bar">
+        <div class="pagination pagination-bar">
             {% if current_page > 1 %}
                 <a href="{{ url_for('market', page=1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
                 <a href="{{ url_for('market', page=current_page - 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
@@ -224,7 +222,7 @@
 
             {% for p in range(start_page, end_page + 1) %}
                 {% if p == current_page %}
-                    <span class="templatedivbutton smallactionbutton" class="is-current">{{ p }}</span>
+                    <span class="templatedivbutton smallactionbutton is-current">{{ p }}</span>
                 {% else %}
                     <a href="{{ url_for('market', page=p, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
                 {% endif %}

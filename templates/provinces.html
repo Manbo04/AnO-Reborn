@@ -67,7 +67,7 @@
             {% if current_page > 1 %}
             <a href="?page={{ current_page - 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Previous</a>
             {% endif %}
-            <span style="font-weight: bold; color: var(--text-color);">Page {{ current_page }} of {{ total_pages }}</span>
+            <span style="font-weight: bold; color: var(--colorOne);">Page {{ current_page }} of {{ total_pages }}</span>
             {% if current_page < total_pages %}
             <a href="?page={{ current_page + 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Next</a>
             {% endif %}
