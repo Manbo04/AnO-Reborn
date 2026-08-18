@@ -1175,6 +1175,15 @@ body.game-reduced-motion .province-map-node-pin::after {
     display: none !important;
 }
 
+/* One explicit flex item for all the running text + inline button, instead
+   of relying on the browser to auto-generate anonymous flex items from bare
+   text nodes mixed with inline elements — that split behaves inconsistently
+   across engines and can fragment the sentence into oddly-spaced pieces. */
+.province-view-nudge-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .province-view-nudge-btn {
     background: var(--accent, #00a7e1);
     color: #fff;
@@ -1397,6 +1406,29 @@ body.page-rankings .rankings-table tbody td a {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+/* Below 768px, .templatetable already goes display:block + overflow-x:auto
+   with a sticky first column (game-layout.css). This table's own
+   width:100%/table-layout:fixed/ellipsis rules fight that and silently
+   clip the rightmost column instead of letting it scroll — reset them so
+   the table can size to its natural content width again. */
+@media (max-width: 768px) {
+    body.page-rankings .rankings-table {
+        width: max-content;
+        min-width: 100%;
+        table-layout: auto;
+    }
+
+    body.page-rankings .rankings-table tbody td {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: nowrap;
+    }
+
+    body.page-rankings .rankings-table tbody td:last-child {
+        width: auto;
+    }
 }
 
 .onboarding-checklist {
@@ -1646,11 +1678,18 @@ body.page-rankings .rankings-table tbody td a {
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
     font-family: monospace;
-    padding: 5px 0;
+    padding: 5px 0 calc(5px + var(--game-safe-bottom));
     z-index: 10000;
     overflow: hidden;
     white-space: nowrap;
     border-top: 1px solid #333;
+}
+
+/* Reserve space so the fixed ticker never covers the last bit of page
+   content — it renders on every page via static/script.js, so this has
+   to live on body rather than any one template's content wrapper. */
+body:has(.news-ticker) {
+    padding-bottom: calc(var(--game-ticker-height) + var(--game-safe-bottom));
 }
 
 .news-ticker-content {

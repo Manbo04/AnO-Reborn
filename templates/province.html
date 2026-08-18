@@ -27,7 +27,7 @@
         {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
         <p class="province-view-nudge" id="province-view-nudge" hidden>
             <span class="material-icons-outlined">map</span>
-            Try the <strong>district map</strong> above — tap <button type="button" class="province-view-nudge-btn" data-province-view-toggle>Base view</button>
+            <span class="province-view-nudge-text">Try the <strong>district map</strong> above — tap <button type="button" class="province-view-nudge-btn" data-province-view-toggle>Base view</button></span>
         </p>
         {% endif %}
         <div id="province-classic-view"{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} hidden{% endif %}>
