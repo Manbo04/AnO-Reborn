@@ -2,6 +2,7 @@
 {% block title %}Find Targets{% endblock %}
 
 {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 <div class="templatediv">
     <div class="templatedivtopper wartopper">
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">track_changes</span>Find Targets</h1>
@@ -43,7 +44,7 @@
                     <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name" value="{{ request.args.get('search', '') }}" />
                 </div>
                 <div class="templatedivflex2right">
-                    <button class="center templatedivbutton smallactionbutton" type="submit"><span class="material-icons-outlined">arrow_forward</span>Filter</button>
+                    {{ game_button('Filter', icon='arrow_forward', extra_class='center smallactionbutton') }}
                 </div>
             </div>
         </form>

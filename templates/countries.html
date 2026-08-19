@@ -1,4 +1,5 @@
 {% extends "layout.html" %} {% block title %} Countries {% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 
 <div class="templatediv">
 
@@ -51,9 +52,7 @@
                 </div>
 
                 <div class="templatedivflex2left">
-                    <button class="center templatedivbutton smallactionbutton" type="submit"><span class="material-icons-outlined">
-                        arrow_forward
-                        </span>Submit</button>
+                    {{ game_button('Submit', icon='arrow_forward', extra_class='center smallactionbutton') }}
                 </div>
 
             </div>
@@ -157,14 +156,14 @@
                 line-height: 1 !important;
             }
             .modern-pagination a:hover {
-                border-color: #00a7e1 !important;
-                color: #00a7e1 !important;
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
                 background: var(--accent-subtle) !important;
             }
             .modern-pagination .mp-active {
-                background-color: #00a7e1 !important;
+                background-color: var(--accent) !important;
                 color: white !important;
-                border-color: #00a7e1 !important;
+                border-color: var(--accent) !important;
                 font-weight: bold !important;
             }
             .modern-pagination .mp-disabled {
@@ -221,13 +220,13 @@
             .modern-pagination select:focus,
             .modern-pagination input[type="number"]:hover,
             .modern-pagination input[type="number"]:focus {
-                border-color: #00a7e1 !important;
+                border-color: var(--accent) !important;
             }
             .modern-pagination button[type="submit"] {
                 border-radius: 20px !important;
                 padding: 8px 20px !important;
-                border: 1px solid #00a7e1 !important;
-                background: #00a7e1 !important;
+                border: 1px solid var(--accent) !important;
+                background: var(--accent) !important;
                 color: white !important;
                 font-size: 13px !important;
                 font-weight: 600 !important;

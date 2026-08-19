@@ -1,0 +1,21 @@
+{% macro game_button(text, icon=None, formaction=None, href=None, type='submit', variant='primary', extra_class='templatecenteredbutton', id=None) %}
+{% set variant_class = '' if variant == 'primary' else ' templatedivbutton-' ~ variant %}
+{% set classes = 'templatedivbutton' ~ variant_class ~ (' ' ~ extra_class if extra_class else '') %}
+{% if href %}
+<a href="{{ href }}" class="{{ classes }}"{% if id %} id="{{ id }}"{% endif %}>{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ text }}</a>
+{% else %}
+<button type="{{ type }}" class="{{ classes }}"{% if formaction %} formaction="{{ formaction }}"{% endif %}{% if id %} id="{{ id }}"{% endif %}>{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ text }}</button>
+{% endif %}
+{% endmacro %}
+
+{% macro stat_card(label, value, icon=None) %}
+<div class="templatedivflex2left stat-card">
+    <strong class="stat-label">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ label }}</strong>
+    <span class="stat-value">{{ value }}</span>
+</div>
+{% endmacro %}
+
+{% macro game_panel(title, icon=None, style=None) %}
+<h2 class="templatecontentheaderleft"{% if style %} style="{{ style }}"{% endif %}>{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>
+{{ caller() }}
+{% endmacro %}
