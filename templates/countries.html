@@ -74,7 +74,7 @@
         {% set age_sortway = 'asc' if sort == 'age' and sortway == 'desc' else 'desc' %}
         {% set provinces_sortway = 'asc' if sort == 'provinces' and sortway == 'desc' else 'desc' %}
         <!-- Mobile card list -->
-        <div class="nations-mobile-list">
+        <div class="nations-mobile-list game-card-list--mobile-only">
             {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
             <a class="nation-card {% if id == current_user_id %}highlight-row{% endif %}" href="/country/id={{ id }}">
                 <span class="nation-card__rank">{{ loop.index }}</span>
@@ -94,7 +94,7 @@
         </div>
 
         <!-- Desktop table -->
-        <div class="templateoutertablediv nations-desktop-table">
+        <div class="templateoutertablediv nations-desktop-table game-table-fallback--hide-mobile">
             <table class="templatetable templatetable2">
                 <tr>
                     <th>#</th>
