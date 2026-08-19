@@ -88,10 +88,55 @@ def test_resolve_battle_outcome_and_casualties_deterministic():
 
     rng = random.Random(0)
     winner_pairs, loser_pairs = compute_unit_casualties(
-        winner_cas, win_type, ["u1", "u2"], ["v1", "v2"], rng=rng
+        winner_cas,
+        win_type,
+        ["u1", "u2"],
+        ["v1", "v2"],
+        {"u1": 1000, "u2": 1000},
+        {"v1": 1000, "v2": 1000},
+        rng=rng,
     )
     assert len(winner_pairs) == 2
     assert len(loser_pairs) == 2
     # casualty values should be positive floats
     assert all(a > 0 for _, a in winner_pairs)
     assert all(a > 0 for _, a in loser_pairs)
+
+
+def test_compute_unit_casualties_excludes_units_not_sent():
+    # A unit type present in the composition list but sent with amount 0
+    # must take no casualties at all (regression test for units dying
+    # without being sent into the attack).
+    import random
+
+    rng = random.Random(0)
+    winner_pairs, loser_pairs = compute_unit_casualties(
+        winner_casulties=1.0,
+        win_type=3.0,
+        winner_units_list=["tanks", "artillery"],
+        loser_units_list=["soldiers", "apaches"],
+        winner_units={"tanks": 50, "artillery": 0},
+        loser_units={"soldiers": 0, "apaches": 20},
+        rng=rng,
+    )
+    assert [u for u, _ in winner_pairs] == ["tanks"]
+    assert [u for u, _ in loser_pairs] == ["apaches"]
+
+
+def test_compute_unit_casualties_caps_at_sent_amount():
+    # Casualties can never exceed the amount actually committed to this
+    # engagement, even with a very lopsided win_type/winner_casulties.
+    import random
+
+    rng = random.Random(1)
+    winner_pairs, loser_pairs = compute_unit_casualties(
+        winner_casulties=1000.0,
+        win_type=1000.0,
+        winner_units_list=["tanks"],
+        loser_units_list=["soldiers"],
+        winner_units={"tanks": 5},
+        loser_units={"soldiers": 3},
+        rng=rng,
+    )
+    assert winner_pairs == [("tanks", 5)]
+    assert loser_pairs == [("soldiers", 3)]

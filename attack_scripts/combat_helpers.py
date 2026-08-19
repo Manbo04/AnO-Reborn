@@ -220,9 +220,17 @@ def compute_unit_casualties(
     win_type: float,
     winner_units_list: list,
     loser_units_list: list,
+    winner_units: dict = None,
+    loser_units: dict = None,
     rng: object = None,
 ) -> tuple:
     """Compute casualty values for each unit pair in the engagement.
+
+    `winner_units`/`loser_units` map unit_type -> amount actually committed to this
+    fight (i.e. `Units.selected_units`). A unit type present in the composition list
+    but sent with amount 0 takes no casualties, and casualties for a sent unit type
+    are capped at the amount sent — a side can never lose more of a unit type than it
+    actually committed to this specific engagement, regardless of total stockpile.
 
     Returns two lists of (unit_name, casualties) for winner and loser respectively.
     The function is pure if a deterministic RNG is provided (useful for tests).
@@ -230,13 +238,21 @@ def compute_unit_casualties(
     import random as _random
 
     _rng = rng or _random
+    winner_units = winner_units or {}
+    loser_units = loser_units or {}
     winner_pairs = []
     loser_pairs = []
 
     for w_unit, l_unit in zip(winner_units_list, loser_units_list):
-        w_cas = winner_casulties * _rng.uniform(2, 10) * 2
-        l_cas = win_type * _rng.uniform(2, 10.5) * 2
-        winner_pairs.append((w_unit, w_cas))
-        loser_pairs.append((l_unit, l_cas))
+        w_sent = winner_units.get(w_unit, 0) or 0
+        l_sent = loser_units.get(l_unit, 0) or 0
+
+        if w_sent > 0:
+            w_cas = min(w_sent, winner_casulties * _rng.uniform(2, 10) * 2)
+            winner_pairs.append((w_unit, w_cas))
+
+        if l_sent > 0:
+            l_cas = min(l_sent, win_type * _rng.uniform(2, 10.5) * 2)
+            loser_pairs.append((l_unit, l_cas))
 
     return winner_pairs, loser_pairs
