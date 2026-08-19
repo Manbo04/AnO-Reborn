@@ -9882,10 +9882,45 @@ body.page-provinces .game-province-card-thumb img {
 .province-status-card--ok {
     border-color: rgba(45, 159, 111, 0.45);
     background: linear-gradient(135deg, rgba(45, 159, 111, 0.12), var(--foregroundThree));
+    overflow: hidden;
+    animation: province-status-fade-out 0.6s ease-in forwards;
 }
 
 .province-status-card--ok .province-status-card__head .material-icons-outlined {
     color: var(--success, #2d9f6f);
+}
+
+/* Good news doesn't need to stay on screen — bad news (.province-status-card--bad,
+   no animation below, persists) does. Position-based delays rather than an
+   only-.province-status-card--ok counter, since :nth-child counts DOM position
+   among all three cards regardless of class — bad cards never match --ok so
+   they're skipped automatically, and ok cards still fade in their original
+   left-to-right/top-to-bottom order. */
+.province-status-card--ok:nth-child(1) { animation-delay: 4s; }
+.province-status-card--ok:nth-child(2) { animation-delay: 5.2s; }
+.province-status-card--ok:nth-child(3) { animation-delay: 6.4s; }
+
+@keyframes province-status-fade-out {
+    0%, 65% {
+        opacity: 1;
+        max-height: 160px;
+        padding-top: var(--game-space-md, 16px);
+        padding-bottom: var(--game-space-md, 16px);
+        border-width: 1px;
+    }
+    100% {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .province-status-card--ok {
+        animation: none;
+    }
 }
 
 .province-status-card--bad {
