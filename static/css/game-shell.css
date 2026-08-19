@@ -3,7 +3,11 @@
  */
 
 body.game-shell-active {
-    padding-bottom: var(--game-safe-bottom);
+    /* .game-bottom-nav is position:fixed/bottom:0 and wasn't accounted for
+       here when this file was written ("no bottom tab bar" — see header
+       comment); it was added later without updating this reservation, so
+       real page content could render underneath the nav bar. */
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
 }
 
 body.game-shell-active .footer {

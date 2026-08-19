@@ -5655,7 +5655,7 @@ html.page-tutorial .resourcedivcontent {
     --game-panel-border: var(--border);
     --game-hud-height: 52px;
     --game-navbar-height: 55px;
-    --game-bottom-nav-height: 0px;
+    --game-bottom-nav-height: 52px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
     --game-ticker-height: 34px;
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
@@ -5673,7 +5673,11 @@ html.page-tutorial .resourcedivcontent {
  */
 
 body.game-shell-active {
-    padding-bottom: var(--game-safe-bottom);
+    /* .game-bottom-nav is position:fixed/bottom:0 and wasn't accounted for
+       here when this file was written ("no bottom tab bar" — see header
+       comment); it was added later without updating this reservation, so
+       real page content could render underneath the nav bar. */
+    padding-bottom: calc(var(--game-bottom-nav-height) + var(--game-safe-bottom));
 }
 
 body.game-shell-active .footer {
@@ -8438,17 +8442,33 @@ body.page-rankings .rankings-table tbody td a {
     color: #fff;
     font-family: monospace;
     padding: 5px 0 calc(5px + var(--game-safe-bottom));
-    z-index: 10000;
+    /* Below the bottom nav's z-index (1000, game-shell.css) so it never
+       paints over real navigation controls; still above ordinary content. */
+    z-index: 900;
     overflow: hidden;
     white-space: nowrap;
     border-top: 1px solid #333;
 }
 
+/* On the mobile game shell, the bottom nav (.game-bottom-nav, z-index 1000,
+   also position:fixed/bottom:0) already owns the very bottom of the
+   viewport — stack the ticker just above it instead of letting both fixed
+   elements occupy the same spot. */
+body.game-shell-active .news-ticker {
+    bottom: var(--game-bottom-nav-height);
+}
+
 /* Reserve space so the fixed ticker never covers the last bit of page
    content — it renders on every page via static/script.js, so this has
-   to live on body rather than any one template's content wrapper. */
+   to live on body rather than any one template's content wrapper. Add the
+   bottom nav's height too when the shell is active, since the ticker sits
+   stacked above it rather than overlapping. */
 body:has(.news-ticker) {
     padding-bottom: calc(var(--game-ticker-height) + var(--game-safe-bottom));
+}
+
+body.game-shell-active:has(.news-ticker) {
+    padding-bottom: calc(var(--game-ticker-height) + var(--game-bottom-nav-height) + var(--game-safe-bottom));
 }
 
 .news-ticker-content {
