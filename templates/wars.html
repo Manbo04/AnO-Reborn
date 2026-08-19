@@ -1,4 +1,5 @@
 {% extends "layout.html"%} {% block title %} Wars {% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 
 <div class="templatediv">
 
@@ -12,19 +13,19 @@
 
         <div class="templatedivflex2 divflex2full wars-action-strip">
             <div class="templatedivflex2left">
-                <a class="center templatedivbutton smallactionbutton" href="/military"><span class="material-icons-outlined">payments</span>Purchase Military</a>
+                {{ game_button('Purchase Military', icon='payments', href='/military', extra_class='center smallactionbutton') }}
             </div>
             <div class="templatedivflex2left">
-                <a class="center templatedivbutton smallactionbutton" href="/find_targets"><span class="material-icons-outlined">track_changes</span>Find Target</a>
+                {{ game_button('Find Target', icon='track_changes', href='/find_targets', extra_class='center smallactionbutton') }}
             </div>
             <div class="templatedivflex2left">
-                <a class="center templatedivbutton smallactionbutton" href="/defense"><span class="material-icons-outlined">shield</span>Organize Defense</a>
+                {{ game_button('Organize Defense', icon='shield', href='/defense', extra_class='center smallactionbutton') }}
             </div>
             <div class="templatedivflex2right">
-                <a class="center templatedivbutton smallactionbutton" href="/peace_offers"><span class="material-icons-outlined">favorite_border</span>Peace Offers</a>
+                {{ game_button('Peace Offers', icon='favorite_border', href='/peace_offers', extra_class='center smallactionbutton') }}
             </div>
             <div class="templatedivflex2right">
-                <a class="center templatedivbutton smallactionbutton" href="/intelligence"><span class="material-icons-outlined">person_search</span>Intelligence</a>
+                {{ game_button('Intelligence', icon='person_search', href='/intelligence', extra_class='center smallactionbutton') }}
             </div>
         </div>
 

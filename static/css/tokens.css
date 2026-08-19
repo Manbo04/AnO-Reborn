@@ -1,6 +1,60 @@
 /**
- * Game UI design tokens — extends theme variables in style.css
+ * Game UI design tokens — canonical source for color/spacing/radius tokens
+ * (relocated from static/style.css's hand-written .theme-light/.theme-dark
+ * blocks, which previously lived above the auto-generated bundle marker).
  */
+.theme-light {
+    --background: #eef1f5;
+    --foreground: #ffffff;
+    --foregroundTwo: #f8f9fc;
+    --foregroundThree: #f0f2f7;
+    --foregroundFour: #e8ecf3;
+    --foregroundFive: #f4f6fa;
+    --foregroundSix: #f0f2f7;
+    --foregroundSeven: #e8ecf3;
+    --foregroundEight: #e3e8f0;
+    --border: #d0d7e2;
+    --tableOne: #f4f6fa;
+    --tableTwo: #ffffff;
+    --colorOne: #1a2332;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #0090c4;
+    --accent-subtle: #e6f6fc;
+    --gold: #d4a843;
+    --success: #2d9f6f;
+    --danger: #d35649;
+    --text-secondary: #5c6b7f;
+    --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
+    --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
+}
+
+.theme-dark {
+    --background: #13171e;
+    --foreground: #1c2029;
+    --foregroundTwo: #212630;
+    --foregroundThree: #262b36;
+    --foregroundFour: #2a3040;
+    --foregroundFive: #1e2330;
+    --foregroundSix: #262b36;
+    --foregroundSeven: #1a1e28;
+    --foregroundEight: #1c2029;
+    --border: #2a3040;
+    --tableOne: #1c2029;
+    --tableTwo: #212630;
+    --colorOne: #e0e4ea;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #33b8e8;
+    --accent-subtle: #0a2a3a;
+    --gold: #e0b84d;
+    --success: #3ab87e;
+    --danger: #e05a4d;
+    --text-secondary: #8b95a5;
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
 :root {
     --game-radius-sm: 8px;
     --game-radius-md: 12px;

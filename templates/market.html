@@ -3,6 +3,7 @@
 <script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=6"></script>
 {% endblock %}
 {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 
 <div class="templatediv">
 
@@ -86,16 +87,12 @@
         <div class="templatedivflex2 divflex2center">
             <div class="templatedivflex2left">
 
-                <a href="marketoffer" class="center templatedivbutton"><span class="material-icons-outlined">
-                    payments
-                    </span>Create Offer</a>
+                {{ game_button('Create Offer', icon='payments', href='marketoffer', extra_class='center') }}
 
             </div>
             <div class="templatedivflex2right">
 
-                <a href="/my_offers" class="center templatedivbutton"><span class="material-icons-outlined">
-                    payments
-                    </span>My Offers</a>
+                {{ game_button('My Offers', icon='payments', href='/my_offers', extra_class='center') }}
 
             </div>
         </div>
