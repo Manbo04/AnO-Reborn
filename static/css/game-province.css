@@ -256,13 +256,23 @@ body.page-provinces .game-province-card-thumb img {
     }
 }
 
-/* Province info two-column layout */
+/* Province info two-column layout.
+   align-items: stretch (not start) so both columns match the taller
+   one's height — .province-info-stats gets real card chrome below so
+   that stretch has something visible to fill instead of leaving a
+   blank gap of page background under the shorter column. */
 .province-info-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--game-space-md, 16px);
     width: 100%;
-    align-items: start;
+    /* !important: a sitewide rule (.templatedivcontent .templatedivflex2 {
+       align-items: flex-start }) outranks this on specificity because
+       this element also carries the generic .templatedivflex2 class —
+       and flex-start is a different value than the stretch we need here,
+       unlike other grids that happened to already want start/flex-start
+       (identical values, so no conflict was ever visible there). */
+    align-items: stretch !important;
 }
 
 .province-info-grid > .templatedivflex2left,
@@ -270,6 +280,21 @@ body.page-provinces .game-province-card-thumb img {
     margin: 0;
     width: 100%;
     max-width: none;
+}
+
+/* .templatetable already has its own card background/border/radius —
+   don't wrap it in a second card, just make it (not a plain div) the
+   thing that stretches, so its existing visible chrome fills the
+   available height instead of a wrapper nobody can see. */
+.province-info-stats {
+    display: flex;
+    flex-direction: column;
+}
+
+.province-info-stats > .templatetable {
+    flex: 1;
+    width: 100%;
+    margin: 0;
 }
 
 .province-info-demographics .chart-wrapper {
