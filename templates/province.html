@@ -10,6 +10,7 @@
 {% endif %}
 {% endblock %}
 {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 <div class="templatediv">
 
     {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
@@ -63,9 +64,7 @@
                         id="build_qty"
                         required
                     />
-                    <button type="submit" class="templatedivbutton templatecenteredbutton">
-                        <span class="material-icons-outlined">construction</span>Build
-                    </button>
+                    {{ game_button('Build', icon='construction') }}
                 </form>
             </div>
 
@@ -120,10 +119,7 @@
                             </div>
                             <div class="templatedivflex2right">
 
-                                <button type="submit" formaction="/buy/cityCount/{{ province['id'] }}" class="templatedivbutton templatecenteredbutton" id="citiesbutton"><span
-                                        class="material-icons-outlined">
-                                        business
-                                    </span>Purchase</button>
+                                {{ game_button('Purchase', icon='business', formaction='/buy/cityCount/' ~ province['id'], id='citiesbutton') }}
 
                             </div>
                         </div>
@@ -177,10 +173,7 @@
                             </div>
                             <div class="templatedivflex2right">
 
-                                <button type="submit" formaction="/buy/land/{{ province['id'] }}" class="templatedivbutton templatecenteredbutton"><span
-                                        class="material-icons-outlined">
-                                        landscape
-                                    </span>Purchase</button>
+                                {{ game_button('Purchase', icon='landscape', formaction='/buy/land/' ~ province['id']) }}
 
                             </div>
                         </div>
@@ -389,18 +382,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/coal_burners/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_burners/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/coal_burners/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_burners/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -438,18 +425,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/oil_burners/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/oil_burners/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/oil_burners/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/oil_burners/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -487,16 +468,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/solar_fields/{{ province['id'] }}"><span class="material-icons-outlined">
-                                add_circle_outline
-                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/solar_fields/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/solar_fields/{{ province['id'] }}"><span class="material-icons-outlined">
-                                remove_circle_outline
-                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/solar_fields/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -531,16 +508,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/wind_farms/{{ province['id'] }}"><span class="material-icons-outlined">
-                                add_circle_outline
-                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/wind_farms/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/wind_farms/{{ province['id'] }}"><span class="material-icons-outlined">
-                                remove_circle_outline
-                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/wind_farms/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -575,16 +548,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/geothermal_plants/{{ province['id'] }}"><span class="material-icons-outlined">
-                                add_circle_outline
-                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/geothermal_plants/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/geothermal_plants/{{ province['id'] }}"><span class="material-icons-outlined">
-                                remove_circle_outline
-                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/geothermal_plants/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -619,16 +588,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/hydro_dams/{{ province['id'] }}"><span class="material-icons-outlined">
-                                add_circle_outline
-                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/hydro_dams/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/hydro_dams/{{ province['id'] }}"><span class="material-icons-outlined">
-                                remove_circle_outline
-                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/hydro_dams/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -686,16 +651,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/nuclear_reactors/{{ province['id'] }}"><span class="material-icons-outlined">
-                                add_circle_outline
-                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/nuclear_reactors/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/nuclear_reactors/{{ province['id'] }}"><span class="material-icons-outlined">
-                                remove_circle_outline
-                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/nuclear_reactors/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -723,10 +684,10 @@
                                     <input class="loginsignupinput" autocomplete="off" name="food_banks" type="number" placeholder="Amount" />
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/food_banks/{{ province['id'] }}"><span class="material-icons-outlined">add_circle_outline</span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/food_banks/' ~ province['id']) }}
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/food_banks/{{ province['id'] }}"><span class="material-icons-outlined">remove_circle_outline</span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/food_banks/' ~ province['id']) }}
                                         </div>
                                     </div>
                                 </div>
@@ -762,16 +723,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/gas_stations/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/gas_stations/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/gas_stations/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/gas_stations/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -810,16 +767,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/general_stores/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/general_stores/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/general_stores/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/general_stores/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -858,16 +811,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/farmers_markets/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/farmers_markets/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/farmers_markets/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/farmers_markets/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -900,16 +849,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/banks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/banks/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/banks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/banks/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -951,16 +896,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/malls/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/malls/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/malls/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/malls/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -998,17 +939,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/distribution_centers/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/distribution_centers/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/distribution_centers/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/distribution_centers/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1045,16 +981,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/city_parks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/city_parks/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/city_parks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/city_parks/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1090,16 +1022,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/libraries/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/libraries/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/libraries/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/libraries/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1132,16 +1060,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/hospitals/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/hospitals/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/hospitals/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/hospitals/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1177,16 +1101,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/universities/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/universities/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/universities/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/universities/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1221,16 +1141,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/primary_school/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/primary_school/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/primary_school/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/primary_school/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1265,16 +1181,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/high_school/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/high_school/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/high_school/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/high_school/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1311,16 +1223,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/monorails/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    add_circle_outline
-                                </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/monorails/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/monorails/{{ province['id'] }}"><span class="material-icons-outlined">
-                                    remove_circle_outline
-                                </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/monorails/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1454,17 +1362,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/army_bases/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/army_bases/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/army_bases/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/army_bases/' ~ province['id']) }}
 
 
                                         </div>
@@ -1502,17 +1405,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/aerodomes/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/aerodomes/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/aerodomes/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/aerodomes/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1549,17 +1447,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/harbours/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/harbours/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/harbours/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/harbours/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1595,17 +1488,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/admin_buildings/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/admin_buildings/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/admin_buildings/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/admin_buildings/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1641,17 +1529,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/silos/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/silos/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/silos/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/silos/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -1692,17 +1575,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/farms/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/farms/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/farms/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/farms/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -1746,17 +1624,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/iron_mines/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/iron_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/iron_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/iron_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -1798,17 +1671,12 @@
                                             <div class="templatedivflex2 divflex2center">
                                                 <div class="templatedivflex2left flexchildvanilla">
 
-                                                    <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/coal_mines/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                    {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_mines/' ~ province['id']) }}
 
                                                 </div>
                                                 <div class="templatedivflex2left flexchildvanilla">
 
-                                                    <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/coal_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                    {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_mines/' ~ province['id']) }}
 
                                                 </div>
                                             </div>
@@ -1849,17 +1717,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/copper_mines/{{ province['id'] }}"><span
-                                                    class="material-icons-outlined">
-                                                    add_circle_outline
-                                                </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/copper_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/copper_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                    remove_circle_outline
-                                                </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/copper_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -1897,17 +1760,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/pumpjacks/{{ province['id'] }}"><span
-                                                    class="material-icons-outlined">
-                                                    add_circle_outline
-                                                </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/pumpjacks/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/pumpjacks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                    remove_circle_outline
-                                                </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/pumpjacks/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -1944,18 +1802,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -1993,17 +1845,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/lead_mines/{{ province['id'] }}"><span
-                                                        class="material-icons-outlined">
-                                                        add_circle_outline
-                                                    </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lead_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/lead_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                        remove_circle_outline
-                                                    </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lead_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2041,17 +1888,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/bauxite_mines/{{ province['id'] }}"><span
-                                                        class="material-icons-outlined">
-                                                        add_circle_outline
-                                                    </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/bauxite_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/bauxite_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                        remove_circle_outline
-                                                    </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/bauxite_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2088,18 +1930,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2137,17 +1973,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/pumpjacks/{{ province['id'] }}"><span
-                                                    class="material-icons-outlined">
-                                                    add_circle_outline
-                                                </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/pumpjacks/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/pumpjacks/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                    remove_circle_outline
-                                                </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/pumpjacks/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2185,18 +2016,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/lumber_mills/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2231,17 +2056,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/uranium_mines/{{ province['id'] }}"><span
-                                                        class="material-icons-outlined">
-                                                        add_circle_outline
-                                                    </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/uranium_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/uranium_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                        remove_circle_outline
-                                                    </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/uranium_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2278,17 +2098,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/bauxite_mines/{{ province['id'] }}"><span
-                                                        class="material-icons-outlined">
-                                                        add_circle_outline
-                                                    </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/bauxite_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/bauxite_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                        remove_circle_outline
-                                                    </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/bauxite_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2326,17 +2141,12 @@
                                         <div class="templatedivflex2 divflex2center">
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/coal_mines/{{ province['id'] }}"><span
-                                                class="material-icons-outlined">
-                                                add_circle_outline
-                                            </span>Buy</button>
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_mines/' ~ province['id']) }}
 
                                             </div>
                                             <div class="templatedivflex2left flexchildvanilla">
 
-                                                <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/coal_mines/{{ province['id'] }}"><span class="material-icons-outlined">
-                                                remove_circle_outline
-                                            </span>Sell</button>
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_mines/' ~ province['id']) }}
 
                                             </div>
                                         </div>
@@ -2380,17 +2190,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/component_factories/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/component_factories/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/component_factories/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/component_factories/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -2429,17 +2234,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/steel_mills/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/steel_mills/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/steel_mills/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/steel_mills/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -2476,17 +2276,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/ammunition_factories/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/ammunition_factories/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/ammunition_factories/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/ammunition_factories/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -2521,17 +2316,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/aluminium_refineries/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/aluminium_refineries/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/aluminium_refineries/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/aluminium_refineries/' ~ province['id']) }}
 
                                         </div>
                                     </div>
@@ -2565,17 +2355,12 @@
                                     <div class="templatedivflex2 divflex2center">
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/buy/oil_refineries/{{ province['id'] }}"><span
-                                        class="material-icons-outlined">
-                                        add_circle_outline
-                                    </span>Buy</button>
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/oil_refineries/' ~ province['id']) }}
 
                                         </div>
                                         <div class="templatedivflex2left flexchildvanilla">
 
-                                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/sell/oil_refineries/{{ province['id'] }}"><span class="material-icons-outlined">
-                                        remove_circle_outline
-                                    </span>Sell</button>
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/oil_refineries/' ~ province['id']) }}
 
                                         </div>
                                     </div>

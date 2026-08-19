@@ -349,59 +349,7 @@
 /* Do NOT set color-scheme on html — Safari uses it to tint the browser toolbar,
    which looked like the theme changing when hovering the navbar vs the page. */
 
-.theme-light {
-    --background: #eef1f5;
-    --foreground: #ffffff;
-    --foregroundTwo: #f8f9fc;
-    --foregroundThree: #f0f2f7;
-    --foregroundFour: #e8ecf3;
-    --foregroundFive: #f4f6fa;
-    --foregroundSix: #f0f2f7;
-    --foregroundSeven: #e8ecf3;
-    --foregroundEight: #e3e8f0;
-    --border: #d0d7e2;
-    --tableOne: #f4f6fa;
-    --tableTwo: #ffffff;
-    --colorOne: #1a2332;
-    --colorTwo: #ffffff;
-    --accent: #00a7e1;
-    --accent-hover: #0090c4;
-    --accent-subtle: #e6f6fc;
-    --gold: #d4a843;
-    --success: #2d9f6f;
-    --danger: #d35649;
-    --text-secondary: #5c6b7f;
-    --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
-    --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
-}
-
-.theme-dark {
-    --background: #13171e;
-    --foreground: #1c2029;
-    --foregroundTwo: #212630;
-    --foregroundThree: #262b36;
-    --foregroundFour: #2a3040;
-    --foregroundFive: #1e2330;
-    --foregroundSix: #262b36;
-    --foregroundSeven: #1a1e28;
-    --foregroundEight: #1c2029;
-    --border: #2a3040;
-    --tableOne: #1c2029;
-    --tableTwo: #212630;
-    --colorOne: #e0e4ea;
-    --colorTwo: #ffffff;
-    --accent: #00a7e1;
-    --accent-hover: #33b8e8;
-    --accent-subtle: #0a2a3a;
-    --gold: #e0b84d;
-    --success: #3ab87e;
-    --danger: #e05a4d;
-    --text-secondary: #8b95a5;
-    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
-    --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-
+/* Color tokens (.theme-light / .theme-dark) moved to static/css/tokens.css — see that file for the canonical source. */
 
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
@@ -1742,7 +1690,7 @@ body:has(.navbarparent .templatecontainer) {
 .templatedivtitle {
     text-align: center;
     color: #ffffff !important;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     font-size: 40px;
     animation: templatedivtitleload 1.5s;
     margin: 0;
@@ -1752,11 +1700,11 @@ body:has(.navbarparent .templatecontainer) {
     width: -moz-fit-content;
     margin: auto;
     padding: 10px 20px;
-    background-color: #00a7e1;
-    box-shadow: rgba(0, 0, 0, 0.15) 0 3px 4px 1px, rgba(0, 0, 0, 0.4) 0 12px 32px 0;
+    background-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
     text-transform: capitalize;
     font-weight: bold;
-    border-radius: 4px;
+    border-radius: var(--game-radius-md, 12px);
 }
 
 .advert {
@@ -1799,7 +1747,7 @@ body:has(.navbarparent .templatecontainer) {
     margin: 20px 6px;
     padding: 10px 16px;
     color: var(--colorOne);
-    border-radius: 6px;
+    border-radius: var(--game-radius-sm, 8px);
     font-weight: 600;
     text-align: center;
     border-left: 4px solid var(--accent);
@@ -1857,16 +1805,15 @@ body:has(.navbarparent .templatecontainer) {
     user-select: none;
     outline: none !important;
     text-align: center;
-    text-transform: uppercase;
-    transition: all 0.2s ease;
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    background: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     width: max-content;
-    letter-spacing: 1.2px;
-    box-shadow: 0 2px 8px rgba(0, 167, 225, 0.25);
+    letter-spacing: normal;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     border-radius: 8px;
     animation: templatedivcontentload 1.25s;
     position: relative;
@@ -1874,14 +1821,15 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .templatedivbutton:hover {
-    box-shadow: 0 4px 14px rgba(0, 167, 225, 0.35);
+    background: var(--accent-hover);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
     color: white;
 }
 
 .templatedivbutton:active {
     transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(0, 167, 225, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .templatedivbutton-secondary {
@@ -1899,21 +1847,21 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .templatedivbutton-danger {
-    background: linear-gradient(135deg, var(--danger), #b8443a);
-    box-shadow: 0 2px 8px rgba(211, 86, 73, 0.25);
+    background: var(--danger);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .templatedivbutton-danger:hover {
-    box-shadow: 0 4px 14px rgba(211, 86, 73, 0.35);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .templatedivbutton-success {
-    background: linear-gradient(135deg, var(--success), #248a5e);
-    box-shadow: 0 2px 8px rgba(45, 159, 111, 0.25);
+    background: var(--success);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .templatedivbutton-success:hover {
-    box-shadow: 0 4px 14px rgba(45, 159, 111, 0.35);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .templatedivbutton:focus {
@@ -2327,8 +2275,8 @@ body:has(.navbarparent .templatecontainer) {
     width: -moz-fit-content;
     max-width: 95%;
     margin: 16px auto;
-    box-shadow: rgba(0, 0, 0, 0.05) 0 16px 26px 0;
-    border-radius: 4px;
+    box-shadow: var(--shadow-card);
+    border-radius: var(--game-radius-md, 12px);
     box-sizing: border-box;
 }
 
@@ -2679,7 +2627,14 @@ button {
     display: table-cell;
 }
 
-/* Infrastructure table with 3 equal columns */
+/* Infrastructure table with 3 equal columns.
+   table-layout: fixed keeps columns at their declared width instead of
+   growing with long cell content (e.g. "Dist. Centers / Food Banks"),
+   which was pushing the table wider than its container on mobile and
+   clipping the .menuflex2 category tab row off-screen with no scroll hint. */
+.smalltable.templatetable2 {
+    table-layout: fixed;
+}
 .smalltable.templatetable2 td {
     width: 33.33%;
 }
@@ -3695,11 +3650,11 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 }
 
 .notificationchildleft {
-    background: linear-gradient(135deg, var(--success), #248a5e);
+    background: var(--success);
 }
 
 .notificationchildright {
-    background: linear-gradient(135deg, var(--danger), #b8443a);
+    background: var(--danger);
 }
 
 .provinceimage {
@@ -5260,6 +5215,11 @@ body:has(.loginsignupdiv) .footer {
     margin: 0;
     padding: 16px;
     text-align: center;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md, 12px);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 .stat-card-wide { margin: 0; grid-column: 1 / -1; text-align: center; }
 .stat-value { font-size: 18px; font-weight: bold; color: var(--colorOne); }
@@ -5605,8 +5565,62 @@ html.page-tutorial .resourcedivcontent {
 
 /* --- static/css/tokens.css --- */
 /**
- * Game UI design tokens — extends theme variables in style.css
+ * Game UI design tokens — canonical source for color/spacing/radius tokens
+ * (relocated from static/style.css's hand-written .theme-light/.theme-dark
+ * blocks, which previously lived above the auto-generated bundle marker).
  */
+.theme-light {
+    --background: #eef1f5;
+    --foreground: #ffffff;
+    --foregroundTwo: #f8f9fc;
+    --foregroundThree: #f0f2f7;
+    --foregroundFour: #e8ecf3;
+    --foregroundFive: #f4f6fa;
+    --foregroundSix: #f0f2f7;
+    --foregroundSeven: #e8ecf3;
+    --foregroundEight: #e3e8f0;
+    --border: #d0d7e2;
+    --tableOne: #f4f6fa;
+    --tableTwo: #ffffff;
+    --colorOne: #1a2332;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #0090c4;
+    --accent-subtle: #e6f6fc;
+    --gold: #d4a843;
+    --success: #2d9f6f;
+    --danger: #d35649;
+    --text-secondary: #5c6b7f;
+    --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
+    --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
+}
+
+.theme-dark {
+    --background: #13171e;
+    --foreground: #1c2029;
+    --foregroundTwo: #212630;
+    --foregroundThree: #262b36;
+    --foregroundFour: #2a3040;
+    --foregroundFive: #1e2330;
+    --foregroundSix: #262b36;
+    --foregroundSeven: #1a1e28;
+    --foregroundEight: #1c2029;
+    --border: #2a3040;
+    --tableOne: #1c2029;
+    --tableTwo: #212630;
+    --colorOne: #e0e4ea;
+    --colorTwo: #ffffff;
+    --accent: #00a7e1;
+    --accent-hover: #33b8e8;
+    --accent-subtle: #0a2a3a;
+    --gold: #e0b84d;
+    --success: #3ab87e;
+    --danger: #e05a4d;
+    --text-secondary: #8b95a5;
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
 :root {
     --game-radius-sm: 8px;
     --game-radius-md: 12px;
@@ -6558,8 +6572,18 @@ body.page-country .templatedivcontent .infodiv {
         width: auto !important;
         margin: 0 !important;
         min-width: 0;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
     }
-    .menuflex2 .smallheader { font-size: 14px; white-space: nowrap; }
+    .menuflex2 .smallheader {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        max-width: 100%;
+        display: block;
+    }
 
     /* Action-button strips become a compact 2-column grid instead of
        five giant full-width stacked blocks */

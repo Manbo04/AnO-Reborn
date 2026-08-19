@@ -1,4 +1,5 @@
 {% extends "layout.html"%} {% block title %} Military {% endblock %}{% block body_class %} page-military{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button %}
 
 {% macro combat_stats_line(unit_key) %}
 <div class="combat-stats-inline">
@@ -17,13 +18,15 @@
 /* MOBILE-FIRST DESIGN (Rule 7) */
 .page-military .menuflex2 {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
     gap: 8px;
     margin-bottom: 16px;
-    padding: 0 8px;
+    padding: 0 8px !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
 }
 .page-military .menuflex2 .templatedivflex2left {
-    flex: 1 1 45%;
+    flex: 1 1 45% !important;
     min-height: 48px;
     display: flex;
     align-items: center;
@@ -221,17 +224,11 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/soldiers"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/soldiers') }}
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/soldiers"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/soldiers') }}
 
                                     </div>
                                 </div>
@@ -275,18 +272,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/artillery"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/artillery') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/artillery"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/artillery') }}
 
                                     </div>
                                 </div>
@@ -328,18 +319,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/tanks"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/tanks') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/tanks"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/tanks') }}
 
                                     </div>
                                 </div>
@@ -386,18 +371,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/fighters"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/fighters') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/fighters"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/fighters') }}
 
                                     </div>
                                 </div>
@@ -442,18 +421,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/bombers"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/bombers') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/bombers"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/bombers') }}
 
                                     </div>
                                 </div>
@@ -498,18 +471,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/apaches"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/apaches') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/apaches"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/apaches') }}
 
                                     </div>
                                 </div>
@@ -558,18 +525,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/submarines"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/submarines') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/submarines"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/submarines') }}
 
                                     </div>
                                 </div>
@@ -610,18 +571,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/cruisers"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/cruisers') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/cruisers"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/cruisers') }}
 
                                     </div>
                                 </div>
@@ -665,18 +620,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/destroyers"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/destroyers') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/destroyers"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/destroyers') }}
 
                                     </div>
                                 </div>
@@ -724,18 +673,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/spies"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/spies') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/spies"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/spies') }}
 
                                     </div>
                                 </div>
@@ -779,18 +722,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/icbms"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/icbms') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/icbms"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/icbms') }}
 
                                     </div>
                                 </div>
@@ -834,18 +771,12 @@
                                 <div class="templatedivflex2 divflex2center">
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/buy/nukes"><span
-                                            class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Buy</button>
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/nukes') }}
 
                                     </div>
                                     <div class="templatedivflex2left flexchildvanilla">
 
-                                        <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/military/sell/nukes"><span
-                                            class="material-icons-outlined">
-                                            remove_circle_outline
-                                        </span>Sell</button>
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/nukes') }}
 
                                     </div>
                                 </div>
