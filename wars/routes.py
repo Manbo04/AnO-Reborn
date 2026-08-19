@@ -684,55 +684,12 @@ def warResult():
         winner = None
         result = session.get("from_wartarget", None)
         if result is None:
-            # Compute default defense from the defender's actual military
-            # composition (top 3 non-zero normal unit types by quantity).
-            # The legacy `military` table no longer exists; use normalized
-            # user_military + unit_dictionary tables.
-            from psycopg2.extras import RealDictCursor
-            from database import get_db_connection as _gdc
+            # Determine what the defender is actually defending with: their
+            # saved `/defense` composition if they've set one, otherwise the
+            # top-3-owned-by-quantity auto-pick (legacy behaviour).
+            from attack_scripts.war_orchestrator import resolve_defender_composition
 
-            normal_unit_names = [
-                "soldiers",
-                "tanks",
-                "artillery",
-                "bombers",
-                "fighters",
-                "apaches",
-                "destroyers",
-                "cruisers",
-                "submarines",
-            ]
-            with _gdc() as _conn:
-                _cur = _conn.cursor(cursor_factory=RealDictCursor)
-                _cur.execute(
-                    """SELECT ud.name, COALESCE(um.quantity, 0) AS quantity
-                       FROM unit_dictionary ud
-                       LEFT JOIN user_military um
-                           ON um.unit_id = ud.unit_id AND um.user_id = %s
-                       WHERE ud.is_active = TRUE
-                         AND LOWER(ud.name) = ANY(%s)
-                       ORDER BY COALESCE(um.quantity, 0) DESC""",
-                    (eId, normal_unit_names),
-                )
-                defender_units_rows = _cur.fetchall()
-
-            # Pick up to 3 unit types that the defender has (prefer non-zero)
-            defenselst = []
-            for row in defender_units_rows:
-                if len(defenselst) >= 3:
-                    break
-                defenselst.append(row["name"])
-            # Fallback: if defender has no units at all, use first 3 normal types
-            if len(defenselst) < 3:
-                for u in normal_unit_names:
-                    if u not in defenselst:
-                        defenselst.append(u)
-                    if len(defenselst) >= 3:
-                        break
-
-            # Get actual quantities for the defense units
-            defender_military = Military.get_military(eId)
-            defenseunits = {u: defender_military.get(u, 0) for u in defenselst}
+            defenselst, defenseunits = resolve_defender_composition(eId)
 
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
             prev_defender = dict(defender.selected_units)
