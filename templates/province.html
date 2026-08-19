@@ -290,6 +290,83 @@
                 <!--Electricity-->
                 <div id="electricity" class="electricity">
 
+                    <div class="menudiv energy-balance-panel">
+                        <h2 class="templatecontentheaderleft">Energy Balance</h2>
+
+                        {% if energy['net'] >= 0 %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--ok">
+                            <span class="material-icons-outlined">bolt</span>
+                            Fully powered — {{ energy['production'] }} produced vs {{ energy['consumption'] }} needed this hour (+{{ energy['net'] }} spare)
+                        </p>
+                        {% else %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--deficit">
+                            <span class="material-icons-outlined">warning</span>
+                            Energy deficit — {{ energy['production'] }} produced vs {{ energy['consumption'] }} needed this hour ({{ energy['net'] }}). Some buildings will not run until this is fixed.
+                        </p>
+                        {% endif %}
+
+                        {% if energy['theoretical_production'] > energy['production'] %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--warn">
+                            <span class="material-icons-outlined">info</span>
+                            Your power plants could produce {{ energy['theoretical_production'] }} if fully fueled, but only {{ energy['production'] }} is actually affordable this hour (see "limited by" below).
+                        </p>
+                        {% endif %}
+
+                        {% if energy['production_breakdown'] %}
+                        <h3 class="templatecontentheadercenter">Production</h3>
+                        <div class="energy-breakdown-table-wrap">
+                            <table class="templatetable energy-breakdown-table">
+                                <tr>
+                                    <th>Plant</th>
+                                    <th>Built</th>
+                                    <th>Running</th>
+                                    <th>Each</th>
+                                    <th>Total</th>
+                                    <th>Limited by</th>
+                                </tr>
+                                {% for row in energy['production_breakdown'] %}
+                                <tr{% if row['limited_by'] %} class="energy-row--limited"{% endif %}>
+                                    <td>{{ row['name'].replace('_', ' ').title() }}</td>
+                                    <td>{{ row['quantity'] }}</td>
+                                    <td>{{ row['affordable_units'] }}</td>
+                                    <td>+{{ row['unit_output'] }}</td>
+                                    <td>+{{ row['actual'] }}</td>
+                                    <td>
+                                        {% if row['limited_by'] %}
+                                            {{ row['limited_by'] | join(', ') | replace('_', ' ') }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if energy['consumption_breakdown'] %}
+                        <h3 class="templatecontentheadercenter">Consumption</h3>
+                        <div class="energy-breakdown-table-wrap">
+                            <table class="templatetable energy-breakdown-table">
+                                <tr>
+                                    <th>Building</th>
+                                    <th>Count</th>
+                                    <th>Each</th>
+                                    <th>Total</th>
+                                </tr>
+                                {% for row in energy['consumption_breakdown'] %}
+                                <tr>
+                                    <td>{{ row['name'].replace('_', ' ').title() }}</td>
+                                    <td>{{ row['quantity'] }}</td>
+                                    <td>-{{ row['unit_cost'] }}</td>
+                                    <td>-{{ row['subtotal'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <div class="menudiv">
 
                         <h2 class="templatecontentheaderleft">Coal Power Plants</h2>
