@@ -502,8 +502,18 @@ body.page-country .templatedivcontent .infodiv {
         width: auto !important;
         margin: 0 !important;
         min-width: 0;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
     }
-    .menuflex2 .smallheader { font-size: 14px; white-space: nowrap; }
+    .menuflex2 .smallheader {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        max-width: 100%;
+        display: block;
+    }
 
     /* Action-button strips become a compact 2-column grid instead of
        five giant full-width stacked blocks */
