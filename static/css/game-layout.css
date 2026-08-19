@@ -514,6 +514,23 @@ body.page-country .templatedivcontent .infodiv {
         max-width: 100%;
         display: block;
     }
+    /* When something else (e.g. body.page-province's 44px touch-target rule)
+       forces .smallheader itself to display:flex, text-overflow:ellipsis on
+       the flex container stops working — it only applies to block/inline
+       overflow, not to a flex item's children. Wrap the label text in its
+       own span so it still truncates correctly regardless of what the
+       parent's display is; the notification badge stays fixed-size next
+       to it instead of being squeezed. */
+    .menuflex2-label-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .menuflex2 .smallheader .menuflex2notification {
+        flex-shrink: 0;
+    }
 
     /* Action-button strips become a compact 2-column grid instead of
        five giant full-width stacked blocks */
