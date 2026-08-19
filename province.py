@@ -179,7 +179,15 @@ def province(pId):
                 """,
                 (user_id,),
             )
-            for (tech_name,) in db.fetchall():
+            for row in db.fetchall():
+                # db is a RealDictCursor here -- rows are dict-like, so
+                # `for (tech_name,) in db.fetchall()` silently unpacked the
+                # row's KEY ("name") instead of its VALUE (e.g.
+                # "better_engineering"), so tech_to_legacy.get() never
+                # matched anything and every upgrade-gated display on this
+                # page (bonus text, the reactor "+6 w/ Better Engineering"
+                # branch, etc.) silently showed as locked even when unlocked.
+                tech_name = row["name"] if hasattr(row, "get") else row[0]
                 legacy_key = tech_to_legacy.get(tech_name)
                 if legacy_key:
                     upgrades[legacy_key] = True
@@ -325,13 +333,18 @@ def province(pId):
             SELECT rd.name, ue.quantity
             FROM user_economy ue
             JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-            WHERE ue.user_id=%s AND rd.name IN ('consumer_goods', 'rations')
+            WHERE ue.user_id=%s AND rd.name IN
+                ('consumer_goods', 'rations', 'coal', 'oil', 'uranium')
             """,
             (user_id,),
         )
         economy_values = {row["name"]: row["quantity"] for row in db.fetchall()}
         consumer_goods = economy_values.get("consumer_goods", 0) or 0
         rations = economy_values.get("rations", 0) or 0
+
+        db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
+        gold_row = db.fetchone()
+        national_gold = (row_val(gold_row, "gold", 0, default=0) or 0) if gold_row else 0
 
         max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
         cg_dist_cap = 0
@@ -388,21 +401,155 @@ def province(pId):
         producers = variables.ENERGY_UNITS
         new_infra = variables.NEW_INFRA
 
-        energy_consumption = sum(units.get(c, 0) or 0 for c in consumers)
-        energy_production = 0
+        # Production multiplier — must match generate_province_revenue() exactly:
+        # productivity (this province) * workforce efficiency (national, same
+        # jobs-available/jobs-needed ratio the real tick uses), or this display
+        # can show a surplus while the real tick lands on a deficit (or vice
+        # versa) whenever a nation's population outstrips its job-providing
+        # buildings, which is common for large/dense provinces.
+        prod_val = province.get("productivity")
+        productivity_multiplier = (
+            1 + ((prod_val - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER)
+            if prod_val is not None
+            else 1.0
+        )
+
+        efficiency_multiplier = 1.0
+        if variables.FEATURE_PHASE3_WORKFORCE:
+            db.execute(
+                """
+                SELECT COALESCE(SUM(pop_working), 0) AS total_pop_working,
+                       COALESCE(SUM(edu_none), 0) AS edu_none,
+                       COALESCE(SUM(edu_highschool), 0) AS edu_highschool,
+                       COALESCE(SUM(edu_college), 0) AS edu_college
+                FROM provinces WHERE userId = %s
+                """,
+                (user_id,),
+            )
+            demo_row = db.fetchone() or {}
+            total_pop_working = int((demo_row.get("total_pop_working") if hasattr(demo_row, "get") else demo_row[0]) or 0)
+            jobs_available = int(
+                ((demo_row.get("edu_none") if hasattr(demo_row, "get") else demo_row[1]) or 0)
+                + ((demo_row.get("edu_highschool") if hasattr(demo_row, "get") else demo_row[2]) or 0)
+                + ((demo_row.get("edu_college") if hasattr(demo_row, "get") else demo_row[3]) or 0)
+            )
+
+            db.execute(
+                """
+                SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS count
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s GROUP BY bd.name
+                """,
+                (user_id,),
+            )
+            national_building_counts = {
+                (r.get("name") if hasattr(r, "get") else r[0]): int(
+                    (r.get("count") if hasattr(r, "get") else r[1]) or 0
+                )
+                for r in db.fetchall()
+            }
+            jobs_needed = sum(
+                matrix_data.get("worker_count", 0) * national_building_counts.get(bname, 0)
+                for bname, matrix_data in variables.BUILDING_EMPLOYMENT_MATRICES.items()
+            )
+            if jobs_needed > 0:
+                employment_ratio = jobs_available / jobs_needed
+                efficiency_multiplier = min(
+                    1.0, max(variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio)
+                )
+        production_multiplier = productivity_multiplier * efficiency_multiplier
+
+        # Per-building consumption breakdown (each consumer building uses 1
+        # energy/hour, except Electric Arc Furnace steel mills which use 2 —
+        # matches the real per-unit cost applied in generate_province_revenue()).
+        consumption_breakdown = []
+        energy_consumption = 0
+        for c in consumers:
+            qty = units.get(c, 0) or 0
+            if qty <= 0:
+                continue
+            unit_cost = 2 if (c == "steel_mills" and upgrades.get("electricarcfurnace")) else 1
+            subtotal = qty * unit_cost
+            energy_consumption += subtotal
+            consumption_breakdown.append(
+                {"name": c, "quantity": qty, "unit_cost": unit_cost, "subtotal": subtotal}
+            )
+        consumption_breakdown.sort(key=lambda r: r["subtotal"], reverse=True)
+
+        # Per-building production breakdown. Two numbers per producer:
+        # theoretical (every built unit assumed to run) and affordable (how
+        # many can actually afford their money + fuel upkeep this hour, same
+        # gate generate_province_revenue() applies). Real player report:
+        # /province showed reactors "producing" full output even when
+        # uranium/gold couldn't actually sustain them, because this display
+        # never checked affordability -- only the theoretical formula.
+        production_breakdown = []
+        theoretical_production = 0
+        affordable_production = 0
+        gold_remaining = national_gold
         for p in producers:
+            qty = units.get(p, 0) or 0
+            if qty <= 0:
+                continue
             per_unit_energy = new_infra[p]["plus"]["energy"]
-            # BETTER ENGINEERING -- must match the bonus generate_province_revenue()
-            # actually applies each tick (app_core/game_ticks/revenue.py), or this
-            # display permanently under-reports real production. Real player report:
-            # /province showed 60 (4 reactors x 15 base, no bonus) even with Better
-            # Engineering researched, because this was a second, independent energy
-            # formula that never had the bonus added to it in the first place.
             if p == "nuclear_reactors" and upgrades.get("betterengineering"):
                 per_unit_energy += 6
-            energy_production += (units.get(p, 0) or 0) * per_unit_energy
-        energy = {"consumption": energy_consumption, "production": energy_production}
-        has_power = energy_production >= energy_consumption
+
+            unit_infra = new_infra.get(p, {})
+            money_cost_per_unit = unit_infra.get("money", 0) or 0
+            fuel_resource = None
+            fuel_cost_per_unit = 0
+            for res_name, amt in (unit_infra.get("minus", {}) or {}).items():
+                if amt > 0:
+                    fuel_resource = res_name
+                    fuel_cost_per_unit = amt
+                    break
+
+            affordable = qty
+            limited_by = []
+            if money_cost_per_unit > 0:
+                afford_by_money = int(gold_remaining // money_cost_per_unit)
+                if afford_by_money < affordable:
+                    limited_by.append("money")
+                affordable = min(affordable, afford_by_money)
+            if fuel_resource:
+                have_fuel = economy_values.get(fuel_resource, 0) or 0
+                afford_by_fuel = int(have_fuel // fuel_cost_per_unit)
+                if afford_by_fuel < affordable:
+                    limited_by.append(fuel_resource)
+                affordable = min(affordable, afford_by_fuel)
+            affordable = max(0, affordable)
+            gold_remaining -= money_cost_per_unit * affordable
+
+            theoretical = math.ceil(qty * per_unit_energy * production_multiplier) if qty else 0
+            actual = math.ceil(affordable * per_unit_energy * production_multiplier) if affordable else 0
+            theoretical_production += theoretical
+            affordable_production += actual
+            production_breakdown.append(
+                {
+                    "name": p,
+                    "quantity": qty,
+                    "affordable_units": affordable,
+                    "unit_output": per_unit_energy,
+                    "theoretical": theoretical,
+                    "actual": actual,
+                    "limited_by": limited_by,
+                    "fuel_resource": fuel_resource,
+                }
+            )
+        production_breakdown.sort(key=lambda r: r["actual"], reverse=True)
+
+        energy_production = affordable_production
+        energy = {
+            "consumption": energy_consumption,
+            "production": affordable_production,
+            "theoretical_production": theoretical_production,
+            "consumption_breakdown": consumption_breakdown,
+            "production_breakdown": production_breakdown,
+            "net": affordable_production - energy_consumption,
+        }
+        has_power = affordable_production >= energy_consumption
 
         # upgrades already fetched in same connection above
 
