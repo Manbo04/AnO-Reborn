@@ -909,6 +909,8 @@ body:has(.navbarparent .templatecontainer) {
 .resourcedivchild {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    justify-content: center;
     transition: all 0.3s;
     width: 56px;
     height: 56px;
@@ -922,7 +924,7 @@ body:has(.navbarparent .templatecontainer) {
 
 .resourceicon {
     font-size: 46px !important;
-    margin-left: 10px;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
     user-select: none;
@@ -9813,6 +9815,16 @@ body.page-provinces .game-province-card-thumb img {
 .province-info-demographics .chart-wrapper {
     max-width: none;
     width: 100%;
+    /* Fixed, not min-height: the base .chart-wrapper rule sets a real
+       height:280px + overflow:hidden cap, but this override replaced it
+       with an open-ended min-height with nothing to cap the top end.
+       Chart.js's canvas here uses responsive:true + maintainAspectRatio:
+       false, which sizes the canvas to fill its container — with no max
+       height, a taller container (e.g. from the sibling column
+       stretching to match) lets the canvas grow unbounded instead of
+       staying clipped, which is what produced a huge blank canvas
+       overflowing past the visible card. */
+    height: 280px;
     min-height: 280px;
     margin: var(--game-space-sm, 8px) 0;
 }
