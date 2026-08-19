@@ -85,6 +85,43 @@ def _apply_casualties(db, user_id: int, pairs: Iterable[Tuple[str, float]]) -> N
         )
 
 
+_NORMAL_UNIT_NAMES = {
+    "soldiers",
+    "tanks",
+    "artillery",
+    "bombers",
+    "fighters",
+    "apaches",
+    "destroyers",
+    "cruisers",
+    "submarines",
+}
+
+
+def resolve_defender_composition(defender_id: int) -> Tuple[list, dict]:
+    """Determine the 3 unit types (and quantities) an incoming attack can hit.
+
+    Prefers the defender's saved `/defense` composition (`Military.get_defense`).
+    Falls back to the top-3-owned-by-quantity auto-pick
+    (`Military.get_defending_units`) when the saved composition is missing or
+    invalid (not exactly 3 known unit types) — this preserves existing
+    behaviour for players who never configured `/defense`.
+
+    Returns (defenselst, defenseunits) where defenselst is the ordered list of
+    3 unit type names and defenseunits maps unit type -> quantity owned.
+    """
+    from attack_scripts.Nations import Military
+
+    saved = Military.get_defense(defender_id)
+    if len(saved) == 3 and all(u in _NORMAL_UNIT_NAMES for u in saved):
+        defender_military = Military.get_military(defender_id)
+        defenseunits = {u: defender_military.get(u, 0) for u in saved}
+        return saved, defenseunits
+
+    defenseunits = Military.get_defending_units(defender_id)
+    return list(defenseunits.keys()), defenseunits
+
+
 def _determine_win_label(win_type: Optional[int]) -> str:
     if win_type is None:
         return "close victory"

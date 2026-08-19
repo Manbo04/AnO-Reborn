@@ -850,6 +850,8 @@ class Military(Nation):
             win_type,
             winner.selected_units_list,
             loser.selected_units_list,
+            winner.selected_units,
+            loser.selected_units,
         )
 
         # Persist casualties + morale change in a single transactional operation
