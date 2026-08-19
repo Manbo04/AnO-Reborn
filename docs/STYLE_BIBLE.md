@@ -6,6 +6,8 @@
 
 ## Palette (matches CSS tokens)
 
+Authoritative values: `static/css/tokens.css` (`.theme-light`/`.theme-dark`) — this table is a quick-reference summary, not the source of truth.
+
 | Role | Light | Dark |
 |------|-------|------|
 | Background | `#eef1f5` | `#13171e` |

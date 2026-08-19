@@ -1,4 +1,5 @@
 {% extends "layout.html" %} {% block title %} Statistics {% endblock %}{% block body_class %} page-statistics{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import stat_card, game_panel %}
 <div class="templatediv">
 
     <div class="templatedivtopper noboxshadowtopper">
@@ -17,23 +18,13 @@
 
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
-                                        groups
-                                        </span>Global Stats</h2>
+                {% call game_panel('Global Stats', icon='groups', style='margin-top: 0;') %}
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Total Nations</strong>
-        <span class="stat-value">{{ total_nations | commas }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Average Influence</strong>
-        <span class="stat-value">{{ avg_influence | commas }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Highest Influence</strong>
-        <span class="stat-value">{{ max_influence | commas }}</span>
-    </div>
+    {{ stat_card('Total Nations', total_nations | commas) }}
+    {{ stat_card('Average Influence', avg_influence | commas) }}
+    {{ stat_card('Highest Influence', max_influence | commas) }}
 </div>
+                {% endcall %}
             </div>
             <div class="templatedivflex2left">
                 <div class="infodiv">
@@ -48,43 +39,13 @@
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
-                                        insert_chart_outlined
-                                        </span>Average Price</h2>
+                {% call game_panel('Average Price', icon='insert_chart_outlined', style='margin-top: 0;') %}
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Rations</strong>
-        <span class="stat-value">{{ market_stats.get('rations', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Oil</strong>
-        <span class="stat-value">{{ market_stats.get('oil', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Coal</strong>
-        <span class="stat-value">{{ market_stats.get('coal', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Uranium</strong>
-        <span class="stat-value">{{ market_stats.get('uranium', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Steel</strong>
-        <span class="stat-value">{{ market_stats.get('steel', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Aluminium</strong>
-        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Lumber</strong>
-        <span class="stat-value">{{ market_stats.get('lumber', {}).get('avg', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Components</strong>
-        <span class="stat-value">{{ market_stats.get('components', {}).get('avg', 'N/A') }}</span>
-    </div>
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('avg', 'N/A')) }}
+    {% endfor %}
 </div>
+                {% endcall %}
             </div>
             <div class="templatedivflex2left">
                 <p class="templatecontentheadercenter">Chart of prices over last 100 days</p>
@@ -94,83 +55,23 @@
         <div class="templatedivflex2 menuflex card-align-row">
             <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
-                                        arrow_circle_up
-                                        </span>Highest Price</h2>
+                {% call game_panel('Highest Price', icon='arrow_circle_up', style='margin-top: 0;') %}
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Rations</strong>
-        <span class="stat-value">{{ market_stats.get('rations', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Oil</strong>
-        <span class="stat-value">{{ market_stats.get('oil', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Coal</strong>
-        <span class="stat-value">{{ market_stats.get('coal', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Uranium</strong>
-        <span class="stat-value">{{ market_stats.get('uranium', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Steel</strong>
-        <span class="stat-value">{{ market_stats.get('steel', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Aluminium</strong>
-        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Lumber</strong>
-        <span class="stat-value">{{ market_stats.get('lumber', {}).get('max', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Components</strong>
-        <span class="stat-value">{{ market_stats.get('components', {}).get('max', 'N/A') }}</span>
-    </div>
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('max', 'N/A')) }}
+    {% endfor %}
 </div>
+                {% endcall %}
             </div>
             <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
-                                        arrow_circle_down
-                                        </span>Lowest Price</h2>
+                {% call game_panel('Lowest Price', icon='arrow_circle_down', style='margin-top: 0;') %}
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Rations</strong>
-        <span class="stat-value">{{ market_stats.get('rations', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Oil</strong>
-        <span class="stat-value">{{ market_stats.get('oil', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Coal</strong>
-        <span class="stat-value">{{ market_stats.get('coal', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Uranium</strong>
-        <span class="stat-value">{{ market_stats.get('uranium', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Steel</strong>
-        <span class="stat-value">{{ market_stats.get('steel', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Aluminium</strong>
-        <span class="stat-value">{{ market_stats.get('aluminium', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Lumber</strong>
-        <span class="stat-value">{{ market_stats.get('lumber', {}).get('min', 'N/A') }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label">Components</strong>
-        <span class="stat-value">{{ market_stats.get('components', {}).get('min', 'N/A') }}</span>
-    </div>
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('min', 'N/A')) }}
+    {% endfor %}
 </div>
+                {% endcall %}
 
             </div>
         </div>
