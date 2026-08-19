@@ -495,3 +495,62 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
         justify-content: flex-start;
     }
 }
+
+/* Energy Balance panel — production/consumption breakdown on /province */
+.energy-balance-panel .energy-balance-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--game-radius-sm, 8px);
+    font-weight: 600;
+    margin: 8px 0;
+}
+.energy-balance-status--ok {
+    background: rgba(46, 204, 113, 0.12);
+    color: var(--success, #2ecc71);
+}
+.energy-balance-status--deficit {
+    background: rgba(231, 76, 60, 0.12);
+    color: var(--danger, #e74c3c);
+}
+.energy-balance-status--warn {
+    background: rgba(241, 196, 15, 0.12);
+    color: var(--accent, #f1c40f);
+    font-weight: 500;
+}
+.energy-breakdown-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 8px 0 16px;
+}
+.energy-breakdown-table {
+    width: 100%;
+    min-width: 420px;
+    border-collapse: collapse;
+}
+.energy-breakdown-table th,
+.energy-breakdown-table td {
+    padding: 6px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
+}
+.energy-breakdown-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.energy-row--limited td {
+    color: var(--danger, #e74c3c);
+}
+
+@media (max-width: 480px) {
+    .energy-balance-panel .energy-balance-status {
+        font-size: 0.9rem;
+    }
+    .energy-breakdown-table {
+        min-width: 380px;
+    }
+}
