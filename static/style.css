@@ -6768,7 +6768,6 @@ body.page-country .templatedivcontent .infodiv {
 /* Reset global icon nudge inside province UI (style.css sets top/right on all icons) */
 .province-base-section .material-icons-outlined,
 .province-base-slot-sheet .material-icons-outlined,
-.province-view-nudge .material-icons-outlined,
 .province-onboarding .material-icons-outlined {
     position: static;
     top: auto;
@@ -6805,7 +6804,6 @@ body.page-country .templatedivcontent .infodiv {
 
 @media (max-width: 768px) {
     .province-base-toggle,
-    .province-view-nudge-btn,
     .province-base-sheet-close,
     .province-dock-expand,
     .province-base-build-btn {
@@ -7920,41 +7918,6 @@ body.game-reduced-motion .province-map-node-pin::after {
 
 @keyframes drawer-down {
     from { transform: translateY(-100%); }
-}
-
-.province-view-nudge {
-    display: flex;
-    align-items: center;
-    gap: var(--game-space-sm);
-    margin: 0 0 var(--game-space-md);
-    padding: var(--game-space-sm) var(--game-space-md);
-    border-radius: var(--game-radius-md);
-    background: linear-gradient(90deg, rgba(0, 167, 225, 0.2), rgba(45, 159, 111, 0.15));
-    border: 1px solid rgba(0, 167, 225, 0.35);
-    font-size: 0.9rem;
-}
-
-.province-view-nudge[hidden] {
-    display: none !important;
-}
-
-/* One explicit flex item for all the running text + inline button, instead
-   of relying on the browser to auto-generate anonymous flex items from bare
-   text nodes mixed with inline elements — that split behaves inconsistently
-   across engines and can fragment the sentence into oddly-spaced pieces. */
-.province-view-nudge-text {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.province-view-nudge-btn {
-    background: var(--accent, #00a7e1);
-    color: #fff;
-    border: none;
-    border-radius: var(--game-radius-sm);
-    padding: 2px 10px;
-    cursor: pointer;
-    font-weight: 600;
 }
 
 .province-base-hint {
