@@ -882,37 +882,6 @@ def get_bulk_influence(user_ids):
     return results
 
 
-def get_coalition_influence(coalition_id):
-    """Get total influence for a coalition using bulk query."""
-    # Check cache first
-    cache_key = f"coalition_influence_{coalition_id}"
-    cached = query_cache.get(cache_key)
-    if cached is not None:
-        return cached
-
-    with get_request_cursor() as db:
-        try:
-            db.execute(
-                "SELECT user_id FROM coalition_members WHERE coalition_id=(%s)",
-                (coalition_id,),
-            )
-            members = db.fetchall()
-        except Exception:
-            return 0
-
-        if not members:
-            return 0
-
-        # Use bulk influence function for all members at once
-        member_ids = [m[0] for m in members]
-        influences = get_bulk_influence(member_ids)
-        total_influence = sum(influences.values())
-
-        # Cache the result
-        query_cache.set(cache_key, total_influence)
-
-        return total_influence
-
 def get_valid_int(field_name, default="0", min_val=1, error_invalid="Invalid value", error_min="Value must be positive"):
     from flask import request
     val_str = request.form.get(field_name, default)
