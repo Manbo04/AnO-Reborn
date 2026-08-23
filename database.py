@@ -5,6 +5,7 @@ Provides connection pooling, query helpers, and unified database access patterns
 
 import psycopg2
 from psycopg2.extras import RealDictCursor, execute_batch
+import hashlib
 import os
 from contextlib import contextmanager
 from dotenv import load_dotenv
@@ -1850,6 +1851,56 @@ def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
             "UPDATE users SET discord_id = %s WHERE id = %s",
             (discord_user_id, user_id),
         )
+
+
+def client_ip_from_headers(headers, remote_addr: Optional[str]) -> Optional[str]:
+    """Extract client IP, preferring X-Forwarded-For's first hop (app may run behind a proxy).
+
+    Mirrors the extraction already used for signup rate-limiting in signup.py.
+    """
+    forwarded = headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return remote_addr
+
+
+def coarse_fingerprint_from_headers(headers) -> str:
+    """Cheap, frontend-free device signal: hash of UA/language/encoding headers.
+
+    Not a substitute for real client-side fingerprinting (canvas/WebGL), but lets
+    two logins be compared for "same browser/device profile" with zero frontend work.
+    """
+    raw = "|".join(
+        [
+            headers.get("User-Agent", ""),
+            headers.get("Accept-Language", ""),
+            headers.get("Accept-Encoding", ""),
+        ]
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def log_login_event(
+    user_id: int, ip: Optional[str], fingerprint: Optional[str], auth_type: str
+) -> None:
+    """Record a login's IP/fingerprint for later multi-account correlation. Best-effort.
+
+    Uses its own pooled connection (get_db_cursor), not the caller's request-scoped
+    one, so a missing/broken login_events table can never poison the rest of the
+    login request's transaction (e.g. the last_active update, committed later by
+    teardown_request_connection).
+    """
+    try:
+        with get_db_cursor() as db:
+            db.execute(
+                """
+                INSERT INTO login_events (user_id, ip, fingerprint, auth_type)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (user_id, ip, fingerprint, auth_type),
+            )
+    except Exception as exc:
+        logger.warning("log_login_event failed for user %s: %s", user_id, exc)
 
 
 def discord_link_codes_table_exists() -> bool:

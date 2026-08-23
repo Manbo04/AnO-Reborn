@@ -11,7 +11,12 @@ import datetime
 import logging
 import uuid
 import time
-from database import get_request_cursor
+from database import (
+    get_request_cursor,
+    client_ip_from_headers,
+    coarse_fingerprint_from_headers,
+    log_login_event,
+)
 
 load_dotenv()
 
@@ -207,6 +212,13 @@ def login():
                     except Exception:
                         pass  # best-effort; don't block login
 
+                    try:
+                        ip = client_ip_from_headers(request.headers, request.remote_addr)
+                        fingerprint = coarse_fingerprint_from_headers(request.headers)
+                        log_login_event(user[0], ip, fingerprint, "password")
+                    except Exception:
+                        pass  # best-effort; don't block login
+
                     logger.debug("Returning redirect to / after login")
 
                     response = redirect("/")
@@ -383,6 +395,12 @@ def discord_login():
                 "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s",
                 (user_id,),
             )
+            try:
+                ip = client_ip_from_headers(request.headers, request.remote_addr)
+                fingerprint = coarse_fingerprint_from_headers(request.headers)
+                log_login_event(user_id, ip, fingerprint, "discord")
+            except Exception:
+                pass  # best-effort; don't block login
             try:
                 from signup import ensure_user_provisioned
                 ensure_user_provisioned(db, user_id)
