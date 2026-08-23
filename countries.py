@@ -141,6 +141,7 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId, db=None):
     from database import query_cache
+    from app_core.economy.affordability import compute_affordable_units
 
     # Check cache first - expensive calculation
     cache_key = f"revenue_{cId}"
@@ -215,62 +216,108 @@ def get_revenue(cId, db=None):
                     proinfra_by_id[prov_id] = {}
                 proinfra_by_id[prov_id][building_name] = quantity or 0
 
-        # Fetch gold, rations, and CG in a single combined query
+        # Fetch gold separately, and the FULL resource stock (not just
+        # rations/consumer_goods) so the affordability check below can see
+        # real input-resource levels -- previously this only ever checked
+        # gold, so a refinery/reactor/silo with plenty of money but no local
+        # energy or no bauxite/uranium still showed full projected output
+        # while the real hourly tick produced little or nothing.
+        db.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id = %s", (cId,))
+        gold_row = db.fetchone()
+        current_money = gold_row[0] if gold_row else 0
+
         db.execute(
             """
-            SELECT
-                COALESCE(s.gold, 0) AS gold,
-                COALESCE(r.quantity, 0) AS rations,
-                COALESCE(cg.quantity, 0) AS consumer_goods
-            FROM stats s
-            LEFT JOIN (
-                SELECT ue.quantity FROM user_economy ue
-                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-                WHERE ue.user_id = %s AND rd.name = 'rations'
-            ) r ON TRUE
-            LEFT JOIN (
-                SELECT ue.quantity FROM user_economy ue
-                JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-                WHERE ue.user_id = %s AND rd.name = 'consumer_goods'
-            ) cg ON TRUE
-            WHERE s.id = %s
+            SELECT rd.name, COALESCE(ue.quantity, 0)
+            FROM user_economy ue
+            JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+            WHERE ue.user_id = %s
             """,
-            (cId, cId, cId),
+            (cId,),
         )
-        econ_row = db.fetchone()
-        current_money = econ_row[0] if econ_row else 0
-        current_rations = econ_row[1] if econ_row else 0
-        consumer_goods = int(econ_row[2]) if econ_row else 0
+        stock = {row[0]: row[1] for row in db.fetchall()}
+        current_rations = stock.get("rations", 0)
+        consumer_goods = int(stock.get("consumer_goods", 0))
 
-        # Simulated funds used while computing `net`; do not mutate DB
+        # Simulated funds/resources used while computing `net`; never mutates
+        # the DB. `simulated_resources` is the nation-wide input-resource pool,
+        # decremented as each building's upkeep is applied and incremented by
+        # any building's own production, so a later building in this same
+        # pass sees what an earlier one already produced/consumed -- same
+        # ordering rule as the real tick. `simulated_energy` is per-province
+        # and starts at 0 every projection, mirroring the real tick: energy
+        # isn't a stockpile, it's rebuilt from scratch by power plants each
+        # run before consumers draw on it.
         simulated_funds = current_money
+        simulated_resources = dict(stock)
+        simulated_energy = {pid: 0 for pid in provinces}
+        energy_consumers = variables.ENERGY_CONSUMERS
 
         for province in provinces:
             buildings = proinfra_by_id.get(province)
             if buildings is None:
                 buildings = {}
 
-            for building, build_count in buildings.items():
-                if building == "id":
-                    continue
-                if build_count is None or build_count == 0:
+            # Iterate in the same canonical order the real tick uses
+            # (variables.BUILDINGS), not arbitrary DB/dict order -- power
+            # plants must be processed before energy-consuming buildings so
+            # this province's simulated energy reflects this hour's actual
+            # production before anything tries to draw on it.
+            for building in variables.BUILDINGS:
+                build_count = buildings.get(building, 0)
+                if not build_count:
                     continue
                 if building not in infra:
                     continue
 
                 operating_costs = infra[building]["money"] * build_count
+                cost_per_unit = operating_costs / build_count if build_count else 0
 
-                # Add to gross/net resource production only if this building would
-                # actually operate given the player's money. We keep `gross` and
-                # `gross_theoretical` as unconditional projections, but `net`
-                # reflects a simple money-constrained simulation similar to the
-                # actual task runner so UI `net` is consistent with what will
-                # actually happen.
-                will_operate = simulated_funds >= operating_costs
+                energy_per_unit = 0
+                if building in energy_consumers:
+                    energy_per_unit = 1
+                elif building == "steel_mills" and upgrades.get("electricarcfurnace"):
+                    energy_per_unit = 2
+                current_energy = simulated_energy.get(province, 0)
 
-                if will_operate:
-                    simulated_funds -= operating_costs
-                    revenue["net"]["money"] -= operating_costs
+                minus = infra[building].get("minus", {})
+                per_unit_minus = {}
+                for resource, base_amount in minus.items():
+                    amount_per_unit = base_amount
+                    if building == "component_factories" and upgrades.get(
+                        "automationintegration"
+                    ):
+                        amount_per_unit *= 0.75
+                    if building == "steel_mills" and upgrades.get("largerforges"):
+                        amount_per_unit *= 0.7
+                    if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
+                        amount_per_unit *= 1.36
+                    if building == "steel_mills" and upgrades.get("electricarcfurnace"):
+                        amount_per_unit *= 0.5
+                    per_unit_minus[resource] = amount_per_unit
+
+                # The one gate shared with the real hourly tick
+                # (app_core/game_ticks/revenue.py) -- money, then energy,
+                # then each input resource -- so this projection and actual
+                # production can't drift apart on the rule again.
+                affordable_units, _issues = compute_affordable_units(
+                    unit_amount=build_count,
+                    cost_per_unit=cost_per_unit,
+                    current_money=simulated_funds,
+                    energy_per_unit=energy_per_unit,
+                    current_energy=current_energy,
+                    per_unit_minus=per_unit_minus,
+                    current_resources=simulated_resources,
+                )
+
+                # `gross`/`gross_theoretical` stay unconditional projections
+                # (what `build_count` buildings would produce with no
+                # constraints at all); `net` reflects what actually runs --
+                # partial, not all-or-nothing, matching the real tick.
+                if cost_per_unit > 0 and affordable_units:
+                    spend = cost_per_unit * affordable_units
+                    simulated_funds -= spend
+                    revenue["net"]["money"] -= spend
 
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
@@ -309,16 +356,37 @@ def get_revenue(cId, db=None):
                     revenue["gross_theoretical"][resource] += theoretical_total
                     revenue["gross"][resource] += adjusted_total
 
-                    # Only add to `net` if the building will operate
-                    if will_operate:
-                        revenue["net"][resource] += adjusted_total
+                    if affordable_units:
+                        # Net production is scaled to the units that actually
+                        # ran this pass (affordable_units), not the full
+                        # build_count -- a partial energy/resource shortfall
+                        # now shows up as reduced net output instead of full
+                        # projected output.
+                        net_amount = math.ceil(affordable_units * amount * multiplier)
+                        revenue["net"][resource] += net_amount
 
-                minus = infra[building].get("minus", {})
-                for resource, amount in minus.items():
-                    total = build_count * amount
-                    # Only subtract upkeep from net if building operates
-                    if will_operate:
-                        revenue["net"][resource] -= total
+                        if resource == "energy":
+                            simulated_energy[province] = current_energy + net_amount
+                            current_energy = simulated_energy[province]
+                        else:
+                            simulated_resources[resource] = (
+                                simulated_resources.get(resource, 0) + net_amount
+                            )
+
+                for resource, amount_per_unit in per_unit_minus.items():
+                    if amount_per_unit <= 0 or not affordable_units:
+                        continue
+                    total = amount_per_unit * affordable_units
+                    revenue["net"][resource] -= total
+                    simulated_resources[resource] = (
+                        simulated_resources.get(resource, 0) - total
+                    )
+
+                if energy_per_unit and affordable_units:
+                    simulated_energy[province] = (
+                        simulated_energy.get(province, 0)
+                        - energy_per_unit * affordable_units
+                    )
 
         # Fetch policies for tax calculation
         try:

@@ -54,6 +54,7 @@ from app_core.game_ticks.common import (
 )
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.population import find_unit_category
+from app_core.economy.affordability import compute_affordable_units
 
 
 
@@ -666,8 +667,14 @@ def generate_province_revenue():  # Runs each hour
                         # short (player-reported real problem: scaling up a
                         # building type made an existing shortfall affect 100% of
                         # output instead of the unaffordable fraction).
-                        affordable_units = unit_amount
-                        has_enough_stuff = {"status": True, "issues": []}
+                        #
+                        # The actual gate math lives in
+                        # app_core/economy/affordability.compute_affordable_units
+                        # so this tick and countries.get_revenue()'s projection
+                        # can never drift apart on it again -- that drift (the
+                        # projection only ever checking gold) was the real cause
+                        # behind refineries/reactors/silos showing full output
+                        # while producing little or nothing.
 
                         # Pending state — only committed to gold_deductions,
                         # provinces_data energy, and resource_deltas AFTER
@@ -682,12 +689,6 @@ def generate_province_revenue():  # Runs each hour
                         pending_resource_deltas_local = {}
 
                         cost_per_unit = operating_costs / unit_amount
-                        if cost_per_unit > 0:
-                            affordable_units = min(
-                                affordable_units, int(current_money // cost_per_unit)
-                            )
-                            if affordable_units < unit_amount:
-                                has_enough_stuff["issues"].append("money")
 
                         # Use tracked energy in provinces_data instead of
                         # per-building SELECT
@@ -697,13 +698,10 @@ def generate_province_revenue():  # Runs each hour
                         elif unit == "steel_mills" and upgrades.get("electricarcfurnace"):
                             energy_per_unit = 2  # EAF consumes 2 energy per mill
 
+                        current_energy = 0
                         if energy_per_unit:
                             prov_data = provinces_data.get(province_id, {})
                             current_energy = prov_data.get("energy", 0)
-                            affordable_by_energy = int(current_energy // energy_per_unit)
-                            if affordable_by_energy < affordable_units:
-                                has_enough_stuff["issues"].append("energy")
-                            affordable_units = min(affordable_units, affordable_by_energy)
 
                         # Use preloaded resources instead of per-building queries
                         resources = resources_map.get(user_id, {})
@@ -715,6 +713,7 @@ def generate_province_revenue():  # Runs each hour
                         # unit_amount, so it can be scaled by affordable_units
                         # below once every resource's ceiling is known).
                         per_unit_minus = {}
+                        effective_resources = {}
                         for resource, base_amount in minus.items():
                             amount_per_unit = base_amount
 
@@ -745,17 +744,21 @@ def generate_province_revenue():  # Runs each hour
                             pending_delta = resource_deltas.get(user_id, {}).get(
                                 resource, 0
                             )
-                            effective_current = current_resource + pending_delta
+                            effective_resources[resource] = current_resource + pending_delta
 
-                            affordable_by_resource = int(
-                                effective_current // amount_per_unit
-                            )
-                            if affordable_by_resource < affordable_units:
-                                has_enough_stuff["issues"].append(resource)
-                            affordable_units = min(affordable_units, affordable_by_resource)
-
-                        affordable_units = max(0, affordable_units)
-                        has_enough_stuff["status"] = affordable_units > 0
+                        affordable_units, issues = compute_affordable_units(
+                            unit_amount=unit_amount,
+                            cost_per_unit=cost_per_unit,
+                            current_money=current_money,
+                            energy_per_unit=energy_per_unit,
+                            current_energy=current_energy,
+                            per_unit_minus=per_unit_minus,
+                            current_resources=effective_resources,
+                        )
+                        has_enough_stuff = {
+                            "status": affordable_units > 0,
+                            "issues": issues,
+                        }
 
                         if not has_enough_stuff["status"]:
                             issues_str = ", ".join(has_enough_stuff["issues"])
