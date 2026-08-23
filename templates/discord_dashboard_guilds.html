@@ -1,0 +1,39 @@
+{% extends "layout.html" %} {% block title %} Bot Dashboard {% endblock %} {% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">smart_toy</span>Bot Dashboard</h1>
+    </div>
+    <div class="templatedivcontent">
+        <h2 class="templatecontentheaderleft">Your Servers</h2>
+        {% if guilds %}
+        <div class="infodiv">
+            <ul class="dashboard-guild-list">
+                {% for guild in guilds %}
+                <li class="dashboard-guild-row">
+                    <a href="/discord/dashboard/{{ guild.id }}" class="dashboard-guild-link">
+                        {% if guild.icon %}
+                        <img class="dashboard-guild-icon" src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" alt="" />
+                        {% else %}
+                        <span class="dashboard-guild-icon dashboard-guild-icon-fallback material-icons-outlined">groups</span>
+                        {% endif %}
+                        <span class="dashboard-guild-name">{{ guild.name }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <p class="templatecontentpleft">No servers found where you're an admin or have Manage Server permission.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.dashboard-guild-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dashboard-guild-row { border: 1px solid #333; border-radius: 8px; }
+.dashboard-guild-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit; }
+.dashboard-guild-icon { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.dashboard-guild-icon-fallback { display: flex; align-items: center; justify-content: center; background: #2c2c40; }
+.dashboard-guild-name { font-weight: 600; }
+</style>
+{% endblock %}
