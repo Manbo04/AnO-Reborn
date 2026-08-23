@@ -8,8 +8,10 @@ import discord
 from discord.ext import commands, tasks
 
 from discord_bot.backend import backend_mode_label, get_backend
+from discord_bot import giveaways, listeners
 from discord_bot.commands import admin_cmds
 from discord_bot.commands import community as community_cmds
+from discord_bot.commands import engagement as engagement_cmds
 from discord_bot.commands import guild_setup as guild_setup_cmds
 from discord_bot.commands import info as info_cmds
 from discord_bot.commands import register as register_cmds
@@ -104,6 +106,10 @@ class AnOBot(commands.Bot):
     def __init__(self, backend) -> None:
         intents = discord.Intents.default()
         intents.message_content = False
+        # Privileged intent — also needs enabling under Discord Developer Portal →
+        # Bot → Privileged Gateway Intents → Server Members Intent, or on_member_join
+        # (welcome messages, auto-roles) silently never fires.
+        intents.members = True
         super().__init__(command_prefix="!", intents=intents)
         self.backend = backend
 
@@ -113,6 +119,7 @@ class AnOBot(commands.Bot):
         guild_setup_cmds.register_commands(self.tree)
         admin_cmds.register_commands(self.tree, self.backend)
         community_cmds.register_commands(self.tree, self.backend)
+        engagement_cmds.register_commands(self.tree, self.backend)
         synced = await self.tree.sync()
         logger.info("Synced %s global slash command(s)", len(synced))
 
@@ -135,6 +142,8 @@ class AnOBot(commands.Bot):
                 logger.warning("Permission setup failed for guild %s: %s", guild.id, exc)
         if not self.panel_refresh_loop.is_running():
             self.panel_refresh_loop.start()
+        if not self.giveaway_resolve_loop.is_running():
+            self.giveaway_resolve_loop.start()
 
     @tasks.loop(minutes=1)
     async def panel_refresh_loop(self) -> None:
@@ -143,6 +152,27 @@ class AnOBot(commands.Bot):
     @panel_refresh_loop.before_loop
     async def before_panel_refresh(self) -> None:
         await self.wait_until_ready()
+
+    @tasks.loop(seconds=30)
+    async def giveaway_resolve_loop(self) -> None:
+        await giveaways.resolve_due_giveaways(self)
+
+    @giveaway_resolve_loop.before_loop
+    async def before_giveaway_resolve(self) -> None:
+        await self.wait_until_ready()
+
+    async def on_message(self, message: discord.Message) -> None:
+        await listeners.handle_message(message)
+        await self.process_commands(message)
+
+    async def on_member_join(self, member: discord.Member) -> None:
+        await listeners.handle_member_join(member)
+
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
+        await listeners.handle_reaction_add(payload, self)
+
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
+        await listeners.handle_reaction_remove(payload, self)
 
 
 def main() -> None:

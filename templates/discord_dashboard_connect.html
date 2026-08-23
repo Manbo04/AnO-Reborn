@@ -1,0 +1,20 @@
+{% extends "layout.html" %} {% block title %} Bot Dashboard {% endblock %} {% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">smart_toy</span>Bot Dashboard</h1>
+    </div>
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft">
+            Connect your Discord account to manage leveling, welcome messages, reaction roles, and giveaways
+            for any server where you're an admin or have Manage Server permission.
+        </p>
+        <form action="/discord" method="GET">
+            <input type="hidden" name="scope" value="identify guilds" />
+            <input type="hidden" name="intent" value="dashboard" />
+            <button type="submit" class="templatedivbutton templatecenteredbutton discordbutton">
+                <span class="material-icons-outlined">link</span>Connect Discord
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

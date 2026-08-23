@@ -1257,6 +1257,92 @@ def _ensure_discord_bot_tables(db) -> None:
         logger.warning("idx_users_discord_id_unique: %s", exc)
 
 
+def _ensure_engagement_tables(db) -> None:
+    """Idempotent Discord engagement tables (leveling, welcome, reaction roles, giveaways)."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_user_xp (
+            guild_id VARCHAR(32) NOT NULL,
+            user_id VARCHAR(32) NOT NULL,
+            xp INTEGER NOT NULL DEFAULT 0,
+            level INTEGER NOT NULL DEFAULT 0,
+            last_xp_at TIMESTAMPTZ,
+            PRIMARY KEY (guild_id, user_id)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_level_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            xp_per_message INTEGER NOT NULL DEFAULT 15,
+            xp_cooldown_seconds INTEGER NOT NULL DEFAULT 60,
+            xp_per_voice_minute INTEGER NOT NULL DEFAULT 5,
+            level_up_channel_id VARCHAR(32),
+            level_up_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_level_roles (
+            guild_id VARCHAR(32) NOT NULL,
+            level INTEGER NOT NULL,
+            role_id VARCHAR(32) NOT NULL,
+            PRIMARY KEY (guild_id, level)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_welcome_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            channel_id VARCHAR(32),
+            message_template TEXT,
+            dm_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            dm_template TEXT,
+            auto_role_ids TEXT[] NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_reaction_roles (
+            guild_id VARCHAR(32) NOT NULL,
+            message_id VARCHAR(32) NOT NULL,
+            emoji VARCHAR(64) NOT NULL,
+            role_id VARCHAR(32) NOT NULL,
+            PRIMARY KEY (guild_id, message_id, emoji)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_giveaways (
+            id SERIAL PRIMARY KEY,
+            guild_id VARCHAR(32) NOT NULL,
+            channel_id VARCHAR(32) NOT NULL,
+            message_id VARCHAR(32),
+            prize TEXT NOT NULL,
+            winners_count INTEGER NOT NULL DEFAULT 1,
+            ends_at TIMESTAMPTZ NOT NULL,
+            ended BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_giveaways_active
+        ON discord_giveaways (ends_at)
+        WHERE ended = FALSE
+        """
+    )
+
+
 def _run_schema_step(label: str, fn) -> bool:
     """Run one schema DDL step in its own connection; never abort later steps."""
     global _schema_compat_failed_steps
@@ -1429,6 +1515,7 @@ def ensure_schema_compat() -> None:
         )
         # Discord bot tables are optional; do not fail readiness if they cannot be created.
         _run_schema_step("discord_bot_tables", _ensure_discord_bot_tables)
+        _run_schema_step("discord_engagement_tables", _ensure_engagement_tables)
         # Coalition bank contribution tracking (cumulative per member per resource)
         _run_schema_step(
             "col_bank_contributions",
