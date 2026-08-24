@@ -722,7 +722,22 @@ def bot_nation_embed():
     user_id = _resolve_nation_identifier(identifier)
     if user_id is None:
         return jsonify({"error": "Nation not found"}), 404
-    snap = nation_snapshot_for_bot(user_id, full_detail=True)
+
+    # Check ownership — only the nation's own linked Discord user gets
+    # full detail (exact gold/resources/military); everyone else gets a
+    # summary view, same rule as /api/bot/nation and /api/bot/resources.
+    # `trusted` is set only by staff-gated bot commands (e.g. /admin
+    # nation, which requires Discord guild-admin permission) that need
+    # guaranteed full detail regardless of ownership.
+    is_owner = False
+    discord_user_id = _discord_user_id_from_request()
+    if discord_user_id:
+        requester_id = resolve_user_id_by_discord(discord_user_id)
+        if requester_id and str(requester_id) == str(user_id):
+            is_owner = True
+    trusted = request.args.get("trusted") == "1"
+
+    snap = nation_snapshot_for_bot(user_id, full_detail=(is_owner or trusted))
     if not snap.get("id"):
         return jsonify({"error": "Could not load nation statistics."}), 500
     title = (request.args.get("title") or "Nation lookup").strip() or "Nation lookup"
@@ -925,7 +940,11 @@ def bot_heuristics_sync():
         return jsonify({"ok": True, "message": "Spam warning synced"})
         
     elif action == "xp_gain":
-        xp_amount = int(payload.get("xp_amount", 0))
+        try:
+            xp_amount = int(payload.get("xp_amount", 0))
+        except (TypeError, ValueError):
+            xp_amount = 0
+        xp_amount = max(0, min(xp_amount, 50))
         try:
             QueryHelper.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (xp_amount * 10, user_id))
         except:

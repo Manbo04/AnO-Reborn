@@ -70,7 +70,9 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
             ident = identifier.strip()
-            data = await asyncio.to_thread(backend.nation, ident)
+            data = await asyncio.to_thread(
+                lambda: backend.nation(ident, trusted=True)
+            )
             embed = build_nation_embed(data, "Staff — nation intel")
             embed.color = discord.Color.gold()
             await interaction.followup.send(embed=embed, ephemeral=True)

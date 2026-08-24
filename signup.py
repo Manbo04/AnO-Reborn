@@ -378,11 +378,16 @@ def callback():
     if request.values.get("error"):
         return request.values["error"]
 
-    # Create an OAuth session using the stored state (may be None)
-    # Guard against missing oauth2_state in session
+    # Create an OAuth session using the stored state. The state MUST come
+    # from this browser's own session (set in discord()) — trusting a
+    # request-supplied `state` when the session has none would let an
+    # attacker complete their own OAuth flow and hand the victim a link
+    # that logs their session into the attacker's Discord identity
+    # (login CSRF). Hard-fail instead of falling back.
     oauth_state = session.get("oauth2_state")
-    if not oauth_state and "state" in request.values:
-        oauth_state = request.values["state"]
+    if not oauth_state:
+        flash("Your Discord login session expired. Please try again.")
+        return redirect("/login")
 
     if not OAUTH2_CLIENT_SECRET:
         import logging

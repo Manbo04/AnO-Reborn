@@ -181,7 +181,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                         isError: true,
                     };
                 }
-                const result = await pool.query(query);
+                // Passing an explicit (empty) params array forces node-postgres to
+                // use the extended query protocol, which — unlike the simple query
+                // protocol used by pool.query(query) with no params — rejects
+                // multi-statement strings outright. This closes the stacked-query
+                // bypass of the "SELECT only" check above (e.g. "select 1; drop
+                // table x;" would otherwise execute both statements).
+                const result = await pool.query(query, []);
                 return {
                     content: [
                         {

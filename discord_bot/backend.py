@@ -10,7 +10,13 @@ class BotBackend(Protocol):
 
     def me(self, discord_user_id: str) -> Dict[str, Any]: ...
 
-    def nation(self, identifier: str) -> Dict[str, Any]: ...
+    def nation(
+        self,
+        identifier: str,
+        requester_discord_user_id: Optional[str] = None,
+        *,
+        trusted: bool = False,
+    ) -> Dict[str, Any]: ...
 
     def wars(
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
@@ -74,13 +80,27 @@ class DirectDatabaseBackend:
             )
         return snap
 
-    def nation(self, identifier: str) -> Dict[str, Any]:
+    def nation(
+        self,
+        identifier: str,
+        requester_discord_user_id: Optional[str] = None,
+        *,
+        trusted: bool = False,
+    ) -> Dict[str, Any]:
         from bot_api import _resolve_nation_identifier, nation_snapshot_for_bot
+        from database import resolve_user_id_by_discord
 
         user_id = _resolve_nation_identifier(identifier)
         if user_id is None:
             raise BotBackendError("Nation not found", 404)
-        snap = nation_snapshot_for_bot(user_id, full_detail=True)
+
+        is_owner = trusted
+        if not is_owner and requester_discord_user_id:
+            requester_id = resolve_user_id_by_discord(requester_discord_user_id)
+            if requester_id and str(requester_id) == str(user_id):
+                is_owner = True
+
+        snap = nation_snapshot_for_bot(user_id, full_detail=is_owner)
         if not snap.get("id"):
             raise BotBackendError("Could not load nation statistics.", 500)
         return snap
@@ -109,12 +129,20 @@ class DirectDatabaseBackend:
 
         if nation:
             user_id = _resolve_nation_identifier(nation)
+            is_owner = False
+            if user_id is not None and discord_user_id:
+                requester_id = resolve_user_id_by_discord(discord_user_id)
+                if requester_id and str(requester_id) == str(user_id):
+                    is_owner = True
         else:
             if not discord_user_id:
                 raise BotBackendError("Register first or provide a nation name/id", 400)
             user_id = resolve_user_id_by_discord(discord_user_id)
+            is_owner = True
         if user_id is None:
             raise BotBackendError("Nation not found or not registered", 404)
+        if not is_owner:
+            raise BotBackendError("Forbidden. You can only view your own resources.", 403)
         snap = nation_snapshot_for_bot(user_id, full_detail=True)
         if not snap.get("id"):
             raise BotBackendError("Could not load nation statistics.", 500)
@@ -143,8 +171,20 @@ class HttpApiBackend:
     def me(self, discord_user_id: str) -> Dict[str, Any]:
         return self._wrap(self._client.me, discord_user_id)
 
-    def nation(self, identifier: str) -> Dict[str, Any]:
-        return self._wrap(self._client.nation, identifier)
+    def nation(
+        self,
+        identifier: str,
+        requester_discord_user_id: Optional[str] = None,
+        *,
+        trusted: bool = False,
+    ) -> Dict[str, Any]:
+        # NOTE: `trusted` has no effect here — /api/bot/nation always gates
+        # full detail on the X-Discord-User-Id header server-side. Staff
+        # tools that need guaranteed full detail should use the direct-DB
+        # or web-embed backend, which honor `trusted`.
+        return self._wrap(
+            self._client.nation, identifier, requester_discord_user_id
+        )
 
     def wars(
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
