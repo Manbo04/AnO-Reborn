@@ -3,6 +3,8 @@
 
 import asyncio
 import logging
+import os
+import threading
 
 import discord
 from discord.ext import commands, tasks
@@ -190,6 +192,14 @@ def main() -> None:
             warmup_bot_api()
         except Exception as exc:
             logger.warning("warmup_bot_api: %s", exc)
+    try:
+        from discord_bot.dashboard import run as run_dashboard
+
+        threading.Thread(target=run_dashboard, daemon=True, name="bot-dashboard").start()
+        logger.info("Bot dashboard started on port %s", os.getenv("PORT", "8080"))
+    except Exception as exc:
+        logger.warning("Bot dashboard failed to start: %s", exc)
+
     backend = get_backend()
     logger.info("Starting AnO Discord bot (mode=%s)", backend_mode_label())
     bot = AnOBot(backend)

@@ -442,7 +442,6 @@ def create_app():
     from app_core.referrals.routes import bp as referrals_api_bp
     from app_core.onboarding.routes import bp as onboarding_api_bp
     from app_core.events.routes import events_bp
-    from discord_dashboard import discord_dashboard_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -461,7 +460,6 @@ def create_app():
     app.register_blueprint(referrals_api_bp)
     app.register_blueprint(onboarding_api_bp)
     app.register_blueprint(events_bp)
-    app.register_blueprint(discord_dashboard_bp)
     register_coalitions_routes(app)
 
     import config

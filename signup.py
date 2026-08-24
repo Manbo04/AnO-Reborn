@@ -477,16 +477,6 @@ def callback():
                     session.pop('oauth2_intent', None)
                     return redirect("/forgot_password")
 
-            elif intent == 'dashboard':
-                if 'user_id' not in session:
-                    return error(401, "You must be logged in to open the bot dashboard.")
-                guilds_resp = discord.get(API_BASE_URL + '/users/@me/guilds')
-                session['discord_dashboard_guilds'] = (
-                    guilds_resp.json() if guilds_resp.status_code == 200 else []
-                )
-                session.pop('oauth2_intent', None)
-                return redirect("/discord/dashboard")
-
             from database import users_table_has_column
 
             if users_table_has_column("discord_id"):
