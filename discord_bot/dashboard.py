@@ -14,11 +14,16 @@ import os
 
 from flask import Flask, redirect, render_template, request, session
 from requests_oauthlib import OAuth2Session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from discord_bot import engagement_store as store
 
 app = Flask(__name__, template_folder="dashboard_templates")
 app.secret_key = os.getenv("SECRET_KEY", "")
+# Railway terminates TLS at its edge and forwards over plain HTTP — without
+# this, Flask sees request.url as http:// and oauthlib refuses the token
+# exchange ("OAuth 2 MUST utilize https").
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 API_BASE_URL = "https://discord.com/api"
 AUTHORIZATION_BASE_URL = API_BASE_URL + "/oauth2/authorize"
