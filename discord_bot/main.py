@@ -192,13 +192,17 @@ def main() -> None:
             warmup_bot_api()
         except Exception as exc:
             logger.warning("warmup_bot_api: %s", exc)
-    try:
-        from discord_bot.dashboard import run as run_dashboard
+    # Dashboard binds $PORT — only safe on the dedicated bot service. On the
+    # web sidecar (DISCORD_BOT_SIDECAR=1), $PORT is already claimed by
+    # gunicorn; starting it there race-crashes the web service (2026-08-24 outage).
+    if (os.getenv("RAILWAY_SERVICE_NAME") or "").strip().lower().find("bot") != -1:
+        try:
+            from discord_bot.dashboard import run as run_dashboard
 
-        threading.Thread(target=run_dashboard, daemon=True, name="bot-dashboard").start()
-        logger.info("Bot dashboard started on port %s", os.getenv("PORT", "8080"))
-    except Exception as exc:
-        logger.warning("Bot dashboard failed to start: %s", exc)
+            threading.Thread(target=run_dashboard, daemon=True, name="bot-dashboard").start()
+            logger.info("Bot dashboard started on port %s", os.getenv("PORT", "8080"))
+        except Exception as exc:
+            logger.warning("Bot dashboard failed to start: %s", exc)
 
     backend = get_backend()
     logger.info("Starting AnO Discord bot (mode=%s)", backend_mode_label())
