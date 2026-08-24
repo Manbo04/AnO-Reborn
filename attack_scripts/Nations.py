@@ -397,6 +397,8 @@ class Nation:
             return result
 
     # set the peace_date in wars table for a particular war
+    _SET_PEACE_ALLOWED_OPTIONS = {"id", "peace_offer_id"}
+
     @staticmethod
     def set_peace(db, connection, war_id=None, options=None):
         if war_id is not None:
@@ -406,6 +408,8 @@ class Nation:
             )
         else:
             option = options["option"]
+            if option not in Nation._SET_PEACE_ALLOWED_OPTIONS:
+                raise ValueError(f"Invalid set_peace option column: {option!r}")
             query = "UPDATE wars SET peace_date=(%s)" + f" WHERE {option}" + "=(%s)"
             db.execute(query, (time.time(), options["value"]))
 

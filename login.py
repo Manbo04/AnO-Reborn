@@ -17,6 +17,7 @@ from database import (
     coarse_fingerprint_from_headers,
     log_login_event,
 )
+from signup import verify_recaptcha
 
 load_dotenv()
 
@@ -84,6 +85,14 @@ def login():
                 logger.debug("Missing username or password")
                 flash("Please provide both username and password.")
                 return render_template("login.html", recaptcha_site_key=recaptcha_site_key), 400
+
+            recaptcha_response = request.form.get("g-recaptcha-response")
+            if not verify_recaptcha(recaptcha_response):
+                logger.debug("Login reCAPTCHA verification failed")
+                flash("Wrong username or password")
+                return render_template(
+                    "login.html", recaptcha_site_key=recaptcha_site_key
+                ), 403
 
             password = password.encode("utf-8")
 

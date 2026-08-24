@@ -1274,6 +1274,19 @@ def nuclear_strike():
     weapon_name = "nukes" if weapon_type == "nuke" else "icbms"
 
     with get_request_cursor() as db:
+        # Require an active war with the target before allowing a strike
+        db.execute(
+            (
+                "SELECT id FROM wars "
+                "WHERE ((attacker=%s AND defender=%s) "
+                "OR (attacker=%s AND defender=%s)) "
+                "AND peace_date IS NULL"
+            ),
+            (attacker_id, target_id, target_id, attacker_id),
+        )
+        if not db.fetchone():
+            return error(403, "You are not at war with this nation.")
+
         # Check weapon quantity
         db.execute(
             """
@@ -1369,6 +1382,19 @@ def strategic_airstrike():
         return error(400, "Must send at least 1 bomber.")
 
     with get_request_cursor() as db:
+        # Require an active war with the target before allowing a strike
+        db.execute(
+            (
+                "SELECT id FROM wars "
+                "WHERE ((attacker=%s AND defender=%s) "
+                "OR (attacker=%s AND defender=%s)) "
+                "AND peace_date IS NULL"
+            ),
+            (attacker_id, target_id, target_id, attacker_id),
+        )
+        if not db.fetchone():
+            return error(403, "You are not at war with this nation.")
+
         # Check attacker bombers
         db.execute(
             """

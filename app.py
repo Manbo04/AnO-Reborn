@@ -226,10 +226,25 @@ def create_app():
     Compress(app)
     limiter.init_app(app)
 
+    # Auth paths that must always be rate limited, even though they live
+    # outside /api/ — brute-force/credential-stuffing targets.
+    _RATE_LIMITED_AUTH_PATHS = (
+        "/login",
+        "/login/email",
+        "/request_password_reset",
+        "/reset_password/",
+        "/reset_password_recovery_key",
+        "/discord_reset_password_page",
+    )
+
     @limiter.request_filter
     def exempt_non_api_routes():
         # True means the request is EXEMPT from rate limiting.
-        return not request.path.startswith("/api/")
+        if request.path.startswith("/api/"):
+            return False
+        if request.path.startswith(_RATE_LIMITED_AUTH_PATHS):
+            return False
+        return True
 
     app.teardown_request(teardown_request_connection)
 
@@ -390,6 +405,22 @@ def create_app():
         text = vimeo.sub(_vimeo, text)
 
         html = _md.markdown(text, extensions=["nl2br"])
+
+        # Sanitize the user-derived markdown output BEFORE splicing in the
+        # trusted, server-built video-embed HTML below — bleach would strip
+        # the iframes too since they aren't on the allowlist.
+        import bleach
+
+        allowed_tags = [
+            "p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li",
+            "a", "blockquote", "code", "pre", "h1", "h2", "h3",
+        ]
+        allowed_attrs = {"a": ["href", "title", "rel"]}
+        html = bleach.clean(
+            html, tags=allowed_tags, attributes=allowed_attrs, strip=True
+        )
+        html = bleach.linkify(html)
+
         for i, embed in enumerate(placeholders):
             html = html.replace(f"<p>VIDEOEMBED{i}ENDEMBED</p>", embed)
             html = html.replace(f"VIDEOEMBED{i}ENDEMBED", embed)

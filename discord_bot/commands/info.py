@@ -63,7 +63,9 @@ def register_commands(
     ) -> None:
         await interaction.response.defer()
         try:
-            data = await asyncio.to_thread(backend.nation, identifier.strip())
+            data = await asyncio.to_thread(
+                backend.nation, identifier.strip(), str(interaction.user.id)
+            )
             await _send_nation_card(
                 interaction, data, fallback_title="Nation lookup", ephemeral=False
             )
@@ -139,8 +141,9 @@ def register_commands(
         try:
             if nation:
                 ident = nation.strip()
+                uid = str(interaction.user.id)
                 data = await asyncio.to_thread(
-                    lambda: backend.resources(nation=ident)
+                    lambda: backend.resources(discord_user_id=uid, nation=ident)
                 )
             else:
                 uid = str(interaction.user.id)

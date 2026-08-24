@@ -65,9 +65,14 @@ class BotApiClient:
     def me(self, discord_user_id: str) -> Dict[str, Any]:
         return self._request("GET", "/api/bot/me", discord_user_id=discord_user_id)
 
-    def nation(self, identifier: str) -> Dict[str, Any]:
+    def nation(
+        self, identifier: str, discord_user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         return self._request(
-            "GET", "/api/bot/nation", params={"identifier": identifier}
+            "GET",
+            "/api/bot/nation",
+            discord_user_id=discord_user_id,
+            params={"identifier": identifier},
         )
 
     def wars(

@@ -30,12 +30,25 @@ class WebEmbedBackend(BotBackend):
             discord_user_id=discord_user_id,
         )
 
-    def nation(self, identifier: str) -> Dict[str, Any]:
+    def nation(
+        self,
+        identifier: str,
+        requester_discord_user_id: Optional[str] = None,
+        *,
+        trusted: bool = False,
+    ) -> Dict[str, Any]:
+        params = {"identifier": identifier.strip(), "title": "Nation lookup"}
+        if trusted:
+            # Only set by staff-gated (require_guild_admin) callers — see
+            # bot_nation_embed(), which honors this alongside the normal
+            # owner check.
+            params["trusted"] = "1"
         return self._wrap(
             self._client._request,
             "GET",
             "/api/bot/nation_embed",
-            params={"identifier": identifier.strip(), "title": "Nation lookup"},
+            discord_user_id=requester_discord_user_id,
+            params=params,
         )
 
     def wars(
@@ -64,6 +77,7 @@ class WebEmbedBackend(BotBackend):
                 self._client._request,
                 "GET",
                 "/api/bot/nation_embed",
+                discord_user_id=discord_user_id,
                 params={"identifier": nation.strip(), "title": "Resources"},
             )
         if discord_user_id:

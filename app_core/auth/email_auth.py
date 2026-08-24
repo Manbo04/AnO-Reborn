@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
 from app_core.auth.passwords import hash_password, password_matches
 from database import get_request_cursor
+from signup import verify_recaptcha
 import datetime
 import logging
 
@@ -137,6 +138,11 @@ def login_email():
 
     if not email or not password:
         flash("Email and password are required.")
+        return redirect("/login")
+
+    recaptcha_response = request.form.get("g-recaptcha-response")
+    if not verify_recaptcha(recaptcha_response):
+        flash("Invalid email or password.")
         return redirect("/login")
 
     try:
