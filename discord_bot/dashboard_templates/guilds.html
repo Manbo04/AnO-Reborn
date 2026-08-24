@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}Your Servers — Bot Dashboard{% endblock %} {% block body %}
+<h1>Your Servers</h1>
+{% if guilds %}
+<ul class="guild-list">
+  {% for guild in guilds %}
+  <li class="guild-row">
+    <a href="/dashboard/{{ guild.id }}">
+      {% if guild.icon %}
+      <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" alt="" />
+      {% else %}
+      <span class="fallback">👥</span>
+      {% endif %}
+      <strong>{{ guild.name }}</strong>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No servers found where you're an admin or have Manage Server permission.</p>
+{% endif %}
+{% endblock %}

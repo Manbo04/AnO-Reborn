@@ -1,0 +1,128 @@
+{% extends "base.html" %} {% block title %}{{ guild.name }} — Bot Dashboard{% endblock %} {% block body %}
+<p><a href="/dashboard">&laquo; Back to your servers</a></p>
+<h1>{{ guild.name }}</h1>
+
+<h2>Leveling</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/levels" method="POST">
+    <label>XP per message
+      <input type="number" min="0" name="xp_per_message" value="{{ level_config.xp_per_message }}" />
+    </label>
+    <label>Cooldown between XP awards (seconds)
+      <input type="number" min="0" name="xp_cooldown_seconds" value="{{ level_config.xp_cooldown_seconds }}" />
+    </label>
+    <label>XP per minute in voice
+      <input type="number" min="0" name="xp_per_voice_minute" value="{{ level_config.xp_per_voice_minute }}" />
+    </label>
+    <label>Level-up announcement channel ID
+      <input type="text" name="level_up_channel_id" value="{{ level_config.level_up_channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="level_up_enabled" {% if level_config.level_up_enabled %}checked{% endif %} />
+      Announce level-ups
+    </label>
+
+    <h3>Level role rewards</h3>
+    {% if level_roles %}
+    <table>
+      <tr><th>Level</th><th>Role ID</th></tr>
+      {% for level, role_id in level_roles %}
+      <tr><td>{{ level }}</td><td>{{ role_id }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No level role rewards configured yet.</p>
+    {% endif %}
+    <div class="inline-fields">
+      <label>Add/update reward — level
+        <input type="number" min="1" name="reward_level" />
+      </label>
+      <label>Role ID
+        <input type="text" name="reward_role_id" />
+      </label>
+    </div>
+
+    <button type="submit" class="btn">Save Leveling Settings</button>
+  </form>
+</div>
+
+<h2>Welcome &amp; Auto-Roles</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/welcome" method="POST">
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" {% if welcome_config.enabled %}checked{% endif %} />
+      Enabled
+    </label>
+    <label>Welcome channel ID
+      <input type="text" name="channel_id" value="{{ welcome_config.channel_id or '' }}" />
+    </label>
+    <label>Welcome message (use {{ '{member}' }} and {{ '{server}' }})
+      <textarea name="message_template" rows="3">{{ welcome_config.message_template or '' }}</textarea>
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="dm_enabled" {% if welcome_config.dm_enabled %}checked{% endif %} />
+      Send DM to new members
+    </label>
+    <label>DM message
+      <textarea name="dm_template" rows="3">{{ welcome_config.dm_template or '' }}</textarea>
+    </label>
+    <label>Auto-roles on join (comma-separated role IDs)
+      <input type="text" name="auto_role_ids" value="{{ welcome_config.auto_role_ids | join(', ') }}" />
+    </label>
+    <button type="submit" class="btn">Save Welcome Settings</button>
+  </form>
+</div>
+
+<h2>Reaction Roles</h2>
+<div class="card">
+  <p>Add new reaction roles in Discord with <code>/reactionrole add</code> — manage existing ones here.</p>
+  {% if reaction_roles %}
+  <table>
+    <tr><th>Message ID</th><th>Emoji</th><th>Role ID</th><th></th></tr>
+    {% for message_id, emoji, role_id in reaction_roles %}
+    <tr>
+      <td>{{ message_id }}</td>
+      <td>{{ emoji }}</td>
+      <td>{{ role_id }}</td>
+      <td>
+        <form action="/dashboard/{{ guild.id }}/reactionrole/{{ message_id }}/{{ emoji | urlencode }}/delete" method="POST">
+          <button type="submit" class="btn danger">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No reaction roles configured yet.</p>
+  {% endif %}
+</div>
+
+<h2>Active Giveaways</h2>
+<div class="card">
+  <p>Start new giveaways in Discord with <code>/giveaway start</code>.</p>
+  {% if giveaways %}
+  <table>
+    <tr><th>Prize</th><th>Winners</th><th>Ends</th></tr>
+    {% for g in giveaways %}
+    <tr><td>{{ g.prize }}</td><td>{{ g.winners_count }}</td><td>{{ g.ends_at }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No active giveaways.</p>
+  {% endif %}
+</div>
+
+<h2>Leaderboard (Top 10)</h2>
+<div class="card">
+  {% if leaderboard %}
+  <table>
+    <tr><th>#</th><th>User ID</th><th>Level</th><th>XP</th></tr>
+    {% for user_id, xp, level in leaderboard %}
+    <tr><td>{{ loop.index }}</td><td>{{ user_id }}</td><td>{{ level }}</td><td>{{ xp }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No XP recorded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
