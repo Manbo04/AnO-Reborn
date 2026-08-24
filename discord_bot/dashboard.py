@@ -12,6 +12,12 @@ discord_bot/permissions.py::is_guild_admin() uses inside Discord itself.
 
 import os
 
+# Discord returns the full union of scopes it's already granted this
+# user for our client_id (the game's own "identify email" login flow
+# shares the same Discord app), not just what this request asked for —
+# requests_oauthlib hard-fails on any scope mismatch by default.
+os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
+
 from flask import Flask, redirect, render_template, request, session
 from requests_oauthlib import OAuth2Session
 from werkzeug.middleware.proxy_fix import ProxyFix
