@@ -73,18 +73,31 @@
             <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
             <form method="POST" action="/start_research">
                 <label for="tech_id">Technology</label>
-                <select class="templateselect" name="tech_id" id="tech_id" required>
+                <select class="templateselect" name="tech_id" id="tech_id" required onchange="anoUpdateTechDescription()">
                     {% for tech in tech_rows %}
-                    <option value="{{ tech[0] }}">
+                    <option value="{{ tech[0] }}" data-description="{{ tech[5] or 'No description available yet.' }}">
                         {{ tech[1] }} ({{ tech[2] | weight_fmt }} {{ research_cost_resource }})
                         {% if tech[0] in unlocked_ids %}- Unlocked{% endif %}
                     </option>
                     {% endfor %}
                 </select>
+                <p class="templatecontentpleft" id="tech_description">
+                    {{ (tech_rows[0][5] or 'No description available yet.') if tech_rows else '' }}
+                </p>
                 <button type="submit" class="templatedivbutton templatecenteredbutton">
                     <span class="material-icons-outlined">science</span>Research
                 </button>
             </form>
+            <script>
+                function anoUpdateTechDescription() {
+                    var select = document.getElementById('tech_id');
+                    var box = document.getElementById('tech_description');
+                    var selected = select.options[select.selectedIndex];
+                    if (selected && box) {
+                        box.textContent = selected.getAttribute('data-description');
+                    }
+                }
+            </script>
         </div>
         {% endif %}
 
