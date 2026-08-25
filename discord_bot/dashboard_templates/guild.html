@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% block title %}{{ guild.name }} — Bot Dashboard{% endblock %} {% block body %}
-<p><a href="/dashboard">&laquo; Back to your servers</a></p>
+{% include "_guild_nav.html" %}
 <h1>{{ guild.name }}</h1>
 
 <h2>Leveling</h2>

@@ -1,0 +1,80 @@
+{% extends "base.html" %} {% block title %}{{ guild.name }} — Community{% endblock %} {% block body %}
+{% include "_guild_nav.html" %}
+<h1>{{ guild.name }} — Community</h1>
+
+<h2>Starboard</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/community/starboard" method="POST">
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" {% if starboard_config.enabled %}checked{% endif %} />
+      Enabled
+    </label>
+    <label>Starboard channel ID
+      <input type="text" name="channel_id" value="{{ starboard_config.channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+    <div class="inline-fields">
+      <label>Emoji
+        <input type="text" name="emoji" value="{{ starboard_config.emoji }}" />
+      </label>
+      <label>Star threshold
+        <input type="number" min="1" name="threshold" value="{{ starboard_config.threshold }}" />
+      </label>
+    </div>
+    <button type="submit" class="btn">Save Starboard Settings</button>
+  </form>
+</div>
+
+<h2>Tickets</h2>
+<div class="card">
+  <p>Members open tickets in Discord with <code>/ticket open</code>; staff close with <code>/ticket close</code> inside the thread. The configured channel must already be restricted to staff via normal Discord permissions.</p>
+  <form action="/dashboard/{{ guild.id }}/community/tickets" method="POST">
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" {% if ticket_config.enabled %}checked{% endif %} />
+      Enabled
+    </label>
+    <label>Ticket channel ID
+      <input type="text" name="ticket_channel_id" value="{{ ticket_config.ticket_channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+    <button type="submit" class="btn">Save Ticket Settings</button>
+  </form>
+
+  <h3>Open Tickets</h3>
+  {% if open_tickets %}
+  <table>
+    <tr><th>Opened by</th><th>Thread</th><th>Opened</th></tr>
+    {% for t in open_tickets %}
+    <tr><td>{{ t.opener_user_id }}</td><td><a href="https://discord.com/channels/{{ guild.id }}/{{ t.thread_id }}">#{{ t.thread_id }}</a></td><td>{{ t.opened_at }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No open tickets.</p>
+  {% endif %}
+</div>
+
+<h2>Suggestions</h2>
+<div class="card">
+  <p>Members post suggestions in Discord with <code>/suggest</code>; staff decide with <code>/suggestion approve|deny|implemented</code>.</p>
+  <form action="/dashboard/{{ guild.id }}/community/suggestions" method="POST">
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" {% if suggestions_config.enabled %}checked{% endif %} />
+      Enabled
+    </label>
+    <label>Suggestions channel ID
+      <input type="text" name="channel_id" value="{{ suggestions_config.channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+    <button type="submit" class="btn">Save Suggestions Settings</button>
+  </form>
+
+  <h3>Recent Suggestions</h3>
+  {% if suggestions %}
+  <table>
+    <tr><th>#</th><th>Status</th><th>Content</th><th>Author</th></tr>
+    {% for s in suggestions %}
+    <tr><td>{{ s.id }}</td><td>{{ s.status }}</td><td>{{ s.content[:80] }}</td><td>{{ s.author_user_id }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No suggestions yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

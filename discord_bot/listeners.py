@@ -4,7 +4,9 @@ import logging
 
 import discord
 
-from discord_bot import engagement_store as store
+from discord_bot import customcommands_store, engagement_store as store
+from discord_bot import moderation_listeners
+from discord_bot import starboard_listeners
 from discord_bot.xp import award_message_xp
 
 logger = logging.getLogger("ano_discord_bot")
@@ -19,6 +21,43 @@ async def handle_message(message: discord.Message) -> None:
         await award_message_xp(message.author)
     except Exception as exc:
         logger.warning("XP award failed for %s: %s", message.author.id, exc)
+
+    try:
+        await moderation_listeners.handle_automod_message(message)
+    except Exception as exc:
+        logger.warning("Automod check failed for %s: %s", message.author.id, exc)
+
+    try:
+        await handle_custom_command_trigger(message)
+    except Exception as exc:
+        logger.warning("Custom command check failed for %s: %s", message.author.id, exc)
+
+
+async def handle_custom_command_trigger(message: discord.Message) -> None:
+    content = message.content or ""
+    if not content.startswith("!"):
+        return
+    token = content.split(maxsplit=1)[0][1:].lower()
+    if not token:
+        return
+    cmd = customcommands_store.get_custom_command(str(message.guild.id), token)
+    if not cmd:
+        return
+    if cmd.response_type == "embed":
+        color = discord.Color.blurple()
+        if cmd.embed_color:
+            try:
+                color = discord.Color(int(cmd.embed_color.lstrip("#"), 16))
+            except ValueError:
+                pass
+        embed = discord.Embed(
+            title=cmd.embed_title or None,
+            description=cmd.response_text or None,
+            color=color,
+        )
+        await message.channel.send(embed=embed)
+    else:
+        await message.channel.send(cmd.response_text or "")
 
 
 def _render_template(template: str, member: discord.Member) -> str:
@@ -55,6 +94,11 @@ async def handle_member_join(member: discord.Member) -> None:
 
 
 async def handle_reaction_add(payload: discord.RawReactionActionEvent, client: discord.Client) -> None:
+    try:
+        await starboard_listeners.handle_reaction_add(payload, client)
+    except Exception as exc:
+        logger.warning("Starboard check failed for message %s: %s", payload.message_id, exc)
+
     if payload.member is None or payload.member.bot:
         return
     role_id = store.get_reaction_role(str(payload.guild_id), str(payload.message_id), str(payload.emoji))
@@ -72,6 +116,11 @@ async def handle_reaction_add(payload: discord.RawReactionActionEvent, client: d
 
 
 async def handle_reaction_remove(payload: discord.RawReactionActionEvent, client: discord.Client) -> None:
+    try:
+        await starboard_listeners.handle_reaction_remove(payload, client)
+    except Exception as exc:
+        logger.warning("Starboard check failed for message %s: %s", payload.message_id, exc)
+
     role_id = store.get_reaction_role(str(payload.guild_id), str(payload.message_id), str(payload.emoji))
     if not role_id:
         return

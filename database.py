@@ -1344,6 +1344,200 @@ def _ensure_engagement_tables(db) -> None:
     )
 
 
+def _ensure_logging_tables(db) -> None:
+    """Idempotent Discord server-logging config (one row per guild)."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_logging_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            log_channel_id VARCHAR(32),
+            log_message_edit BOOLEAN NOT NULL DEFAULT TRUE,
+            log_message_delete BOOLEAN NOT NULL DEFAULT TRUE,
+            log_member_join BOOLEAN NOT NULL DEFAULT TRUE,
+            log_member_leave BOOLEAN NOT NULL DEFAULT TRUE,
+            log_member_ban BOOLEAN NOT NULL DEFAULT TRUE,
+            log_member_timeout BOOLEAN NOT NULL DEFAULT TRUE,
+            log_role_changes BOOLEAN NOT NULL DEFAULT FALSE,
+            log_channel_changes BOOLEAN NOT NULL DEFAULT FALSE,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+
+
+def _ensure_moderation_tables(db) -> None:
+    """Idempotent Discord moderation/auto-mod config, bad-word list, and case log."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_moderation_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            log_channel_id VARCHAR(32),
+            filter_spam_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            filter_spam_message_limit INTEGER NOT NULL DEFAULT 5,
+            filter_spam_interval_seconds INTEGER NOT NULL DEFAULT 5,
+            filter_invites_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            filter_mass_mentions_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            filter_mass_mentions_limit INTEGER NOT NULL DEFAULT 5,
+            filter_bad_words_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            filter_action VARCHAR(16) NOT NULL DEFAULT 'delete_warn',
+            filter_timeout_minutes INTEGER NOT NULL DEFAULT 10,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_bad_words (
+            guild_id VARCHAR(32) NOT NULL,
+            word VARCHAR(128) NOT NULL,
+            PRIMARY KEY (guild_id, word)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_mod_cases (
+            id SERIAL PRIMARY KEY,
+            guild_id VARCHAR(32) NOT NULL,
+            action VARCHAR(16) NOT NULL,
+            target_user_id VARCHAR(32) NOT NULL,
+            moderator_user_id VARCHAR(32) NOT NULL,
+            reason TEXT,
+            duration_minutes INTEGER,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_mod_cases_guild_target
+        ON discord_mod_cases (guild_id, target_user_id)
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_mod_cases_guild_created
+        ON discord_mod_cases (guild_id, created_at DESC)
+        """
+    )
+
+
+def _ensure_customcommands_tables(db) -> None:
+    """Idempotent per-guild custom command / tag definitions."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_custom_commands (
+            id SERIAL PRIMARY KEY,
+            guild_id VARCHAR(32) NOT NULL,
+            trigger_word VARCHAR(64) NOT NULL,
+            response_type VARCHAR(16) NOT NULL DEFAULT 'text',
+            response_text TEXT,
+            embed_title VARCHAR(256),
+            embed_color VARCHAR(7),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (guild_id, trigger_word)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_custom_commands_guild
+        ON discord_custom_commands (guild_id)
+        """
+    )
+
+
+def _ensure_community_tables(db) -> None:
+    """Idempotent starboard, tickets, and suggestions tables."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_starboard_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            channel_id VARCHAR(32),
+            emoji VARCHAR(64) NOT NULL DEFAULT '⭐',
+            threshold INTEGER NOT NULL DEFAULT 3,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_starboard_posts (
+            guild_id VARCHAR(32) NOT NULL,
+            source_message_id VARCHAR(32) NOT NULL,
+            source_channel_id VARCHAR(32) NOT NULL,
+            starboard_message_id VARCHAR(32) NOT NULL,
+            star_count INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, source_message_id)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_ticket_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            ticket_channel_id VARCHAR(32),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_tickets (
+            id SERIAL PRIMARY KEY,
+            guild_id VARCHAR(32) NOT NULL,
+            opener_user_id VARCHAR(32) NOT NULL,
+            thread_id VARCHAR(32) NOT NULL,
+            status VARCHAR(16) NOT NULL DEFAULT 'open',
+            opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            closed_at TIMESTAMPTZ,
+            closed_by_user_id VARCHAR(32)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_tickets_guild_status
+        ON discord_tickets (guild_id, status)
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_suggestions_config (
+            guild_id VARCHAR(32) PRIMARY KEY,
+            enabled BOOLEAN NOT NULL DEFAULT TRUE,
+            channel_id VARCHAR(32),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discord_suggestions (
+            id SERIAL PRIMARY KEY,
+            guild_id VARCHAR(32) NOT NULL,
+            author_user_id VARCHAR(32) NOT NULL,
+            channel_id VARCHAR(32) NOT NULL,
+            message_id VARCHAR(32),
+            content TEXT NOT NULL,
+            status VARCHAR(16) NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            decided_at TIMESTAMPTZ,
+            decided_by_user_id VARCHAR(32)
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_discord_suggestions_guild_status
+        ON discord_suggestions (guild_id, status)
+        """
+    )
+
+
 def _run_schema_step(label: str, fn) -> bool:
     """Run one schema DDL step in its own connection; never abort later steps."""
     global _schema_compat_failed_steps
@@ -1517,6 +1711,10 @@ def ensure_schema_compat() -> None:
         # Discord bot tables are optional; do not fail readiness if they cannot be created.
         _run_schema_step("discord_bot_tables", _ensure_discord_bot_tables)
         _run_schema_step("discord_engagement_tables", _ensure_engagement_tables)
+        _run_schema_step("discord_logging_tables", _ensure_logging_tables)
+        _run_schema_step("discord_moderation_tables", _ensure_moderation_tables)
+        _run_schema_step("discord_customcommands_tables", _ensure_customcommands_tables)
+        _run_schema_step("discord_community_tables", _ensure_community_tables)
         # Coalition bank contribution tracking (cumulative per member per resource)
         _run_schema_step(
             "col_bank_contributions",

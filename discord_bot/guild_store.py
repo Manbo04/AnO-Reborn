@@ -39,13 +39,13 @@ class GuildSettings:
     panels_refresh_minutes: int = 15
 
 
-def get_admin_role_ids(guild_id: str) -> set:
+def get_role_alias_ids(guild_id: str, alias: str) -> set:
     rows = QueryHelper.fetch_all(
         """
         SELECT discord_role_id FROM discord_role_aliases
-        WHERE guild_id = %s AND alias = 'admin'
+        WHERE guild_id = %s AND alias = %s
         """,
-        (guild_id,),
+        (guild_id, alias),
     )
     out: set = set()
     for row in rows or []:
@@ -55,17 +55,25 @@ def get_admin_role_ids(guild_id: str) -> set:
     return out
 
 
-def set_admin_role(guild_id: str, discord_role_id: str) -> None:
+def set_role_alias(guild_id: str, alias: str, discord_role_id: str) -> None:
     with get_db_cursor() as db:
         db.execute(
             """
             INSERT INTO discord_role_aliases (guild_id, alias, discord_role_id)
-            VALUES (%s, 'admin', %s)
+            VALUES (%s, %s, %s)
             ON CONFLICT (guild_id, alias)
             DO UPDATE SET discord_role_id = EXCLUDED.discord_role_id
             """,
-            (guild_id, str(discord_role_id)),
+            (guild_id, alias, str(discord_role_id)),
         )
+
+
+def get_admin_role_ids(guild_id: str) -> set:
+    return get_role_alias_ids(guild_id, "admin")
+
+
+def set_admin_role(guild_id: str, discord_role_id: str) -> None:
+    set_role_alias(guild_id, "admin", discord_role_id)
 
 
 def get_guild_settings(guild_id: str) -> Optional[GuildSettings]:

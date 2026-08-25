@@ -1,0 +1,48 @@
+{% extends "base.html" %} {% block title %}{{ guild.name }} — Logging{% endblock %} {% block body %}
+{% include "_guild_nav.html" %}
+<h1>{{ guild.name }} — Server Logging</h1>
+
+<h2>Log Channel &amp; Events</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/logging/config" method="POST">
+    <label>Log channel ID
+      <input type="text" name="log_channel_id" value="{{ logging_config.log_channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" name="log_message_edit" {% if logging_config.log_message_edit %}checked{% endif %} />
+      Message edited
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_message_delete" {% if logging_config.log_message_delete %}checked{% endif %} />
+      Message deleted
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_member_join" {% if logging_config.log_member_join %}checked{% endif %} />
+      Member joined
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_member_leave" {% if logging_config.log_member_leave %}checked{% endif %} />
+      Member left
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_member_ban" {% if logging_config.log_member_ban %}checked{% endif %} />
+      Member banned / unbanned
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_member_timeout" {% if logging_config.log_member_timeout %}checked{% endif %} />
+      Member timed out
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_role_changes" {% if logging_config.log_role_changes %}checked{% endif %} />
+      Role created / updated / deleted, and member role changes
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="log_channel_changes" {% if logging_config.log_channel_changes %}checked{% endif %} />
+      Channel created / deleted
+    </label>
+
+    <button type="submit" class="btn">Save Logging Settings</button>
+  </form>
+</div>
+{% endblock %}
