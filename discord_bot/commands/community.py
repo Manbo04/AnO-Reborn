@@ -87,11 +87,17 @@ def _check_site_status() -> str:
 
 
 def _channel_tag(guild: Optional[discord.Guild], name: str) -> str:
-    """Real clickable mention if the channel exists in this guild, else plain text."""
+    """Real clickable mention if the channel exists in this guild, else plain text.
+
+    Matches by substring (not equality) because servers commonly prefix channel
+    names with an emoji/separator, e.g. the real name is "🐞┃bug-reports", not
+    "bug-reports".
+    """
     if guild:
-        channel = discord.utils.get(guild.text_channels, name=name)
-        if channel:
-            return channel.mention
+        target = name.lower()
+        for channel in guild.text_channels:
+            if target in channel.name.lower():
+                return channel.mention
     return f"#{name}"
 
 
