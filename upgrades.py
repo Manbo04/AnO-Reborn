@@ -84,7 +84,7 @@ def upgrades():
     with get_request_cursor() as db:
         db.execute(
             """
-            SELECT tech_id, display_name, research_cost, prerequisite_tech_id, name
+            SELECT tech_id, display_name, research_cost, prerequisite_tech_id, name, description
             FROM tech_dictionary
             WHERE is_active = TRUE
             ORDER BY display_name ASC
@@ -100,7 +100,7 @@ def upgrades():
         tech_costs = {}
         tech_prereq_names = {}
         for row in tech_rows:
-            tech_id, display_name, research_cost, prerequisite_tech_id, tech_name = row
+            tech_id, display_name, research_cost, prerequisite_tech_id, tech_name, description = row
             legacy_key = TECH_TO_LEGACY_UPGRADE.get(tech_name)
             if not legacy_key:
                 continue
