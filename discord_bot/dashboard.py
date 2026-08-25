@@ -22,7 +22,13 @@ from flask import Flask, redirect, render_template, request, session
 from requests_oauthlib import OAuth2Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from discord_bot import customcommands_store
 from discord_bot import engagement_store as store
+from discord_bot import logging_store
+from discord_bot import moderation_store
+from discord_bot import starboard_store
+from discord_bot import suggestions_store
+from discord_bot import tickets_store
 
 app = Flask(__name__, template_folder="dashboard_templates")
 app.secret_key = os.getenv("SECRET_KEY", "")
@@ -164,6 +170,7 @@ def dashboard_guild(guild_id):
     return render_template(
         "guild.html",
         guild=guild,
+        active_tab="engagement",
         level_config=store.get_level_config(guild_id),
         level_roles=store.list_level_roles(guild_id),
         welcome_config=store.get_welcome_config(guild_id),
@@ -224,6 +231,194 @@ def dashboard_delete_reaction_role(guild_id, message_id, emoji):
         return render_template("connect.html"), 403
     store.remove_reaction_role(guild_id, message_id, emoji)
     return redirect(f"/dashboard/{guild_id}")
+
+
+@app.route("/dashboard/<guild_id>/logging")
+def dashboard_logging(guild_id):
+    guild = _manageable_guild_or_none(guild_id)
+    if not guild:
+        return render_template("connect.html"), 403
+    return render_template(
+        "guild_logging.html",
+        guild=guild,
+        active_tab="logging",
+        logging_config=logging_store.get_logging_config(guild_id),
+    )
+
+
+@app.route("/dashboard/<guild_id>/logging/config", methods=["POST"])
+def dashboard_update_logging(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+
+    config = logging_store.get_logging_config(guild_id)
+    config.log_channel_id = request.form.get("log_channel_id") or None
+    config.log_message_edit = request.form.get("log_message_edit") == "on"
+    config.log_message_delete = request.form.get("log_message_delete") == "on"
+    config.log_member_join = request.form.get("log_member_join") == "on"
+    config.log_member_leave = request.form.get("log_member_leave") == "on"
+    config.log_member_ban = request.form.get("log_member_ban") == "on"
+    config.log_member_timeout = request.form.get("log_member_timeout") == "on"
+    config.log_role_changes = request.form.get("log_role_changes") == "on"
+    config.log_channel_changes = request.form.get("log_channel_changes") == "on"
+    logging_store.set_logging_config(config)
+
+    return redirect(f"/dashboard/{guild_id}/logging")
+
+
+@app.route("/dashboard/<guild_id>/moderation")
+def dashboard_moderation(guild_id):
+    guild = _manageable_guild_or_none(guild_id)
+    if not guild:
+        return render_template("connect.html"), 403
+    return render_template(
+        "guild_moderation.html",
+        guild=guild,
+        active_tab="moderation",
+        mod_config=moderation_store.get_moderation_config(guild_id),
+        bad_words=moderation_store.list_bad_words(guild_id),
+        cases=moderation_store.list_cases(guild_id, limit=20),
+    )
+
+
+@app.route("/dashboard/<guild_id>/moderation/config", methods=["POST"])
+def dashboard_update_moderation(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+
+    config = moderation_store.get_moderation_config(guild_id)
+    config.log_channel_id = request.form.get("log_channel_id") or None
+    config.filter_spam_enabled = request.form.get("filter_spam_enabled") == "on"
+    config.filter_spam_message_limit = int(
+        request.form.get("filter_spam_message_limit") or config.filter_spam_message_limit
+    )
+    config.filter_spam_interval_seconds = int(
+        request.form.get("filter_spam_interval_seconds") or config.filter_spam_interval_seconds
+    )
+    config.filter_invites_enabled = request.form.get("filter_invites_enabled") == "on"
+    config.filter_mass_mentions_enabled = request.form.get("filter_mass_mentions_enabled") == "on"
+    config.filter_mass_mentions_limit = int(
+        request.form.get("filter_mass_mentions_limit") or config.filter_mass_mentions_limit
+    )
+    config.filter_bad_words_enabled = request.form.get("filter_bad_words_enabled") == "on"
+    config.filter_action = request.form.get("filter_action") or config.filter_action
+    config.filter_timeout_minutes = int(
+        request.form.get("filter_timeout_minutes") or config.filter_timeout_minutes
+    )
+    moderation_store.set_moderation_config(config)
+
+    return redirect(f"/dashboard/{guild_id}/moderation")
+
+
+@app.route("/dashboard/<guild_id>/moderation/badwords/add", methods=["POST"])
+def dashboard_add_bad_word(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    word = (request.form.get("word") or "").strip()
+    if word:
+        moderation_store.add_bad_word(guild_id, word)
+    return redirect(f"/dashboard/{guild_id}/moderation")
+
+
+@app.route("/dashboard/<guild_id>/moderation/badwords/<word>/delete", methods=["POST"])
+def dashboard_delete_bad_word(guild_id, word):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    moderation_store.remove_bad_word(guild_id, word)
+    return redirect(f"/dashboard/{guild_id}/moderation")
+
+
+@app.route("/dashboard/<guild_id>/customcommands")
+def dashboard_customcommands(guild_id):
+    guild = _manageable_guild_or_none(guild_id)
+    if not guild:
+        return render_template("connect.html"), 403
+    return render_template(
+        "guild_customcommands.html",
+        guild=guild,
+        active_tab="customcommands",
+        custom_commands=customcommands_store.list_custom_commands(guild_id),
+    )
+
+
+@app.route("/dashboard/<guild_id>/customcommands/save", methods=["POST"])
+def dashboard_save_customcommand(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+
+    trigger = (request.form.get("trigger") or "").strip()
+    if trigger:
+        command_id = request.form.get("id")
+        customcommands_store.save_custom_command(
+            guild_id=guild_id,
+            trigger=trigger,
+            response_type=request.form.get("response_type") or "text",
+            response_text=request.form.get("response_text") or None,
+            embed_title=request.form.get("embed_title") or None,
+            embed_color=request.form.get("embed_color") or None,
+            command_id=int(command_id) if command_id else None,
+        )
+    return redirect(f"/dashboard/{guild_id}/customcommands")
+
+
+@app.route("/dashboard/<guild_id>/customcommands/<int:command_id>/delete", methods=["POST"])
+def dashboard_delete_customcommand(guild_id, command_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    customcommands_store.delete_custom_command(guild_id, command_id)
+    return redirect(f"/dashboard/{guild_id}/customcommands")
+
+
+@app.route("/dashboard/<guild_id>/community")
+def dashboard_community(guild_id):
+    guild = _manageable_guild_or_none(guild_id)
+    if not guild:
+        return render_template("connect.html"), 403
+    return render_template(
+        "guild_community.html",
+        guild=guild,
+        active_tab="community",
+        starboard_config=starboard_store.get_starboard_config(guild_id),
+        ticket_config=tickets_store.get_ticket_config(guild_id),
+        open_tickets=tickets_store.list_open_tickets(guild_id),
+        suggestions_config=suggestions_store.get_suggestions_config(guild_id),
+        suggestions=suggestions_store.list_suggestions(guild_id, limit=20),
+    )
+
+
+@app.route("/dashboard/<guild_id>/community/starboard", methods=["POST"])
+def dashboard_update_starboard(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    config = starboard_store.get_starboard_config(guild_id)
+    config.enabled = request.form.get("enabled") == "on"
+    config.channel_id = request.form.get("channel_id") or None
+    config.emoji = request.form.get("emoji") or config.emoji
+    config.threshold = int(request.form.get("threshold") or config.threshold)
+    starboard_store.set_starboard_config(config)
+    return redirect(f"/dashboard/{guild_id}/community")
+
+
+@app.route("/dashboard/<guild_id>/community/tickets", methods=["POST"])
+def dashboard_update_tickets(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    config = tickets_store.get_ticket_config(guild_id)
+    config.enabled = request.form.get("enabled") == "on"
+    config.ticket_channel_id = request.form.get("ticket_channel_id") or None
+    tickets_store.set_ticket_config(config)
+    return redirect(f"/dashboard/{guild_id}/community")
+
+
+@app.route("/dashboard/<guild_id>/community/suggestions", methods=["POST"])
+def dashboard_update_suggestions(guild_id):
+    if not _manageable_guild_or_none(guild_id):
+        return render_template("connect.html"), 403
+    config = suggestions_store.get_suggestions_config(guild_id)
+    config.enabled = request.form.get("enabled") == "on"
+    config.channel_id = request.form.get("channel_id") or None
+    suggestions_store.set_suggestions_config(config)
+    return redirect(f"/dashboard/{guild_id}/community")
 
 
 def run() -> None:

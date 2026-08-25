@@ -1,0 +1,8 @@
+<p><a href="/dashboard">&laquo; Back to your servers</a></p>
+<p class="subnav">
+  {% if active_tab == 'engagement' %}<span class="current">Engagement</span>{% else %}<a href="/dashboard/{{ guild.id }}">Engagement</a>{% endif %} |
+  {% if active_tab == 'moderation' %}<span class="current">Moderation</span>{% else %}<a href="/dashboard/{{ guild.id }}/moderation">Moderation</a>{% endif %} |
+  {% if active_tab == 'logging' %}<span class="current">Logging</span>{% else %}<a href="/dashboard/{{ guild.id }}/logging">Logging</a>{% endif %} |
+  {% if active_tab == 'customcommands' %}<span class="current">Custom Commands</span>{% else %}<a href="/dashboard/{{ guild.id }}/customcommands">Custom Commands</a>{% endif %} |
+  {% if active_tab == 'community' %}<span class="current">Community</span>{% else %}<a href="/dashboard/{{ guild.id }}/community">Community</a>{% endif %}
+</p>

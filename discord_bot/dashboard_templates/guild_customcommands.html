@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block title %}{{ guild.name }} — Custom Commands{% endblock %} {% block body %}
+{% include "_guild_nav.html" %}
+<h1>{{ guild.name }} — Custom Commands</h1>
+<p>Members trigger these with <code>!trigger</code> in chat. Use <code>/tag list</code> in Discord to see them all.</p>
+
+<h2>Add / Edit a Command</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/customcommands/save" method="POST">
+    <label>Trigger (without the !) — saving an existing trigger updates it
+      <input type="text" name="trigger" placeholder="e.g. rules" />
+    </label>
+    <label>Response type
+      <select name="response_type">
+        <option value="text">Plain text</option>
+        <option value="embed">Embed</option>
+      </select>
+    </label>
+    <label>Response text / embed description
+      <textarea name="response_text" rows="3"></textarea>
+    </label>
+    <label>Embed title (only used when response type is Embed)
+      <input type="text" name="embed_title" />
+    </label>
+    <label>Embed color hex (only used when response type is Embed)
+      <input type="text" name="embed_color" placeholder="#5865F2" />
+    </label>
+    <button type="submit" class="btn">Save Command</button>
+  </form>
+</div>
+
+<h2>Existing Commands</h2>
+<div class="card">
+  {% if custom_commands %}
+  <table>
+    <tr><th>Trigger</th><th>Type</th><th>Response</th><th></th></tr>
+    {% for c in custom_commands %}
+    <tr>
+      <td>!{{ c.trigger }}</td>
+      <td>{{ c.response_type }}</td>
+      <td>{{ (c.embed_title or c.response_text or '')[:60] }}</td>
+      <td>
+        <form action="/dashboard/{{ guild.id }}/customcommands/{{ c.id }}/delete" method="POST">
+          <button type="submit" class="btn danger">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No custom commands configured yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

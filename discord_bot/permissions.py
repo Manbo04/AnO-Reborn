@@ -7,7 +7,7 @@ from typing import Optional, Set
 import discord
 from discord import app_commands
 
-from discord_bot.guild_store import get_admin_role_ids
+from discord_bot.guild_store import get_admin_role_ids, get_role_alias_ids
 
 
 def _env_admin_role_ids() -> Set[int]:
@@ -51,6 +51,47 @@ def require_guild_admin():
             return True
         raise app_commands.CheckFailure(
             "This command is restricted to server administrators and configured staff roles."
+        )
+
+    return app_commands.check(predicate)
+
+
+async def is_guild_staff(
+    interaction: discord.Interaction,
+    *,
+    guild_id: Optional[int] = None,
+) -> bool:
+    """True if member may run staff moderation-action commands (warn/kick/ban/timeout/...).
+
+    Looser bar than is_guild_admin(): also passes for native kick/ban/timeout
+    permissions or the configured 'moderator' role alias, since acting on a single
+    member is a lower-stakes action than changing guild-wide automod policy.
+    """
+    if await is_guild_admin(interaction, guild_id=guild_id):
+        return True
+    if not interaction.guild or not interaction.user:
+        return False
+    member = interaction.user
+    if isinstance(member, discord.Member):
+        perms = member.guild_permissions
+        if perms.kick_members or perms.ban_members or perms.moderate_members:
+            return True
+        gid = str(guild_id or interaction.guild.id)
+        mod_roles = get_role_alias_ids(gid, "moderator")
+        if mod_roles and any(r.id in mod_roles for r in member.roles):
+            return True
+    return False
+
+
+def require_guild_staff():
+    """App command check: reject non-staff with a clear message."""
+
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if await is_guild_staff(interaction):
+            return True
+        raise app_commands.CheckFailure(
+            "This command is restricted to server staff (kick/ban/timeout permissions "
+            "or the configured moderator role)."
         )
 
     return app_commands.check(predicate)

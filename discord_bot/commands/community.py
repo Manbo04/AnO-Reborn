@@ -20,8 +20,10 @@ import discord
 from discord import app_commands
 
 from database import QueryHelper
+from discord_bot import suggestions_store
 from discord_bot.backend import BotBackend
 from discord_bot.config import GAME_BASE_URL
+from discord_bot.permissions import require_guild_admin
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +103,17 @@ def _channel_tag(guild: Optional[discord.Guild], name: str) -> str:
             if target in channel.name.lower() and hasattr(channel, "mention"):
                 return channel.mention
     return f"#{name}"
+
+
+def _find_channel_by_name(guild: Optional[discord.Guild], name: str) -> Optional[discord.TextChannel]:
+    """Same substring-match convention as _channel_tag, but returns the real channel."""
+    if not guild:
+        return None
+    target = name.lower()
+    for channel in guild.text_channels:
+        if target in channel.name.lower():
+            return channel
+    return None
 
 
 def _tick_schedule_info() -> dict:
@@ -230,12 +243,95 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
             ephemeral=True,
         )
 
-    @tree.command(name="suggest", description="Log a quick suggestion")
+    @tree.command(name="suggest", description="Post a suggestion for staff to review")
     @app_commands.describe(text="Your suggestion")
     async def suggest_cmd(interaction: discord.Interaction, text: str) -> None:
-        suggestions = _channel_tag(interaction.guild, "suggestions")
-        await interaction.response.send_message(
-            f"Got it: \"{text}\" -- also worth posting in {suggestions} so it doesn't get lost "
-            "and others can react to it.",
-            ephemeral=True,
+        await interaction.response.defer(ephemeral=True)
+        guild_id = str(interaction.guild.id)
+        config = suggestions_store.get_suggestions_config(guild_id)
+        channel = None
+        if config.channel_id:
+            ch = interaction.guild.get_channel(int(config.channel_id))
+            channel = ch if isinstance(ch, discord.TextChannel) else None
+        if channel is None:
+            channel = _find_channel_by_name(interaction.guild, "suggestions")
+        if channel is None:
+            await interaction.followup.send(
+                "No suggestions channel is configured yet — ask an admin to set one "
+                "on the dashboard's Community page.",
+                ephemeral=True,
+            )
+            return
+
+        embed = discord.Embed(
+            title="New suggestion",
+            description=text[:4000],
+            color=discord.Color.blurple(),
         )
+        embed.set_footer(text=f"Suggested by {interaction.user} — Pending")
+        try:
+            message = await channel.send(embed=embed)
+            await message.add_reaction("👍")
+            await message.add_reaction("👎")
+        except discord.Forbidden:
+            await interaction.followup.send(
+                f"Missing permission to post in {channel.mention}.", ephemeral=True
+            )
+            return
+
+        suggestion_id = suggestions_store.create_suggestion(
+            guild_id, str(interaction.user.id), str(channel.id), text
+        )
+        suggestions_store.set_suggestion_message(suggestion_id, str(message.id))
+        await interaction.followup.send(f"Suggestion #{suggestion_id} posted in {channel.mention}.", ephemeral=True)
+
+    suggestion_group = app_commands.Group(
+        name="suggestion",
+        description="Decide on posted suggestions",
+        default_permissions=discord.Permissions(manage_guild=True),
+    )
+
+    async def _decide(interaction: discord.Interaction, message_id: str, status: str, label: str) -> None:
+        await interaction.response.defer(ephemeral=True)
+        guild_id = str(interaction.guild.id)
+        suggestion = suggestions_store.get_suggestion_by_message(guild_id, message_id)
+        if not suggestion:
+            await interaction.followup.send("No suggestion found for that message ID.", ephemeral=True)
+            return
+        suggestions_store.decide_suggestion(suggestion.id, status, str(interaction.user.id))
+
+        channel = interaction.guild.get_channel(int(suggestion.channel_id))
+        if isinstance(channel, discord.TextChannel):
+            try:
+                message = await channel.fetch_message(int(message_id))
+                embed = message.embeds[0] if message.embeds else discord.Embed(description=suggestion.content)
+                embed.color = {
+                    "approved": discord.Color.green(),
+                    "denied": discord.Color.red(),
+                    "implemented": discord.Color.gold(),
+                }.get(status, embed.color)
+                embed.set_footer(text=f"{label} by {interaction.user}")
+                await message.edit(embed=embed)
+            except (discord.NotFound, discord.Forbidden):
+                pass
+        await interaction.followup.send(f"Suggestion #{suggestion.id} marked {label.lower()}.", ephemeral=True)
+
+    @suggestion_group.command(name="approve", description="Mark a suggestion approved")
+    @app_commands.describe(message_id="Message ID of the suggestion embed")
+    @require_guild_admin()
+    async def suggestion_approve(interaction: discord.Interaction, message_id: str) -> None:
+        await _decide(interaction, message_id, "approved", "Approved")
+
+    @suggestion_group.command(name="deny", description="Mark a suggestion denied")
+    @app_commands.describe(message_id="Message ID of the suggestion embed")
+    @require_guild_admin()
+    async def suggestion_deny(interaction: discord.Interaction, message_id: str) -> None:
+        await _decide(interaction, message_id, "denied", "Denied")
+
+    @suggestion_group.command(name="implemented", description="Mark a suggestion implemented")
+    @app_commands.describe(message_id="Message ID of the suggestion embed")
+    @require_guild_admin()
+    async def suggestion_implemented(interaction: discord.Interaction, message_id: str) -> None:
+        await _decide(interaction, message_id, "implemented", "Implemented")
+
+    tree.add_command(suggestion_group)

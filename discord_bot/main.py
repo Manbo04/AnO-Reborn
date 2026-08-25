@@ -10,13 +10,16 @@ import discord
 from discord.ext import commands, tasks
 
 from discord_bot.backend import backend_mode_label, get_backend
-from discord_bot import giveaways, listeners
+from discord_bot import giveaways, listeners, logging_listeners
 from discord_bot.commands import admin_cmds
 from discord_bot.commands import community as community_cmds
+from discord_bot.commands import customcommands as customcommands_cmds
 from discord_bot.commands import engagement as engagement_cmds
 from discord_bot.commands import guild_setup as guild_setup_cmds
 from discord_bot.commands import info as info_cmds
+from discord_bot.commands import moderation as moderation_cmds
 from discord_bot.commands import register as register_cmds
+from discord_bot.commands import tickets as tickets_cmds
 from discord_bot.config import DISCORD_BOT_TOKEN, validate_config
 from discord_bot.embeds import EMBED_UI_VERSION
 from discord_bot.panel_service import refresh_all_guild_panels
@@ -107,11 +110,17 @@ async def _setup_panel_permissions(guild: discord.Guild) -> None:
 class AnOBot(commands.Bot):
     def __init__(self, backend) -> None:
         intents = discord.Intents.default()
-        intents.message_content = False
+        # Privileged intent — also needs enabling under Discord Developer Portal →
+        # Bot → Privileged Gateway Intents → Message Content Intent, or message.content
+        # is silently empty on every Gateway event (auto-mod filters, custom-command
+        # triggers, and edit/delete logging all depend on this).
+        intents.message_content = True
         # Privileged intent — also needs enabling under Discord Developer Portal →
         # Bot → Privileged Gateway Intents → Server Members Intent, or on_member_join
         # (welcome messages, auto-roles) silently never fires.
         intents.members = True
+        # Non-privileged — needed for on_member_ban/on_member_unban (moderation logging).
+        intents.moderation = True
         super().__init__(command_prefix="!", intents=intents)
         self.backend = backend
 
@@ -122,6 +131,9 @@ class AnOBot(commands.Bot):
         admin_cmds.register_commands(self.tree, self.backend)
         community_cmds.register_commands(self.tree, self.backend)
         engagement_cmds.register_commands(self.tree, self.backend)
+        moderation_cmds.register_commands(self.tree, self.backend)
+        customcommands_cmds.register_commands(self.tree, self.backend)
+        tickets_cmds.register_commands(self.tree, self.backend)
         synced = await self.tree.sync()
         logger.info("Synced %s global slash command(s)", len(synced))
 
@@ -175,6 +187,39 @@ class AnOBot(commands.Bot):
 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
         await listeners.handle_reaction_remove(payload, self)
+
+    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
+        await logging_listeners.handle_message_edit(before, after)
+
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        await logging_listeners.handle_message_delete(payload, self)
+
+    async def on_member_remove(self, member: discord.Member) -> None:
+        await logging_listeners.handle_member_remove(member)
+
+    async def on_member_ban(self, guild: discord.Guild, user) -> None:
+        await logging_listeners.handle_member_ban(guild, user)
+
+    async def on_member_unban(self, guild: discord.Guild, user: discord.User) -> None:
+        await logging_listeners.handle_member_unban(guild, user)
+
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
+        await logging_listeners.handle_member_update(before, after)
+
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel) -> None:
+        await logging_listeners.handle_guild_channel_create(channel)
+
+    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel) -> None:
+        await logging_listeners.handle_guild_channel_delete(channel)
+
+    async def on_guild_role_create(self, role: discord.Role) -> None:
+        await logging_listeners.handle_guild_role_create(role)
+
+    async def on_guild_role_update(self, before: discord.Role, after: discord.Role) -> None:
+        await logging_listeners.handle_guild_role_update(before, after)
+
+    async def on_guild_role_delete(self, role: discord.Role) -> None:
+        await logging_listeners.handle_guild_role_delete(role)
 
 
 def main() -> None:

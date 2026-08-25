@@ -1,0 +1,105 @@
+{% extends "base.html" %} {% block title %}{{ guild.name }} — Moderation{% endblock %} {% block body %}
+{% include "_guild_nav.html" %}
+<h1>{{ guild.name }} — Moderation &amp; Auto-mod</h1>
+<p>Actions like <code>/warn /kick /ban /timeout</code> run in Discord — this page configures auto-mod policy and shows the case log.</p>
+
+<h2>Auto-mod Filters</h2>
+<div class="card">
+  <form action="/dashboard/{{ guild.id }}/moderation/config" method="POST">
+    <label>Log channel ID (auto-mod actions &amp; case log)
+      <input type="text" name="log_channel_id" value="{{ mod_config.log_channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" name="filter_invites_enabled" {% if mod_config.filter_invites_enabled %}checked{% endif %} />
+      Filter invite links
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" name="filter_mass_mentions_enabled" {% if mod_config.filter_mass_mentions_enabled %}checked{% endif %} />
+      Filter mass mentions
+    </label>
+    <label>Mass-mention limit
+      <input type="number" min="1" name="filter_mass_mentions_limit" value="{{ mod_config.filter_mass_mentions_limit }}" />
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" name="filter_bad_words_enabled" {% if mod_config.filter_bad_words_enabled %}checked{% endif %} />
+      Filter bad words (list below)
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" name="filter_spam_enabled" {% if mod_config.filter_spam_enabled %}checked{% endif %} />
+      Filter spam / rate-limit
+    </label>
+    <div class="inline-fields">
+      <label>Message limit
+        <input type="number" min="1" name="filter_spam_message_limit" value="{{ mod_config.filter_spam_message_limit }}" />
+      </label>
+      <label>Per interval (seconds)
+        <input type="number" min="1" name="filter_spam_interval_seconds" value="{{ mod_config.filter_spam_interval_seconds }}" />
+      </label>
+    </div>
+
+    <label>Action when a filter triggers
+      <select name="filter_action">
+        <option value="delete_warn" {% if mod_config.filter_action == 'delete_warn' %}selected{% endif %}>Delete + warn</option>
+        <option value="delete_timeout" {% if mod_config.filter_action == 'delete_timeout' %}selected{% endif %}>Delete + timeout</option>
+        <option value="delete_only" {% if mod_config.filter_action == 'delete_only' %}selected{% endif %}>Delete only</option>
+      </select>
+    </label>
+    <label>Timeout duration (minutes, used when action is "Delete + timeout")
+      <input type="number" min="1" name="filter_timeout_minutes" value="{{ mod_config.filter_timeout_minutes }}" />
+    </label>
+
+    <button type="submit" class="btn">Save Auto-mod Settings</button>
+  </form>
+</div>
+
+<h2>Bad Words</h2>
+<div class="card">
+  {% if bad_words %}
+  <table>
+    <tr><th>Word</th><th></th></tr>
+    {% for word in bad_words %}
+    <tr>
+      <td>{{ word }}</td>
+      <td>
+        <form action="/dashboard/{{ guild.id }}/moderation/badwords/{{ word | urlencode }}/delete" method="POST">
+          <button type="submit" class="btn danger">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No bad words configured yet.</p>
+  {% endif %}
+  <form action="/dashboard/{{ guild.id }}/moderation/badwords/add" method="POST">
+    <label>Add word
+      <input type="text" name="word" placeholder="e.g. slur or spam phrase" />
+    </label>
+    <button type="submit" class="btn">Add Word</button>
+  </form>
+</div>
+
+<h2>Recent Cases</h2>
+<div class="card">
+  {% if cases %}
+  <table>
+    <tr><th>#</th><th>Action</th><th>Member</th><th>Reason</th><th>When</th></tr>
+    {% for c in cases %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>{{ c.action }}</td>
+      <td>{{ c.target_user_id }}</td>
+      <td>{{ c.reason or '' }}</td>
+      <td>{{ c.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No moderation cases yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
