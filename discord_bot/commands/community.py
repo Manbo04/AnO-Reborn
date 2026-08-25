@@ -91,12 +91,14 @@ def _channel_tag(guild: Optional[discord.Guild], name: str) -> str:
 
     Matches by substring (not equality) because servers commonly prefix channel
     names with an emoji/separator, e.g. the real name is "🐞┃bug-reports", not
-    "bug-reports".
+    "bug-reports". Searches all channel types (guild.channels), not just
+    guild.text_channels -- confirmed live that #bug-reports is a Forum channel,
+    which guild.text_channels excludes entirely.
     """
     if guild:
         target = name.lower()
-        for channel in guild.text_channels:
-            if target in channel.name.lower():
+        for channel in guild.channels:
+            if target in channel.name.lower() and hasattr(channel, "mention"):
                 return channel.mention
     return f"#{name}"
 
