@@ -86,6 +86,42 @@ def _check_site_status() -> str:
         return f"🔴 {GAME_BASE_URL} didn't respond within 8s -- might be down."
 
 
+def _channel_tag(guild: Optional[discord.Guild], name: str) -> str:
+    """Real clickable mention if the channel exists in this guild, else plain text."""
+    if guild:
+        channel = discord.utils.get(guild.text_channels, name=name)
+        if channel:
+            return channel.mention
+    return f"#{name}"
+
+
+def _tick_schedule_info() -> dict:
+    from datetime import datetime, timezone
+
+    from app_core.celery_schedule import CELERY_BEAT_SCHEDULE
+
+    schedule = CELERY_BEAT_SCHEDULE["global_tick"]["schedule"]
+    minutes = sorted(schedule.minute)
+    hours = sorted(schedule.hour)
+
+    interval_desc = None
+    if hours == list(range(24)) and len(minutes) > 1:
+        gaps = {b - a for a, b in zip(minutes, minutes[1:])}
+        gaps.add((minutes[0] + 60) - minutes[-1])
+        if len(gaps) == 1:
+            interval_desc = f"every {gaps.pop()} minutes"
+    if interval_desc is None:
+        interval_desc = (
+            f"at minute(s) {', '.join(str(m) for m in minutes)} "
+            f"of hour(s) {', '.join(str(h) for h in hours)} (UTC)"
+        )
+
+    now = datetime.now(timezone.utc)
+    next_in = schedule.remaining_estimate(now)
+    next_at_epoch = int((now + next_in).timestamp())
+    return {"interval_desc": interval_desc, "next_at_epoch": next_at_epoch}
+
+
 def _fetch_changelog() -> str:
     url = f"https://api.github.com/repos/{GITHUB_REPO}/pulls?state=closed&sort=updated&direction=desc&per_page=10"
     req = urllib.request.Request(url, headers={"User-Agent": "AnO-Bot-Changelog/1.0", "Accept": "application/vnd.github+json"})
@@ -112,8 +148,25 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
             "**Player commands**\n"
             "`/register` `/me` `/nation` `/wars` `/resources` — link and check nation data\n\n"
             "**Info commands**\n"
-            "`/stats` `/patreon` `/status` `/changelog` `/site` `/bugreport` `/suggest`",
+            "`/stats` `/patreon` `/status` `/changelog` `/site` `/tick` `/bugreport` `/suggest`",
             ephemeral=True,
+        )
+
+    @tree.command(name="tick", description="How often the game's economy tick runs, and when the next one fires")
+    async def tick_cmd(interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        try:
+            info = await asyncio.to_thread(_tick_schedule_info)
+        except Exception:
+            logger.exception("/tick failed")
+            await interaction.followup.send(
+                "Couldn't read the tick schedule right now.", ephemeral=True
+            )
+            return
+        await interaction.followup.send(
+            f"🕒 The game tick runs **{info['interval_desc']}** "
+            "(production, consumption, tax, and upkeep all settle on this cycle).\n"
+            f"Next tick: <t:{info['next_at_epoch']}:R> (<t:{info['next_at_epoch']}:t>)."
         )
 
     @tree.command(name="stats", description="Real player/signup numbers")
@@ -155,14 +208,16 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
 
     @tree.command(name="site", description="Game and community links")
     async def site_cmd(interaction: discord.Interaction) -> None:
+        bugs = _channel_tag(interaction.guild, "bug-reports")
         await interaction.response.send_message(
-            f"**Game**: {GAME_BASE_URL}\n**Bugs**: #bug-reports", ephemeral=False
+            f"**Game**: {GAME_BASE_URL}\n**Bugs**: {bugs}", ephemeral=False
         )
 
     @tree.command(name="bugreport", description="Where and how to report a bug")
     async def bugreport_cmd(interaction: discord.Interaction) -> None:
+        bugs = _channel_tag(interaction.guild, "bug-reports")
         await interaction.response.send_message(
-            "Found a bug? Post it in #bug-reports with what happened and how to reproduce it -- "
+            f"Found a bug? Post it in {bugs} with what happened and how to reproduce it -- "
             "that's the one place we actually track them from.",
             ephemeral=True,
         )
@@ -170,8 +225,9 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
     @tree.command(name="suggest", description="Log a quick suggestion")
     @app_commands.describe(text="Your suggestion")
     async def suggest_cmd(interaction: discord.Interaction, text: str) -> None:
+        suggestions = _channel_tag(interaction.guild, "suggestions")
         await interaction.response.send_message(
-            f"Got it: \"{text}\" -- also worth posting in #suggestions so it doesn't get lost "
+            f"Got it: \"{text}\" -- also worth posting in {suggestions} so it doesn't get lost "
             "and others can react to it.",
             ephemeral=True,
         )

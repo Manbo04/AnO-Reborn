@@ -26,20 +26,51 @@ def build_readme_embed() -> discord.Embed:
     embed = discord.Embed(
         title="📜 Affairs & Order — Discord Commandery",
         description=(
-            "Link your **nation** to Discord, then use slash commands to read live game data.\n\n"
-            "**Player commands** (anyone)\n"
-            "• `/register code:XXXXXXXX` — link nation (code from [Account]("
-            f"{GAME_BASE_URL}/account))\n"
-            "• `/me` — your nation dashboard\n"
-            "• `/nation` · `/wars` · `/resources` — lookups\n\n"
-            "**Info commands** (anyone)\n"
-            "• `/stats` · `/patreon` · `/status` · `/changelog` — server/community numbers\n"
-            "• `/site` · `/bugreport` · `/suggest` — links, bugs, feedback\n\n"
-            "**Staff commands** — administrators only (`/guild_*`, `/admin_*`)\n"
-            "Configure panels and broadcasts in the staff channel; "
-            "non-admins cannot run those commands."
+            "Link your **nation** to Discord, then use slash commands to read live game data."
         ),
         color=ANO_BLUE,
+    )
+    embed.add_field(
+        name="🪪 Your nation",
+        value=(
+            f"• `/register code:XXXXXXXX` — link your nation (code from [Account]({GAME_BASE_URL}/account))\n"
+            "• `/me` — your nation dashboard (economy, military, resources, wars)\n"
+            "• `/nation` — look up any nation's full stats\n"
+            "• `/wars` — list active wars for you or another nation\n"
+            "• `/resources` — top resources for you or another nation"
+        ),
+        inline=False,
+    )
+    embed.add_field(
+        name="ℹ️ Game info",
+        value=(
+            "• `/stats` — real player/signup numbers\n"
+            "• `/patreon` — current patron count and monthly support\n"
+            "• `/status` — is the live game up right now\n"
+            "• `/changelog` — recently merged game updates\n"
+            "• `/tick` — how often the game tick runs and when the next one fires\n"
+            "• `/site` — game and community links\n"
+            "• `/bugreport` — where and how to report a bug\n"
+            "• `/suggest` — log a quick suggestion"
+        ),
+        inline=False,
+    )
+    embed.add_field(
+        name="🎲 Server fun",
+        value=(
+            "• `/rank` — your (or someone else's) level and XP\n"
+            "• `/leaderboard` — top members by XP in this server\n"
+            "• `/poll` — post a quick yes/no poll"
+        ),
+        inline=False,
+    )
+    embed.add_field(
+        name="🛡️ Staff only",
+        value=(
+            "`/guild_*` `/admin_*` `/levels` `/welcome` `/reactionrole` `/giveaway` — "
+            "panels, broadcasts, and server config; non-admins cannot run these."
+        ),
+        inline=False,
     )
     embed.add_field(
         name="Panels in this server",
