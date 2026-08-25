@@ -77,8 +77,24 @@ def _guild_is_manageable(guild: dict) -> bool:
     return bool(perms & _PERM_ADMINISTRATOR) or bool(perms & _PERM_MANAGE_GUILD)
 
 
+def _fetch_guilds() -> list:
+    """Fetch the caller's guild list live from Discord using the stored token.
+
+    Not cached in the session cookie: a user's full guild list (every field
+    Discord returns, for every server) easily blows past browsers' ~4KB
+    cookie limit, which gets silently dropped — logging the user right back
+    out. The OAuth token itself is small, so we keep only that and re-fetch.
+    """
+    token = session.get("oauth2_token")
+    if not token:
+        return []
+    discord = _make_session(token=token)
+    resp = discord.get(API_BASE_URL + "/users/@me/guilds")
+    return resp.json() if resp.status_code == 200 else []
+
+
 def _manageable_guild_or_none(guild_id: str):
-    for guild in session.get("guilds") or []:
+    for guild in _fetch_guilds():
         if str(guild.get("id")) == str(guild_id) and _guild_is_manageable(guild):
             return guild
     return None
@@ -127,9 +143,7 @@ def callback():
     session["oauth2_token"] = token
     discord = _make_session(token=token)
     me = discord.get(API_BASE_URL + "/users/@me").json()
-    guilds_resp = discord.get(API_BASE_URL + "/users/@me/guilds")
     session["discord_user"] = {"id": me.get("id"), "username": me.get("username")}
-    session["guilds"] = guilds_resp.json() if guilds_resp.status_code == 200 else []
     return redirect("/dashboard")
 
 
@@ -137,7 +151,7 @@ def callback():
 def dashboard_home():
     if "discord_user" not in session:
         return render_template("connect.html")
-    manageable = [g for g in session.get("guilds") or [] if _guild_is_manageable(g)]
+    manageable = [g for g in _fetch_guilds() if _guild_is_manageable(g)]
     return render_template("guilds.html", guilds=manageable, user=session["discord_user"])
 
 
