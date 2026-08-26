@@ -34,7 +34,7 @@
                 <span><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
                 <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}% happy</span>
                 <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
-                <span><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
+                <span><span class="material-icons-outlined">power</span> {% if energy >= 0 %}Powered{% else %}No power{% endif %}</span>
             </div>
             <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
         </a>
@@ -54,7 +54,7 @@
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}%</span>
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ cityCount }} cities</span>
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">landscape</span> {{ land }} land</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto{% if energy <= 0 %} province-stat-pill--warn{% endif %}"><span class="material-icons-outlined">power</span> {% if energy > 0 %}Powered{% else %}No power{% endif %}</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto{% if energy < 0 %} province-stat-pill--warn{% endif %}"><span class="material-icons-outlined">power</span> {% if energy >= 0 %}Powered{% else %}No power{% endif %}</span>
                 </div>
             </div>
         </a>
