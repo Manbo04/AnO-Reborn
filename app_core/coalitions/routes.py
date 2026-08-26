@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import variables  # noqa: E402
 import datetime  # noqa: E402
-from database import cache_response, rollback_db_cursor, get_request_cursor  # noqa: E402
+from database import cache_response, rollback_db_cursor, get_request_cursor, invalidate_view_cache  # noqa: E402
 from database import get_coalition_members_table  # noqa: E402
 from typing import Optional  # noqa: E402
 
@@ -1460,6 +1460,18 @@ def update_col_info(coalition_id):
 # Coalition bank stuff
 
 
+def _invalidate_bank_caches(coalition_id):
+    """Clear cached /coalition and /my_coalition responses after a bank
+    mutation. Both views are cached for 30s (cache_response); without this,
+    deposits/withdrawals/requests and their accept/deny can appear to "hang
+    around" or not show up for up to 30s after the action completes. Cleared
+    broadly (not just for the acting user) since other officers viewing the
+    same coalition's bank need the update too.
+    """
+    invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
+    invalidate_view_cache("my_coalition")
+
+
 # Route for depositing resources into the bank
 def deposit_into_bank(coalition_id):
     cId = session["user_id"]
@@ -1559,6 +1571,7 @@ def deposit_into_bank(coalition_id):
             amount = resource[1]
             deposit(name, amount, db)
 
+    _invalidate_bank_caches(coalition_id)
     return redirect(f"/coalition/{coalition_id}")
 
 
@@ -1679,6 +1692,7 @@ def withdraw_from_bank(coalition_id):
         if result is not None:
             return result
 
+    _invalidate_bank_caches(coalition_id)
     return redirect(f"/coalition/{coalition_id}")
 
 
@@ -1727,6 +1741,7 @@ def request_from_bank(coalition_id):
                     500, "Error submitting bank request; please try again or contact admins"
                 )
 
+    _invalidate_bank_caches(coalition_id)
     return redirect(f"/coalition/{coalition_id}")
 
 
@@ -1755,6 +1770,7 @@ def remove_bank_request(bankId):
 
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
+    _invalidate_bank_caches(coalition_id)
     return redirect("/my_coalition")
 
 
@@ -1793,6 +1809,7 @@ def accept_bank_request(bankId):
             return result
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
+    _invalidate_bank_caches(coalition_id)
     return redirect("/my_coalition")
 
 
