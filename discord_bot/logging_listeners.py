@@ -118,11 +118,11 @@ async def handle_member_unban(guild: discord.Guild, user: discord.User) -> None:
 async def handle_member_update(before: discord.Member, after: discord.Member) -> None:
     config = store.get_logging_config(str(after.guild.id))
 
-    if config.log_member_timeout and before.communication_disabled_until != after.communication_disabled_until:
-        if after.communication_disabled_until:
+    if config.log_member_timeout and before.timed_out_until != after.timed_out_until:
+        if after.timed_out_until:
             embed = discord.Embed(
                 title="Member timed out",
-                description=f"{after.mention} ({after}) until {after.communication_disabled_until}",
+                description=f"{after.mention} ({after}) until {after.timed_out_until}",
                 color=discord.Color.orange(),
             )
         else:
