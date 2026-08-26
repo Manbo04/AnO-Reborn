@@ -25,12 +25,19 @@ def _google_client_secret() -> str:
 
 
 def get_google_redirect_uri() -> str:
-    """OAuth callback URL — override with GOOGLE_REDIRECT_URI on any environment."""
+    """OAuth callback URL — override with GOOGLE_REDIRECT_URI on any environment.
+
+    Must be .org, not .com: the login page (and its Google-login form) is
+    served on .org, which sets google_oauth2_state in the .org session
+    cookie. A .com redirect_uri means /login/google/callback runs on a
+    domain that never receives that cookie, so the state check always
+    fails and login silently breaks (same failure mode as Discord login).
+    """
     explicit = os.environ.get("GOOGLE_REDIRECT_URI", "").strip()
     if explicit:
         return explicit
     if os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("RAILWAY_ENVIRONMENT_NAME"):
-        return "https://affairsandorder.com/login/google/callback"
+        return "https://affairsandorder.org/login/google/callback"
     return "http://127.0.0.1:5000/login/google/callback"
 
 
