@@ -163,9 +163,10 @@ OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 environment = os.getenv("ENVIRONMENT", "DEV")
 
 if environment == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
-    # Use Railway domain or custom domain
+    # Must match login.py's OAUTH2_REDIRECT_URI (kept in sync manually, see
+    # that file for why this has to be .org and not .com).
     OAUTH2_REDIRECT_URI = os.getenv(
-        "DISCORD_REDIRECT_URI", "https://affairsandorder.com/callback"
+        "DISCORD_REDIRECT_URI", "https://affairsandorder.org/callback"
     )
 else:
     OAUTH2_REDIRECT_URI = "http://127.0.0.1:5000/callback"

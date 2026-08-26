@@ -137,34 +137,16 @@ def create_app():
             canonical_host = None
             if host_only.startswith("www."):
                 canonical_host = host_only[4:]
-            # .com is kept ONLY for the OAuth flow (redirect URIs are registered there).
-            # All other .com traffic redirects to .org (the primary domain).
-            # The OAuth flow includes: the callback itself, the Discord-signup form
-            # (needs session["oauth2_token"] set by the callback), the Discord-login
-            # bridge, and /auth_handoff which finishes the transition to .org.
-            # Any path that reads session["oauth2_token"] MUST stay on .com so the
-            # session cookie set by /callback is sent by the browser.
-            _OAUTH_PATHS = {
-                "/callback",
-                "/login/google/callback",
-                "/discord_signup",
-                "/google_signup",
-                "/discord_login/",
-                "/auth_handoff",
-                "/health",
-                "/ready",
-            }
-            # OAuth signup/login pages are served on .com (they read the session
-            # cookie set by /callback). Their CSS/images load via relative
-            # /static/ URLs, so /static MUST also serve directly on .com — else
-            # each asset 301-redirects to .org and browsers don't apply the
-            # redirected stylesheet, leaving the signup page completely unstyled
-            # with giant unscaled images (player-reported on the biome page).
-            if (
-                host_only == "affairsandorder.com"
-                and request.path not in _OAUTH_PATHS
-                and not request.path.startswith("/static/")
-            ):
+            # .com exists only as a redirect to .org (the primary domain).
+            # OAuth (Discord/Google) redirect URIs now point at .org directly —
+            # they used to be registered on .com, which required this whole
+            # method to carve out exceptions so the OAuth session cookie set
+            # on .com would survive to the callback. That's gone: everything,
+            # including OAuth, runs on .org now. /health and /ready stay
+            # exempt in case a healthcheck ever hits the .com hostname
+            # directly — a 301 there wouldn't be followed and would read as
+            # a failed check.
+            if host_only == "affairsandorder.com" and request.path not in ("/health", "/ready"):
                 canonical_host = "affairsandorder.org"
             if canonical_host and canonical_host != host_only:
                 canonical = request.url.replace(
@@ -842,78 +824,6 @@ def create_app():
         if value.lower() == "citycount": return "City"
         return value.replace("_", " ").title()
     # --- END RESTORED FILTERS ---
-
-    # ── Cross-domain OAuth handoff ──────────────────────────────────────────
-    # OAuth redirect URIs are registered for .com but .org is the primary domain.
-    # After a successful OAuth callback on .com, the callback redirects here
-    # (on .org) with a short-lived HMAC token so the user lands logged in on .org.
-    @app.route("/auth_handoff")
-    def auth_handoff():
-        import time as _time, hmac as _hmac, hashlib as _hashlib
-        uid_str = request.args.get("uid", "")
-        ts_str  = request.args.get("ts", "")
-        sig     = request.args.get("sig", "")
-        try:
-            uid = int(uid_str)
-            ts  = int(ts_str)
-        except (ValueError, TypeError):
-            return redirect("/login")
-        if abs(_time.time() - ts) > 90:               # 90-second window
-            return redirect("/login?discord_error=session")
-        secret  = (app.config.get("SECRET_KEY") or "").encode()
-        expected = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
-        if not _hmac.compare_digest(sig, expected):
-            return redirect("/login?discord_error=session")
-
-        with get_request_cursor(read_only=True) as db:
-            db.execute("SELECT 1 FROM users WHERE id=%s", (uid,))
-            exists = db.fetchone() is not None
-        if not exists:
-            session.pop("user_id", None)
-            return redirect("/signup")
-
-        session["user_id"] = uid
-        session.permanent  = True
-        session.modified   = True
-        return redirect("/")
-
-    @app.after_request
-    def _maybe_org_handoff(response):
-        """After any OAuth-hosted step on .com sets user_id, redirect to .org.
-
-        Fires for the callback itself AND for /discord_signup and /discord_login/
-        since those paths finish the login/signup while still on .com (they read
-        session["oauth2_token"] set by /callback and can't move to .org until the
-        session has user_id).
-        """
-        import time as _time, hmac as _hmac, hashlib as _hashlib
-        if response.status_code not in (301, 302):
-            return response
-        host_only = (request.host or "").split(":")[0].lower()
-        if host_only != "affairsandorder.com":
-            return response
-        if request.path not in (
-            "/callback",
-            "/login/google/callback",
-            "/discord_signup",
-            "/discord_login/",
-        ):
-            return response
-        uid = session.get("user_id")
-        if not uid:
-            return response
-            
-        loc = response.headers.get("Location", "")
-        if "/discord_signup" in loc or "/google_signup" in loc:
-            return response
-            
-        ts  = int(_time.time())
-        secret   = (app.config.get("SECRET_KEY") or "").encode()
-        sig      = _hmac.new(secret, f"{uid}:{ts}".encode(), _hashlib.sha256).hexdigest()[:24]
-        response.headers["Location"] = (
-            f"https://affairsandorder.org/auth_handoff?uid={uid}&ts={ts}&sig={sig}"
-        )
-        return response
 
     return app
 

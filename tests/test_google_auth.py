@@ -25,4 +25,4 @@ def test_redirect_uri_explicit_override(monkeypatch):
 def test_redirect_uri_railway_default(monkeypatch):
     monkeypatch.delenv("GOOGLE_REDIRECT_URI", raising=False)
     monkeypatch.setenv("RAILWAY_ENVIRONMENT_NAME", "production")
-    assert get_google_redirect_uri() == "https://affairsandorder.com/login/google/callback"
+    assert get_google_redirect_uri() == "https://affairsandorder.org/login/google/callback"

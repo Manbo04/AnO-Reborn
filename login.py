@@ -305,8 +305,12 @@ OAUTH2_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 environment = os.getenv("ENVIRONMENT", "DEV")
 
 if environment == "PROD" or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+    # Must be .org, not .com: the login page (and its /discord form) is served
+    # on .org, which sets the oauth2_state session cookie on .org. A .com
+    # redirect_uri means /callback runs on a domain that never receives that
+    # cookie, so oauth2_state always reads back empty and login silently fails.
     OAUTH2_REDIRECT_URI = os.getenv(
-        "DISCORD_REDIRECT_URI", "https://affairsandorder.com/callback"
+        "DISCORD_REDIRECT_URI", "https://affairsandorder.org/callback"
     )
 else:
     OAUTH2_REDIRECT_URI = "http://localhost:5000/callback"
