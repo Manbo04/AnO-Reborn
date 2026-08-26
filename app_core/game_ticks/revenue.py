@@ -1108,6 +1108,17 @@ def generate_province_revenue():  # Runs each hour
                                 f"Applied pension crisis penalties "
                                 f"to {len(pension_penalties)} users"
                             )
+
+                        try:
+                            from database import invalidate_user_cache
+
+                            for user_id, _ in gold_updates:
+                                try:
+                                    invalidate_user_cache(user_id)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
             except Exception as e:
                 conn.rollback()
                 revenue_write_failed = True

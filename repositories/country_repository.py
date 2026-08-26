@@ -1,5 +1,6 @@
 from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
+from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES
 
 class CountryRepository:
     @staticmethod
@@ -33,25 +34,7 @@ class CountryRepository:
                         c.name,
                         COALESCE(p.provinces_count, 0) AS provinces_count,
                         NULL::integer AS join_number,
-                        ROUND(
-                            COALESCE(p.provinces_count, 0) * 300
-                            + COALESCE(m.soldiers, 0) * 0.02
-                            + COALESCE(m.artillery, 0) * 1.6
-                            + COALESCE(m.tanks, 0) * 0.8
-                            + COALESCE(m.fighters, 0) * 3.5
-                            + COALESCE(m.bombers, 0) * 2.5
-                            + COALESCE(m.apaches, 0) * 3.2
-                            + COALESCE(m.submarines, 0) * 4.5
-                            + COALESCE(m.destroyers, 0) * 3
-                            + COALESCE(m.cruisers, 0) * 5.5
-                            + COALESCE(m.icbms, 0) * 250
-                            + COALESCE(m.nukes, 0) * 500
-                            + COALESCE(m.spies, 0) * 25
-                            + COALESCE(p.city_count, 0) * 10
-                            + COALESCE(p.total_land, 0) * 10
-                            + COALESCE(r.total_resources, 0) * 0.001
-                            + COALESCE(s.gold, 0) * 0.00001
-                        )::bigint AS influence,
+                        {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u
                     JOIN user_ids ui ON u.id = ui.id

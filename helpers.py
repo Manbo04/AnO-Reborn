@@ -662,54 +662,29 @@ def get_influence(country_id, db=None):
         total_land = float(total_land or 0)
         total_resources = float(total_resources or 0)
 
-        # Calculate influence scores
-        soldiers_score = soldiers * 0.02
-        artillery_score = artillery * 1.6
-        tanks_score = tanks * 0.8
-        fighters_score = fighters * 3.5
-        bombers_score = bombers * 2.5
-        apaches_score = apaches * 3.2
-        submarines_score = submarines * 4.5
-        destroyers_score = destroyers * 3
-        cruisers_score = cruisers * 5.5
-        icbms_score = icbms * 250
-        nukes_score = nukes * 500
-        spies_score = spies * 25
-        money_score = gold * 0.00001
-        cities_score = city_count * 10
-        provinces_score = province_count * 300
-        land_score = total_land * 10
-        resources_score = total_resources * 0.001
+    from influence_formula import compute_influence
 
-    """
-    (# of provinces * 300)+(# of soldiers * 0.02)+(# of artillery*1.6)+(# of tanks*0.8)
-    +(# of fighters* 3.5)+(# of bombers *2.5)+(# of apaches *3.2)+(# of subs * 4.5)+
-    (# of destroyers *3.0)+(# of cruisers *5.5) + (# of ICBMS*250)+(# of Nukes * 500)
-    + (# of spies*25) + (# of total cities * 10) + (# of total land * 10)+
-    (total number of rss *0.001)+(total amount of money*0.00001)
-    """
-
-    influence = (
-        provinces_score
-        + soldiers_score
-        + artillery_score
-        + tanks_score
-        + fighters_score
-        + bombers_score
-        + apaches_score
-        + submarines_score
-        + destroyers_score
-        + cruisers_score
-        + icbms_score
-        + nukes_score
-        + spies_score
-        + cities_score
-        + land_score
-        + resources_score
-        + money_score
+    influence = compute_influence(
+        {
+            "provinces": province_count,
+            "soldiers": soldiers,
+            "artillery": artillery,
+            "tanks": tanks,
+            "fighters": fighters,
+            "bombers": bombers,
+            "apaches": apaches,
+            "submarines": submarines,
+            "destroyers": destroyers,
+            "cruisers": cruisers,
+            "icbms": icbms,
+            "nukes": nukes,
+            "spies": spies,
+            "cities": city_count,
+            "land": total_land,
+            "resources": total_resources,
+            "gold": gold,
+        }
     )
-
-    influence = round(influence)
 
     # Cache the result
     query_cache.set(cache_key, influence)
@@ -723,6 +698,8 @@ def get_bulk_influence(user_ids):
     Returns a dict mapping user_id -> influence score.
     Much faster than calling get_influence() in a loop.
     """
+    from influence_formula import compute_influence
+
     if not user_ids:
         return {}
 
@@ -856,24 +833,26 @@ def get_bulk_influence(user_ids):
             total_resources = float(total_resources or 0)
 
             # Calculate influence
-            influence = round(
-                province_count * 300
-                + soldiers * 0.02
-                + artillery * 1.6
-                + tanks * 0.8
-                + fighters * 3.5
-                + bombers * 2.5
-                + apaches * 3.2
-                + submarines * 4.5
-                + destroyers * 3
-                + cruisers * 5.5
-                + icbms * 250
-                + nukes * 500
-                + spies * 25
-                + city_count * 10
-                + total_land * 10
-                + total_resources * 0.001
-                + gold * 0.00001
+            influence = compute_influence(
+                {
+                    "provinces": province_count,
+                    "soldiers": soldiers,
+                    "artillery": artillery,
+                    "tanks": tanks,
+                    "fighters": fighters,
+                    "bombers": bombers,
+                    "apaches": apaches,
+                    "submarines": submarines,
+                    "destroyers": destroyers,
+                    "cruisers": cruisers,
+                    "icbms": icbms,
+                    "nukes": nukes,
+                    "spies": spies,
+                    "cities": city_count,
+                    "land": total_land,
+                    "resources": total_resources,
+                    "gold": gold,
+                }
             )
 
             results[user_id] = influence

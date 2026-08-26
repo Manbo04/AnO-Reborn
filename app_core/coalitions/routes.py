@@ -9,7 +9,7 @@ from flask import (
     flash,
     current_app,
 )
-from helpers import login_required, error, empty_state, require_post_origin, get_influence
+from helpers import login_required, error, empty_state, require_post_origin, get_bulk_influence
 import os
 from dotenv import load_dotenv
 
@@ -19,6 +19,7 @@ import datetime  # noqa: E402
 from database import cache_response, rollback_db_cursor, get_request_cursor, invalidate_view_cache  # noqa: E402
 from database import get_coalition_members_table  # noqa: E402
 from typing import Optional  # noqa: E402
+from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES  # noqa: E402
 
 
 # Route for viewing a coalition's page
@@ -26,14 +27,14 @@ def coalition(coalition_id):
     with get_request_cursor() as db:
         cId = session["user_id"]
 
-        # OPTIMIZATION: Single query for basic coalition info + member count + total influence
+        # OPTIMIZATION: Single query for basic coalition info + member count + total population
         # Only aggregates provinces for members of THIS coalition (not all users)
         _COALITION_HEADER_SQL = f"""
             SELECT
                 c.name, c.type, c.description, c.flag, c.name_changes_used,
                 COALESCE(c.tax_rate, 0),
                 COUNT(DISTINCT coal.userid) AS members_count,
-                COALESCE(SUM(prov.total_pop), 0) AS total_influence
+                COALESCE(SUM(prov.total_pop), 0) AS total_population
             FROM colNames c
             LEFT JOIN {_members_tbl()} coal ON c.id = coal.colid
             LEFT JOIN (
@@ -53,7 +54,7 @@ def coalition(coalition_id):
                 c.name, c.type, c.description, c.flag, c.name_changes_used,
                 0,
                 COUNT(DISTINCT coal.userid) AS members_count,
-                COALESCE(SUM(prov.total_pop), 0) AS total_influence
+                COALESCE(SUM(prov.total_pop), 0) AS total_population
             FROM colNames c
             LEFT JOIN {_members_tbl()} coal ON c.id = coal.colid
             LEFT JOIN (
@@ -95,11 +96,11 @@ def coalition(coalition_id):
             name_changes_used,
             tax_rate,
             members_count,
-            total_influence,
+            total_population,
         ) = result
-        average_influence = total_influence // members_count if members_count > 0 else 0
+        average_population = total_population // members_count if members_count > 0 else 0
 
-        # Calculate coalition statistics (provinces, cities, land, GDP)
+        # Calculate coalition statistics (provinces, cities, land)
         stats_result = None
         try:
             db.execute(
@@ -131,10 +132,6 @@ def coalition(coalition_id):
         )
         coalition_avg_land = coalition_land // members_count if members_count > 0 else 0
 
-        # GDP is the same as total influence (population-based)
-        coalition_gdp = total_influence
-        coalition_gdp_per_capita = average_influence
-
         try:
             db.execute(
                 (
@@ -150,6 +147,8 @@ def coalition(coalition_id):
         except (TypeError, AttributeError, IndexError):
             leaders = []
 
+        total_influence = 0
+        average_influence = 0
         try:
             # stats table has no influence column; keep list lightweight and avoid bad column reference
             # Uses pre-aggregated subquery to avoid N+1 per-member province count lookups
@@ -179,11 +178,12 @@ def coalition(coalition_id):
                     (coalition_id, coalition_id),
                 )
                 members = db.fetchall()
+                influence_by_user = get_bulk_influence([m[0] for m in members])
                 members = [
-                    (m[0], m[1], m[2], get_influence(m[0], db=db), m[4], m[5])
+                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5])
                     for m in members
                 ]
-                total_influence = sum(m[3] for m in members)
+                total_influence = sum(influence_by_user.values())
                 average_influence = total_influence // members_count if members_count > 0 else 0
             except Exception:
                 rollback_db_cursor(db)
@@ -211,11 +211,12 @@ def coalition(coalition_id):
                     (coalition_id, coalition_id),
                 )
                 members = db.fetchall()
+                influence_by_user = get_bulk_influence([m[0] for m in members])
                 members = [
-                    (m[0], m[1], m[2], get_influence(m[0], db=db), m[4], m[5])
+                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5])
                     for m in members
                 ]
-                total_influence = sum(m[3] for m in members)
+                total_influence = sum(influence_by_user.values())
                 average_influence = total_influence // members_count if members_count > 0 else 0
         except Exception:
             members = []
@@ -585,6 +586,8 @@ def coalition(coalition_id):
             userInCurCol=userInCurCol,
             total_influence=total_influence,
             average_influence=average_influence,
+            total_population=total_population,
+            average_population=average_population,
             leaders=leaders,
             flag=flag,
             bankRequests=bankRequests,
@@ -608,8 +611,6 @@ def coalition(coalition_id):
             coalitionAverageCities=coalition_avg_cities,
             coalitionLand=coalition_land,
             coalitionAverageLand=coalition_avg_land,
-            coalitiongpd=coalition_gdp,
-            coalitiongpdPerCapita=coalition_gdp_per_capita,
             tax_rate=tax_rate,
         )
 
@@ -779,25 +780,7 @@ def coalitions():
             LEFT JOIN (
                 SELECT
                     u.id AS userid,
-                    ROUND(
-                        COALESCE(p.provinces_count, 0) * 300
-                        + COALESCE(m.soldiers, 0) * 0.02
-                        + COALESCE(m.artillery, 0) * 1.6
-                        + COALESCE(m.tanks, 0) * 0.8
-                        + COALESCE(m.fighters, 0) * 3.5
-                        + COALESCE(m.bombers, 0) * 2.5
-                        + COALESCE(m.apaches, 0) * 3.2
-                        + COALESCE(m.submarines, 0) * 4.5
-                        + COALESCE(m.destroyers, 0) * 3
-                        + COALESCE(m.cruisers, 0) * 5.5
-                        + COALESCE(m.icbms, 0) * 250
-                        + COALESCE(m.nukes, 0) * 500
-                        + COALESCE(m.spies, 0) * 25
-                        + COALESCE(p.city_count, 0) * 10
-                        + COALESCE(p.total_land, 0) * 10
-                        + COALESCE(r.total_resources, 0) * 0.001
-                        + COALESCE(s.gold, 0) * 0.00001
-                    )::bigint AS influence
+                    {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
@@ -858,25 +841,7 @@ def coalitions():
             LEFT JOIN (
                 SELECT
                     u.id AS userid,
-                    ROUND(
-                        COALESCE(p.provinces_count, 0) * 300
-                        + COALESCE(m.soldiers, 0) * 0.02
-                        + COALESCE(m.artillery, 0) * 1.6
-                        + COALESCE(m.tanks, 0) * 0.8
-                        + COALESCE(m.fighters, 0) * 3.5
-                        + COALESCE(m.bombers, 0) * 2.5
-                        + COALESCE(m.apaches, 0) * 3.2
-                        + COALESCE(m.submarines, 0) * 4.5
-                        + COALESCE(m.destroyers, 0) * 3
-                        + COALESCE(m.cruisers, 0) * 5.5
-                        + COALESCE(m.icbms, 0) * 250
-                        + COALESCE(m.nukes, 0) * 500
-                        + COALESCE(m.spies, 0) * 25
-                        + COALESCE(p.city_count, 0) * 10
-                        + COALESCE(p.total_land, 0) * 10
-                        + COALESCE(r.total_resources, 0) * 0.001
-                        + COALESCE(s.gold, 0) * 0.00001
-                    )::bigint AS influence
+                    {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence
                 FROM users u
                 LEFT JOIN stats s ON s.id = u.id
                 LEFT JOIN (
