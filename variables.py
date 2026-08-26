@@ -19,6 +19,15 @@ DEFAULT_MAX_POPULATION = 1000000
 CITY_MAX_POPULATION_ADDITION = 750000
 LAND_MAX_POPULATION_ADDITION = 120000
 
+# Saturating curve replacing the old linear/unbounded cityCount and land maxPop
+# terms: contribution = CAP * (1 - exp(-units / SOFTNESS)); slope at 0 ~= CAP/SOFTNESS,
+# tuned to roughly match the old linear rate (750k/city, 120k/land) at normal
+# scale, saturating hard at extreme scale (thousands of cities/land).
+CITY_POP_CAP = 50_000_000
+CITY_POP_SOFTNESS = 67
+LAND_POP_CAP = 20_000_000
+LAND_POP_SOFTNESS = 167
+
 DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER = 0.009  # 9%
 
 LAND_FARM_PRODUCTION_ADDITION = 3
@@ -51,6 +60,15 @@ RATIONS_DISTRIBUTION_PER_BUILDING = {
 }
 # Convenience default for any building not in the dict
 RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
+
+# Rations spoilage: banked rations above the buffer decay each hour instead of
+# sustaining unattended growth indefinitely. Tied specifically to
+# distribution_centers (not the full distribution-building mix, since some of
+# those are cheap enough to mass-build purely to game this) so the buffer
+# scales with a real, deliberate infrastructure investment.
+RATIONS_BASELINE_BUFFER_DAYS = 14
+RATIONS_STORAGE_PER_DISTRIBUTION_CENTER = 2_000_000
+RATIONS_EXCESS_DECAY_RATE = 0.02
 
 # DEMOGRAPHIC-BASED CONSUMPTION (Phase 2)
 # Rates are per-capita per tick, scaled to match building production units.
