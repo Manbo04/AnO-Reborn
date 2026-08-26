@@ -2,6 +2,7 @@ from celery import Celery
 import psycopg2
 import os
 import time
+import datetime
 import logging
 from dotenv import load_dotenv
 from attack_scripts import Economy
@@ -289,6 +290,11 @@ def population_growth():  # Function for growing population
             )
 
         # PHASE 2: Apply distribution-center bottleneck.
+        # Spoilage grace period: see variables.RATIONS_SPOILAGE_GRACE_PERIOD_END.
+        in_spoilage_grace_period = (
+            datetime.datetime.now(datetime.timezone.utc)
+            < variables.RATIONS_SPOILAGE_GRACE_PERIOD_END
+        )
         user_rations_to_deduct = {}
         user_effective_rations = {}
         for uid, needed in user_total_rations_needed.items():
@@ -306,16 +312,17 @@ def population_growth():  # Function for growing population
             # indefinitely. Buffer = free baseline (days of this user's
             # current hourly need) + extra capacity from distribution_centers
             # they've built.
-            buffer = (
-                needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS
-                + distribution_centers_map.get(uid, 0)
-                * variables.RATIONS_STORAGE_PER_DISTRIBUTION_CENTER
-            )
-            remaining_after_consumption = warehouse - actually_consumed
             spoilage = 0
-            if remaining_after_consumption > buffer:
-                excess = remaining_after_consumption - buffer
-                spoilage = int(round(excess * variables.RATIONS_EXCESS_DECAY_RATE))
+            if not in_spoilage_grace_period:
+                buffer = (
+                    needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS
+                    + distribution_centers_map.get(uid, 0)
+                    * variables.RATIONS_STORAGE_PER_DISTRIBUTION_CENTER
+                )
+                remaining_after_consumption = warehouse - actually_consumed
+                if remaining_after_consumption > buffer:
+                    excess = remaining_after_consumption - buffer
+                    spoilage = int(round(excess * variables.RATIONS_EXCESS_DECAY_RATE))
 
             user_rations_to_deduct[uid] = actually_consumed + spoilage
 

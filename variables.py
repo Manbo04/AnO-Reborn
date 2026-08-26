@@ -70,6 +70,16 @@ RATIONS_BASELINE_BUFFER_DAYS = 14
 RATIONS_STORAGE_PER_DISTRIBUTION_CENTER = 2_000_000
 RATIONS_EXCESS_DECAY_RATE = 0.02
 
+# TEMP: 48h grace period after this mechanic's 2026-08-26 rollout, so accounts
+# that had already banked a surplus under the old (no-spoilage) rules get a
+# window to see the announcement / adjust before spoilage actually applies.
+# Safe to delete this constant and its check in population.py after this date.
+import datetime as _datetime
+
+RATIONS_SPOILAGE_GRACE_PERIOD_END = _datetime.datetime(
+    2026, 8, 28, 20, 0, 0, tzinfo=_datetime.timezone.utc
+)
+
 # DEMOGRAPHIC-BASED CONSUMPTION (Phase 2)
 # Rates are per-capita per tick, scaled to match building production units.
 # Buildings produce single-digit resources per hour (e.g. farm → 12 rations).
