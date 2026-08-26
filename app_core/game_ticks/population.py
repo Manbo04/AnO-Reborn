@@ -189,7 +189,8 @@ def population_growth():  # Function for growing population
                  p.happiness, p.pollution, p.productivity,
                  COALESCE(p.pop_children, 0) AS pop_children,
                  COALESCE(p.pop_working, 0) AS pop_working,
-                 COALESCE(p.pop_elderly, 0) AS pop_elderly
+                 COALESCE(p.pop_elderly, 0) AS pop_elderly,
+                 COALESCE(p.legacy_max_population, 0) AS legacy_max_population
              FROM provinces p
              JOIN users u ON u.id = p.userId
             ORDER BY userId ASC
@@ -241,6 +242,11 @@ def population_growth():  # Function for growing population
 
         # Preload distribution capacity per user
         dist_cap_map = {}
+        # Tracked separately from dist_cap_map (which spans 6 building types,
+        # some very cheap) so the rations-storage buffer below can't be
+        # trivially inflated by mass-building the cheapest distribution
+        # building -- it's tied specifically to distribution_centers.
+        distribution_centers_map = {}
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             dbdict.execute(
                 """
@@ -265,6 +271,8 @@ def population_growth():  # Function for growing population
                     bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
                 )
                 dist_cap_map[uid] = dist_cap_map.get(uid, 0) + qty * cap
+                if bname == "distribution_centers":
+                    distribution_centers_map[uid] = qty
 
         conn.commit()  # Release read locks from preload queries
 
@@ -291,8 +299,25 @@ def population_growth():  # Function for growing population
             else:
                 distributable = warehouse
             actually_consumed = min(needed, distributable)
-            user_rations_to_deduct[uid] = actually_consumed
             user_effective_rations[uid] = distributable
+
+            # Rations spoilage: a banked surplus above the buffer decays each
+            # hour instead of being able to sustain unattended growth
+            # indefinitely. Buffer = free baseline (days of this user's
+            # current hourly need) + extra capacity from distribution_centers
+            # they've built.
+            buffer = (
+                needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS
+                + distribution_centers_map.get(uid, 0)
+                * variables.RATIONS_STORAGE_PER_DISTRIBUTION_CENTER
+            )
+            remaining_after_consumption = warehouse - actually_consumed
+            spoilage = 0
+            if remaining_after_consumption > buffer:
+                excess = remaining_after_consumption - buffer
+                spoilage = int(round(excess * variables.RATIONS_EXCESS_DECAY_RATE))
+
+            user_rations_to_deduct[uid] = actually_consumed + spoilage
 
         def calc_population_growth(province_row):
             """Calculate population growth for a single province."""
@@ -302,10 +327,18 @@ def population_growth():  # Function for growing population
             land = province_row["land"] or 0
             happiness = int(province_row.get("happiness") or 0)
             pollution = province_row.get("pollution") or 0
+            legacy_max_population = province_row.get("legacy_max_population") or 0
 
-            maxPop = variables.DEFAULT_MAX_POPULATION
-            maxPop += cities * variables.CITY_MAX_POPULATION_ADDITION
-            maxPop += land * variables.LAND_MAX_POPULATION_ADDITION
+            # Saturating curve (approaches a cap asymptotically) instead of the
+            # old unbounded linear terms, so buying unlimited cities/land no
+            # longer produces unbounded maxPop.
+            city_contribution = variables.CITY_POP_CAP * (
+                1 - math.exp(-cities / variables.CITY_POP_SOFTNESS)
+            )
+            land_contribution = variables.LAND_POP_CAP * (
+                1 - math.exp(-land / variables.LAND_POP_SOFTNESS)
+            )
+            maxPop = variables.DEFAULT_MAX_POPULATION + city_contribution + land_contribution
 
             happiness_multiplier = (
                 (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
@@ -317,6 +350,12 @@ def population_growth():  # Function for growing population
             maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
             if maxPop < variables.DEFAULT_MAX_POPULATION:
                 maxPop = variables.DEFAULT_MAX_POPULATION
+            # Grandfather floor: population that already existed before this
+            # curve shipped never gets retroactively shrunk -- it just stops
+            # growing further until legitimate new land/city purchases push
+            # the curve's result past this floor.
+            if legacy_max_population > maxPop:
+                maxPop = legacy_max_population
 
             total_needed = user_total_rations_needed.get(user_id, 1)
             effective_rations = user_effective_rations.get(user_id, 0) or 0
