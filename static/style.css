@@ -5255,7 +5255,11 @@ body:has(.loginsignupdiv) .footer {
     pointer-events: none;
 }
 .th-sort-link {
-    color: inherit;
+    /* !important needed: .templatetable a / .templatetable2 a (higher
+       specificity, styles body-row links like nation names) otherwise
+       overrides this to accent blue, which is the same color as the
+       header's own background -- invisible header text. */
+    color: inherit !important;
     text-decoration: none;
 }
 .flag-thumb {
