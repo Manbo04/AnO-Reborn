@@ -1,23 +1,37 @@
-"""DB access for coalition group chat and 1:1 nation direct messages."""
+"""DB access for coalition group chat and 1:1 nation direct messages.
 
-from database import get_request_cursor, get_coalition_members_table
+Uses ``get_db_cursor`` (commits/rolls back within its own ``with`` block)
+rather than ``get_request_cursor`` (request-scoped, committed by
+``teardown_request`` at the end of a normal Flask request) everywhere here,
+even in code paths also reachable from plain HTTP routes. Flask-SocketIO
+event handlers only get an app context, not a full request context, so
+``teardown_request`` never fires for them -- a write made via
+``get_request_cursor`` inside a socket handler is silently never committed
+(found via a live repro: the INSERT ran with no error, but neither an
+independent connection in the same process nor a fresh psql session ever
+saw it). ``get_db_cursor`` doesn't depend on that hook, so it's correct in
+both contexts.
+"""
+
+from database import get_db_cursor, get_coalition_members_table
 
 MAX_MESSAGE_LENGTH = 1000
 
 
-def is_coalition_member(db, user_id, coalition_id):
+def is_coalition_member(user_id, coalition_id):
     members_tbl = get_coalition_members_table()
     if not members_tbl:
         return False
-    db.execute(
-        f"SELECT 1 FROM {members_tbl} WHERE userid=%s AND colid=%s",
-        (user_id, coalition_id),
-    )
-    return db.fetchone() is not None
+    with get_db_cursor(read_only=True) as db:
+        db.execute(
+            f"SELECT 1 FROM {members_tbl} WHERE userid=%s AND colid=%s",
+            (user_id, coalition_id),
+        )
+        return db.fetchone() is not None
 
 
 def create_coalition_message(coalition_id, sender_id, content):
-    with get_request_cursor() as db:
+    with get_db_cursor() as db:
         db.execute(
             """
             INSERT INTO coalition_messages (coalition_id, sender_id, content)
@@ -40,7 +54,7 @@ def create_coalition_message(coalition_id, sender_id, content):
 
 
 def list_coalition_messages(coalition_id, limit=50):
-    with get_request_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         db.execute(
             """
             SELECT cm.id, cm.sender_id, u.username, cm.content, cm.created_at
@@ -67,7 +81,7 @@ def list_coalition_messages(coalition_id, limit=50):
 
 
 def create_direct_message(sender_id, recipient_id, content):
-    with get_request_cursor() as db:
+    with get_db_cursor() as db:
         db.execute(
             """
             INSERT INTO direct_messages (sender_id, recipient_id, content)
@@ -90,7 +104,7 @@ def create_direct_message(sender_id, recipient_id, content):
 
 
 def list_conversation_messages(user_a, user_b, limit=50):
-    with get_request_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         db.execute(
             """
             SELECT dm.id, dm.sender_id, dm.recipient_id, u.username, dm.content, dm.created_at
@@ -118,7 +132,7 @@ def list_conversation_messages(user_a, user_b, limit=50):
 
 
 def mark_conversation_read(user_id, other_user_id):
-    with get_request_cursor() as db:
+    with get_db_cursor() as db:
         db.execute(
             """
             UPDATE direct_messages SET read_at = now()
@@ -130,7 +144,7 @@ def mark_conversation_read(user_id, other_user_id):
 
 def list_conversations_for_user(user_id):
     """Most-recent-message-first list of this user's DM conversations."""
-    with get_request_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         db.execute(
             """
             SELECT other_id, u.username, last_content, last_created_at, unread_count
@@ -163,7 +177,7 @@ def list_conversations_for_user(user_id):
 
 
 def unread_dm_total(user_id):
-    with get_request_cursor() as db:
+    with get_db_cursor(read_only=True) as db:
         db.execute(
             "SELECT COUNT(*) FROM direct_messages WHERE recipient_id=%s AND read_at IS NULL",
             (user_id,),
