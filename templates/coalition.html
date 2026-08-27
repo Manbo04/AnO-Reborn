@@ -61,6 +61,11 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 <h3 class="smallheader">Bank</h3>
             </div>
             {% endif %}
+            {% if userInCurCol %}
+            <div class="templatedivflex2left" id="coalitionchat" onclick="coalitionchat()">
+                <h3 class="smallheader">Chat</h3>
+            </div>
+            {% endif %}
             {% if userInCurCol and user_role in ["leader", "deputy_leader", "domestic_minister"] %}
             <div class="templatedivflex2left" id="coalitiongov" onclick="coalitiongov()">
                 <h3 class="smallheader">Government</h3>
@@ -493,6 +498,101 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
+        </div>
+
+        <!--CHAT TAB — any member-->
+        <div class="chat" id="chat">
+            {% if userInCurCol %}
+            <div class="infodiv" id="coalitionChatRoot" data-coalition-id="{{ colId }}" data-current-user-id="{{ session.user_id }}">
+                <h3 class="templatecontentheadercenter">Coalition Chat</h3>
+                <div class="chat-messages" id="coalitionChatMessages" aria-live="polite"></div>
+                <form id="coalitionChatForm" class="chat-input-row" autocomplete="off">
+                    <textarea class="templatetextarea chat-input" id="coalitionChatInput" maxlength="1000" placeholder="Message your coalition..." rows="1" required></textarea>
+                    <button type="submit" class="templatedivbutton templatecenteredbutton chat-send-btn">
+                        <span class="material-icons-outlined">send</span>
+                    </button>
+                </form>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+            <script>
+            (function() {
+                var root = document.getElementById('coalitionChatRoot');
+                if (!root) return;
+                var coalitionId = root.dataset.coalitionId;
+                var currentUserId = root.dataset.currentUserId;
+                var messagesEl = document.getElementById('coalitionChatMessages');
+                var form = document.getElementById('coalitionChatForm');
+                var input = document.getElementById('coalitionChatInput');
+                var joined = false;
+
+                function renderMessage(m) {
+                    var div = document.createElement('div');
+                    div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
+                    var sender = document.createElement('span');
+                    sender.className = 'chat-message-sender';
+                    sender.textContent = m.sender_username;
+                    var text = document.createElement('span');
+                    text.className = 'chat-message-text';
+                    text.textContent = m.content;
+                    div.appendChild(sender);
+                    div.appendChild(text);
+                    messagesEl.appendChild(div);
+                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                }
+
+                function loadHistory() {
+                    fetch('/coalition/' + coalitionId + '/chat/messages')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            messagesEl.innerHTML = '';
+                            if (!data.messages || !data.messages.length) {
+                                var empty = document.createElement('div');
+                                empty.className = 'chat-message-empty';
+                                empty.textContent = 'No messages yet. Say hello!';
+                                messagesEl.appendChild(empty);
+                                return;
+                            }
+                            data.messages.forEach(renderMessage);
+                        });
+                }
+
+                var socket = io();
+
+                function joinRoom() {
+                    if (joined) return;
+                    socket.emit('join_coalition_chat', {coalition_id: coalitionId});
+                    joined = true;
+                }
+
+                loadHistory();
+                socket.on('connect', joinRoom);
+                if (socket.connected) joinRoom();
+
+                socket.on('coalition_chat_message', function(m) {
+                    if (String(m.coalition_id) !== String(coalitionId)) return;
+                    var empty = messagesEl.querySelector('.chat-message-empty');
+                    if (empty) empty.remove();
+                    renderMessage(m);
+                });
+
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var content = input.value.trim();
+                    if (!content) return;
+                    socket.emit('coalition_chat_message', {coalition_id: coalitionId, content: content});
+                    input.value = '';
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (form.requestSubmit) form.requestSubmit();
+                        else form.dispatchEvent(new Event('submit', {cancelable: true}));
+                    }
+                });
+            })();
+            </script>
             {% endif %}
         </div>
 

@@ -2177,6 +2177,15 @@
     <!-- Actions -->
     <div class="actions" id="actions">
 
+        {% if session.user_id and session.user_id|string != cId|string %}
+        <div class="infodiv">
+            <h2 class="templatecontentheaderleft">Message</h2>
+            <a class="templatedivbutton templatecenteredbutton" href="/messages/{{ cId }}">
+                <span class="material-icons-outlined">mail</span>Message {{ username }}
+            </a>
+        </div>
+        {% endif %}
+
         <h2 class="templatecontentheaderleft">War</h2>
 
         <form action="/declare_war" method="post" class="infodiv">

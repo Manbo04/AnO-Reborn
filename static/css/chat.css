@@ -1,0 +1,128 @@
+/* Coalition chat + nation direct messages — mobile-first. */
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm);
+    height: 50vh;
+    max-height: 420px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--game-space-sm);
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    margin-bottom: var(--game-space-sm);
+}
+
+.chat-message {
+    align-self: flex-start;
+    max-width: 80%;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-sm) var(--game-space-md);
+}
+
+.chat-message.chat-message-mine {
+    align-self: flex-end;
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.chat-message.chat-message-mine .chat-message-sender,
+.chat-message.chat-message-mine .chat-message-text {
+    color: var(--colorTwo);
+}
+
+.chat-message-sender {
+    display: block;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.chat-message-text {
+    color: var(--colorOne);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-message-empty {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: var(--game-space-lg) 0;
+}
+
+.chat-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--game-space-sm);
+}
+
+.chat-input-row .chat-input {
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    resize: none;
+}
+
+.chat-input-row .chat-send-btn {
+    min-height: 44px;
+    min-width: 44px;
+    flex-shrink: 0;
+}
+
+/* DM inbox list */
+.dm-conversation-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm);
+}
+
+.dm-conversation-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--game-space-md);
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-md);
+    min-height: 44px;
+    text-decoration: none;
+}
+
+.dm-conversation-row:hover {
+    border-color: var(--accent);
+}
+
+.dm-conversation-name {
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
+.dm-conversation-preview {
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60vw;
+}
+
+.dm-conversation-unread {
+    background: var(--accent);
+    color: var(--colorTwo);
+    border-radius: 999px;
+    font-size: 0.75em;
+    padding: 2px 8px;
+    flex-shrink: 0;
+}
+
+@media all and (min-width: 768px) {
+    .dm-conversation-preview {
+        max-width: 320px;
+    }
+}

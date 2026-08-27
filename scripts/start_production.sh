@@ -82,8 +82,17 @@ elif [[ "$SERVICE_NAME" == *"bot"* ]] || [[ "$SERVICE_NAME" == *"discord"* ]]; t
   echo "[start] WARN: dedicated bot service is deprecated — use DISCORD_BOT_SIDECAR=1 on web."
   exec python3 scripts/run_discord_bot_if_leader.py
 else
-  GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
-  GUNICORN_THREADS="${GUNICORN_THREADS:-10}"
+  # Single worker process, double the threads (was workers=2, threads=10 --
+  # same total concurrent-request budget, so the thread-starvation fix that
+  # motivated 2 workers stays intact). Forced down from 2 workers for the
+  # coalition chat / nation DM feature: Socket.IO's long-polling transport
+  # needs every request in one chat session to land on the same worker
+  # process, and gunicorn's workers don't do that (message_queue/Redis only
+  # relays broadcasts between workers, not a single client's own polling
+  # session) -- verified live, 2 workers intermittently drops chat
+  # connections with "Invalid session", 1 worker doesn't.
+  GUNICORN_WORKERS="${GUNICORN_WORKERS:-1}"
+  GUNICORN_THREADS="${GUNICORN_THREADS:-20}"
   echo "[start] Starting gunicorn on :${PORT} (workers=${GUNICORN_WORKERS} threads=${GUNICORN_THREADS})..."
   exec gunicorn \
     --bind "0.0.0.0:${PORT}" \

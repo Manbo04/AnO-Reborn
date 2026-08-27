@@ -58,6 +58,7 @@ var TAB_GROUPS = {
         { tab: "coalitiongeneral", content: "general" },
         { tab: "coalitionjoin", content: "join" },
         { tab: "coalitionbank", content: "bank" },
+        { tab: "coalitionchat", content: "chat" },
         { tab: "coalitiongov", content: "government" },
         { tab: "coalitiondiplomacy", content: "diplomacy" },
         { tab: "coalitiontax", content: "tax" },
