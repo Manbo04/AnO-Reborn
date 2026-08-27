@@ -4,6 +4,7 @@
 # Bump when embed layout changes — visible in footer so you can confirm bot deploy.
 EMBED_UI_VERSION = "2.1"
 
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -342,3 +343,42 @@ def build_nation_embed(data: Dict[str, Any], title: str) -> discord.Embed:
         text=f"Affairs & Order · embed UI {EMBED_UI_VERSION} · /me · /nation · /wars · /resources",
     )
     return embed
+
+
+_REENGAGE_BANNER_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "static", "images", "dm_reengage_banner.jpg"
+)
+
+
+def build_reengagement_embed() -> Tuple[discord.Embed, Optional[discord.File]]:
+    """Re-engagement DM: short nudge back to the game, banner image, one CTA button."""
+    embed = discord.Embed(
+        title="Remember Affairs and Order?",
+        description=(
+            "The game is live and worth another look — build your nation, forge "
+            "alliances, wage war, and climb the leaderboard alongside a real, "
+            "growing community.\n\n"
+            "We're building this in the open. Come tell us what you think."
+        ),
+        color=ANO_BLUE,
+        url=GAME_BASE_URL,
+    )
+    file: Optional[discord.File] = None
+    if os.path.isfile(_REENGAGE_BANNER_PATH):
+        file = discord.File(_REENGAGE_BANNER_PATH, filename="dm_reengage_banner.jpg")
+        embed.set_image(url="attachment://dm_reengage_banner.jpg")
+    embed.set_footer(text=f"Affairs & Order · {GAME_BASE_URL}")
+    return embed, file
+
+
+def build_reengagement_view() -> discord.ui.View:
+    view = discord.ui.View()
+    view.add_item(
+        discord.ui.Button(
+            label="Play Now",
+            style=discord.ButtonStyle.link,
+            url=GAME_BASE_URL,
+            emoji="🕊️",
+        )
+    )
+    return view
