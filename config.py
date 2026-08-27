@@ -89,6 +89,16 @@ def warn_optional_integrations() -> None:
             "Google OAuth not configured (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). "
             "Google login and signup buttons will be hidden."
         )
+    # Non-fatal on purpose: FEATURE_STORE defaults off, so a missing Stripe
+    # key must not crash boot. Once the store is switched on for real, these
+    # should be promoted into validate_production_secrets() instead.
+    if not (os.getenv("STRIPE_SECRET_KEY") or "").strip() or not (
+        os.getenv("STRIPE_WEBHOOK_SECRET") or ""
+    ).strip():
+        log.warning(
+            "Stripe not configured (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET). "
+            "The Gems store will not be able to process real-money purchases."
+        )
 
 
 # Parse on import to ensure environment variables are set

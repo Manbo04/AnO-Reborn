@@ -47,6 +47,10 @@ FEATURE_GAME_SHELL = _env_flag("FEATURE_GAME_SHELL", "true")
 FEATURE_PROVINCE_BASE_VIEW = _env_flag("FEATURE_PROVINCE_BASE_VIEW", "true")
 FEATURE_GAME_PWA = _env_flag("FEATURE_GAME_PWA", "true")
 
+# Gems/cosmetics store — defaults OFF. Stripe isn't configured yet and the
+# catalog is unseeded; flip on (env FEATURE_STORE=true) once both are ready.
+FEATURE_STORE = _env_flag("FEATURE_STORE", "false")
+
 # Legacy JPG filenames (no extension) keyed by normalized building name.
 BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "coal_burners": "coalburner.jpg",
@@ -595,6 +599,7 @@ def game_ui_context() -> dict[str, Any]:
         "FEATURE_GAME_SHELL": FEATURE_GAME_SHELL,
         "FEATURE_PROVINCE_BASE_VIEW": FEATURE_PROVINCE_BASE_VIEW,
         "FEATURE_GAME_PWA": FEATURE_GAME_PWA,
+        "FEATURE_STORE": FEATURE_STORE,
         "asset_version": get_asset_version(),
         "game_stylesheet": game_stylesheet_filename(),
         "game_asset_path": game_asset_path,
