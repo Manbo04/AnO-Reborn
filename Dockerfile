@@ -30,6 +30,13 @@ COPY --from=builder /root/.local /root/.local
 # Copy application code
 COPY . .
 
+# Regenerate static/style.css from static/css/*.css source files. Without
+# this, style.css is just whatever was last committed verbatim -- CSS
+# source edits silently don't reach production even after a clean deploy
+# (nixpacks.toml's [phases.build] bundle_game_css.py step is dead config;
+# this Dockerfile, not nixpacks, is what Railway actually builds from).
+RUN python3 scripts/bundle_game_css.py
+
 # Set Python path
 ENV PATH=/root/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
