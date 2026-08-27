@@ -709,7 +709,7 @@ def create_app():
                 # until the migration is applied) -- keeps this query from ever
                 # running against a schema that doesn't have it yet (see the
                 # equipped_bg_css_class incident above for why that matters).
-                if game_ui.FEATURE_STORE:
+                if game_ui.FEATURE_STORE or user_id in SUPER_ADMIN_USER_IDS:
                     equip_cache_key = f"layout_user_equip_{user_id}"
                     cached_equip = query_cache.get(equip_cache_key)
                     if cached_equip is None:
