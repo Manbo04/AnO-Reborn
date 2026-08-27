@@ -107,7 +107,10 @@
                     {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
                     <tr {% if id == current_user_id %}class="highlight-row"{% endif %}>
                         <td>{{ loop.index }})</td>
-                        <td><a href="/country/id={{ id }}">{{ username }}</a></td>
+                        <td>
+                            <img src="/flag/country/{{ id }}" alt="" loading="lazy" class="flag-thumb" onerror="this.style.display='none'">
+                            <a href="/country/id={{ id }}">{{ username }}</a>
+                        </td>
                         <td>{% if join_number %}#{{ join_number }}{% else %}—{% endif %}</td>
                         <td>{{ influence | fmt }}</td>
                         <td>{{ date }}</td>
