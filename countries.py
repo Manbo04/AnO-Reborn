@@ -453,6 +453,33 @@ def get_revenue(cId, db=None):
         if coalition_tax_deducted:
             revenue["coalition_tax"] = coalition_tax_deducted
 
+        # Military maintenance upkeep (rations for soldiers, gasoline for
+        # vehicles/aircraft/ships, components for spies). The global tick
+        # deducts this every hour from user_economy, but it was missing here
+        # — a nation feeding a large army/navy/air force saw a net-positive
+        # resource number while actually running a deficit. Mirrors the query
+        # already used in get_econ_statistics for the expenses breakdown.
+        db.execute(
+            """
+            SELECT rd.name AS resource, SUM(um.quantity * ud.maintenance_cost_amount) AS required
+            FROM user_military um
+            JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+            JOIN resource_dictionary rd ON rd.resource_id = ud.maintenance_cost_resource_id
+            WHERE um.user_id = %s
+              AND um.quantity > 0
+              AND ud.maintenance_cost_resource_id IS NOT NULL
+              AND ud.maintenance_cost_amount > 0
+            GROUP BY rd.name
+            """,
+            (cId,),
+        )
+        military_upkeep = {row[0]: int(row[1] or 0) for row in db.fetchall()}
+        for resource, amount in military_upkeep.items():
+            if resource == "rations":
+                continue  # folded into the rations recompute below
+            if resource in revenue["net"]:
+                revenue["net"][resource] -= amount
+
         # Reuse already-fetched data for CG need calculation
         total_population = sum(row[3] or 0 for row in province_rows)
         if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
@@ -482,6 +509,7 @@ def get_revenue(cId, db=None):
             total_rations_needed += province_consumption
         if total_rations_needed < 1:
             total_rations_needed = 1
+        total_rations_needed += military_upkeep.get("rations", 0)
         new_rations = max(0, current_rations_for_calc - total_rations_needed)
         revenue["net"]["rations"] = new_rations - current_rations
 
