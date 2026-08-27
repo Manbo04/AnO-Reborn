@@ -6,7 +6,7 @@ tables with the same shapes. Mirrors the style of guild_store.py.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from database import QueryHelper, get_db_cursor
 
@@ -84,6 +84,15 @@ def get_user_xp(guild_id: str, user_id: str) -> tuple:
     if not row:
         return 0, 0, None
     return int(row[0]), int(row[1]), row[2]
+
+
+def get_last_active_map(guild_id: str) -> Dict[str, datetime]:
+    """user_id -> last_xp_at for every member with tracked message activity in this guild."""
+    rows = QueryHelper.fetch_all(
+        "SELECT user_id, last_xp_at FROM discord_user_xp WHERE guild_id = %s AND last_xp_at IS NOT NULL",
+        (guild_id,),
+    )
+    return {str(row[0]): row[1] for row in rows}
 
 
 def set_user_xp(guild_id: str, user_id: str, xp: int, level: int, last_xp_at: datetime) -> None:

@@ -89,6 +89,73 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         await interaction.followup.send(f"Preview DM sent to {target.mention}.", ephemeral=True)
 
     @admin_group.command(
+        name="dm_reengage_send",
+        description="DM the re-engagement message to members with no tracked activity in 7+ days",
+    )
+    @app_commands.describe(
+        dry_run="If true (default), only reports how many would receive it — sends nothing",
+    )
+    @require_guild_admin()
+    async def dm_reengage_send(
+        interaction: discord.Interaction,
+        dry_run: bool = True,
+    ) -> None:
+        await interaction.response.defer(ephemeral=True)
+        if not interaction.guild:
+            return
+        from datetime import datetime, timedelta, timezone
+
+        from discord_bot import engagement_store as store
+        from discord_bot.embeds import build_reengagement_embed, build_reengagement_view
+
+        guild = interaction.guild
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        last_active = await asyncio.to_thread(store.get_last_active_map, str(guild.id))
+
+        members = [m async for m in guild.fetch_members(limit=None)]
+        targets = []
+        for m in members:
+            if m.bot:
+                continue
+            seen = last_active.get(str(m.id))
+            if seen is None or seen < cutoff:
+                targets.append(m)
+
+        if dry_run:
+            await interaction.followup.send(
+                f"Dry run only, nothing sent. {len(targets)} of "
+                f"{sum(1 for m in members if not m.bot)} non-bot members have no tracked "
+                f"Discord message in the last 7 days (definition: last XP-earning message "
+                f"per `discord_user_xp`, or no tracked message ever) and would receive the DM. "
+                f"Run again with `dry_run:False` to actually send.",
+                ephemeral=True,
+            )
+            return
+
+        sent = 0
+        forbidden = 0
+        failed = 0
+        for m in targets:
+            embed, file = build_reengagement_embed()
+            view = build_reengagement_view()
+            try:
+                if file:
+                    await m.send(embed=embed, file=file, view=view)
+                else:
+                    await m.send(embed=embed, view=view)
+                sent += 1
+            except discord.Forbidden:
+                forbidden += 1
+            except Exception:
+                failed += 1
+            await asyncio.sleep(1.5)
+
+        await interaction.followup.send(
+            f"Re-engagement send complete: {sent} sent, {forbidden} had DMs closed, {failed} failed.",
+            ephemeral=True,
+        )
+
+    @admin_group.command(
         name="nation",
         description="Full nation intel (any nation id or name)",
     )
