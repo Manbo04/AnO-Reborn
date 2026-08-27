@@ -24,11 +24,22 @@ store_bp = Blueprint("store_bp", __name__)
 logger = logging.getLogger(__name__)
 
 
+def _store_accessible():
+    """FEATURE_STORE gates the store for everyone once real Stripe keys and
+    the reviewed catalog are ready. Until then, staff can still preview the
+    real, live page (not a local demo) without exposing it to players."""
+    if game_ui.FEATURE_STORE:
+        return True
+    from app_core.admin.services import SUPER_ADMIN_USER_IDS
+
+    return session.get("user_id") in SUPER_ADMIN_USER_IDS
+
+
 @store_bp.route("/store", methods=["GET"])
 @login_required
 @cache_response(ttl_seconds=30)
 def store():
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     with get_request_cursor(read_only=True) as db:
@@ -68,7 +79,7 @@ def store():
 @login_required
 @limiter.limit("10 per minute")
 def gems_checkout(gem_package_id):
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     with get_request_cursor() as db:
@@ -97,7 +108,7 @@ def stripe_webhook():
     """Stripe-only. No @login_required (no session cookie from Stripe) — the
     signature check below is the entire auth boundary. Kept CSRF-exempt via
     app.py (only this specific view, not the whole blueprint)."""
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     import stripe
@@ -144,7 +155,7 @@ def stripe_webhook():
 @login_required
 @limiter.limit("20 per minute")
 def buy_cosmetic(cosmetic_id):
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     with get_request_cursor() as db:
@@ -172,7 +183,7 @@ def buy_cosmetic(cosmetic_id):
 @store_bp.route("/store/cosmetics/equip/<int:cosmetic_id>", methods=["POST"])
 @login_required
 def equip_cosmetic(cosmetic_id):
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     with get_request_cursor() as db:
@@ -190,7 +201,7 @@ def equip_cosmetic(cosmetic_id):
 @store_bp.route("/store/cosmetics/unequip", methods=["POST"])
 @login_required
 def unequip_cosmetic():
-    if not game_ui.FEATURE_STORE:
+    if not _store_accessible():
         return error(404, "Not found")
 
     with get_request_cursor() as db:

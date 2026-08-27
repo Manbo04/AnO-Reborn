@@ -341,7 +341,7 @@
                         <a class="" href="/military"><span class="material-icons-outlined">
                             shield
                         </span>Military</a>
-                        {% if FEATURE_STORE %}
+                        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
                         <a class="" href="/store"><span class="material-icons-outlined">
                             storefront
                         </span>Store</a>
@@ -378,7 +378,7 @@
         <a class="menubara" href="/military"><span class="material-icons-outlined">
                 shield
             </span>Military</a>
-        {% if FEATURE_STORE %}
+        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
         <a class="menubara" href="/store"><span class="material-icons-outlined">
                 storefront
             </span>Store</a>
