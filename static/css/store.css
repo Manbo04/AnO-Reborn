@@ -1,30 +1,34 @@
 /*
  * Store page (Gems + cosmetics). Bundled into static/style.css by
  * scripts/bundle_game_css.py — edit this file, not style.css, for changes
- * here. Reuses .game-panel-grid/.stat-card/.templatedivbutton rather than
+ * here. Reuses .game-panel-grid/.templatedivbutton/tokens.css rather than
  * inventing new layout primitives, per the ano-ui-design skill.
  */
 
 .store-gems-balance {
     display: flex;
     align-items: center;
-    gap: var(--game-space-sm, 8px);
-    background: var(--foreground);
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--accent-subtle), var(--foreground) 60%);
     border: 1px solid var(--border);
-    border-radius: var(--game-radius-md);
+    border-radius: var(--game-radius-lg);
     box-shadow: var(--shadow-card);
-    padding: var(--game-space-md, 16px);
+    padding: 18px var(--game-space-md, 16px);
     margin-bottom: var(--game-space-lg, 24px);
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
 .store-gems-balance .material-icons-outlined {
     color: var(--gems);
+    font-size: 1.6rem;
 }
 
 .store-gems-balance .store-gems-count {
     color: var(--gems);
+    font-size: 1.4rem;
+    font-weight: 700;
 }
 
 .store-section-intro {
@@ -41,71 +45,130 @@
     text-align: center;
 }
 
+/* Full-width CTA inside a card, filling the card edge to edge instead of
+   floating with .templatedivbutton's default intrinsic width — a page-scoped
+   override, per the skill's documented pattern for this kind of thing. */
+.store-package-card form,
+.store-cosmetic-body form {
+    width: 100%;
+    margin-top: auto;
+}
+
+.store-package-card .templatedivbutton,
+.store-cosmetic-body .templatedivbutton {
+    width: 100%;
+    margin: 0;
+}
+
 /* --- Gem packages --- */
 .store-package-card {
     background: var(--foreground);
     border: 1px solid var(--border);
-    border-radius: var(--game-radius-md);
+    border-radius: var(--game-radius-lg);
     box-shadow: var(--shadow-card);
     padding: var(--game-space-md, 16px);
     display: flex;
     flex-direction: column;
-    gap: var(--game-space-sm, 8px);
-    min-height: 44px; /* real touch target, not just visual padding */
+    gap: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.store-package-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--accent);
 }
 
 .store-package-card .store-package-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--colorOne);
+    font-size: 1.05rem;
 }
 
 .store-package-card .store-package-gems {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     color: var(--gems);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.store-package-card .store-package-gems .material-icons-outlined {
+    font-size: 1.1rem;
 }
 
 .store-package-card .store-package-price {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
 }
 
 /* --- Cosmetics gallery --- */
 .store-cosmetic-card {
     background: var(--foreground);
     border: 1px solid var(--border);
-    border-radius: var(--game-radius-md);
+    border-radius: var(--game-radius-lg);
     box-shadow: var(--shadow-card);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.store-cosmetic-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--accent);
 }
 
 .store-cosmetic-preview {
-    height: 100px;
+    height: 130px;
     background-color: var(--foregroundThree);
     background-size: cover;
     background-position: center;
+    border-bottom: 1px solid var(--border);
 }
 
 .store-cosmetic-body {
     padding: var(--game-space-md, 16px);
     display: flex;
     flex-direction: column;
-    gap: var(--game-space-sm, 8px);
+    gap: 6px;
+    flex: 1 1 auto;
 }
 
 .store-cosmetic-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--colorOne);
+    font-size: 1.05rem;
 }
 
 .store-cosmetic-price {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     color: var(--gems);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.store-cosmetic-price .material-icons-outlined {
+    font-size: 1.1rem;
 }
 
 .store-cosmetic-price.store-cosmetic-price--insufficient {
     color: var(--danger);
+}
+
+.store-cosmetic-body .store-section-intro {
+    font-size: 0.8rem;
+    margin: -2px 0 4px;
+}
+
+.store-cosmetic-body .store-section-intro a {
+    color: var(--accent);
+    font-weight: 600;
 }
 
 .store-cosmetic-equipped-badge {
@@ -113,6 +176,11 @@
     align-items: center;
     gap: 4px;
     color: var(--success);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.store-cosmetic-equipped-badge .material-icons-outlined {
+    font-size: 1.05rem;
 }
