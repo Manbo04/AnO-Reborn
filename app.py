@@ -449,6 +449,7 @@ def create_app():
     from app_core.world_map.routes import bp as world_map_bp
     from app_core.game_map.routes import bp as game_map_bp
     from app_core.market.routes import market_bp
+    from app_core.store.routes import store_bp, stripe_webhook as store_stripe_webhook
     from app_core.military.routes import bp as military_bp
     from app_core.coalitions.routes import register_coalitions_routes
     from app_core.tutorial.routes import bp as tutorial_api_bp
@@ -468,6 +469,7 @@ def create_app():
     app.register_blueprint(world_map_bp)
     app.register_blueprint(game_map_bp)
     app.register_blueprint(market_bp)
+    app.register_blueprint(store_bp)
     app.register_blueprint(military_bp)
     app.register_blueprint(tutorial_api_bp)
     app.register_blueprint(referrals_api_bp)
@@ -494,6 +496,10 @@ def create_app():
 
     csrf = CSRFProtect(app)
     csrf.exempt(bot_api.bp)
+    # Only the webhook view, not the whole store_bp blueprint — the rest of
+    # store_bp is player-facing and must keep normal CSRF protection. The
+    # webhook's auth boundary is the Stripe signature check inside the view.
+    csrf.exempt(store_stripe_webhook)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
@@ -696,7 +702,27 @@ def create_app():
                 ctx["coalition_id"] = cached_user["coalition_id"]
                 ctx["coalition_name"] = cached_user["coalition_name"]
                 ctx["equipped_bg_css_class"] = cached_user.get("equipped_bg_css_class")
-                
+
+                # Store cosmetics: cosmetics/stats.equipped_background_cosmetic_id
+                # only exist once migration 0048 has run, which is exactly the
+                # gate FEATURE_STORE already gives us (Dede won't flip it on
+                # until the migration is applied) -- keeps this query from ever
+                # running against a schema that doesn't have it yet (see the
+                # equipped_bg_css_class incident above for why that matters).
+                if game_ui.FEATURE_STORE:
+                    equip_cache_key = f"layout_user_equip_{user_id}"
+                    cached_equip = query_cache.get(equip_cache_key)
+                    if cached_equip is None:
+                        try:
+                            from app_core.store.repositories import get_equipped_cosmetic
+
+                            cached_equip = {"css_class": get_equipped_cosmetic(db, user_id)}
+                            query_cache.set(equip_cache_key, cached_equip, ttl_seconds=60)
+                        except Exception:
+                            rollback_db_cursor(db)
+                            cached_equip = {"css_class": None}
+                    ctx["equipped_bg_css_class"] = cached_equip["css_class"]
+
                 ctx["game_ui"] = {"has_unseen_combat_logs": False}
                 try:
                     from app_core.onboarding.service import get_onboarding_status

@@ -1,0 +1,50 @@
+/*
+ * Store cosmetic backgrounds — one rule per row in the `cosmetics` table,
+ * keyed by its css_class column. Bundled into static/style.css by
+ * scripts/bundle_game_css.py (do not edit style.css directly for this).
+ *
+ * Each selector is a bare `.<css_class>` (specificity 0,1,0), deliberately
+ * NOT qualified with `body` — this lets the exact same rule apply both to
+ * <body> (equipped, real background) and to a store-cosmetic-preview <div>
+ * in the store gallery (see templates/store.html), so browsing shows the
+ * real artwork instead of a flat placeholder swatch. On <body> it still
+ * beats the plain `body { background: var(--background) !important; }`
+ * rule in static/style.css regardless of which .theme-light/.theme-dark
+ * class is on <html> — a bare class selector outranks a bare type selector
+ * — so equipping a cosmetic overrides the theme background, and having
+ * none equipped leaves the normal theme toggle untouched.
+ *
+ * Seeded catalog: see migrations/0049_seed_store_catalog.sql. Add one rule
+ * here per catalog item you seed, e.g.:
+ *
+ * .bg-sunset-gradient {
+ *     background: linear-gradient(135deg, #ff7e5f, #feb47b) !important;
+ * }
+ * .bg-midnight-stars {
+ *     background: url('/static/img/cosmetics/midnight-stars.jpg') center/cover fixed !important;
+ * }
+ */
+
+.bg-sunset-horizon {
+    background: linear-gradient(135deg, #ff7e5f, #feb47b 45%, #ffd97d 100%) fixed !important;
+}
+
+.bg-emerald-canopy {
+    background: linear-gradient(135deg, #0b3d2e, #1f6f4f 50%, #4caf7d 100%) fixed !important;
+}
+
+.bg-aurora-borealis {
+    background: linear-gradient(135deg, #0f2027, #2c7a7b 40%, #7ee8c7 75%, #b892ff 100%) fixed !important;
+}
+
+.bg-midnight-nebula {
+    background: radial-gradient(circle at 30% 20%, #3a1c71 0%, #17123a 45%, #05040f 100%) fixed !important;
+}
+
+.bg-neon-circuit {
+    background: linear-gradient(135deg, #0d0221 0%, #170b3b 40%, #240046 70%, #10002b 100%) fixed !important;
+}
+
+.bg-royal-amethyst {
+    background: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed !important;
+}

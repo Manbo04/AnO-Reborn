@@ -67,7 +67,8 @@
     {% endif %}
 
 
-    {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py #}
+    {# Game UI CSS bundled into style.css via scripts/bundle_game_css.py — this
+       also picks up static/css/cosmetics.css and static/css/store.css #}
     <link href="{{ url_for('static', filename=game_stylesheet|default('style.css')) }}?v={{ asset_version }}" rel="stylesheet" type="text/css" />
     {# Critical scroll fix: survives long-lived cached style.css when legacy HTML nests content in fixed navbar #}
     <style id="critical-scroll-fix">
@@ -216,7 +217,7 @@
     {% block head %} {% endblock %}
 </head>
 
-<body class="has-side-ads {% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% block body_class %}{% endblock %}">
+<body class="has-side-ads {% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% if equipped_bg_css_class %} {{ equipped_bg_css_class }}{% endif %}{% block body_class %}{% endblock %}">
 
     {% include 'partials/side_ads.html' %}
 
@@ -340,6 +341,11 @@
                         <a class="" href="/military"><span class="material-icons-outlined">
                             shield
                         </span>Military</a>
+                        {% if FEATURE_STORE %}
+                        <a class="" href="/store"><span class="material-icons-outlined">
+                            storefront
+                        </span>Store</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -372,6 +378,11 @@
         <a class="menubara" href="/military"><span class="material-icons-outlined">
                 shield
             </span>Military</a>
+        {% if FEATURE_STORE %}
+        <a class="menubara" href="/store"><span class="material-icons-outlined">
+                storefront
+            </span>Store</a>
+        {% endif %}
 
         <h3>Global Affairs</h3>
         <a class="menubara" href="/my_coalition"><span class="material-icons-outlined">

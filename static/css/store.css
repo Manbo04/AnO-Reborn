@@ -1,0 +1,118 @@
+/*
+ * Store page (Gems + cosmetics). Bundled into static/style.css by
+ * scripts/bundle_game_css.py — edit this file, not style.css, for changes
+ * here. Reuses .game-panel-grid/.stat-card/.templatedivbutton rather than
+ * inventing new layout primitives, per the ano-ui-design skill.
+ */
+
+.store-gems-balance {
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-sm, 8px);
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    box-shadow: var(--shadow-card);
+    padding: var(--game-space-md, 16px);
+    margin-bottom: var(--game-space-lg, 24px);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.store-gems-balance .material-icons-outlined {
+    color: var(--gems);
+}
+
+.store-gems-balance .store-gems-count {
+    color: var(--gems);
+}
+
+.store-section-intro {
+    color: var(--text-secondary);
+    margin: 0 0 var(--game-space-md, 16px);
+}
+
+.store-empty-catalog {
+    color: var(--text-secondary);
+    background: var(--foreground);
+    border: 1px dashed var(--border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-lg, 24px);
+    text-align: center;
+}
+
+/* --- Gem packages --- */
+.store-package-card {
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    box-shadow: var(--shadow-card);
+    padding: var(--game-space-md, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm, 8px);
+    min-height: 44px; /* real touch target, not just visual padding */
+}
+
+.store-package-card .store-package-name {
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
+.store-package-card .store-package-gems {
+    color: var(--gems);
+    font-weight: 600;
+}
+
+.store-package-card .store-package-price {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* --- Cosmetics gallery --- */
+.store-cosmetic-card {
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.store-cosmetic-preview {
+    height: 100px;
+    background-color: var(--foregroundThree);
+    background-size: cover;
+    background-position: center;
+}
+
+.store-cosmetic-body {
+    padding: var(--game-space-md, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-sm, 8px);
+}
+
+.store-cosmetic-name {
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
+.store-cosmetic-price {
+    color: var(--gems);
+    font-weight: 600;
+}
+
+.store-cosmetic-price.store-cosmetic-price--insufficient {
+    color: var(--danger);
+}
+
+.store-cosmetic-equipped-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
