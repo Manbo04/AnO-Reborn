@@ -40,9 +40,8 @@ def _clean_content(raw):
 @login_required
 def coalition_chat_history(coalition_id):
     user_id = session["user_id"]
-    with get_request_cursor() as db:
-        if not repo.is_coalition_member(db, user_id, coalition_id):
-            return error(403, "You are not in this coalition")
+    if not repo.is_coalition_member(user_id, coalition_id):
+        return error(403, "You are not in this coalition")
     return jsonify({"messages": repo.list_coalition_messages(coalition_id)})
 
 
@@ -102,9 +101,8 @@ def register_chat_socketio_handlers(socketio):
             coalition_id = int((data or {}).get("coalition_id"))
         except (TypeError, ValueError):
             return
-        with get_request_cursor() as db:
-            if not repo.is_coalition_member(db, user_id, coalition_id):
-                return
+        if not repo.is_coalition_member(user_id, coalition_id):
+            return
         join_room(f"coalition_{coalition_id}")
 
     @socketio.on("coalition_chat_message")
@@ -119,9 +117,8 @@ def register_chat_socketio_handlers(socketio):
         content = _clean_content((data or {}).get("content"))
         if not content or _throttled(user_id):
             return
-        with get_request_cursor() as db:
-            if not repo.is_coalition_member(db, user_id, coalition_id):
-                return
+        if not repo.is_coalition_member(user_id, coalition_id):
+            return
         message = repo.create_coalition_message(coalition_id, user_id, content)
         emit("coalition_chat_message", message, room=f"coalition_{coalition_id}")
 
