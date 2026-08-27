@@ -6021,7 +6021,15 @@ body.game-reduced-motion .game-market-card::after {
 
 @media (min-width: 858px) {
     .game-card-list--mobile-only {
-        display: none;
+        /* !important needed: .nations-mobile-list's own unconditional
+           `display: flex` (below) has equal specificity and sits later in
+           the bundled stylesheet, so without this the mobile card list won
+           the cascade on desktop too and rendered alongside the desktop
+           table -- the empty-looking wide rows were the mobile-sized card
+           layout stretched across a desktop-width column. Matches the
+           !important already used on .game-table-fallback--hide-mobile below
+           for the same reason, in reverse. */
+        display: none !important;
     }
 }
 
