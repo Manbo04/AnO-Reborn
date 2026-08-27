@@ -55,6 +55,7 @@ MIGRATION_FILES = [
     "0043_planes_missiles_use_aluminium.sql",
     "0044_military_stat_rebalance.sql",
     "0045_add_login_events.sql",
+    "0050_fix_coalition_messages_fk.sql",
 ]
 
 
