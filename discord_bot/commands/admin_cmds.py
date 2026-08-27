@@ -58,6 +58,37 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         await interaction.followup.send("Broadcast posted and alerts panel updated.", ephemeral=True)
 
     @admin_group.command(
+        name="dm_reengage_preview",
+        description="DM a preview of the re-engagement message (defaults to yourself)",
+    )
+    @app_commands.describe(
+        member="Who to send the preview DM to (defaults to you)",
+    )
+    @require_guild_admin()
+    async def dm_reengage_preview(
+        interaction: discord.Interaction,
+        member: discord.Member = None,
+    ) -> None:
+        await interaction.response.defer(ephemeral=True)
+        from discord_bot.embeds import build_reengagement_embed, build_reengagement_view
+
+        target = member or interaction.user
+        embed, file = build_reengagement_embed()
+        view = build_reengagement_view()
+        try:
+            if file:
+                await target.send(embed=embed, file=file, view=view)
+            else:
+                await target.send(embed=embed, view=view)
+        except discord.Forbidden:
+            await interaction.followup.send(
+                f"Couldn't DM {target.mention} — they have server DMs closed.",
+                ephemeral=True,
+            )
+            return
+        await interaction.followup.send(f"Preview DM sent to {target.mention}.", ephemeral=True)
+
+    @admin_group.command(
         name="nation",
         description="Full nation intel (any nation id or name)",
     )
