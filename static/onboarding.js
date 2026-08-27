@@ -1,6 +1,7 @@
 (function () {
     var STORAGE_PREFIX = "ano_tutorial_prompt_snooze_";
     var SNOOZE_MS = 24 * 60 * 60 * 1000;
+    var CHECKLIST_DISMISS_PREFIX = "ano_checklist_dismissed_";
 
     function snoozeKey(userId) {
         return STORAGE_PREFIX + String(userId);
@@ -21,6 +22,45 @@
             localStorage.setItem(snoozeKey(userId), String(Date.now() + SNOOZE_MS));
         } catch (err) {
             /* ignore quota errors */
+        }
+    }
+
+    function checklistDismissKey(userId) {
+        return CHECKLIST_DISMISS_PREFIX + String(userId);
+    }
+
+    function isChecklistDismissed(userId) {
+        try {
+            return localStorage.getItem(checklistDismissKey(userId)) === "1";
+        } catch (err) {
+            return false;
+        }
+    }
+
+    function dismissChecklist(userId) {
+        try {
+            localStorage.setItem(checklistDismissKey(userId), "1");
+        } catch (err) {
+            /* ignore quota errors */
+        }
+    }
+
+    function initChecklistDismiss() {
+        var checklist = document.querySelector(".onboarding-checklist");
+        if (!checklist) return;
+        var userId = checklist.getAttribute("data-user-id");
+
+        if (userId && isChecklistDismissed(userId)) {
+            checklist.style.display = "none";
+            return;
+        }
+
+        var dismissBtn = checklist.querySelector("[data-onboarding-checklist-dismiss]");
+        if (dismissBtn) {
+            dismissBtn.addEventListener("click", function () {
+                if (userId) dismissChecklist(userId);
+                checklist.style.display = "none";
+            });
         }
     }
 
@@ -87,9 +127,14 @@
         });
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initTutorialPopup);
-    } else {
+    function init() {
+        initChecklistDismiss();
         initTutorialPopup();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
     }
 })();

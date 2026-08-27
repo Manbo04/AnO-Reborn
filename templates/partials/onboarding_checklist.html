@@ -1,6 +1,11 @@
 {% if onboarding_checklist and onboarding_checklist.show_checklist %}
 <div class="onboarding-checklist" role="region" aria-label="Getting started" data-user-id="{{ session.get('user_id') }}">
-    <h3 class="onboarding-checklist-title">Getting started ({{ onboarding_checklist.completed }}/{{ onboarding_checklist.total }})</h3>
+    <div class="onboarding-checklist-header">
+        <h3 class="onboarding-checklist-title">Getting started ({{ onboarding_checklist.completed }}/{{ onboarding_checklist.total }})</h3>
+        <button type="button" class="onboarding-checklist-dismiss" aria-label="Dismiss getting started checklist" data-onboarding-checklist-dismiss>
+            <span class="material-icons-outlined" aria-hidden="true">close</span>
+        </button>
+    </div>
     <ol class="onboarding-checklist-steps">
         {% for step in onboarding_checklist.steps %}
         <li class="{% if step.done %}onboarding-done{% endif %}">

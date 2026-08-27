@@ -8092,9 +8092,36 @@ body.page-rankings .rankings-table tbody td a {
     border-radius: 4px;
 }
 
+.onboarding-checklist-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
 .onboarding-checklist-title {
     margin: 0 0 0.5rem;
     font-size: 0.95rem;
+    color: var(--colorOne);
+}
+
+.onboarding-checklist-dismiss {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.onboarding-checklist-dismiss:hover,
+.onboarding-checklist-dismiss:focus-visible {
+    color: var(--accent);
+}
+
+.onboarding-checklist-dismiss .material-icons-outlined {
+    font-size: 20px;
 }
 
 .onboarding-checklist-steps {
@@ -8109,6 +8136,11 @@ body.page-rankings .rankings-table tbody td a {
     gap: 0.35rem;
     margin: 0.25rem 0;
     font-size: 0.9rem;
+    color: var(--colorOne);
+}
+
+.onboarding-checklist-steps a {
+    color: var(--accent);
 }
 
 .onboarding-checklist-steps .onboarding-done {
