@@ -110,24 +110,29 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
 
         guild = interaction.guild
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-        last_active = await asyncio.to_thread(store.get_last_active_map, str(guild.id))
+        discord_last_active = await asyncio.to_thread(store.get_last_active_map, str(guild.id))
+        game_last_active = await asyncio.to_thread(store.get_game_last_active_map)
 
         members = [m async for m in guild.fetch_members(limit=None)]
         targets = []
         for m in members:
             if m.bot:
                 continue
-            seen = last_active.get(str(m.id))
-            if seen is None or seen < cutoff:
+            uid = str(m.id)
+            discord_seen = discord_last_active.get(uid)
+            game_seen = game_last_active.get(uid)
+            recently_active = (discord_seen is not None and discord_seen >= cutoff) or (
+                game_seen is not None and game_seen >= cutoff
+            )
+            if not recently_active:
                 targets.append(m)
 
         if dry_run:
             await interaction.followup.send(
                 f"Dry run only, nothing sent. {len(targets)} of "
                 f"{sum(1 for m in members if not m.bot)} non-bot members have no tracked "
-                f"Discord message in the last 7 days (definition: last XP-earning message "
-                f"per `discord_user_xp`, or no tracked message ever) and would receive the DM. "
-                f"Run again with `dry_run:False` to actually send.",
+                f"Discord message AND no in-game login in the last 7 days, and would receive "
+                f"the DM. Run again with `dry_run:False` to actually send.",
                 ephemeral=True,
             )
             return
@@ -135,7 +140,7 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         sent = 0
         forbidden = 0
         failed = 0
-        for m in targets:
+        for i, m in enumerate(targets, start=1):
             embed, file = build_reengagement_embed()
             view = build_reengagement_view()
             try:
@@ -148,12 +153,24 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
                 forbidden += 1
             except Exception:
                 failed += 1
+            if i % 50 == 0:
+                try:
+                    await interaction.followup.send(
+                        f"Progress: {i}/{len(targets)} processed ({sent} sent, "
+                        f"{forbidden} closed, {failed} failed).",
+                        ephemeral=True,
+                    )
+                except Exception:
+                    pass
             await asyncio.sleep(1.5)
 
-        await interaction.followup.send(
-            f"Re-engagement send complete: {sent} sent, {forbidden} had DMs closed, {failed} failed.",
-            ephemeral=True,
-        )
+        try:
+            await interaction.followup.send(
+                f"Re-engagement send complete: {sent} sent, {forbidden} had DMs closed, {failed} failed.",
+                ephemeral=True,
+            )
+        except Exception:
+            pass
 
     @admin_group.command(
         name="nation",

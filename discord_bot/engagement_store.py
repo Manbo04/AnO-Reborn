@@ -95,6 +95,14 @@ def get_last_active_map(guild_id: str) -> Dict[str, datetime]:
     return {str(row[0]): row[1] for row in rows}
 
 
+def get_game_last_active_map() -> Dict[str, datetime]:
+    """discord_id -> last_active for every linked game account with a recorded login."""
+    rows = QueryHelper.fetch_all(
+        "SELECT discord_id, last_active FROM users WHERE discord_id IS NOT NULL AND last_active IS NOT NULL",
+    )
+    return {str(row[0]): row[1] for row in rows}
+
+
 def set_user_xp(guild_id: str, user_id: str, xp: int, level: int, last_xp_at: datetime) -> None:
     with get_db_cursor() as db:
         db.execute(
