@@ -1,0 +1,1 @@
+from .routes import register_chat_routes, register_chat_socketio_handlers

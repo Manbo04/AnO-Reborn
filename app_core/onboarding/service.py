@@ -31,9 +31,17 @@ def _food_bank_count(db, user_id: int) -> int:
 
 
 def _joined_coalition(db, user_id: int) -> bool:
-    db.execute("SELECT coalition_id FROM users WHERE id = %s", (user_id,))
-    row = db.fetchone()
-    return (row[0] is not None) if row else False
+    from database import get_coalition_members_table
+
+    try:
+        members_tbl = get_coalition_members_table()
+        if not members_tbl:
+            return False
+        db.execute(f"SELECT 1 FROM {members_tbl} WHERE userid = %s LIMIT 1", (user_id,))
+        return db.fetchone() is not None
+    except Exception:
+        db.connection.rollback()
+        return False
 
 
 def _active_treaties_count(db, user_id: int) -> int:
@@ -71,11 +79,7 @@ def get_onboarding_status(db, user_id: int) -> dict:
 
     provinces = _province_count(db, user_id)
     food_banks = _food_bank_count(db, user_id)
-
-    # Check coalition membership
-    db.execute("SELECT coalition_id FROM users WHERE id = %s", (user_id,))
-    row = db.fetchone()
-    in_coalition = row[0] is not None if row else False
+    in_coalition = _joined_coalition(db, user_id)
 
     # Check allies (active treaties)
     db.execute(

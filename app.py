@@ -623,6 +623,7 @@ def create_app():
             "admin_user_ids": list(SUPER_ADMIN_USER_IDS),
             "get_resources": get_resources,
             "game_ui": {},
+            "equipped_bg_css_class": None,
         }
 
         if "user_id" not in session:
@@ -636,29 +637,48 @@ def create_app():
             with get_request_cursor() as db:
                 if cached_user is None:
                     try:
-                        db.execute(
-                            """
-                            SELECT u.username,
-                                   c.id as col_id, c.name as col_name
-                            FROM users u
-                            LEFT JOIN colNames c ON c.id = u.coalition_id
-                            WHERE u.id = %s
-                            """,
-                            (user_id,),
-                        )
+                        from database import get_coalition_members_table
+
+                        members_tbl = get_coalition_members_table()
+                        if members_tbl:
+                            db.execute(
+                                f"""
+                                SELECT u.username, cn.id as col_id, cn.name as col_name
+                                FROM users u
+                                LEFT JOIN {members_tbl} cm ON cm.userid = u.id
+                                LEFT JOIN colnames cn ON cn.id = cm.colid
+                                WHERE u.id = %s
+                                """,
+                                (user_id,),
+                            )
+                        else:
+                            db.execute(
+                                "SELECT username, NULL, NULL FROM users WHERE id = %s",
+                                (user_id,),
+                            )
                         row = db.fetchone()
-                        
+
                         if row:
                             cached_user = {
                                 "country_name": row[0] if row[0] else "Unknown",
                                 "coalition_id": row[1],
-                                "coalition_name": row[2]
+                                "coalition_name": row[2],
+                                # Cosmetics (equipped background) aren't implemented in the
+                                # schema yet (no cosmetics table, no
+                                # stats.equipped_background_cosmetic_id column) -- this was
+                                # previously joining against tables/columns that don't exist,
+                                # which threw on every request and, worse, rolled back this
+                                # request's whole shared connection, silently discarding any
+                                # earlier uncommitted write in the same request (found via a
+                                # real repro: a DM's read-receipt write vanishing on render).
+                                "equipped_bg_css_class": None,
                             }
                         else:
                             cached_user = {
                                 "country_name": "Unknown",
                                 "coalition_id": None,
-                                "coalition_name": None
+                                "coalition_name": None,
+                                "equipped_bg_css_class": None,
                             }
                         query_cache.set(cache_key, cached_user, ttl_seconds=60)
                     except Exception:
@@ -666,14 +686,16 @@ def create_app():
                         cached_user = {
                             "country_name": "Error",
                             "coalition_id": None,
-                            "coalition_name": None
+                            "coalition_name": None,
+                            "equipped_bg_css_class": None,
                         }
-                
+
                 ctx["country_name"] = cached_user["country_name"]
                 if ctx["country_name"] == "Terra Homeworld":
                     ctx["admin_user_ids"].append(user_id)
                 ctx["coalition_id"] = cached_user["coalition_id"]
                 ctx["coalition_name"] = cached_user["coalition_name"]
+                ctx["equipped_bg_css_class"] = cached_user.get("equipped_bg_css_class")
                 
                 ctx["game_ui"] = {"has_unseen_combat_logs": False}
                 try:
@@ -681,6 +703,13 @@ def create_app():
 
                     ctx["onboarding_checklist"] = get_onboarding_status(db, user_id)
                 except Exception:
+                    # Swallowing without rolling back would leave this request's
+                    # shared connection in an aborted-transaction state for
+                    # everything after it (any earlier uncommitted write in this
+                    # request would then be silently discarded, since a COMMIT
+                    # on an aborted postgres transaction is treated as a ROLLBACK
+                    # -- found via a real repro, not theoretical).
+                    rollback_db_cursor(db)
                     ctx["onboarding_checklist"] = None
         except Exception:
             ctx["country_name"] = "Error"
@@ -824,6 +853,19 @@ def create_app():
         if value.lower() == "citycount": return "City"
         return value.replace("_", " ").title()
     # --- END RESTORED FILTERS ---
+
+    from extensions import socketio
+    from app_core.chat.routes import register_chat_routes, register_chat_socketio_handlers
+
+    register_chat_routes(app)
+    register_chat_socketio_handlers(socketio)
+    _socketio_debug = os.getenv("ANO_SOCKETIO_DEBUG") == "1"
+    socketio.init_app(
+        app,
+        message_queue=config.get_redis_url(),
+        logger=_socketio_debug,
+        engineio_logger=_socketio_debug,
+    )
 
     return app
 

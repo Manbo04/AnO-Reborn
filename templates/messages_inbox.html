@@ -1,0 +1,31 @@
+{% extends "layout.html" %} {% block title %} Messages {% endblock %}{% block body_class %} page-messages{% endblock %} {% block body %}
+
+<div class="templatediv">
+
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">mail</span>Messages</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        {% if conversations and conversations|length > 0 %}
+        <div class="dm-conversation-list">
+            {% for c in conversations %}
+            <a class="dm-conversation-row" href="/messages/{{ c.other_user_id }}">
+                <div>
+                    <span class="dm-conversation-name">{{ c.other_username }}</span><br>
+                    <span class="dm-conversation-preview">{{ c.last_message }}</span>
+                </div>
+                {% if c.unread_count and c.unread_count > 0 %}
+                <span class="dm-conversation-unread">{{ c.unread_count }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="templatecontentpleft">No conversations yet. Visit a nation's page and use the Message button to start one.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
