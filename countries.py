@@ -521,6 +521,8 @@ def get_revenue(cId, db=None):
             "gross_theoretical": revenue["gross_theoretical"],
             "net": revenue["net"],
         }
+        if "coalition_tax" in revenue:
+            filtered_revenue["coalition_tax"] = revenue["coalition_tax"]
 
         # Cache the result for 60 seconds (revenue doesn't change often)
         query_cache.set(cache_key, filtered_revenue, ttl_seconds=60)

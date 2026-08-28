@@ -17,8 +17,9 @@ def test_rebalanced_unit_costs():
         assert row[2] == 4000
         assert row[3] == 0
         
-        # Check Nukes -- migration 0043 moved this unit's steel cost to aluminium
-        db.execute("SELECT production_cost_steel, production_cost_components, production_cost_fuel, production_cost_rations, production_cost_aluminium FROM unit_dictionary WHERE name = 'nukes'")
+        # Check Nukes -- migration 0043 moved this unit's steel cost to aluminium;
+        # migration 0051 added a uranium requirement
+        db.execute("SELECT production_cost_steel, production_cost_components, production_cost_fuel, production_cost_rations, production_cost_aluminium, production_cost_uranium FROM unit_dictionary WHERE name = 'nukes'")
         row = db.fetchone()
         assert row is not None
         assert row[0] == 0
@@ -26,6 +27,7 @@ def test_rebalanced_unit_costs():
         assert row[2] == 25000
         assert row[3] == 0
         assert row[4] == 120000
+        assert row[5] == 20000
 
         # Check Spies
         db.execute("SELECT production_cost_steel, production_cost_components, production_cost_fuel, production_cost_rations FROM unit_dictionary WHERE name = 'spies'")
@@ -38,7 +40,7 @@ def test_rebalanced_unit_costs():
 
     # Verify variables.py matches
     assert MILDICT["destroyers"]["resources"] == {"steel": 120000, "components": 15000, "gasoline": 4000}
-    assert MILDICT["nukes"]["resources"] == {"aluminium": 120000, "components": 100000, "gasoline": 25000}
+    assert MILDICT["nukes"]["resources"] == {"aluminium": 120000, "components": 100000, "gasoline": 25000, "uranium": 20000}
     assert MILDICT["spies"]["resources"] == {"rations": 100, "components": 2000}
 
 def test_aerodrome_spelling_mismatch_fallback():
