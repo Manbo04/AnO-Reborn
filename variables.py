@@ -592,7 +592,12 @@ MILDICT = {
     },
     "nukes": {
         "price": 80000000,
-        "resources": {"aluminium": 120000, "components": 100000, "gasoline": 25000},
+        "resources": {
+            "aluminium": 120000,
+            "components": 100000,
+            "gasoline": 25000,
+            "uranium": 20000,
+        },
         "manpower": 0,
     },
 }
