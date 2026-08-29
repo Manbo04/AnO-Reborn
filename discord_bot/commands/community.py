@@ -10,7 +10,6 @@ nation-optimization tools).
 import asyncio
 import json
 import logging
-import os
 import time
 import urllib.error
 import urllib.request
@@ -19,6 +18,7 @@ from typing import Optional
 import discord
 from discord import app_commands
 
+from app_core.patreon import client as patreon_client
 from database import QueryHelper
 from discord_bot import suggestions_store
 from discord_bot.backend import BotBackend
@@ -45,33 +45,6 @@ def _get_signup_stats() -> dict:
         "signups_24h": int(signups_24h[0]) if signups_24h else 0,
         "dau": int(dau[0]) if dau else 0,
     }
-
-
-def _get_patreon_stats() -> Optional[dict]:
-    token = os.getenv("PATREON_ACCESS_TOKEN")
-    campaign_id = os.getenv("PATREON_CAMPAIGN_ID")
-    if not token or not campaign_id:
-        return None
-    fields = "patron_status,currently_entitled_amount_cents"
-    url = (
-        f"https://www.patreon.com/api/oauth2/v2/campaigns/{campaign_id}/members"
-        f"?page%5Bcount%5D=200&fields%5Bmember%5D={fields}"
-    )
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception:
-        logger.exception("Patreon fetch failed")
-        return None
-    members = data.get("data", [])
-    active = [
-        m for m in members
-        if m.get("attributes", {}).get("patron_status") == "active_patron"
-        and m.get("attributes", {}).get("currently_entitled_amount_cents", 0) > 0
-    ]
-    cents = sum(m["attributes"]["currently_entitled_amount_cents"] for m in active)
-    return {"count": len(active), "monthly_usd": round(cents / 100, 2)}
 
 
 def _check_site_status() -> str:
@@ -206,7 +179,7 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
     @tree.command(name="patreon", description="Current patron count and monthly support")
     async def patreon_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        stats = await asyncio.to_thread(_get_patreon_stats)
+        stats = await asyncio.to_thread(patreon_client.fetch_campaign_summary)
         if stats is None:
             await interaction.followup.send("Patreon isn't wired up right now.", ephemeral=True)
             return
