@@ -200,6 +200,15 @@ def task_cleanup_orphan_user_rows():
     _run_with_deadlock_retries(cleanup_orphan_user_rows, "cleanup_orphan_user_rows")
 
 
+@celery.task(name="tasks.task_patreon_gem_grant")
+@leader_only(ttl_seconds=300)
+def task_patreon_gem_grant():
+    """Monthly Patreon -> Gems bonus. See app_core/patreon/service.py."""
+    from app_core.patreon import service as patreon_service
+
+    _run_with_deadlock_retries(patreon_service.run, "patreon_gem_grant")
+
+
 @celery.task(name="tasks.task_cleanup_old_spyinfo")
 def task_cleanup_old_spyinfo():
     """Remove spyinfo rows older than 7 days. Runs daily via beat."""

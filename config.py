@@ -99,6 +99,15 @@ def warn_optional_integrations() -> None:
             "Stripe not configured (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET). "
             "The Gems store will not be able to process real-money purchases."
         )
+    # Non-fatal on purpose, same reasoning as Stripe above: FEATURE_PATREON_GEMS
+    # defaults off, so a missing Patreon token must not crash boot.
+    if not (os.getenv("PATREON_ACCESS_TOKEN") or "").strip() or not (
+        os.getenv("PATREON_CAMPAIGN_ID") or ""
+    ).strip():
+        log.warning(
+            "Patreon not configured (PATREON_ACCESS_TOKEN / PATREON_CAMPAIGN_ID). "
+            "/patreon and the monthly Patreon Gems bonus will not work."
+        )
 
 
 # Parse on import to ensure environment variables are set
