@@ -20,15 +20,27 @@
     color: var(--text-secondary);
 }
 
-.store-gems-balance .material-icons-outlined {
-    color: var(--gems);
-    font-size: 1.6rem;
-}
-
 .store-gems-balance .store-gems-count {
     color: var(--gems);
     font-size: 1.4rem;
     font-weight: 700;
+}
+
+/* Bespoke gem icon (static/images/resgems.png), matching the flat-icon
+   style of the game's other resource icons (resmoney.png etc.) — used
+   in place of the generic Material "diamond" glyph anywhere Gems the
+   currency itself is being shown, not just decoratively. */
+.store-gem-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    vertical-align: middle;
+}
+
+.store-gem-icon--sm {
+    width: 18px;
+    height: 18px;
+    margin-right: 2px;
 }
 
 .store-section-intro {
@@ -102,6 +114,56 @@
     color: var(--text-secondary);
     font-size: 0.85rem;
     margin-bottom: 10px;
+}
+
+/* Featured tier: inverted accent fill, like a "Most Popular" plan on a
+   pricing page — bolder than the other cards, not just a label. Placed
+   AFTER the base .store-package-card rules above on purpose: equal
+   specificity, so source order decides the winner — this must come later
+   to actually override them (see the countries-page nation-card bug this
+   session already hit once for the same reason). */
+.store-package-card--featured {
+    position: relative;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--colorTwo);
+    overflow: visible;
+}
+
+.store-package-card--featured:hover {
+    border-color: var(--accent-hover);
+}
+
+.store-package-card--featured .store-package-name,
+.store-package-card--featured .store-package-price {
+    color: var(--colorTwo);
+}
+
+.store-package-card--featured .store-package-gems {
+    color: #fff;
+}
+
+.store-package-card--featured .templatedivbutton {
+    background: var(--colorTwo);
+    color: var(--accent);
+    box-shadow: none;
+}
+
+.store-package-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gems);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
 }
 
 /* --- Cosmetics gallery --- */

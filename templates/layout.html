@@ -277,6 +277,11 @@
                             admin_panel_settings
                         </span>Admin</a>
                         {% endif %}
+                        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
+                        <a class="" href="/store"><span class="material-icons-outlined">
+                            storefront
+                        </span>Store</a>
+                        {% endif %}
                         <!--
                         <a class="" href="/statistics"><span class="material-icons-outlined">
                             insert_chart_outlined
@@ -341,11 +346,6 @@
                         <a class="" href="/military"><span class="material-icons-outlined">
                             shield
                         </span>Military</a>
-                        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
-                        <a class="" href="/store"><span class="material-icons-outlined">
-                            storefront
-                        </span>Store</a>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -378,11 +378,6 @@
         <a class="menubara" href="/military"><span class="material-icons-outlined">
                 shield
             </span>Military</a>
-        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
-        <a class="menubara" href="/store"><span class="material-icons-outlined">
-                storefront
-            </span>Store</a>
-        {% endif %}
 
         <h3>Global Affairs</h3>
         <a class="menubara" href="/my_coalition"><span class="material-icons-outlined">
@@ -428,6 +423,11 @@
         <a class="menubara" href="/admin/command-center"><span class="material-icons-outlined">
                 admin_panel_settings
             </span>Admin</a>
+        {% endif %}
+        {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
+        <a class="menubara" href="/store"><span class="material-icons-outlined">
+                storefront
+            </span>Store</a>
         {% endif %}
 
         <!--

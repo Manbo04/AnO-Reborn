@@ -13,7 +13,7 @@
     <div class="templatedivcontent">
 
         <div class="store-gems-balance">
-            <span class="material-icons-outlined">diamond</span>
+            <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon">
             <span>You have <span class="store-gems-count">{{ gems | commas }}</span> Gems</span>
         </div>
 
@@ -22,9 +22,10 @@
         {% if gem_packages %}
         <div class="game-panel-grid game-panel-grid--3">
             {% for package_id, name, gems_granted, price_cents, currency in gem_packages %}
-            <div class="store-package-card">
+            <div class="store-package-card{% if name == 'Popular Pack' %} store-package-card--featured{% endif %}">
+                {% if name == 'Popular Pack' %}<span class="store-package-badge">Most Popular</span>{% endif %}
                 <span class="store-package-name">{{ name }}</span>
-                <span class="store-package-gems"><span class="material-icons-outlined">diamond</span> {{ gems_granted | commas }} Gems</span>
+                <span class="store-package-gems"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ gems_granted | commas }} Gems</span>
                 <span class="store-package-price">{{ "%.2f" | format(price_cents / 100) }} {{ currency | upper }}</span>
                 <form action="{{ url_for('store_bp.gems_checkout', gem_package_id=package_id) }}" method="POST">
                     {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
@@ -63,7 +64,7 @@
 
                     {% else %}
                     <span class="store-cosmetic-price{% if gems < cosmetic.price_gems %} store-cosmetic-price--insufficient{% endif %}">
-                        <span class="material-icons-outlined">diamond</span> {{ cosmetic.price_gems | commas }} Gems
+                        <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ cosmetic.price_gems | commas }} Gems
                     </span>
                     {% if gems < cosmetic.price_gems %}
                     <span class="store-section-intro">Not enough Gems — <a href="#buy-gems">buy more above</a>.</span>
