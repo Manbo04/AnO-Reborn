@@ -58,6 +58,7 @@ MIGRATION_FILES = [
     "0050_fix_coalition_messages_fk.sql",
     "0051_nukes_require_uranium.sql",
     "0052_add_patreon_gems.sql",
+    "0053_seed_patreon_tiers.sql",
 ]
 
 
