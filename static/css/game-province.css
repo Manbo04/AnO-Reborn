@@ -572,6 +572,10 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
     white-space: nowrap;
     border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
 }
+.energy-breakdown-table th.num,
+.energy-breakdown-table td.num {
+    text-align: right;
+}
 .energy-breakdown-table th {
     color: var(--text-secondary);
     font-weight: 600;
