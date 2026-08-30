@@ -116,7 +116,15 @@ def calc_ti(user_id):
             base_multiplier = variables.DEFAULT_TAX_INCOME
 
             multiplier = base_multiplier + (base_multiplier * land_multiplier)
-            income += multiplier * population
+            if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
+                taxable_population = (
+                    (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
+                    + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
+                    + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
+                )
+            else:
+                taxable_population = population
+            income += multiplier * taxable_population
 
             # Calculate CG need (demographic-based if available)
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION and has_demographic_data:
@@ -495,7 +503,15 @@ def tax_income():
 
                     base_multiplier = variables.DEFAULT_TAX_INCOME
                     multiplier = base_multiplier + (base_multiplier * land_multiplier)
-                    income += multiplier * population
+                    if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
+                        taxable_population = (
+                            (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
+                            + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
+                            + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
+                        )
+                    else:
+                        taxable_population = population
+                    income += multiplier * taxable_population
 
                     if (
                         variables.FEATURE_DEMOGRAPHIC_CONSUMPTION
