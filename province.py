@@ -76,6 +76,11 @@ def province(pId):
     from database import get_request_cursor, query_cache
 
     cId = session["user_id"]
+    
+    try:
+        pId = int(str(pId).replace('id=', ''))
+    except ValueError:
+        return "Invalid province ID", 400
 
     # OPTIMIZED: Single query to fetch province + infra + resources + stats
     # + upgrades - all in ONE database connection
