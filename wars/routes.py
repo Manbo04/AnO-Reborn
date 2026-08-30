@@ -275,8 +275,10 @@ def send_peace_offer(war_id, enemy_id):
     if request.method == "POST":
         resources = []
         resources_amount = []
+        validResources = list(Economy.resources)
+        validResources.append("money")
         try:
-            for resource in request.form:
+            for resource in validResources:
                 amount = request.form.get(resource, None)
                 if amount:
                     amo = int(amount)
@@ -299,8 +301,6 @@ def send_peace_offer(war_id, enemy_id):
                 return error(403, "You are not a participant in this war")
             resources_string = ""
             amount_string = ""
-            validResources = list(Economy.resources)
-            validResources.append("money")
             if len(resources) and len(resources_amount):
                 for res, amo in zip(resources, resources_amount):
                     if res not in validResources:
