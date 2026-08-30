@@ -95,17 +95,21 @@ def purchase_building(
         raise BuildingPurchaseError("No such building exists.")
 
     db.execute(
-        "SELECT userId, climate FROM provinces WHERE id = %s FOR UPDATE",
+        "SELECT userId FROM provinces WHERE id = %s FOR UPDATE",
         (province_id,),
     )
     owner = db.fetchone()
     if not owner or owner[0] != user_id:
         raise BuildingPurchaseError("You do not own this province.")
 
-    if not is_mine_allowed_in_biome(name, owner[1]):
+    db.execute("SELECT location FROM stats WHERE id = %s", (user_id,))
+    location_row = db.fetchone()
+    location = location_row[0] if location_row else None
+
+    if not is_mine_allowed_in_biome(name, location):
         raise BuildingPurchaseError(
             f"{name.replace('_', ' ').title()} cannot be built in this "
-            f"province's biome ({owner[1] or 'unknown'})."
+            f"province's biome ({location or 'unknown'})."
         )
 
     if policies is None:
