@@ -19,7 +19,8 @@ import discord
 from discord import app_commands
 
 from app_core.patreon import client as patreon_client
-from database import QueryHelper
+from app_core.patreon import repositories as patreon_repositories
+from database import QueryHelper, get_db_cursor
 from discord_bot import suggestions_store
 from discord_bot.backend import BotBackend
 from discord_bot.config import GAME_BASE_URL
@@ -45,6 +46,30 @@ def _get_signup_stats() -> dict:
         "signups_24h": int(signups_24h[0]) if signups_24h else 0,
         "dau": int(dau[0]) if dau else 0,
     }
+
+
+def _get_patreon_tier_gems() -> list:
+    """Live Patreon tiers joined with the Gems bonus we've configured for
+    them (patreon_tiers, admin-managed -- see app_core/patreon/). Matched
+    by title. Tiers we haven't configured a Gems amount for are omitted,
+    so this naturally shows nothing extra until patreon_tiers is seeded.
+
+    Returns [] if Patreon isn't configured or the tiers fetch fails --
+    treated as "nothing to show", not an error, since /patreon still has
+    the patron-count line to fall back on.
+    """
+    tiers = patreon_client.fetch_campaign_tiers()
+    if not tiers:
+        return []
+    with get_db_cursor(read_only=True) as db:
+        gems_by_title = dict(patreon_repositories.get_active_tiers(db))
+    if not gems_by_title:
+        return []
+    return [
+        {"title": t["title"], "amount_cents": t["amount_cents"], "gems": gems_by_title[t["title"]]}
+        for t in tiers
+        if t["title"] in gems_by_title
+    ]
 
 
 def _check_site_status() -> str:
@@ -176,17 +201,24 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
             logger.exception("/stats failed")
             await interaction.followup.send("Couldn't pull stats right now.", ephemeral=True)
 
-    @tree.command(name="patreon", description="Current patron count and monthly support")
+    @tree.command(name="patreon", description="Current patron count, monthly support, and Gems bonus per tier")
     async def patreon_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         stats = await asyncio.to_thread(patreon_client.fetch_campaign_summary)
         if stats is None:
             await interaction.followup.send("Patreon isn't wired up right now.", ephemeral=True)
             return
-        await interaction.followup.send(
+        lines = [
             f"{stats['count']} paying patron(s) right now, ${stats['monthly_usd']}/mo. "
             f"Thank you to everyone supporting the game."
-        )
+        ]
+        tier_gems = await asyncio.to_thread(_get_patreon_tier_gems)
+        if tier_gems:
+            lines.append("")
+            lines.append("**Monthly Gems bonus by tier:**")
+            for t in tier_gems:
+                lines.append(f"• {t['title']} (${t['amount_cents'] / 100:.2f}/mo) — {t['gems']:,} Gems/mo")
+        await interaction.followup.send("\n".join(lines))
 
     @tree.command(name="status", description="Is the live game up right now")
     async def status_cmd(interaction: discord.Interaction) -> None:

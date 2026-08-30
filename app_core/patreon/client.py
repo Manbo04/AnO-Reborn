@@ -1,7 +1,9 @@
 """Patreon API v2 client.
 
-Read-only. Two entry points:
+Read-only. Three entry points:
   - fetch_campaign_summary(): patron count + monthly $ (used by /patreon).
+  - fetch_campaign_tiers(): the campaign's published tier catalog (name +
+    price), used by /patreon to list the Gems bonus per tier.
   - fetch_active_members(): per-patron tier + linked Discord account, used
     by the monthly Gems bonus (see app_core/patreon/service.py).
 
@@ -22,9 +24,10 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 _MEMBERS_URL = "https://www.patreon.com/api/oauth2/v2/campaigns/{campaign_id}/members"
+_CAMPAIGN_URL = "https://www.patreon.com/api/oauth2/v2/campaigns/{campaign_id}"
 _SUMMARY_FIELDS = "patron_status,currently_entitled_amount_cents"
 _MEMBER_FIELDS = "patron_status,currently_entitled_amount_cents"
-_TIER_FIELDS = "title"
+_TIER_FIELDS = "title,amount_cents,published"
 _USER_FIELDS = "social_connections"
 _MAX_PAGES = 25  # hard cap so a malformed/looping cursor can't run forever
 
@@ -63,6 +66,36 @@ def fetch_campaign_summary() -> Optional[dict]:
     ]
     cents = sum(m["attributes"]["currently_entitled_amount_cents"] for m in active)
     return {"count": len(active), "monthly_usd": round(cents / 100, 2)}
+
+
+def fetch_campaign_tiers() -> Optional[list]:
+    """Returns the campaign's published tiers, cheapest first:
+        [{"title": str, "amount_cents": int}, ...]
+
+    Returns None if not configured or the API call fails.
+    """
+    if not is_configured():
+        return None
+    campaign_id = os.getenv("PATREON_CAMPAIGN_ID")
+    url = (
+        _CAMPAIGN_URL.format(campaign_id=campaign_id)
+        + f"?include=tiers&fields%5Btier%5D={_TIER_FIELDS}"
+    )
+    try:
+        data = _get(url)
+    except Exception:
+        logger.exception("Patreon tiers fetch failed")
+        return None
+    tiers = [
+        {
+            "title": item.get("attributes", {}).get("title"),
+            "amount_cents": item.get("attributes", {}).get("amount_cents", 0),
+        }
+        for item in data.get("included", [])
+        if item.get("type") == "tier" and item.get("attributes", {}).get("published")
+    ]
+    tiers.sort(key=lambda t: t["amount_cents"])
+    return tiers
 
 
 def fetch_active_members() -> Optional[list]:
