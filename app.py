@@ -395,9 +395,12 @@ def create_app():
 
         allowed_tags = [
             "p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li",
-            "a", "blockquote", "code", "pre", "h1", "h2", "h3",
+            "a", "blockquote", "code", "pre", "h1", "h2", "h3", "img",
         ]
-        allowed_attrs = {"a": ["href", "title", "rel"]}
+        allowed_attrs = {
+            "a": ["href", "title", "rel"],
+            "img": ["src", "alt", "title"],
+        }
         html = bleach.clean(
             html, tags=allowed_tags, attributes=allowed_attrs, strip=True
         )
