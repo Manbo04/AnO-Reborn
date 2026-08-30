@@ -95,7 +95,7 @@ def purchase_building(
         raise BuildingPurchaseError("No such building exists.")
 
     db.execute(
-        "SELECT userId, location FROM provinces WHERE id = %s FOR UPDATE",
+        "SELECT userId, climate FROM provinces WHERE id = %s FOR UPDATE",
         (province_id,),
     )
     owner = db.fetchone()
