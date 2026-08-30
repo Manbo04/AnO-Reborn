@@ -497,6 +497,35 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     {% endfor %}
                 </div>
                 {% endif %}
+
+                {% if bank_transactions %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Recent Bank Transactions</h2>
+                <p style="margin-bottom:12px; color: var(--text-secondary); font-size:0.9em;">
+                    {% if user_role in ["leader", "deputy_leader", "banker"] %}Last 50 deposits and withdrawals across the whole coalition.{% else %}Your last 50 deposits and withdrawals.{% endif %}
+                </p>
+                <div class="templateoutertablediv">
+                    <table class="templatetable templatetable2">
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Member</th>
+                            <th>Resource</th>
+                            <th>Amount</th>
+                            <th>By</th>
+                        </tr>
+                        {% for created_at, uname, uid, actor_uname, actor_id, direction, res, amt in bank_transactions %}
+                        <tr>
+                            <td>{{ created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ "Deposit" if direction == "deposit" else "Withdraw" }}</td>
+                            <td><a href="/country/id={{ uid }}">{{ uname }}</a></td>
+                            <td>{{ res | replace('_', ' ') | title }}</td>
+                            <td>{{ amt | commas }}</td>
+                            <td>{% if actor_id != uid %}<a href="/country/id={{ actor_id }}">{{ actor_uname }}</a>{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
         </div>
