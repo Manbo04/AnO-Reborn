@@ -1730,6 +1730,33 @@ def ensure_schema_compat() -> None:
                 """
             ),
         )
+
+        # Coalition bank transaction log — individual deposit/withdraw events
+        # (col_bank_contributions above only tracks a running total, not who
+        # moved what and when; players/leaders asked for real history).
+        def _create_col_bank_transactions(db):
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS col_bank_transactions (
+                    id BIGSERIAL PRIMARY KEY,
+                    coalition_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    actor_id INTEGER NOT NULL,
+                    resource TEXT NOT NULL,
+                    amount BIGINT NOT NULL,
+                    direction TEXT NOT NULL CHECK (direction IN ('deposit', 'withdraw')),
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+                )
+                """
+            )
+            db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_col_bank_transactions_coalition_time
+                ON col_bank_transactions (coalition_id, created_at DESC)
+                """
+            )
+
+        _run_schema_step("col_bank_transactions", _create_col_bank_transactions)
         _schema_compat_succeeded = core_ok
         _coalition_members_table_cache = None
         _table_column_cache.clear()

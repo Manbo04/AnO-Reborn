@@ -573,6 +573,45 @@ def coalition(coalition_id):
                 contributions_by_user[uid] = {"username": uname, "flag_data": flag_data, "resources": {}}
             contributions_by_user[uid]["resources"][res] = amt
 
+        # Recent bank transaction log — leaders/deputies/bankers see everyone's,
+        # regular members see only their own (matches contribution-history visibility)
+        bank_transactions = []
+        if userInCurCol:
+            try:
+                if user_role in ("leader", "deputy_leader", "banker"):
+                    db.execute(
+                        """
+                        SELECT cbt.created_at, u.username, cbt.user_id,
+                               a.username, cbt.actor_id,
+                               cbt.direction, cbt.resource, cbt.amount
+                        FROM col_bank_transactions cbt
+                        JOIN users u ON u.id = cbt.user_id
+                        JOIN users a ON a.id = cbt.actor_id
+                        WHERE cbt.coalition_id = %s
+                        ORDER BY cbt.created_at DESC
+                        LIMIT 50
+                        """,
+                        (coalition_id,),
+                    )
+                else:
+                    db.execute(
+                        """
+                        SELECT cbt.created_at, u.username, cbt.user_id,
+                               a.username, cbt.actor_id,
+                               cbt.direction, cbt.resource, cbt.amount
+                        FROM col_bank_transactions cbt
+                        JOIN users u ON u.id = cbt.user_id
+                        JOIN users a ON a.id = cbt.actor_id
+                        WHERE cbt.coalition_id = %s AND cbt.user_id = %s
+                        ORDER BY cbt.created_at DESC
+                        LIMIT 50
+                        """,
+                        (coalition_id, cId),
+                    )
+                bank_transactions = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+
         return render_template(
             "coalition.html",
             name=name,
@@ -603,6 +642,7 @@ def coalition(coalition_id):
             pending_applications=pending_applications,
             name_changes_used=name_changes_used,
             contributions_by_user=contributions_by_user,
+            bank_transactions=bank_transactions,
             current_user_id=cId,
             # Coalition statistics
             coalitionProvinces=coalition_provinces,
@@ -1530,6 +1570,19 @@ def deposit_into_bank(coalition_id):
         except Exception:
             db.execute("ROLLBACK TO SAVEPOINT contrib_track")
 
+        try:
+            db.execute("SAVEPOINT txn_log")
+            db.execute(
+                """
+                INSERT INTO col_bank_transactions
+                    (coalition_id, user_id, actor_id, resource, amount, direction)
+                VALUES (%s, %s, %s, %s, %s, 'deposit')
+                """,
+                (coalition_id, cId, cId, resource, amount),
+            )
+        except Exception:
+            db.execute("ROLLBACK TO SAVEPOINT txn_log")
+
     with get_request_cursor() as db:
         for resource in deposited_resources:
             name = resource[0]
@@ -1541,7 +1594,12 @@ def deposit_into_bank(coalition_id):
 
 
 # Function for withdrawing a resource from the bank
-def withdraw(resource, amount, user_id, coalition_id):
+def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
+    # actor_id: who performed the withdrawal (a banker approving someone
+    # else's request); defaults to user_id for a direct self-withdrawal.
+    if actor_id is None:
+        actor_id = user_id
+
     # Whitelist of valid colBanks column names
     _VALID_BANK_COLUMNS = frozenset(["money"] + variables.RESOURCES)
     if resource not in _VALID_BANK_COLUMNS:
@@ -1609,6 +1667,19 @@ def withdraw(resource, amount, user_id, coalition_id):
                     f"{resource}_after=updated"
                 )
             )
+
+        try:
+            db.execute("SAVEPOINT txn_log")
+            db.execute(
+                """
+                INSERT INTO col_bank_transactions
+                    (coalition_id, user_id, actor_id, resource, amount, direction)
+                VALUES (%s, %s, %s, %s, %s, 'withdraw')
+                """,
+                (coalition_id, user_id, actor_id, resource, amount),
+            )
+        except Exception:
+            db.execute("ROLLBACK TO SAVEPOINT txn_log")
 
 
 # Route from withdrawing from the bank
@@ -1769,7 +1840,7 @@ def accept_bank_request(bankId):
             db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
             return error(400, "The user who requested this is no longer in the coalition.")
 
-        result = withdraw(resource, amount, user_id, coalition_id)
+        result = withdraw(resource, amount, user_id, coalition_id, actor_id=cId)
         if result is not None:
             return result
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
