@@ -800,15 +800,7 @@ def update_info():
         # Location changing
         new_location = request.form.get("countryLocation")
 
-        continents = [
-            "Tundra",
-            "Savanna",
-            "Desert",
-            "Jungle",
-            "Boreal Forest",
-            "Grassland",
-            "Mountain Range",
-        ]
+        from app_core.economy.biome_buildings import CANONICAL_BIOMES as continents
 
         if new_location not in continents and new_location not in ["", "none"]:
             return error(400, "No such continent")
@@ -899,10 +891,27 @@ def reset_account():
                 )
                 reset_count = db.fetchone()[0]
                 first_reset = reset_count <= 1
+                from app_core.economy.biome_buildings import CANONICAL_BIOMES
+
+                db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
+                prior_location_row = db.fetchone()
+                prior_location = (
+                    prior_location_row[0] if prior_location_row else None
+                )
+                if (prior_location or "").strip().title() not in CANONICAL_BIOMES:
+                    # No valid prior biome to carry over (e.g. this account's
+                    # location was already corrupt) -- fall back to a random
+                    # real continent rather than a non-existent placeholder.
+                    import random
+
+                    prior_location = random.choice(CANONICAL_BIOMES)
                 db.execute("DELETE FROM stats WHERE id=%s", (cId,))
                 db.execute("DELETE FROM user_economy WHERE user_id=%s", (cId,))
                 starting_gold = 70000000 if first_reset else 1000000
-                db.execute("INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)", (cId, "Global", starting_gold))
+                db.execute(
+                    "INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s)",
+                    (cId, prior_location, starting_gold),
+                )
                 if first_reset:
                     _init_economy_tables(db, cId)
                 else:

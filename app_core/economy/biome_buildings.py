@@ -20,6 +20,16 @@ ALL_MINE_BUILDINGS: tuple[str, ...] = (
     "lumber_mills",
 )
 
+CANONICAL_BIOMES: tuple[str, ...] = (
+    "Tundra",
+    "Desert",
+    "Boreal Forest",
+    "Grassland",
+    "Savanna",
+    "Mountain Range",
+    "Jungle",
+)
+
 BIOME_MINES: dict[str, tuple[str, ...]] = {
     "tundra": ("iron_mines", "copper_mines", "lead_mines", "uranium_mines"),
     "desert": ("iron_mines", "pumpjacks", "bauxite_mines", "uranium_mines"),

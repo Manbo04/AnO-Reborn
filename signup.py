@@ -653,18 +653,11 @@ def discord_register():
             if not continent_str:
                 return error(400, "Biome selection is required")
 
+            from app_core.economy.biome_buildings import CANONICAL_BIOMES
+
             try:
                 continent_number = int(continent_str) - 1
-                continents = [
-                    "Tundra",
-                    "Savanna",
-                    "Desert",
-                    "Jungle",
-                    "Boreal Forest",
-                    "Grassland",
-                    "Mountain Range",
-                ]
-                continent = continents[continent_number]
+                continent = CANONICAL_BIOMES[continent_number]
             except (ValueError, IndexError):
                 return error(400, "Invalid biome selection")
 
@@ -893,16 +886,9 @@ def signup():
         except (ValueError, TypeError):
             return error(400, "Continent must be a valid number")
 
-        # Ordered list, DO NOT EDIT
-        continents = [
-            "Tundra",
-            "Savanna",
-            "Desert",
-            "Jungle",
-            "Boreal Forest",
-            "Grassland",
-            "Mountain Range",
-        ]
+        # Ordered list, DO NOT EDIT (order is tied to the signup form's
+        # numbered biome dropdown) -- shared with app_core.economy.biome_buildings
+        from app_core.economy.biome_buildings import CANONICAL_BIOMES as continents
 
         if continent_number < 0 or continent_number >= len(continents):
             return error(400, "Invalid continent selection")
