@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, session, send_from_directory, flash, Response, current_app
+from flask import Blueprint, render_template, request, redirect, session, send_from_directory, flash, Response, current_app, jsonify
 from xml.sax.saxutils import escape
 from helpers import login_required, error
 from database import get_request_cursor
@@ -214,3 +214,56 @@ def serve_flag(flag_type, flag_id):
             if len(serve_flag._cache) < 500: serve_flag._cache[cache_key] = (default_bytes, "image/jpeg", time_module.time())
         except Exception: pass
         return send_from_directory("static/flags", "default_flag.jpg")
+
+
+@bp.route("/api/quick_search")
+@login_required
+def api_quick_search():
+    """Instant nation+coalition search for the redesigned UI's topbar dropdown
+    (see /Users/dede/ano-redesign/plan/PRODUCTION_PORT_PLAN.md §6.1). Distinct
+    from /countries' and /coalitions' own full server-side search+pagination —
+    this is a small, cheap, capped lookup for a type-ahead box, not a results
+    page. Reuses the existing /flag/<type>/<id> route for flag images rather
+    than doing an expensive per-row flag lookup here.
+    """
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify({"nations": [], "coalitions": []})
+
+    like = f"%{q}%"
+    nations = []
+    coalitions = []
+    with get_request_cursor(read_only=True) as cur:
+        try:
+            if q.isdigit():
+                cur.execute(
+                    "SELECT id, username FROM users WHERE id = %s LIMIT 5",
+                    (int(q),),
+                )
+            else:
+                cur.execute(
+                    "SELECT id, username FROM users WHERE username ILIKE %s ORDER BY username LIMIT 5",
+                    (like,),
+                )
+            nations = [{"id": r[0], "name": r[1], "flag_url": f"/flag/country/{r[0]}"} for r in cur.fetchall()]
+        except Exception:
+            cur.connection.rollback()
+            nations = []
+
+        try:
+            if q.isdigit():
+                cur.execute(
+                    "SELECT id, name FROM colNames WHERE id = %s LIMIT 5",
+                    (int(q),),
+                )
+            else:
+                cur.execute(
+                    "SELECT id, name FROM colNames WHERE name ILIKE %s ORDER BY name LIMIT 5",
+                    (like,),
+                )
+            coalitions = [{"id": r[0], "name": r[1], "flag_url": f"/flag/coalition/{r[0]}"} for r in cur.fetchall()]
+        except Exception:
+            cur.connection.rollback()
+            coalitions = []
+
+    return jsonify({"nations": nations, "coalitions": coalitions})
