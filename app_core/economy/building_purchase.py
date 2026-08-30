@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 
+from app_core.economy.biome_buildings import is_mine_allowed_in_biome
 from app_core.economy.building_costs import (
     CITY_UNITS,
     LAND_UNITS,
@@ -93,10 +94,19 @@ def purchase_building(
     if f"{name}_price" not in prices:
         raise BuildingPurchaseError("No such building exists.")
 
-    db.execute("SELECT userId FROM provinces WHERE id = %s FOR UPDATE", (province_id,))
+    db.execute(
+        "SELECT userId, location FROM provinces WHERE id = %s FOR UPDATE",
+        (province_id,),
+    )
     owner = db.fetchone()
     if not owner or owner[0] != user_id:
         raise BuildingPurchaseError("You do not own this province.")
+
+    if not is_mine_allowed_in_biome(name, owner[1]):
+        raise BuildingPurchaseError(
+            f"{name.replace('_', ' ').title()} cannot be built in this "
+            f"province's biome ({owner[1] or 'unknown'})."
+        )
 
     if policies is None:
         policies = _load_policies(db, user_id)

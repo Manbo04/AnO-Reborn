@@ -29,6 +29,7 @@ from database import (
 import os
 import math
 from action_loop import build_structure, ActionLoopError
+from app_core.economy.biome_buildings import mines_for_biome
 from app_core.economy.building_costs import enrich_building_row, get_build_cost
 from app_core.economy.building_purchase import (
     BuildingPurchaseError,
@@ -842,6 +843,14 @@ def province_slot_api(pId, slot_id):
         if prow["owner_id"] != cId:
             return jsonify({"error": "Forbidden"}), 403
 
+        allowed_mines = None
+        if slot_id == "mines":
+            db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
+            loc_row = db.fetchone()
+            allowed_mines = set(
+                mines_for_biome(loc_row["location"] if loc_row else None)
+            )
+
         rows = _province_units_for_user(db, cId, pId)
         names = set(slot["buildings"])
         buildings = []
@@ -849,6 +858,11 @@ def province_slot_api(pId, slot_id):
             if row["name"] not in names:
                 continue
             qty = int(row["quantity"] or 0)
+            can_build = allowed_mines is None or row["name"] in allowed_mines
+            if not can_build and qty == 0:
+                # Not ownable in this biome and none already built — hide it
+                # rather than offer a purchase that will be rejected server-side.
+                continue
             entry = enrich_building_row(
                 {
                     "building_id": row["building_id"],
@@ -859,7 +873,7 @@ def province_slot_api(pId, slot_id):
             )
             entry["icon"] = building_visual_icon(row["name"])
             entry["quantity"] = qty
-            entry["can_build"] = True
+            entry["can_build"] = can_build
             buildings.append(entry)
         buildings.sort(key=lambda b: (-b["quantity"], b["display_name"]))
 
