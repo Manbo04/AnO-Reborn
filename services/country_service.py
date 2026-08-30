@@ -506,7 +506,8 @@ class CountryService:
 
             distribution_status = None
             food_score = None
-            if variables.FEATURE_RATIONS_DISTRIBUTION and population:
+            is_owner = session_user_id is not None and str(session_user_id) == str(cId)
+            if variables.FEATURE_RATIONS_DISTRIBUTION and population and is_owner:
                 try:
                     from tasks import fetch_nation_distribution_status, food_stats
 
