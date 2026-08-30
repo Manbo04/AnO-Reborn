@@ -1,0 +1,144 @@
+/*
+ * Full-bleed photo background + frosted glass panel system, added for the
+ * 2026-08-30 UI redesign port. Bundled into static/style.css by
+ * scripts/bundle_game_css.py — edit this file, not style.css.
+ *
+ * Page-agnostic primitives only. Per-page component reskins (tabs, modals,
+ * the topnav) are ported separately once each page's real markup is read,
+ * not guessed here.
+ *
+ * Prototyped and content-fidelity-checked against real templates in a local
+ * mockup at /Users/dede/ano-redesign/ before landing here — see
+ * PRODUCTION_PORT_PLAN.md in that folder for the full port plan this file
+ * is Phase 0 of.
+ */
+
+.game-page-bg {
+    position: fixed;
+    inset: -20px;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    filter: blur(7px);
+    animation: game-page-bg-kenburns 34s ease-in-out infinite alternate;
+}
+
+@keyframes game-page-bg-kenburns {
+    from {
+        transform: scale(1.03) translate3d(0, 0, 0);
+    }
+    to {
+        transform: scale(1.12) translate3d(-0.5%, -0.5%, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-page-bg {
+        animation: none;
+    }
+}
+
+/* Darkens the bottom of the photo so light-on-dark UI text stays readable
+   over busy image detail, independent of the blur above (blur alone isn't
+   always enough over a bright sky/light region). */
+.game-page-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+        180deg,
+        rgba(10, 13, 18, 0.14) 0%,
+        rgba(10, 13, 18, 0.34) 38%,
+        rgba(10, 13, 18, 0.6) 75%,
+        rgba(10, 13, 18, 0.74) 100%
+    );
+}
+
+.theme-light .game-page-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(20, 26, 36, 0.06) 0%,
+        rgba(20, 26, 36, 0.16) 38%,
+        rgba(20, 26, 36, 0.34) 75%,
+        rgba(20, 26, 36, 0.46) 100%
+    );
+}
+
+/* Base frosted panel. Distinct from .stat-card/.infodiv (opaque, tokens.css
+   --foreground) — this is the translucent glass treatment that only makes
+   sense on pages carrying .game-page-bg behind it. Don't apply to pages
+   still on the flat/opaque design without a background photo. */
+.game-glass {
+    position: relative;
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--game-shadow-glass);
+    color: var(--colorOne);
+}
+
+.theme-light .game-glass {
+    color: var(--colorOne);
+}
+
+/* Higher-opacity variant for content that needs stronger contrast than the
+   base glass gives — modals, dropdowns, anything overlapping other glass. */
+.game-glass--strong {
+    background: var(--game-glass-bg-strong);
+}
+
+/* Hero/intro header — badge + title + subtitle, optionally a trailing
+   action slot. The single most-reused block across every ported page. */
+.game-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+}
+
+.game-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--colorOne);
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    margin-bottom: 12px;
+}
+
+.game-hero-badge .material-icons-outlined {
+    font-size: 13px;
+}
+
+.game-hero h1 {
+    font-size: 28px;
+    margin: 0;
+    color: var(--colorOne);
+}
+
+.game-hero .game-hero-sub {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 5px 0 0;
+}
+
+@media (max-width: 768px) {
+    .game-hero {
+        padding: 20px 18px;
+    }
+
+    .game-hero h1 {
+        font-size: 22px;
+    }
+}

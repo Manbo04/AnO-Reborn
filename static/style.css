@@ -5604,6 +5604,16 @@ html.page-tutorial .resourcedivcontent {
     --text-secondary: #5c6b7f;
     --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
     --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
+
+    /* Glass redesign (2026-08-30 UI port) — frosted-panel tokens for the
+       full-bleed-photo + glass-panel treatment. New tokens only; reuse
+       --accent/--gold/--gems/--success/--danger/--text-secondary above
+       rather than duplicating them under a game- prefix. */
+    --game-glass-bg: rgba(255, 255, 255, 0.55);
+    --game-glass-bg-strong: rgba(255, 255, 255, 0.82);
+    --game-glass-border: rgba(26, 35, 50, 0.10);
+    --game-text-faint: #93a0b2;
+    --game-shadow-glass: 0 16px 40px rgba(26, 35, 50, 0.18);
 }
 
 .theme-dark {
@@ -5631,6 +5641,13 @@ html.page-tutorial .resourcedivcontent {
     --text-secondary: #8b95a5;
     --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
     --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+    /* Glass redesign (2026-08-30 UI port) — see .theme-light for token notes. */
+    --game-glass-bg: rgba(22, 26, 34, 0.32);
+    --game-glass-bg-strong: rgba(22, 26, 34, 0.62);
+    --game-glass-border: rgba(255, 255, 255, 0.14);
+    --game-text-faint: #657289;
+    --game-shadow-glass: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 :root {
@@ -5652,10 +5669,159 @@ html.page-tutorial .resourcedivcontent {
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
+    --game-glass-blur: blur(24px);
+    --game-radius-2xl: 28px;
 }
 
 .theme-dark {
     --game-panel-bg: var(--foregroundTwo);
+}
+
+
+/* --- static/css/game-glass.css --- */
+/*
+ * Full-bleed photo background + frosted glass panel system, added for the
+ * 2026-08-30 UI redesign port. Bundled into static/style.css by
+ * scripts/bundle_game_css.py — edit this file, not style.css.
+ *
+ * Page-agnostic primitives only. Per-page component reskins (tabs, modals,
+ * the topnav) are ported separately once each page's real markup is read,
+ * not guessed here.
+ *
+ * Prototyped and content-fidelity-checked against real templates in a local
+ * mockup at /Users/dede/ano-redesign/ before landing here — see
+ * PRODUCTION_PORT_PLAN.md in that folder for the full port plan this file
+ * is Phase 0 of.
+ */
+
+.game-page-bg {
+    position: fixed;
+    inset: -20px;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    filter: blur(7px);
+    animation: game-page-bg-kenburns 34s ease-in-out infinite alternate;
+}
+
+@keyframes game-page-bg-kenburns {
+    from {
+        transform: scale(1.03) translate3d(0, 0, 0);
+    }
+    to {
+        transform: scale(1.12) translate3d(-0.5%, -0.5%, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-page-bg {
+        animation: none;
+    }
+}
+
+/* Darkens the bottom of the photo so light-on-dark UI text stays readable
+   over busy image detail, independent of the blur above (blur alone isn't
+   always enough over a bright sky/light region). */
+.game-page-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+        180deg,
+        rgba(10, 13, 18, 0.14) 0%,
+        rgba(10, 13, 18, 0.34) 38%,
+        rgba(10, 13, 18, 0.6) 75%,
+        rgba(10, 13, 18, 0.74) 100%
+    );
+}
+
+.theme-light .game-page-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(20, 26, 36, 0.06) 0%,
+        rgba(20, 26, 36, 0.16) 38%,
+        rgba(20, 26, 36, 0.34) 75%,
+        rgba(20, 26, 36, 0.46) 100%
+    );
+}
+
+/* Base frosted panel. Distinct from .stat-card/.infodiv (opaque, tokens.css
+   --foreground) — this is the translucent glass treatment that only makes
+   sense on pages carrying .game-page-bg behind it. Don't apply to pages
+   still on the flat/opaque design without a background photo. */
+.game-glass {
+    position: relative;
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--game-shadow-glass);
+    color: var(--colorOne);
+}
+
+.theme-light .game-glass {
+    color: var(--colorOne);
+}
+
+/* Higher-opacity variant for content that needs stronger contrast than the
+   base glass gives — modals, dropdowns, anything overlapping other glass. */
+.game-glass--strong {
+    background: var(--game-glass-bg-strong);
+}
+
+/* Hero/intro header — badge + title + subtitle, optionally a trailing
+   action slot. The single most-reused block across every ported page. */
+.game-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+}
+
+.game-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--colorOne);
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    margin-bottom: 12px;
+}
+
+.game-hero-badge .material-icons-outlined {
+    font-size: 13px;
+}
+
+.game-hero h1 {
+    font-size: 28px;
+    margin: 0;
+    color: var(--colorOne);
+}
+
+.game-hero .game-hero-sub {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 5px 0 0;
+}
+
+@media (max-width: 768px) {
+    .game-hero {
+        padding: 20px 18px;
+    }
+
+    .game-hero h1 {
+        font-size: 22px;
+    }
 }
 
 
@@ -9148,12 +9314,6 @@ body.page-country .menuflex2 a h3 {
     line-height: 1.3;
 }
 
-.country-biome-card-resources {
-    font-size: 0.7rem;
-    color: var(--accent);
-    line-height: 1.3;
-}
-
 .country-biome-card-badge {
     position: absolute;
     top: 8px;
@@ -10231,6 +10391,10 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
     white-space: nowrap;
     border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
 }
+.energy-breakdown-table th.num,
+.energy-breakdown-table td.num {
+    text-align: right;
+}
 .energy-breakdown-table th {
     color: var(--text-secondary);
     font-weight: 600;
@@ -10776,5 +10940,309 @@ html.has-touch.game-reduced-motion .touch-active {
     .dm-conversation-preview {
         max-width: 320px;
     }
+}
+
+
+/* --- static/css/store.css --- */
+/*
+ * Store page (Gems + cosmetics). Bundled into static/style.css by
+ * scripts/bundle_game_css.py — edit this file, not style.css, for changes
+ * here. Reuses .game-panel-grid/.templatedivbutton/tokens.css rather than
+ * inventing new layout primitives, per the ano-ui-design skill.
+ */
+
+.store-gems-balance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--accent-subtle), var(--foreground) 60%);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 18px var(--game-space-md, 16px);
+    margin-bottom: var(--game-space-lg, 24px);
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.store-gems-balance .store-gems-count {
+    color: var(--gems);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* Bespoke gem icon (static/images/resgems.png), matching the flat-icon
+   style of the game's other resource icons (resmoney.png etc.) — used
+   in place of the generic Material "diamond" glyph anywhere Gems the
+   currency itself is being shown, not just decoratively. */
+.store-gem-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    vertical-align: middle;
+}
+
+.store-gem-icon--sm {
+    width: 18px;
+    height: 18px;
+    margin-right: 2px;
+}
+
+.store-section-intro {
+    color: var(--text-secondary);
+    margin: 0 0 var(--game-space-md, 16px);
+}
+
+.store-empty-catalog {
+    color: var(--text-secondary);
+    background: var(--foreground);
+    border: 1px dashed var(--border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-lg, 24px);
+    text-align: center;
+}
+
+/* Full-width CTA inside a card, filling the card edge to edge instead of
+   floating with .templatedivbutton's default intrinsic width — a page-scoped
+   override, per the skill's documented pattern for this kind of thing. */
+.store-package-card form,
+.store-cosmetic-body form {
+    width: 100%;
+    margin-top: auto;
+}
+
+.store-package-card .templatedivbutton,
+.store-cosmetic-body .templatedivbutton {
+    width: 100%;
+    margin: 0;
+}
+
+/* --- Gem packages --- */
+.store-package-card {
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: var(--game-space-md, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.store-package-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--accent);
+}
+
+.store-package-card .store-package-name {
+    font-weight: 700;
+    color: var(--colorOne);
+    font-size: 1.05rem;
+}
+
+.store-package-card .store-package-gems {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--gems);
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.store-package-card .store-package-gems .material-icons-outlined {
+    font-size: 1.1rem;
+}
+
+.store-package-card .store-package-price {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+/* Featured tier: inverted accent fill, like a "Most Popular" plan on a
+   pricing page — bolder than the other cards, not just a label. Placed
+   AFTER the base .store-package-card rules above on purpose: equal
+   specificity, so source order decides the winner — this must come later
+   to actually override them (see the countries-page nation-card bug this
+   session already hit once for the same reason). */
+.store-package-card--featured {
+    position: relative;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--colorTwo);
+    overflow: visible;
+}
+
+.store-package-card--featured:hover {
+    border-color: var(--accent-hover);
+}
+
+.store-package-card--featured .store-package-name,
+.store-package-card--featured .store-package-price {
+    color: var(--colorTwo);
+}
+
+.store-package-card--featured .store-package-gems {
+    color: #fff;
+}
+
+.store-package-card--featured .templatedivbutton {
+    background: var(--colorTwo);
+    color: var(--accent);
+    box-shadow: none;
+}
+
+.store-package-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gems);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+}
+
+/* --- Cosmetics gallery --- */
+.store-cosmetic-card {
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.store-cosmetic-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--accent);
+}
+
+.store-cosmetic-preview {
+    height: 130px;
+    background-color: var(--foregroundThree);
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.store-cosmetic-body {
+    padding: var(--game-space-md, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 auto;
+}
+
+.store-cosmetic-name {
+    font-weight: 700;
+    color: var(--colorOne);
+    font-size: 1.05rem;
+}
+
+.store-cosmetic-price {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--gems);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.store-cosmetic-price .material-icons-outlined {
+    font-size: 1.1rem;
+}
+
+.store-cosmetic-price.store-cosmetic-price--insufficient {
+    color: var(--danger);
+}
+
+.store-cosmetic-body .store-section-intro {
+    font-size: 0.8rem;
+    margin: -2px 0 4px;
+}
+
+.store-cosmetic-body .store-section-intro a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.store-cosmetic-equipped-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--success);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.store-cosmetic-equipped-badge .material-icons-outlined {
+    font-size: 1.05rem;
+}
+
+
+/* --- static/css/cosmetics.css --- */
+/*
+ * Store cosmetic backgrounds — one rule per row in the `cosmetics` table,
+ * keyed by its css_class column. Bundled into static/style.css by
+ * scripts/bundle_game_css.py (do not edit style.css directly for this).
+ *
+ * Each selector is a bare `.<css_class>` (specificity 0,1,0), deliberately
+ * NOT qualified with `body` — this lets the exact same rule apply both to
+ * <body> (equipped, real background) and to a store-cosmetic-preview <div>
+ * in the store gallery (see templates/store.html), so browsing shows the
+ * real artwork instead of a flat placeholder swatch. On <body> it still
+ * beats the plain `body { background: var(--background) !important; }`
+ * rule in static/style.css regardless of which .theme-light/.theme-dark
+ * class is on <html> — a bare class selector outranks a bare type selector
+ * — so equipping a cosmetic overrides the theme background, and having
+ * none equipped leaves the normal theme toggle untouched.
+ *
+ * Seeded catalog: see migrations/0049_seed_store_catalog.sql. Add one rule
+ * here per catalog item you seed, e.g.:
+ *
+ * .bg-sunset-gradient {
+ *     background: linear-gradient(135deg, #ff7e5f, #feb47b) !important;
+ * }
+ * .bg-midnight-stars {
+ *     background: url('/static/img/cosmetics/midnight-stars.jpg') center/cover fixed !important;
+ * }
+ */
+
+.bg-sunset-horizon {
+    background: linear-gradient(135deg, #ff7e5f, #feb47b 45%, #ffd97d 100%) fixed !important;
+}
+
+.bg-emerald-canopy {
+    background: linear-gradient(135deg, #0b3d2e, #1f6f4f 50%, #4caf7d 100%) fixed !important;
+}
+
+.bg-aurora-borealis {
+    background: linear-gradient(135deg, #0f2027, #2c7a7b 40%, #7ee8c7 75%, #b892ff 100%) fixed !important;
+}
+
+.bg-midnight-nebula {
+    background: radial-gradient(circle at 30% 20%, #3a1c71 0%, #17123a 45%, #05040f 100%) fixed !important;
+}
+
+.bg-neon-circuit {
+    background: linear-gradient(135deg, #0d0221 0%, #170b3b 40%, #240046 70%, #10002b 100%) fixed !important;
+}
+
+.bg-royal-amethyst {
+    background: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed !important;
 }
 

@@ -19,3 +19,29 @@
 <h2 class="templatecontentheaderleft"{% if style %} style="{{ style }}"{% endif %}>{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>
 {{ caller() }}
 {% endmacro %}
+
+{#- Added for the 2026-08-30 UI redesign port (see /Users/dede/ano-redesign/plan/PRODUCTION_PORT_PLAN.md).
+    game_panel above only renders the <h2> header; callers still hand-wrap it in their own
+    background/border div. game_glass_panel bundles both into one call for pages that have
+    switched to the .game-glass frosted-panel treatment (game-glass.css) — only use this on
+    pages carrying .game-page-bg behind them, not on pages still using the flat/opaque style. #}
+{% macro game_glass_panel(title, icon=None, extra_class=None) %}
+<div class="game-glass{{ ' ' ~ extra_class if extra_class else '' }}" style="padding: 22px 24px;">
+    <h2 class="templatecontentheaderleft" style="margin-top: 0;">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>
+    {{ caller() }}
+</div>
+{% endmacro %}
+
+{#- The full-bleed-photo page header: badge + title + subtitle, with an optional trailing
+    action slot (a button/row) via {% call %}. Called plainly (no {% call %}) when a page has
+    no trailing action. #}
+{% macro game_hero(title, badge_text=None, badge_icon=None, subtitle=None) %}
+<div class="game-glass game-hero">
+    <div>
+        {% if badge_text %}<span class="game-hero-badge">{% if badge_icon %}<span class="material-icons-outlined">{{ badge_icon }}</span>{% endif %}{{ badge_text }}</span>{% endif %}
+        <h1>{{ title }}</h1>
+        {% if subtitle %}<p class="game-hero-sub">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if caller is defined %}{{ caller() }}{% endif %}
+</div>
+{% endmacro %}
