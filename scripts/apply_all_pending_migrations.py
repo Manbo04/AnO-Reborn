@@ -59,6 +59,7 @@ MIGRATION_FILES = [
     "0051_nukes_require_uranium.sql",
     "0052_add_patreon_gems.sql",
     "0053_seed_patreon_tiers.sql",
+    "0054_seed_patreon_tier_elite.sql",
 ]
 
 
