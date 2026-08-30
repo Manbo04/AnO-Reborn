@@ -5694,6 +5694,19 @@ html.page-tutorial .resourcedivcontent {
  * is Phase 0 of.
  */
 
+/* static/style.css sets `body { background: var(--background) !important; }`
+   (hand-written, above the bundle marker) — opaque, so it fully hides
+   .game-page-bg below unless overridden. This class-selector rule
+   (specificity 0,1,1) beats that bare-element one (0,0,1) regardless of
+   !important vs !important tie-break rules, since specificity is compared
+   first. Applied via body_class on pages using the new redesign; note this
+   means an equipped store cosmetic (cosmetics.css, also a body class,
+   gradients not photos) won't show through on a game-page-v2 page — real
+   product tradeoff, not an oversight, revisit if that turns out to matter. */
+body.game-page-v2 {
+    background: transparent !important;
+}
+
 .game-page-bg {
     position: fixed;
     inset: -20px;

@@ -1,7 +1,7 @@
 # FULLY MIGRATED
 
 from flask import Blueprint, request, render_template, session, redirect
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 import time
 from dotenv import load_dotenv
 import variables
@@ -84,7 +84,8 @@ def intelligence():
 
         except Exception:
             # If anything unexpected happens reading spyinfo, return an empty page
-            return render_template("intelligence.html", info={})
+            template = "intelligence_v2.html" if is_theme_v2_enabled("intelligence") else "intelligence.html"
+            return render_template(template, info={})
 
         sorted_data = {}
         fully_sorted = {}
@@ -116,7 +117,8 @@ def intelligence():
                 if resource not in data:
                     fully_sorted[user][resource] = "?"
 
-        return render_template("intelligence.html", info=fully_sorted)
+        template = "intelligence_v2.html" if is_theme_v2_enabled("intelligence") else "intelligence.html"
+        return render_template(template, info=fully_sorted)
 
 
 @bp.route("/spyAmount", methods=["GET", "POST"])
