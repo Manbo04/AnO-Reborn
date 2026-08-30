@@ -25,8 +25,8 @@
     background/border div. game_glass_panel bundles both into one call for pages that have
     switched to the .game-glass frosted-panel treatment (game-glass.css) — only use this on
     pages carrying .game-page-bg behind them, not on pages still using the flat/opaque style. #}
-{% macro game_glass_panel(title, icon=None, extra_class=None) %}
-<div class="game-glass{{ ' ' ~ extra_class if extra_class else '' }}" style="padding: 22px 24px;">
+{% macro game_glass_panel(title, icon=None, extra_class=None, style=None) %}
+<div class="game-glass{{ ' ' ~ extra_class if extra_class else '' }}" style="padding: 22px 24px;{% if style %} {{ style }}{% endif %}">
     <h2 class="templatecontentheaderleft" style="margin-top: 0;">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>
     {{ caller() }}
 </div>

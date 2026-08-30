@@ -1,0 +1,65 @@
+{% extends "layout.html" %} {% block title %} Intelligence {% endblock %}
+{% block body_class %} game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import stat_card, game_glass_panel, game_hero, game_button %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/spy.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+    {% set report_count = info|length if info else 0 %}
+    {{ game_hero('Intelligence', badge_text=(report_count ~ ' up-to-date report' ~ ('s' if report_count != 1 else '')) if report_count else None, badge_icon='person_search', subtitle='Spy reports gathered from your last successful missions. Reports go stale over time.') }}
+
+    <div class="templatedivcontent">
+        {% if info %}
+            {% for user, data in info.items() %}
+            {% call game_glass_panel(data["username"] ~ "'s military", icon='shield', style='margin-bottom: var(--game-space-lg, 24px);') %}
+                <div class="templateoutertablediv">
+                    <table class="templatetable templatetable2">
+                        <tr>
+                            <th>Army</th>
+                            <th>Air Force</th>
+                            <th>Navy</th>
+                            <th>Special</th>
+                        </tr>
+                        <tr>
+                            <td>{{ data["soldiers"] }} Soldiers</td>
+                            <td>{{ data["fighters"] }} Fighter Jets</td>
+                            <td>{{ data["submarines"] }} Submarines</td>
+                            <td>{{ data["spies"] }} Spies</td>
+                        </tr>
+                        <tr>
+                            <td>{{ data["artillery"] }} Artillery</td>
+                            <td>{{ data["bombers"] }} Bombers</td>
+                            <td>{{ data["cruisers"] }} Cruisers</td>
+                            <td>{{ data["icbms"] }} Ballistic Missiles</td>
+                        </tr>
+                        <tr>
+                            <td>{{ data["tanks"] }} Tanks</td>
+                            <td>{{ data["apaches"] }} Attack Helicopters</td>
+                            <td>{{ data["destroyers"] }} Destroyers</td>
+                            <td>{{ data["nukes"] }} Nukes</td>
+                        </tr>
+                    </table>
+                </div>
+                <p style="margin: 10px 0 0;">{{ game_button("View " ~ data["username"] ~ "'s nation", href="/country/id=" ~ data["spyee"], variant='secondary', extra_class='') }}</p>
+            {% endcall %}
+
+            {% call game_glass_panel(data["username"] ~ "'s Resources", icon='article') %}
+            <div class="stat-grid">
+                {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Iron','iron'), ('Lead','lead'), ('Bauxite','bauxite'), ('Copper','copper'), ('Lumber','lumber'), ('Components','components'), ('Steel','steel'), ('Consumer goods','consumer_goods'), ('Aluminium','aluminium'), ('Gasoline','gasoline'), ('Ammunition','ammunition')] %}
+                {{ stat_card(label, data[key]) }}
+                {% endfor %}
+            </div>
+            {% endcall %}
+            {% endfor %}
+        {% else %}
+        <div class="game-glass" style="padding: 40px 24px; text-align: center;">
+            <span class="material-icons-outlined" style="font-size: 34px; color: var(--text-secondary); margin-bottom: 10px; display: inline-block;">visibility_off</span>
+            <h2 class="templatecontentheadercenter" style="border: none; margin: 0;">No up-to-date intelligence</h2>
+            <p style="color: var(--text-secondary); margin: 8px 0 0;">Send spies from the <a href="/wars">Wars</a> page to gather a report on another nation.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
