@@ -96,6 +96,14 @@ DEMO_CONSUMER_GOODS_CONSUMPTION = {
     "pop_elderly": 2.0 / 80000,  # 2x for elderly (healthcare, comfort)
 }
 
+# Tax contribution by age bracket. Children are dependents (no income tax);
+# elderly pay a reduced rate; working-age pays full rate.
+DEMO_TAX_MULTIPLIER = {
+    "pop_working": 1.0,
+    "pop_children": 0.0,
+    "pop_elderly": 0.45,
+}
+
 # Distribution capacity for different building types
 # These cap how much rations/CG can actually be consumed even if available
 CONSUMER_GOODS_DISTRIBUTION_BUILDINGS = [
@@ -117,6 +125,9 @@ CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
 
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
+
+# Feature flag for age-weighted tax income (children/elderly pay less)
+FEATURE_DEMOGRAPHIC_TAX = True  # toggle age-weighted tax rates on/off
 
 # PHASE 3: AGING, EDUCATION & WORKFORCE (Phase 3)
 # Daily population aging rates (per tick, as fraction)
