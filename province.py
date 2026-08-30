@@ -943,8 +943,14 @@ def province_quick_build_api(pId):
             demolish_structure(cId, building_id, -quantity, province_id=pId)
         else:
             build_structure(cId, building_id, quantity, province_id=pId)
-    except ActionLoopError as e:
-        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        # Catch ActionLoopError and psycopg2 DatabaseError (from triggers)
+        import psycopg2
+        if isinstance(e, psycopg2.DatabaseError):
+            err_msg = str(e).split('\n')[0]
+        else:
+            err_msg = str(e)
+        return jsonify({"ok": False, "error": err_msg}), 400
 
     try:
         invalidate_user_cache(cId)
