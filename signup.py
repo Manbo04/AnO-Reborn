@@ -139,10 +139,14 @@ def init_user_game_data(db, user_id, continent):
     logger = logging.getLogger(__name__)
     
     # 1. Stats
+    # Base starting gold (80M) plus a temporary +1B new-player signup bonus,
+    # announced 2026-08-30. Remove the addition to revert to the base amount.
+    STARTING_GOLD = 80_000_000
+    NEW_PLAYER_SIGNUP_BONUS = 1_000_000_000
     db.execute(
         "INSERT INTO stats (id, location, gold) VALUES (%s, %s, %s) "
         "ON CONFLICT DO NOTHING",
-        (user_id, continent, 80_000_000),
+        (user_id, continent, STARTING_GOLD + NEW_PLAYER_SIGNUP_BONUS),
     )
     
     # 2. Policies
