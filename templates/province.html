@@ -1295,11 +1295,11 @@
                         <tr>
                             <td>{{ units["harbours"] }} Naval Bases</td>
                             <!-- #2 Raw resource -->
-                            {% if province['location'] in ["Tundra", "Savanna", "Grassland"] %}
+                            {% if province['location'] in ["Tundra", "Savanna", "Jungle", "Grassland"] %}
                             <td>{{ units["copper_mines"] }} Copper Mines</td>
                             {% elif province['location'] in ["Mountain Range", "Desert"] %}
                             <td>{{ units["pumpjacks"] }} Pumpjacks</td>
-                            {% elif province['location'] in ["Jungle", "Boreal Forest"] %}
+                            {% elif province['location'] in ["Boreal Forest"] %}
                             <td>{{ units["lumber_mills"] }} Lumber Mills</td>
                             {% endif %}
                             <!---->
@@ -1313,7 +1313,7 @@
                             {% elif province['location'] in ["Desert", "Grassland", "Mountain Range"] %}
                             <td>{{ units["bauxite_mines"] }} Bauxite Mines</td>
                             {% elif province['location'] in ["Jungle"] %}
-                            <td>{{ units["copper_mines"] }} Copper Mines</td>
+                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
                             {% endif %}
                             <!---->
                             <td>{{ units["aluminium_refineries"] }} Aluminium Refineries</td>
