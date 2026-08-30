@@ -443,13 +443,26 @@
         if (row) row.classList.add('is-busy');
         btn.disabled = true;
 
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
         fetch('/api/province/' + meta.provinceId + '/quick_build', {
             method: 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify({ building_id: buildingId, quantity: 1 }),
         })
             .then(function (r) {
+                var isJson = r.headers.get('content-type') && r.headers.get('content-type').indexOf('application/json') !== -1;
+                if (!isJson) {
+                    return r.text().then(function(text) {
+                        throw new Error('Server Error (' + r.status + '): ' + text.substring(0, 50));
+                    });
+                }
                 return r.json().then(function (data) {
                     if (!r.ok || !data.ok) throw new Error(data.error || 'Build failed');
                     return data;
