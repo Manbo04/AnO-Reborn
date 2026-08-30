@@ -26,6 +26,20 @@ def client_ip_from_request() -> str | None:
     return request.remote_addr
 
 
+def is_theme_v2_enabled(page_key: str) -> bool:
+    """Feature flag for the 2026-08-30 UI redesign port (see
+    /Users/dede/ano-redesign/plan/PRODUCTION_PORT_PLAN.md §4.5/§8) — deploy-time
+    only, not per-user. THEME_V2_PAGES is a comma-separated list of page keys
+    (e.g. "store,account,intelligence"); unset/empty means no page has cut
+    over yet. Each key is one page's instant on/off switch: a route checks
+    this once and picks which template to render, so turning a page off is
+    a Railway env var change, not a deploy.
+    """
+    enabled_pages = os.getenv("THEME_V2_PAGES", "")
+    keys = {key.strip() for key in enabled_pages.split(",") if key.strip()}
+    return page_key in keys
+
+
 def province_image_url(province_id: int, has_image: bool = False) -> str:
     """Public URL for a province banner, or the default stock image."""
     if has_image:

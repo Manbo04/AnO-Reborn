@@ -28,6 +28,16 @@
     --text-secondary: #5c6b7f;
     --shadow-card: 0 2px 12px rgba(26, 35, 50, 0.08);
     --shadow-card-hover: 0 4px 20px rgba(26, 35, 50, 0.12);
+
+    /* Glass redesign (2026-08-30 UI port) — frosted-panel tokens for the
+       full-bleed-photo + glass-panel treatment. New tokens only; reuse
+       --accent/--gold/--gems/--success/--danger/--text-secondary above
+       rather than duplicating them under a game- prefix. */
+    --game-glass-bg: rgba(255, 255, 255, 0.55);
+    --game-glass-bg-strong: rgba(255, 255, 255, 0.82);
+    --game-glass-border: rgba(26, 35, 50, 0.10);
+    --game-text-faint: #93a0b2;
+    --game-shadow-glass: 0 16px 40px rgba(26, 35, 50, 0.18);
 }
 
 .theme-dark {
@@ -55,6 +65,13 @@
     --text-secondary: #8b95a5;
     --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
     --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+    /* Glass redesign (2026-08-30 UI port) — see .theme-light for token notes. */
+    --game-glass-bg: rgba(22, 26, 34, 0.32);
+    --game-glass-bg-strong: rgba(22, 26, 34, 0.62);
+    --game-glass-border: rgba(255, 255, 255, 0.14);
+    --game-text-faint: #657289;
+    --game-shadow-glass: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 :root {
@@ -76,6 +93,8 @@
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
+    --game-glass-blur: blur(24px);
+    --game-radius-2xl: 28px;
 }
 
 .theme-dark {

@@ -7,6 +7,7 @@ STYLE = ROOT / "static" / "style.css"
 MARKER = "/* === GAME UI BUNDLE (auto-generated) === */"
 FILES = [
     "static/css/tokens.css",
+    "static/css/game-glass.css",
     "static/css/game-shell.css",
     "static/css/game-layout.css",
     "static/css/game-experience.css",
