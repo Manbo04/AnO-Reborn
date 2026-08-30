@@ -55,21 +55,6 @@ if not hasattr(ast, "Ellipsis"): ast.Ellipsis = ast.Constant
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-
-@app.route("/_admin/read_errors")
-def read_errors():
-
-    import os
-    from flask import request
-    if request.args.get("env"):
-        return str(os.environ.get("DATABASE_URL"))
-
-    import os
-    import os
-    if not os.path.exists("errors.log"):
-        return "No errors.log found"
-    with open("errors.log", "r") as log_file:
-        return "<pre>" + log_file.read()[-50000:] + "</pre>"
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 def create_app():
