@@ -1167,11 +1167,17 @@ def createprovince():
                     if not found:
                         new_x, new_y = 0, 0 # Fallback
 
+                # Split the starting 1,000,000 population across age brackets
+                # (60% working / 30% children / 10% elderly) instead of
+                # dumping it all into pop_children -- a new nation used to
+                # start 100% "children," which zeroed its tax income under
+                # the age-weighted tax system and skewed consumer-goods need.
                 db.execute(
                     (
                         "INSERT INTO provinces "
-                        "(userId, provinceName, pop_children, coordinate_x, coordinate_y) "
-                        "VALUES (%s, %s, 1000000, %s, %s) RETURNING id"
+                        "(userId, provinceName, pop_children, pop_working, pop_elderly, "
+                        "coordinate_x, coordinate_y) "
+                        "VALUES (%s, %s, 300000, 600000, 100000, %s, %s) RETURNING id"
                     ),
                     (cId, pName, new_x, new_y),
                 )

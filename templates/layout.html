@@ -93,15 +93,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://use.fontawesome.com">
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&display=swap" rel="stylesheet">
     <!-- Font Awesome (non-render-blocking) -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"></noscript>
+    <!-- Served from cdnjs, not use.fontawesome.com: that CDN started 503ing
+         (checked 2026-08-30), which silently blanked every fa-* icon site-wide
+         since the onload media swap below never fires on a failed load. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css"></noscript>
     <!-- v4 shim: SimpleMDE's toolbar hard-codes unprefixed fa-* (v4) class names,
          which don't resolve against FA5's all.css without this compatibility layer. -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/v4-shims.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/v4-shims.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/v4-shims.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/v4-shims.min.css"></noscript>
     <!-- Google Fonts (non-render-blocking) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"></noscript>

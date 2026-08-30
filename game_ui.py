@@ -427,6 +427,21 @@ def nation_biome_choices() -> list[dict[str, str]]:
     return NATION_BIOME_CHOICES
 
 
+def biome_resources(location: str | None) -> list[str]:
+    """Raw resources minable in a biome, for display on the biome picker."""
+    from app_core.economy.biome_buildings import mines_for_biome
+    import variables
+
+    names = []
+    for mine in mines_for_biome(location):
+        produced = variables.INFRA.get(f"{mine}_plus") or {}
+        for resource in produced:
+            label = resource.replace("_", " ").title()
+            if label not in names:
+                names.append(label)
+    return names
+
+
 def get_slot_config(slot_id: str) -> dict[str, Any] | None:
     for slot in PROVINCE_BASE_SLOTS:
         if slot["id"] == slot_id:
@@ -604,6 +619,7 @@ def game_ui_context() -> dict[str, Any]:
         "game_stylesheet": game_stylesheet_filename(),
         "game_asset_path": game_asset_path,
         "nation_biome_choices": nation_biome_choices,
+        "biome_resources": biome_resources,
         "biome_theme": biome_theme,
         "biome_icon": biome_icon,
         "legacy_image_for_building": legacy_image_for_building,

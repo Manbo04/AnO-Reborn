@@ -701,10 +701,11 @@ def update_info():
     with get_request_cursor() as db:
         cId = session["user_id"]
 
-        # Description changing
+        # Description changing. Only "None" (a legacy sentinel) skips the
+        # update -- an empty string is a deliberate clear and must persist.
         description = request.form.get("description", "")
 
-        if description not in ["None", ""]:
+        if description != "None":
             db.execute(
                 "UPDATE users SET description=%s WHERE id=%s", (description, cId)
             )

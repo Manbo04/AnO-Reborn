@@ -1266,6 +1266,7 @@
                                     <span class="material-icons-outlined country-biome-card-icon" aria-hidden="true">{{ biome.icon }}</span>
                                     <span class="country-biome-card-label">{{ biome.label }}</span>
                                     <span class="country-biome-card-tagline">{{ biome.tagline }}</span>
+                                    <span class="country-biome-card-resources">Produces: {{ biome_resources(biome.value) | join(', ') }}</span>
                                 </span>
                                 {% if location and location == biome.value %}
                                 <span class="country-biome-card-badge">Current</span>
@@ -1559,6 +1560,20 @@
 
                                 <div>Rations consumption -15%</div>
                                 <div>Happiness -10 per province</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education6" value="6" type="checkbox" id="b6">
+                                <label for="b6" onclick="showContent(this)">University Grants (6)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Universities cost 7% less</div>
 
                             </li>
                         </div>
