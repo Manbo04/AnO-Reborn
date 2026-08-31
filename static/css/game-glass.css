@@ -26,6 +26,20 @@ body.game-page-v2 {
     background: transparent !important;
 }
 
+/* .templatecontainer and .templatediv (the universal page-wrapper classes,
+   used by every page old and new) also carry their own opaque backgrounds
+   (var(--background)/var(--foreground) respectively, set above the bundle
+   marker) and sit directly between body and any .game-hero/.game-glass
+   content — left unfixed, they paint an opaque card over almost the entire
+   page, hiding .game-page-bg/.game-page-overlay behind them entirely except
+   a thin margin at the very edge of the viewport. Found live in production
+   2026-08-31: every ported page showed a flat opaque panel with no visible
+   photo/blur at all once THEME_V2_PAGES was enabled for real players. */
+body.game-page-v2 .templatecontainer,
+body.game-page-v2 .templatediv {
+    background: transparent !important;
+}
+
 .game-page-bg {
     position: fixed;
     inset: -20px;
