@@ -1,0 +1,364 @@
+{% extends "layout.html" %} {% block title %} Countries {% endblock %}{% block body_class %} page-countries game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/countries.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Countries', badge_icon='public', badge_text=(total_count | commas) ~ ' nations', subtitle='Every nation across the world') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+        <form action="/countries" method="GET">
+            <div class="templatedivflex2 divflex2full">
+
+                <div class="templatedivflex2left">
+
+                    <select name="sort" class="templateselect">
+                        <option value="influence" class="templateoption" {% if sort == 'influence' %}selected{% endif %}>Influence</option>
+                        <option value="population" class="templateoption" {% if sort == 'population' %}selected{% endif %}>Population</option>
+                        <option value="age" class="templateoption" {% if sort == 'age' %}selected{% endif %}>Age</option>
+                        <option value="provinces" class="templateoption" {% if sort == 'provinces' %}selected{% endif %}>Provinces</option>
+                        <option value="war_range" class="templateoption" {% if sort == 'war_range' %}selected{% endif %}>War Range</option>
+                    </select>
+
+                </div>
+                <div class="templatedivflex2right">
+
+                    <select name="sortway" class="templateselect">
+                        <option value="desc" class="templateoption" {% if sortway == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" class="templateoption" {% if sortway == 'asc' %}selected{% endif %}>Ascending</option>
+                    </select>
+
+                </div>
+
+                <div class="templatedivflex2left">
+
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name or ID" value="{{ search or '' }}" />
+
+                </div>
+                <div class="templatedivflex2right">
+
+                    <select name="per_page" class="templateselect">
+                        <option value="50" class="templateoption" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                        <option value="100" class="templateoption" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+                        <option value="150" class="templateoption" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
+                    </select>
+
+                </div>
+
+                <div class="templatedivflex2left">
+                    {{ game_button('Submit', icon='arrow_forward', extra_class='center smallactionbutton') }}
+                </div>
+
+            </div>
+        </form>
+
+        {% if total_count is defined %}
+        <p class="text-muted text-center mt-sm">
+            Showing {{ countries|length }} of {{ total_count }} nations
+            {% if search %} matching "{{ search }}"{% endif %}
+        </p>
+        {% endif %}
+        </div>
+
+        <!-- Hidden preserved-link for tests and clients: keeps current query params present in HTML -->
+        <a href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="hidden">preserve</a>
+
+        {% set influence_sortway = 'asc' if sort == 'influence' and sortway == 'desc' else 'desc' %}
+        {% set age_sortway = 'asc' if sort == 'age' and sortway == 'desc' else 'desc' %}
+        {% set provinces_sortway = 'asc' if sort == 'provinces' and sortway == 'desc' else 'desc' %}
+        <!-- Mobile card list -->
+        <div class="nations-mobile-list game-card-list--mobile-only">
+            {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
+            <a class="nation-card {% if id == current_user_id %}highlight-row{% endif %}" href="/country/id={{ id }}">
+                <span class="nation-card__rank">{{ loop.index }}</span>
+                <img class="nation-card__flag" src="/flag/country/{{ id }}" onerror="this.style.display='none'" alt="">
+                <div class="nation-card__main">
+                    <div class="nation-card__name">{{ username }}</div>
+                    <div class="nation-card__sub">{% if colName %}{{ colName }}{% else %}No coalition{% endif %} · {{ province_count }} prov.</div>
+                </div>
+                <div class="nation-card__chips">
+                    <span class="nation-card__chip nation-card__chip--accent">{{ influence | fmt }} inf</span>
+                    {% if join_number %}<span class="nation-card__chip">#{{ join_number }}</span>{% endif %}
+                </div>
+            </a>
+            {% else %}
+            <p style="padding:16px;text-align:center;color:var(--text-secondary)">No nations found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="templateoutertablediv nations-desktop-table game-table-fallback--hide-mobile">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Founder Rank</th>
+                    <th><a href="{{ url_for('countries', page=1, sort='influence', sortway=influence_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="th-sort-link">Influence{% if sort == 'influence' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
+                    <th><a href="{{ url_for('countries', page=1, sort='age', sortway=age_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="th-sort-link">Date Created{% if sort == 'age' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
+                    <th>Coalition</th>
+                    <th><a href="{{ url_for('countries', page=1, sort='provinces', sortway=provinces_sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}" class="th-sort-link">Provinces{% if sort == 'provinces' %} {% if sortway == 'desc' %}↓{% else %}↑{% endif %}{% endif %}</a></th>
+
+                    {% for id, username, date, flag, province_population, colId, colName, province_count, join_number, influence, unix in countries %}
+                    <tr {% if id == current_user_id %}class="highlight-row"{% endif %}>
+                        <td>{{ loop.index }})</td>
+                        <td>
+                            <img src="/flag/country/{{ id }}" alt="" loading="lazy" class="flag-thumb" onerror="this.style.display='none'">
+                            <a href="/country/id={{ id }}">{{ username }}</a>
+                        </td>
+                        <td>{% if join_number %}#{{ join_number }}{% else %}—{% endif %}</td>
+                        <td>{{ influence | fmt }}</td>
+                        <td>{{ date }}</td>
+                        {% if colName == None %}
+                        <td>No coalition</td>
+                        {% else %}
+                        <td><a href="/coalition/{{ colId }}">{{ colName }}</a></td>
+                        {% endif %}
+                        <td>{{ province_count }}</td>
+                    </tr>
+                    {% endfor %}
+            </table>
+        </div>
+
+        <!-- Pagination controls -->
+        {% if total_pages and total_pages > 1 %}
+        <style>
+            .modern-pagination {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 15px !important;
+                margin: 30px 0 !important;
+                flex-wrap: wrap !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .modern-pagination a,
+            .modern-pagination span.mp-pill {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 50px !important;
+                padding: 10px 20px !important;
+                border: 1px solid var(--border) !important;
+                background: var(--foreground) !important;
+                color: var(--colorOne) !important;
+                text-decoration: none !important;
+                transition: all 0.2s ease !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+                min-width: 42px !important;
+                height: 42px !important;
+                box-sizing: border-box !important;
+                line-height: 1 !important;
+            }
+            body.game-page-v2 .modern-pagination a,
+            body.game-page-v2 .modern-pagination span.mp-pill {
+                background: var(--game-glass-bg-strong) !important;
+                border-color: var(--game-glass-border) !important;
+                backdrop-filter: var(--game-glass-blur);
+                -webkit-backdrop-filter: var(--game-glass-blur);
+            }
+            .modern-pagination a:hover {
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
+                background: var(--accent-subtle) !important;
+            }
+            .modern-pagination .mp-active {
+                background-color: var(--accent) !important;
+                color: white !important;
+                border-color: var(--accent) !important;
+                font-weight: bold !important;
+            }
+            .modern-pagination .mp-disabled {
+                opacity: 0.3 !important;
+                cursor: not-allowed !important;
+                pointer-events: none !important;
+            }
+            .modern-pagination .mp-ellipsis {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 4px !important;
+                min-width: auto !important;
+                color: var(--text-secondary) !important;
+                font-weight: bold !important;
+                cursor: default !important;
+            }
+            .modern-pagination form {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .modern-pagination select,
+            .modern-pagination input[type="number"] {
+                border-radius: 20px !important;
+                padding: 8px 15px !important;
+                border: 1px solid var(--border) !important;
+                height: 40px !important;
+                font-size: 13px !important;
+                background: var(--foreground) !important;
+                color: var(--colorOne) !important;
+                box-sizing: border-box !important;
+                outline: none !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+            body.game-page-v2 .modern-pagination select,
+            body.game-page-v2 .modern-pagination input[type="number"] {
+                background-color: var(--game-glass-bg-strong) !important;
+                border-color: var(--game-glass-border) !important;
+            }
+            .modern-pagination select {
+                padding-right: 28px !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 10px center !important;
+            }
+            .modern-pagination input[type="number"] {
+                width: 70px !important;
+                text-align: center !important;
+            }
+            .modern-pagination input[type="number"]::-webkit-inner-spin-button,
+            .modern-pagination input[type="number"]::-webkit-outer-spin-button {
+                -webkit-appearance: none !important;
+                margin: 0 !important;
+            }
+            .modern-pagination select:hover,
+            .modern-pagination select:focus,
+            .modern-pagination input[type="number"]:hover,
+            .modern-pagination input[type="number"]:focus {
+                border-color: var(--accent) !important;
+            }
+            .modern-pagination button[type="submit"] {
+                border-radius: 20px !important;
+                padding: 8px 20px !important;
+                border: 1px solid var(--accent) !important;
+                background: var(--accent) !important;
+                color: white !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                height: 40px !important;
+                transition: all 0.2s ease !important;
+                box-sizing: border-box !important;
+            }
+            .modern-pagination button[type="submit"]:hover {
+                background: #0096c7 !important;
+                border-color: #0096c7 !important;
+            }
+            .modern-pagination .mp-label {
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                color: var(--colorOne) !important;
+                white-space: nowrap !important;
+            }
+            .modern-pagination .mp-mobile-only {
+                display: none !important;
+            }
+            @media all and (max-width: 768px) {
+                .modern-pagination {
+                    gap: 8px !important;
+                    margin: 20px 0 !important;
+                    flex-wrap: nowrap !important;
+                    overflow-x: auto !important;
+                    justify-content: center !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    padding-bottom: 4px !important;
+                }
+                .modern-pagination a,
+                .modern-pagination span.mp-pill {
+                    padding: 6px 12px !important;
+                    font-size: 12px !important;
+                    min-width: 34px !important;
+                    height: 34px !important;
+                }
+                .modern-pagination .mp-desktop-only {
+                    display: none !important;
+                }
+                .modern-pagination .mp-mobile-only {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+                .modern-pagination select,
+                .modern-pagination input[type="number"],
+                .modern-pagination button[type="submit"] {
+                    height: 34px !important;
+                    font-size: 12px !important;
+                }
+            }
+        </style>
+        <div class="modern-pagination">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('countries', page=current_page - 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">‹</a>
+            {% else %}
+                <span class="mp-pill mp-disabled">‹</span>
+            {% endif %}
+
+            {% set start_page = [current_page - 2, 1] | max %}
+            {% set end_page = [current_page + 2, total_pages] | min %}
+
+            {% if start_page > 1 %}
+                <a class="mp-desktop-only" href="{{ url_for('countries', page=1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">1</a>
+                {% if start_page > 2 %}<span class="mp-pill mp-ellipsis mp-desktop-only">…</span>{% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == current_page %}
+                    <span class="mp-pill mp-active">{{ p }}</span>
+                {% else %}
+                    <a class="mp-desktop-only" href="{{ url_for('countries', page=p, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}<span class="mp-pill mp-ellipsis mp-desktop-only">…</span>{% endif %}
+                <a class="mp-desktop-only" href="{{ url_for('countries', page=total_pages, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('countries', page=current_page + 1, sort=sort, sortway=sortway, search=search, lowerinf=lowerinf, upperinf=upperinf, province_range=province_range, per_page=per_page) }}">›</a>
+            {% else %}
+                <span class="mp-pill mp-disabled">›</span>
+            {% endif %}
+
+            <form method="GET" id="perPageForm" class="mp-desktop-only">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="sortway" value="{{ sortway }}">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                <input type="hidden" name="province_range" value="{{ province_range }}">
+                <input type="hidden" name="page" value="1">
+                <select name="per_page" onchange="document.getElementById('perPageForm').submit();">
+                    <option value="50" {% if per_page == 50 %}selected{% endif %}>50 / page</option>
+                    <option value="100" {% if per_page == 100 %}selected{% endif %}>100 / page</option>
+                    <option value="150" {% if per_page == 150 %}selected{% endif %}>150 / page</option>
+                </select>
+            </form>
+
+            <form method="GET" class="mp-desktop-only">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="sortway" value="{{ sortway }}">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="lowerinf" value="{{ lowerinf }}">
+                <input type="hidden" name="upperinf" value="{{ upperinf }}">
+                <input type="hidden" name="province_range" value="{{ province_range }}">
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <span class="mp-label">Go to</span>
+                <input type="number" name="page" min="1" max="{{ total_pages }}" placeholder="Page" required>
+                <button type="submit">Go</button>
+            </form>
+
+            <span class="mp-pill mp-mobile-only">Page {{ current_page }}/{{ total_pages }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock%}
