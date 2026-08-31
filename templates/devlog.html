@@ -28,7 +28,7 @@
             <div class="game-glass game-panel">
                 <div class="game-spread">
                     <h3 style="margin: 0; color: var(--colorOne);">{{ entry.title }}</h3>
-                    <span class="game-faint">{{ entry.created_at | days_old }}</span>
+                    <span class="game-faint">{{ entry.created_at | timeago }}</span>
                 </div>
                 <p style="color: var(--colorOne); margin: 10px 0 4px; white-space: pre-wrap;">{{ entry.body }}</p>
                 <div class="game-faint" style="font-size: 11.5px;">— {{ entry.author }}</div>

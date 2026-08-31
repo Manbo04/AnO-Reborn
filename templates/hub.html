@@ -107,7 +107,7 @@
                     {% for entry in recent_devlog %}
                     <div>
                         <div style="font-weight: 600; color: var(--colorOne); font-size: 13.5px;">{{ entry.title }}</div>
-                        <div class="game-faint" style="font-size: 11.5px;">{{ entry.created_at | days_old }}</div>
+                        <div class="game-faint" style="font-size: 11.5px;">{{ entry.created_at | timeago }}</div>
                     </div>
                     {% endfor %}
                 </div>
