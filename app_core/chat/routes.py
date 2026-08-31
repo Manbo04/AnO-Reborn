@@ -45,6 +45,12 @@ def coalition_chat_history(coalition_id):
     return jsonify({"messages": repo.list_coalition_messages(coalition_id)})
 
 
+@bp.route("/global_chat/messages", methods=["GET"])
+@login_required
+def global_chat_history():
+    return jsonify({"messages": repo.list_global_chat_messages()})
+
+
 @bp.route("/messages", methods=["GET"])
 @login_required
 def messages_inbox():
@@ -123,6 +129,24 @@ def register_chat_socketio_handlers(socketio):
             return
         message = repo.create_coalition_message(coalition_id, user_id, content)
         emit("coalition_chat_message", message, room=f"coalition_{coalition_id}")
+
+    @socketio.on("join_global_chat")
+    def handle_join_global_chat():
+        user_id = session.get("user_id")
+        if not user_id:
+            return disconnect()
+        join_room("global_chat")
+
+    @socketio.on("global_chat_message")
+    def handle_global_chat_message(data):
+        user_id = session.get("user_id")
+        if not user_id:
+            return disconnect()
+        content = _clean_content((data or {}).get("content"))
+        if not content or _throttled(user_id):
+            return
+        message = repo.create_global_chat_message(user_id, content)
+        emit("global_chat_message", message, room="global_chat")
 
     @socketio.on("join_dm")
     def handle_join_dm(data):

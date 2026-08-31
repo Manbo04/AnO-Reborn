@@ -80,6 +80,53 @@ def list_coalition_messages(coalition_id, limit=50):
     ]
 
 
+def create_global_chat_message(sender_id, content):
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            INSERT INTO global_chat_messages (sender_id, content)
+            VALUES (%s, %s)
+            RETURNING id, created_at
+            """,
+            (sender_id, content),
+        )
+        row = db.fetchone()
+        db.execute("SELECT username FROM users WHERE id=%s", (sender_id,))
+        username_row = db.fetchone()
+    return {
+        "id": row[0],
+        "sender_id": sender_id,
+        "sender_username": username_row[0] if username_row else "Unknown",
+        "content": content,
+        "created_at": row[1].isoformat(),
+    }
+
+
+def list_global_chat_messages(limit=30):
+    with get_db_cursor(read_only=True) as db:
+        db.execute(
+            """
+            SELECT gcm.id, gcm.sender_id, u.username, gcm.content, gcm.created_at
+            FROM global_chat_messages gcm
+            JOIN users u ON u.id = gcm.sender_id
+            ORDER BY gcm.id DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        rows = db.fetchall() or []
+    return [
+        {
+            "id": r[0],
+            "sender_id": r[1],
+            "sender_username": r[2],
+            "content": r[3],
+            "created_at": r[4].isoformat(),
+        }
+        for r in reversed(rows)
+    ]
+
+
 def create_direct_message(sender_id, recipient_id, content):
     with get_db_cursor() as db:
         db.execute(
