@@ -5,7 +5,7 @@ import time
 from flask import Blueprint, render_template, session, redirect, jsonify
 from flask_socketio import join_room, emit, disconnect
 
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor
 
 from . import repositories as repo
@@ -50,7 +50,8 @@ def coalition_chat_history(coalition_id):
 def messages_inbox():
     user_id = session["user_id"]
     conversations = repo.list_conversations_for_user(user_id)
-    return render_template("messages_inbox.html", conversations=conversations)
+    template = "messages_inbox_v2.html" if is_theme_v2_enabled("messages") else "messages_inbox.html"
+    return render_template(template, conversations=conversations)
 
 
 @bp.route("/messages/<int:other_user_id>", methods=["GET"])
@@ -69,8 +70,9 @@ def messages_thread(other_user_id):
 
     history = repo.list_conversation_messages(user_id, other_user_id)
     repo.mark_conversation_read(user_id, other_user_id)
+    template = "messages_thread_v2.html" if is_theme_v2_enabled("messages") else "messages_thread.html"
     return render_template(
-        "messages_thread.html",
+        template,
         other_user_id=other_user_id,
         other_username=other_username,
         history=history,
