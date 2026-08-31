@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% block title %}Find Targets{% endblock %}
+{% block body_class %} game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/spy.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Find Targets', badge_icon='track_changes', badge_text=(targets|length ~ ' potential target' ~ ('s' if targets|length != 1 else '')) if targets else 'No targets in range') }}
+    <div class="templatedivcontent">
+        <h2 class="templatecontentheaderleft">Search for a Country</h2>
+        <p class="templatecontentpleft landingpagecontent">
+            Enter a country name or ID to quickly jump to their country page.<br>
+            You can also use the <b>Global Affairs</b> menu to browse all countries by influence or province count.
+        </p>
+        <form action="/find_targets" method="POST" class="infodiv" style="max-width: 400px; margin: 0 auto;">
+            <label for="defender" class="bold">Country Name or ID:</label>
+            <input class="loginsignupinput" autocomplete="off" type="text" name="defender" id="defender" placeholder="Enter name or ID" required />
+            <button class="templatedivbutton templatecenteredbutton" type="submit">
+                <span class="material-icons-outlined">search</span>Find
+            </button>
+        </form>
+
+        <h2 class="templatecontentheaderleft">Potential War Targets</h2>
+        <p class="templatecontentpleft landingpagecontent">
+            Browse potential war targets filtered by province count and influence. Use the filters below to sort and search.
+        </p>
+        <form action="/find_targets" method="GET">
+            <div class="templatedivflex2 divflex2full">
+                <div class="templatedivflex2left">
+                    <select name="sort" class="templateselect">
+                        <option value="influence">Influence</option>
+                        <option value="provinces">Provinces</option>
+                        <option value="username">Name</option>
+                    </select>
+                </div>
+                <div class="templatedivflex2right">
+                    <select name="sortway" class="templateselect">
+                        <option value="desc">Descending</option>
+                        <option value="asc">Ascending</option>
+                    </select>
+                </div>
+                <div class="templatedivflex2left">
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name" value="{{ request.args.get('search', '') }}" />
+                </div>
+                <div class="templatedivflex2right">
+                    {{ game_button('Filter', icon='arrow_forward', extra_class='center smallactionbutton') }}
+                </div>
+            </div>
+        </form>
+
+        {% if targets %}
+        <div class="infodiv">
+            {% for target in targets %}
+            <div class="templatedivflex2" style="border-bottom: 1px solid #ccc; padding: 10px 0; align-items: center;">
+                <div class="templatedivflex2left" style="display: flex; align-items: center;">
+                    <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename='flags/'+target.flag) }}" style="width: 50px; height: 30px; margin-right: 10px;" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" />
+                    <div>
+                        <a href="/country/id={{ target.id }}" class="templatelink">{{ target.username }}</a>
+                        <br>
+                        Provinces: {{ target.provinces }} | Influence: {{ "%.2f"|format(target.influence) }}
+                    </div>
+                </div>
+                <div class="templatedivflex2right">
+                    <form action="/declare_war" method="post" style="display: flex; align-items: center;">
+                        <input type="hidden" name="defender" value="{{ target.id }}" />
+                        <select name="warType" class="templateselect" style="margin-right: 10px;">
+                            <option value="Raze">Raze</option>
+                            <option value="Sustained">Sustained</option>
+                            <option value="Loot">Loot</option>
+                        </select>
+                        <span data-tippy-content="<strong>Raze</strong>: 10&times; province damage, no loot.<br><strong>Sustained</strong>: normal province damage, no loot.<br><strong>Loot</strong>: only 20% of normal province damage, but each win steals 0&ndash;10% of their gold.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help; margin-right: 10px;"><i class="fas fa-circle-info"></i></span>
+                        <textarea name="description" placeholder="War message" maxlength="240" style="width: 200px; height: 40px; margin-right: 10px;"></textarea>
+                        <button type="submit" class="templatedivbutton smallactionbutton">
+                            <span class="material-icons-outlined">military_tech</span>Declare War
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="templatecontentpleft">No potential targets found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
