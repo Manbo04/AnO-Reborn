@@ -175,6 +175,42 @@ body.game-page-v2 .page-military .stat-badge {
         flex-wrap: nowrap;
     }
 }
+
+/* Compact card grid instead of full-width stacked sections, closer to the
+   reference mockup's unit-card layout -- CSS layout only, every real
+   buy/sell form/formaction/input stays exactly where it was in the DOM, so
+   no purchasing behavior changes. */
+@media (min-width: 1000px) {
+    .page-military .land,
+    .page-military .air,
+    .page-military .water,
+    .page-military .special {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        align-items: start;
+    }
+    .page-military .land .menudiv,
+    .page-military .air .menudiv,
+    .page-military .water .menudiv,
+    .page-military .special .menudiv {
+        margin: 0;
+    }
+    .page-military .land .warflexparentcolors,
+    .page-military .air .warflexparentcolors,
+    .page-military .water .warflexparentcolors,
+    .page-military .special .warflexparentcolors {
+        flex-direction: column;
+    }
+    .page-military .land .unitimage,
+    .page-military .air .unitimage,
+    .page-military .water .unitimage,
+    .page-military .special .unitimage {
+        max-width: 100%;
+        max-height: 140px;
+        object-fit: cover;
+    }
+}
 </style>
 
 
