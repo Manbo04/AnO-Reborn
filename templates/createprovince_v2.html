@@ -1,0 +1,63 @@
+{% extends "layout.html" %} {% block title %} Create Province {% endblock %}{% block body_class %} game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('New Province', badge_icon='account_balance') }}
+
+    <div class="templatedivcontent">
+
+        <p class="templatecontentpleft landingpagecontent">
+            Provinces are the foundation of your countries economy. Each province allows you to expand your land and build cities, which allows for more citizens to pay taxes, more mineral deposits to harvest, and more space to manufacture. You can learn more about
+            provinces <a class="templatelink" href="/provinces">here</a>.
+        </p>
+
+        <div class="menudiv">
+
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <form action="/createprovince" method="POST" id="createProvinceForm" onsubmit="return handleSubmit(this)">
+                        <div class="infodiv">
+                            <ul class="resourceparent middle">Your next province costs <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />{{ price | commas }}</ul>
+                            <div class="templatedivflex2 divflex2center">
+                                <div class="templatedivflex2left">
+
+                                    <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Province Name" maxlength="30" required/>
+
+                                </div>
+                                <div class="templatedivflex2left">
+
+                                    <button type="submit" class="templatedivbutton templatecenteredbutton" id="createBtn"><span class="material-icons-outlined">
+                                add_circle_outline
+                                </span>Create</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="templatedivflex2left">
+
+                    <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/province.jpg') }}?v=3" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleSubmit(form) {
+    var btn = document.getElementById('createBtn');
+    if (btn.disabled) {
+        return false; // Already submitting
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span>Creating...';
+    return true;
+}
+</script>
+{% endblock %}

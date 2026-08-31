@@ -13,6 +13,7 @@ from helpers import (
     require_post_origin,
     compress_province_image,
     province_image_url,
+    is_theme_v2_enabled,
 )
 from dotenv import load_dotenv
 import variables
@@ -1222,7 +1223,8 @@ def createprovince():
         return redirect("/provinces")
     else:
         price = get_province_price(cId)
-        return render_template("createprovince.html", price=price)
+        template = "createprovince_v2.html" if is_theme_v2_enabled("createprovince") else "createprovince.html"
+        return render_template(template, price=price)
 
 
 def get_free_slots(pId, slot_type, db=None):  # pId = province id
