@@ -76,6 +76,48 @@
 
         </div>
 
+        <div class="game-row" style="align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-top: 18px;">
+
+            <div class="game-glass game-panel" style="flex: 1 1 380px; min-width: 300px;">
+                <div class="game-spread">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">forum</span>Global Discussions</h2>
+                    <a href="/discussions" class="game-btn game-btn-ghost game-btn-sm">View all &rarr;</a>
+                </div>
+                {% if recent_threads and recent_threads|length > 0 %}
+                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                    {% for t in recent_threads %}
+                    <a href="/discussions/{{ t.id }}" class="game-spread" style="text-decoration: none; color: var(--colorOne); padding: 8px 0; border-bottom: 1px solid var(--game-glass-border);">
+                        <span style="font-size: 13.5px;">{{ t.title }}</span>
+                        <span class="game-faint" style="font-size: 11.5px;">{{ t.reply_count }} repl{{ 'y' if t.reply_count == 1 else 'ies' }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="game-faint">No discussions yet -- <a href="/discussions" style="color: var(--accent);">start one</a>.</p>
+                {% endif %}
+            </div>
+
+            <div class="game-glass game-panel" style="flex: 1 1 320px; min-width: 280px;">
+                <div class="game-spread">
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">rocket_launch</span>Devlog</h2>
+                    <a href="/devlog" class="game-btn game-btn-ghost game-btn-sm">View all &rarr;</a>
+                </div>
+                {% if recent_devlog and recent_devlog|length > 0 %}
+                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                    {% for entry in recent_devlog %}
+                    <div>
+                        <div style="font-weight: 600; color: var(--colorOne); font-size: 13.5px;">{{ entry.title }}</div>
+                        <div class="game-faint" style="font-size: 11.5px;">{{ entry.created_at | days_old }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="game-faint">No updates posted yet.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
     </div>
 
 </div>

@@ -1,0 +1,41 @@
+{% extends "layout.html" %} {% block title %} Discussions {% endblock %}{% block body_class %} page-discussions game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/hungaryparliament.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Discussions', badge_icon='forum', badge_text=(threads|length ~ ' thread' ~ ('s' if threads|length != 1 else '')), subtitle='Talk strategy, politics, and everything in between.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;">Start a discussion</h2>
+            <form method="POST" action="/discussions">
+                <input class="loginsignupinput" type="text" name="title" maxlength="200" placeholder="Thread title" required style="width: 100%; margin-bottom: 10px;" />
+                <textarea class="templatetextarea" name="body" maxlength="4000" rows="3" placeholder="What's on your mind?" required style="width: 100%;"></textarea>
+                <button type="submit" class="game-btn game-btn-primary" style="margin-top: 10px;"><span class="material-icons-outlined">add</span>Post Thread</button>
+            </form>
+        </div>
+
+        {% if threads and threads|length > 0 %}
+        <div class="game-glass" style="padding: 0;">
+            {% for t in threads %}
+            <a href="/discussions/{{ t.id }}" class="game-row" style="justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--game-glass-border); text-decoration: none; color: var(--colorOne);">
+                <div>
+                    <div style="font-weight: 600;">{{ t.title }}</div>
+                    <div class="game-faint" style="font-size: 12px; margin-top: 2px;">by {{ t.author }} · {{ t.last_activity_at | timeago }}</div>
+                </div>
+                <span class="game-badge game-badge-good">{{ t.reply_count }} repl{{ 'y' if t.reply_count == 1 else 'ies' }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="game-faint" style="text-align: center; padding: 30px;">No discussions yet -- start the first one.</p>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

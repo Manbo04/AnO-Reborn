@@ -885,9 +885,11 @@ def create_app():
 
     from extensions import socketio
     from app_core.chat.routes import register_chat_routes, register_chat_socketio_handlers
+    from app_core.community.routes import register_community_routes
 
     register_chat_routes(app)
     register_chat_socketio_handlers(socketio)
+    register_community_routes(app)
     _socketio_debug = os.getenv("ANO_SOCKETIO_DEBUG") == "1"
     socketio.init_app(
         app,

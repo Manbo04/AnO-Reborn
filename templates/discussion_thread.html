@@ -1,0 +1,59 @@
+{% extends "layout.html" %} {% block title %} {{ thread.title }} {% endblock %}{% block body_class %} page-discussions game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/hungaryparliament.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero(thread.title, badge_icon='forum', badge_text='by ' ~ thread.author) }}
+
+    <div class="templatedivcontent">
+
+        <p class="game-faint" style="margin-bottom: 14px;"><a href="/discussions" style="color: var(--accent); text-decoration: none;">&larr; All discussions</a></p>
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <p style="color: var(--colorOne); white-space: pre-wrap; margin: 0;">{{ thread.body }}</p>
+            <div class="game-spread" style="margin-top: 14px;">
+                <span class="game-faint" style="font-size: 11.5px;">{{ thread.created_at | days_old }}</span>
+                {% if session.user_id == thread.author_id or is_admin %}
+                <form method="POST" action="/discussions/{{ thread.id }}/delete" onsubmit="return confirm('Delete this whole thread?');">
+                    <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">delete</span>Delete thread</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <h2 class="templatecontentheaderleft">{{ thread.replies|length }} Repl{{ 'y' if thread.replies|length == 1 else 'ies' }}</h2>
+
+        {% if thread.replies and thread.replies|length > 0 %}
+        <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 18px;">
+            {% for r in thread.replies %}
+            <div class="game-glass game-panel" style="padding: 14px 18px;">
+                <div class="game-spread">
+                    <span style="font-weight: 600; color: var(--colorOne); font-size: 13px;">{{ r.author }}</span>
+                    <span class="game-faint" style="font-size: 11px;">{{ r.created_at | timeago }}</span>
+                </div>
+                <p style="color: var(--colorOne); margin: 6px 0 0; white-space: pre-wrap;">{{ r.content }}</p>
+                {% if session.user_id == r.author_id or is_admin %}
+                <form method="POST" action="/discussions/reply/{{ r.id }}/delete" onsubmit="return confirm('Delete this reply?');" style="margin-top: 6px;">
+                    <input type="hidden" name="thread_id" value="{{ thread.id }}" />
+                    <button type="submit" class="game-btn game-btn-ghost game-btn-sm">Delete</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="game-glass game-panel">
+            <form method="POST" action="/discussions/{{ thread.id }}">
+                <textarea class="templatetextarea" name="content" maxlength="2000" rows="3" placeholder="Write a reply..." required style="width: 100%;"></textarea>
+                <button type="submit" class="game-btn game-btn-primary" style="margin-top: 10px;"><span class="material-icons-outlined">reply</span>Reply</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

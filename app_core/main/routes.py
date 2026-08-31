@@ -21,6 +21,7 @@ def index():
 
 def _hub_context():
     from app_core.chat import repositories as chat_repo
+    from app_core.community import repositories as community_repo
 
     user_id = session["user_id"]
     with get_request_cursor() as db:
@@ -91,6 +92,8 @@ def _hub_context():
         messages_today=messages_today,
         news=news,
         chat_history=chat_repo.list_global_chat_messages(),
+        recent_threads=community_repo.list_threads(limit=4),
+        recent_devlog=community_repo.list_devlog_entries(limit=3),
     )
 
 

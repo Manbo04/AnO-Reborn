@@ -1,0 +1,44 @@
+{% extends "layout.html" %} {% block title %} Devlog {% endblock %}{% block body_class %} page-devlog game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/hungaryparliament.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Devlog', badge_icon='rocket_launch', badge_text=(entries|length ~ ' update' ~ ('s' if entries|length != 1 else '')), subtitle='What changed, straight from the team.') }}
+
+    <div class="templatedivcontent">
+
+        {% if is_admin %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;">Post an update</h2>
+            <form method="POST" action="/devlog">
+                <input class="loginsignupinput" type="text" name="title" maxlength="200" placeholder="Title" required style="width: 100%; margin-bottom: 10px;" />
+                <textarea class="templatetextarea" name="body" maxlength="4000" rows="4" placeholder="What changed?" required style="width: 100%;"></textarea>
+                <button type="submit" class="game-btn game-btn-primary" style="margin-top: 10px;"><span class="material-icons-outlined">send</span>Post</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if entries and entries|length > 0 %}
+        <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 14px;">
+            {% for entry in entries %}
+            <div class="game-glass game-panel">
+                <div class="game-spread">
+                    <h3 style="margin: 0; color: var(--colorOne);">{{ entry.title }}</h3>
+                    <span class="game-faint">{{ entry.created_at | days_old }}</span>
+                </div>
+                <p style="color: var(--colorOne); margin: 10px 0 4px; white-space: pre-wrap;">{{ entry.body }}</p>
+                <div class="game-faint" style="font-size: 11.5px;">— {{ entry.author }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="game-faint" style="text-align: center; padding: 30px;">No updates posted yet.</p>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
