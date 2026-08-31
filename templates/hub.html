@@ -7,50 +7,50 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Welcome to Affairs and Order', badge_icon='public', badge_text='The world is watching', subtitle='Chat, news, and your nation, all in one place.') }}
+    {% call game_hero('Welcome to Affairs and Order', badge_icon='public', badge_text='The world is watching', subtitle='Chat, news, discussions, and dev updates from the whole world -- all in one place.') %}
+        <a class="game-btn game-btn-primary" href="/country/id={{ session.user_id }}"><span class="material-icons-outlined">flag</span> Enter your nation</a>
+    {% endcall %}
 
     <div class="templatedivcontent">
 
         <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <div class="game-row" style="justify-content: space-around; flex-wrap: wrap; gap: 24px; text-align: center;">
-                <div>
-                    <div class="game-faint" style="font-size: 12px;">Nations online now</div>
-                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ nations_online | commas }}</div>
-                </div>
-                <div>
-                    <div class="game-faint" style="font-size: 12px;">Total nations</div>
-                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ total_nations | commas }}</div>
-                </div>
-                <div>
-                    <div class="game-faint" style="font-size: 12px;">Messages last 24h</div>
-                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ messages_today | commas }}</div>
-                </div>
-                <div>
-                    <div class="game-faint" style="font-size: 12px;">Wars right now</div>
-                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ wars_now | commas }}</div>
-                </div>
+            <div class="game-stat-row">
+                <div class="game-stat"><div class="game-stat-icon"><span class="material-icons-outlined">groups</span></div><div><div class="game-stat-label">Nations online now</div><div class="game-stat-value">{{ nations_online | commas }}</div></div></div>
+                <div class="game-stat"><div class="game-stat-icon"><span class="material-icons-outlined">public</span></div><div><div class="game-stat-label">Total nations</div><div class="game-stat-value">{{ total_nations | commas }}</div></div></div>
+                <div class="game-stat"><div class="game-stat-icon"><span class="material-icons-outlined">forum</span></div><div><div class="game-stat-label">Messages last 24h</div><div class="game-stat-value">{{ messages_today | commas }}</div></div></div>
+                <div class="game-stat"><div class="game-stat-icon"><span class="material-icons-outlined">my_location</span></div><div><div class="game-stat-label">Wars right now</div><div class="game-stat-value">{{ wars_now | commas }}</div></div></div>
             </div>
         </div>
 
-        <div class="game-row" style="align-items: flex-start; gap: 18px; flex-wrap: wrap;">
+        <div class="game-row" style="align-items: stretch; gap: 18px; flex-wrap: wrap;">
 
             <div class="game-glass game-panel" style="flex: 1 1 380px; min-width: 300px;">
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">forum</span>Global Chat</h2>
+                <div class="game-spread" style="margin-bottom: 14px;">
+                    <div class="game-row" style="gap: 8px;"><span class="material-icons-outlined" style="color: var(--success);">chat</span><strong style="font-size: 14px;">Global Chat</strong></div>
+                    {% if online_sender_ids %}
+                    <div class="game-online-stack">
+                        {% for uid in online_sender_ids %}<img src="/flag/country/{{ uid }}" alt="">{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
                 <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}">
-                    <div class="chat-messages" id="hubChatMessages" aria-live="polite" style="max-height: 320px; overflow-y: auto;">
+                    <div class="game-chat-feed" id="hubChatMessages" aria-live="polite">
                         {% if chat_history and chat_history|length > 0 %}
-                            {% for m in chat_history %}
-                            <div class="chat-message{% if m.sender_id|string == session.user_id|string %} chat-message-mine{% endif %}">
-                                <span class="chat-message-sender">{{ m.sender_username }}</span>
-                                <span class="chat-message-text">{{ m.content }}</span>
+                            {% for m in chat_history|reverse %}
+                            <div class="game-chat-msg">
+                                <img src="/flag/country/{{ m.sender_id }}" alt="">
+                                <div>
+                                    <div class="game-chat-name">{{ m.sender_username }}{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
+                                    <div class="game-chat-bubble">{{ m.content }}</div>
+                                </div>
                             </div>
                             {% endfor %}
                         {% else %}
-                            <div class="chat-message-empty">No messages yet. Say hello to the world!</div>
+                            <div class="game-faint">No messages yet. Say hello to the world!</div>
                         {% endif %}
                     </div>
-                    <form id="hubChatForm" class="chat-input-row" autocomplete="off" style="margin-top: 10px;">
-                        <textarea class="templatetextarea chat-input" id="hubChatInput" maxlength="1000" placeholder="Say something to everyone..." rows="1" required></textarea>
+                    <form id="hubChatForm" class="game-row" autocomplete="off" style="margin-top: 12px; flex-wrap: nowrap;">
+                        <textarea class="templatetextarea chat-input" id="hubChatInput" maxlength="1000" placeholder="Say something to everyone..." rows="1" required style="flex: 1;"></textarea>
                         <button type="submit" class="game-btn game-btn-primary chat-send-btn">
                             <span class="material-icons-outlined">send</span>
                         </button>
@@ -59,14 +59,15 @@
             </div>
 
             <div class="game-glass game-panel" style="flex: 1 1 320px; min-width: 280px;">
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">newspaper</span>Global News</h2>
+                <div class="game-row" style="gap: 8px; margin-bottom: 14px;"><span class="material-icons-outlined" style="color: var(--gold);">newspaper</span><strong style="font-size: 14px;">Global News</strong></div>
                 {% if news and news|length > 0 %}
-                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                <div class="game-news-grid">
                     {% for item in news %}
-                    <div class="game-row" style="align-items: flex-start; gap: 10px;">
-                        <span class="material-icons-outlined" style="color: var(--accent); font-size: 20px;">{{ item.icon }}</span>
-                        <span style="color: var(--colorOne); font-size: 13.5px;">{{ item.text }}</span>
-                    </div>
+                    <a class="game-news-card" href="{{ item.href }}">
+                        <img src="/flag/country/{{ item.flag_user_id }}" alt="">
+                        <div class="game-news-title">{{ item.title }}</div>
+                        <p class="game-news-snippet">{{ item.snippet }}</p>
+                    </a>
                     {% endfor %}
                 </div>
                 {% else %}
@@ -76,19 +77,22 @@
 
         </div>
 
-        <div class="game-row" style="align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-top: 18px;">
+        <div class="game-row" style="align-items: stretch; gap: 18px; flex-wrap: wrap; margin-top: 18px;">
 
             <div class="game-glass game-panel" style="flex: 1 1 380px; min-width: 300px;">
-                <div class="game-spread">
-                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">forum</span>Global Discussions</h2>
+                <div class="game-spread" style="margin-bottom: 6px;">
+                    <div class="game-row" style="gap: 8px;"><span class="material-icons-outlined" style="color: var(--accent);">forum</span><strong style="font-size: 14px;">Global Discussions</strong></div>
                     <a href="/discussions" class="game-btn game-btn-ghost game-btn-sm">View all &rarr;</a>
                 </div>
                 {% if recent_threads and recent_threads|length > 0 %}
-                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                <div>
                     {% for t in recent_threads %}
-                    <a href="/discussions/{{ t.id }}" class="game-spread" style="text-decoration: none; color: var(--colorOne); padding: 8px 0; border-bottom: 1px solid var(--game-glass-border);">
-                        <span style="font-size: 13.5px;">{{ t.title }}</span>
-                        <span class="game-faint" style="font-size: 11.5px;">{{ t.reply_count }} repl{{ 'y' if t.reply_count == 1 else 'ies' }}</span>
+                    <a href="/discussions/{{ t.id }}" class="game-thread-row">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 13px;">{{ t.title }}</div>
+                            <div class="game-faint" style="font-size: 11px;">by {{ t.author }} &middot; {{ t.last_activity_at | timeago }}</div>
+                        </div>
+                        <div class="game-faint mono" style="font-size: 12px; flex-shrink: 0;">{{ t.reply_count }} repl{{ 'y' if t.reply_count == 1 else 'ies' }}</div>
                     </a>
                     {% endfor %}
                 </div>
@@ -98,16 +102,19 @@
             </div>
 
             <div class="game-glass game-panel" style="flex: 1 1 320px; min-width: 280px;">
-                <div class="game-spread">
-                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">rocket_launch</span>Devlog</h2>
+                <div class="game-spread" style="margin-bottom: 6px;">
+                    <div class="game-row" style="gap: 8px;"><span class="material-icons-outlined" style="color: var(--danger);">rocket_launch</span><strong style="font-size: 14px;">Devlog</strong></div>
                     <a href="/devlog" class="game-btn game-btn-ghost game-btn-sm">View all &rarr;</a>
                 </div>
                 {% if recent_devlog and recent_devlog|length > 0 %}
-                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                <div>
                     {% for entry in recent_devlog %}
-                    <div>
-                        <div style="font-weight: 600; color: var(--colorOne); font-size: 13.5px;">{{ entry.title }}</div>
-                        <div class="game-faint" style="font-size: 11.5px;">{{ entry.created_at | timeago }}</div>
+                    <div class="game-devlog-item">
+                        <div class="game-devlog-dot"></div>
+                        <div style="flex: 1;">
+                            <div class="game-row" style="gap: 8px; margin-bottom: 4px;"><strong style="font-size: 13px;">{{ entry.title }}</strong><span class="game-faint" style="font-size: 11px;">{{ entry.created_at | timeago }}</span></div>
+                            <p class="game-faint" style="font-size: 12px; line-height: 1.4;">{{ entry.body }}</p>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -135,15 +142,12 @@
 
     function renderMessage(m) {
         var div = document.createElement('div');
-        div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
-        var sender = document.createElement('span');
-        sender.className = 'chat-message-sender';
-        sender.textContent = m.sender_username;
-        var text = document.createElement('span');
-        text.className = 'chat-message-text';
-        text.textContent = m.content;
-        div.appendChild(sender);
-        div.appendChild(text);
+        div.className = 'game-chat-msg';
+        var mine = String(m.sender_id) === String(currentUserId);
+        div.innerHTML = '<img src="/flag/country/' + m.sender_id + '" alt="">' +
+            '<div><div class="game-chat-name"></div><div class="game-chat-bubble"></div></div>';
+        div.querySelector('.game-chat-name').textContent = m.sender_username + (mine ? ' (you)' : '') + ' · just now';
+        div.querySelector('.game-chat-bubble').textContent = m.content;
         messagesEl.appendChild(div);
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
@@ -161,8 +165,6 @@
     if (socket.connected) joinRoom();
 
     socket.on('global_chat_message', function(m) {
-        var empty = messagesEl.querySelector('.chat-message-empty');
-        if (empty) empty.remove();
         renderMessage(m);
     });
 

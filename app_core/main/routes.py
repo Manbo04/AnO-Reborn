@@ -53,14 +53,23 @@ def _hub_context():
         )
         messages_today = db.fetchone()[0]
 
+        # Each item carries a real flag image (the relevant nation's, via
+        # /flag/country/<id>) instead of the reference mockup's invented
+        # stock photos -- there's no per-story photo in this game, but a
+        # real flag is a genuine, always-available image, not a placeholder.
         news = []
-        db.execute("SELECT username FROM users ORDER BY id DESC LIMIT 3")
-        for (name,) in db.fetchall():
-            news.append({"icon": "flag", "text": f"A new nation, {name}, has risen to power."})
+        db.execute("SELECT id, username FROM users ORDER BY id DESC LIMIT 3")
+        for uid, name in db.fetchall():
+            news.append({
+                "flag_user_id": uid,
+                "title": f"New nation: {name}",
+                "snippet": "A new nation has risen to power in Terra.",
+                "href": f"/country/id={uid}",
+            })
 
         db.execute(
             """
-            SELECT u1.username, u2.username
+            SELECT wars.id, u1.id, u1.username, u2.username
             FROM wars
             JOIN users u1 ON wars.attacker = u1.id
             JOIN users u2 ON wars.defender = u2.id
@@ -68,21 +77,40 @@ def _hub_context():
             ORDER BY wars.id DESC LIMIT 3
             """
         )
-        for att, defn in db.fetchall():
-            news.append({"icon": "military_tech", "text": f"{att} has declared war on {defn}."})
+        for war_id, attacker_id, att, defn in db.fetchall():
+            news.append({
+                "flag_user_id": attacker_id,
+                "title": f"{att} declared war on {defn}",
+                "snippet": "A new conflict has begun.",
+                "href": f"/war/{war_id}",
+            })
 
         db.execute(
             """
-            SELECT u.username, td.name
+            SELECT u.id, u.username, td.name
             FROM user_tech ut
             JOIN tech_dictionary td ON ut.tech_id = td.tech_id
             JOIN users u ON ut.user_id = u.id
             ORDER BY ut.user_id DESC LIMIT 3
             """
         )
-        for name, tech in db.fetchall():
+        for uid, name, tech in db.fetchall():
             tech_name = str(tech).replace("_", " ").title()
-            news.append({"icon": "science", "text": f"{name} has developed {tech_name}."})
+            news.append({
+                "flag_user_id": uid,
+                "title": f"{name} researched {tech_name}",
+                "snippet": "A new technology has been unlocked.",
+                "href": f"/country/id={uid}",
+            })
+
+        chat_history = chat_repo.list_global_chat_messages()
+        online_sender_ids = []
+        for m in chat_history:
+            sid = m["sender_id"]
+            if sid not in online_sender_ids:
+                online_sender_ids.append(sid)
+            if len(online_sender_ids) >= 4:
+                break
 
     return dict(
         username=username,
@@ -91,7 +119,8 @@ def _hub_context():
         wars_now=wars_now,
         messages_today=messages_today,
         news=news,
-        chat_history=chat_repo.list_global_chat_messages(),
+        chat_history=chat_history,
+        online_sender_ids=online_sender_ids,
         recent_threads=community_repo.list_threads(limit=4),
         recent_devlog=community_repo.list_devlog_entries(limit=3),
     )
