@@ -9,7 +9,7 @@ from flask import (
     flash,
     current_app,
 )
-from helpers import login_required, error, empty_state, require_post_origin, get_bulk_influence
+from helpers import login_required, error, empty_state, require_post_origin, get_bulk_influence, is_theme_v2_enabled
 import os
 from dotenv import load_dotenv
 
@@ -612,8 +612,9 @@ def coalition(coalition_id):
             except Exception:
                 rollback_db_cursor(db)
 
+        template = "coalition_v2.html" if is_theme_v2_enabled("coalition") else "coalition.html"
         return render_template(
-            "coalition.html",
+            template,
             name=name,
             colId=coalition_id,
             coalition_id=coalition_id,

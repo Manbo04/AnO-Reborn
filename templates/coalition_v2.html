@@ -1,4 +1,8 @@
-{% extends "layout.html"%} {% block title %} {{ name }} {% endblock %}{% block body_class %} page-coalition{% endblock %} {% block body %}
+{% extends "layout.html"%} {% block title %} {{ name }} {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalitions.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
 
 <style>
 /* Mobile-First touch targets */
@@ -33,11 +37,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
 
 <div class="templatediv">
 
-    <div class="templatedivtopper coalitiontopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            public
-            </span>{{ name }}</h1>
-    </div>
+    {{ game_hero(name, badge_icon='public', badge_text=colType) }}
 
     <div class="templatedivcontent">
 
