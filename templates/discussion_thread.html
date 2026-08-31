@@ -16,7 +16,7 @@
         <div class="game-glass game-panel" style="margin-bottom: 18px;">
             <p style="color: var(--colorOne); white-space: pre-wrap; margin: 0;">{{ thread.body }}</p>
             <div class="game-spread" style="margin-top: 14px;">
-                <span class="game-faint" style="font-size: 11.5px;">{{ thread.created_at | days_old }}</span>
+                <span class="game-faint" style="font-size: 11.5px;">{{ thread.created_at | timeago }}</span>
                 {% if session.user_id == thread.author_id or is_admin %}
                 <form method="POST" action="/discussions/{{ thread.id }}/delete" onsubmit="return confirm('Delete this whole thread?');">
                     <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">delete</span>Delete thread</button>
