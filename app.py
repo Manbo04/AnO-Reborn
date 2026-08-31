@@ -612,6 +612,30 @@ def create_app():
         except Exception:
             return default_resources
 
+    def get_notification_count():
+        """Real unread-news count for the topbar bell badge (see /api/notifications
+        for the dropdown's actual content). Same table country.html's own
+        Reports & News section reads/dismisses from (news.destination_id), so
+        this count naturally drops as the player dismisses items there.
+        """
+        target_user_id = session.get("user_id")
+        if not target_user_id:
+            return 0
+
+        cache_key = f"notif_count_{target_user_id}"
+        cached = query_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        try:
+            with get_db_cursor() as db:
+                db.execute("SELECT COUNT(*) FROM news WHERE destination_id=%s", (target_user_id,))
+                count = db.fetchone()[0] or 0
+                query_cache.set(cache_key, count, ttl_seconds=15)
+                return count
+        except Exception:
+            return 0
+
     @app.context_processor
     def inject_layout_context():
         """Single layout context: game UI, admin ids, and per-user HUD data."""
@@ -631,6 +655,7 @@ def create_app():
             "google_auth_enabled": is_google_auth_configured(),
             "admin_user_ids": list(SUPER_ADMIN_USER_IDS),
             "get_resources": get_resources,
+            "notification_count": get_notification_count(),
             "game_ui": {},
             "equipped_bg_css_class": None,
         }
@@ -747,6 +772,21 @@ def create_app():
 
         return ctx
 
+
+    @app.template_filter()
+    def nav_initials(name):
+        """"Empire of Rome" -> "ER" (skips short filler words); a single-word
+        name like "Meridia" -> "ME" (first two letters) -- matches the
+        redesigned topbar avatar's convention (see /Users/dede/ano-redesign/
+        shell.js's initials()).
+        """
+        if not name:
+            return "?"
+        skip = {"of", "the", "and", "de", "la"}
+        words = [w for w in str(name).split() if w.lower() not in skip]
+        if len(words) >= 2:
+            return (words[0][0] + words[1][0]).upper()
+        return str(name)[:2].upper()
 
     # --- RESTORED JINJA2 FILTERS ---
     @app.template_filter()
