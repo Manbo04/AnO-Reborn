@@ -1352,16 +1352,11 @@ def nuclear_strike():
         target_row = db.fetchone()
         target_name = target_row[0] if target_row else "Unknown"
 
-        news_text = f"🚨 {attacker_name} has launched a {weapon_display} at {target_name}! Millions have perished and cities are in ruins."
+        # Personal news to target ('news' has no global/broadcast row -- destination_id
+        # is FK'd to users.id, so there's no id-0 "everyone" recipient to insert for)
+        personal_news = f"🚨 NUCLEAR STRIKE: Your country was struck by a {weapon_display} launched by {attacker_name}! Your population has been decimated and happiness is 0."
         db.execute(
-            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'NUCLEAR STRIKE', %s)",
-            (0, news_text) # Global news (userId = 0)
-        )
-
-        # Personal news to target
-        personal_news = f"Your country was struck by a {weapon_display} launched by {attacker_name}! Your population has been decimated and happiness is 0."
-        db.execute(
-            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'NUCLEAR STRIKE', %s)",
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
             (target_id, personal_news)
         )
 
@@ -1521,12 +1516,12 @@ def strategic_airstrike():
         defender_news = f"{attacker_name} launched an airstrike against your {strike_target.replace('_', ' ').title()}! Your fighters shot down {lost_bombers} bombers (losing {lost_fighters} fighters). Result: The enemy {damage_report}."
 
         db.execute(
-            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'flight', 'AIRSTRIKE RESULT', %s)",
-            (attacker_id, attacker_news)
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+            (attacker_id, f"AIRSTRIKE RESULT: {attacker_news}")
         )
         db.execute(
-            "INSERT INTO news (userId, icon, title, description) VALUES (%s, 'warning', 'UNDER ATTACK', %s)",
-            (target_id, defender_news)
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+            (target_id, f"🚨 UNDER ATTACK: {defender_news}")
         )
 
     return redirect(f"/country/id={target_id}")
