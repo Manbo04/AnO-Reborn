@@ -1241,7 +1241,8 @@ def find_targets():
         # take the top 20 after filtering/sorting
         targets_list = targets_list[:20]
 
-        return render_template("find_targets.html", targets=targets_list)
+        template = "find_targets_v2.html" if is_theme_v2_enabled("find_targets") else "find_targets.html"
+        return render_template(template, targets=targets_list)
     # POST - find a target by id or username and redirect
     defender_raw = request.form.get("defender")
     if not defender_raw:
