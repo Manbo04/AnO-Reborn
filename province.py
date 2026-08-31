@@ -514,6 +514,13 @@ def province(pId):
 
             affordable = qty
             limited_by = []
+            if abs(production_multiplier - 1.0) > 1e-9:
+                # "Each" shows the building's base rate, but production_multiplier
+                # (productivity/workforce efficiency) scales the actual total, so
+                # Built x Each can look like it doesn't add up to Total without
+                # this note. Real player report: geothermal plants "give 5 units"
+                # but total showed 4 with no explanation (ticket-0026).
+                limited_by.append("productivity")
             if money_cost_per_unit > 0:
                 afford_by_money = int(gold_remaining // money_cost_per_unit)
                 if afford_by_money < affordable:
@@ -554,6 +561,7 @@ def province(pId):
             "consumption_breakdown": consumption_breakdown,
             "production_breakdown": production_breakdown,
             "net": affordable_production - energy_consumption,
+            "production_multiplier": production_multiplier,
         }
         has_power = affordable_production >= energy_consumption
 

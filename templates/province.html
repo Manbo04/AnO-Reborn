@@ -310,6 +310,13 @@
                         </p>
                         {% endif %}
 
+                        {% if energy['production_multiplier'] is not none and (energy['production_multiplier'] - 1) | abs > 0.001 %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--warn">
+                            <span class="material-icons-outlined">info</span>
+                            Your productivity and workforce levels are scaling total power output to {{ (energy['production_multiplier'] * 100) | round(0, 'floor') | int }}% of each plant's base rate — that's why "Built &times; Each" below doesn't match "Total".
+                        </p>
+                        {% endif %}
+
                         {% if energy['production_breakdown'] %}
                         <h3 class="templatecontentheadercenter">Production</h3>
                         <div class="energy-breakdown-table-wrap">
