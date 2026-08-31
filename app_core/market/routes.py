@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
-from helpers import login_required, error, get_valid_int, record_trade_event
+from helpers import login_required, error, get_valid_int, record_trade_event, is_theme_v2_enabled
 import variables
 import logging
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
@@ -52,8 +52,9 @@ def market():
             user_id, offer_type_val, resource, amount, price, offer_id, username = row
             offers.append((user_id, offer_type_val, username, resource, amount, price, offer_id, price * amount))
 
+        template = "market_v2.html" if is_theme_v2_enabled("market") else "market.html"
         return render_template(
-            "market.html",
+            template,
             offers=offers,
             price_type=price_type,
             cId=cId,

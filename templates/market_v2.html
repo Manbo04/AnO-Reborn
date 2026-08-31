@@ -1,17 +1,17 @@
-{% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market{% endblock %}
+{% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market game-page-v2{% endblock %}
 {% block extra_head %}
 <script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=6"></script>
 {% endblock %}
 {% block body %}
-{% from 'macros/game_ui.html' import game_button %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    <div class="templatedivtopper markettopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            local_grocery_store
-            </span>Market</h1>
-    </div>
+    {% set offer_count = offers|length if offers else 0 %}
+    {{ game_hero('Market', badge_icon='local_grocery_store', badge_text=(('Showing ' ~ offer_count ~ ' of ' ~ total_count ~ ' offers') if total_count is defined else None), subtitle='Trade resources with every nation in the world') }}
 
     <div class="templatedivcontent">
         <div class="templatedivflex2 divflex2full">
@@ -77,12 +77,7 @@
         </div>
         </form>
 
-        <!-- Result count info -->
-        {% if total_count is defined %}
-        <p class="text-muted text-center mt-sm">
-            Showing {{ offers|length }} of {{ total_count }} offers
-        </p>
-        {% endif %}
+        <!-- Result count now shown in the hero badge above, not repeated here -->
 
         <div class="templatedivflex2 divflex2center">
             <div class="templatedivflex2left">
