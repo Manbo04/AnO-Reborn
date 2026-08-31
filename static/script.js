@@ -391,15 +391,28 @@ function initImmersion() {
             let displayEvents = [...events];
 
             const eventsStr = displayEvents.map(e => `<span>BREAKING NEWS: ${e}</span>`).join(" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ");
-            
+
+            // Player-reported: with a fixed duration, scroll speed rode content
+            // length -- more events (the backend can return anywhere from a
+            // handful up to ~40) made the same loop cover more pixels in the
+            // same time, i.e. it visibly sped up. Render at padding-left:0
+            // first so we can measure the real content width, then derive a
+            // duration from a constant reading speed so pace stays the same
+            // no matter how many events came back.
+            tickerContainer.innerHTML = `<div class="news-ticker-content" style="animation: none; padding-left: 100vw;">${eventsStr} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>TERRA: Global state remains active.</span></div>`;
+
+            const contentEl = tickerContainer.querySelector('.news-ticker-content');
+            const PX_PER_SECOND = 70;
+            const travelPx = contentEl.scrollWidth + window.innerWidth; // starts one viewport-width offscreen (padding-left: 100vw)
+            const durationMs = Math.max(30000, Math.round((travelPx / PX_PER_SECOND) * 1000));
+
             // To make it continuous and unaffected by tab switches, we calculate the negative delay based on Date.now()
-            // With ~40 events, we need a much longer loop to read them all smoothly. Let's do 5 minutes (300,000 ms)
-            const durationMs = 300000; 
             const now = Date.now();
             const elapsed = now % durationMs;
             const delay = -elapsed;
-            
-            tickerContainer.innerHTML = `<div class="news-ticker-content" style="animation: tickerScroll ${durationMs}ms linear infinite; animation-delay: ${delay}ms; padding-left: 100vw;">${eventsStr} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>TERRA: Global state remains active.</span></div>`;
+
+            contentEl.style.animation = `tickerScroll ${durationMs}ms linear infinite`;
+            contentEl.style.animationDelay = `${delay}ms`;
         }
 
         document.body.appendChild(tickerContainer);

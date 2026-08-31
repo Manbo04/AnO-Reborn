@@ -7094,6 +7094,10 @@ body.page-country .templatedivcontent .infodiv {
     body.has-side-ads .templatediv { width: 90%; }
 }
 
+.house-ad[hidden] {
+    display: none;
+}
+
 .house-ad {
     display: flex;
     flex-direction: column;
