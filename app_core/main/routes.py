@@ -11,8 +11,88 @@ bp = Blueprint('main_bp', __name__)
 @bp.route("/", methods=["GET", "POST"])
 def index():
     from flask import make_response
+
+    if session.get("user_id"):
+        return make_response(render_template("hub.html", **_hub_context()))
+
     resp = make_response(render_template("index.html"))
     return resp
+
+
+def _hub_context():
+    from app_core.chat import repositories as chat_repo
+
+    user_id = session["user_id"]
+    with get_request_cursor() as db:
+        db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
+        row = db.fetchone()
+        username = row[0] if row else None
+
+        db.execute(
+            "SELECT COUNT(*) FROM users WHERE last_active > now() - interval '5 minutes'"
+        )
+        nations_online = db.fetchone()[0]
+
+        db.execute("SELECT COUNT(*) FROM users")
+        total_nations = db.fetchone()[0]
+
+        db.execute("SELECT COUNT(*) FROM wars WHERE peace_date IS NULL")
+        wars_now = db.fetchone()[0]
+
+        db.execute(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT created_at FROM coalition_messages WHERE created_at > now() - interval '24 hours'
+                UNION ALL
+                SELECT created_at FROM direct_messages WHERE created_at > now() - interval '24 hours'
+                UNION ALL
+                SELECT created_at FROM global_chat_messages WHERE created_at > now() - interval '24 hours'
+            ) recent_messages
+            """
+        )
+        messages_today = db.fetchone()[0]
+
+        news = []
+        db.execute("SELECT username FROM users ORDER BY id DESC LIMIT 3")
+        for (name,) in db.fetchall():
+            news.append({"icon": "flag", "text": f"A new nation, {name}, has risen to power."})
+
+        db.execute(
+            """
+            SELECT u1.username, u2.username
+            FROM wars
+            JOIN users u1 ON wars.attacker = u1.id
+            JOIN users u2 ON wars.defender = u2.id
+            WHERE wars.peace_date IS NULL
+            ORDER BY wars.id DESC LIMIT 3
+            """
+        )
+        for att, defn in db.fetchall():
+            news.append({"icon": "military_tech", "text": f"{att} has declared war on {defn}."})
+
+        db.execute(
+            """
+            SELECT u.username, td.name
+            FROM user_tech ut
+            JOIN tech_dictionary td ON ut.tech_id = td.tech_id
+            JOIN users u ON ut.user_id = u.id
+            ORDER BY ut.user_id DESC LIMIT 3
+            """
+        )
+        for name, tech in db.fetchall():
+            tech_name = str(tech).replace("_", " ").title()
+            news.append({"icon": "science", "text": f"{name} has developed {tech_name}."})
+
+    return dict(
+        username=username,
+        nations_online=nations_online,
+        total_nations=total_nations,
+        wars_now=wars_now,
+        messages_today=messages_today,
+        news=news,
+        chat_history=chat_repo.list_global_chat_messages(),
+    )
+
 
 @bp.route("/robots.txt")
 def robots():

@@ -1,0 +1,145 @@
+{% extends "layout.html" %} {% block title %} Welcome {% endblock %}{% block body_class %} page-hub game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/hungaryparliament.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Welcome to Affairs and Order', badge_icon='public', badge_text='The world is watching', subtitle='Chat, news, and your nation, all in one place.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <div class="game-row" style="justify-content: space-around; flex-wrap: wrap; gap: 24px; text-align: center;">
+                <div>
+                    <div class="game-faint" style="font-size: 12px;">Nations online now</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ nations_online | commas }}</div>
+                </div>
+                <div>
+                    <div class="game-faint" style="font-size: 12px;">Total nations</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ total_nations | commas }}</div>
+                </div>
+                <div>
+                    <div class="game-faint" style="font-size: 12px;">Messages last 24h</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ messages_today | commas }}</div>
+                </div>
+                <div>
+                    <div class="game-faint" style="font-size: 12px;">Wars right now</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--colorOne);">{{ wars_now | commas }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-row" style="align-items: flex-start; gap: 18px; flex-wrap: wrap;">
+
+            <div class="game-glass game-panel" style="flex: 1 1 380px; min-width: 300px;">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">forum</span>Global Chat</h2>
+                <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}">
+                    <div class="chat-messages" id="hubChatMessages" aria-live="polite" style="max-height: 320px; overflow-y: auto;">
+                        {% if chat_history and chat_history|length > 0 %}
+                            {% for m in chat_history %}
+                            <div class="chat-message{% if m.sender_id|string == session.user_id|string %} chat-message-mine{% endif %}">
+                                <span class="chat-message-sender">{{ m.sender_username }}</span>
+                                <span class="chat-message-text">{{ m.content }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="chat-message-empty">No messages yet. Say hello to the world!</div>
+                        {% endif %}
+                    </div>
+                    <form id="hubChatForm" class="chat-input-row" autocomplete="off" style="margin-top: 10px;">
+                        <textarea class="templatetextarea chat-input" id="hubChatInput" maxlength="1000" placeholder="Say something to everyone..." rows="1" required></textarea>
+                        <button type="submit" class="game-btn game-btn-primary chat-send-btn">
+                            <span class="material-icons-outlined">send</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="game-glass game-panel" style="flex: 1 1 320px; min-width: 280px;">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">newspaper</span>Global News</h2>
+                {% if news and news|length > 0 %}
+                <div class="game-row" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                    {% for item in news %}
+                    <div class="game-row" style="align-items: flex-start; gap: 10px;">
+                        <span class="material-icons-outlined" style="color: var(--accent); font-size: 20px;">{{ item.icon }}</span>
+                        <span style="color: var(--colorOne); font-size: 13.5px;">{{ item.text }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="game-faint">Nothing new yet -- check back soon.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+<script>
+(function() {
+    var root = document.getElementById('hubChatRoot');
+    if (!root) return;
+    var currentUserId = root.dataset.currentUserId;
+    var messagesEl = document.getElementById('hubChatMessages');
+    var form = document.getElementById('hubChatForm');
+    var input = document.getElementById('hubChatInput');
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    function renderMessage(m) {
+        var div = document.createElement('div');
+        div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
+        var sender = document.createElement('span');
+        sender.className = 'chat-message-sender';
+        sender.textContent = m.sender_username;
+        var text = document.createElement('span');
+        text.className = 'chat-message-text';
+        text.textContent = m.content;
+        div.appendChild(sender);
+        div.appendChild(text);
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    var socket = io();
+    var joined = false;
+
+    function joinRoom() {
+        if (joined) return;
+        socket.emit('join_global_chat');
+        joined = true;
+    }
+
+    socket.on('connect', joinRoom);
+    if (socket.connected) joinRoom();
+
+    socket.on('global_chat_message', function(m) {
+        var empty = messagesEl.querySelector('.chat-message-empty');
+        if (empty) empty.remove();
+        renderMessage(m);
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var content = input.value.trim();
+        if (!content) return;
+        socket.emit('global_chat_message', {content: content});
+        input.value = '';
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (form.requestSubmit) form.requestSubmit();
+            else form.dispatchEvent(new Event('submit', {cancelable: true}));
+        }
+    });
+})();
+</script>
+
+{% endblock %}

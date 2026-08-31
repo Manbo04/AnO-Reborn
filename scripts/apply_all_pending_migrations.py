@@ -62,6 +62,7 @@ MIGRATION_FILES = [
     "0054_seed_patreon_tier_elite.sql",
     "0055_seed_patreon_tier_high_council.sql",
     "0056_widen_users_description.sql",
+    "0057_add_global_chat.sql",
 ]
 
 
