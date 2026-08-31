@@ -1,0 +1,2443 @@
+{% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country game-page-v2{% endblock %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+{% block head %} {% if flag != None %}
+<meta property="og:image" content="/flag/country/{{ cId }}" /> {% endif %}
+<meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
+
+<meta name="description" content="{{ username }}'s country."> {% endblock %} {% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+{% endblock %} {% block body %}
+
+<div class="game-page-bg" style="background-image: url('{% if flag != None %}/flag/country/{{ cId }}{% else %}{{ url_for('static', filename='images/tajmahal.jpg') }}{% endif %}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero(username, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None) }}
+
+    <div class="templatedivcontent">
+
+        <div class="templatedivflex2 menuflex2">
+            <div class="templatedivflex2left" id="countryview" onclick="countryview()">
+                <h3 class="smallheader">View</h3>
+            </div>
+
+            {% if status %}
+            <div class="templatedivflex2left" id="countryrevenue" onclick="countryrevenue()">
+                <h3 class="smallheader">Revenue</h3>
+            </div>
+            <div class="templatedivflex2left" id="countrynews" onclick="countrynews()">
+                <h3 class="smallheader">News {% if news_amount != 0 %}
+                    <span class="menuflex2notification">{{news_amount}}</span> {% endif %}
+                </h3>
+            </div>
+            <div class="templatedivflex2left" id="countryedit" onclick="countryedit()">
+                <h3 class="smallheader">Edit</h3>
+            </div>
+            {% else %}
+            <div class="templatedivflex2left" id="countryactions" onclick="countryactions()">
+                <h3 class="smallheader">Actions</h3>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!--View-->
+        <div class="view" id="view">
+
+
+            <div class="countryimagediv" id="countryFlagBackground">
+                <!--country flag-->
+                {% if flag != None %}
+                <img class="countryimage" src="/flag/country/{{ cId }}" alt="{{ flag }}">
+                <!-- hmm not using url_for, but somewhy it render-->
+                <!-- this is the one that shows -- steven -->
+                {% else %}
+                <!-- tried first with url_for, but it didn't work -- t0dd -->
+                <img alt="Image" class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
+                <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
+                {% if colFlag != None %}
+                <img class="countrycoalitionimage" src="/flag/coalition/{{ colId }}" alt="{{ colFlag }}" /> {% endif %}
+            </div>
+
+
+            {% if description != None %}
+            <h2 class="templatecontentheaderleft">About</h2>
+
+            <div class="strongpadding richDescription">{{ description|markdown }}</div>
+
+            {% endif %}
+
+            {% include 'partials/distribution_alert.html' %}
+
+            {% include 'partials/coalition_recommendations.html' %}
+
+            <h2 class="templatecontentheaderleft">Country info</h2>
+
+            <div class="templatedivflex2 country-overview-grid">
+                <div class="templatedivflex2left country-overview-column country-overview-column--general">
+
+
+                    <table class="templatetable">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">
+                                info
+                                </span>General</th>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                tag
+                                </span>Founder Rank:</td>
+                            <td>{% if join_number %}<span class="text-accent">#{{ join_number }}</span>{% else %}—{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                tag
+                                </span>Country ID:</td>
+                            <td>{{ cId }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                room
+                                </span>Country location:</td>
+                            <td>{{ location }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>Date created:</td>
+                            <td>{{ dateCreated | days_old }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                schedule
+                                </span>Last active:</td>
+                            <td><span class="pulse-indicator"></span>{{ last_active | timeago }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                account_balance
+                                </span>Provinces:</td>
+                            <td>{{ provinceCount }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                people_alt
+                                </span>Population:</td>
+                            {% if population != None %}
+                            <td><span class="pulse-indicator"></span>{{ population | fmt }}</td>
+                            {% else %}
+                            <td><span class="pulse-indicator"></span>0</td>
+                            {% endif %}
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                people_alt
+                                </span>Influence:</td>
+                            <td>{{ influence | fmt }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                location_city
+                                </span>Total Cities:</td>
+                            <td>{{ total_cities | fmt }}</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                map
+                                </span>Total Land:</td>
+                            <td>{{ total_land | fmt }}</td>
+                        </tr>
+                        <!--
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                library_music
+                                </span>Anthem:</td>
+                            <td>
+                                <img alt="Image" src="{{ countryAnthem }}" class="countryanthem" />
+                            </td>
+                        </tr>
+                        -->
+                    </table>
+
+                    <table class="templatetable">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">
+                                public
+                                </span>Affairs</th>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                handshake
+                                </span>Active Treaties:</td>
+                            <td>
+                                {% if active_treaties %}
+                                    <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                                    {% for t in active_treaties %}
+                                        <li>
+                                            {% if t[0] == 'non_aggression' %}<span style="color: #4CAF50; font-weight: bold;">NAP</span>{% else %}<span style="color: #FF9800; font-weight: bold;">MDP</span>{% endif %}
+                                            with <a href="/country/{{ t[2] }}">{{ t[1] }}</a>
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if colName == "" %}
+                        <tr>
+                            <td class="center">Not in a coalition</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>Coalition:</td>
+                            <td><a href="/coalition/{{ colId }}">{{ colName }}</a></td>
+                        </tr>
+                        {% endif %} {% if colRole != None %}
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>Coalition role:</td>
+                            <td>{{ colRole.replace('_', ' ').title() }}</td>
+                        </tr>
+                        {% endif %}
+                        <!--
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>Allied:</td>
+                            <td>Yes/No</td>
+                        </tr>
+                        -->
+                    </table>
+                    <!-- The coalition-invite button lives further down, gated by
+                         can_invite_to_coalition (computed in countries.py's
+                         country() route). This location previously had a duplicate
+                         gated only on "viewing someone else", with no check for
+                         inviter role or whether the target already has a coalition
+                         -- it rendered even on your own profile page. -->
+                    <table class="templatetable">
+                        <tr>
+                            <th colspan="2"><span class="material-icons-outlined">
+                                article
+                                </span>Other</th>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                sentiment_satisfied
+                                </span>Average happiness:
+                                <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help; vertical-align: middle;" data-tippy-content="<strong>Happiness modifiers</strong><br>&bull; Unemployment &gt; 30% &rarr; <em>&minus;10 happiness</em> (build production to hire workers)<br>&bull; Pension crisis (elderly &gt; 40%) &rarr; <em>&minus;5 happiness</em> and <em>&minus;5,000 gold/turn</em><br>&bull; Pollution &rarr; each 1% reduces happiness &amp; caps max population<br>&bull; Active policies &amp; retail/entertainment buildings adjust the baseline<br>&bull; Low happiness cuts tax income and slows population growth<br><br><a href='/mechanics/revenue' style='color:#4da8da;text-decoration:underline;'>&#128214; View mechanics</a>">info</span>
+                            </td>
+                            {% if happiness != None %}
+                            <td>{{ happiness|round }}%</td>
+                            {% else %}
+                            <td>0</td>
+                            {% endif %}
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                arrow_circle_up
+                                </span>Average productivity:
+                                <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help; vertical-align: middle;" data-tippy-content="<strong>Productivity modifiers</strong><br>&bull; Buildings without power run at reduced efficiency<br>&bull; Buildings without required workers idle &mdash; check demographics (working-age)<br>&bull; Chernobyl / disaster events impose a <em>20% minimum</em> production floor for a period<br>&bull; Happiness &lt; 50% drags productivity down<br>&bull; Policies and research modify this globally<br><br><a href='/mechanics/revenue' style='color:#4da8da;text-decoration:underline;'>&#128214; View mechanics</a>">info</span>
+                            </td>
+                            {% if productivity != None %}
+                            <td>{{ productivity|round }}%</td>
+                            {% else %}
+                            <td>0</td>
+                            {% endif %}
+                        </tr>
+                        <!--
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>GDP:</td>
+                            <td>{{ happiness }}%</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>GDP Per Capita:</td>
+                            <td>{{ happiness }}%</td>
+                        </tr>
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                notes
+                                </span>Available Resources:</td>
+                            <td>{{ countryResources }}</td>
+                        </tr>
+                        -->
+                    </table>
+
+                </div>
+                <div class="templatedivflex2right country-overview-column country-overview-column--demographics country-demographics-panel">
+                    <h3 class="templatecontentheaderleft" style="display: flex; align-items: center; gap: 8px;">
+                        Demographics by Province
+                        <span class="material-icons-outlined" style="font-size: 1.1rem; color: var(--text-muted); cursor: help;" data-tippy-content="Population is divided into age groups with different needs and behaviors.<br><br><a href='/mechanics/revenue' style='color: #4da8da; text-decoration: underline;'>📖 View Mechanics</a>">info</span>
+                    </h3>
+                    <p class="country-demographics-subtitle">Stacked population by province</p>
+                    <div class="country-demographics-chart-wrap">
+                        <canvas id="demographicsRadarChart" class="chart-canvas-responsive"></canvas>
+                    </div>
+                    <div class="country-demographics-fallback" id="demographicsFallback">
+                        {% if provinces and provinces|length > 0 %}
+                        {% set ns = namespace(max_total=1) %}
+                        {% for province in provinces %}
+                            {% set total = (province[7] if province[7] else 0) + (province[8] if province[8] else 0) + (province[9] if province[9] else 0) %}
+                            {% if total > ns.max_total %}
+                                {% set ns.max_total = total %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for province in provinces %}
+                            {% set children = province[7] if province[7] else 0 %}
+                            {% set working = province[8] if province[8] else 0 %}
+                            {% set elderly = province[9] if province[9] else 0 %}
+                            {% set total = children + working + elderly %}
+                            <div class="country-demographics-fallback-row">
+                                <div class="country-demographics-fallback-name">{{ province[0] }}</div>
+                                <div class="country-demographics-fallback-stack" role="img" aria-label="{{ province[0] }} demographics">
+                                    <span class="segment-children" style="width: {{ ((children / ns.max_total) * 100) | round(2) }}%;"></span>
+                                    <span class="segment-working" style="width: {{ ((working / ns.max_total) * 100) | round(2) }}%;"></span>
+                                    <span class="segment-elderly" style="width: {{ ((elderly / ns.max_total) * 100) | round(2) }}%;"></span>
+                                </div>
+                                <div class="country-demographics-fallback-total">{{ total | fmt }}</div>
+                            </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="country-demographics-empty">No province demographics available.</p>
+                        {% endif %}
+                    </div>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">people</span>Population Breakdown</h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >child_care</span>Children</strong>
+        <span class="stat-value">{{ total_children | fmt }} <span >({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >work</span>Working Age</strong>
+        <span class="stat-value">{{ total_working | fmt }} <span >({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><span class="material-icons-outlined" >elderly</span>Elderly</strong>
+        <span class="stat-value">{{ total_elderly | fmt }} <span >({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
+    </div>
+</div>
+                </div>
+            </div>
+
+            <script>
+            // Wait for DOM to be fully loaded before initializing charts
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initCountryCharts);
+            } else {
+                initCountryCharts();
+            }
+
+            function initCountryCharts() {
+                const canvasEl = document.getElementById('demographicsRadarChart');
+                const fallback = document.getElementById('demographicsFallback');
+                if (!canvasEl || typeof Chart === 'undefined') {
+                    if (fallback) fallback.style.display = 'grid';
+                    return;
+                }
+                const ctx = canvasEl.getContext('2d');
+                if (!ctx) {
+                    if (fallback) fallback.style.display = 'grid';
+                    return;
+                }
+
+                // Weight formatter: kg -> t -> kt -> Mt
+                function formatWeight(value) {
+                    if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
+                    if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
+                    if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
+                    return value.toFixed(0) + ' kg';
+                }
+
+                // Province data from backend
+                const provinces = [
+                    {% for province in provinces %}
+                    {
+                        name: {{ province[0] | tojson }},
+                        children: {{ province[7] if province[7] else 0 }},
+                        working: {{ province[8] if province[8] else 0 }},
+                        elderly: {{ province[9] if province[9] else 0 }}
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ];
+
+                const provinceNames = provinces.map(p => p.name);
+                const childrenData = provinces.map(p => p.children);
+                const workingData = provinces.map(p => p.working);
+                const elderlyData = provinces.map(p => p.elderly);
+                const hasProvinceData = provinceNames.length > 0;
+
+                // Gradient for children bars (blue)
+                const childrenGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                childrenGradient.addColorStop(0, 'rgba(54, 162, 235, 0.9)');
+                childrenGradient.addColorStop(1, 'rgba(54, 162, 235, 0.5)');
+
+                // Gradient for working bars (green/teal)
+                const workingGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                workingGradient.addColorStop(0, 'rgba(75, 192, 92, 0.9)');
+                workingGradient.addColorStop(1, 'rgba(75, 192, 92, 0.5)');
+
+                // Gradient for elderly bars (grey)
+                const elderlyGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                elderlyGradient.addColorStop(0, 'rgba(159, 168, 174, 0.9)');
+                elderlyGradient.addColorStop(1, 'rgba(159, 168, 174, 0.5)');
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hasProvinceData ? provinceNames : ['No Provinces'],
+                        datasets: [
+                            {
+                                label: 'Children',
+                                data: hasProvinceData ? childrenData : [0],
+                                backgroundColor: childrenGradient,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
+                            },
+                            {
+                                label: 'Working Age',
+                                data: hasProvinceData ? workingData : [0],
+                                backgroundColor: workingGradient,
+                                borderColor: 'rgba(75, 192, 92, 1)',
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
+                            },
+                            {
+                                label: 'Elderly',
+                                data: hasProvinceData ? elderlyData : [0],
+                                backgroundColor: elderlyGradient,
+                                borderColor: 'rgba(159, 168, 174, 1)',
+                                borderWidth: 2,
+                                borderCapStyle: 'round'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeInOutQuart'
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true,
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    font: { size: 11 }
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                        if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                        return value.toFixed(0);
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15,
+                                    font: { size: 12, weight: '600' }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'National Demographics by Province',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                },
+                                padding: 20
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                cornerRadius: 8,
+                                titleFont: { size: 13, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        label += formatWeight(context.parsed.y);
+                                        return label;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        let total = 0;
+                                        tooltipItems.forEach(item => {
+                                            total += item.parsed.y;
+                                        });
+                                        return 'Total: ' + formatWeight(total);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (fallback) {
+                    fallback.style.display = 'none';
+                }
+            }
+            </script>
+
+                <h2 class="templatecontentheaderleft">Buildings</h2>
+                <div class="stat-grid">
+                    {% if building_rows and building_rows|length > 0 %}
+                    {% for building_name, building_qty in building_rows %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label">{{ building_name }}</strong>
+                        <span class="stat-value">{{ (building_qty or 0) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="templatedivflex2left stat-card stat-card-wide">
+                        <em>No buildings</em>
+                    </div>
+                    {% endif %}
+                </div>
+
+
+
+            <h2 class="templatecontentheaderleft">Provinces</h2>
+
+            <div class="game-card-list game-card-list--mobile-only">
+            {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness = province[5] %} {% set provinceProductivity = province[6] %} {% set has_image = provinceId in (provinces_with_images|default([])) %}
+            <a href="/province/{{ provinceId }}" class="game-province-card">
+                <div class="game-province-card-stats">
+                    <h3 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h3>
+                    <span><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
+                    <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
+                    <span><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
+                </div>
+                <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
+            </a>
+            {% endfor %}
+            </div>
+
+            <div class="game-table-fallback--hide-mobile">
+            {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness
+            = province[5] %} {% set provinceProductivity = province[6] %} {% set has_image = provinceId in (provinces_with_images|default([])) %}
+            <a href="/province/{{ provinceId }}" class="province-banner">
+                <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" />
+                <div class="province-banner__body">
+                    <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h2>
+                    <div class="province-stat-row">
+                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
+                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
+                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
+                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ provinceCityCount }} cities</span>
+                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">landscape</span> {{ provinceLand }} land</span>
+                    </div>
+                </div>
+            </a>
+
+            {% endfor %}
+            </div>
+        </div>
+        <!--Revenue-->
+        {% if status %}
+        <div class="revenue" id="revenue">
+
+            {# Macro to show theoretical (original) gross and projected actual value #}
+            {% macro show_gross(resource) %}
+                {{ revenue['gross_theoretical'].get(resource, 0) | fmt }}
+                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) | fmt }}</small>
+            {% endmacro %}
+
+            {% if status %}
+            <div class="templatedivflex2">
+                <div class="templatedivflex2left">
+
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Gross Raw <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary gross</strong>
+        <span class="stat-value">{{ revenue["gross"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/my_coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue["gross"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ show_gross('oil') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ show_gross('coal') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ show_gross('uranium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ show_gross('iron') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ show_gross('lead') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ show_gross('bauxite') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ show_gross('copper') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ show_gross('lumber') }}</span>
+    </div>
+</div>
+                    <br>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Gross Processed <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ show_gross('components') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ show_gross('steel') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ show_gross('consumer_goods') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ show_gross('aluminium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ show_gross('gasoline') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ show_gross('ammunition') }}</span>
+    </div>
+</div>
+
+                </div>
+                <div class="templatedivflex2right">
+
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Net Raw <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
+        <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/my_coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue["net"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ revenue["net"]["oil"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ revenue["net"]["coal"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ revenue["net"]["uranium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ revenue["net"]["iron"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ revenue["net"]["lead"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ revenue["net"]["bauxite"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ revenue["net"]["copper"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ revenue["net"]["lumber"] | weight_fmt }}</span>
+    </div>
+</div>
+                    <br>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Net Processed <small class="font-normal-sub">(Hourly)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ revenue["net"]["components"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ revenue["net"]["steel"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ revenue["net"]["consumer_goods"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ revenue["net"]["aluminium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ revenue["net"]["gasoline"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ revenue["net"]["ammunition"] | weight_fmt }}</span>
+    </div>
+</div>
+
+                </div>
+            </div>
+
+            <h2 class="templatecontentheaderleft">Upkeep Costs</h2>
+
+            <table class="templatetable">
+                <tr>
+                    <th colspan="2">General</th>
+                </tr>
+                <tr>
+                    <td><span class="material-icons-outlined" style="vertical-align: middle;">groups</span> Citizens</td>
+                    <td>{{ rations_need}} rations, {{ cg_needed }} consumer goods</td>
+                </tr>
+                {% if distribution_status %}
+                <tr>
+                    <td>Ration distribution</td>
+                    <td>
+                        Serves {{ distribution_status.distribution_cap | commas }} /
+                        {{ population | commas }} population
+                        ({{ distribution_status.coverage_percent }}%)
+                        {% if distribution_status.stockpile_bottleneck %}
+                        — stockpile not reaching all citizens
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <th colspan="2">Infrastructure</th>
+                </tr>
+                <tr>
+                    <td>Electricity:</td>
+                    <td>{{ statistics["electricity"] }}</td>
+                </tr>
+                <tr>
+                    <td>Retail:</td>
+                    <td>{{ statistics["retail"] }}</td>
+                </tr>
+                <tr>
+                    <td>Public Works:</td>
+                    <td>{{ statistics["public_works"] }}</td>
+                </tr>
+                <tr>
+                    <td>Military:</td>
+                    <td>{{ statistics["military"] }}</td>
+                </tr>
+                <tr>
+                    <td>Industry:</td>
+                    <td>{{ statistics["industry"] }}</td>
+                </tr>
+
+                <tr>
+                    <td>Processing:</td>
+                    <td>{{ statistics["processing"] }}</td>
+                </tr>
+            </table>
+
+            {% if expenses %}
+            <h2 class="templatecontentheaderleft">Purchases</h2>
+            <div class="templateoutertablediv">
+                <table class="templatetable">
+                    <thead><tr><th>Type</th><th>Item / Resource</th><th>Amount</th><th>Date</th></tr></thead>
+                    <tbody>
+                    {% for name, type, resource, amount, date in expenses %}
+                    <tr>
+                        <td>{% if type == 'expense' %}<span class="text-danger">Expense</span>{% else %}<span class="text-success">Revenue</span>{% endif %}</td>
+                        <td>{{ resource | formatname }}</td>
+                        <td>{{ amount }}</td>
+                        <td>{{ date }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %} {% endif %}
+            <!--show this if user is in a coalition-->
+            <!--
+        <table class="templatetable">
+            <tr>
+                <th colspan="2"><span class="material-icons-outlined">
+                        article
+                        </span>Before Tax Raw</th>
+            </tr>
+            <tr>
+                <td>Before tax:</td>
+                <td>{{ gross }}%</td>
+            </tr>
+            <tr>
+                <td>Monetary before tax:</td>
+                <td>{{ monetaryGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <th colspan="2"><span class="material-icons-outlined">
+                        article
+                        </span>Before Tax Processed</th>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+        </table>
+-->
+        </div>
+
+        <!--News-->
+        <div class="news" id="news">
+            <style media="screen">
+                .dismiss-notification:hover {
+                    cursor: pointer;
+                }
+
+                /* Interactive Events Glassmorphism Styles */
+                .glass-panel {
+                    background: rgba(255, 255, 255, 0.08);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                    border-radius: 12px;
+                    color: inherit;
+                }
+
+                .events-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+
+                .event-card {
+                    padding: 20px;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .event-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+                    background: rgba(255, 255, 255, 0.12);
+                }
+
+                .event-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 4px;
+                    background: linear-gradient(90deg, #ff8a00, #e52e71);
+                }
+
+                .event-title {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    margin-top: 0;
+                }
+
+                .event-date {
+                    font-size: 0.85rem;
+                    opacity: 0.7;
+                    margin-bottom: 15px;
+                }
+
+                .event-excerpt {
+                    font-size: 0.95rem;
+                    line-height: 1.4;
+                    opacity: 0.9;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 3;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                /* Modal */
+                .event-modal-backdrop {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(5px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s;
+                }
+
+                .event-modal-backdrop.active {
+                    opacity: 1;
+                    pointer-events: all;
+                }
+
+                .event-modal {
+                    width: 90%;
+                    max-width: 500px;
+                    padding: 30px;
+                    transform: scale(0.95);
+                    transition: transform 0.3s;
+                    position: relative;
+                    /* Fallback background for browsers without backdrop-filter */
+                    background: rgba(30, 30, 30, 0.85); 
+                }
+
+                .event-modal-backdrop.active .event-modal {
+                    transform: scale(1);
+                }
+
+                .event-modal h3 {
+                    margin-top: 0;
+                    font-size: 1.5rem;
+                    margin-bottom: 15px;
+                }
+
+                .event-modal p.desc {
+                    font-size: 1.05rem;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                }
+
+                .event-choices {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .event-choice-btn {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 15px;
+                    border-radius: 8px;
+                    color: inherit;
+                    cursor: pointer;
+                    text-align: left;
+                    transition: all 0.2s;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .event-choice-btn:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-color: rgba(255, 255, 255, 0.4);
+                }
+
+                .choice-label {
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                    margin-bottom: 5px;
+                }
+
+                .choice-details {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.85rem;
+                    opacity: 0.8;
+                }
+
+                .choice-cost { color: #ff8a8a; }
+                .choice-reward { color: #8aff9e; }
+
+                .close-modal-btn {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    opacity: 0.7;
+                }
+
+                .close-modal-btn:hover {
+                    opacity: 1;
+                }
+
+                .event-loading {
+                    display: none;
+                    text-align: center;
+                    margin-top: 15px;
+                    font-weight: bold;
+                }
+            </style>
+
+            {% if interactive_events and interactive_events|length > 0 %}
+            <h2 class="templatecontentheaderleft">Action Required</h2>
+            <div class="events-grid">
+                {% for evt in interactive_events %}
+                <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
+                    <h3 class="event-title">{{ evt.title }}</h3>
+                    <div class="event-date">{{ evt.created_at.strftime('%Y-%m-%d') if evt.created_at else 'Recent' }}</div>
+                    <div class="event-excerpt">{{ evt.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Event Modal -->
+            <div id="eventModalBackdrop" class="event-modal-backdrop">
+                <div class="event-modal glass-panel">
+                    <button class="close-modal-btn" onclick="closeEventModal()">&times;</button>
+                    <h3 id="modalEventTitle">Event Title</h3>
+                    <p class="desc" id="modalEventDesc">Event Description</p>
+                    <div class="event-choices" id="modalEventChoices">
+                        <!-- Choices injected here -->
+                    </div>
+                    <div class="event-loading" id="modalEventLoading">Processing...</div>
+                </div>
+            </div>
+
+            <script>
+                let currentEventId = null;
+
+                function openEventModal(eventId, title, desc, choices) {
+                    currentEventId = eventId;
+                    document.getElementById('modalEventTitle').innerText = title;
+                    document.getElementById('modalEventDesc').innerText = desc;
+                    
+                    const choicesContainer = document.getElementById('modalEventChoices');
+                    choicesContainer.innerHTML = '';
+                    
+                    choices.forEach((choice, index) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'event-choice-btn';
+                        btn.onclick = () => respondToEvent(index);
+                        
+                        btn.innerHTML = `
+                            <div class="choice-label">${choice.label}</div>
+                            <div class="choice-details">
+                                <span class="choice-cost">Cost: ${choice.cost}</span>
+                                <span class="choice-reward">Reward: ${choice.reward}</span>
+                            </div>
+                        `;
+                        choicesContainer.appendChild(btn);
+                    });
+                    
+                    document.getElementById('modalEventLoading').style.display = 'none';
+                    choicesContainer.style.display = 'flex';
+                    
+                    document.getElementById('eventModalBackdrop').classList.add('active');
+                }
+
+                function closeEventModal() {
+                    document.getElementById('eventModalBackdrop').classList.remove('active');
+                    currentEventId = null;
+                }
+
+                function respondToEvent(choiceIndex) {
+                    if (!currentEventId) return;
+                    
+                    document.getElementById('modalEventChoices').style.display = 'none';
+                    document.getElementById('modalEventLoading').style.display = 'block';
+                    
+                    fetch(`/api/events/${currentEventId}/respond`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ option_index: choiceIndex })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert(data.message || 'An error occurred.');
+                            closeEventModal();
+                        }
+                    })
+                    .catch(err => {
+                        alert('Network error.');
+                        closeEventModal();
+                    });
+                }
+            </script>
+            {% endif %}
+
+            {% if news|length %}
+            <h2 class="templatecontentheaderleft">Reports & News</h2>
+            <table class="templatetable">
+
+                {% for new in news %}
+                <tbody data-contain="{{new[2]}}">
+                    <tr>
+                        <th>
+                            <span class="material-icons-outlined">article</span>{{new[1]}}
+                            <span onclick="pop_from_page('/delete_news/{{new[2]}}', {{new[2]}})" class="material-icons-outlined dismiss-notification">highlight_off</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>{{ new[0] }}</td>
+                    </tr>
+                </tbody>
+                {% endfor %}
+            </table>
+            {% else %}
+            <h2 class="templatecontentheadercenter">You have no news</h2> {% endif %}
+
+        </div>
+        <!--Edit-->
+        <div class="edit country-customize" id="edit">
+
+            <p class="country-customize-intro">Shape how the world sees {{ username }} — flag, homeland, and lore all show on your nation page.</p>
+
+            <h2 class="templatecontentheaderleft">Identity</h2>
+
+            <div class="infodiv country-customize-panel">
+
+                <form method="POST" enctype="multipart/form-data" class="country-customize-form">
+
+                    <section class="country-customize-section country-name-studio" aria-labelledby="country-name-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">badge</span>
+                            <div>
+                                <h3 id="country-name-heading" class="country-customize-section-title">Nation Name</h3>
+                                <p class="country-customize-section-hint">Choose a powerful name for your country. Letters and numbers only.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-editor-wrap" style="padding: 15px 20px;">
+                            <input type="text" name="countryName" class="loginsignupinput" value="{{ username|e }}" placeholder="New Nation Name" minlength="3" maxlength="20" pattern="[a-zA-Z0-9 ]+">
+                        </div>
+                    </section>
+
+                    <section class="country-customize-section country-flag-studio" aria-labelledby="country-flag-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">flag</span>
+                            <div>
+                                <h3 id="country-flag-heading" class="country-customize-section-title">National flag</h3>
+                                <p class="country-customize-section-hint">Square or wide images work best. Shown on your banner, coalitions, and when others browse nations.</p>
+                            </div>
+                        </div>
+                        <div class="country-flag-studio-body">
+                            <div class="country-flag-preview-frame" aria-live="polite">
+                                {% if flag != None %}
+                                <img class="country-flag-preview-img" id="countryFlagPreview" src="/flag/country/{{ cId }}" alt="Current flag for {{ username }}">
+                                {% else %}
+                                <img class="country-flag-preview-img country-flag-preview-img--empty" id="countryFlagPreview" alt="" hidden>
+                                <div class="country-flag-preview-placeholder" id="countryFlagPlaceholder">
+                                    <span class="material-icons-outlined" aria-hidden="true">outlined_flag</span>
+                                    <span>No flag yet — upload one!</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <label class="country-flag-upload imageinput fit center" for="countryFlagInput">
+                                <span class="material-icons-outlined" aria-hidden="true">upload</span>
+                                Choose flag image
+                                <input type="file" name="flag_input" id="countryFlagInput" accept="image/*">
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="country-customize-section country-biome-studio" aria-labelledby="country-biome-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">public</span>
+                            <div>
+                                <h3 id="country-biome-heading" class="country-customize-section-title">Homeland biome</h3>
+                                <p class="country-customize-section-hint country-biome-warning">
+                                    <span class="material-icons-outlined" aria-hidden="true">warning</span>
+                                    Changing biome removes all industry buildings in every province.
+                                </p>
+                            </div>
+                        </div>
+                        {% if location %}
+                        <p class="country-biome-current">Current homeland: <strong>{{ location }}</strong></p>
+                        {% endif %}
+                        <div class="country-biome-gallery" role="listbox" aria-label="Choose a biome" id="countryBiomeGallery">
+                            {% for biome in nation_biome_choices() %}
+                            <button type="button" class="country-biome-card{% if location and location == biome.value %} is-current{% endif %}"
+                                role="option"
+                                data-biome-value="{{ biome.value }}"
+                                aria-selected="{% if location and location == biome.value %}true{% else %}false{% endif %}">
+                                <span class="country-biome-card-art">
+                                    <img loading="lazy" alt="" src="{{ url_for('static', filename=game_asset_path('biomes', biome.asset_key)) }}?v={{ asset_version }}">
+                                </span>
+                                <span class="country-biome-card-body">
+                                    <span class="material-icons-outlined country-biome-card-icon" aria-hidden="true">{{ biome.icon }}</span>
+                                    <span class="country-biome-card-label">{{ biome.label }}</span>
+                                    <span class="country-biome-card-tagline">{{ biome.tagline }}</span>
+                                    <span class="country-biome-card-resources">Produces: {{ biome_resources(biome.value) | join(', ') }}</span>
+                                </span>
+                                {% if location and location == biome.value %}
+                                <span class="country-biome-card-badge">Current</span>
+                                {% endif %}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <label class="visually-hidden" for="countryLocationSelect">Biome for form submission</label>
+                        <select class="templateselect country-biome-select-hidden" name="countryLocation" id="countryLocationSelect" tabindex="-1" aria-hidden="true">
+                            <option value="none" class="templateoption" selected="selected">Keep current biome</option>
+                            {% for biome in nation_biome_choices() %}
+                            <option value="{{ biome.value }}" class="templateoption">{{ biome.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="country-biome-pick-hint" id="countryBiomePickHint" hidden>Selected: <strong id="countryBiomePickLabel"></strong> — save to apply.</p>
+                    </section>
+
+                    <section class="country-customize-section country-lore-studio" aria-labelledby="country-lore-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">auto_stories</span>
+                            <div>
+                                <h3 id="country-lore-heading" class="country-customize-section-title">National lore</h3>
+                                <p class="country-customize-section-hint">Tell visitors your origin story, values, rivals, or roleplay rules. Markdown supported.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-prompts" role="group" aria-label="Writing prompts">
+                            <span class="country-lore-prompts-label">Quick prompts:</span>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Founding\n\nOur nation was born when…">Founding</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Government\n\nWe are ruled by…">Government</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Foreign policy\n\nAllies: …\n\nRivals: …">Diplomacy</button>
+                            <button type="button" class="country-lore-prompt-chip" data-prompt="## Culture\n\nTraditions, holidays, and national symbols include…">Culture</button>
+                        </div>
+                        <div class="country-lore-editor-wrap">
+                            <textarea id="countryDescription" class="templatetextarea" name="description" placeholder="Write your nation's story — history, leaders, ambitions, or in-character voice.">{{ description|e }}</textarea>
+                        </div>
+                    </section>
+
+                    <button class="templatedivbutton templatecenteredbutton country-customize-save" formaction="/update_country_info" type="submit">
+                        <span class="material-icons-outlined" aria-hidden="true">save</span>
+                        Save nation identity
+                    </button>
+
+                </form>
+            </div>
+
+            <script>
+            (function () {
+                var flagInput = document.getElementById('countryFlagInput');
+                var preview = document.getElementById('countryFlagPreview');
+                var placeholder = document.getElementById('countryFlagPlaceholder');
+                if (flagInput && preview) {
+                    flagInput.addEventListener('change', function (event) {
+                        var file = event.target.files && event.target.files[0];
+                        if (!file) return;
+                        var url = URL.createObjectURL(file);
+                        preview.src = url;
+                        preview.hidden = false;
+                        preview.classList.remove('country-flag-preview-img--empty');
+                        if (placeholder) placeholder.hidden = true;
+                        preview.onload = function () { URL.revokeObjectURL(url); };
+                    });
+                }
+
+                var gallery = document.getElementById('countryBiomeGallery');
+                var select = document.getElementById('countryLocationSelect');
+                var pickHint = document.getElementById('countryBiomePickHint');
+                var pickLabel = document.getElementById('countryBiomePickLabel');
+                if (gallery && select) {
+                    gallery.addEventListener('click', function (event) {
+                        var card = event.target.closest('.country-biome-card');
+                        if (!card) return;
+                        var value = card.getAttribute('data-biome-value');
+                        select.value = value;
+                        gallery.querySelectorAll('.country-biome-card').forEach(function (el) {
+                            var on = el === card;
+                            el.classList.toggle('is-selected', on);
+                            el.setAttribute('aria-selected', on ? 'true' : 'false');
+                        });
+                        if (pickHint && pickLabel) {
+                            pickLabel.textContent = card.querySelector('.country-biome-card-label').textContent;
+                            pickHint.hidden = false;
+                        }
+                    });
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    var textarea = document.getElementById('countryDescription');
+                    if (!textarea || typeof SimpleMDE === 'undefined') return;
+                    window.countryLoreEditor = new SimpleMDE({
+                        element: textarea,
+                        hideIcons: ['side-by-side', 'fullscreen'],
+                        showIcons: ['table', 'italic', 'strikethrough', 'horizontal-rule'],
+                        autosave: { enabled: true, uniqueId: 'country-lore-{{ cId }}', delay: 2000 },
+                        placeholder: 'Write your nation\'s story…',
+                        status: ['lines', 'words', 'cursor'],
+                    });
+                    document.querySelectorAll('.country-lore-prompt-chip').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var text = btn.getAttribute('data-prompt') || '';
+                            var editor = window.countryLoreEditor;
+                            if (!editor) return;
+                            var current = editor.value();
+                            editor.value(current ? (current.trimEnd() + '\n\n' + text) : text);
+                            editor.codemirror.focus();
+                        });
+                    });
+                });
+            })();
+            </script>
+
+            <h2 class="templatecontentheaderleft">Policies</h2>
+            <form method="POST" action="/policies/update">
+                <div class="infodiv">
+
+                    <script>
+                        function showContent(radioLabel) {
+
+                            radioLabel.parentElement.parentElement.childNodes[3].classList.toggle("radiodivContentShow")
+                        }
+                    </script>
+
+
+                    <!--
+                    <h3 class="policyHeader">Choose how to organize soldiers in your military</h3>
+
+                    <fieldset class="vanilla templatedivflex2 space radiodivparent">
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers1" value="1" type="checkbox" id="a1">
+                                <label for="a1" onclick="showContent(this)">Mandatory 10 year draft for all able citizens (1)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Citizens pay 3% less taxes</div>
+                                <div>soldiers are 16% cheaper to recruit</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers2" value="2" type="checkbox" id="a2">
+                                <label for="a2" onclick="showContent(this)">Retired soldiers will receive long term care (2)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Happiness benefit from hospitals +8%</div>
+                                <div>Hospital upkeep cost +12%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers3" value="3" type="checkbox" id="a3">
+                                <label for="a3" onclick="showContent(this)">Soldiers who serve more than 2 years will receive free university (3)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Productivity benefit from universities +2% each</div>
+                                <div>University upkeep cost +9%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers4" value="4" type="checkbox" id="a4">
+                                <label for="a4" onclick="showContent(this)">Soldiers should be given the latest warfare technology (4)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Soldiers are 8% more effective</div>
+                                <div>Each province Happiness -14%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers5" value="5" type="checkbox" id="a5">
+                                <label for="a5" onclick="showContent(this)">Military funding should be diverted to domestic matters (5)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Country tax income +2%</div>
+                                <div>Decreases max possible soldiers by 13%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers6" value="6" type="checkbox" id="a6">
+                                <label for="a6" onclick="showContent(this)">Propaganda should be used to recruit new soldiers (6)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Army base possible soldier recruits per day + 7%</div>
+                                <div>Soldier recruitment cost +9%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="soldiers7" value="7" type="checkbox" id="a7">
+                                <label for="a7" onclick="showContent(this)">Soldier’s families will be provided for financially (7)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Happiness + 4% per province</div>
+                                <div>Soldier upkeep cost + 7%</div>
+
+                            </li>
+                        </div>
+                    </fieldset>
+                    -->
+
+                    <h3 class="policyHeader">National Policies</h3>
+
+                    <fieldset class="vanilla templatedivflex2 space radiodivparent">
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education1" value="1" type="checkbox" id="b1">
+                                <label for="b1" onclick="showContent(this)">Universal Healthcare (1)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Elderly population +20% consumer goods consumption</div>
+                                <div>Elderly death rate -30%</div>
+                                <div>Happiness +5 per province</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education2" value="2" type="checkbox" id="b2">
+                                <label for="b2" onclick="showContent(this)">Mandatory Schooling (2)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Graduation rates +50%</div>
+                                <div>Happiness +3 per province</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education3" value="3" type="checkbox" id="b3">
+                                <label for="b3" onclick="showContent(this)">Industrial Subsidies (3)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Industrial building upkeep -30%</div>
+                                <div>Pollution from industry +30%</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education4" value="4" type="checkbox" id="b4">
+                                <label for="b4" onclick="showContent(this)">Rationing Program (4)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Rations consumption -15%</div>
+                                <div>Happiness -10 per province</div>
+
+                            </li>
+                        </div>
+
+                        <div class="vanilla radiodiv">
+                            <li class="radioleft">
+                                <input name="education6" value="6" type="checkbox" id="b6">
+                                <label for="b6" onclick="showContent(this)">University Grants (6)</label>
+
+                                <div class="vanilla check"></div>
+                            </li>
+                            <li class="radioright">
+
+                                <div>Universities cost 7% less</div>
+
+                            </li>
+                        </div>
+
+                    </fieldset>
+
+                    <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
+                        check
+                        </span>Update</button>
+            </form>
+            </div>
+        </div>
+
+        {% if status %}
+        <script type="text/javascript">
+            // Hacky JavaScript script to check and uncheck policies
+            const policies = JSON.parse('{{ policies | tojson }}')
+            for (let key of Object.keys(policies)) {
+                let value = policies[key]
+                let checkbox = document.getElementsByName(key)[0]
+                if (value) checkbox.checked = true;
+                else checkbox.checked = false;
+            }
+        </script>
+        {% endif %}
+
+        <!--
+            <h2 class="templatecontentheaderleft">Policies</h2>
+
+            <div class="infodiv">
+
+                <ul>What should you do with people who break the law?</ul>
+
+                <div class="vanilla templatedivflex2 space radiodivparent">
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="a1" name="group1">
+                            <label for="a1">Force them to work in labor camps</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+3% raw resource production</div>
+                            <div>-5% happiness</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="b1" name="group1">
+                            <label for="b1">Put them through rehabilitation</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+2% happiness</div>
+                            <div>+1% consumer spending</div>
+                            <div>+4% productivity</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="c1" name="group1">
+                            <label for="c1">Make them serve in the military</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+5% soldier recruitment per hour</div>
+                            <div>-6% happiness</div>
+
+                        </li>
+                    </div>
+                </div>
+                <hr />
+
+                <ul>How should we deal with climate change?</ul>
+
+                <div class="vanilla templatedivflex2 space radiodivparent">
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="a2" name="group2">
+                            <label for="a2">Continue to use fossil fuels</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+3% pollution</div>
+                            <div>+4% oil / coal poduction</div>
+                            <div>-5% happiness</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="b2" name="group2">
+                            <label for="b2">Switch over to green energy</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+7% happiness</div>
+                            <div>-1% productivity</div>
+                            <div>-8% pollution</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="c2" name="group2">
+                            <label for="c2">Use the military to acquire more fossil fuels</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+10 supplies per hour</div>
+                            <div>+5% pollution</div>
+                            <div>-6% happiness</div>
+
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>How should the country deal with immigration?</ul>
+
+                <div class="vanilla templatedivflex2 space radiodivparent">
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="a3" name="group3">
+                            <label for="a3">Only very wealthy immigrants are allowed</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>-3% food needs</div>
+                            <div>-5% happiness</div>
+
+                        </li>
+                    </div>
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="b3" name="group3">
+                            <label for="b3">All immigrants are allowed and are provided with resources</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>-5% consumer goods needs</div>
+                            <div>-5% productivity</div>
+
+                        </li>
+                    </div>
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="c3" name="group3">
+                            <label for="c3">Immigrants will be indoctrinated into the military</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>-6% military units money cost</div>
+                            <div>-5% happiness</div>
+                            <div>-3% productivity</div>
+
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What shall your tax policy be?</ul>
+
+                <div class="vanilla templatedivflex2 space radiodivparent">
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="a4" name="group4">
+                            <label for="a4">Taxes only on companies and the rich</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+6% productivity</div>
+                            <div>-7% happiness</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="b4" name="group4">
+                            <label for="b4">High taxes for social programs</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+8% public works effectiveness</div>
+                            <div>-6% productivity</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="c4" name="group4">
+                            <label for="c4">Only taxes to fund the military</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+5 supplies per hour</div>
+                            <div>+5% Naval Base and Air Base capacity</div>
+                            <div>-6% happiness</div>
+
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What is your military doctrine?</ul>
+
+                <div class="vanilla templatedivflex2 space radiodivparent">
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="a5" name="group5">
+                            <label for="a5">Uphold decent military strength to defend allies</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+5% productivity</div>
+                            <div>-6% happiness</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="b5" name="group5">
+                            <label for="b5">Strong pacifism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+6% happiness</div>
+                            <div>-7% productivity</div>
+
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li class="radioleft">
+                            <input type="radio" id="c5" name="group5">
+                            <label for="c5">Imperialist policies persueing resources</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                        <li class="radioright">
+
+                            <div>+7% looting resources</div>
+                            <div>-9% happiness</div>
+
+                        </li>
+                    </div>
+                </div>
+                <hr />
+
+                <ul>How should you handle healthcare?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a9" name="group9">
+                            <label>Emergency healthcare will be publically funded</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b9" name="group9">
+                            <label>All healthcare will be publicly funded</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c9" name="group9">
+                            <label>The healthcare sector will private</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What will your police be like?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a10" name="group10">
+                            <label>Policy 1</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b10" name="group10">
+                            <label>Policy 2</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c10" name="group10">
+                            <label for="c10">Policy 3</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What will education look like?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a11" name="group11">
+                            <label for="a11">Must pay for secondary education</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b11" name="group11">
+                            <label for="b11">Free education on every level</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c11" name="group11">
+                            <label for="c11">All education costs money</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>How will elections be handled?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a12" name="group12">
+                            <label for="a12">Only people above an IQ level can vote</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b12" name="group12">
+                            <label for="b12">All people can vote</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c12" name="group12">
+                            <label for="c12">No elections will be held</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What political system best describes your nation?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a13" name="group13">
+                            <label for="a13">Dictatorship</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b13" name="group13">
+                            <label for="b13">Democracy</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c13" name="group13">
+                            <label for="c13">Theocracy</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What economic system best describes your nation?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a14" name="group14">
+                            <label for="a14">Capitalism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b14" name="group14">
+                            <label for="b14">Socialism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c14" name="group14">
+                            <label for="c14">Policy 3</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What is your foreign policy?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a15" name="group15">
+                            <label for="a15">Interventionism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b15" name="group15">
+                            <label for="b15">Isolationism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c15" name="group15">
+                            <label for="c15">Imperialism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>How should you handle debt?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a16" name="group16">
+                            <label for="a16">Try to balance the budget</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b16" name="group16">
+                            <label for="b16">Engage in no debt spending</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c16" name="group16">
+                            <label for="c16">Spend as much as required</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>What should your social system look like?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a17" name="group17">
+                            <label for="a17">Confederalism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b17" name="group17">
+                            <label for="b17">Federalism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c17" name="group17">
+                            <label for="c17">Anarchism</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+                <hr />
+                <ul>How should the government handle religion?</ul>
+
+                <div class="vanilla templatedivflex2 space">
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="a18" name="group18">
+                            <label for="a18">Enpashis on one religion</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="b18" name="group18">
+                            <label for="b18">Freedom of religion</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+
+                    <div class="vanilla radiodiv">
+                        <li>
+                            <input type="radio" id="c18" name="group18">
+                            <label for="c18">Government mandated religion</label>
+
+                            <div class="vanilla check"></div>
+                        </li>
+                    </div>
+                </div>
+
+                <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
+                    check
+                    </span>Update</button>
+            </div>
+            -->
+    </div>
+        {% endif %}
+
+        {% if not status %}
+    <!-- Actions -->
+    <div class="actions" id="actions">
+
+        {% if session.user_id and session.user_id|string != cId|string %}
+        <div class="infodiv">
+            <h2 class="templatecontentheaderleft">Message</h2>
+            <a class="templatedivbutton templatecenteredbutton" href="/messages/{{ cId }}">
+                <span class="material-icons-outlined">mail</span>Message {{ username }}
+            </a>
+        </div>
+        {% endif %}
+
+        <h2 class="templatecontentheaderleft">War</h2>
+
+        <form action="/declare_war" method="post" class="infodiv">
+
+            <input type="hidden" name="defender" value="{{ cId }}" />
+
+            <div class="nomarg nopad center">
+                <label for="warType">Pick war type</label>
+                <select class="templateselect" name="warType">
+
+                                    <option class="templateoption">Raze</option>
+                                    <option class="templateoption">Sustained</option>
+                                    <option class="templateoption">Loot</option>
+
+                                </select>
+                <span data-tippy-content="<strong>Raze</strong>: 10&times; province damage, no loot.<br><strong>Sustained</strong>: normal province damage, no loot.<br><strong>Loot</strong>: only 20% of normal province damage, but each win steals 0&ndash;10% of their gold.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help; margin-left: 6px;"><i class="fas fa-circle-info"></i></span>
+            </div>
+
+            <label for="description">War message</label>
+            <div class="center">
+                <textarea class="templatetextarea" name="description" placeholder="War declaration message" maxlength="240"></textarea>
+            </div>
+
+                        {{ game_button('Declare', icon='military_tech') }}
+            <!---
+                <input type="hidden" name="defender" value="{{ username }}">
+                <input class="templatedivbutton templatecenteredbutton" type="submit" value="Declare">
+                -->
+        </form>
+
+        {% if can_invite_to_coalition %}
+        <form action="/nation/{{ cId }}/invite" method="post" class="infodiv">
+            <h2 class="templatecontentheaderleft">Coalition</h2>
+            <p>This nation isn't in a coalition yet.</p>
+            {{ game_button('Invite to Coalition', icon='group_add') }}
+        </form>
+        {% endif %}
+
+        {% if (nuke_count and nuke_count > 0) or (icbm_count and icbm_count > 0) %}
+        <form action="/nuclear_strike" method="POST" onsubmit="return confirm('WARNING: Launching a nuclear strike will wipe out a massive portion of the target\'s population and infrastructure, but will reduce your own happiness to 0 and incur a massive diplomatic penalty. Are you absolutely sure?');">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ff4444;">Nuclear Strike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="weapon_type">Weapon</label>
+                        <select class="templateselect" name="weapon_type">
+                            {% if icbm_count and icbm_count > 0 %}
+                            <option value="icbm" class="templateoption">ICBM ({{ icbm_count }} available) - Ignore Distance</option>
+                            {% endif %}
+                            {% if nuke_count and nuke_count > 0 %}
+                            <option value="nuke" class="templateoption">Nuke ({{ nuke_count }} available) - Requires War</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ff4444; border-color: #cc0000; color: white;">
+                            <span class="material-icons-outlined">warning</span> LAUNCH
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+        
+        {% if attacker_bombers > 0 and (target_silos > 0 or target_has_nuclear_facility) %}
+        <form action="/strategic_airstrike" method="POST">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ffaa00;">Strategic Airstrike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="strike_target">Target Facility</label>
+                        <select class="templateselect" name="strike_target">
+                            {% if target_has_nuclear_facility %}
+                            <option value="nuclear_testing_facility" class="templateoption">Nuclear Testing Facility</option>
+                            {% endif %}
+                            {% if target_silos > 0 %}
+                            <option value="silo" class="templateoption">Missile Silos ({{ target_silos }} targets)</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left">
+                        <label for="bombers_count">Bombers (Max: {{ attacker_bombers }})</label>
+                        <input class="loginsignupinput" type="number" name="bombers_count" min="1" max="{{ attacker_bombers }}" required placeholder="e.g. 50" />
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ffaa00; color: #333;">
+                            <span class="material-icons-outlined">flight_takeoff</span> ATTACK
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #888;">Note: Defender fighters may intercept your bombers. Facilities are highly reinforced and require many surviving bombers to destroy.</p>
+            </div>
+        </form>
+        {% endif %}
+
+        <form action="/spyResult" method="POST">
+            <input type="hidden" name="country" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft ">Espionage</h2>
+
+            <div class="infodiv ">
+                <div class="templatedivflex2 menuflex ">
+                    <div class="templatedivflex2left ">
+                        <label for="warType ">Choose operation</label>
+                        <select class="templateselect" name="spy_type">
+                            <option value="units" class="templateoption ">Spy on unit amounts</option>
+                            <!-- <option value="defending_units" class="templateoption ">Spy on defending units</option> -->
+                            <option value="resources" class="templateoption ">Spy on resources</option>
+                            <!-- <option value="assasinate_spies" class="templateoption ">Assasinate spies</option> -->
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left ">
+
+                        <label for="countryName ">Number of spies</label>
+                        <input class="loginsignupinput" name="spies" placeholder="{{ spy['count'] }}" />
+
+                    </div>
+                </div>
+
+                <button class="templatedivbutton templatecenteredbutton" type="submit "><span class="material-icons-outlined ">
+                        check
+                        </span>Perform</button>
+            </div>
+        </form>
+        <h2 class="templatecontentheaderleft ">Trade</h2>
+
+        <form method="POST">
+            <div class="infodiv ">
+                <div class="templatedivflex2 divflex2center ">
+                    <div class="templatedivflex2left flexchildvanilla ">
+
+                        <select name="resource" class="templateselect ">
+                            <option disabled="true" selected="selected ">Choose one</option>
+                            <option value="rations" class="templateoption ">Rations</option>
+                            <option value="oil" class="templateoption ">Oil</option>
+                            <option value="coal" class="templateoption ">Coal</option>
+                            <option value="uranium" class="templateoption ">Uranium</option>
+                            <option value="bauxite" class="templateoption ">Bauxite</option>
+                            <option value="iron" class="templateoption ">Iron</option>
+                            <option value="lead" class="templateoption ">Lead</option>
+                            <option value="copper"class="templateoption ">Copper</option>
+                            <option value="lumber" class="templateoption ">Lumber</option>
+                            <option value="components" class="templateoption ">Components</option>
+                            <option value="steel" class="templateoption ">Steel</option>
+                            <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
+                            <option value="copper_plates" class="templateoption ">Copper Plates</option>
+                            <option value="aluminium" class="templateoption ">Aluminium</option>
+                            <option value="gasoline" class="templateoption ">Gasoline</option>
+                            <option value="ammunition" class="templateoption ">Ammunition</option>
+                        </select>
+
+
+                    </div>
+                    <div class="templatedivflex2left flexchildvanilla ">
+
+                        <input class="loginsignupinput" autocomplete="off" name="amount" placeholder="Amount" required/>
+
+                    </div>
+                    <div class="templatedivflex2left flexchildvanilla ">
+
+                        <input class="loginsignupinput" autocomplete="off" name="price" placeholder="Price for one" required/>
+
+                    </div>
+                </div>
+
+                <div class="templatedivflex2 divflex2center ">
+                    <div class="templatedivflex2left ">
+
+                        <button type="submit" formaction="/post_trade_offer/buy/{{ cId }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined ">
+                            payments
+                            </span>Buy offer</button>
+
+                    </div>
+
+                    <div class="templatedivflex2left ">
+
+                        <button formaction="/post_trade_offer/sell/{{ cId }}" type="submit" value="Submit" class="templatedivbutton templatecenteredbutton "><span class="material-icons-outlined ">
+                            payments
+                            </span>Sell Offer</button>
+
+                    </div>
+        </form>
+
+        </div>
+        </div>
+        <h2 class="templatecontentheaderleft ">Transfer Resources</h2>
+
+        <form method="POST" onsubmit="var tid=this.querySelector('input[name=transferee]').value;if(!tid){alert('Please enter a nation ID');return false;}this.action='/transfer/'+tid;">
+            <div class="infodiv ">
+                <p class="mb-md text-muted">Transfer resources to another nation</p>
+
+                <div class="templatedivflex2 divflex2center ">
+                    <div class="templatedivflex2left flexchildvanilla ">
+                        <label for="transferTarget">Target Nation ID:</label>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{{ cId }}" required/>
+                    </div>
+
+                    <div class="templatedivflex2left flexchildvanilla ">
+                        <label for="transferResource">Resource:</label>
+                        <select name="resource" class="templateselect " required>
+                            <option disabled selected value="">Choose one</option>
+                            <option value="gold" class="templateoption ">Money</option>
+                            <option disabled class="templateoption ">---------</option>
+                            <option value="rations" class="templateoption ">Rations</option>
+                            <option value="oil" class="templateoption ">Oil</option>
+                            <option value="coal" class="templateoption ">Coal</option>
+                            <option value="uranium" class="templateoption ">Uranium</option>
+                            <option value="bauxite" class="templateoption ">Bauxite</option>
+                            <option value="iron" class="templateoption ">Iron</option>
+                            <option value="lead" class="templateoption ">Lead</option>
+                            <option value="copper" class="templateoption ">Copper</option>
+                            <option value="lumber" class="templateoption ">Lumber</option>
+                            <option value="components" class="templateoption ">Components</option>
+                            <option value="steel" class="templateoption ">Steel</option>
+                            <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
+                            <option value="aluminium" class="templateoption ">Aluminium</option>
+                            <option value="gasoline" class="templateoption ">Gasoline</option>
+                            <option value="ammunition" class="templateoption ">Ammunition</option>
+                        </select>
+                    </div>
+
+                    <div class="templatedivflex2left flexchildvanilla">
+                        <label for="transferAmount">Amount:</label>
+                        <input class="loginsignupinput" autocomplete="off" type="number" name="amount" placeholder="Amount" required/>
+                    </div>
+                </div>
+
+                <div class="text-center mt-md">
+                    {{ game_button('Transfer', icon='send') }}
+                </div>
+
+            </div>
+        </form>
+    </div>
+        {% endif %}
+</div>
+</div>
+{% endblock %}
