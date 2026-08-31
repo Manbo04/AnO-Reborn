@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, request
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 from database import (
     get_request_cursor,
     query_cache,
@@ -120,8 +120,9 @@ def upgrades():
         )
         unlocked_ids = {row[0] for row in db.fetchall()}
 
+    template = "upgrades_v2.html" if is_theme_v2_enabled("upgrades") else "upgrades.html"
     return render_template(
-        "upgrades.html",
+        template,
         upgrades=upgrades,
         tech_rows=tech_rows,
         unlocked_ids=unlocked_ids,
