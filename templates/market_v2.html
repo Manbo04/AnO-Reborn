@@ -3,227 +3,170 @@
 <script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=6"></script>
 {% endblock %}
 {% block body %}
-{% from 'macros/game_ui.html' import game_button, game_hero %}
+{% from 'macros/game_ui.html' import game_hero, game_glass_panel %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {% set offer_count = offers|length if offers else 0 %}
-    {{ game_hero('Market', badge_icon='local_grocery_store', badge_text=(('Showing ' ~ offer_count ~ ' of ' ~ total_count ~ ' offers') if total_count is defined else None), subtitle='Trade resources with every nation in the world') }}
+    {% call game_hero('Global Market', badge_icon='swap_horiz', badge_text=('Showing ' ~ offers|length ~ ' of ' ~ total_count ~ ' offers') if total_count is defined else None, subtitle='Trade resources with every nation in the world') %}
+    <div class="game-row">
+        <a class="game-btn game-btn-secondary" href="/my_offers">My Offers</a>
+        <a class="game-btn game-btn-primary" href="/marketoffer"><span class="material-icons-outlined">add</span>Create Offer</a>
+    </div>
+    {% endcall %}
 
     <div class="templatedivcontent">
-        <div class="templatedivflex2 divflex2full">
-            <div class="templatedivflex2left">
 
-                <form action="/market" method="GET">
-                    <select name="filtered_resource" class="templateselect">
+        {% call game_glass_panel(None, style='margin-bottom: 16px;') %}
+        <form action="/market" method="GET" class="game-row">
+            <select name="filtered_resource" class="game-select">
+                <option disabled selected>Resource</option>
+                <option value="rations" {% if filtered_resource == 'rations' %}selected{% endif %}>Rations</option>
+                <option value="oil" {% if filtered_resource == 'oil' %}selected{% endif %}>Oil</option>
+                <option value="coal" {% if filtered_resource == 'coal' %}selected{% endif %}>Coal</option>
+                <option value="uranium" {% if filtered_resource == 'uranium' %}selected{% endif %}>Uranium</option>
+                <option value="bauxite" {% if filtered_resource == 'bauxite' %}selected{% endif %}>Bauxite</option>
+                <option value="iron" {% if filtered_resource == 'iron' %}selected{% endif %}>Iron</option>
+                <option value="lead" {% if filtered_resource == 'lead' %}selected{% endif %}>Lead</option>
+                <option value="copper" {% if filtered_resource == 'copper' %}selected{% endif %}>Copper</option>
+                <option value="lumber" {% if filtered_resource == 'lumber' %}selected{% endif %}>Lumber</option>
+                <option value="components" {% if filtered_resource == 'components' %}selected{% endif %}>Components</option>
+                <option value="steel" {% if filtered_resource == 'steel' %}selected{% endif %}>Steel</option>
+                <option value="consumer_goods" {% if filtered_resource == 'consumer_goods' %}selected{% endif %}>Consumer Goods</option>
+                <option value="aluminium" {% if filtered_resource == 'aluminium' %}selected{% endif %}>Aluminium</option>
+                <option value="gasoline" {% if filtered_resource == 'gasoline' %}selected{% endif %}>Gasoline</option>
+                <option value="ammunition" {% if filtered_resource == 'ammunition' %}selected{% endif %}>Ammunition</option>
+            </select>
 
-    <option disabled="true" selected="selected">Resource</option>
-    <option value="rations" class="templateoption">Rations</option>
-    <option value="oil" class="templateoption">Oil</option>
-    <option value="coal" class="templateoption">Coal</option>
-    <option value="uranium" class="templateoption">Uranium</option>
-    <option value="bauxite" class="templateoption">Bauxite</option>
-    <option value="iron" class="templateoption">Iron</option>
-    <option value="lead" class="templateoption">Lead</option>
-    <option value="copper" class="templateoption">Copper</option>
-    <option value="lumber" class="templateoption">Lumber</option>
-    <option value="components" class="templateoption">Components</option>
-    <option value="steel" class="templateoption">Steel</option>
-    <option value="consumer_goods" class="templateoption">Consumer Goods</option>
-    <option value="aluminium" class="templateoption">Aluminium</option>
-    <option value="gasoline" class="templateoption">Gasoline</option>
-    <option value="ammunition" class="templateoption">Ammunition</option>
+            <select name="offer_type" class="game-select">
+                <option disabled {% if not offer_type %}selected{% endif %}>Type</option>
+                <option value="sell" {% if offer_type == 'sell' %}selected{% endif %}>Selling</option>
+                <option value="buy" {% if offer_type == 'buy' %}selected{% endif %}>Buying</option>
+            </select>
 
-                </select>
+            <select name="price_type" class="game-select">
+                <option disabled {% if not price_type %}selected{% endif %}>Sort</option>
+                <option value="ASC" {% if price_type == 'ASC' %}selected{% endif %}>Ascending</option>
+                <option value="DESC" {% if price_type == 'DESC' %}selected{% endif %}>Descending</option>
+            </select>
 
-            </div>
-            <div class="templatedivflex2right">
+            <select name="per_page" class="game-select">
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+                <option value="150" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
+            </select>
 
-                <select name="offer_type" class="templateselect">
-                    <option disabled="true" {% if not offer_type %}selected{% endif %}>Type</option>
-                    <option value="sell" class="templateoption" {% if offer_type == 'sell' %}selected{% endif %}>Selling</option>
-                    <option value="buy" class="templateoption" {% if offer_type == 'buy' %}selected{% endif %}>Buying</option>
-                </select>
-
-            </div>
-            <div class="templatedivflex2left">
-
-                <select name="price_type" class="templateselect">
-                    <option disabled="true" {% if not price_type %}selected{% endif %}>Sort</option>
-                    <option value="ASC" class="templateoption" {% if price_type == 'ASC' %}selected{% endif %}>Ascending</option>
-                    <option value="DESC" class="templateoption" {% if price_type == 'DESC' %}selected{% endif %}>Descending</option>
-                </select>
-
-            </div>
-            <div class="templatedivflex2left">
-
-                <select name="per_page" class="templateselect">
-                    <option value="50" class="templateoption" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
-                    <option value="100" class="templateoption" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
-                    <option value="150" class="templateoption" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
-                </select>
-
-            </div>
-            <div class="templatedivflex2right flex2rightfloatright">
-
-                <button type="submit" class="templatedivbutton smallactionbutton"><span class="material-icons-outlined">
-                    arrow_forward
-                    </span>Submit</button>
-
-            </div>
-        </div>
+            <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">arrow_forward</span>Submit</button>
         </form>
+        {% endcall %}
 
-        <!-- Result count now shown in the hero badge above, not repeated here -->
-
-        <div class="templatedivflex2 divflex2center">
-            <div class="templatedivflex2left">
-
-                {{ game_button('Create Offer', icon='payments', href='marketoffer', extra_class='center') }}
-
-            </div>
-            <div class="templatedivflex2right">
-
-                {{ game_button('My Offers', icon='payments', href='/my_offers', extra_class='center') }}
-
-            </div>
-        </div>
-
-        <div class="game-card-list game-card-list--mobile-only">
+        <div class="game-market-cards">
             {% for id, type, name, resource, amount, price, offer_id, total_price in offers %}
-            <article class="game-market-card">
-                <header class="game-market-card-head">
-                    <a href="/country/id={{ id }}">{{ name }}</a>
-                    <span class="game-market-card-type">{{ 'Buying' if type == 'buy' else 'Selling' }}</span>
-                </header>
-                <div class="game-market-card-body">
-                    <span class="game-market-resource">{{ resource | replace('_', ' ') | title }}</span>
-                    <span class="game-market-amount">{{ amount }}</span>
-                    <span class="game-market-price">${{ price }} / ${{ total_price }} total</span>
+            <div class="game-glass game-panel">
+                <div class="game-spread">
+                    <a href="/country/id={{ id }}" style="color: var(--accent); text-decoration: none; font-weight: 700;">{{ name }}</a>
+                    <span class="game-badge {{ 'game-badge-good' if type == 'sell' else 'game-badge-warn' }}">{{ 'Sell' if type == 'sell' else 'Buy' }}</span>
                 </div>
-                <form method="POST" class="game-market-card-form market-purchase-form">
-                    <span class="market-input-wrap">
-                        <input class="loginsignupinput market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
-                        <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                <div class="game-row" style="margin-top: 8px;">
+                    <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', resource)) if resource != 'copper_plates' else url_for('static', filename='images/rescopper_plates.png') }}?v=2" />
+                    <span>{{ resource | replace('_', ' ') | title }}</span>
+                </div>
+                <div class="game-row" style="margin-top: 4px;">
+                    <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=2" />
+                    <span>${{ price | commas }} Each</span>
+                    <span class="game-faint">${{ total_price | commas }} Total</span>
+                </div>
+                <form method="POST" class="game-row market-purchase-form" style="margin-top: 10px;">
+                    <span class="market-input-wrap game-row" style="gap: 6px;">
+                        <input class="game-purchase-input market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                        <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                     </span>
                     {% if type == "sell" %}
-                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn">Buy</button>
+                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm">Buy</button>
                     {% elif type == "buy" %}
-                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn">Sell</button>
+                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm">Sell</button>
                     {% endif %}
                 </form>
-            </article>
+            </div>
             {% else %}
-            <p class="province-base-sheet-sub">No offers match your filters.</p>
+            <p class="game-faint" style="text-align: center; padding: 20px;">No offers match your filters.</p>
             {% endfor %}
         </div>
 
-        <div class="templateoutertablediv game-table-fallback--hide-mobile">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Resource</th>
-                    <th>Price</th>
-                    <th>Purchase</th>
-                </tr>
-
+        <div class="game-glass game-table-wrap" style="padding: 0;">
+            <table class="game-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Resource</th>
+                        <th>Price</th>
+                        <th>Purchase</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {% for id, type, name, resource, amount, price, offer_id, total_price in offers %}
-                <tr>
-                    <td><a href="/country/id={{ id }}">{{ name }}</a></td>
-                    <!--Buying or Selling-->
-                    {% if type == "buy" %}
-                    <td>Buying</td>
-                    {% elif type == "sell" %}
-                    <td>Selling</td>
-                    {% endif %}
-                    <td>
-                        <div class="middle">
-                            {% if resource == "rations" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "uranium" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "oil" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "coal" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "lead" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "bauxite" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "iron" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "lead" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "copper" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "lumber" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "components" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'components') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "steel" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'steel') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "consumer_goods" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'consumer_goods') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "copper_plates" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename='images/rescopper_plates.png' ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "aluminium" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'aluminium') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "gasoline" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gasoline') ) }}?v=2" class="resource resourcesmall" /> {% elif resource == "ammunition" %}
-                            <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'ammunition') ) }}?v=2" class="resource resourcesmall" /> {% endif %}
-                            <span class="hidden">{{ resource }}</span>{{ amount | commas }}</td>
-                    </div>
-                    <td>
-                        <div class="center fit">
-                            <div class="left middle fit">
-
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
-
+                    <tr>
+                        <td><a href="/country/id={{ id }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">{{ name }}</a></td>
+                        <td><span class="game-badge {{ 'game-badge-good' if type == 'sell' else 'game-badge-warn' }}">{{ 'Sell' if type == 'sell' else 'Buy' }}</span></td>
+                        <td>
+                            <div class="game-row">
+                                <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', resource)) if resource != 'copper_plates' else url_for('static', filename='images/rescopper_plates.png') }}?v=2" />
+                                {{ amount | commas }} {{ resource | replace('_', ' ') | title }}
                             </div>
-                        </div>
-                        <div class="center fit">
-                            <div class="left middle fit">
-
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" /> ${{ total_price | commas }} Total
-
+                        </td>
+                        <td>
+                            <div class="game-row" style="gap: 4px;">
+                                <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=2" />${{ price | commas }} Each
                             </div>
-                        </div>
-                    </td>
-                    <td class="market-purchase-cell">
-                        <form method="POST" class="market-purchase-form">
-                            <div class="templatedivflex2 divflex2center market-purchase-flex">
-                                <div class="templatedivflex2left market-input-wrap">
-                                    <input class="loginsignupinput market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
-                                    <button type="button" class="market-offer-hint" aria-label="Transaction cost info"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
-                                </div>
-                                <div class="templatedivflex2left">
-                                    {% if type == "sell" %}
-                                    <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Buy</button>
-                                    {% elif type == "buy" %}
-                                    <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="templatedivbutton templatecenteredbutton market-purchase-btn"><span class="material-icons-outlined">check</span>Sell</button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </form>
-                    </td>
-                    <!-- add button here -->
-                </tr>
+                            <div class="game-faint">${{ total_price | commas }} Total</div>
+                        </td>
+                        <td>
+                            <form method="POST" class="game-row market-purchase-form">
+                                <span class="market-input-wrap game-row" style="gap: 6px;">
+                                    <input class="game-purchase-input market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                                    <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
+                                </span>
+                                {% if type == "sell" %}
+                                <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">check</span>Buy</button>
+                                {% elif type == "buy" %}
+                                <button type="submit" formaction="/sell_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">check</span>Sell</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
                 {% endfor %}
+                </tbody>
             </table>
         </div>
 
-        <!-- Pagination controls -->
         {% if total_pages and total_pages > 1 %}
-        <div class="pagination pagination-bar">
-            {% if current_page > 1 %}
-                <a href="{{ url_for('market_bp.market', page=1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">First</a>
-                <a href="{{ url_for('market_bp.market', page=current_page - 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">← Prev</a>
-            {% endif %}
-
-            {% set start_page = [current_page - 2, 1] | max %}
-            {% set end_page = [current_page + 2, total_pages] | min %}
-
-            {% for p in range(start_page, end_page + 1) %}
-                {% if p == current_page %}
-                    <span class="templatedivbutton smallactionbutton is-current">{{ p }}</span>
-                {% else %}
-                    <a href="{{ url_for('market_bp.market', page=p, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">{{ p }}</a>
+        <div class="game-spread" style="margin-top: 14px;">
+            <span class="game-faint">Showing {{ offers|length }} of {{ total_count }} offers</span>
+            <div class="game-row">
+                {% if current_page > 1 %}
+                    <a href="{{ url_for('market_bp.market', page=1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="game-btn game-btn-ghost game-btn-sm">First</a>
+                    <a href="{{ url_for('market_bp.market', page=current_page - 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="game-btn game-btn-ghost game-btn-sm">← Prev</a>
                 {% endif %}
-            {% endfor %}
 
-            {% if current_page < total_pages %}
-                <a href="{{ url_for('market_bp.market', page=current_page + 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Next →</a>
-                <a href="{{ url_for('market_bp.market', page=total_pages, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="templatedivbutton smallactionbutton">Last</a>
-            {% endif %}
+                {% set start_page = [current_page - 2, 1] | max %}
+                {% set end_page = [current_page + 2, total_pages] | min %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                    {% if p == current_page %}
+                        <span class="game-btn game-btn-ghost game-btn-sm is-current">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('market_bp.market', page=p, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="game-btn game-btn-ghost game-btn-sm">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if current_page < total_pages %}
+                    <a href="{{ url_for('market_bp.market', page=current_page + 1, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="game-btn game-btn-ghost game-btn-sm">Next →</a>
+                    <a href="{{ url_for('market_bp.market', page=total_pages, filtered_resource=filtered_resource, offer_type=offer_type, price_type=price_type, per_page=per_page) }}" class="game-btn game-btn-ghost game-btn-sm">Last</a>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>

@@ -27,7 +27,7 @@
     pages carrying .game-page-bg behind them, not on pages still using the flat/opaque style. #}
 {% macro game_glass_panel(title, icon=None, extra_class=None, style=None) %}
 <div class="game-glass{{ ' ' ~ extra_class if extra_class else '' }}" style="padding: 22px 24px;{% if style %} {{ style }}{% endif %}">
-    <h2 class="templatecontentheaderleft" style="margin-top: 0;">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>
+    {% if title %}<h2 class="templatecontentheaderleft" style="margin-top: 0;">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>{% endif %}
     {{ caller() }}
 </div>
 {% endmacro %}
