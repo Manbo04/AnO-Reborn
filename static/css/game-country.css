@@ -731,7 +731,14 @@ body.page-country .revenue .stat-value {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: -1;
+    /* Was z-index:-1 -- inside .province-banner's isolated stacking context
+       (isolation:isolate above), a negative z-index child paints BEHIND the
+       context root's own opaque `background: #0a1526`, hiding the photo
+       entirely instead of just sitting behind the ::after scrim + body text.
+       Confirmed live: every province card rendered as a solid navy block
+       with zero photo visible. 0 sits below the scrim (also 0, but painted
+       later in source order) and the body (1), which is what was intended. */
+    z-index: 0;
     transition: transform 0.25s ease;
 }
 .province-banner::after {
