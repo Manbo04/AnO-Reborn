@@ -1,0 +1,36 @@
+{% extends "layout.html" %} {% block title %} Messages {% endblock %}
+{% block body_class %} page-messages game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/library.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Messages', badge_icon='mail') }}
+
+    <div class="templatedivcontent">
+        <div class="game-glass" style="padding: 8px;">
+        {% if conversations and conversations|length > 0 %}
+        <div class="dm-conversation-list">
+            {% for c in conversations %}
+            <a class="dm-conversation-row" href="/messages/{{ c.other_user_id }}">
+                <div>
+                    <span class="dm-conversation-name">{{ c.other_username }}</span><br>
+                    <span class="dm-conversation-preview">{{ c.last_message }}</span>
+                </div>
+                {% if c.unread_count and c.unread_count > 0 %}
+                <span class="dm-conversation-unread">{{ c.unread_count }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="templatecontentpleft" style="padding: 14px 18px;">No conversations yet. Visit a nation's page and use the Message button to start one.</p>
+        {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

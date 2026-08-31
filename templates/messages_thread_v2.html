@@ -1,0 +1,107 @@
+{% extends "layout.html" %} {% block title %} {{ other_username }} {% endblock %}
+{% block body_class %} page-messages game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/library.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero(other_username, badge_icon='mail') }}
+
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft"><a href="/messages">&larr; All conversations</a></p>
+
+        <div class="game-glass" style="padding: 14px;">
+        <div id="dmChatRoot" data-other-user-id="{{ other_user_id }}" data-current-user-id="{{ session.user_id }}">
+            <div class="chat-messages" id="dmChatMessages" aria-live="polite">
+                {% if history and history|length > 0 %}
+                    {% for m in history %}
+                    <div class="chat-message{% if m.sender_id|string == session.user_id|string %} chat-message-mine{% endif %}">
+                        <span class="chat-message-sender">{{ m.sender_username }}</span>
+                        <span class="chat-message-text">{{ m.content }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="chat-message-empty">No messages yet. Say hello!</div>
+                {% endif %}
+            </div>
+            <form id="dmChatForm" class="chat-input-row" autocomplete="off">
+                <textarea class="templatetextarea chat-input" id="dmChatInput" maxlength="1000" placeholder="Message {{ other_username }}..." rows="1" required></textarea>
+                <button type="submit" class="templatedivbutton templatecenteredbutton chat-send-btn">
+                    <span class="material-icons-outlined">send</span>
+                </button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+<script>
+(function() {
+    var root = document.getElementById('dmChatRoot');
+    if (!root) return;
+    var otherUserId = root.dataset.otherUserId;
+    var currentUserId = root.dataset.currentUserId;
+    var messagesEl = document.getElementById('dmChatMessages');
+    var form = document.getElementById('dmChatForm');
+    var input = document.getElementById('dmChatInput');
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    function renderMessage(m) {
+        var div = document.createElement('div');
+        div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
+        var sender = document.createElement('span');
+        sender.className = 'chat-message-sender';
+        sender.textContent = m.sender_username;
+        var text = document.createElement('span');
+        text.className = 'chat-message-text';
+        text.textContent = m.content;
+        div.appendChild(sender);
+        div.appendChild(text);
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    var socket = io();
+    var joined = false;
+
+    function joinRoom() {
+        if (joined) return;
+        socket.emit('join_dm', {other_user_id: otherUserId});
+        joined = true;
+    }
+
+    socket.on('connect', joinRoom);
+    if (socket.connected) joinRoom();
+
+    socket.on('dm_message', function(m) {
+        var isThisThread = (String(m.sender_id) === String(otherUserId) && String(m.recipient_id) === String(currentUserId)) ||
+            (String(m.sender_id) === String(currentUserId) && String(m.recipient_id) === String(otherUserId));
+        if (!isThisThread) return;
+        var empty = messagesEl.querySelector('.chat-message-empty');
+        if (empty) empty.remove();
+        renderMessage(m);
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var content = input.value.trim();
+        if (!content) return;
+        socket.emit('dm_message', {other_user_id: otherUserId, content: content});
+        input.value = '';
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (form.requestSubmit) form.requestSubmit();
+            else form.dispatchEvent(new Event('submit', {cancelable: true}));
+        }
+    });
+})();
+</script>
+
+{% endblock %}
