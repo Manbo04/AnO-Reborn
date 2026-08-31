@@ -59,8 +59,9 @@ def provinces():
     
     data = ProvinceService.get_user_provinces_paginated(cId, page)
 
+    template = "provinces_v2.html" if is_theme_v2_enabled("provinces") else "provinces.html"
     return render_template(
-        "provinces.html",
+        template,
         provinces=data["provinces"],
         provinces_with_images=data["provinces_with_images"],
         current_page=data["current_page"],
