@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor, cache_response, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
 from upgrades import get_upgrades
@@ -22,8 +22,9 @@ def military():
             limits = compute_display_limits(cId, db, units_dict)
             upgrades = get_upgrades(cId, db=db)  # Reuse cursor
 
+        template = "military_v2.html" if is_theme_v2_enabled("military") else "military.html"
         return render_template(
-            "military.html",
+            template,
             units=units_dict,
             units_active=units_active,
             limits=limits,
