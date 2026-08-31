@@ -575,3 +575,164 @@ body.game-page-v2 .templatedivbutton-secondary {
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
 }
+
+/* ---------- Topbar search / notifications / avatar ----------
+   Sitewide (not scoped to body.game-page-v2) -- .navbarparent is a fixed
+   #1c2029 bar on every page regardless of theme or v2 status, so these use
+   their own fixed dark-on-dark palette (matching the reference mockup's
+   shell.js/theme.css) rather than the light/dark-aware --game-glass-* tokens,
+   which are tuned for content panels sitting over a photo, not this bar. */
+.game-topbar-tools {
+    float: right;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 14px;
+    position: relative;
+}
+
+.game-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cfd6e2;
+    cursor: pointer;
+    transition: background .12s, color .12s;
+}
+
+.game-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.game-icon-btn .material-icons-outlined {
+    font-size: 18px;
+}
+
+.game-topbar-notif-dot {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e05a4d;
+    box-shadow: 0 0 0 2px #1c2029;
+}
+
+.game-topbar-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11.5px;
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.game-topbar-avatar:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.game-topbar-dropdown-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.game-topbar-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 280px;
+    max-width: 88vw;
+    padding: 10px;
+    background: rgba(20, 24, 32, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(-12px) scale(.95);
+    pointer-events: none;
+    transform-origin: top right;
+    transition: opacity .25s cubic-bezier(.22, 1, .36, 1), transform .3s cubic-bezier(.22, 1, .36, 1);
+    z-index: 1002;
+}
+
+.game-topbar-dropdown-wide {
+    width: 320px;
+}
+
+.game-topbar-dropdown.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.game-topbar-dropdown-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #8891a0;
+    padding: 4px 8px 8px;
+}
+
+.game-topbar-dropdown input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 13px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+}
+
+.game-topbar-result,
+.game-topbar-notif {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 8px;
+    border-radius: 9px;
+    font-size: 13px;
+    color: #cfd6e2;
+    text-decoration: none;
+}
+
+.game-topbar-result:hover,
+.game-topbar-notif:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.game-topbar-result-type,
+.game-topbar-n-time {
+    margin-left: auto;
+    font-size: 10.5px;
+    color: #8891a0;
+    flex-shrink: 0;
+}
+
+.game-topbar-empty {
+    padding: 14px 8px;
+    text-align: center;
+    font-size: 12px;
+    color: #8891a0;
+}

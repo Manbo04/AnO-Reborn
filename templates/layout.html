@@ -259,6 +259,29 @@
                 person_add_alt_1
                 </span>Get Started</a> {% elif session.get('user_id') != None %}
 
+            <div class="game-topbar-tools">
+                <div class="game-topbar-dropdown-wrap">
+                    <button type="button" class="game-icon-btn" id="nav-search-btn" title="Search" aria-label="Search nations and coalitions">
+                        <span class="material-icons-outlined">search</span>
+                    </button>
+                    <div class="game-topbar-dropdown" id="nav-search-dropdown">
+                        <input id="nav-search-input" placeholder="Search nations or coalitions…" aria-label="Search nations or coalitions" autocomplete="off">
+                        <div id="nav-search-results"></div>
+                    </div>
+                </div>
+                <div class="game-topbar-dropdown-wrap">
+                    <button type="button" class="game-icon-btn" id="nav-notif-btn" title="Notifications" aria-label="Notifications{% if notification_count %}, {{ notification_count }} unread{% endif %}" style="position:relative;">
+                        <span class="material-icons-outlined">notifications_none</span>
+                        {% if notification_count %}<span class="game-topbar-notif-dot" id="nav-notif-dot"></span>{% endif %}
+                    </button>
+                    <div class="game-topbar-dropdown game-topbar-dropdown-wide" id="nav-notif-dropdown">
+                        <div class="game-topbar-dropdown-title">Recent events</div>
+                        <div id="nav-notif-results"><div class="game-topbar-empty">Loading…</div></div>
+                    </div>
+                </div>
+                <a class="game-topbar-avatar" href="/account" aria-label="Account — {{ country_name }}" title="{{ country_name }}">{{ country_name | nav_initials }}</a>
+            </div>
+
             <div class="dropdown">
                 <div class="dropbtn"><button class="dropbtnchild">Other<span class="material-icons-outlined iconright">
                         keyboard_arrow_down
@@ -687,6 +710,115 @@
                     }
                 });
         });
+    </script>
+    {% endif %}
+
+    {% if session.get('user_id') %}
+    <script>
+        (function () {
+            var searchBtn = document.getElementById('nav-search-btn');
+            var searchDropdown = document.getElementById('nav-search-dropdown');
+            var searchInput = document.getElementById('nav-search-input');
+            var searchResults = document.getElementById('nav-search-results');
+            var notifBtn = document.getElementById('nav-notif-btn');
+            var notifDropdown = document.getElementById('nav-notif-dropdown');
+            var notifResults = document.getElementById('nav-notif-results');
+            var notifDot = document.getElementById('nav-notif-dot');
+            if (!searchBtn || !notifBtn) return;
+
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+
+            function closeAllTopbarDropdowns() {
+                document.querySelectorAll('.game-topbar-dropdown').forEach(function (d) { d.classList.remove('show'); });
+            }
+
+            var searchTimer = null;
+            function renderSearchResults(query) {
+                var q = query.trim();
+                if (!q) {
+                    searchResults.innerHTML = '<div class="game-topbar-empty">Type to search nations or coalitions…</div>';
+                    return;
+                }
+                if (q.length < 2) {
+                    searchResults.innerHTML = '<div class="game-topbar-empty">Keep typing…</div>';
+                    return;
+                }
+                fetch('/api/quick_search?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+                    .then(function (r) { return r.ok ? r.json() : { nations: [], coalitions: [] }; })
+                    .then(function (data) {
+                        var rows = [];
+                        (data.nations || []).forEach(function (n) {
+                            rows.push('<a class="game-topbar-result" href="/country/id=' + n.id + '">' +
+                                '<span class="material-icons-outlined" style="font-size:17px;opacity:.8;">flag</span>' +
+                                '<span>' + escapeHtml(n.name) + '</span>' +
+                                '<span class="game-topbar-result-type">Nation</span></a>');
+                        });
+                        (data.coalitions || []).forEach(function (c) {
+                            rows.push('<a class="game-topbar-result" href="/coalition/id=' + c.id + '">' +
+                                '<span class="material-icons-outlined" style="font-size:17px;opacity:.8;">groups</span>' +
+                                '<span>' + escapeHtml(c.name) + '</span>' +
+                                '<span class="game-topbar-result-type">Coalition</span></a>');
+                        });
+                        searchResults.innerHTML = rows.length ? rows.join('') : ('<div class="game-topbar-empty">No matches for "' + escapeHtml(q) + '"</div>');
+                    })
+                    .catch(function () {
+                        searchResults.innerHTML = '<div class="game-topbar-empty">Search failed.</div>';
+                    });
+            }
+            renderSearchResults('');
+            searchInput.addEventListener('input', function (e) {
+                clearTimeout(searchTimer);
+                var val = e.target.value;
+                searchTimer = setTimeout(function () { renderSearchResults(val); }, 180);
+            });
+
+            var notifLoaded = false;
+            function loadNotifications() {
+                notifResults.innerHTML = '<div class="game-topbar-empty">Loading…</div>';
+                fetch('/api/notifications', { credentials: 'same-origin' })
+                    .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+                    .then(function (data) {
+                        var items = data.items || [];
+                        if (!items.length) {
+                            notifResults.innerHTML = '<div class="game-topbar-empty">No recent events.</div>';
+                            return;
+                        }
+                        notifResults.innerHTML = items.map(function (it) {
+                            return '<a class="game-topbar-notif" href="/country/id={{ session.user_id }}">' +
+                                '<span class="material-icons-outlined" style="font-size:16px;opacity:.75;flex-shrink:0;">article</span>' +
+                                '<span>' + escapeHtml(it.message) + '</span>' +
+                                '<span class="game-topbar-n-time">' + escapeHtml(it.when) + '</span></a>';
+                        }).join('');
+                    })
+                    .catch(function () {
+                        notifResults.innerHTML = '<div class="game-topbar-empty">Couldn\'t load notifications.</div>';
+                    });
+            }
+
+            searchBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var wasOpen = searchDropdown.classList.contains('show');
+                closeAllTopbarDropdowns();
+                if (!wasOpen) { searchDropdown.classList.add('show'); searchInput.focus(); }
+            });
+            notifBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var wasOpen = notifDropdown.classList.contains('show');
+                closeAllTopbarDropdowns();
+                if (!wasOpen) {
+                    notifDropdown.classList.add('show');
+                    if (notifDot) notifDot.style.display = 'none';
+                    if (!notifLoaded) { notifLoaded = true; loadNotifications(); } else { loadNotifications(); }
+                }
+            });
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.game-topbar-dropdown-wrap')) closeAllTopbarDropdowns();
+            });
+        })();
     </script>
     {% endif %}
 </body>

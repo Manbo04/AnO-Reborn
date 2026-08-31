@@ -350,3 +350,37 @@ def api_quick_search():
             coalitions = []
 
     return jsonify({"nations": nations, "coalitions": coalitions})
+
+
+@bp.route("/api/notifications")
+@login_required
+def api_notifications():
+    """Real personal notifications for the redesigned UI's topbar bell (see
+    /Users/dede/ano-redesign/plan/PRODUCTION_PORT_PLAN.md §6.1). Reads the
+    same 'news' table country.html's own Reports & News section already
+    reads/dismisses from (news.destination_id) -- this is just a second,
+    lightweight view onto the same real data, not a new notification system.
+    """
+    from datetime import date as _date
+
+    user_id = session["user_id"]
+    items = []
+    with get_request_cursor(read_only=True) as cur:
+        try:
+            cur.execute(
+                "SELECT id, message, date FROM news WHERE destination_id=%s ORDER BY id DESC LIMIT 6",
+                (user_id,),
+            )
+            today = _date.today()
+            for row_id, message, day in cur.fetchall():
+                if day is None:
+                    when = ""
+                else:
+                    days_old = (today - day).days
+                    when = "Today" if days_old <= 0 else ("Yesterday" if days_old == 1 else f"{days_old}d ago")
+                items.append({"id": row_id, "message": message, "when": when})
+        except Exception:
+            cur.connection.rollback()
+            items = []
+
+    return jsonify({"items": items})
