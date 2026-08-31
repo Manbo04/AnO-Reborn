@@ -1,6 +1,6 @@
 from flask import request, render_template, session, redirect, jsonify
 from helpers import login_required
-from helpers import get_influence, error
+from helpers import get_influence, error, is_theme_v2_enabled
 from database import invalidate_view_cache, reuse_or_new_cursor
 import os
 import variables
@@ -635,8 +635,9 @@ def country(cId):
                 if row and row[0] in ("leader", "deputy_leader"):
                     can_invite_to_coalition = True
 
+    template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
-        "country.html", can_invite_to_coalition=can_invite_to_coalition, **data
+        template, can_invite_to_coalition=can_invite_to_coalition, **data
     )
 
 def countries():
