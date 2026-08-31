@@ -15,7 +15,16 @@
 
 <div class="templatediv">
 
+    {% if status %}
+    {% call game_hero(username, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None) %}
+        <div class="game-row" style="gap: 10px;">
+            <a class="game-btn game-btn-secondary" href="/provinces"><span class="material-icons-outlined">account_balance</span> View provinces</a>
+            <a class="game-btn game-btn-primary" href="/upgrades"><span class="material-icons-outlined">engineering</span> Manage economy</a>
+        </div>
+    {% endcall %}
+    {% else %}
     {{ game_hero(username, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None) }}
+    {% endif %}
 
     <div class="templatedivcontent">
 

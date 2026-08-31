@@ -205,6 +205,15 @@ body.game-page-v2 .templatediv {
     padding: 20px 22px;
 }
 
+/* Lets a .game-glass.game-panel stretched to match a taller sibling (via
+   align-items:stretch on the parent row) actually fill that height instead
+   of leaving dead space below its content -- used by hub.html's Global Chat
+   panel to match Global News' height. */
+.game-panel--flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
 .game-row {
     display: flex;
     align-items: center;
@@ -571,6 +580,20 @@ body.game-page-v2 .infodiv {
     -webkit-backdrop-filter: var(--game-glass-blur);
     border: 1px solid var(--game-glass-border);
     box-shadow: var(--game-shadow-glass);
+}
+
+/* .stat-card/.stat-grid -- the resource/stat tile grid used throughout
+   country/province/military/upgrades pages (dozens of instances per page
+   on country.html alone: Buildings, Population Breakdown, several Revenue
+   sub-sections). Opaque var(--foreground) fill, never touched by the
+   theme-v2 port. Page-specific !important overrides (demographics panel,
+   revenue's flat-list variant) already exist and correctly keep winning
+   over this plain rule -- this is only the fallback for everywhere else. */
+body.game-page-v2 .stat-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
 }
 
 body.game-page-v2 .loginsignupinput,
