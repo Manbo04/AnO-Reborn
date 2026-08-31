@@ -3,7 +3,7 @@ import os
 
 from flask import Blueprint, request, render_template, session, redirect, url_for
 
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 from extensions import limiter
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
 import game_ui
@@ -67,8 +67,9 @@ def store():
                 }
             )
 
+        template = "store_v2.html" if is_theme_v2_enabled("store") else "store.html"
         return render_template(
-            "store.html",
+            template,
             gems=gems,
             gem_packages=gem_packages,
             cosmetics=cosmetics_view,
