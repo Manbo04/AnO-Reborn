@@ -20,7 +20,43 @@
 <div class="templatediv">
 
     {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+    {% if province["own"] %}
+    {% call game_hero(province['name'], badge_icon='account_balance') %}
+        <div class="game-row" style="gap: 10px;">
+            <button type="button" class="game-btn game-btn-secondary" id="provinceEditToggle" aria-expanded="false" aria-controls="provinceEditPanel">
+                <span class="material-icons-outlined">edit</span> Edit
+            </button>
+            <a class="game-btn game-btn-primary" href="#infrastructure"><span class="material-icons-outlined">construction</span> Build</a>
+        </div>
+    {% endcall %}
+    <div class="game-glass game-panel" id="provinceEditPanel" hidden style="margin-bottom: 18px;">
+        <div class="game-row" style="gap: 8px; margin-bottom: 14px;"><span class="material-icons-outlined">image</span><strong style="font-size: 14px;">Province banner</strong></div>
+        <form method="POST" action="/province/{{ province['id'] }}/image" enctype="multipart/form-data" class="game-row" style="flex-wrap: wrap;">
+            <input type="file" name="province_image" accept=".png,.jpg,.jpeg,.webp" class="game-select" style="flex: 1; min-width: 220px;">
+            <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">upload</span> Save picture</button>
+        </form>
+        {% if province.has_image %}
+        <form method="POST" action="/province/{{ province['id'] }}/image" style="margin-top: 10px;">
+            <input type="hidden" name="remove_image" value="1">
+            <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">delete_outline</span> Remove current picture</button>
+        </form>
+        {% endif %}
+    </div>
+    <script>
+    (function () {
+        var toggle = document.getElementById('provinceEditToggle');
+        var panel = document.getElementById('provinceEditPanel');
+        if (!toggle || !panel) return;
+        toggle.addEventListener('click', function () {
+            var expanded = toggle.getAttribute('aria-expanded') === 'true';
+            panel.hidden = expanded;
+            toggle.setAttribute('aria-expanded', String(!expanded));
+        });
+    })();
+    </script>
+    {% else %}
     {{ game_hero(province['name'], badge_icon='account_balance') }}
+    {% endif %}
     {% endif %}
 
     <div class="templatedivcontent">
@@ -184,7 +220,7 @@
         </div>
         {% endif %}
         {% if province["own"] %}
-        <h2 class="templatecontentheaderleft">Infrastructure</h2>
+        <h2 class="templatecontentheaderleft" id="infrastructure">Infrastructure</h2>
 
         <div class="templatedivflex2 menuflex2">
             <a href="javascript:void(0);" class="templatedivflex2left" id="provincecity" onclick="provincecity()">
