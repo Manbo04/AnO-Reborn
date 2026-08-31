@@ -5,6 +5,7 @@ from helpers import (
     get_flagname,
     check_required,
     get_influence,
+    is_theme_v2_enabled,
 )
 from database import get_db_connection, get_request_cursor, rollback_db_cursor
 from attack_scripts.Nations import (
@@ -434,8 +435,9 @@ def war_with_id(war_id):
             successChance = spyCount * spyPrep / eSpyCount / eDefcon
         attacker_flag = get_flagname(attacker)
         defender_flag = get_flagname(defender)
+        template = "war_v2.html" if is_theme_v2_enabled("wars") else "war.html"
         return render_template(
-            "war.html",
+            template,
             attacker_flag=attacker_flag,
             defender_flag=defender_flag,
             defender_info=defender_info,
@@ -467,7 +469,8 @@ def warChoose(war_id):
         special_units = Military.get_special(cId)
         units = normal_units.copy()
         units.update(special_units)
-        return render_template("warchoose.html", units=units, war_id=war_id)
+        template = "warchoose_v2.html" if is_theme_v2_enabled("wars") else "warchoose.html"
+        return render_template(template, units=units, war_id=war_id)
     elif request.method == "POST":
         selected_units = {}
         special_unit = request.form.get("special_unit")
@@ -528,8 +531,9 @@ def warAmount():
         unitamounts = Military.get_particular_units_list(
             cId, attack_units.selected_units_list
         )
+        template = "waramount_v2.html" if is_theme_v2_enabled("wars") else "waramount.html"
         return render_template(
-            "waramount.html",
+            template,
             available_supplies=attack_units.available_supplies,
             selected_units=attack_units.selected_units_list,
             unit_range=len(unitamounts),
@@ -1135,8 +1139,9 @@ def wars():
             except Exception:
                 rollback_db_cursor(db)
                 warsCount = 0
+        template = "wars_v2.html" if is_theme_v2_enabled("wars") else "wars.html"
         return render_template(
-            "wars.html",
+            template,
             units=units,
             warsCount=warsCount,
             war_info=war_info,
