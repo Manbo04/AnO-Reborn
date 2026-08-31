@@ -1,0 +1,2453 @@
+{% extends "layout.html" %}
+{% block title %}{{ province['name'] }}{% endblock %}
+{% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% else %} game-page-v2{% endif %}{% endblock %}
+{% block extra_head %}
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script defer src="{{ url_for('static', filename='province-demographics.js') }}?v=1"></script>
+{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+<script defer src="{{ url_for('static', filename='province-base.js') }}?v=10"></script>
+<script defer src="{{ url_for('static', filename='province-zones.js') }}?v=1"></script>
+{% endif %}
+{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+{% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+<div class="game-page-bg" style="background-image: url('{% if province.has_image %}{{ province.image_url }}{% else %}{{ url_for('static', filename='images/province.jpg') }}{% endif %}');"></div>
+<div class="game-page-overlay"></div>
+{% endif %}
+
+<div class="templatediv">
+
+    {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+    {{ game_hero(province['name'], badge_icon='account_balance') }}
+    {% endif %}
+
+    <div class="templatedivcontent">
+        {% include 'partials/distribution_alert.html' %}
+
+        {% include 'partials/province_base_view.html' %}
+        {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
+        <p class="province-view-nudge" id="province-view-nudge" hidden>
+            <span class="material-icons-outlined">map</span>
+            Try the <strong>district map</strong> above — tap <button type="button" class="province-view-nudge-btn" data-province-view-toggle>Base view</button>
+        </p>
+        {% endif %}
+        <div id="province-classic-view"{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} hidden{% endif %}>
+        {% include 'partials/province_status.html' %}
+        {% include 'partials/province_settings.html' %}
+        {% include 'partials/province_info.html' %}
+
+
+        {% if province["own"] %}
+        <div class="province-owner-tools game-stack">
+            <div class="infodiv province-owner-build">
+                <h3 class="templatecontentheadercenter">Quick Build (Normalized)</h3>
+                <form method="POST" action="/build_structure">
+                    <input type="hidden" name="province_id" value="{{ province['id'] }}" />
+                    <label for="building_id">Structure</label>
+                    <select class="templateselect" name="building_id" id="building_id" required>
+                        {% if normalized_buildings and normalized_buildings|length > 0 %}
+                        {% for b in normalized_buildings %}
+                            <option value="{{ b['building_id'] }}">
+                                {{ b['display_name'] }} — {{ b['cost_display'] }}
+                            </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="" disabled selected>No structures available</option>
+                        {% endif %}
+                    </select>
+                    <label for="build_qty">Quantity</label>
+                    <input
+                        class="loginsignupinput"
+                        type="number"
+                        value="1"
+                        name="quantity"
+                        id="build_qty"
+                        required
+                    />
+                    {{ game_button('Build', icon='construction') }}
+                </form>
+            </div>
+
+            <form method="POST" class="province-purchase-grid game-panel-grid game-panel-grid--2">
+                <div class="infodiv province-purchase-panel">
+                        <script>
+                            const citiesCost = function(event) {
+                                var citiesamount = document.getElementById("citiesamount").value;
+                                var cityCount = document.getElementById("cityCount").value;
+                                var citiesoutput = document.getElementById("citiesoutput");
+
+                                // Handle empty inputs
+                                if (!citiesamount || citiesamount === "") {
+                                    citiesoutput.innerHTML = "0";
+                                    return;
+                                }
+
+                                citiesamount = parseInt(citiesamount);
+                                cityCount = parseInt(cityCount) || 0;
+
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
+                                    // O(1) formula instead of O(n) loop for performance
+                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
+                                    let totalCost = numPurchased * basePrice +
+                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
+                                    return Math.round(totalCost);
+                                }
+
+                                function numberWithCommas(x) {
+                                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                }
+
+                                let newPrice = sum_cost_linear(750000, 50000, cityCount, citiesamount)
+                                let newOutputPrice = numberWithCommas(newPrice)
+                                console.log("New City price: " + newOutputPrice)
+
+                                citiesoutput.innerHTML = newOutputPrice;
+                            }
+                        </script>
+                        <h3 class="templatecontentheadercenter">Purchase Cities</h3>
+
+                        <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
+                            <strong id="citiesoutput">0</strong>
+                        </ul>
+
+                        <div class="templatedivflex2 divflex2center">
+                            <div class="templatedivflex2left">
+
+                                <input class="loginsignupinput" type="number" name="cityCount" placeholder="City Amount" id="citiesamount" onchange="citiesCost(event)" />
+                                <input id="cityCount" type="hidden" value="{{ province['citycount'] }}" />
+
+                            </div>
+                            <div class="templatedivflex2right">
+
+                                {{ game_button('Purchase', icon='business', formaction='/buy/cityCount/' ~ province['id'], id='citiesbutton') }}
+
+                            </div>
+                        </div>
+                </div>
+
+                <div class="infodiv province-purchase-panel">
+                        <script>
+                            const landCost = function(event) {
+                                var landamount = document.getElementById("landamount").value;
+                                var landoutput = document.getElementById("landoutput");
+                                let current_land = document.getElementById("currentLand").value;
+
+                                // Handle empty inputs
+                                if (!landamount || landamount === "") {
+                                    landoutput.innerHTML = "0";
+                                    return;
+                                }
+
+                                landamount = parseInt(landamount);
+                                current_land = parseInt(current_land) || 0;
+
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
+                                    // O(1) formula instead of O(n) loop for performance
+                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
+                                    let totalCost = numPurchased * basePrice +
+                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
+                                    return Math.round(totalCost);
+                                }
+
+                                function numberWithCommas(x) {
+                                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                }
+
+                                let land_price = sum_cost_linear(520000, 25000, current_land, landamount)
+                                let land_output_price = numberWithCommas(land_price)
+                                console.log("New land price: " + land_output_price)
+                                landoutput.innerHTML = land_output_price;
+                            }
+                        </script>
+                        <h3 class="templatecontentheadercenter">Purchase Land</h3>
+
+                        <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
+                            <strong id="landoutput">0</strong>
+                        </ul>
+                        <div class="templatedivflex2 divflex2center">
+                            <div class="templatedivflex2left">
+
+                                <input class="loginsignupinput" type="number" name="land" placeholder="Land Amount" id="landamount" onchange="landCost(event)" />
+                                <input type="hidden" id="currentLand" value="{{ province['land'] }}" />
+
+                            </div>
+                            <div class="templatedivflex2right">
+
+                                {{ game_button('Purchase', icon='landscape', formaction='/buy/land/' ~ province['id']) }}
+
+                            </div>
+                        </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% if province["own"] %}
+        <h2 class="templatecontentheaderleft">Infrastructure</h2>
+
+        <div class="templatedivflex2 menuflex2">
+            <a href="javascript:void(0);" class="templatedivflex2left" id="provincecity" onclick="provincecity()">
+
+                <h3 class="smallheader"><span class="material-icons-outlined">
+                    business
+                </span>City
+                </h3>
+
+            </a>
+            <a href="javascript:void(0);" class="templatedivflex2left" id="provinceland" onclick="provinceland()">
+
+                <h3 class="smallheader"><span class="material-icons-outlined">
+                    landscape
+                </span>Land
+                </h3>
+
+            </a>
+        </div>
+        <!--Cities-->
+        <form method="POST">
+            <div class="city" id="city">
+
+
+                <div class="templateoutertablediv" style="overflow-x: auto; max-width: 100%;">
+                    <table class="templatetable templatetable2 smalltable">
+                        <tr>
+                            <td colspan="3">
+                                <div class="templatedivflex2 menuflex2 width100">
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="cityelectricity" onclick="cityelectricity()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">Electricity</span>
+                                        </h3>
+
+                                    </a>
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="cityretail" onclick="cityretail()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">Retail</span>
+                                            <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                        </h3>
+
+                                    </a>
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="cityworks" onclick="cityworks()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">Public Works</span>
+                                            <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                        </h3>
+
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["coal_burners"] }} Coal Power Plants</td>
+                            <td>{{ units["food_banks"] }} Food Banks</td>
+                            <td>{{ units["city_parks"] }} City Parks</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["oil_burners"] }} Oil Power Plants</td>
+                            <td>{{ units["gas_stations"] }} Gas Stations</td>
+                            <td>{{ units["libraries"] }} Libraries</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["solar_fields"] }} Solar Fields</td>
+                            <td>{{ units["general_stores"] }} General Stores</td>
+                            <td>{{ units["hospitals"] }} Hospitals</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["wind_farms"] }} Wind Farms</td>
+                            <td>{{ units["farmers_markets"] }} Farmers Markets</td>
+                            <td>{{ units["universities"] }} Universities</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["geothermal_plants"] }} Geothermal Plants</td>
+                            <td>{{ units["banks"] }} Banks</td>
+                            <td>{{ units["primary_school"] }} Primary Schools</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["hydro_dams"] }} Hydro Dams</td>
+                            {% if upgrades["onlineshopping"] %}
+                            <td>{{ units["malls"] }} Fulfillment Centers</td>
+                            {% else %}
+                            <td>{{ units["malls"] }} Malls</td>
+                            {% endif %}
+                            <td>{{ units["high_school"] }} High Schools</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["nuclear_reactors"] }} Nuclear Reactors</td>
+                            <td>{{ units["distribution_centers"] }} Dist. Centers</td>
+                            {% if upgrades["highspeedrail"] %}
+                            <td>{{ units["monorails"] }} Bullet Trains</td>
+                            {% else %}
+                            <td>{{ units["monorails"] }} Monorails</td>
+                            {% endif %}
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>{{ units["industrial_district"] }} Industrial Districts</td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+                <!--Electricity-->
+                <div id="electricity" class="electricity">
+
+                    <div class="menudiv energy-balance-panel">
+                        <h2 class="templatecontentheaderleft">Energy Balance</h2>
+
+                        {% if energy['net'] >= 0 %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--ok">
+                            <span class="material-icons-outlined">bolt</span>
+                            Fully powered — {{ energy['production'] }} produced vs {{ energy['consumption'] }} needed this hour (+{{ energy['net'] }} spare)
+                        </p>
+                        {% else %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--deficit">
+                            <span class="material-icons-outlined">warning</span>
+                            Energy deficit — {{ energy['production'] }} produced vs {{ energy['consumption'] }} needed this hour ({{ energy['net'] }}). Some buildings will not run until this is fixed.
+                        </p>
+                        {% endif %}
+
+                        {% if energy['theoretical_production'] > energy['production'] %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--warn">
+                            <span class="material-icons-outlined">info</span>
+                            Your power plants could produce {{ energy['theoretical_production'] }} if fully fueled, but only {{ energy['production'] }} is actually affordable this hour (see "limited by" below).
+                        </p>
+                        {% endif %}
+
+                        {% if energy['production_multiplier'] is not none and (energy['production_multiplier'] - 1) | abs > 0.001 %}
+                        <p class="templatecontentpleft energy-balance-status energy-balance-status--warn">
+                            <span class="material-icons-outlined">info</span>
+                            Your productivity and workforce levels are scaling total power output to {{ (energy['production_multiplier'] * 100) | round(0, 'floor') | int }}% of each plant's base rate — that's why "Built &times; Each" below doesn't match "Total".
+                        </p>
+                        {% endif %}
+
+                        {% if energy['production_breakdown'] %}
+                        <h3 class="templatecontentheadercenter">Production</h3>
+                        <div class="energy-breakdown-table-wrap">
+                            <table class="templatetable energy-breakdown-table">
+                                <tr>
+                                    <th>Plant</th>
+                                    <th class="num">Built</th>
+                                    <th class="num">Each</th>
+                                    <th class="num">Total</th>
+                                    <th>Limited by</th>
+                                </tr>
+                                {% for row in energy['production_breakdown'] %}
+                                <tr{% if row['limited_by'] %} class="energy-row--limited"{% endif %}>
+                                    <td>{{ row['name'].replace('_', ' ').title() }}</td>
+                                    <td class="num">{{ row['quantity'] }}</td>
+                                    <td class="num">+{{ row['unit_output'] }}</td>
+                                    <td class="num">+{{ row['actual'] }}</td>
+                                    <td>
+                                        {% if row['limited_by'] %}
+                                            {{ row['limited_by'] | join(', ') | replace('_', ' ') }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if energy['consumption_breakdown'] %}
+                        <h3 class="templatecontentheadercenter">Consumption</h3>
+                        <div class="energy-breakdown-table-wrap">
+                            <table class="templatetable energy-breakdown-table">
+                                <tr>
+                                    <th>Building</th>
+                                    <th class="num">Count</th>
+                                    <th class="num">Each</th>
+                                    <th class="num">Total</th>
+                                </tr>
+                                {% for row in energy['consumption_breakdown'] %}
+                                <tr>
+                                    <td>{{ row['name'].replace('_', ' ').title() }}</td>
+                                    <td class="num">{{ row['quantity'] }}</td>
+                                    <td class="num">-{{ row['unit_cost'] }}</td>
+                                    <td class="num">-{{ row['subtotal'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Coal Power Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["coal_burners"] }} Coal Power Plants</h3>
+
+                                <p class="templatecontentpleft">Coal power plants are a cheap way to produce power for a developing nation. While they cost less to build and operate, they contribute lots of pollution.</p>
+
+                                <ul>Coal power plants cost {{ infra["coal_burners_money"] | fmt }} per hour, takes {{ infra["coal_burners_convert_minus"][0]["coal"]  | weight_fmt }} coal per hour, and produces +{{ infra["coal_burners_plus"]["energy"] }} electricity
+                                    and +{{ infra["coal_burners_effect"][0]["pollution"] }}% pollution
+                                </ul>
+                                <ul>{{ "coal_burners" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="coal_burners" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_burners/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_burners/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'coal_burners')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Oil Power Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["oil_burners"] }} Oil Power Plants</h3>
+
+                                <p class="templatecontentpleft">Oil power plants cost more to operate and build than coal power plants, but produce less pollution. They are ideal for a nation pursuing tax income as a primary revenue source.</p>
+
+                                <ul>Oil power plants cost {{ infra["oil_burners_money"] | fmt }} per hour, takes {{ infra["oil_burners_convert_minus"][0]["oil"]  | weight_fmt }} oil per hour, and produce +{{ infra["oil_burners_plus"]["energy"] }} electricity and
+                                    +{{ infra["oil_burners_effect"][0]["pollution"] }}% pollution
+                                </ul>
+                                <ul>{{ "oil_burners" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="oil_burners" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/oil_burners/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/oil_burners/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'oil_burners')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Solar Fields</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["solar_fields"] }} Solar Fields</h3>
+
+                                <p class="templatecontentpleft">Solar fields are a hefty investment, but in return produce no pollution. They are ideal for developed nations.</p>
+
+                                <ul>Solar cost {{ infra["solar_fields_money"] | fmt }} per hour and produce +{{ infra["solar_fields_plus"]["energy"]}} electricity
+                                </ul>
+                                <ul>{{ "solar_fields" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="solar_fields" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/solar_fields/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/solar_fields/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'solar_fields')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Wind Farms</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["wind_farms"] }} Wind Farms</h3>
+
+                                <p class="templatecontentpleft">Wind farms provide a renewable source of energy to support your infrastructure.</p>
+
+                                <ul>Wind Farms cost {{ infra["wind_farms_money"] | fmt }} per hour and produce +{{ infra["wind_farms_plus"]["energy"]}} electricity
+                                </ul>
+                                <ul>{{ "wind_farms" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="wind_farms" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/wind_farms/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/wind_farms/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'wind_farms')) }}?v=1" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Geothermal Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["geothermal_plants"] }} Geothermal Plants</h3>
+
+                                <p class="templatecontentpleft">Geothermal plants tap into the earth's natural heat to provide massive amounts of zero-emission electricity.</p>
+
+                                <ul>Geothermal Plants cost {{ infra["geothermal_plants_money"] | fmt }} per hour and produce +{{ infra["geothermal_plants_plus"]["energy"]}} electricity
+                                </ul>
+                                <ul>{{ "geothermal_plants" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="geothermal_plants" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/geothermal_plants/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/geothermal_plants/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'geothermal_plants')) }}?v=1" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Hydro Dams</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["hydro_dams"] }} Hydro Dams</h3>
+
+                                <p class="templatecontentpleft">Hydro dams are expensive to build and upkeep, but provide lots of power with absolutely no production of pollution.</p>
+
+                                <ul>Hydro dams cost {{ infra["hydro_dams_money"] | fmt }} per hour and produce +{{ infra["hydro_dams_plus"]["energy"] }} electricity
+                                </ul>
+                                <ul>{{ "hydro_dams" | prores }}
+                                </ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="hydro_dams" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/hydro_dams/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/hydro_dams/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'hydro_dams')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Nuclear Reactors</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["nuclear_reactors"] }} Nuclear Reactors</h3>
+
+                                <p class="templatecontentpleft">Nuclear reactors are a sign of a world power. While they are costly to build and even more to maintain, it is fully compensated for by the massive amount of electricity it contributes to your province.</p>
+
+                                {% if upgrades["betterengineering"] %}
+                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | fmt }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"]  | weight_fmt }} uranium per hour and produce +{{ infra["nuclear_reactors_plus"]["energy"] + 6 }} electricity</ul>
+                                {% else %}
+                                <ul>Nuclear reactors cost {{ infra["nuclear_reactors_money"] | fmt }}, {{ infra["nuclear_reactors_convert_minus"][0]["uranium"]  | weight_fmt }} uranium per hour and produce +{{ infra["nuclear_reactors_plus"]["energy"] }} electricity</ul>
+                                {% endif %}
+                                <ul>{{ "nuclear_reactors" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="nuclear_reactors" type="number" placeholder="Amount" />
+
+                                    <!--
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" disabled class="templatedivbutton templatecenteredbutton templateclosedbutton nuclearreactordisabledbutton" formaction="/buy/nuclear_reactors/{{ province['id'] }}"><span class="material-icons-outlined">
+                                add_circle_outline
+                            </span>Buy</button>
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            <button type="submit" disabled class="templatedivbutton templatecenteredbutton templateclosedbutton nuclearreactordisabledbutton" formaction="/sell/nuclear_reactors/{{ province['id'] }}"><span class="material-icons-outlined">
+                                remove_circle_outline
+                            </span>Sell</button>
+
+                                        </div>
+                                    </div>
+                                -->
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/nuclear_reactors/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/nuclear_reactors/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'nuclear_reactors')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Retail-->
+                <div id="retail" class="retail">
+
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Food Banks</h2>
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+                                <h3 class="templatecontentheadercenter">You have {{ units["food_banks"] }} Food Banks</h3>
+                                <p class="templatecontentpleft">Basic distribution centers to feed the populace. Very cheap to construct.</p>
+                                <ul>Food Banks cost {{ infra["food_banks_money"] | fmt }} per hour and provide 250,000 Distribution Capacity.</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "food_banks" | prores }}</ul>
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="food_banks" type="number" placeholder="Amount" />
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/food_banks/' ~ province['id']) }}
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/food_banks/' ~ province['id']) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'distribution_centers')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Gas Stations</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["gas_stations"] }} Gas Stations</h3>
+
+                                <p class="templatecontentpleft">Gas stations allow your citizens to fuel their cars and to grab some groceries. They contribute a small amount of consumer goods to the economy.</p>
+
+                                {% if upgrades["governmentregulation"] %}
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} and produce +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ (infra["gas_stations_effect"][0]["pollution"] * 0.75) | int }}% pollution. They provide 1,000,000 Distribution Capacity.</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                {% else %}
+                                <ul>Gas stations cost {{ infra["gas_stations_money"] | fmt }} and produce +{{ infra["gas_stations_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["gas_stations_effect"][0]["pollution"] }}% pollution. They provide 1,000,000 Distribution Capacity.</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                {% endif %}
+
+                                <ul>{{ "gas_stations" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="gas_stations" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/gas_stations/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/gas_stations/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'gas_stations')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">General Stores</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["general_stores"] }} General Stores</h3>
+
+                                <p class="templatecontentpleft">General stores allow your citizens to pick up everyday items necessary for your economy to function.</p>
+
+                                <ul>General stores cost {{ infra["general_stores_money"] | fmt }} and produce +{{ infra["general_stores_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as {% if upgrades["governmentregulation"] %}
+                                    +{{ (infra["general_stores_effect"][0]["pollution"] * 0.75) | int }}% pollution. They provide 2,500,000 Distribution Capacity.</ul>
+                                {% else %} +{{ infra["general_stores_effect"][0]["pollution"] }}% pollution. They provide 2,500,000 Distribution Capacity.</ul>
+                                {% endif %}
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "general_stores" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="general_stores" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/general_stores/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/general_stores/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'general_stores')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Farmers Markets</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["farmers_markets"] }} Farmers Markets</h3>
+
+                                <p class="templatecontentpleft">Farmers markets provide fresh produce to your population without any middle man. They are perfect for producing consumer goods with little pollution.</p>
+
+                                <ul>Farmers markets cost {{ infra["farmers_markets_money"] | fmt }} and produce +{{ infra["farmers_markets_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% if upgrades["governmentregulation"]
+                                    %} +{{ (infra["farmers_markets_effect"][0]["pollution"] * 0.75) | int }}% pollution. They provide 2,000,000 Distribution Capacity.</ul>
+                                {% else %} +{{ infra["farmers_markets_effect"][0]["pollution"] }}% pollution. They provide 2,000,000 Distribution Capacity.</ul>
+                                {% endif %}
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "farmers_markets" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="farmers_markets" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/farmers_markets/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/farmers_markets/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'farmers_markets')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Banks</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["banks"] }} Banks</h3>
+
+                                <p class="templatecontentpleft">Banks help produce a thriving debt-based economy that drastically increases production of consumer goods. Banks produce no pollution.</p>
+
+                                <ul>Banks cost {{ infra["banks_money"] | fmt }} per hour and produce +{{ infra["banks_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "banks" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="banks" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/banks/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/banks/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'banks')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        {% if upgrades["onlineshopping"] %} {% set malls_name = "Fulfillment Centers" %} {% else %} {% set malls_name = "Malls" %} {% endif %}
+                        <h2 class="templatecontentheaderleft">{{ malls_name }}</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["malls"] }} {{ malls_name }}</h3>
+
+                                <p class="templatecontentpleft">{{ malls_name }} are supercenters of consumer spending. Dozens of stores make up a mall and get consumers to spend money at every store. {{ malls_name }} produce lots of pollution.</p>
+
+                                {% if upgrades["onlineshopping"] %}
+                                <ul>{{ malls_name }} cost {{ (infra["malls_money"] * 0.7) | fmt }} and produce +{{ infra["malls_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% else %}
+                                    <ul>{{ malls_name }} cost {{ infra["malls_money"] | fmt }} and produce +{{ infra["malls_plus"]["consumer_goods"]  | weight_fmt }} consumer goods per hour, as well as {% endif %} {% if upgrades["governmentregulation"] %}
+                                        +{{ (infra["malls_effect"][0]["pollution"] * 0.75) }}% pollution. They provide 5,000,000 Distribution Capacity.</ul>
+                                    {% else %} +{{ infra["malls_effect"][0]["pollution"] }}% pollution. They provide 5,000,000 Distribution Capacity.</ul>
+                                {% endif %}
+                                <ul>Uses -1 electricity per hour</ul>
+
+                                <ul>{{ malls_name | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="malls" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/malls/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/malls/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2left">
+
+
+
+                                {% if upgrades["onlineshopping"] %}
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'distribution_centers')) }}?v=2" /> {% else %}
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'malls')) }}?v=2" /> {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        {% if units["distribution_centers"] > 0 %}
+                        <h2 class="templatecontentheaderleft">Distribution Centers (Deprecated)</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["distribution_centers"] }} Distribution Centers</h3>
+
+                                <p class="templatecontentpleft">Large-scale logistics hubs that distribute rations and consumer goods to your population. Each serves up to 1,500,000 citizens.</p>
+
+                                <ul>Distribution Centers cost {{ infra["distribution_centers_money"] | fmt }} per hour and provide 1,500,000 Distribution Capacity per building.</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "distribution_centers" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="distribution_centers" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/distribution_centers/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/distribution_centers/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'malls')) }}?v=2" />
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--Public Works-->
+                <div id="works" class="works">
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">City Parks</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["city_parks"] }} City Parks</h3>
+
+                                <p class="templatecontentpleft">City parks are perfect establishments to increase happiness of your population, and to absorb some pollution.</p>
+
+                                <ul>City parks cost {{ infra["city_parks_money"] | fmt }} per hour and contribute +{{ infra["city_parks_effect"][0]["happiness"] }}% happiness and -{{ infra["city_parks_effect_minus"]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "city_parks" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="city_parks" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/city_parks/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/city_parks/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'city_parks')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Libraries</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["libraries"] }} Libraries</h3>
+
+                                <p class="templatecontentpleft">Libraries are places for your citizens to enjoy a book and learn from them to become more productive.</p>
+
+                                <ul>Libraries cost {{ infra["libraries_money"] | fmt }} per hour and contribute +{{ infra["libraries_effect"][0]["happiness"] }}% happiness and +{{ infra["libraries_effect"][1]["productivity"] }}% productivity</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "libraries" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="libraries" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/libraries/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/libraries/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'libraries')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Hospitals</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["hospitals"] }} Hospitals</h3>
+
+                                <p class="templatecontentpleft">Hospitals are equipped with advanced medical equipment and staff, allowing for the drastic increase in people who survive childbirth and deadly illnesses. People live longer and as such are happier.</p>
+
+                                <ul>Hospitals cost {{ infra["hospitals_money"] | fmt }} per hour and {% if upgrades["nationalhealthinstitution"] %} contribute +{{ (infra["hospitals_effect"][0]["happiness"] * 1.3) | round(2) }}% happiness {% else %} contribute +{{ infra["hospitals_effect"][0]["happiness"] }}% happiness {% endif %}</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "hospitals" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="hospitals" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/hospitals/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/hospitals/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'hospitals')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Universities</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["universities"] }} Universities</h3>
+
+                                <p class="templatecontentpleft">Universities help educate your population, making them far more productive. University gives their students some great memories.</p>
+
+                                <ul>Universities cost {{ infra["universities_money"] | fmt }} per hour and contribute +{{ infra["universities_effect"][0]["productivity"] }}% productivity and +{{ new_infra["universities"]["eff"]["happiness"] }}% happiness</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "universities" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="universities" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/universities/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/universities/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'universities')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Primary Schools</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["primary_school"] }} Primary Schools</h3>
+
+                                <p class="templatecontentpleft">Primary Schools provide early education, boosting productivity and happiness for your citizens.</p>
+
+                                <ul>Primary Schools cost {{ infra["primary_school_money"] | fmt }} per hour and contribute +{{ infra["primary_school_effect"][0]["productivity"] }}% productivity and +{{ infra["primary_school_effect"][1]["happiness"] }}% happiness</ul>
+                                <ul>{{ "primary_school" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="primary_school" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/primary_school/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/primary_school/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'primary_school')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">High Schools</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["high_school"] }} High Schools</h3>
+
+                                <p class="templatecontentpleft">High Schools prepare your citizens for the workforce, providing a solid boost to productivity.</p>
+
+                                <ul>High Schools cost {{ infra["high_school_money"] | fmt }} per hour and contribute +{{ infra["high_school_effect"][0]["productivity"] }}% productivity and +{{ infra["high_school_effect"][1]["happiness"] }}% happiness</ul>
+                                <ul>{{ "high_school" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="high_school" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/high_school/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/high_school/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'high_school')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        {% if upgrades["highspeedrail"] %} {% set monorails_name = "Bullet Trains" %} {% else %} {% set monorails_name = "Monorails" %} {% endif %}
+                        <h2 class="templatecontentheaderleft">{{ monorails_name }}</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["monorails"] }} {{ monorails_name }}</h3>
+
+                                <p class="templatecontentpleft">{{ monorails_name }} astronimically increase the productivity of your citizens by deceasing the time it takes for them to get to work. They also reduce pollution drastically by cutting down on the use of cars.</p>
+
+                                <ul>{{ monorails_name }} cost {{ infra["monorails_money"] | fmt }} per hour and {% if upgrades["highspeedrail"] %} contribute +{{ infra["monorails_effect"][0]["productivity"] * 1.2 }}% productivity {% else %} contribute
+                                    +{{ infra["monorails_effect"][0]["productivity"] }}% productivity {% endif %} and -{{ infra["monorails_effect_minus"]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ monorails_name | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="monorails" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/monorails/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/monorails/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2left">
+
+
+
+                                {% if upgrades["highspeedrail"] %}
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/bullettrains.jpg') }}?v=2" /> {% else %}
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'monorails')) }}?v=2" /> {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Land-->
+            <div class="land" id="land">
+
+                <div class="templateoutertablediv" style="overflow-x: auto; max-width: 100%;">
+                    <table class="templatetable templatetable2 smalltable">
+                        <tr>
+                            <td colspan="3">
+                                <div class="templatedivflex2 menuflex2 width100">
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="landmilitary" onclick="landmilitary()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">Military</span></h3>
+
+                                    </a>
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="landindustry" onclick="landindustry()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">industry</span></h3>
+
+                                    </a>
+                                    <a href="javascript:void(0);" class="templatedivflex2left" id="landprocessing" onclick="landprocessing()">
+
+                                        <h3 class="smallheader"><span class="menuflex2-label-text">Processing</span>
+                                            <span class="menuflex2notification material-icons-outlined notificationyellow notificationicon">power</span>
+                                        </h3>
+
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!--FOR CARSON - make these tds links in the future (using IDs)-->
+
+                        <tr>
+                            <td>{{ units["army_bases"] }} Army Bases</td>
+                            <td>{{ units["farms"] }} Farms</td>
+                            <td>{{ units["component_factories"] }} Component Factories</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["aerodomes"] }} Air Bases</td>
+                            <!-- #1 Raw resource -->
+                            {% if province['location'] in ["Tundra", "Desert", "Boreal Forest", "Grassland"] %}
+                            <td>{{ units["iron_mines"] }} Iron Mines</td>
+                            {% elif province['location'] in ["Savanna", "Jungle", "Mountain Range"] %}
+                            <td>{{ units["coal_mines"] }} Coal Mines</td>
+                            {% endif %}
+                            <td>{{ units["steel_mills"] }} Steel Mills</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["harbours"] }} Naval Bases</td>
+                            <!-- #2 Raw resource -->
+                            {% if province['location'] in ["Tundra", "Savanna", "Jungle", "Grassland"] %}
+                            <td>{{ units["copper_mines"] }} Copper Mines</td>
+                            {% elif province['location'] in ["Mountain Range", "Desert"] %}
+                            <td>{{ units["pumpjacks"] }} Pumpjacks</td>
+                            {% elif province['location'] in ["Boreal Forest"] %}
+                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            {% endif %}
+                            <!---->
+                            <td>{{ units["ammunition_factories"] }} Ammunition Factories</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["admin_buildings"] }} Administrative Buildings</td>
+                            <!-- #3 Raw resource -->
+                            {% if province['location'] in ["Tundra", "Savanna", "Boreal Forest"] %}
+                            <td>{{ units["lead_mines"] }} Lead Mines</td>
+                            {% elif province['location'] in ["Desert", "Grassland", "Mountain Range"] %}
+                            <td>{{ units["bauxite_mines"] }} Bauxite Mines</td>
+                            {% elif province['location'] in ["Jungle"] %}
+                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            {% endif %}
+                            <!---->
+                            <td>{{ units["aluminium_refineries"] }} Aluminium Refineries</td>
+                        </tr>
+                        <tr>
+                            <td>{{ units["silos"] }} Silos</td>
+                            <!-- 4 Raw resource -->
+                            {% if province['location'] in ["Jungle", "Grassland"] %}
+                            <td>{{ units["pumpjacks"] }} Pumpjacks</td>
+                            {% elif province['location'] in ["Mountain Range"] %}
+                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            {% elif province['location'] in ["Desert", "Tundra"]%}
+                            <td>{{ units["uranium_mines"] }} Uranium Mines </td>
+                            {% elif province['location'] in ["Savanna"] %}
+                            <td>{{ units["bauxite_mines"] }} Bauxite Mines</td>
+                            {% elif province['location'] in ["Boreal Forest"] %}
+                            <td>{{ units["coal_mines"] }} Coal mines</td>
+                            {% endif %}
+                            <!---->
+                            <td>{{ units["oil_refineries"] }} Oil Refineries</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!--Military-->
+                <div id="military" class="military">
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Army Bases</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["army_bases"] }} Army Bases</h3>
+
+                                <p class="templatecontentpleft">Army Bases allow for the storage and production of all ground units.</p>
+                                <p class="templatecontentpleft"><strong>Note:</strong> Enforces a cap of 150 troops per Army Base.</p>
+
+                                <ul>Army bases cost {{ infra["army_bases_money"] | fmt }} per hour</ul>
+                                <ul>{{ "army_bases" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="army_bases" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/army_bases/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/army_bases/' ~ province['id']) }}
+
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'army_bases')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Air Bases</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["aerodomes"] }} Air Bases</h3>
+
+                                <p class="templatecontentpleft">Air Bases allow for the storage and production of all air units.</p>
+
+                                <ul>Air Bases cost {{ infra["aerodomes_money"] | fmt }} per hour</ul>
+                                <ul>{{ "aerodomes" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="aerodomes" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/aerodomes/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/aerodomes/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'aerodomes')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Naval Bases</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["harbours"] }} Naval Bases</h3>
+
+                                <p class="templatecontentpleft">Naval Bases allow for the storage and production of all naval units.</p>
+
+                                <ul>Naval Bases cost {{ infra["harbours_money"] | fmt }} per hour</ul>
+                                <ul>{{ "harbours" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="harbours" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/harbours/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/harbours/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'harbours')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Administrative Buildings</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["admin_buildings"] }} Administrative Buildings</h3>
+
+                                <p class="templatecontentpleft">Admin buildings provide capabilities to recruit spies and perform operations on adversaries.</p>
+
+                                <ul>Admin buildings cost {{ infra["admin_buildings_money"] | fmt }} per hour</ul>
+                                <ul>{{ "admin_buildings" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="admin_buildings" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/admin_buildings/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/admin_buildings/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'admin_buildings')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Silos</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["silos"] }} Silos</h3>
+
+                                <p class="templatecontentpleft">Silos allow for the production, storage, and launch of Ballistic Missiles and Nukes.</p>
+
+                                <ul>Silos cost {{ infra["silos_money"] | fmt }} per hour</ul>
+                                <ul>{{ "silos" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="silos" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/silos/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/silos/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'silos')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Industry-->
+                <!-- Farms -->
+                <div id="industry" class="industry">
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Farms</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["farms"] }} Farms</h3>
+
+                                <p class="templatecontentpleft">Farms produce rations to feed your nation. Farms are best suited for established nations that own lots of land, as land influences farm production.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Farms cost {{ (infra["farms_money"] * 0.8) | fmt }} {% else %}
+                                    <ul>Farms cost {{ infra["farms_money"] | fmt }} {% endif %} {% if upgrades["advancedmachinery"] %} and produce +{{ (infra["farms_plus"]["rations"] * 1.5) | int  | weight_fmt }} rations per hour, {% else %} and produce +{{ infra["farms_plus"]["rations"]  | weight_fmt }} rations per hour, {% endif %} as well as +{{ infra["farms_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "farms" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="farms" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/farms/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/farms/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'farms')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CONTINENT SPECIFIC RESOURCES -->
+                    <!-- #1 Raw resource -->
+                    {% if province['location'] in ["Tundra", "Desert", "Boreal Forest", "Grassland"] %}
+                    <!-- Iron mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Iron Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["iron_mines"] }} Iron Mines</h3>
+
+                                <p class="templatecontentpleft">Iron mines produce iron which is necessary to produce steel.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Iron mines cost {{ (infra["iron_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Iron mines cost {{ infra["iron_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["iron_mines_plus"]["iron"]  | weight_fmt }} iron per hour, as well as +{{ infra["iron_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "iron_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="iron_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/iron_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/iron_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'iron_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Savanna", "Mountain Range", "Jungle"] %}
+                    <!-- Coal mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Coal Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["coal_mines"] }} Coal Mines</h3>
+
+                                <p class="templatecontentpleft">Coal mines produce coal. Coal can be used to fuel coal power plants, or can be combined with iron to produce steel.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %}
+                                        <ul>and produce {{ infra["coal_mines_plus"]["coal"]  | weight_fmt }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                        <ul>{{ "coal_mines" | prores }}</ul>
+
+                                        <div class="purchasemilitarydiv">
+                                            <input class="loginsignupinput" autocomplete="off" name="coal_mines" type="number" placeholder="Amount" />
+
+                                            <div class="templatedivflex2 divflex2center">
+                                                <div class="templatedivflex2left flexchildvanilla">
+
+                                                    {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_mines/' ~ province['id']) }}
+
+                                                </div>
+                                                <div class="templatedivflex2left flexchildvanilla">
+
+                                                    {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_mines/' ~ province['id']) }}
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'coal_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endif %}
+
+                    <!-- #2 Raw resource -->
+                    {% if province['location'] in ["Tundra", "Savanna", "Jungle", "Grassland"] %}
+                    <!-- Copper mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Copper Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["copper_mines"] }} Copper Mines</h3>
+
+                                <p class="templatecontentpleft">Copper mines produce copper for your nation. Copper can be used to manufacture ammunution</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Copper mines cost {{ (infra["copper_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Copper mines cost {{ infra["copper_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["copper_mines_plus"]["copper"]  | weight_fmt }} copper per hour, as well as +{{ infra["copper_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "copper_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="copper_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/copper_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/copper_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'copper_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Mountain Range", "Desert"] %}
+                    <!-- Pumpjacks -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Pumpjacks</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["pumpjacks"] }} Pumpjacks</h3>
+
+                                <p class="templatecontentpleft">Pumpjacks harvest oil from the ground, providing a resource that can be processed into gasoline.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"]  | weight_fmt }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "pumpjacks" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="pumpjacks" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/pumpjacks/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/pumpjacks/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'pumpjacks')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Boreal Forest"] %}
+                    <!-- Lumber mills -->
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Lumber Mills</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
+
+                                <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "lumber_mills" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'lumber_mills')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- #3 Raw resource -->
+                    {% if province['location'] in ["Tundra", "Savanna", "Boreal Forest"] %}
+                    <!-- Lead mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Lead Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["lead_mines"] }} Lead Mines</h3>
+
+                                <p class="templatecontentpleft">Lead mines allow for the production of lead, which is valuable for its use in ammunition.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Lead mines cost {{ (infra["lead_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lead mines cost {{ infra["lead_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["lead_mines_plus"]["lead"]  | weight_fmt }} lead per hour, as well as +{{ infra["lead_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "lead_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="lead_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lead_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lead_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'lead_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Desert", "Grassland", "Mountain Range"] %}
+                    <!-- Bauxite mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Bauxite Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["bauxite_mines"] }} Bauxite Mines</h3>
+
+                                <p class="templatecontentpleft">Bauxite mines make bauxite for your country. Bauxite can be processed into aluminium.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"]  | weight_fmt }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "bauxite_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="bauxite_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/bauxite_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/bauxite_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'bauxite_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Jungle"] %}
+                    <!-- Lumber mills -->
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Lumber Mills</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
+
+                                <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "lumber_mills" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'lumber_mills')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- #4 Raw resource -->
+                    {% if province['location'] in ["Jungle", "Grassland"] %}
+                    <!-- Pumpjacks -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Pumpjacks</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["pumpjacks"] }} Pumpjacks</h3>
+
+                                <p class="templatecontentpleft">Pumpjacks harvest oil from the ground, providing a resource that can be processed into gasoline.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"]  | weight_fmt }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "pumpjacks" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="pumpjacks" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/pumpjacks/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/pumpjacks/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'pumpjacks')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Mountain Range"] %}
+                    <!-- Lumber mills -->
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Lumber Mills</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["lumber_mills"] }} Lumber Mills</h3>
+
+                                <p class="templatecontentpleft">Lumber mills produce lumber, a useful raw resource used to mines and farms.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour
+                                {% else %}
+                                <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "lumber_mills" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/lumber_mills/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'lumber_mills')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    {% elif province['location'] in ["Desert", "Tundra"]%}
+                    <!-- Uranium Mines-->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Uranium Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["uranium_mines"] }} Uranium Mines</h3>
+
+                                <p class="templatecontentpleft">Uranium mines harvest uranium, which can be used to fuel nuclear reactors, or in nuclear weapons.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Uranium mines cost {{ (infra["uranium_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Uranium mines cost {{ infra["uranium_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["uranium_mines_plus"]["uranium"]  | weight_fmt }} uranium per hour, as well as +{{ infra["uranium_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "uranium_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="uranium_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/uranium_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/uranium_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'uranium_mines')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    {% elif province['location'] in ["Savanna"] %}
+                    <!-- Bauxite mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Bauxite Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["bauxite_mines"] }} Bauxite Mines</h3>
+
+                                <p class="templatecontentpleft">Bauxite mines make bauxite for your country. Bauxite can be processed into aluminium.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"]  | weight_fmt }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "bauxite_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="bauxite_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/bauxite_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/bauxite_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'bauxite_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% elif province['location'] in ["Boreal Forest"] %}
+                    <!-- Coal mines -->
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Coal Mines</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["coal_mines"] }} Coal Mines</h3>
+
+                                <p class="templatecontentpleft">Coal mines produce coal. Coal can be used to fuel coal power plants, or can be combined with iron to produce steel.</p>
+
+                                {% if upgrades["cheapermaterials"] %}
+                                <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | fmt }} per hour {% else %}
+                                    <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["coal_mines_plus"]["coal"]  | weight_fmt }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
+                                    <ul>{{ "coal_mines" | prores }}</ul>
+
+                                    <div class="purchasemilitarydiv">
+                                        <input class="loginsignupinput" autocomplete="off" name="coal_mines" type="number" placeholder="Amount" />
+
+                                        <div class="templatedivflex2 divflex2center">
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/coal_mines/' ~ province['id']) }}
+
+                                            </div>
+                                            <div class="templatedivflex2left flexchildvanilla">
+
+                                                {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/coal_mines/' ~ province['id']) }}
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'coal_mines')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!--Processing-->
+                <div id="processing" class="processing">
+
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Component Factories</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["component_factories"] }} Component Factories</h3>
+
+                                <p class="templatecontentpleft">Components factories produce components for your country from copper, steel, and aluminium. Components are incredibly valuable which are used in advanced machinery.</p>
+
+                                {% if upgrades["automationintegration"] %}
+                                <ul>Component Factories cost {{ infra["component_factories_money"] | fmt }} and convert {{ (infra["component_factories_convert_minus"][0]["copper"] * 0.75) | int  | weight_fmt }} copper, {{ (infra["component_factories_convert_minus"][1]["steel"] * 0.75) | int  | weight_fmt }} steel, and {{ (infra["component_factories_convert_minus"][2]["aluminium"] * 0.75) | int  | weight_fmt }} aluminium into {{ infra["component_factories_plus"]["components"]  | weight_fmt }} components per hour, as well as +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                {% else %}
+                                <ul>Component Factories cost {{ infra["component_factories_money"] | fmt }} and convert {{ infra["component_factories_convert_minus"][0]["copper"]  | weight_fmt }} copper, {{ infra["component_factories_convert_minus"][1]["steel"]  | weight_fmt }} steel, and {{ infra["component_factories_convert_minus"][2]["aluminium"]  | weight_fmt }} aluminium into {{ infra["component_factories_plus"]["components"]  | weight_fmt }} components per hour, as well as +{{ infra["component_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                {% endif %}
+                                <ul>{{ "component_factories" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="component_factories" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/component_factories/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/component_factories/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'component_factories')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Steel Mills</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["steel_mills"] }} Steel Mills</h3>
+
+                                <p class="templatecontentpleft">Steel mills produce steel from iron and coal, an incredibly robust material</p>
+
+                                {% if upgrades["largerforges"] %}
+                                <ul>Steel Mills cost {{ ((infra["steel_mills_money"] * 0.7) | int) | fmt }} and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * 0.7) | int  | weight_fmt }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * 0.7) | int  | weight_fmt }} coal into {{ infra["steel_mills_plus"]["steel"]  | weight_fmt }} steel per hour, as well as +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -2 electricity per hour if you have Electric Arc Furnace researched, otherwise -1</ul>
+                                {% else %}
+                                <ul>Steel Mills cost {{ infra["steel_mills_money"] | fmt }} and convert {{ infra["steel_mills_convert_minus"][1]["iron"]  | weight_fmt }} iron and {{ infra["steel_mills_convert_minus"][0]["coal"]  | weight_fmt }} coal into {{ infra["steel_mills_plus"]["steel"]  | weight_fmt }} steel per hour, as well as +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -2 electricity per hour if you have Electric Arc Furnace researched, otherwise -1</ul>
+                                {% endif %}
+                                <ul>{{ "steel_mills" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="steel_mills" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/steel_mills/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/steel_mills/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'steel_mills')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Ammunition Factories</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["ammunition_factories"] }} Ammunition Factories</h3>
+
+                                <p class="templatecontentpleft">Ammunition factories allows you to convert copper and lead into ammunition, which is necessary for war machines and useful for soldiers to fight in war.</p>
+
+                                <ul>Ammunition Factories cost {{ infra["ammunition_factories_money"] | fmt }} and convert {{ infra["ammunition_factories_convert_minus"][0]["copper"]  | weight_fmt }} copper and {{ infra["ammunition_factories_convert_minus"][1]["lead"]  | weight_fmt }} lead into {{ infra["ammunition_factories_plus"]["ammunition"]  | weight_fmt }} ammunition per hour, as well as +{{ infra["ammunition_factories_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "ammunition_factories" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="ammunition_factories" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/ammunition_factories/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/ammunition_factories/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'ammunition_factories')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Aluminium Refineries</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["aluminium_refineries"] }} Aluminium Refineries</h3>
+
+                                <p class="templatecontentpleft">Aluminium refineries allow you to convert bauxite into aluminium, a general use material.</p>
+
+                                <ul>Aluminium Refineries cost {{ infra["aluminium_refineries_money"] | fmt }} and convert {{ infra["aluminium_refineries_convert_minus"][0]["bauxite"]  | weight_fmt }} bauxite into {{ infra["aluminium_refineries_plus"]["aluminium"]  | weight_fmt }} aluminium per hour, as well as +{{ infra["aluminium_refineries_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "aluminium_refineries" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="aluminium_refineries" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/aluminium_refineries/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/aluminium_refineries/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'aluminium_refineries')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Oil Refinery</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["oil_refineries"] }} Oil Refineries</h3>
+
+                                <p class="templatecontentpleft">Oil refineries convert oil into gasoline, used for fueling your war machines.</p>
+
+                                <ul>Oil Refineries cost {{ infra["oil_refineries_money"] | fmt }} and convert {{ infra["oil_refineries_convert_minus"][0]["oil"]  | weight_fmt }} oil into {{ infra["oil_refineries_plus"]["gasoline"]  | weight_fmt }} gasoline per hour, as well as +{{ infra["oil_refineries_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "oil_refineries" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="oil_refineries" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/oil_refineries/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/oil_refineries/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'oil_refineries')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Industrial District</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["industrial_district"] }} Industrial Districts</h3>
+
+                                <p class="templatecontentpleft">Industrial Districts are a large-scale consumer goods facility, producing far more per building than a general store.</p>
+
+                                <ul>Industrial Districts cost {{ infra["industrial_district_money"] | fmt }} per hour and produce {{ infra["industrial_district_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["industrial_district_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>{{ "industrial_district" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="industrial_district" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/industrial_district/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/industrial_district/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('buildings', 'industrial_district')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </form>
+        {% endif %}
+        </div>
+        </div><!-- /province-classic-view -->
+    </div>
+</div>
+{% endblock %}

@@ -621,8 +621,9 @@ def province(pId):
                 distribution_status = dict(distribution_status)
                 distribution_status["show_alert"] = True
 
+        template = "province_v2.html" if is_theme_v2_enabled("province") else "province.html"
         return render_template(
-            "province.html",
+            template,
             province=province,
             distribution_status=distribution_status,
             population=national_pop,
