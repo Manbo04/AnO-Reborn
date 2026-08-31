@@ -3040,20 +3040,45 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     display: flex;
     flex-direction: row;
     width: 100%;
-    overflow: visible;
+    overflow: hidden;
     margin: 0;
     background-color: transparent;
     height: max-content;
     box-shadow: none;
     position: relative;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url("images/coalition.jpg?v=2");
     min-height: calc(100vh - 55px);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
     transition: none;
     padding-top: 55px;
     box-sizing: border-box;
+}
+
+/* Blurred, gently darkened backdrop -- kept as a separate layer behind the
+   real content rather than a filter on .landingparent itself, since a CSS
+   filter on the parent would blur the h1/buttons too, not just the photo.
+   Matches the same blur/overlay treatment every other page in the game now
+   uses (.game-page-bg/.game-page-overlay) -- this page's own hero photo +
+   scroll parallax (parallaxify.js, unchanged) is worth keeping distinct from
+   the rest of the site, but a sharp, undarkened photo here read as
+   inconsistent with everything else once the rest of the site went glassy. */
+.landingparent::before {
+    content: "";
+    position: absolute;
+    inset: -20px;
+    z-index: 0;
+    background-image: url("images/coalition.jpg?v=2");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    filter: blur(7px);
+    transform: scale(1.05);
+}
+
+.landingparent::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.65));
 }
 
 @media all and (max-width: 800px) {
@@ -3066,6 +3091,8 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
     width: 90%;
     padding: 0px 5%;
     margin: 0;
+    position: relative;
+    z-index: 1;
 }
 
 @media all and (max-width: 800px) {
