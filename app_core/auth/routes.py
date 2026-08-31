@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect
-from helpers import login_required, error
+from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor, rollback_db_cursor, users_table_has_column
 from psycopg2.extras import RealDictCursor
 
@@ -65,8 +65,9 @@ def account():
     except Exception:
         pass
 
+    template = "account_v2.html" if is_theme_v2_enabled("account") else "account.html"
     return render_template(
-        "account.html",
+        template,
         user=user,
         discord_bot_link=discord_bot_link,
         discord_link_ttl_minutes=discord_link_ttl_minutes,

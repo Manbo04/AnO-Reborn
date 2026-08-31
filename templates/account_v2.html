@@ -1,19 +1,18 @@
-{% extends "layout.html" %} {% block title %} Account {% endblock %} {% block body %}
-<div class="templatediv">
+{% extends "layout.html" %} {% block title %} Account {% endblock %}
+{% block body_class %} game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_glass_panel, game_hero, game_button %}
 
-    <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            perm_identity
-            </span>{{ user.username }}'s Account</h1>
-    </div>
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/washington.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+    {{ game_hero(user.username ~ "'s Account", badge_icon='perm_identity', badge_text='Member since ' ~ user["date"]) }}
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheaderleft">Account Information</h2>
-
-
         <form action="/change" method="POST">
-            <div class="infodiv">
+        {% call game_glass_panel('Account Information', icon='badge', style='margin-bottom: var(--game-space-lg, 24px);') %}
                 <div class="templateoutertablediv">
                     <table class="templatetable templatetable2">
                         <tr>
@@ -34,9 +33,7 @@
                         <tr>
                             <td>Password:</td>
                             <td>************</td>
-                            <td><button formaction="/request_password_reset" type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                                lock_reset
-                                </span>Reset password</button></td>
+                            <td>{{ game_button('Reset password', icon='lock_reset', formaction='/request_password_reset') }}</td>
                         </tr>
                         <tr>
                             <td>Date joined:</td>
@@ -57,17 +54,13 @@
 
                 <div class="account-action-form" style="margin-top: 15px;">
                     <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
-
-                    <button class="templatedivbutton templatecenteredbutton" type="submit">
-                        <span class="material-icons-outlined">save</span>Save Details
-                    </button>
+                    {{ game_button('Save Details', icon='save') }}
                 </div>
-            </div>
+        {% endcall %}
         </form>
 
         {% if referral_dashboard %}
-        <h2 class="templatecontentheaderleft">Invite Friends</h2>
-        <div class="infodiv referral-panel">
+        {% call game_glass_panel('Invite Friends', icon='diversity_3', style='margin-bottom: var(--game-space-lg, 24px);') %}
             <p class="templatecontentpleft">
                 Share your link — friends get <strong>{{ referral_dashboard.invitee_bonus_summary }}</strong> at signup.
                 You earn more gold and resources for each day they keep playing (Day 1, 3, 7, and 14).
@@ -128,7 +121,7 @@
             {% else %}
             <p class="templatecontentpleft">No signups from your link yet. Post it on Discord or send to friends!</p>
             {% endif %}
-        </div>
+        {% endcall %}
         <script>
         function copyReferralLink() {
             var input = document.getElementById('referral-link-input');
@@ -139,8 +132,7 @@
         </script>
         {% endif %}
 
-        <h2 class="templatecontentheaderleft">Discord Bot Link</h2>
-        <div class="infodiv">
+        {% call game_glass_panel('Discord Bot Link', icon='smart_toy', style='margin-bottom: var(--game-space-lg, 24px);') %}
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
 
             {% if discord_bot_link %}
@@ -170,12 +162,11 @@
 
             <form action="/generate_discord_link_code" method="POST" class="account-action-form">
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
-                <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">smart_toy</span>Generate Bot Link Code</button>
+                {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
             </form>
-        </div>
+        {% endcall %}
 
-        <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
-        <div class="infodiv">
+        {% call game_glass_panel('Backup Recovery Key', icon='key', style='margin-bottom: var(--game-space-lg, 24px);') %}
             {% if not has_recovery_key %}
             <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107;">
                 You don't have a backup recovery key yet — generate one now while you can log in.
@@ -184,34 +175,19 @@
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
             <form action="/generate_recovery_key" method="POST" class="account-action-form">
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
-                <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">key</span>Generate Key</button>
+                {{ game_button('Generate Key', icon='key') }}
             </form>
-        </div>
+        {% endcall %}
 
-        <h2 class="templatecontentheaderleft">General</h2>
-
-        <div class="infodiv">
-
-            <!--
-            <input class="loginsignupinput" name="" placeholder="Discord Username" />
-            -->
-
+        {% call game_glass_panel('General', icon='tune') %}
             <label class="templatecheckmarklabel fit">Dark Mode
                 <input type="checkbox" onchange="toggleTheme()" id="slider">
                 <span class="templatecheckmark center"></span>
-              </label>
-
-            <!-- <button id="templatedivbutton" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                        check
-                    </span>Update</button>
-                -->
-
-        </div>
+            </label>
+        {% endcall %}
     </div>
 
-    <h2 class="templatecontentheaderleft">Danger Zone</h2>
-
-    <div class="infodiv">
+    {% call game_glass_panel('Danger Zone', icon='warning', style='margin-top: var(--game-space-lg, 24px);') %}
         <form method="POST" id="deleteAccountForm">
             <div class="templatedivflex2 menuflex">
                 <div class="templatedivflex2left">
@@ -236,7 +212,7 @@
                 </div>
             </div>
         </form>
-    </div>
+    {% endcall %}
 </div>
 
 <!-- Delete Account Confirmation Modal -->
@@ -325,28 +301,6 @@
     background: var(--background);
     color: var(--colorOne);
     font-size: 14px;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.modal-buttons .templatedivbutton {
-    flex: 1;
-}
-
-.account-action-form input.loginsignupinput {
-    flex: 1;
-    min-width: 250px;
-    margin-bottom: 0 !important;
-}
-.account-action-form button.templatedivbutton {
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-bottom: 0 !important;
 }
 
 #confirmDeleteBtn:disabled {
@@ -555,6 +509,5 @@ function submitReset(type) {
 }
 </script>
 
-    {% include "partials/reset_modal.html" %}
-</div>
+{% include "partials/reset_modal.html" %}
 {% endblock %}
