@@ -736,3 +736,222 @@ body.game-page-v2 .templatedivbutton-secondary {
     font-size: 12px;
     color: #8891a0;
 }
+
+/* ---------- More reference-mockup vocabulary: stat chips, chat, news cards,
+   threads, devlog (hub.html) ---------- */
+.game-badge-accent {
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.game-stat-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.game-stat-row .game-stat {
+    flex: 1 1 150px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 20px;
+    border-left: 1px solid var(--game-glass-border);
+}
+
+.game-stat-row .game-stat:first-child {
+    border-left: none;
+    padding-left: 4px;
+}
+
+.game-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.game-stat-icon .material-icons-outlined {
+    font-size: 20px;
+    color: var(--accent);
+}
+
+.game-stat-label {
+    font-size: 11.5px;
+    color: var(--game-text-faint);
+    font-weight: 600;
+}
+
+.game-stat-value {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--colorOne);
+}
+
+@media (max-width: 620px) {
+    .game-stat-row .game-stat {
+        flex: 1 1 42%;
+        border-left: none;
+        padding-left: 4px;
+        margin-bottom: 10px;
+    }
+}
+
+.game-online-stack {
+    display: flex;
+}
+
+.game-online-stack img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-left: -8px;
+    border: 2px solid var(--background);
+    object-fit: cover;
+    background: var(--game-glass-bg-strong);
+}
+
+.game-online-stack img:first-child {
+    margin-left: 0;
+}
+
+.game-chat-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.game-chat-msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.game-chat-msg img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-top: 2px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border: 1px solid var(--game-glass-border);
+}
+
+.game-chat-bubble {
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 12px;
+    border-top-left-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    max-width: 88%;
+    color: var(--colorOne);
+}
+
+.game-chat-name {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 2px;
+    color: var(--colorOne);
+}
+
+.game-chat-time {
+    font-size: 10.5px;
+    color: var(--game-text-faint);
+    margin-left: 6px;
+    font-weight: 500;
+}
+
+.game-news-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.game-news-card {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--game-glass-border);
+    background: var(--game-glass-bg-strong);
+    text-decoration: none;
+    color: var(--colorOne);
+    display: block;
+    transition: background .12s;
+}
+
+.game-news-card:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-news-card img {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: var(--game-glass-bg);
+}
+
+.game-news-card .game-news-title {
+    font-weight: 700;
+    font-size: 12.5px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+
+.game-news-card .game-news-snippet {
+    font-size: 11px;
+    color: var(--game-text-faint);
+}
+
+@media (max-width: 620px) {
+    .game-news-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.game-thread-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--game-glass-border);
+    text-decoration: none;
+    color: var(--colorOne);
+}
+
+.game-thread-row:last-child {
+    border-bottom: none;
+}
+
+.game-thread-row:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-devlog-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+.game-devlog-item:last-child {
+    border-bottom: none;
+}
+
+.game-devlog-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 5px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
