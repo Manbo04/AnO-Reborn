@@ -939,6 +939,14 @@ body.game-page-v2 .warflexparentcolors {
     gap: 12px;
 }
 
+/* A same-specificity class rule (author) always beats the UA stylesheet's
+   [hidden]{display:none} regardless of source order (author origin always
+   wins over user-agent origin) -- without this, hub.html's collapsed
+   "show more" news grid stayed visible despite the hidden attribute. */
+.game-news-grid[hidden] {
+    display: none;
+}
+
 .game-news-card {
     padding: 12px;
     border-radius: 12px;
