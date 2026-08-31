@@ -543,6 +543,14 @@ body.game-page-v2 .templatetable3 td {
     color: var(--colorOne);
 }
 
+/* Transparent, not another glass layer -- .templatetable inside it already
+   carries the glass treatment above; stacking two translucent layers just
+   double-darkens the same content. */
+body.game-page-v2 .templateoutertablediv {
+    background: transparent;
+    box-shadow: none;
+}
+
 body.game-page-v2 .templateselect,
 body.game-page-v2 .imageinput {
     background: var(--game-glass-bg-strong);
