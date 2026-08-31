@@ -190,3 +190,211 @@ body.game-page-v2 .templatediv {
         height: 42px;
     }
 }
+
+/* ---------- Component vocabulary ported from the reference mockup ----------
+   The reference (/Users/dede/ano-redesign/*.html + theme.css) redesigns a
+   page's ENTIRE body -- filter panels, tables, buttons, pagination -- not
+   just its header. These are the shared building blocks for that, mapped
+   onto the real game's own tokens (tokens.css) rather than the mockup's own
+   invented --glass-bg/--accent-dim/etc. variable names, so they stay
+   correct across both real themes automatically. Added 2026-08-31 after
+   the first hero-only pass turned out to badly undershoot what "one to one
+   with the mockup" meant. */
+
+.game-panel {
+    padding: 20px 22px;
+}
+
+.game-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.game-spread {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.game-faint {
+    color: var(--game-text-faint);
+    font-size: 12.5px;
+}
+
+.game-icon-sm {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.game-select {
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--colorOne);
+    font-size: 12.5px;
+    min-height: 38px;
+}
+
+/* ---------- Buttons ---------- */
+.game-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: background 0.12s, border-color 0.12s, transform 0.05s;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--colorOne);
+}
+
+.game-btn:active {
+    transform: translateY(1px);
+}
+
+.game-btn-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.game-btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.game-btn-secondary {
+    background: var(--game-glass-bg-strong);
+    border-color: var(--game-glass-border);
+    color: var(--colorOne);
+}
+
+.game-btn-secondary:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.game-btn-ghost:hover {
+    color: var(--colorOne);
+}
+
+.game-btn-ghost.is-current {
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    font-weight: 700;
+}
+
+.game-btn-sm {
+    padding: 6px 11px;
+    font-size: 12px;
+}
+
+.game-btn .material-icons-outlined {
+    font-size: 16px;
+}
+
+/* ---------- Badges ---------- */
+.game-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.game-badge-good {
+    background: color-mix(in srgb, var(--success) 16%, transparent);
+    color: var(--success);
+}
+
+.game-badge-warn {
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
+    color: var(--gold);
+}
+
+/* ---------- Table ---------- */
+.game-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--game-radius-lg);
+}
+
+.game-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.game-table thead th {
+    text-align: left;
+    padding: 11px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--game-text-faint);
+    border-bottom: 1px solid var(--game-glass-border);
+    white-space: nowrap;
+}
+
+.game-table tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--game-glass-border);
+    color: var(--colorOne);
+}
+
+.game-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.game-table tbody tr {
+    transition: background 0.1s;
+}
+
+.game-table tbody tr:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-purchase-input {
+    width: 90px;
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    color: var(--colorOne);
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .game-table-wrap {
+        display: none;
+    }
+}
+
+.game-market-cards {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .game-market-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+}
