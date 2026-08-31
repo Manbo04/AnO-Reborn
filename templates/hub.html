@@ -22,9 +22,9 @@
             </div>
         </div>
 
-        <div class="game-row" style="align-items: flex-start; gap: 18px; flex-wrap: wrap;">
+        <div class="game-row" style="align-items: stretch; gap: 18px; flex-wrap: wrap;">
 
-            <div class="game-glass game-panel" style="flex: 1 1 380px; min-width: 300px;">
+            <div class="game-glass game-panel game-panel--flex-col" style="flex: 1 1 380px; min-width: 300px;">
                 <div class="game-spread" style="margin-bottom: 14px;">
                     <div class="game-row" style="gap: 8px;"><span class="material-icons-outlined" style="color: var(--success);">chat</span><strong style="font-size: 14px;">Global Chat</strong></div>
                     {% if online_sender_ids %}
@@ -33,8 +33,8 @@
                     </div>
                     {% endif %}
                 </div>
-                <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}">
-                    <div class="game-chat-feed" id="hubChatMessages" aria-live="polite">
+                <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
+                    <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1; max-height: none;">
                         {% if chat_history and chat_history|length > 0 %}
                             {% for m in chat_history|reverse %}
                             <div class="game-chat-msg">
@@ -49,7 +49,7 @@
                             <div class="game-faint">No messages yet. Say hello to the world!</div>
                         {% endif %}
                     </div>
-                    <form id="hubChatForm" class="game-row" autocomplete="off" style="margin-top: 12px; flex-wrap: nowrap;">
+                    <form id="hubChatForm" class="game-row" autocomplete="off" style="margin-top: 12px; flex-wrap: nowrap; flex-shrink: 0;">
                         <textarea class="templatetextarea chat-input" id="hubChatInput" maxlength="1000" placeholder="Say something to everyone..." rows="1" required style="flex: 1; min-width: 0; min-height: 0; max-width: none; max-height: 42px; resize: none; margin: 0;"></textarea>
                         <button type="submit" class="game-btn game-btn-primary chat-send-btn">
                             <span class="material-icons-outlined">send</span>
@@ -62,7 +62,7 @@
                 <div class="game-row" style="gap: 8px; margin-bottom: 14px;"><span class="material-icons-outlined" style="color: var(--gold);">newspaper</span><strong style="font-size: 14px;">Global News</strong></div>
                 {% if news and news|length > 0 %}
                 <div class="game-news-grid">
-                    {% for item in news %}
+                    {% for item in news[:4] %}
                     <a class="game-news-card" href="{{ item.href }}">
                         <img src="/flag/country/{{ item.flag_user_id }}" alt="">
                         <div class="game-news-title">{{ item.title }}</div>
@@ -70,6 +70,21 @@
                     </a>
                     {% endfor %}
                 </div>
+                {% if news|length > 4 %}
+                <div class="game-news-grid" id="hubNewsMore" hidden style="margin-top: 12px;">
+                    {% for item in news[4:] %}
+                    <a class="game-news-card" href="{{ item.href }}">
+                        <img src="/flag/country/{{ item.flag_user_id }}" alt="">
+                        <div class="game-news-title">{{ item.title }}</div>
+                        <p class="game-news-snippet">{{ item.snippet }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                <button type="button" class="game-btn game-btn-ghost game-btn-sm" id="hubNewsToggle" style="margin-top: 12px; width: 100%;" aria-expanded="false" aria-controls="hubNewsMore">
+                    <span class="material-icons-outlined" id="hubNewsToggleIcon">expand_more</span>
+                    <span id="hubNewsToggleLabel">Show {{ news|length - 4 }} more</span>
+                </button>
+                {% endif %}
                 {% else %}
                 <p class="game-faint">Nothing new yet -- check back soon.</p>
                 {% endif %}
@@ -182,6 +197,22 @@
             if (form.requestSubmit) form.requestSubmit();
             else form.dispatchEvent(new Event('submit', {cancelable: true}));
         }
+    });
+})();
+
+(function () {
+    var toggle = document.getElementById('hubNewsToggle');
+    if (!toggle) return;
+    var more = document.getElementById('hubNewsMore');
+    var icon = document.getElementById('hubNewsToggleIcon');
+    var label = document.getElementById('hubNewsToggleLabel');
+    var showLabel = label.textContent;
+    toggle.addEventListener('click', function () {
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        more.hidden = expanded;
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        icon.textContent = expanded ? 'expand_more' : 'expand_less';
+        label.textContent = expanded ? showLabel : 'Show less';
     });
 })();
 </script>
