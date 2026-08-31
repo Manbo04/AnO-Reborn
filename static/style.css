@@ -6080,6 +6080,183 @@ body.game-page-v2 .templatediv {
     }
 }
 
+/* ---------- Shared tab bar (.menuflex2) restyle, scoped to game-page-v2 ----------
+   .menuflex2 is ONE shared component used by Country/Military/Coalition/Upgrades'
+   section switchers (View/Revenue/News/Edit, Land/Air/Water/Special, General/Bank/...,
+   Economic/Military) -- real JS (static/script.js's activateTab()) toggles a
+   `{tabId}click` class per group, unrelated to any markup change here. Restyling this
+   once, scoped to game-page-v2, upgrades the tab bar on all four pages at once instead
+   of needing a per-page pass. Replaces the old solid-blue-fill active state with an
+   underline indicator + consistent label color, matching Dede's own earlier explicit
+   feedback from the mockup phase ("use the blue line as indicator of which tab you are
+   on" -- see feedback in project-ano-ui-redesign-mockups memory). */
+body.game-page-v2 .menuflex2 {
+    background: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid var(--game-glass-border);
+    border-radius: 0;
+    height: auto;
+    width: 100%;
+    margin: 0 0 18px;
+}
+
+body.game-page-v2 .menuflex2 div,
+body.game-page-v2 .menuflex2 a {
+    background: transparent;
+    height: auto;
+    padding: 10px 16px;
+    border-bottom: 2px solid transparent;
+}
+
+body.game-page-v2 .menuflex2 div h3,
+body.game-page-v2 .menuflex2 a h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: normal;
+    height: auto;
+    color: var(--colorOne);
+}
+
+body.game-page-v2 .menuflex2 div:hover,
+body.game-page-v2 .menuflex2 a:hover {
+    background: var(--game-glass-bg);
+}
+
+body.game-page-v2 .countryviewclick,
+body.game-page-v2 .countryrevenueclick,
+body.game-page-v2 .countrynewsclick,
+body.game-page-v2 .countryactionsclick,
+body.game-page-v2 .countryeditclick,
+body.game-page-v2 .militarylandclick,
+body.game-page-v2 .militaryairclick,
+body.game-page-v2 .militarywaterclick,
+body.game-page-v2 .militaryspecialclick,
+body.game-page-v2 .coalitiongeneralclick,
+body.game-page-v2 .coalitionjoinclick,
+body.game-page-v2 .coalitionbankclick,
+body.game-page-v2 .coalitionchatclick,
+body.game-page-v2 .coalitiongovclick,
+body.game-page-v2 .coalitiondiplomacyclick,
+body.game-page-v2 .coalitiontaxclick,
+body.game-page-v2 .coalitionsettingsclick,
+body.game-page-v2 .upgradeseconomicclick,
+body.game-page-v2 .upgradesmilitaryclick {
+    background: transparent !important;
+    border-bottom-color: var(--accent) !important;
+}
+
+body.game-page-v2 .countryviewclick h3,
+body.game-page-v2 .countryrevenueclick h3,
+body.game-page-v2 .countrynewsclick h3,
+body.game-page-v2 .countryactionsclick h3,
+body.game-page-v2 .countryeditclick h3,
+body.game-page-v2 .militarylandclick h3,
+body.game-page-v2 .militaryairclick h3,
+body.game-page-v2 .militarywaterclick h3,
+body.game-page-v2 .militaryspecialclick h3,
+body.game-page-v2 .coalitiongeneralclick h3,
+body.game-page-v2 .coalitionjoinclick h3,
+body.game-page-v2 .coalitionbankclick h3,
+body.game-page-v2 .coalitionchatclick h3,
+body.game-page-v2 .coalitiongovclick h3,
+body.game-page-v2 .coalitiondiplomacyclick h3,
+body.game-page-v2 .coalitiontaxclick h3,
+body.game-page-v2 .coalitionsettingsclick h3,
+body.game-page-v2 .upgradeseconomicclick h3,
+body.game-page-v2 .upgradesmilitaryclick h3 {
+    color: var(--accent) !important;
+}
+
+/* ---------- Shared old-style component reskin, scoped to game-page-v2 ----------
+   Every already-ported page still has REAL content built from the site's shared
+   base classes -- .templatetable, .templateselect, .infodiv, .loginsignupinput,
+   .templatetextarea -- that only ever had the old flat/opaque look. Rather than
+   hand-editing markup on every one of the 15 ported pages (huge surface, real risk
+   of breaking real onclick/formaction/JS bindings for no visual gain), these
+   selectors are restyled in place, scoped to game-page-v2 only, so every existing
+   use of them picks up the glass look automatically with zero template changes.
+   Found necessary 2026-08-31 after Market's dedicated full-body rebuild made clear
+   that a hero-only pass wasn't enough anywhere -- this is the retroactive fix for
+   every OTHER already-ported page at once, not a one-off. */
+
+body.game-page-v2 .templatetable,
+body.game-page-v2 .templatetable2,
+body.game-page-v2 .templatetable3 {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    box-shadow: var(--game-shadow-glass);
+}
+
+body.game-page-v2 .templatetable th,
+body.game-page-v2 .templatetable2 th,
+body.game-page-v2 .templatetable3 th {
+    background: transparent;
+    color: var(--game-text-faint);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.game-page-v2 .templatetable tr:nth-child(odd),
+body.game-page-v2 .templatetable tr:nth-child(even),
+body.game-page-v2 .templatetable2 tr:nth-child(odd),
+body.game-page-v2 .templatetable2 tr:nth-child(even),
+body.game-page-v2 .templatetable3 tr:nth-child(odd),
+body.game-page-v2 .templatetable3 tr:nth-child(even) {
+    background: transparent;
+}
+
+body.game-page-v2 .templatetable tbody tr:hover,
+body.game-page-v2 .templatetable2 tbody tr:hover,
+body.game-page-v2 .templatetable3 tbody tr:hover {
+    background: var(--game-glass-bg-strong);
+}
+
+body.game-page-v2 .templatetable td,
+body.game-page-v2 .templatetable2 td,
+body.game-page-v2 .templatetable3 td {
+    border-bottom: 1px solid var(--game-glass-border);
+    color: var(--colorOne);
+}
+
+body.game-page-v2 .templateselect,
+body.game-page-v2 .imageinput {
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    color: var(--colorOne);
+}
+
+body.game-page-v2 .infodiv {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    box-shadow: var(--game-shadow-glass);
+}
+
+body.game-page-v2 .loginsignupinput,
+body.game-page-v2 .templatetextarea {
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    color: var(--colorOne);
+}
+
+/* .templatedivbutton already has a real flat-fill treatment (tokens.css era,
+   2026-08-19) that reads fine against a photo background as-is -- left alone here
+   on purpose, not an oversight. Secondary/ghost variants get a touch more glass
+   consistency since they're meant to read as lower-emphasis than the solid accent
+   fill above. */
+body.game-page-v2 .templatedivbutton-secondary {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+}
+
 
 /* --- static/css/game-shell.css --- */
 /**
