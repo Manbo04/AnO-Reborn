@@ -1,5 +1,5 @@
 from flask import render_template
-from helpers import login_required
+from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor, cache_response, get_coalition_members_table
 from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES
 
@@ -253,8 +253,9 @@ def rankings():
             rollback_db_cursor(db)
             top_alliances = []
 
+    template = "rankings_v2.html" if is_theme_v2_enabled("rankings") else "rankings.html"
     return render_template(
-        "rankings.html",
+        template,
         top_population=top_population,
         top_military=top_military,
         top_wealth=top_wealth,
