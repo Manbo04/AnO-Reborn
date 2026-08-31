@@ -289,7 +289,8 @@ def my_offers():
         offers["incoming"] = incoming
         offers["market"] = get_my_offers(db, cId)
 
-    return render_template("my_offers.html", cId=cId, offers=offers)
+    template = "my_offers_v2.html" if is_theme_v2_enabled("my_offers") else "my_offers.html"
+    return render_template(template, cId=cId, offers=offers)
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
