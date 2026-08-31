@@ -37,7 +37,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
 
 <div class="templatediv">
 
-    {{ game_hero(name, badge_icon='public', badge_text=colType) }}
+    {{ game_hero(name, badge_icon='public', badge_text=colType, image_url=('/flag/coalition/' ~ colId) if flag else None) }}
 
     <div class="templatedivcontent">
 

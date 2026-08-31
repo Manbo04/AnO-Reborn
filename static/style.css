@@ -5810,6 +5810,22 @@ body.game-page-v2 .templatediv {
     margin-bottom: 20px;
 }
 
+.game-hero-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.game-hero-thumb {
+    width: 88px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--game-glass-border);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
 .game-hero-badge {
     display: inline-flex;
     align-items: center;
@@ -5848,6 +5864,11 @@ body.game-page-v2 .templatediv {
 
     .game-hero h1 {
         font-size: 22px;
+    }
+
+    .game-hero-thumb {
+        width: 56px;
+        height: 42px;
     }
 }
 

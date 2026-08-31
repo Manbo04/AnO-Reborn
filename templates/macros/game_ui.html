@@ -35,12 +35,15 @@
 {#- The full-bleed-photo page header: badge + title + subtitle, with an optional trailing
     action slot (a button/row) via {% call %}. Called plainly (no {% call %}) when a page has
     no trailing action. #}
-{% macro game_hero(title, badge_text=None, badge_icon=None, subtitle=None) %}
+{% macro game_hero(title, badge_text=None, badge_icon=None, subtitle=None, image_url=None) %}
 <div class="game-glass game-hero">
-    <div>
-        {% if badge_text %}<span class="game-hero-badge">{% if badge_icon %}<span class="material-icons-outlined">{{ badge_icon }}</span>{% endif %}{{ badge_text }}</span>{% endif %}
-        <h1>{{ title }}</h1>
-        {% if subtitle %}<p class="game-hero-sub">{{ subtitle }}</p>{% endif %}
+    <div class="game-hero-main">
+        {% if image_url %}<img class="game-hero-thumb" src="{{ image_url }}" alt="" />{% endif %}
+        <div>
+            {% if badge_text %}<span class="game-hero-badge">{% if badge_icon %}<span class="material-icons-outlined">{{ badge_icon }}</span>{% endif %}{{ badge_text }}</span>{% endif %}
+            <h1>{{ title }}</h1>
+            {% if subtitle %}<p class="game-hero-sub">{{ subtitle }}</p>{% endif %}
+        </div>
     </div>
     {% if caller is defined %}{{ caller() }}{% endif %}
 </div>
