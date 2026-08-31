@@ -551,6 +551,13 @@ body.game-page-v2 .templateoutertablediv {
     box-shadow: none;
 }
 
+body.game-page-v2 .nation-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
 body.game-page-v2 .templateselect,
 body.game-page-v2 .imageinput {
     background: var(--game-glass-bg-strong);

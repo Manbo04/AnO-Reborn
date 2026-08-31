@@ -675,8 +675,9 @@ def countries():
         per_page=per_page
     )
 
+    template = "countries_v2.html" if is_theme_v2_enabled("countries") else "countries.html"
     return render_template(
-        "countries.html",
+        template,
         countries=data["countries"],
         current_user_id=cId,
         current_page=data["current_page"],
