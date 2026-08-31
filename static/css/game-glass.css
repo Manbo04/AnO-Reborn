@@ -596,7 +596,7 @@ body.game-page-v2 .templatecontentheaderleft {
    every one of those cards renders as a solid opaque block on every ported
    page that uses it. One shared fix instead of a per-page one. */
 body.game-page-v2 .warflexparentcolors {
-    background: var(--game-glass-bg-strong);
+    background: var(--game-glass-bg);
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
     border-color: var(--game-glass-border);
