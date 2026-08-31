@@ -1,0 +1,144 @@
+{% extends "layout.html"%} {% block title %} Wars {% endblock %}{% block body_class %} game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Wars', badge_icon='military_tech', badge_text=(warsCount ~ ' ongoing war' ~ ('s' if warsCount != 1 else '')) if warsCount else 'No ongoing wars') }}
+
+    <div class="templatedivcontent">
+
+        <div class="templatedivflex2 divflex2full wars-action-strip">
+            <div class="templatedivflex2left">
+                {{ game_button('Purchase Military', icon='payments', href='/military', extra_class='center smallactionbutton') }}
+            </div>
+            <div class="templatedivflex2left">
+                {{ game_button('Find Target', icon='track_changes', href='/find_targets', extra_class='center smallactionbutton') }}
+            </div>
+            <div class="templatedivflex2left">
+                {{ game_button('Organize Defense', icon='shield', href='/defense', extra_class='center smallactionbutton') }}
+            </div>
+            <div class="templatedivflex2right">
+                {{ game_button('Peace Offers', icon='favorite_border', href='/peace_offers', extra_class='center smallactionbutton') }}
+            </div>
+            <div class="templatedivflex2right">
+                {{ game_button('Intelligence', icon='person_search', href='/intelligence', extra_class='center smallactionbutton') }}
+            </div>
+        </div>
+
+        <h2 class="templatecontentheaderleft">Standing Military</h2>
+
+        <!-- Mobile: 2-column chip grid -->
+        <div class="wars-mil-grid game-table-fallback--hide-mobile" style="display:none"></div>
+        <div class="wars-mil-grid game-card-list--mobile-only">
+            {% for label, key in [('Soldiers','soldiers'),('Artillery','artillery'),('Tanks','tanks'),('Fighter Jets','fighters'),('Bombers','bombers'),('Attack Helicopters','apaches'),('Submarines','submarines'),('Cruisers','cruisers'),('Destroyers','destroyers'),('Spies','spies'),('Ballistic Missiles','icbms'),('Nukes','nukes')] %}
+            <div class="wars-mil-chip">
+                <span class="material-icons-outlined">military_tech</span>
+                <span><strong>{{ units[key] }}</strong> {{ label }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="templateoutertablediv game-table-fallback--hide-mobile">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Army</th>
+                    <th>Air Force</th>
+                    <th>Navy</th>
+                    <th>Special</th>
+                </tr>
+                <tr>
+                    <td>{{ units["soldiers"] }} Soldiers</td>
+                    <td>{{ units["fighters"] }} Fighter Jets</td>
+                    <td>{{ units["submarines"] }} Submarines</td>
+                    <td>{{ units["spies"] }} Spies</td>
+                </tr>
+                <tr>
+                    <td>{{ units["artillery"] }} Artillery</td>
+                    <td>{{ units["bombers"] }} Bombers</td>
+                    <td>{{ units["cruisers"] }} Cruisers</td>
+                    <td>{{ units["icbms"] }} Ballistic Missiles</td>
+                </tr>
+                <tr>
+                    <td>{{ units["tanks"] }} Tanks</td>
+                    <td>{{ units["apaches"] }} Attack Helicopters</td>
+                    <td>{{ units["destroyers"] }} Destroyers</td>
+                    <td>{{ units["nukes"] }} Nukes</td>
+                </tr>
+                <tr style="background-color: rgba(0, 204, 0, 0.1); border-top: 2px solid #00cc00;">
+                    <td colspan="4" style="text-align: center; padding: 0.5rem; color: #00cc00; font-weight: bold;">
+                        🛡️ Defending With:
+                        {% for unit_name in current_defense %}
+                            {{ units[unit_name] }} {{ unit_name | title }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        {% if warsCount == 0 %}
+        <!--if wars == False-->
+        <h2 class="templatecontentheadercenter">You have no ongoing wars</h2>
+        <!--if wars == True-->
+        {% endif %} {% if warsCount != 0 %}
+
+        <h2 class="templatecontentheaderleft">Ongoing Wars</h2>
+
+        {% endif %} {% for war_id in war_info.keys() %}
+        <div class="warflexparent templatedivflex2 menuflex">
+            <a href="/war/{{ war_id }}" class="warflexlink"></a>
+
+            <!-- DEFENDER -->
+            {% set def = war_info[war_id]["def"]%}
+            <div class="templatedivflex2left">
+                <h2 class="templatecontentheadercenter"><a class="templatelink" href="/country/id={{def['id']}}">{{def["name"]}}</a></h2>
+                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{def['id']}}" />
+                <div class="progressbarparent">
+                    <div class="progressbarchildtext">{{def["morale"]}} / 100 Morale</div>
+                    <div class="progressbarchild" style="width:{{ def['morale'] }}%"></div>
+                </div>
+                <div class="progressbarparent">
+                    <div class="progressbarchildtext">{{def["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (def['supplies']/20) | round(0, 'ceil') }}%"></div>
+                </div>
+            </div>
+
+            <div class="min templatedivflex2left">
+                <h2 class="templatecontentheadercenter">VS</h2>
+            </div>
+
+            <!-- AGGRESSOR -->
+            {% set att = war_info[war_id]["att"] %}
+            <div class="templatedivflex2left">
+                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{att['id']}}">{{att["name"]}}</a></h2>
+                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{att['id']}}" />
+                <div class="progressbarparent">
+                    <div class="progressbarchildtext">{{att["morale"]}} / 100 Morale</div>
+                    <div class="progressbarchild" style="width:{{ att['morale'] }}%"></div>
+                </div>
+                <div class="progressbarparent">
+                    <div class="progressbarchildtext">{{att["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (att['supplies']/20) | round(0, 'ceil') }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <h2 class="templatecontentheadercenter">Combat Mechanics</h2>
+
+        <div class="templatedivflex2">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheaderleft">How Morale Loss Is Calculated</h3>
+                <p class="templatecontentpleft">Morale impact depends on unit weights (e.g., tanks count more than infantry), relative strength of forces, and win intensity. The losing side takes a scaled morale delta, ensuring wars last multiple engagements.</p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheaderleft">Damage & Loot</h3>
+                <p class="templatecontentpleft">Casualties are applied proportionally to the units involved. If the war type is Loot and the attacker wins, they may seize up to 10% of the defender's gold.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
