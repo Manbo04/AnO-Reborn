@@ -38,9 +38,9 @@
                 {% endif %}
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
-                <div class="game-spread"><span class="game-faint">Population</span><span>{{ population | fmt }}</span></div>
-                <div class="game-spread"><span class="game-faint">Happiness</span><span>{{ happiness | round }}%</span></div>
-                <div class="game-spread"><span class="game-faint">Est. tax revenue</span><span>${{ est_daily_tax | fmt }}/day</span></div>
+                <div class="game-spread"><span class="game-faint">Population</span><span class="game-mono">{{ population | fmt }}</span></div>
+                <div class="game-spread"><span class="game-faint">Happiness</span><span class="game-mono">{{ happiness | round }}%</span></div>
+                <div class="game-spread"><span class="game-faint">Est. tax revenue</span><span class="game-mono">${{ est_daily_tax | fmt }}/day</span></div>
             </div>
             <div class="game-meter" style="margin-top: 10px;"><div class="game-meter-fill {{ 'good' if happiness >= 60 else ('warn' if happiness >= 35 else 'bad') }}" style="width: {{ happiness }}%;"></div></div>
         </a>
