@@ -5398,6 +5398,24 @@ body:has(.loginsignupdiv) .footer {
     color: #e2e8f0 !important;
 }
 
+/* error.html reuses .loginsignupdiv (its light text color and the
+   transparent-body rule below both assume the dark photo backdrop that
+   every OTHER page carrying this class provides via <img class="background">)
+   but never includes that backdrop -- found by hitting a routine 400
+   (daily buy-limit reached) live: the whole error page (code/message) was
+   near-invisible light-gray-on-white. This is the generic error page shown
+   for every validation failure site-wide, so it's worth its own opaque
+   treatment rather than inheriting the login pages' dark-hero styling. */
+body:has(.errordiv.loginsignupdiv) {
+    background: var(--background) !important;
+}
+body:has(.errordiv.loginsignupdiv) .templatecontainer {
+    background: var(--foreground) !important;
+}
+.errordiv.loginsignupdiv .templatedivcontent > p {
+    color: var(--colorOne) !important;
+}
+
 .loginsignupdiv .auth-panel p,
 .loginsignupdiv .auth-panel ul,
 .loginsignupdiv .auth-panel li,
@@ -6331,6 +6349,19 @@ body.game-page-v2 .nation-card {
     border-color: var(--game-glass-border);
 }
 
+/* .game-province-card (provinces.html mobile card list) and .game-market-card
+   (market.html) -- same opaque-legacy-fill pattern as .nation-card above
+   (--game-panel-bg / --foregroundThree, no blur), just never covered by that
+   fix. Reported live 2026-09-01 by Dede on /provinces -- solid dark cards
+   standing out against every other glass panel on the page. */
+body.game-page-v2 .game-province-card,
+body.game-page-v2 .game-market-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
 body.game-page-v2 .templateselect,
 body.game-page-v2 .imageinput {
     background: var(--game-glass-bg-strong);
@@ -6365,6 +6396,24 @@ body.game-page-v2 .templatetextarea {
     background: var(--game-glass-bg-strong);
     border: 1px solid var(--game-glass-border);
     color: var(--colorOne);
+}
+
+/* .landingpagecontent -- the page-intro paragraph used right under game_hero()
+   on ~15 v2 pages (mass_purchase, trade_agreements, find_targets, upgrades,
+   createprovince, establish_coalition, warchoose, waramount, ...). It's plain
+   var(--text-secondary) text with no background of its own, meant for the
+   opaque legacy page body -- ported pages leave it floating directly on the
+   raw photo (only .game-page-overlay's light gradient behind it), reading as
+   near-illegible low-contrast text. Reported live 2026-09-01 by Dede on
+   mass_purchase. One shared glass-chip fix instead of a per-page rewrite. */
+body.game-page-v2 .landingpagecontent {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-md);
+    box-sizing: border-box;
 }
 
 /* .templatedivbutton already has a real flat-fill treatment (tokens.css era,
@@ -6563,6 +6612,77 @@ body.game-page-v2 .warflexparentcolors {
     text-align: center;
     font-size: 12px;
     color: #8891a0;
+}
+
+/* ---------- Nav bar itself + Internal/Global/Other dropdown menus ----------
+   Reported live 2026-08-31 by Dede via Safari screenshot ("navigation bar is
+   also not like the mockup"). The bar was still a 100%-opaque #1c2029 slab with
+   a 2px accent-blue underline (static/style.css .navbarparent, pre-dates the
+   glass port) instead of the mockup's translucent/blurred .topnav, and the
+   Internal Affairs/Global Affairs/Other menus were still the old .dropdown/
+   .dropbtn/.dropdown-content classes -- solid #1c2029 panels with no blur,
+   never restyled when the topbar search/notif/avatar icons next to them got
+   the glass treatment. Scoped to game-shell-active (only pages with the
+   full-bleed photo behind them) -- logged-out/marketing pages keep the
+   original opaque bar since there's no photo for it to blend with. */
+body.game-shell-active .navbarparent {
+    background: rgba(13, 16, 22, 0.55);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+body.game-shell-active .navbarparent:hover,
+body.game-shell-active .navbarparent:has(.templatecontainer)::after {
+    background: rgba(13, 16, 22, 0.55);
+}
+
+body.game-shell-active .dropbtnchild {
+    background: transparent;
+    color: #b7bfcc;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: none !important;
+}
+
+body.game-shell-active .dropbtn:hover .dropbtnchild,
+body.game-shell-active .dropdown:hover .dropbtnchild {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff;
+}
+
+body.game-shell-active .dropdown-content {
+    top: 55px;
+}
+
+body.game-shell-active .dropdown:hover .dropdown-content {
+    top: 63px;
+}
+
+body.game-shell-active .dropdown-contentchild {
+    background: rgba(20, 24, 32, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+body.game-shell-active .dropdown-content a {
+    color: #cfd6e2;
+    font-weight: 500;
+}
+
+body.game-shell-active .dropdown-content a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+body.game-shell-active .dropdown-content a.active {
+    background: var(--accent-subtle);
+    color: var(--accent);
 }
 
 /* ---------- More reference-mockup vocabulary: stat chips, chat, news cards,
@@ -7566,7 +7686,7 @@ body.game-shell-active .templatecontainer {
 }
 
 .templatedivcontent .templatetable {
-    margin: var(--game-space-sm, 8px) 0;
+    margin: var(--game-space-sm, 8px) auto;
 }
 
 /* Market filters — full-width responsive grid */
@@ -9925,6 +10045,24 @@ body.page-country .menuflex2 a h3 {
     padding: 12px;
 }
 
+/* Reported live 2026-09-01 by Dede ("why is some stuff lighter and some is
+   darker") -- this panel kept the pre-glass opaque --foregroundThree card
+   fill while its sibling column (AFFAIRS/OTHER tables) picked up the glass
+   treatment sitewide, so the two country-page columns rendered as one solid
+   light block next to one translucent dark one. Match the rest of the v2
+   card vocabulary (.nation-card, .warflexparentcolors). Legacy country.html
+   reuses the same class name and keeps the opaque look. */
+body.game-page-v2 .country-demographics-panel {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
+body.game-page-v2 .country-demographics-chart-wrap {
+    border-color: var(--game-glass-border);
+}
+
 .country-demographics-panel .templatecontentheaderleft {
     margin: 0;
 }
@@ -10133,6 +10271,20 @@ body.page-country .menuflex2 a h3 {
     border-radius: var(--game-radius-md);
     background: var(--foregroundThree);
     padding: 16px;
+}
+
+/* This card also carries .infodiv, and game-glass.css's generic
+   `body.game-page-v2 .infodiv` rule (higher specificity: body+class vs a
+   single class here) was winning, swapping the intended opaque
+   --foregroundThree fill for translucent glass. A dense identity-editing
+   form (name/flag/biome/lore) reads as a washed-out gray veil over the
+   page photo that way, not a card -- found live playing through the Edit
+   tab. Restore the opaque treatment for this specific component. */
+body.game-page-v2 .infodiv.country-customize-panel {
+    background: var(--foregroundThree);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
 }
 
 .country-customize-form {

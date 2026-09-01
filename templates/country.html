@@ -1594,6 +1594,13 @@
             for (let key of Object.keys(policies)) {
                 let value = policies[key]
                 let checkbox = document.getElementsByName(key)[0]
+                // get_policy_in_format() emits a dense 1..N range per category,
+                // but not every number has a checkbox (e.g. no "education5" --
+                // a numbering gap, not a real policy). Without this guard, the
+                // loop throws on the first missing one and every policy after
+                // it (education6 included) silently never gets its checked
+                // state applied, showing unchecked even when active in the DB.
+                if (!checkbox) continue;
                 if (value) checkbox.checked = true;
                 else checkbox.checked = false;
             }
