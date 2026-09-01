@@ -3,6 +3,42 @@
 {% block body_class %}page-upgrades game-page-v2{% endblock %}
 {% block extra_head %}
 <style>
+/* Mockup (ano-redesign/projects.html) renders technologies as a 3-column
+   card grid: photo on top, title/description/cost/action below, compact.
+   This page instead rendered each tech as one full-width horizontal row
+   (text column | image column via .templatedivflex2/.warflexparentcolors,
+   the same "wide row" component used for military unit purchase lists) --
+   correct content, wrong shape, and 20 stacked rows made this an extremely
+   long page. Reported live 2026-09-01 by Dede ("not identical") comparing
+   it directly against the mockup. Converted to a real grid purely with CSS
+   -- .economic/.military's <form> becomes the grid container, each .menudiv
+   a cell, and .warflexparentcolors flips from a row to a column with the
+   image (originally the second .templatedivflex2left, DOM order unchanged)
+   pulled to the top via `order`. No markup/backend changes. */
+.page-upgrades .economic form,
+.page-upgrades .military form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+.page-upgrades .menudiv {
+    margin: 0;
+}
+.page-upgrades .warflexparentcolors {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.page-upgrades .warflexparentcolors .templatedivflex2left:has(.unitimage) {
+    order: -1;
+}
+.page-upgrades .warflexparentcolors .unitimage {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--game-radius-md, 12px);
+}
 /* Center everything inside project cards */
 .page-upgrades .warflexparentcolors .templatedivflex2left {
     display: flex;
@@ -24,6 +60,7 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    margin-top: auto;
 }
 .page-upgrades .warflexparentcolors .researched-badge {
     display: flex;
@@ -31,6 +68,18 @@
     justify-content: center;
     gap: 6px;
     margin: 0 auto;
+}
+@media (max-width: 900px) {
+    .page-upgrades .economic form,
+    .page-upgrades .military form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 600px) {
+    .page-upgrades .economic form,
+    .page-upgrades .military form {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
