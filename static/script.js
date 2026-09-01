@@ -181,7 +181,24 @@ function updateThemeToggleUi(themeName) {
     });
 }
 
+/* All design tokens (--accent, --colorOne, --background, etc.) live only
+   inside .theme-light/.theme-dark rules in tokens.css -- there's no :root
+   fallback. A stored value that isn't exactly one of those two strings
+   (e.g. a pre-rename "light"/"dark" left over in a real browser's
+   localStorage from before this "theme-" prefix convention existed) makes
+   document.documentElement.className mismatch both selectors, so every
+   token resolves to nothing and every var(--accent)-filled element (any
+   solid button, badge, etc.) silently renders with a transparent
+   background -- confirmed live: a real "theme":"light" value sitting in
+   localStorage left every .game-btn-primary with an invisible fill.
+   Normalize anything else back to the light default instead of trusting
+   the stored string. */
+function normalizeThemeName(themeName) {
+    return themeName === "theme-dark" ? "theme-dark" : "theme-light";
+}
+
 function setTheme(themeName) {
+    themeName = normalizeThemeName(themeName);
     try { localStorage.setItem("theme", themeName); } catch(e) {}
     document.documentElement.className = themeName;
     var slider = document.getElementById("slider");
@@ -192,14 +209,14 @@ function setTheme(themeName) {
 
 function toggleTheme() {
     var current = "theme-light";
-    try { current = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    try { current = normalizeThemeName(localStorage.getItem("theme")); } catch(e) {}
     setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
 }
 
 // Apply saved theme on load (light default; dark available via toggle)
 (function() {
     var theme = "theme-light";
-    try { theme = localStorage.getItem("theme") || "theme-light"; } catch(e) {}
+    try { theme = normalizeThemeName(localStorage.getItem("theme")); } catch(e) {}
     setTheme(theme);
 })();
 
