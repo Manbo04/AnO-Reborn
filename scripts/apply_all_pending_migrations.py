@@ -64,6 +64,7 @@ MIGRATION_FILES = [
     "0056_widen_users_description.sql",
     "0057_add_global_chat.sql",
     "0058_add_devlog_and_discussions.sql",
+    "0059_coalition_members_joined_at.sql",
 ]
 
 

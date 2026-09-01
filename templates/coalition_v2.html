@@ -203,10 +203,13 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             <th onclick="sortMembersTable(5, true)" style="cursor: pointer; user-select: none;"><span class="material-icons-outlined">
                                 schedule
                                 </span>Last Active <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
+                            <th onclick="sortMembersTable(6, true)" style="cursor: pointer; user-select: none;"><span class="material-icons-outlined">
+                                event
+                                </span>Joined <span class="sort-icon" style="font-size: 0.8em; opacity: 0.5;"></span></th>
                         </tr>
                     </thead>
                     <tbody id="membersTableBody">
-                    {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=3, reverse=True) %}
+                    {% for member_id, username, role, influence, provinces, last_active, joined_at in members|sort(attribute=3, reverse=True) %}
                     <tr class="member-row">
                         <td data-sort="{{ loop.index }}">{{ loop.index }})</td>
                         <td data-sort="{{ username.lower() }}">
@@ -220,6 +223,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             account_balance
                             </span>{{ provinces if provinces else 0 }}</td>
                         <td data-sort="{{ (last_active.timestamp() if last_active else 0) }}">{{ last_active | timeago }}</td>
+                        <td data-sort="{{ (joined_at.timestamp() if joined_at else 0) }}">{{ joined_at | timeago if joined_at else '—' }}</td>
                     </tr>
                     {% endfor %}
                     </tbody>
@@ -650,7 +654,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         <div class="templatedivflex2left">
                             <select class="templateselect" name="username" required>
                                 <option class="templateoption" selected disabled value="">Choose Member</option>
-                                {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=1) %}
+                                {% for member_id, username, role, influence, provinces, last_active, joined_at in members|sort(attribute=1) %}
                                 <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
                                 {% endfor %}
                             </select>
