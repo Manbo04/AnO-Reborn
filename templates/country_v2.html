@@ -56,6 +56,158 @@
         <!--View-->
         <div class="view" id="view">
 
+            {% if status %}
+            {% set resources = get_resources() %}
+            {% set rations_pct = ((resources.rations / rations_need) * 100) | round if rations_need else 100 %}
+            {% set rations_pct = 100 if rations_pct > 100 else rations_pct %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-stat-row">
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><img src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=3" alt="" style="width: 22px; height: 22px; object-fit: contain;" /></div>
+                        <div>
+                            <div class="game-stat-label">Treasury</div>
+                            <div class="game-stat-value">${{ resources.gold | fmt }}</div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">groups</span></div>
+                        <div>
+                            <div class="game-stat-label">Population</div>
+                            <div class="game-stat-value">{{ population | fmt }}</div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">account_balance</span></div>
+                        <div>
+                            <div class="game-stat-label">GDP <span style="font-weight: 500; text-transform: none; letter-spacing: 0;">(annualized)</span></div>
+                            <div class="game-stat-value">${{ gdp | fmt }}</div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">shield</span></div>
+                        <div>
+                            <div class="game-stat-label">Military</div>
+                            <div class="game-stat-value">{{ total_military | fmt }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-head">
+                    <div class="game-panel-title">Population breakdown</div>
+                </div>
+                <div class="game-stat-row">
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">child_care</span></div>
+                        <div>
+                            <div class="game-stat-label">Children</div>
+                            <div class="game-stat-value" style="font-size: 15px;">{{ total_children | fmt }} <span class="game-faint" style="font-size: 11px;">({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">work</span></div>
+                        <div>
+                            <div class="game-stat-label">Working age</div>
+                            <div class="game-stat-value" style="font-size: 15px;">{{ total_working | fmt }} <span class="game-faint" style="font-size: 11px;">({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">elderly</span></div>
+                        <div>
+                            <div class="game-stat-label">Elderly</div>
+                            <div class="game-stat-value" style="font-size: 15px;">{{ total_elderly | fmt }} <span class="game-faint" style="font-size: 11px;">({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">sentiment_satisfied</span></div>
+                        <div>
+                            <div class="game-stat-label">Happiness</div>
+                            <div class="game-stat-value" style="font-size: 15px;">{{ happiness | round }}%</div>
+                        </div>
+                    </div>
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">arrow_circle_up</span></div>
+                        <div>
+                            <div class="game-stat-label">Productivity</div>
+                            <div class="game-stat-value" style="font-size: 15px;">{{ productivity | round }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-grid-2" style="margin-bottom: 20px;">
+                <div class="game-glass game-panel">
+                    <div class="game-panel-head">
+                        <div>
+                            <div class="game-panel-title">Provinces</div>
+                            <p class="game-faint" style="margin-top: 2px;">{{ provinceCount }} province{{ 's' if provinceCount != 1 }}{% if at_risk_provinces %} &middot; {{ at_risk_provinces }} need attention{% endif %}</p>
+                        </div>
+                        <a class="game-btn game-btn-ghost game-btn-sm" href="/provinces">View all &rarr;</a>
+                    </div>
+                    {% for province in provinces[:3] %}
+                    <a class="game-list-row" href="/province/{{ province[1] }}">
+                        <div class="game-row">
+                            <span class="material-icons-outlined" style="color: var(--accent);">account_balance</span>
+                            <div>
+                                <div style="font-weight: 600;">{{ province[0] }}</div>
+                                <div class="game-faint" style="font-size: 11.5px;">{{ province[2] | fmt }} pop</div>
+                            </div>
+                        </div>
+                        {% set h = province[5] or 0 %}
+                        {% if h >= 60 %}
+                        <span class="game-badge game-badge-good"><span class="game-badge-dot" style="background: var(--success);"></span>Stable</span>
+                        {% elif h >= 35 %}
+                        <span class="game-badge game-badge-warn"><span class="game-badge-dot" style="background: var(--gold);"></span>Unrest rising</span>
+                        {% else %}
+                        <span class="game-badge game-badge-bad"><span class="game-badge-dot" style="background: var(--danger);"></span>Under threat</span>
+                        {% endif %}
+                    </a>
+                    {% else %}
+                    <p class="game-faint">No provinces yet.</p>
+                    {% endfor %}
+                </div>
+
+                <div class="game-glass game-panel">
+                    <div class="game-panel-head">
+                        <div class="game-panel-title">Resources</div>
+                        <a class="game-btn game-btn-ghost game-btn-sm" href="/market">Market &rarr;</a>
+                    </div>
+                    <div style="margin-bottom: 14px;">
+                        <div class="game-spread" style="font-size: 12.5px; margin-bottom: 6px;">
+                            <span class="game-row" style="gap: 7px;"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}?v=3" alt=""><span class="game-faint">Food reserves</span></span>
+                            <span>{{ rations_pct | round }}%</span>
+                        </div>
+                        <div class="game-meter"><div class="game-meter-fill {{ 'good' if rations_pct >= 100 else ('warn' if rations_pct >= 50 else 'bad') }}" style="width: {{ rations_pct }}%;"></div></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        {% for res_key in ['oil', 'coal', 'uranium', 'bauxite', 'iron', 'lead', 'copper', 'lumber', 'components', 'steel', 'consumer_goods', 'aluminium', 'gasoline', 'ammunition'] %}
+                        <span class="game-resource-chip"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="">{{ resources[res_key] | weight_fmt }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {% if news|length %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-head">
+                    <div class="game-panel-title">Recent activity</div>
+                    <a class="game-btn game-btn-ghost game-btn-sm" href="#" onclick="countrynews(); return false;">View log &rarr;</a>
+                </div>
+                {% for new in news[:5] %}
+                <div class="game-list-row" style="cursor: default;">
+                    <div class="game-row" style="align-items: flex-start;">
+                        <span class="material-icons-outlined" style="color: var(--accent); margin-top: 1px;">article</span>
+                        <div>
+                            <div>{{ new[0] }}</div>
+                            <div class="game-faint" style="font-size: 11.5px; margin-top: 2px;">{{ new[1] | timeago }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endif %}
 
             <div class="countryimagediv" id="countryFlagBackground">
                 <!--country flag-->

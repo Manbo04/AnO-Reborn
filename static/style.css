@@ -6182,6 +6182,106 @@ body.page-hub.theme-light .game-page-overlay {
     display: none;
 }
 
+/* ---------- Overview dashboard (own-country View tab): stat tiles,
+   provinces/resources panels, meters, activity feed. Added for the country
+   page's full-body dashboard-style port (2026-09-01), reusing hub.html's
+   existing .game-stat-row tile pattern for consistency instead of a
+   separate one-off component set. ---------- */
+.game-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 860px) {
+    .game-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.game-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.game-panel-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--colorOne);
+}
+
+.game-badge-bad {
+    background: color-mix(in srgb, var(--danger) 16%, transparent);
+    color: var(--danger);
+}
+
+.game-badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.game-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--game-glass-border);
+    text-decoration: none;
+    color: var(--colorOne);
+    transition: background 0.1s;
+}
+
+.game-list-row:last-child {
+    border-bottom: none;
+}
+
+.game-list-row:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-meter {
+    height: 6px;
+    border-radius: 4px;
+    background: var(--game-glass-bg-strong);
+    overflow: hidden;
+}
+
+.game-meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent);
+}
+
+.game-meter-fill.good {
+    background: var(--success);
+}
+
+.game-meter-fill.warn {
+    background: var(--gold);
+}
+
+.game-meter-fill.bad {
+    background: var(--danger);
+}
+
+.game-resource-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 20px;
+    padding: 5px 10px 5px 6px;
+    font-size: 12px;
+    color: var(--colorOne);
+}
+
 @media (max-width: 768px) {
     .game-market-cards {
         display: flex;
