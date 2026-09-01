@@ -217,7 +217,8 @@ def sell_market_offer(offer_id):
 @market_bp.route("/marketoffer/", methods=["GET", "POST"])
 @login_required
 def marketoffer():
-    return render_template("marketoffer.html")
+    template = "marketoffer_v2.html" if is_theme_v2_enabled("marketoffer") else "marketoffer.html"
+    return render_template(template)
 
 @market_bp.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required

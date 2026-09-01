@@ -727,7 +727,8 @@ def establish_coalition():
                     f"/coalition/{coalition_id}"
                 )  # Redirects to the new coalition's page
     else:
-        return render_template("establish_coalition.html")
+        template = "establish_coalition_v2.html" if is_theme_v2_enabled("establish_coalition") else "establish_coalition.html"
+        return render_template(template)
 
 
 # Route for viewing all existing coalitions
@@ -2060,7 +2061,8 @@ def view_coalition_invites():
         )
         incoming_invites = db.fetchall()
 
-    return render_template("coalition_invites.html", incoming_invites=incoming_invites)
+    template = "coalition_invites_v2.html" if is_theme_v2_enabled("coalition_invites") else "coalition_invites.html"
+    return render_template(template, incoming_invites=incoming_invites)
 
 
 def accept_coalition_invite(invite_id):
