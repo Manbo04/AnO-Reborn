@@ -523,6 +523,52 @@ body.page-hub.theme-light .game-page-overlay {
     color: var(--colorOne);
 }
 
+/* ---------- Compact province card grid (provinces.html mockup), added
+   2026-09-01 -- distinct from the existing full-photo-banner .province-banner/
+   .game-province-card pattern used elsewhere: a dense summary grid, one card
+   per province, real photo swap in for the mockup's flat color swatch. ---------- */
+.game-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 1100px) {
+    .game-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .game-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.game-mini-card {
+    display: block;
+    text-decoration: none;
+    color: var(--colorOne);
+}
+
+.game-mini-card-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--game-glass-border);
+}
+
+.game-mini-card-dash {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    border-style: dashed;
+    text-align: center;
+}
+
 @media (max-width: 768px) {
     .game-market-cards {
         display: flex;

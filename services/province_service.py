@@ -8,7 +8,7 @@ class ProvinceService:
         if provinces_has_image_data():
             has_image_col = ", (image_data IS NOT NULL AND image_data <> '') AS has_image"
 
-        provinces_raw, total_count, total_pages, current_page = ProvinceRepository.get_provinces_paginated(
+        provinces_raw, total_count, total_pages, current_page, total_population = ProvinceRepository.get_provinces_paginated(
             user_id, page, per_page, has_image_col
         )
 
@@ -18,11 +18,12 @@ class ProvinceService:
             provinces.append(row[:8])
             if len(row) > 8 and row[8]:
                 provinces_with_images.add(row[3])
-                
+
         return {
             "provinces": provinces,
             "provinces_with_images": provinces_with_images,
             "current_page": current_page,
             "total_pages": total_pages,
-            "total_count": total_count
+            "total_count": total_count,
+            "total_population": total_population,
         }

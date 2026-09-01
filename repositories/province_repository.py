@@ -10,7 +10,11 @@ class ProvinceRepository:
             db.execute("SELECT COUNT(*) FROM provinces WHERE userId=(%s)", (user_id,))
             total_count = db.fetchone()
             total_count = total_count[0] if total_count else 0
-            
+
+            db.execute("SELECT COALESCE(SUM(population), 0) FROM provinces WHERE userId=(%s)", (user_id,))
+            total_population_row = db.fetchone()
+            total_population = total_population_row[0] if total_population_row else 0
+
             total_pages = max(1, (total_count + per_page - 1) // per_page)
             if page < 1:
                 page = 1
@@ -30,4 +34,4 @@ class ProvinceRepository:
             )
             provinces_raw = db.fetchall()
             
-            return provinces_raw, total_count, total_pages, page
+            return provinces_raw, total_count, total_pages, page, total_population
