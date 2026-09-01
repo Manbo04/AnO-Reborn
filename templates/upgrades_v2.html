@@ -57,7 +57,15 @@
     overflow: hidden;
 }
 .page-upgrades .warflexparentcolors .templatedivflex2left:has(.unitimage) {
+    /* Base .templatedivflex2left (static/style.css) sets
+       "margin: 20px auto" -- auto LEFT/RIGHT margins on a flex item
+       suppress align-items:stretch entirely (the item shrinks to its
+       content width and the leftover space goes into the auto margins
+       instead), which is why this column still wasn't filling the card's
+       width even after forcing align-items:stretch on its flex parent
+       above. Zeroing the margin here lets stretch actually apply. */
     order: -1;
+    margin: 0;
     padding: 16px 16px 0;
     box-sizing: border-box;
 }
@@ -108,6 +116,7 @@
        itself a flex item of .warflexparentcolors (the card), just not a
        flex container for its own children. */
     display: block;
+    margin: 0;
     padding: 16px;
     text-align: left;
     flex: 1;
