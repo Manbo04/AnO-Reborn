@@ -6,63 +6,53 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Provinces', badge_icon='account_balance', badge_text=(total_count ~ ' province' ~ ('s' if total_count != 1 else '')) if total_count is defined else None) }}
+    {% call game_hero('Provinces', badge_icon='account_balance', badge_text=(total_count ~ ' province' ~ ('s' if total_count != 1 else '')) if total_count is defined else None, subtitle=(total_population | fmt) ~ ' total population across your territory' if total_population is defined else None) %}
+        <div class="game-row" style="gap: 10px;">
+            <a class="game-btn game-btn-secondary" href="/mass_purchase"><span class="material-icons-outlined">payments</span> Mass Purchase</a>
+            <a class="game-btn game-btn-primary" href="/createprovince"><span class="material-icons-outlined">add</span> New Province</a>
+        </div>
+    {% endcall %}
 
     <div class="templatedivcontent ">
 
-        <div class="templatedivflex2 divflex2full">
-            <div class="templatedivflex2left">
-
-                <a href="/createprovince" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                    add_circle_outline
-                    </span>New Province</a>
-            </div>
-            <div class="templatedivflex2right">
-
-
-                <a href="/mass_purchase" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                    payments
-                    </span>Mass Purchase</a>
-
-            </div>
-        </div>
-
-        <div class="game-card-list game-card-list--mobile-only">
-        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6] %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
-        <a href="/province/{{ pId }}" class="game-province-card">
-            <div class="game-province-card-stats">
-                <h2 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
-                <span><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
-                <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}% happy</span>
-                <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
-                <span><span class="material-icons-outlined">power</span> {% if energy >= 0 %}Powered{% else %}No power{% endif %}</span>
-            </div>
-            <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
-        </a>
-        {% endfor %}
-        </div>
-
-        <div class="game-table-fallback--hide-mobile">
-        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] %} {% set productivity = province[6]
-        %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
-        <a href="/province/{{ pId }}" class="province-banner">
-            <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" />
-            <div class="province-banner__body">
-                <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
-                <div class="province-stat-row">
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}%</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}%</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ cityCount }} cities</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">landscape</span> {{ land }} land</span>
-                    <span class="province-stat-pill province-stat-pill--onphoto{% if energy < 0 %} province-stat-pill--warn{% endif %}"><span class="material-icons-outlined">power</span> {% if energy >= 0 %}Powered{% else %}No power{% endif %}</span>
+        <div class="game-grid-3">
+        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] or 0 %} {% set productivity = province[6] %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
+        {# Mirrors calc_ti()'s per-province formula (app_core/game_ticks/taxes.py) using its
+           real constants (variables.DEFAULT_TAX_INCOME=0.75, DEFAULT_LAND_TAX_MULTIPLIER=0.02),
+           hourly x24 for a daily figure. Excludes the nation-wide consumer-goods multiplier
+           (a real bottleneck, but not attributable to one province) -- an estimate, labeled as such. #}
+        {% set land_multiplier = [((land - 1) * 0.02), 1] | min %}
+        {% set est_daily_tax = (0.75 * (1 + land_multiplier)) * population * 24 %}
+        <a href="/province/{{ pId }}" class="game-glass game-panel game-mini-card">
+            <div class="game-spread" style="margin-bottom: 14px;">
+                <div class="game-row">
+                    <img class="game-mini-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ pId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
+                    <b>{{ name }}</b>
                 </div>
+                {% if happiness >= 60 %}
+                <span class="game-badge game-badge-good"><span class="game-badge-dot" style="background: var(--success);"></span>Stable</span>
+                {% elif happiness >= 35 %}
+                <span class="game-badge game-badge-warn"><span class="game-badge-dot" style="background: var(--gold);"></span>Unrest</span>
+                {% else %}
+                <span class="game-badge game-badge-bad"><span class="game-badge-dot" style="background: var(--danger);"></span>Under threat</span>
+                {% endif %}
             </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+                <div class="game-spread"><span class="game-faint">Population</span><span>{{ population | fmt }}</span></div>
+                <div class="game-spread"><span class="game-faint">Happiness</span><span>{{ happiness | round }}%</span></div>
+                <div class="game-spread"><span class="game-faint">Est. tax revenue</span><span>${{ est_daily_tax | fmt }}/day</span></div>
+            </div>
+            <div class="game-meter" style="margin-top: 10px;"><div class="game-meter-fill {{ 'good' if happiness >= 60 else ('warn' if happiness >= 35 else 'bad') }}" style="width: {{ happiness }}%;"></div></div>
         </a>
         {% endfor %}
+        <a href="/createprovince" class="game-glass game-panel game-mini-card game-mini-card-dash">
+            <div>
+                <span class="material-icons-outlined" style="font-size: 26px; color: var(--game-text-faint);">add_circle</span>
+                <div class="game-faint" style="margin-top: 6px;">Found new province</div>
+            </div>
+        </a>
         </div>
-        </div>
-        
+
         {% if total_pages > 1 %}
         <div style="margin: 20px 0; display: flex; justify-content: center; gap: 10px; align-items: center; width: 100%;">
             {% if current_page > 1 %}

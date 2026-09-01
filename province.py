@@ -67,6 +67,7 @@ def provinces():
         current_page=data["current_page"],
         total_pages=data["total_pages"],
         total_count=data["total_count"],
+        total_population=data["total_population"],
     )
 
 
