@@ -39,35 +39,81 @@
     object-fit: cover;
     border-radius: var(--game-radius-md, 12px);
 }
-/* Center everything inside project cards */
-.page-upgrades .warflexparentcolors .templatedivflex2left {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+/* Mockup's card text is left-aligned, compact (13.5px title / 11.5px
+   description) with cost and the Research/Owned action sharing one row
+   (mockup's `.spread` class: flex, space-between). This page's cards were
+   center-aligned throughout with a large heading and everything (including
+   cost + action) stacked on its own line -- correct content, much lower
+   density and a different alignment than the mockup. Recreate the cost+
+   action row without touching markup: <ul> (cost) and .purchasemilitarydiv
+   (action) are adjacent siblings on 15 of 20 cards, so floating one left
+   and one right puts them on the same line exactly like `.spread`. The
+   other 5 (prereq techs) have a "Requires: X" paragraph between them --
+   that paragraph still renders correctly, just above the row instead of
+   interrupting it, since it isn't floated and clears above the row. */
+.page-upgrades .warflexparentcolors .templatedivflex2left:not(:has(.unitimage)) {
+    /* display:block (not flex) is deliberate -- float doesn't apply to
+       flex-item children, and the cost/action row below relies on float
+       to sit side by side. flex:1 still works here since THIS div is
+       itself a flex item of .warflexparentcolors (the card), just not a
+       flex container for its own children. */
+    display: block;
+    padding: 16px;
+    text-align: left;
+    flex: 1;
+    box-sizing: border-box;
+}
+.page-upgrades .warflexparentcolors h3.templatecontentheadercenter {
+    text-align: left;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    width: 100%;
 }
 .page-upgrades .warflexparentcolors .templatecontentpleft {
-    text-align: center;
+    text-align: left;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+    width: 100%;
+    clear: both;
+}
+.page-upgrades .warflexparentcolors > .templatedivflex2left::after {
+    content: "";
+    display: table;
+    clear: both;
 }
 .page-upgrades .warflexparentcolors ul {
-    text-align: center;
+    float: left;
+    text-align: left;
     padding: 0;
-    margin: 10px 0;
+    margin: 0;
+    list-style: none;
+    font-size: 12.5px;
+    font-family: "Roboto Mono", monospace;
+    color: var(--colorOne);
+    line-height: 36px;
 }
 .page-upgrades .warflexparentcolors .purchasemilitarydiv {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    margin-top: auto;
+    float: right;
+    width: auto;
+    margin: 0;
 }
-.page-upgrades .warflexparentcolors .researched-badge {
+.page-upgrades .warflexparentcolors .researched-badge.text-success {
+    /* This <p> also carries .templatecontentpleft -- same selector
+       specificity (4 classes each), so every property needs to be
+       re-set here explicitly (not just added to), including color,
+       or it silently inherits clear:both/width:100%/the muted
+       text-secondary color from that rule and both breaks out of the
+       floated .purchasemilitarydiv and loses its green "success" tint. */
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
-    margin: 0 auto;
+    margin: 0;
+    width: auto;
+    clear: none;
+    color: var(--success);
+    line-height: 36px;
 }
 @media (max-width: 900px) {
     .page-upgrades .economic form,
@@ -91,7 +137,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Projects', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' researched') if unlocked_ids is defined else None) }}
+    {{ game_hero('Projects', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' of ' ~ tech_rows|length ~ ' researched') if unlocked_ids is defined and tech_rows is defined else None) }}
 
     <div class="templatedivcontent">
 
