@@ -5289,6 +5289,18 @@ body:has(.loginsignupdiv) .footer {
     color: inherit !important;
     text-decoration: none;
 }
+/* Same root cause, different symptom: any solid-fill button rendered as an
+   <a> inside a table (e.g. a "Manage"/"View" action link) needs its own
+   white text to read against its own accent-blue fill -- .templatetable a
+   overrides it to accent blue too, same color as the fill, so the label is
+   invisible. Found live on mass_purchase.html's "Manage" links (blank blue
+   pills, confirmed via computed style: text color == background color). */
+.templatetable a.templatedivbutton,
+.templatetable2 a.templatedivbutton,
+.templatetable a.game-btn-primary,
+.templatetable2 a.game-btn-primary {
+    color: #fff !important;
+}
 .flag-thumb {
     width: 24px;
     height: 16px;
