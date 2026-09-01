@@ -43,6 +43,13 @@
        above already said to, instead of a bespoke faint tone. */
     --game-text-faint: var(--text-secondary);
     --game-shadow-glass: 0 16px 40px rgba(26, 35, 50, 0.18);
+    /* Same category of bug as --game-text-faint above: --gold (#d4a843) used
+       directly as badge text color (.game-badge-warn, e.g. market.html's
+       "Buy" pill) measures ~2:1 against its own translucent-gold-on-white
+       background, well under WCAG AA's 4.5:1 -- confirmed live, essentially
+       unreadable. --gold itself stays unchanged (icons/currency accents
+       still want the lighter, richer tone); this is only for badge text. */
+    --game-warn-text: #8a6710;
 }
 
 .theme-dark {
@@ -77,6 +84,9 @@
     --game-glass-border: rgba(255, 255, 255, 0.14);
     --game-text-faint: #657289;
     --game-shadow-glass: 0 16px 40px rgba(0, 0, 0, 0.45);
+    /* Bright gold on a dark glass background already has plenty of
+       contrast -- no separate darker text token needed here. */
+    --game-warn-text: var(--gold);
 }
 
 :root {
