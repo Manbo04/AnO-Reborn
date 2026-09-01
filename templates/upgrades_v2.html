@@ -40,6 +40,16 @@
        border-radius (mockup's .glass.panel uses a much rounder 16px). */
     display: flex;
     flex-direction: column;
+    /* This card also carries the bare .templatedivflex2 class, which pulls
+       in the sitewide ".templatedivcontent .templatedivflex2 { align-items:
+       flex-start }" rule (see the ano-ui-design skill's landmine #9) at
+       equal-or-higher specificity than a plain align-items here would have.
+       Without overriding it, each column (image / text) shrinks to its own
+       content width instead of stretching to fill the card -- exactly why
+       every thumbnail and text column came out a different width
+       (Dede: "pictures to be same size not all different"). !important
+       because a bare override was confirmed elsewhere to silently lose. */
+    align-items: stretch !important;
     height: 100%;
     width: 100%;
     margin: 0;
