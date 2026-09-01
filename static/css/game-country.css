@@ -69,6 +69,24 @@ body.page-country .menuflex2 a h3 {
     padding: 12px;
 }
 
+/* Reported live 2026-09-01 by Dede ("why is some stuff lighter and some is
+   darker") -- this panel kept the pre-glass opaque --foregroundThree card
+   fill while its sibling column (AFFAIRS/OTHER tables) picked up the glass
+   treatment sitewide, so the two country-page columns rendered as one solid
+   light block next to one translucent dark one. Match the rest of the v2
+   card vocabulary (.nation-card, .warflexparentcolors). Legacy country.html
+   reuses the same class name and keeps the opaque look. */
+body.game-page-v2 .country-demographics-panel {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
+body.game-page-v2 .country-demographics-chart-wrap {
+    border-color: var(--game-glass-border);
+}
+
 .country-demographics-panel .templatecontentheaderleft {
     margin: 0;
 }
