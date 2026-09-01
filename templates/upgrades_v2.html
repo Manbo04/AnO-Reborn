@@ -51,13 +51,30 @@
     padding: 16px 16px 0;
     box-sizing: border-box;
 }
-.page-upgrades .warflexparentcolors .unitimage {
+.page-upgrades .tech-grid-form .warflexparentcolors .unitimage {
     /* Mockup's <img class="thumb"> is a slim ~80px-tall banner (height:80px,
        object-fit:cover) inset by the card's own padding, not a full-bleed
        16:9 photo -- that taller aspect made every card noticeably heavier/
-       bigger than the mockup's compact, tightly-packed grid. */
+       bigger than the mockup's compact, tightly-packed grid.
+
+       2026-09-02: every card rendered at a DIFFERENT height/width for its
+       photo (reported live by Dede, "pictures... same everywhere else").
+       Root cause: static/css/game-layout.css's shared
+       ".templatedivcontent .warflexparentcolors .unitimage" rule sets
+       height:100% -- same specificity (3 classes) as this rule, so which
+       one wins the `height` property was coming down to cascade order, and
+       that rule's 100% resolved to `auto` against this card's auto-height
+       flex column, falling through to base .unitimage's `aspect-ratio:2/1`
+       -- so every thumbnail's height ended up column-width/2, different
+       per row. Bumped to 4 classes (adding .tech-grid-form) so this rule
+       unambiguously wins regardless of stylesheet order, and pinned
+       aspect-ratio/min-height/max-height explicitly rather than leaving
+       them to fall through from another rule. */
     width: 100%;
     height: 110px;
+    min-height: 110px;
+    max-height: 110px;
+    aspect-ratio: auto;
     object-fit: cover;
     border-radius: var(--game-radius-md, 12px);
     display: block;
