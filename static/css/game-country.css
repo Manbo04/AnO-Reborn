@@ -297,6 +297,20 @@ body.game-page-v2 .country-demographics-chart-wrap {
     padding: 16px;
 }
 
+/* This card also carries .infodiv, and game-glass.css's generic
+   `body.game-page-v2 .infodiv` rule (higher specificity: body+class vs a
+   single class here) was winning, swapping the intended opaque
+   --foregroundThree fill for translucent glass. A dense identity-editing
+   form (name/flag/biome/lore) reads as a washed-out gray veil over the
+   page photo that way, not a card -- found live playing through the Edit
+   tab. Restore the opaque treatment for this specific component. */
+body.game-page-v2 .infodiv.country-customize-panel {
+    background: var(--foregroundThree);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+}
+
 .country-customize-form {
     display: flex;
     flex-direction: column;

@@ -457,3 +457,37 @@ if (document.readyState === 'loading') {
 } else {
     initImmersion();
 }
+
+// ---------------------------------------------------------------------------
+// Military purchase daily-limit guard
+// ---------------------------------------------------------------------------
+// Found live: clicking Buy when today's limit is already 0 doesn't warn you
+// up front -- it submits, 400s server-side ("Unit buy limit exceeded"), and
+// full-navigates to the generic error page. Disable Buy ahead of time so
+// that trip is avoided entirely; Sell is never limited, so it's left alone.
+function disableExhaustedMilitaryBuyButtons() {
+    document.querySelectorAll('.purchasemilitarydiv').forEach(function (container) {
+        var limitEl = container.querySelector('.limit-text');
+        if (!limitEl) return;
+        var match = limitEl.textContent.match(/purchase\s+([\d,]+)\s+more/i);
+        if (!match) return;
+        var remaining = parseInt(match[1].replace(/,/g, ''), 10);
+        if (isNaN(remaining) || remaining > 0) return;
+        var buyBtn = container.querySelector('button[formaction*="/buy/"]');
+        var input = container.querySelector('input[type="number"]');
+        if (buyBtn) {
+            buyBtn.disabled = true;
+            buyBtn.title = 'Daily purchase limit reached';
+        }
+        if (input) {
+            input.disabled = true;
+            input.placeholder = 'Limit reached today';
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', disableExhaustedMilitaryBuyButtons);
+} else {
+    disableExhaustedMilitaryBuyButtons();
+}
