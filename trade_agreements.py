@@ -1,5 +1,5 @@
 # Trade Agreements - Private recurring automatic trades between players
-from helpers import login_required
+from helpers import login_required, is_theme_v2_enabled
 from database import (
     get_db_connection,
     get_request_cursor,
@@ -309,8 +309,9 @@ def trade_agreements():
 
         agreements = db.fetchall()
 
+    template = "trade_agreements_v2.html" if is_theme_v2_enabled("trade_agreements") else "trade_agreements.html"
     return render_template(
-        "trade_agreements.html",
+        template,
         agreements=agreements,
         resources=VALID_TRADE_RESOURCES,
         resource_labels=TRADE_RESOURCE_LABELS,
