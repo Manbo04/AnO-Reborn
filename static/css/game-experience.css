@@ -1381,12 +1381,19 @@ body.page-rankings .rankings-table tbody td {
 }
 
 body.page-rankings .rankings-table tbody td:first-child {
-    width: 56px;
+    width: 44px;
     text-align: center;
 }
 
+/* Was 32% -- nation/coalition names were the ones actually running long
+   (e.g. "Terra Homeworld", "The Republic of..."), not these mostly-short
+   formatted numbers, so the wide value column was squeezing the name
+   column into truncating names that would've fit. Reported live
+   (luciuskonst, #suggestions: "nation/alliance names do not fit into the
+   space"). Also added title="" on both cells site-wide as a fallback for
+   whatever still gets clipped. */
 body.page-rankings .rankings-table tbody td:last-child {
-    width: 32%;
+    width: 110px;
     text-align: right;
 }
 

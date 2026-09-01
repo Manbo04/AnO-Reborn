@@ -36,7 +36,12 @@
                 <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
                     <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1; max-height: none;">
                         {% if chat_history and chat_history|length > 0 %}
-                            {% for m in chat_history|reverse %}
+                            {# list_global_chat_messages() already returns oldest-first
+                               (it does its own reversed(rows) after the DESC-ordered
+                               query) -- reversing again here put newest messages at
+                               the top instead of the bottom like every other chat UI.
+                               Reported live (luciuskonst, #suggestions). #}
+                            {% for m in chat_history %}
                             <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
                                 <img src="/flag/country/{{ m.sender_id }}" alt="">
                                 <div>
