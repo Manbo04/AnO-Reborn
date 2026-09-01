@@ -1,13 +1,34 @@
-{% extends "layout.html" %} {% block title %} World Assembly {% endblock %} 
+{% extends "layout.html" %} {% block title %} World Assembly {% endblock %}
+{% block body_class %} page-assembly game-page-v2{% endblock %}
 
 {% block body %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/assembly.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
 <style>
+    /* This page had its own bespoke dark gradient + no photo background,
+       never ported to the redesign's photo+glass system (unlike every other
+       page) even though a matching images/assembly.jpg asset already existed
+       unused -- looked like a page that was planned for the port but never
+       finished. Container swapped from an opaque gradient fill to a
+       translucent glass one so the photo shows through. Every text color
+       below this point is hardcoded light/white (never theme-aware, unlike
+       the rest of the redesign) -- fixed dark-on-dark glass values here
+       instead of the light/dark-aware --game-glass-* tokens, same reasoning
+       as the topbar's own fixed palette, so light theme doesn't turn this
+       panel white under white text. The poll-section/vote-option styling
+       underneath was already close to glass (translucent + blur) and is
+       left as-is. */
     .assembly-container {
         padding: 40px 20px;
         color: #fff;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        background: rgba(20, 24, 32, 0.72);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
         margin: 20px auto;
         max-width: 1000px;
         font-family: 'Inter', 'Segoe UI', sans-serif;
