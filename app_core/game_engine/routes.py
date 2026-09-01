@@ -87,4 +87,5 @@ def mass_purchase():
         if provinces:
             colnames = [desc[0] for desc in db.description]
             for row in provinces: province_list.append(dict(zip(colnames, row)))
-    return render_template("mass_purchase.html", provinces=province_list)
+    template = "mass_purchase_v2.html" if is_theme_v2_enabled("mass_purchase") else "mass_purchase.html"
+    return render_template(template, provinces=province_list)
