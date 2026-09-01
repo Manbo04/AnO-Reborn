@@ -26,18 +26,33 @@
     margin: 0;
 }
 .page-upgrades .warflexparentcolors {
+    /* Base .warflexparentcolors (static/style.css) is tuned for the old
+       full-width-row layout: width:95%/margin:12px auto (wastes space
+       inside a grid cell instead of filling it) and a barely-rounded 4px
+       border-radius (mockup's .glass.panel uses a much rounder 16px). */
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
+    margin: 0;
+    border-radius: var(--game-radius-lg, 16px);
+    overflow: hidden;
 }
 .page-upgrades .warflexparentcolors .templatedivflex2left:has(.unitimage) {
     order: -1;
+    padding: 16px 16px 0;
+    box-sizing: border-box;
 }
 .page-upgrades .warflexparentcolors .unitimage {
+    /* Mockup's <img class="thumb"> is a slim ~80px-tall banner (height:80px,
+       object-fit:cover) inset by the card's own padding, not a full-bleed
+       16:9 photo -- that taller aspect made every card noticeably heavier/
+       bigger than the mockup's compact, tightly-packed grid. */
     width: 100%;
-    aspect-ratio: 16 / 9;
+    height: 110px;
     object-fit: cover;
     border-radius: var(--game-radius-md, 12px);
+    display: block;
 }
 /* Mockup's card text is left-aligned, compact (13.5px title / 11.5px
    description) with cost and the Research/Owned action sharing one row
