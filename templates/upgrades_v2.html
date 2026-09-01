@@ -14,9 +14,17 @@
    -- .economic/.military's <form> becomes the grid container, each .menudiv
    a cell, and .warflexparentcolors flips from a row to a column with the
    image (originally the second .templatedivflex2left, DOM order unchanged)
-   pulled to the top via `order`. No markup/backend changes. */
-.page-upgrades .economic form,
-.page-upgrades .military form {
+   pulled to the top via `order`. No markup/backend changes.
+
+   2026-09-01: the mockup has no Economic/Military tab split at all -- one
+   flat grid of every tech. The old .economic/.military tab panes (shown
+   via JS-toggled .economicclick/.militaryclick, base class display:none --
+   see static/style.css "/*UPGRADES*/" block) were removed from the markup
+   and merged into a single always-visible .tech-grid-form/<form>, since
+   .economic/.military are also used by unrelated tab groups elsewhere
+   (e.g. province_v2.html's land/industry/processing tabs) and must keep
+   their display:none default there. */
+.page-upgrades .tech-grid-form form {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
@@ -131,14 +139,12 @@
     line-height: 36px;
 }
 @media (max-width: 900px) {
-    .page-upgrades .economic form,
-    .page-upgrades .military form {
+    .page-upgrades .tech-grid-form form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 @media (max-width: 600px) {
-    .page-upgrades .economic form,
-    .page-upgrades .military form {
+    .page-upgrades .tech-grid-form form {
         grid-template-columns: 1fr;
     }
 }
@@ -152,30 +158,12 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Projects', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' of ' ~ tech_rows|length ~ ' researched') if unlocked_ids is defined and tech_rows is defined else None) }}
+    {{ game_hero('All Technologies', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' of ' ~ tech_rows|length ~ ' researched') if unlocked_ids is defined and tech_rows is defined else None, subtitle='One-time nationwide upgrades — permanent effects, no upkeep.') }}
 
     <div class="templatedivcontent">
 
         <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease construction costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.
         </p>
-
-        <div class="templatedivflex2 menuflex2">
-            <div class="templatedivflex2left" id="upgradeseconomic" onclick="upgradeseconomic()">
-
-                <h3 class="smallheader"><span class="material-icons-outlined">
-                        account_balance
-                    </span>Economic
-                </h3>
-
-            </div>
-            <div class="templatedivflex2left" id="upgradesmilitary" onclick="upgradesmilitary()">
-
-                <h3 class="smallheader"><span class="material-icons-outlined">
-                        military_tech
-                    </span>Military
-                </h3>
-            </div>
-        </div>
 
         {% if tech_rows and tech_rows|length > 0 %}
         <div class="infodiv mb-md">
@@ -211,8 +199,7 @@
         </div>
         {% endif %}
 
-        <!--ECONOMIC-->
-        <div class="economic" id="economic">
+        <div class="tech-grid-form">
 
             <form method="POST">
 
@@ -665,14 +652,6 @@
                     </div>
 
                 </div>
-
-            </form>
-        </div>
-
-        <!--MILITARY-->
-        <div class="military" id="military">
-
-            <form method="POST">
 
             <div class="menudiv">
 

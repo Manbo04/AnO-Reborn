@@ -9906,9 +9906,46 @@ body.page-rankings .rankings-table tbody td a {
     font-weight: 600;
 }
 
-.distribution-alert {
-    border-left: 3px solid #e74c3c;
-    background: rgba(231, 76, 60, 0.1);
+.distribution-alert-card {
+    margin: 0 0 var(--game-space-md, 16px);
+    padding: var(--game-space-md, 16px);
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--game-radius-md, 12px);
+    box-shadow: var(--shadow-card);
+}
+
+.distribution-alert-card-good {
+    border-left-color: var(--success);
+}
+
+.distribution-alert-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 0;
+    color: var(--colorOne);
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+
+.distribution-alert-line + .distribution-alert-line {
+    border-top: 1px solid var(--border);
+}
+
+.distribution-alert-line .material-icons-outlined {
+    flex-shrink: 0;
+    color: var(--danger);
+}
+
+.distribution-alert-card-good .distribution-alert-line .material-icons-outlined {
+    color: var(--success);
+}
+
+.distribution-alert-headline {
+    font-weight: 600;
 }
 
 @media (max-width: 720px) {
