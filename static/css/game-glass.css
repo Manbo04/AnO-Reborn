@@ -626,6 +626,24 @@ body.game-page-v2 .templatetextarea {
     color: var(--colorOne);
 }
 
+/* .landingpagecontent -- the page-intro paragraph used right under game_hero()
+   on ~15 v2 pages (mass_purchase, trade_agreements, find_targets, upgrades,
+   createprovince, establish_coalition, warchoose, waramount, ...). It's plain
+   var(--text-secondary) text with no background of its own, meant for the
+   opaque legacy page body -- ported pages leave it floating directly on the
+   raw photo (only .game-page-overlay's light gradient behind it), reading as
+   near-illegible low-contrast text. Reported live 2026-09-01 by Dede on
+   mass_purchase. One shared glass-chip fix instead of a per-page rewrite. */
+body.game-page-v2 .landingpagecontent {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-md);
+    box-sizing: border-box;
+}
+
 /* .templatedivbutton already has a real flat-fill treatment (tokens.css era,
    2026-08-19) that reads fine against a photo background as-is -- left alone here
    on purpose, not an oversight. Secondary/ghost variants get a touch more glass
