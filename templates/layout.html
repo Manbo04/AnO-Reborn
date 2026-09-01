@@ -288,22 +288,22 @@
                     </span></button></div>
                 <div class="dropdown-content">
                     <div class="dropdown-contentchild">
-                        <a class="" href="/account"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/account') else '' }}" href="/account"><span class="material-icons-outlined">
                             perm_identity
                         </span>Account</a>
-                        <a class="" href="/mechanics"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/mechanics') else '' }}" href="/mechanics"><span class="material-icons-outlined">
                             build
                         </span>Mechanics</a>
-                        <a class="" href="/tutorial"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/tutorial') else '' }}" href="/tutorial"><span class="material-icons-outlined">
                             school
                         </span>Tutorial</a>
                         {% if session.get('user_id') in admin_user_ids %}
-                        <a class="" href="/admin/command-center"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/admin') else '' }}" href="/admin/command-center"><span class="material-icons-outlined">
                             admin_panel_settings
                         </span>Admin</a>
                         {% endif %}
                         {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
-                        <a class="" href="/store"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/store') else '' }}" href="/store"><span class="material-icons-outlined">
                             storefront
                         </span>Store</a>
                         {% endif %}
@@ -322,25 +322,25 @@
                 <div class="dropdown-content">
                     <div class="dropdown-contentchild">
                         {% if session.get('user_id') != None %}
-                        <a class="" href="/my_coalition"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/my_coalition') else '' }}" href="/my_coalition"><span class="material-icons-outlined">
                             group
                         </span>My Coalition</a> {% endif %}
-                        <a class="" href="/establish_coalition"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/establish_coalition') else '' }}" href="/establish_coalition"><span class="material-icons-outlined">
                             group_add
                         </span>Establish a Coalition</a>
-                        <a class="" href="/coalitions"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/coalitions') else '' }}" href="/coalitions"><span class="material-icons-outlined">
                             public
                         </span>Coalitions</a>
-                        <a class="" href="/countries"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/countries') else '' }}" href="/countries"><span class="material-icons-outlined">
                         person_pin_circle
                         </span>Countries</a>
-                        <a class="" href="/rankings"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/rankings') else '' }}" href="/rankings"><span class="material-icons-outlined">
                         leaderboard
                         </span>Rankings</a>
-                        <a class="" href="/treaties"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/treaties') else '' }}" href="/treaties"><span class="material-icons-outlined">
                         handshake
                         </span>Treaties</a>
-                        <a class="" href="/assembly"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/assembly') else '' }}" href="/assembly"><span class="material-icons-outlined">
                             chat
                         </span>Assembly</a>
                     </div>
@@ -352,23 +352,23 @@
                     </span></button></div>
                 <div class="dropdown-content">
                     <div class="dropdown-contentchild">
-                        <a class="" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">language</span>Country<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="" href="/upgrades"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/country/') else '' }}" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">language</span>Country<!--<span class="menubaranotification">1</span>--></a>
+                        <a class="{{ 'active' if request.path.startswith('/upgrades') else '' }}" href="/upgrades"><span class="material-icons-outlined">
                         engineering
                         </span>Projects</a>
-                        <a class="" href="/provinces"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/provinces') or request.path.startswith('/province/') else '' }}" href="/provinces"><span class="material-icons-outlined">
                             account_balance
                         </span>Provinces</a>
-                        <a class="" href="/market"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/market') else '' }}" href="/market"><span class="material-icons-outlined">
                             local_grocery_store
                         </span>Market<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="" href="/trade-agreements"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/trade-agreements') else '' }}" href="/trade-agreements"><span class="material-icons-outlined">
                             handshake
                         </span>Trade Deals</a>
-                        <a class="" href="/wars"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/war') or request.path.startswith('/declare_war') or request.path.startswith('/find_targets') or request.path.startswith('/defense') or request.path.startswith('/peace_offers') or request.path.startswith('/intelligence') else '' }}" href="/wars"><span class="material-icons-outlined">
                             military_tech
                         </span>Wars<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="" href="/military"><span class="material-icons-outlined">
+                        <a class="{{ 'active' if request.path.startswith('/military') else '' }}" href="/military"><span class="material-icons-outlined">
                             shield
                         </span>Military</a>
                     </div>
