@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for
-from helpers import login_required
+from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor
 
 treaties_bp = Blueprint("treaties", __name__)
@@ -40,8 +40,9 @@ def view_treaties():
             from database import rollback_db_cursor
             rollback_db_cursor(db)
 
+    template = "treaty_v2.html" if is_theme_v2_enabled("treaties") else "treaty.html"
     return render_template(
-        "treaty.html",
+        template,
         active_treaties=active_treaties,
         incoming_treaties=incoming_treaties,
         outgoing_treaties=outgoing_treaties,
