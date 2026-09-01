@@ -209,33 +209,37 @@
             {% endif %}
             {% endif %}
 
+            {% if status %}
+            {# The old full-width flag/coalition banner photo is gone here -- the flag already
+               shows as the hero thumbnail up top, and a second identical photo looked like leftover
+               old UI stapled under the new dashboard (flagged directly, 2026-09-01). Only render it
+               for the non-owner view below, which doesn't have a hero thumbnail of its own. #}
+            {% else %}
             <div class="countryimagediv" id="countryFlagBackground">
                 <!--country flag-->
                 {% if flag != None %}
                 <img class="countryimage" src="/flag/country/{{ cId }}" alt="{{ flag }}">
-                <!-- hmm not using url_for, but somewhy it render-->
-                <!-- this is the one that shows -- steven -->
                 {% else %}
-                <!-- tried first with url_for, but it didn't work -- t0dd -->
                 <img alt="Image" class="countryimage" src="{{ url_for('static', filename='images/tajmahal.jpg') }}?v=2" /> {% endif %}
                 <!--Coalitions flag. if the country is in a coalition this is shown, if not it is hidden-->
                 {% if colFlag != None %}
                 <img class="countrycoalitionimage" src="/flag/coalition/{{ colId }}" alt="{{ colFlag }}" /> {% endif %}
             </div>
-
+            {% endif %}
 
             {% if description != None %}
-            <h2 class="templatecontentheaderleft">About</h2>
-
-            <div class="strongpadding richDescription">{{ description|markdown }}</div>
-
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-title" style="margin-bottom: 12px;">About</div>
+                <div class="strongpadding richDescription" style="padding: 0;">{{ description|markdown }}</div>
+            </div>
             {% endif %}
 
             {% include 'partials/distribution_alert.html' %}
 
             {% include 'partials/coalition_recommendations.html' %}
 
-            <h2 class="templatecontentheaderleft">Country info</h2>
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+            <div class="game-panel-title" style="margin-bottom: 16px;">Country info</div>
 
             <div class="templatedivflex2 country-overview-grid">
                 <div class="templatedivflex2left country-overview-column country-overview-column--general">
@@ -412,26 +416,6 @@
                             <td>0</td>
                             {% endif %}
                         </tr>
-                        <!--
-                        <tr>
-                            <td><span class="material-icons-outlined">
-                                notes
-                                </span>GDP:</td>
-                            <td>{{ happiness }}%</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">
-                                notes
-                                </span>GDP Per Capita:</td>
-                            <td>{{ happiness }}%</td>
-                        </tr>
-                        <tr>
-                            <td><span class="material-icons-outlined">
-                                notes
-                                </span>Available Resources:</td>
-                            <td>{{ countryResources }}</td>
-                        </tr>
-                        -->
                     </table>
 
                 </div>
@@ -472,22 +456,11 @@
                         <p class="country-demographics-empty">No province demographics available.</p>
                         {% endif %}
                     </div>
-                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">people</span>Population Breakdown</h2>
-<div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined" >child_care</span>Children</strong>
-        <span class="stat-value">{{ total_children | fmt }} <span >({{ ((total_children / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined" >work</span>Working Age</strong>
-        <span class="stat-value">{{ total_working | fmt }} <span >({{ ((total_working / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><span class="material-icons-outlined" >elderly</span>Elderly</strong>
-        <span class="stat-value">{{ total_elderly | fmt }} <span >({{ ((total_elderly / (population if population > 0 else 1)) * 100) | round(1) }}%)</span></span>
-    </div>
-</div>
+                    {# The Children/Working/Elderly stat-grid that used to live here is gone --
+                       it duplicated the real Population breakdown panel now at the top of the
+                       page (added 2026-09-01), which already covers this plus Happiness/Productivity. #}
                 </div>
+            </div>
             </div>
 
             <script>
@@ -665,7 +638,8 @@
             }
             </script>
 
-                <h2 class="templatecontentheaderleft">Buildings</h2>
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-title" style="margin-bottom: 16px;">Buildings</div>
                 <div class="stat-grid">
                     {% if building_rows and building_rows|length > 0 %}
                     {% for building_name, building_qty in building_rows %}
@@ -680,44 +654,12 @@
                     </div>
                     {% endif %}
                 </div>
-
-
-
-            <h2 class="templatecontentheaderleft">Provinces</h2>
-
-            <div class="game-card-list game-card-list--mobile-only">
-            {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness = province[5] %} {% set provinceProductivity = province[6] %} {% set has_image = provinceId in (provinces_with_images|default([])) %}
-            <a href="/province/{{ provinceId }}" class="game-province-card">
-                <div class="game-province-card-stats">
-                    <h3 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h3>
-                    <span><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
-                    <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
-                    <span><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
-                </div>
-                <img class="game-province-card-thumb" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" alt="" />
-            </a>
-            {% endfor %}
             </div>
 
-            <div class="game-table-fallback--hide-mobile">
-            {% for province in provinces %} {% set provinceName = province[0] %} {% set provinceId = province[1] %} {% set provincePopulation = province[2] %} {% set provinceCityCount = province[3] %} {% set provinceLand = province[4] %} {% set provinceHappiness
-            = province[5] %} {% set provinceProductivity = province[6] %} {% set has_image = provinceId in (provinces_with_images|default([])) %}
-            <a href="/province/{{ provinceId }}" class="province-banner">
-                <img class="province-banner__img" alt="" loading="lazy" src="{% if has_image %}/province-image/{{ provinceId }}{% else %}{{ url_for('static', filename='images/province.jpg') }}?v=3{% endif %}" />
-                <div class="province-banner__body">
-                    <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ provinceName }}</h2>
-                    <div class="province-stat-row">
-                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ provincePopulation | fmt }}</span>
-                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">sentiment_satisfied</span> {{ provinceHappiness }}%</span>
-                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ provinceProductivity }}%</span>
-                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ provinceCityCount }} cities</span>
-                        <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">landscape</span> {{ provinceLand }} land</span>
-                    </div>
-                </div>
-            </a>
-
-            {% endfor %}
-            </div>
+            {# The full province list that used to live here is gone -- it duplicated the
+               top-of-page Provinces preview panel (added 2026-09-01), and the full list with
+               every real stat is already one click away via that panel's "View all" link to
+               the (also just rebuilt) /provinces page. #}
         </div>
         <!--Revenue-->
         {% if status %}

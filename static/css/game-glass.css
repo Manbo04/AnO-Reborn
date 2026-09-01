@@ -225,7 +225,7 @@ body.page-hub.theme-light .game-page-overlay {
    with the mockup" meant. */
 
 .game-panel {
-    padding: 20px 22px;
+    padding: 22px 24px;
 }
 
 /* Lets a .game-glass.game-panel stretched to match a taller sibling (via
@@ -431,7 +431,7 @@ body.page-hub.theme-light .game-page-overlay {
 .game-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 18px;
 }
 
 @media (max-width: 860px) {
@@ -445,12 +445,13 @@ body.page-hub.theme-light .game-page-overlay {
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .game-panel-title {
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 700;
+    margin-bottom: 2px;
     color: var(--colorOne);
 }
 
@@ -460,10 +461,14 @@ body.page-hub.theme-light .game-page-overlay {
 }
 
 .game-badge-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     display: inline-block;
+}
+
+.game-mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
 }
 
 .game-list-row {
@@ -530,16 +535,10 @@ body.page-hub.theme-light .game-page-overlay {
 .game-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 18px;
 }
 
-@media (max-width: 1100px) {
-    .game-grid-3 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
+@media (max-width: 860px) {
     .game-grid-3 {
         grid-template-columns: 1fr;
     }
@@ -552,9 +551,9 @@ body.page-hub.theme-light .game-page-overlay {
 }
 
 .game-mini-card-thumb {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 32px;
+    height: 23px;
+    border-radius: 5px;
     object-fit: cover;
     flex-shrink: 0;
     border: 1px solid var(--game-glass-border);
