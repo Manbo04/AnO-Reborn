@@ -137,11 +137,9 @@
     <script defer src="{{ url_for('static', filename='tooltips.js') }}?v=1"></script>
 
     {% block extra_head %}{% endblock %}
-    <!-- Hide dropdown arrows in navbar -->
     <style>
     .theme-toggle-btn, .theme-toggle-btn .material-icons-outlined { color: #ffffff !important; }
-    .dropbtnchild .iconright { display: none; }
-    
+
     /* Force bypass cache for resource menu button */
     .resourcedivshow {
         right: 200px !important;
