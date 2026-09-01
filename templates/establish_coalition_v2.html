@@ -1,0 +1,61 @@
+{% extends "layout.html" %} {% block title %} Establish Coalition {% endblock %}{% block body_class %} page-establish-coalition game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Establish a Coalition', badge_icon='group_add') }}
+
+    <div class="templatedivcontent">
+
+        <p class="templatecontentpleft landingpagecontent">Coalitions allow you to work together with other players through sharing resources, helping each other in war. Coalitions can declare coalition wars to increase faculty, and can share treaties with other coalitions. You can learn more about coalitions
+            <a class="templatelink" href="/coalition_types">here</a>.
+        </p>
+
+        <div class="coalitionimagepreview">
+            <img alt="Image" id="output" />
+        </div>
+
+        <form action="/establish_coalition" method="POST">
+
+            <div class="game-glass game-panel">
+                <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2left">
+
+                        <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" required/>
+
+                    </div>
+                </div>
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+
+                        <div class="templatedivflex2 menuflex">
+                            <div class="templatedivflex2left">
+
+                                <select name="type" class="templateselect">
+                            <option disabled="true" selected="selected">Application Type</option>
+                            <option class="templateoption">Open</option>
+                            <option class="templateoption">Invite Only</option>
+                            </select>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240" style="min-height: 90px; max-height: 160px; min-width: 0; max-width: none; width: 100%; box-sizing: border-box;"></textarea>
+
+                <div style="margin: 12px 0;">
+                    <label><input type="checkbox" name="recruiting" /> Looking for members (show on Recruitment list)</label>
+                </div>
+
+                <button class="game-btn game-btn-primary templatecenteredbutton"><span class="material-icons-outlined">
+                group_add
+                </span>Establish</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

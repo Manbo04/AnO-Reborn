@@ -1,0 +1,77 @@
+{% extends "layout.html" %} {% block title %} Market Offer {% endblock %}{% block body_class %} page-marketoffer game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Market Offer', badge_icon='payments', subtitle='Request or offer certain resources to other players on the market. A buy offer requests specific resources while a sell offer offers specific resources.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel">
+            <div class="templatedivflex2 divflex2center">
+                <div class="templatedivflex2left">
+
+                    <form method="POST">
+                        <select name="resource" class="templateselect">
+
+                    <option disabled="true" selected="selected">Choose one</option>
+                    <option value="rations" class="templateoption">Rations</option>
+                    <option value="oil" class="templateoption">Oil</option>
+                    <option value="coal" class="templateoption">Coal</option>
+                    <option value="uranium" class="templateoption">Uranium</option>
+                    <option value="bauxite" class="templateoption">Bauxite</option>
+                    <option value="iron" class="templateoption">Iron</option>
+                    <option value="lead" class="templateoption">Lead</option>
+                    <option value="copper"class="templateoption">Copper</option>
+                    <option value="lumber" class="templateoption ">Lumber</option>
+                    <option value="components" class="templateoption">Components</option>
+                    <option value="steel" class="templateoption">Steel</option>
+                    <option value="consumer_goods" class="templateoption">Consumer Goods</option>
+                    <option value="copper_plates" class="templateoption">Copper Plates</option>
+                    <option value="aluminium" class="templateoption">Aluminium</option>
+                    <option value="gasoline" class="templateoption">Gasoline</option>
+                    <option value="ammunition" class="templateoption">Ammunition</option>
+                </select>
+
+
+                </div>
+            </div>
+            <div class="templatedivflex2 divflex2center">
+                <div class="templatedivflex2left">
+
+                    <input class="loginsignupinput" name="amount" placeholder="Amount" required/>
+
+                </div>
+                <div class="templatedivflex2left">
+
+                    <input class="loginsignupinput" name="price" placeholder="Price for one" required/>
+
+                </div>
+            </div>
+            <div class="templatedivflex2 divflex2center">
+                <div class="templatedivflex2left">
+
+                    <button type="submit" formaction="/post_offer/buy" class="game-btn game-btn-primary templatecenteredbutton"><span class="material-icons-outlined">
+                    payments
+                    </span>Buy offer</button>
+
+                </div>
+
+                <div class="templatedivflex2left">
+
+                    <button type="submit" formaction="/post_offer/sell" class="game-btn game-btn-primary templatecenteredbutton"><span class="material-icons-outlined">
+                    payments
+                    </span>Sell Offer</button>
+
+                </div>
+
+            </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
