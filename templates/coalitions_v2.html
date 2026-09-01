@@ -1,0 +1,133 @@
+{% extends "layout.html" %} {% block title %} Coalitions {% endblock %}{% block body_class %} page-coalitions game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Coalitions', badge_icon='public', badge_text=(total_count | commas) ~ ' coalitions' if total_count is defined else None) }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+        <form action="/coalitions" method="GET">
+            <div class="templatedivflex2 divflex2full">
+
+                <div class="templatedivflex2left">
+
+                    <select name="sort" class="templateselect">
+                        <option value="influence" class="templateoption" {% if selected_sort == 'influence' %}selected{% endif %}>Influence</option>
+                        <option value="age" class="templateoption" {% if selected_sort == 'age' %}selected{% endif %}>Age</option>
+                        <option value="invite_only" class="templateoption" {% if selected_sort == 'invite_only' %}selected{% endif %}>Invite Only</option>
+                        <option value="open" class="templateoption" {% if selected_sort == 'open' %}selected{% endif %}>Open</option>
+                        <option value="members" class="templateoption" {% if selected_sort == 'members' %}selected{% endif %}>Members</option>
+                    </select>
+
+                </div>
+                <div class="templatedivflex2right">
+
+                    <select name="sortway" class="templateselect">
+                        <option value="desc" class="templateoption" {% if sortway == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" class="templateoption" {% if sortway == 'asc' %}selected{% endif %}>Ascending</option>
+                    </select>
+
+                </div>
+
+                <div class="templatedivflex2left">
+                    <input class="loginsignupinput templateflexfullinput" autocomplete="off" name="search" placeholder="Search by name or ID" value="{{ search or '' }}" />
+                </div>
+                <div class="templatedivflex2right">
+                    <select name="per_page" class="templateselect">
+                        <option value="50" class="templateoption" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                        <option value="100" class="templateoption" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+                        <option value="150" class="templateoption" {% if per_page == 150 %}selected{% endif %}>150 per page</option>
+                    </select>
+                </div>
+
+                <div class="templatedivflex2left">
+                    {{ game_button('Submit', icon='arrow_forward', extra_class='center smallactionbutton') }}
+                </div>
+
+            </div>
+            <div class="game-spread" style="margin-top: 14px;">
+                <strong style="font-size: 13.5px;">Looking for a coalition?</strong>
+                <div class="game-row" style="gap: 8px;">
+
+                    <a href="/coalition_invites" class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">
+                    mail
+                    </span>My Invites</a>
+
+                    <a href="/recruitments" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">
+                    group_add
+                    </span>Recruitment list</a>
+
+                </div>
+            </div>
+        </form>
+        </div>
+
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Influence</th>
+                        <th>Members</th>
+                        <th>Date Created</th>
+                        <th>Type</th>
+                    </tr>
+                    {% for col in coalitions %}
+                    <tr>
+                        <td>{{ loop.index }})</td>
+                        <td>
+                            <img src="{{ col.flag_src }}" alt="" loading="lazy" class="flag-thumb">
+                            <a href="/coalition/{{ col.id }}">{{ col.name }}</a>
+                        </td>
+                        <td>{{ col.influence | fmt }}</td>
+                        <td>{{ col.members }}</td>
+                        <td>{{ col.date }}</td>
+                        <td>{{ col.type }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Result count info -->
+            {% if total_count is defined %}
+            <p class="text-muted text-center mt-sm">
+                Showing {{ coalitions|length }} of {{ total_count }} coalitions
+                {% if search %} matching "{{ search }}"{% endif %}
+            </p>
+            {% endif %}
+
+            <!-- Pagination controls -->
+            {% if total_pages and total_pages > 1 %}
+            <div class="pagination pagination-bar">
+                {% if current_page > 1 %}
+                    <a href="{{ url_for('coalitions', page=1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="game-btn game-btn-secondary game-btn-sm">First</a>
+                    <a href="{{ url_for('coalitions', page=current_page - 1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="game-btn game-btn-secondary game-btn-sm">← Prev</a>
+                {% endif %}
+
+                <!-- Page number links -->
+                {% set start_page = [current_page - 2, 1] | max %}
+                {% set end_page = [current_page + 2, total_pages] | min %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                    {% if p == current_page %}
+                        <span class="game-btn game-btn-ghost game-btn-sm is-current">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('coalitions', page=p, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="game-btn game-btn-secondary game-btn-sm">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if current_page < total_pages %}
+                    <a href="{{ url_for('coalitions', page=current_page + 1, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="game-btn game-btn-secondary game-btn-sm">Next →</a>
+                    <a href="{{ url_for('coalitions', page=total_pages, sort=selected_sort, sortway=sortway, search=search, per_page=per_page) }}" class="game-btn game-btn-secondary game-btn-sm">Last</a>
+                {% endif %}
+            </div>
+            {% endif %}
+    </div>
+</div>
+
+{% endblock%}

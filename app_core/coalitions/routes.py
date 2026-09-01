@@ -994,8 +994,9 @@ def coalitions():
                 }
             )
 
+        template = "coalitions_v2.html" if is_theme_v2_enabled("coalitions") else "coalitions.html"
         return render_template(
-            "coalitions.html",
+            template,
             coalitions=coalitions_list,
             sort=actual_sort,
             sortway=sortway,
