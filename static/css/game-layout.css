@@ -227,7 +227,7 @@ body.game-shell-active .templatecontainer {
 }
 
 .templatedivcontent .templatetable {
-    margin: var(--game-space-sm, 8px) 0;
+    margin: var(--game-space-sm, 8px) auto;
 }
 
 /* Market filters — full-width responsive grid */
