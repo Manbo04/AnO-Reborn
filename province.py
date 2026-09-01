@@ -30,7 +30,7 @@ from database import (
 import os
 import math
 from action_loop import build_structure, ActionLoopError
-from app_core.economy.biome_buildings import mines_for_biome
+from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
 from app_core.economy.building_costs import enrich_building_row, get_build_cost
 from app_core.economy.building_purchase import (
     BuildingPurchaseError,
@@ -625,6 +625,7 @@ def province(pId):
         return render_template(
             template,
             province=province,
+            other_mines=other_biome_mines(province.get("location")),
             distribution_status=distribution_status,
             population=national_pop,
             food_score=food_score,

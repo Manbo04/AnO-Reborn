@@ -37,7 +37,7 @@
                     <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1; max-height: none;">
                         {% if chat_history and chat_history|length > 0 %}
                             {% for m in chat_history|reverse %}
-                            <div class="game-chat-msg">
+                            <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
                                 <img src="/flag/country/{{ m.sender_id }}" alt="">
                                 <div>
                                     <div class="game-chat-name">{{ m.sender_username }}{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
@@ -157,8 +157,8 @@
 
     function renderMessage(m) {
         var div = document.createElement('div');
-        div.className = 'game-chat-msg';
         var mine = String(m.sender_id) === String(currentUserId);
+        div.className = 'game-chat-msg' + (mine ? ' game-chat-msg--mine' : '');
         div.innerHTML = '<img src="/flag/country/' + m.sender_id + '" alt="">' +
             '<div><div class="game-chat-name"></div><div class="game-chat-bubble"></div></div>';
         div.querySelector('.game-chat-name').textContent = m.sender_username + (mine ? ' (you)' : '') + ' · just now';

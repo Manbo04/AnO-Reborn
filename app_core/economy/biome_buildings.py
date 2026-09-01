@@ -41,6 +41,65 @@ BIOME_MINES: dict[str, tuple[str, ...]] = {
 }
 
 
+# Display metadata for the "not available in your biome" cards on the
+# classic province page -- lets players see a trade partner's raw-material
+# costs/output even for mines they can't build themselves, instead of the
+# building simply not existing on the page (player-requested, see
+# "City buildings" in #bug-reports).
+MINE_INFO: dict[str, dict[str, str]] = {
+    "iron_mines": {
+        "display_name": "Iron Mines",
+        "resource": "iron",
+        "description": "Iron mines produce iron which is necessary to produce steel.",
+    },
+    "coal_mines": {
+        "display_name": "Coal Mines",
+        "resource": "coal",
+        "description": "Coal mines produce coal. Coal can be used to fuel coal power plants, or can be combined with iron to produce steel.",
+    },
+    "copper_mines": {
+        "display_name": "Copper Mines",
+        "resource": "copper",
+        "description": "Copper mines produce copper for your nation. Copper can be used to manufacture ammunition.",
+    },
+    "bauxite_mines": {
+        "display_name": "Bauxite Mines",
+        "resource": "bauxite",
+        "description": "Bauxite mines make bauxite for your country. Bauxite can be processed into aluminium.",
+    },
+    "lead_mines": {
+        "display_name": "Lead Mines",
+        "resource": "lead",
+        "description": "Lead mines allow for the production of lead, which is valuable for its use in ammunition.",
+    },
+    "uranium_mines": {
+        "display_name": "Uranium Mines",
+        "resource": "uranium",
+        "description": "Uranium mines harvest uranium, which can be used to fuel nuclear reactors, or in nuclear weapons.",
+    },
+    "pumpjacks": {
+        "display_name": "Pumpjacks",
+        "resource": "oil",
+        "description": "Pumpjacks harvest oil from the ground, providing a resource that can be processed into gasoline.",
+    },
+    "lumber_mills": {
+        "display_name": "Lumber Mills",
+        "resource": "lumber",
+        "description": "Lumber mills produce lumber, a useful raw resource used to mines and farms.",
+    },
+}
+
+
+def other_biome_mines(location: str | None) -> list[dict[str, str]]:
+    """Raw-material mines NOT buildable in this biome, for display-only cards."""
+    allowed = set(mines_for_biome(location))
+    return [
+        {"name": name, **MINE_INFO[name]}
+        for name in ALL_MINE_BUILDINGS
+        if name not in allowed
+    ]
+
+
 def mines_for_biome(location: str | None) -> tuple[str, ...]:
     """Raw-material mine/well types buildable in a given province biome.
 

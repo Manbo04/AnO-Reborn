@@ -81,9 +81,13 @@
                         </div>
                     </td>
                     <td>
-                        <form method="post" class="material-icons iconblue" onclick="event.target.submit();">check_circle_outline
+                        <form method="post" class="material-icons iconblue" onclick="event.target.submit();" style="display: inline; margin-right: 8px;" title="Accept">check_circle_outline
                             <input type="hidden" name="peace_offer" value="{{key}}">
                             <input type="hidden" name="decision" value="1">
+                        </form>
+                        <form method="post" class="material-icons iconred" onclick="event.target.submit();" style="display: inline;" title="Reject">highlight_off
+                            <input type="hidden" name="peace_offer" value="{{key}}">
+                            <input type="hidden" name="decision" value="0">
                         </form>
                     </td>
                 </tr>
