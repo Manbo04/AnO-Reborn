@@ -590,6 +590,19 @@ body.game-page-v2 .nation-card {
     border-color: var(--game-glass-border);
 }
 
+/* .game-province-card (provinces.html mobile card list) and .game-market-card
+   (market.html) -- same opaque-legacy-fill pattern as .nation-card above
+   (--game-panel-bg / --foregroundThree, no blur), just never covered by that
+   fix. Reported live 2026-09-01 by Dede on /provinces -- solid dark cards
+   standing out against every other glass panel on the page. */
+body.game-page-v2 .game-province-card,
+body.game-page-v2 .game-market-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
 body.game-page-v2 .templateselect,
 body.game-page-v2 .imageinput {
     background: var(--game-glass-bg-strong);
