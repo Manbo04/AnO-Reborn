@@ -167,8 +167,8 @@
 
         {% if tech_rows and tech_rows|length > 0 %}
         <div class="infodiv mb-md">
-            <h3 class="templatecontentheadercenter">All Technologies</h3>
-            <p class="templatecontentpleft">Research cost is paid in {{ research_cost_resource }}.</p>
+            <h3 class="templatecontentheadercenter">Quick research</h3>
+            <p class="templatecontentpleft">Search any technology, including ones not yet shown as cards below. Research cost is paid in {{ research_cost_resource }}.</p>
             <form method="POST" action="/start_research">
                 <label for="tech_id">Technology</label>
                 <select class="templateselect" name="tech_id" id="tech_id" required onchange="anoUpdateTechDescription()">
