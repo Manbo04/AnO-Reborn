@@ -36,7 +36,12 @@
     --game-glass-bg: rgba(255, 255, 255, 0.55);
     --game-glass-bg-strong: rgba(255, 255, 255, 0.82);
     --game-glass-border: rgba(26, 35, 50, 0.10);
-    --game-text-faint: #93a0b2;
+    /* Was #93a0b2, a standalone value nobody checked against the light
+       glass panels -- ~2.3:1 against white, well under WCAG AA's 4.5:1,
+       reported as illegible ("no contrast") on both the hub stats row and
+       Projects page. Reuse --text-secondary as the file's own comment
+       above already said to, instead of a bespoke faint tone. */
+    --game-text-faint: var(--text-secondary);
     --game-shadow-glass: 0 16px 40px rgba(26, 35, 50, 0.18);
 }
 
