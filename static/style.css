@@ -2085,7 +2085,11 @@ body:has(.navbarparent .templatecontainer) {
 .radioleft .check {
     position: absolute;
     border: 3px solid var(--colorOne);
-    border-radius: 100%;
+    /* Was 100% (a circle) -- these are independent <input type="checkbox">
+       elements that genuinely support selecting more than one at once
+       (e.g. National Policies), but reading as radio buttons implied
+       single-select. Rounded square instead, same as .check::before below. */
+    border-radius: 4px;
     height: 15px;
     width: 15px;
     top: 15px;
@@ -2104,7 +2108,7 @@ body:has(.navbarparent .templatecontainer) {
 .radioleft .check::before {
     position: absolute;
     content: '';
-    border-radius: 100%;
+    border-radius: 2px;
     top: 0;
     bottom: 0;
     margin: auto;
@@ -2128,7 +2132,12 @@ body:has(.navbarparent .templatecontainer) {
 }
 
 .radiodiv:hover .radioright {
-    opacity: 0.8;
+    /* Was 0.8 -- this text explains what the policy actually does
+       (e.g. "-30% upkeep, +30% pollution"), real gameplay-relevant info,
+       not decoration; dimming it while someone's specifically hovering
+       to read it worked against the point. Reported live: faint but
+       readable on the country Edit tab. */
+    opacity: 1;
     pointer-events: all;
 }
 
@@ -2157,7 +2166,7 @@ body:has(.navbarparent .templatecontainer) {
    layout height in the flex column — visible as large empty gaps. */
 @media (hover: none) {
     .radioright {
-        opacity: 0.8;
+        opacity: 1;
         pointer-events: all;
     }
 
@@ -4271,7 +4280,10 @@ body:has(.landingpagediv) .landingpagediv.templatediv {
 }
 
 .radiodivContentShow {
-    opacity: 0.7;
+    /* Was 0.7 -- dimmed the description of a policy you've actually
+       selected/checked even more than the passive hover-reveal state,
+       backwards for text that matters this much. */
+    opacity: 1;
 }
 
 

@@ -80,7 +80,7 @@
                 </div>
                 <form method="POST" class="game-row market-purchase-form" style="margin-top: 10px;">
                     <span class="market-input-wrap game-row" style="gap: 6px;">
-                        <input class="game-purchase-input market-purchase-input" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                        <input class="game-purchase-input market-purchase-input" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
                         <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                     </span>
                     {% if type == "sell" %}
@@ -126,7 +126,7 @@
                         <td>
                             <form method="POST" class="game-row market-purchase-form">
                                 <span class="market-input-wrap game-row" style="gap: 6px;">
-                                    <input class="game-purchase-input market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" value="{{ amount }}" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                                    <input class="game-purchase-input market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
                                     <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                                 </span>
                                 {% if type == "sell" %}
