@@ -128,9 +128,15 @@
     <!-- Interactive Tooltips — self-hosted + deferred. Previously these loaded
          synchronously from unpkg.com (with 302 redirects), which BLOCKED page
          rendering on every page until that flaky CDN responded — the cause of
-         extraordinarily slow loads. tippy-bundle includes popper, so one file.
+         extraordinarily slow loads. Despite its name, tippy-bundle.umd.min.js
+         does NOT inline Popper (its UMD factory still takes Popper as an
+         argument, `e(t.Popper)`) -- it was previously missing here, which left
+         window.Popper undefined and threw "Cannot read properties of
+         undefined (reading 'applyStyles')" on every page load. popper-core
+         must load first so window.Popper exists before tippy-bundle runs.
          defer keeps them non-blocking and still runs them (in order) before
          DOMContentLoaded, where tooltips.js initialises tippy. -->
+    <script defer src="{{ url_for('static', filename='vendor/popper-core.min.js') }}?v=2.11.8"></script>
     <script defer src="{{ url_for('static', filename='vendor/tippy-bundle.umd.min.js') }}?v=6.3.7"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/tippy-scale.css') }}?v=6.3.7" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="{{ url_for('static', filename='vendor/tippy-scale.css') }}?v=6.3.7" /></noscript>
