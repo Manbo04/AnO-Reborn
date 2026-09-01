@@ -1,42 +1,38 @@
 {% if distribution_status and distribution_status.show_alert %}
 {% if distribution_status.grace_period %}
-<div class="center fit notificationparent distribution-alert" role="status" style="border-color: #2ecc71;">
-    <div class="left fit notificationchild">
-        <ul class="right vanilla notificationchildright" style="color: #2ecc71;">
-            <span class="material-icons-outlined" style="color: #2ecc71;">verified</span>
-            <strong>GRACE PERIOD ACTIVE - NO STARVATION</strong>
-        </ul>
-        <ul class="right vanilla notificationchild">
-            <span class="material-icons-outlined">restaurant</span>
-            Your citizens are fed without penalties while you have &le; 1 province and &le; 20 land blocks.
-        </ul>
-    </div>
+<div class="distribution-alert-card distribution-alert-card-good" role="status">
+    <p class="distribution-alert-line distribution-alert-headline">
+        <span class="material-icons-outlined">verified</span>
+        <strong>Grace period active &mdash; no starvation</strong>
+    </p>
+    <p class="distribution-alert-line">
+        <span class="material-icons-outlined">restaurant</span>
+        Your citizens are fed without penalties while you have &le; 1 province and &le; 20 land blocks.
+    </p>
 </div>
 {% else %}
-<div class="center fit notificationparent distribution-alert" role="status">
-    <div class="left fit notificationchild">
-        <ul class="right vanilla notificationchildright">
-            <span class="material-icons-outlined">warning</span>
-            Ration stockpile {{ distribution_status.rations_stockpile | weight_fmt }}, but only
-            {{ distribution_status.distribution_cap | commas }} citizens can be fed
-            ({{ distribution_status.coverage_percent }}% of {{ population | commas }} population).
-        </ul>
-        {% if distribution_status.uncovered_population > 0 %}
-        <ul class="right vanilla notificationchild">
-            <span class="material-icons-outlined">local_shipping</span>
-            Build distribution to reach {{ distribution_status.uncovered_population | commas }} more citizens.
-            {% if distribution_status.distribution_centers_suggested > 0 %}
-            About {{ distribution_status.distribution_centers_suggested }} food bank(s)
-            (250K cap each) or more gas stations / general stores / malls.
-            {% endif %}
-        </ul>
+<div class="distribution-alert-card" role="status">
+    <p class="distribution-alert-line distribution-alert-headline">
+        <span class="material-icons-outlined">warning</span>
+        Ration stockpile {{ distribution_status.rations_stockpile | weight_fmt }}, but only
+        {{ distribution_status.distribution_cap | commas }} citizens can be fed
+        ({{ distribution_status.coverage_percent }}% of {{ population | commas }} population).
+    </p>
+    {% if distribution_status.uncovered_population > 0 %}
+    <p class="distribution-alert-line">
+        <span class="material-icons-outlined">local_shipping</span>
+        Build distribution to reach {{ distribution_status.uncovered_population | commas }} more citizens.
+        {% if distribution_status.distribution_centers_suggested > 0 %}
+        About {{ distribution_status.distribution_centers_suggested }} food bank(s)
+        (250K cap each) or more gas stations / general stores / malls.
         {% endif %}
-        {% if food_score is not none and food_score < -1 %}
-        <ul class="right vanilla notificationchild">
-            Food supply score {{ "%.2f"|format(food_score) }} (tax and growth penalized until distribution catches up).
-        </ul>
-        {% endif %}
-    </div>
+    </p>
+    {% endif %}
+    {% if food_score is not none and food_score < -1 %}
+    <p class="distribution-alert-line">
+        Food supply score {{ "%.2f"|format(food_score) }} (tax and growth penalized until distribution catches up).
+    </p>
+    {% endif %}
 </div>
 {% endif %}
 {% endif %}
