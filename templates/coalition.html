@@ -206,7 +206,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         </tr>
                     </thead>
                     <tbody id="membersTableBody">
-                    {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=3, reverse=True) %}
+                    {% for member_id, username, role, influence, provinces, last_active, joined_at in members|sort(attribute=3, reverse=True) %}
                     <tr class="member-row">
                         <td data-sort="{{ loop.index }}">{{ loop.index }})</td>
                         <td data-sort="{{ username.lower() }}">
@@ -650,7 +650,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         <div class="templatedivflex2left">
                             <select class="templateselect" name="username" required>
                                 <option class="templateoption" selected disabled value="">Choose Member</option>
-                                {% for member_id, username, role, influence, provinces, last_active in members|sort(attribute=1) %}
+                                {% for member_id, username, role, influence, provinces, last_active, joined_at in members|sort(attribute=1) %}
                                 <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
                                 {% endfor %}
                             </select>

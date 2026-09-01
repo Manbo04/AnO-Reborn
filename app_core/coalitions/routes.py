@@ -161,7 +161,8 @@ def coalition(coalition_id):
                            {_members_tbl()}.role,
                            0 AS influence,
                            COALESCE(prov.province_count, 0) AS province_count,
-                           users.last_active
+                           users.last_active,
+                           {_members_tbl()}.joined_at
                     FROM {_members_tbl()}
                     INNER JOIN users ON {_members_tbl()}.userid = users.id
                     LEFT JOIN (
@@ -180,7 +181,7 @@ def coalition(coalition_id):
                 members = db.fetchall()
                 influence_by_user = get_bulk_influence([m[0] for m in members])
                 members = [
-                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5])
+                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5], m[6])
                     for m in members
                 ]
                 total_influence = sum(influence_by_user.values())
@@ -194,7 +195,8 @@ def coalition(coalition_id):
                            {_members_tbl()}.role,
                            0 AS influence,
                            COALESCE(prov.province_count, 0) AS province_count,
-                           NULL::timestamptz AS last_active
+                           NULL::timestamptz AS last_active,
+                           {_members_tbl()}.joined_at
                     FROM {_members_tbl()}
                     INNER JOIN users ON {_members_tbl()}.userid = users.id
                     LEFT JOIN (
@@ -213,7 +215,7 @@ def coalition(coalition_id):
                 members = db.fetchall()
                 influence_by_user = get_bulk_influence([m[0] for m in members])
                 members = [
-                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5])
+                    (m[0], m[1], m[2], influence_by_user.get(m[0], 0), m[4], m[5], m[6])
                     for m in members
                 ]
                 total_influence = sum(influence_by_user.values())
