@@ -335,7 +335,7 @@ body.game-page-v2 .templatediv {
 
 .game-badge-warn {
     background: color-mix(in srgb, var(--gold) 20%, transparent);
-    color: var(--gold);
+    color: var(--game-warn-text);
 }
 
 /* ---------- Table ---------- */
