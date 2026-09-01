@@ -2368,7 +2368,13 @@ body:has(.navbarparent .templatecontainer) {
     text-align: center;
 }
 
-.divflex2center div {
+/* Direct children only -- this was a descendant selector (`.divflex2center
+   div`) reaching into arbitrarily-deep nested content (e.g. a warning box's
+   text paragraph on the email-verification page), forcing width:max-content
+   + margin:auto on it and making it overflow its own container off to one
+   side. See the width:auto!important override this used to require in
+   game-province.css for a page that already had to work around it. */
+.divflex2center > div {
     height: min-content;
     width: max-content;
     justify-items: center;
@@ -5651,7 +5657,12 @@ html.page-tutorial .resourcedivcontent {
     --game-glass-bg: rgba(255, 255, 255, 0.55);
     --game-glass-bg-strong: rgba(255, 255, 255, 0.82);
     --game-glass-border: rgba(26, 35, 50, 0.10);
-    --game-text-faint: #93a0b2;
+    /* Was #93a0b2, a standalone value nobody checked against the light
+       glass panels -- ~2.3:1 against white, well under WCAG AA's 4.5:1,
+       reported as illegible ("no contrast") on both the hub stats row and
+       Projects page. Reuse --text-secondary as the file's own comment
+       above already said to, instead of a bespoke faint tone. */
+    --game-text-faint: var(--text-secondary);
     --game-shadow-glass: 0 16px 40px rgba(26, 35, 50, 0.18);
 }
 
@@ -5923,6 +5934,15 @@ body.game-page-v2 .templatediv {
 
 .game-panel {
     padding: 20px 22px;
+}
+
+/* Lets a .game-glass.game-panel stretched to match a taller sibling (via
+   align-items:stretch on the parent row) actually fill that height instead
+   of leaving dead space below its content -- used by hub.html's Global Chat
+   panel to match Global News' height. */
+.game-panel--flex-col {
+    display: flex;
+    flex-direction: column;
 }
 
 .game-row {
@@ -6263,6 +6283,21 @@ body.game-page-v2 .templatetable3 td {
     color: var(--colorOne);
 }
 
+/* Transparent, not another glass layer -- .templatetable inside it already
+   carries the glass treatment above; stacking two translucent layers just
+   double-darkens the same content. */
+body.game-page-v2 .templateoutertablediv {
+    background: transparent;
+    box-shadow: none;
+}
+
+body.game-page-v2 .nation-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
 body.game-page-v2 .templateselect,
 body.game-page-v2 .imageinput {
     background: var(--game-glass-bg-strong);
@@ -6276,6 +6311,20 @@ body.game-page-v2 .infodiv {
     -webkit-backdrop-filter: var(--game-glass-blur);
     border: 1px solid var(--game-glass-border);
     box-shadow: var(--game-shadow-glass);
+}
+
+/* .stat-card/.stat-grid -- the resource/stat tile grid used throughout
+   country/province/military/upgrades pages (dozens of instances per page
+   on country.html alone: Buildings, Population Breakdown, several Revenue
+   sub-sections). Opaque var(--foreground) fill, never touched by the
+   theme-v2 port. Page-specific !important overrides (demographics panel,
+   revenue's flat-list variant) already exist and correctly keep winning
+   over this plain rule -- this is only the fallback for everywhere else. */
+body.game-page-v2 .stat-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
 }
 
 body.game-page-v2 .loginsignupinput,
@@ -6294,6 +6343,420 @@ body.game-page-v2 .templatedivbutton-secondary {
     background: var(--game-glass-bg-strong);
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
+}
+
+/* .templatecontentheaderleft is used as a generic "section header inside a
+   card" sub-header on many ported pages (military's per-unit "Soldiers" /
+   "Artillery" headers, etc.) -- its opaque var(--foregroundThree) fill was
+   never touched by the theme-v2 port, so it reads as a solid opaque bar
+   sitting on top of the translucent photo-backed page everywhere it's used.
+   Keep the bar/accent shape (a deliberate, separately-polished treatment,
+   not a mistake) but make its fill glass instead of opaque. */
+body.game-page-v2 .templatecontentheaderleft {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    color: var(--colorOne);
+}
+
+/* .warflexparentcolors (static/style.css ~line 1341) is the shared
+   "building/unit/war card" wrapper used across military, province, and war
+   -- opaque var(--foreground) fill, never touched by the theme-v2 port, so
+   every one of those cards renders as a solid opaque block on every ported
+   page that uses it. One shared fix instead of a per-page one. */
+body.game-page-v2 .warflexparentcolors {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
+/* ---------- Topbar search / notifications / avatar ----------
+   Sitewide (not scoped to body.game-page-v2) -- .navbarparent is a fixed
+   #1c2029 bar on every page regardless of theme or v2 status, so these use
+   their own fixed dark-on-dark palette (matching the reference mockup's
+   shell.js/theme.css) rather than the light/dark-aware --game-glass-* tokens,
+   which are tuned for content panels sitting over a photo, not this bar. */
+.game-topbar-tools {
+    float: right;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 14px;
+    position: relative;
+}
+
+.game-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cfd6e2;
+    cursor: pointer;
+    transition: background .12s, color .12s;
+}
+
+.game-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.game-icon-btn .material-icons-outlined {
+    font-size: 18px;
+}
+
+.game-topbar-notif-dot {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e05a4d;
+    box-shadow: 0 0 0 2px #1c2029;
+}
+
+.game-topbar-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11.5px;
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.game-topbar-avatar:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.game-topbar-dropdown-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.game-topbar-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 280px;
+    max-width: 88vw;
+    padding: 10px;
+    background: rgba(20, 24, 32, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(-12px) scale(.95);
+    pointer-events: none;
+    transform-origin: top right;
+    transition: opacity .25s cubic-bezier(.22, 1, .36, 1), transform .3s cubic-bezier(.22, 1, .36, 1);
+    z-index: 1002;
+}
+
+.game-topbar-dropdown-wide {
+    width: 320px;
+}
+
+.game-topbar-dropdown.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.game-topbar-dropdown-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #8891a0;
+    padding: 4px 8px 8px;
+}
+
+.game-topbar-dropdown input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 13px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+}
+
+.game-topbar-result,
+.game-topbar-notif {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 8px;
+    border-radius: 9px;
+    font-size: 13px;
+    color: #cfd6e2;
+    text-decoration: none;
+}
+
+.game-topbar-result:hover,
+.game-topbar-notif:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.game-topbar-result-type,
+.game-topbar-n-time {
+    margin-left: auto;
+    font-size: 10.5px;
+    color: #8891a0;
+    flex-shrink: 0;
+}
+
+.game-topbar-empty {
+    padding: 14px 8px;
+    text-align: center;
+    font-size: 12px;
+    color: #8891a0;
+}
+
+/* ---------- More reference-mockup vocabulary: stat chips, chat, news cards,
+   threads, devlog (hub.html) ---------- */
+.game-badge-accent {
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.game-stat-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.game-stat-row .game-stat {
+    flex: 1 1 150px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 20px;
+    border-left: 1px solid var(--game-glass-border);
+}
+
+.game-stat-row .game-stat:first-child {
+    border-left: none;
+    padding-left: 4px;
+}
+
+.game-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.game-stat-icon .material-icons-outlined {
+    font-size: 20px;
+    color: var(--accent);
+}
+
+.game-stat-label {
+    font-size: 11.5px;
+    color: var(--game-text-faint);
+    font-weight: 600;
+}
+
+.game-stat-value {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--colorOne);
+}
+
+@media (max-width: 620px) {
+    .game-stat-row .game-stat {
+        flex: 1 1 42%;
+        border-left: none;
+        padding-left: 4px;
+        margin-bottom: 10px;
+    }
+}
+
+.game-online-stack {
+    display: flex;
+}
+
+.game-online-stack img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-left: -8px;
+    border: 2px solid var(--background);
+    object-fit: cover;
+    background: var(--game-glass-bg-strong);
+}
+
+.game-online-stack img:first-child {
+    margin-left: 0;
+}
+
+.game-chat-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.game-chat-msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.game-chat-msg img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-top: 2px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border: 1px solid var(--game-glass-border);
+}
+
+.game-chat-bubble {
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 12px;
+    border-top-left-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    max-width: 88%;
+    color: var(--colorOne);
+}
+
+.game-chat-name {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 2px;
+    color: var(--colorOne);
+}
+
+.game-chat-time {
+    font-size: 10.5px;
+    color: var(--game-text-faint);
+    margin-left: 6px;
+    font-weight: 500;
+}
+
+.game-news-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* A same-specificity class rule (author) always beats the UA stylesheet's
+   [hidden]{display:none} regardless of source order (author origin always
+   wins over user-agent origin) -- without this, hub.html's collapsed
+   "show more" news grid stayed visible despite the hidden attribute. */
+.game-news-grid[hidden] {
+    display: none;
+}
+
+.game-news-card {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--game-glass-border);
+    background: var(--game-glass-bg-strong);
+    text-decoration: none;
+    color: var(--colorOne);
+    display: block;
+    transition: background .12s;
+}
+
+.game-news-card:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-news-card img {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: var(--game-glass-bg);
+}
+
+.game-news-card .game-news-title {
+    font-weight: 700;
+    font-size: 12.5px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+
+.game-news-card .game-news-snippet {
+    font-size: 11px;
+    color: var(--game-text-faint);
+}
+
+@media (max-width: 620px) {
+    .game-news-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.game-thread-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--game-glass-border);
+    text-decoration: none;
+    color: var(--colorOne);
+}
+
+.game-thread-row:last-child {
+    border-bottom: none;
+}
+
+.game-thread-row:hover {
+    background: var(--game-glass-bg);
+}
+
+.game-devlog-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+.game-devlog-item:last-child {
+    border-bottom: none;
+}
+
+.game-devlog-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 5px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 
@@ -10064,7 +10527,14 @@ body.page-country .revenue .stat-value {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: -1;
+    /* Was z-index:-1 -- inside .province-banner's isolated stacking context
+       (isolation:isolate above), a negative z-index child paints BEHIND the
+       context root's own opaque `background: #0a1526`, hiding the photo
+       entirely instead of just sitting behind the ::after scrim + body text.
+       Confirmed live: every province card rendered as a solid navy block
+       with zero photo visible. 0 sits below the scrim (also 0, but painted
+       later in source order) and the body (1), which is what was intended. */
+    z-index: 0;
     transition: transform 0.25s ease;
 }
 .province-banner::after {
@@ -11507,6 +11977,13 @@ html.has-touch.game-reduced-motion .touch-active {
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
+body.game-page-v2 .store-package-card:not(.store-package-card--featured) {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
 .store-package-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-card-hover);
@@ -11598,6 +12075,13 @@ html.has-touch.game-reduced-motion .touch-active {
     display: flex;
     flex-direction: column;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+body.game-page-v2 .store-cosmetic-card {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
 }
 
 .store-cosmetic-card:hover {
