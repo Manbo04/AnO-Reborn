@@ -195,7 +195,11 @@ def create_app():
         if user_id:
             now = time()
             last_ping = session.get("_last_active_ping", 0)
-            if now - last_ping > 3600:
+            # Must stay well under the 5-minute window _hub_context() uses for
+            # "Nations online now" (SELECT ... WHERE last_active > now() - '5
+            # minutes') -- the old 3600s throttle meant an actively browsing
+            # user showed as offline for up to ~55 minutes out of every hour.
+            if now - last_ping > 120:
                 try:
                     with get_request_cursor() as _db:
                         _db.execute("UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))

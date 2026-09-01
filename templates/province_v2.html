@@ -2222,6 +2222,28 @@
 
                     </div>
                     {% endif %}
+
+                    {% if other_mines %}
+                    <!-- Player-requested: show every raw-resource mine, not just the ones
+                         buildable in this province's biome, so you can see a trade
+                         partner's costs/output instead of the building not existing here. -->
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Other Raw Resources</h2>
+                        <p class="templatecontentpleft">Not producible in this province's biome — shown for reference (e.g. checking what a trade partner's mines cost and produce).</p>
+                        {% for m in other_mines %}
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row" style="opacity: 0.6;">
+                            <div class="templatedivflex2left">
+                                <h3 class="templatecontentheadercenter">{{ m.display_name }} <span style="font-weight: 400;">(not available in this biome)</span></h3>
+                                <p class="templatecontentpleft">{{ m.description }}</p>
+                                <ul>Costs {{ infra[m.name ~ "_money"] | fmt }} per hour and produces {{ infra[m.name ~ "_plus"][m.resource] | weight_fmt }} {{ m.resource }} per hour, as well as +{{ infra[m.name ~ "_effect"][0]["pollution"] }}% pollution</ul>
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+                                <img alt="Image" class="unitimage" style="filter: grayscale(1);" src="{{ url_for('static', filename=game_asset_path('buildings', m.name)) }}?v=2" />
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!--Processing-->

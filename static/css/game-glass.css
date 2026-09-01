@@ -92,6 +92,29 @@ body.game-page-v2 .templatediv {
     );
 }
 
+/* The hub is almost entirely glass panels (each with their own background),
+   not a photo-heavy hero like the login/country pages the default gradient
+   above was tuned for -- the same bottom-heavy darkening just reads as an
+   overly dark page here instead of helping legibility. Lighter, flatter
+   version scoped to this page only (reported directly, "way too dark"). */
+body.page-hub .game-page-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(10, 13, 18, 0.08) 0%,
+        rgba(10, 13, 18, 0.16) 50%,
+        rgba(10, 13, 18, 0.28) 100%
+    );
+}
+
+body.page-hub.theme-light .game-page-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(20, 26, 36, 0.03) 0%,
+        rgba(20, 26, 36, 0.08) 50%,
+        rgba(20, 26, 36, 0.16) 100%
+    );
+}
+
 /* Base frosted panel. Distinct from .stat-card/.infodiv (opaque, tokens.css
    --foreground) — this is the translucent glass treatment that only makes
    sense on pages carrying .game-page-bg behind it. Don't apply to pages
@@ -931,6 +954,33 @@ body.game-page-v2 .warflexparentcolors {
     color: var(--game-text-faint);
     margin-left: 6px;
     font-weight: 500;
+}
+
+/* Player-requested: your own messages should sit apart from everyone
+   else's, like every other chat UI -- mirror the row and right-align the
+   name/bubble instead of everything reading as one undifferentiated left
+   column. */
+.game-chat-msg--mine {
+    flex-direction: row-reverse;
+}
+
+.game-chat-msg--mine > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.game-chat-msg--mine .game-chat-bubble {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--colorTwo);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 4px;
+}
+
+.game-chat-msg--mine .game-chat-time {
+    margin-left: 0;
+    margin-right: 6px;
 }
 
 .game-news-grid {
