@@ -1,0 +1,88 @@
+{% extends "layout.html" %} {% block title %} Recruitment {% endblock %}{% block body_class %} page-recruitments game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+<style>
+.recruitment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--game-space-md, 16px);
+    margin: 24px 0;
+}
+
+.recruitment-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.recruitment-card h2 {
+    font-size: 18px;
+    line-height: 1.3;
+    margin: 0 0 4px;
+    color: var(--colorOne);
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.recruitment-card-type {
+    color: var(--game-text-faint);
+    font-size: 13px;
+    margin: 0 0 10px;
+    text-align: left;
+}
+
+.recruitment-card-desc {
+    color: var(--game-text-faint);
+    text-align: left;
+    width: 100%;
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.recruitment-card-actions {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+</style>
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Recruitment', badge_icon='group_add', subtitle='Coalitions looking for members') }}
+
+    <div class="templatedivcontent">
+
+        {% if coalitions and coalitions|length > 0 %}
+            <div class="recruitment-grid">
+                {% for col in coalitions %}
+                <div class="recruitment-card game-glass game-panel">
+                    <h2>{{ col[1] }}</h2>
+                    <p class="recruitment-card-type">Type: {{ col[2] }}</p>
+                    <p class="recruitment-card-desc">{{ col[3] }}</p>
+                    <div class="recruitment-card-actions">
+                        <a class="templatelink" href="/coalition/{{ col[0] }}">View coalition</a>
+                        {% if session.user_id and col[0] != own_coalition_id %}
+                            <!-- user is logged in and not already in this coalition -->
+                            <a class="game-btn game-btn-primary game-btn-sm" href="/coalition/{{ col[0] }}/apply">Apply to join</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="templatecontentcenter">No coalitions are recruiting right now.</p>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
