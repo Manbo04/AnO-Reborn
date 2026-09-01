@@ -757,6 +757,23 @@ body.game-page-v2 .landingpagecontent {
     box-sizing: border-box;
 }
 
+/* Same illegible-floating-text bug as .landingpagecontent above, different
+   class: .richDescription renders a coalition's or nation's own markdown
+   "About"/lore text (country.html's National Lore, coalition_v2.html's
+   About tab) with light theme-aware text but zero background of its own --
+   confirmed live on the "Imperium of Man" coalition page, reported as
+   "poor contrast on My Coalition" (luciuskonst, #suggestions). Same
+   glass-chip fix. */
+body.game-page-v2 .richDescription {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md);
+    padding: var(--game-space-md);
+    box-sizing: border-box;
+}
+
 /* .templatedivbutton already has a real flat-fill treatment (tokens.css era,
    2026-08-19) that reads fine against a photo background as-is -- left alone here
    on purpose, not an oversight. Secondary/ghost variants get a touch more glass
@@ -994,12 +1011,25 @@ body.game-shell-active .dropdown:hover .dropbtnchild {
     color: #fff;
 }
 
+/* Was top:55px (hidden) -> top:63px (hover, an 8px slide-down reveal).
+   .dropdown has no defined height of its own -- .dropdown-content is
+   absolutely positioned and contributes nothing to it -- so .dropdown's
+   actual hoverable box is just the button, and that 8px gap between the
+   button's bottom and the menu's top was dead space: crossing it broke
+   :hover on .dropdown before the cursor ever reached the menu, closing it
+   mid-move. Reported live (luciuskonst, #suggestions: "the drop-down box
+   often disappears when the mouse cursor moves over that space"). top:100%
+   keeps the menu flush against the button in both states -- zero gap,
+   ever -- and the reveal motion moves to a transform instead so hit-testing
+   never depends on it. */
 body.game-shell-active .dropdown-content {
-    top: 55px;
+    top: 100%;
+    transform: translateY(-6px);
 }
 
 body.game-shell-active .dropdown:hover .dropdown-content {
-    top: 63px;
+    top: 100%;
+    transform: translateY(0);
 }
 
 body.game-shell-active .dropdown-contentchild {
