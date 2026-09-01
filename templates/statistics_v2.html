@@ -1,0 +1,79 @@
+{% extends "layout.html" %} {% block title %} Statistics {% endblock %}{% block body_class %} page-statistics game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import stat_card, game_glass_panel, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Statistics', badge_icon='insert_chart_outlined', subtitle='Stats are stored for 100 days') }}
+
+    <div class="templatedivcontent">
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">
+                        public
+                        </span>Nation Statistics</h2>
+
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+                {% call game_glass_panel('Global Stats', icon='groups', style='margin-top: 0;') %}
+<div class="stat-grid">
+    {{ stat_card('Total Nations', total_nations | commas) }}
+    {{ stat_card('Average Influence', avg_influence | commas) }}
+    {{ stat_card('Highest Influence', max_influence | commas) }}
+</div>
+                {% endcall %}
+            </div>
+            <div class="templatedivflex2left">
+                <div class="game-glass game-panel">
+                    <p class="templatecontentpleft">Track global market trends and nation statistics to make informed decisions about trading, warfare, and economic planning.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">
+                        local_grocery_store
+                        </span>Market Prices</h2>
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+
+                {% call game_glass_panel('Average Price', icon='insert_chart_outlined', style='margin-top: 0;') %}
+<div class="stat-grid">
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('avg', 'N/A')) }}
+    {% endfor %}
+</div>
+                {% endcall %}
+            </div>
+            <div class="templatedivflex2left">
+                <p class="templatecontentheadercenter">Chart of prices over last 100 days</p>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex card-align-row">
+            <div class="templatedivflex2left">
+
+                {% call game_glass_panel('Highest Price', icon='arrow_circle_up', style='margin-top: 0;') %}
+<div class="stat-grid">
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('max', 'N/A')) }}
+    {% endfor %}
+</div>
+                {% endcall %}
+            </div>
+            <div class="templatedivflex2left">
+
+                {% call game_glass_panel('Lowest Price', icon='arrow_circle_down', style='margin-top: 0;') %}
+<div class="stat-grid">
+    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Steel','steel'), ('Aluminium','aluminium'), ('Lumber','lumber'), ('Components','components')] %}
+    {{ stat_card(label, market_stats.get(key, {}).get('min', 'N/A')) }}
+    {% endfor %}
+</div>
+                {% endcall %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

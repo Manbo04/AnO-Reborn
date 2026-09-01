@@ -124,8 +124,9 @@ def statistics():
         avg_influence = round(nation_stats[1]) if nation_stats[1] else 0
         max_influence = nation_stats[2] if nation_stats[2] else 0
 
+    template = "statistics_v2.html" if is_theme_v2_enabled("statistics") else "statistics.html"
     return render_template(
-        "statistics.html",
+        template,
         market_stats=market_stats,
         total_nations=total_nations,
         avg_influence=avg_influence,
