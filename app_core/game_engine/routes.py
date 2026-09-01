@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
-from helpers import login_required, empty_state
+from helpers import login_required, empty_state, is_theme_v2_enabled
 from database import get_request_cursor
 from app_core.coalitions.repositories import _coalition_id_for_user
 
@@ -12,7 +12,8 @@ def recruitments():
         db.execute("SELECT id, name, type, description, flag FROM colNames WHERE recruiting=TRUE ORDER BY id ASC")
         cols = db.fetchall()
         own_coalition_id = _coalition_id_for_user(db, session["user_id"])
-    return render_template("recruitments.html", coalitions=cols, own_coalition_id=own_coalition_id)
+    template = "recruitments_v2.html" if is_theme_v2_enabled("recruitments") else "recruitments.html"
+    return render_template(template, coalitions=cols, own_coalition_id=own_coalition_id)
 
 @bp.route("/businesses", methods=["GET"])
 @login_required
