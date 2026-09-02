@@ -1036,6 +1036,23 @@ body.game-shell-active .navbarparent {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* static/style.css has a `body::before` -- a full-width, 100%-opaque
+   #1c2029 strip pinned to the top 56px, z-index 999 -- predating this glass
+   port entirely ("Full-width strip under navbar so Safari never samples
+   light hero gaps at the top edge", pre-dates .game-page-bg's photo system).
+   It sits directly behind .navbarparent (z-index 1000) on every page,
+   including game-shell-active ones, so even though .navbarparent above got
+   its translucent/blurred background, there was still a fully opaque solid
+   slab immediately behind it with nothing left to blend -- the glass fix
+   never had anything to show through. Confirmed live via computed styles:
+   .navbarparent really did compute to rgba(13,16,22,0.55) + blur(24px), but
+   the nav still rendered as a flat opaque bar because of this pseudo-element.
+   Non-game-shell pages (logged-out/marketing, no photo backdrop) still need
+   the strip, so it's suppressed only where the photo system takes over. */
+body.game-shell-active::before {
+    content: none;
+}
+
 body.game-shell-active .navbarparent:hover,
 body.game-shell-active .navbarparent:has(.templatecontainer)::after {
     background: rgba(13, 16, 22, 0.55);
