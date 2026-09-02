@@ -11,7 +11,7 @@ from extensions import limiter
 
 # Root modules
 import upgrades
-import intelligence
+from app_core import intelligence
 import change
 import countries
 import signup
