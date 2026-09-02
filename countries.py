@@ -182,6 +182,9 @@ def get_revenue(cId, db=None):
                 "integrated_steelmaking": "integratedsteelmaking",
                 "cheaper_materials": "cheapermaterials",
                 "online_shopping": "onlineshopping",
+                "larger_forges": "largerforges",
+                "electric_arc_furnace": "electricarcfurnace",
+                "automation_integration": "automationintegration",
             }
             for (tech_name,) in db.fetchall() or []:
                 legacy = _tech_to_legacy.get(tech_name)
@@ -312,6 +315,16 @@ def get_revenue(cId, db=None):
                         land = land_by_id.get(province, 0)
                         amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
 
+                    # BETTER ENGINEERING (mirrors revenue.py's flat +6
+                    # energy/reactor -- another gap found sweeping for
+                    # duplicated tick formulas).
+                    if (
+                        building == "nuclear_reactors"
+                        and resource == "energy"
+                        and upgrades.get("betterengineering")
+                    ):
+                        amount += 6
+
                     # Compute theoretical production (no productivity multiplier)
                     theoretical_total = build_count * amount
 
@@ -349,6 +362,22 @@ def get_revenue(cId, db=None):
 
                 minus = infra[building].get("minus", {})
                 for resource, amount in minus.items():
+                    # Input-resource-consumption multipliers, mirroring
+                    # revenue.py's per_unit_minus adjustments (same
+                    # sequential-if, stackable structure as the real tick --
+                    # more gaps found sweeping for duplicated formulas).
+                    if building == "steel_mills":
+                        if upgrades.get("largerforges"):
+                            amount *= 0.7
+                        if upgrades.get("integratedsteelmaking"):
+                            amount *= 1.36
+                        if upgrades.get("electricarcfurnace"):
+                            amount *= 0.5
+                    if building == "component_factories" and upgrades.get(
+                        "automationintegration"
+                    ):
+                        amount *= 0.75
+
                     total = build_count * amount
                     # Only subtract upkeep from net if building operates
                     if will_operate:
