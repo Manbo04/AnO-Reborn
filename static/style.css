@@ -5757,6 +5757,16 @@ html.page-tutorial .resourcedivcontent {
     --game-navbar-height: 55px;
     --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Real height of the site-wide scrolling news ticker (static/script.js
+       initImmersion(), .news-ticker in game-experience.css) -- it's
+       position:fixed/bottom:0/z-index:10000 on every page via a plain
+       document.body.appendChild, so nothing reserves space for it by
+       default and it permanently overlaps whatever content sits at the
+       bottom of the viewport. Small on desktop (lots of extra whitespace
+       below the fold); on mobile it eats a real chunk of a short viewport
+       and reliably covers the last card/row. Used below to pad real
+       content clear of it instead of shrinking/removing the ticker. */
+    --game-ticker-height: 34px;
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
     --game-glass-blur: blur(24px);
@@ -6807,6 +6817,23 @@ body.game-shell-active .navbarparent {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* static/style.css has a `body::before` -- a full-width, 100%-opaque
+   #1c2029 strip pinned to the top 56px, z-index 999 -- predating this glass
+   port entirely ("Full-width strip under navbar so Safari never samples
+   light hero gaps at the top edge", pre-dates .game-page-bg's photo system).
+   It sits directly behind .navbarparent (z-index 1000) on every page,
+   including game-shell-active ones, so even though .navbarparent above got
+   its translucent/blurred background, there was still a fully opaque solid
+   slab immediately behind it with nothing left to blend -- the glass fix
+   never had anything to show through. Confirmed live via computed styles:
+   .navbarparent really did compute to rgba(13,16,22,0.55) + blur(24px), but
+   the nav still rendered as a flat opaque bar because of this pseudo-element.
+   Non-game-shell pages (logged-out/marketing, no photo backdrop) still need
+   the strip, so it's suppressed only where the photo system takes over. */
+body.game-shell-active::before {
+    content: none;
+}
+
 body.game-shell-active .navbarparent:hover,
 body.game-shell-active .navbarparent:has(.templatecontainer)::after {
     background: rgba(13, 16, 22, 0.55);
@@ -7667,6 +7694,20 @@ body.game-reduced-motion .game-market-card::after {
     grid-template-columns: 1fr;
     gap: var(--game-space-md, 16px);
     width: 100%;
+}
+
+/* Grid items default to min-width:auto, i.e. "never shrink below my
+   content's intrinsic width" -- so a card holding a wide table (e.g.
+   rankings' .templatetable, white-space:nowrap + overflow-x:auto at
+   768px) silently blows out the grid track instead of triggering that
+   table's own internal scrollbar. Confirmed live on /rankings: the
+   Population column rendered 414px wide inside a 390px viewport,
+   clipped outright with zero scroll affordance since body has
+   overflow-x:hidden. This is the standard fix -- let items actually
+   shrink to their track so overflow is handled inside the card, not by
+   blowing out the page. */
+.game-panel-grid > * {
+    min-width: 0;
 }
 
 @media (min-width: 768px) {
@@ -9463,7 +9504,7 @@ body.game-reduced-motion .province-map-node-pin::after {
 
 .tutorial-reward-toast {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(24px + var(--game-safe-bottom, 0px));
     left: 50%;
     transform: translateX(-50%) translateY(120%);
     z-index: 10050;
@@ -9982,6 +10023,10 @@ body.page-rankings .rankings-table tbody td a {
     color: #fff;
     font-family: monospace;
     padding: 5px 0;
+    /* Clears the iOS home-indicator gesture bar instead of rendering
+       under it -- this bar is always fixed at the true viewport bottom
+       with no safe-area awareness otherwise. */
+    padding-bottom: calc(5px + var(--game-safe-bottom, 0px));
     z-index: 10000;
     overflow: hidden;
     white-space: nowrap;
@@ -9997,6 +10042,18 @@ body.page-rankings .rankings-table tbody td a {
 @keyframes tickerScroll {
     0% { transform: translate(0, 0); }
     100% { transform: translate(-100%, 0); }
+}
+
+/* The ticker is injected via document.body.appendChild in script.js
+   (initImmersion) on EVERY page, fixed at the real viewport bottom with
+   z-index 10000 -- nothing about it accounts for page content underneath.
+   On a short mobile viewport this reliably covers the last visible
+   card/row/input (reported live on /market and /hub, 2026-09-02). Reserve
+   real space at the bottom of the page instead of shrinking or removing
+   the ticker. :has() re-evaluates once script.js inserts the element, so
+   this applies with no JS changes and no dependency on game-shell-active. */
+body:has(> .news-ticker) {
+    padding-bottom: calc(var(--game-ticker-height) + var(--game-safe-bottom, 0px));
 }
 
 .province-base-building-row > div:first-child {
