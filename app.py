@@ -10,7 +10,7 @@ import traceback
 from extensions import limiter
 
 # Root modules
-import upgrades
+from app_core.upgrades.routes import bp as upgrades_bp
 from app_core import intelligence
 import change
 import countries
@@ -441,7 +441,7 @@ def create_app():
     statistics.register_statistics_routes(app)
     register_trade_agreement_routes(app)
     app.register_blueprint(province.bp)
-    if upgrades.bp: app.register_blueprint(upgrades.bp)
+    if upgrades_bp: app.register_blueprint(upgrades_bp)
     app.register_blueprint(intelligence.bp)
     app.register_blueprint(wars_bp)
     app.register_blueprint(treaties_bp)

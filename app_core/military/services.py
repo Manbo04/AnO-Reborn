@@ -12,7 +12,7 @@ from .repositories import (
     update_manpower_and_gold,
     insert_revenue
 )
-from upgrades import get_upgrades
+from app_core.upgrades.services import get_upgrades
 
 def compute_display_limits(cId, db, units_row=None):
     """Return limits as shown on the military page."""

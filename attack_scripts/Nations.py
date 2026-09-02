@@ -418,7 +418,7 @@ class Nation:
     # Get the list of owned upgrades using Economy 2.0 tech system
     @classmethod
     def get_upgrades(cls, upgrade_type, user_id):
-        from upgrades import get_upgrades as _get_upgrades
+        from app_core.upgrades.services import get_upgrades as _get_upgrades
 
         all_upgrades = _get_upgrades(user_id)
 
@@ -1023,7 +1023,7 @@ class Military(Nation):
 
         # these numbers determine the upper limit of how many of each military unit can be built per day
         # fetch upgrade flag from Economy 2.0 tech system
-        from upgrades import get_upgrades as _get_upgrades
+        from app_core.upgrades.services import get_upgrades as _get_upgrades
 
         user_upgrades = _get_upgrades(cId)
         increased_funding = user_upgrades.get("increasedfunding", False)
