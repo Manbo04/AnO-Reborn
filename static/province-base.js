@@ -242,8 +242,11 @@
         }
         var own = meta && meta.own;
         buildings.forEach(function (b) {
+            var locked = b.can_build === false;
             var row = document.createElement('div');
-            row.className = 'province-base-building-row';
+            row.className =
+                'province-base-building-row' + (locked ? ' is-locked' : '');
+            if (locked) row.style.opacity = '0.6';
             row.setAttribute('role', 'listitem');
             row.innerHTML =
                 '<div><div class="province-base-building-name">' +
@@ -251,13 +254,16 @@
                 escapeHtml(b.icon || 'domain') +
                 '</span>' +
                 escapeHtml(b.display_name || b.name) +
+                (locked
+                    ? ' <span style="font-weight:400;font-size:0.85em;">(not available in this biome)</span>'
+                    : '') +
                 '</div><div class="province-base-building-meta">' +
                 formatCost(b) +
                 '</div></div>' +
                 '<span class="province-base-building-qty" data-qty>' +
                 b.quantity +
                 '</span>' +
-                (own
+                (own && !locked
                     ? '<button type="button" class="province-base-build-btn" data-build-id="' +
                       b.building_id +
                       '" aria-label="Build one">+</button>'
@@ -273,6 +279,7 @@
         dockList.innerHTML = '';
         var own = meta && meta.own;
         var items = buildings.filter(function (b) {
+            if (b.can_build === false && b.quantity === 0) return false;
             return b.quantity > 0 || own;
         });
         if (!items.length) {
