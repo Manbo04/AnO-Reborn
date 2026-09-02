@@ -1838,7 +1838,16 @@ from flask import jsonify
 from database import get_request_cursor
 
 # Add to province.py
+# Identical for every visitor (no per-user data), but was re-running 7
+# sequential queries -- including an ORDER BY RANDOM() full scan -- on every
+# single call, holding a pooled DB connection the whole time. Client polls
+# this every 60s per tab (static/script.js), and with many concurrent
+# players that was enough concurrent connection-holding to exhaust the
+# pool (see "Database connection pool exhausted" in prod logs 2026-09-02).
+# A short shared cache collapses all those polls into one DB round-trip
+# per window regardless of player count.
 @bp.route("/api/global_events", methods=["GET"])
+@cache_response(ttl_seconds=45, public=True)
 def get_global_events():
     events = [
         "🚨 BREAKING NEWS: New Balance Update! First Province now costs $2M! New player Grace Period active (no starvation)! Lumber is now a core building requirement for Tier 2 buildings. Steel Mills & Aluminium Refineries cost 50% less! 🚨"
