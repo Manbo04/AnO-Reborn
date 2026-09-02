@@ -64,7 +64,7 @@ def run(period: str = None) -> dict:
     period = period or datetime.now(timezone.utc).strftime("%Y-%m")
 
     with get_db_cursor(read_only=True) as db:
-        tiers = {title: gems for title, gems in repositories.get_active_tiers(db)}
+        tiers = {title.strip(): gems for title, gems in repositories.get_active_tiers(db)}
     if not tiers:
         logger.warning("[patreon_gems] no active rows in patreon_tiers, skipping")
         return summary
@@ -78,7 +78,7 @@ def run(period: str = None) -> dict:
     # multiple -- keep only the highest-value matching tier per patron.
     best_by_member = {}
     for m in members:
-        gems = tiers.get(m["tier_title"])
+        gems = tiers.get((m["tier_title"] or "").strip())
         if gems is None:
             summary["unmatched_tier"] += 1
             continue
