@@ -22,7 +22,7 @@ from treaties import treaties_bp
 import policies
 import statistics
 import requests
-import trade_agreements
+from app_core.trade_agreements import register_trade_agreement_routes
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
 from flaskext.markdown import Markdown
@@ -439,7 +439,7 @@ def create_app():
     countries.register_countries_routes(app)
     policies.register_policies_routes(app)
     statistics.register_statistics_routes(app)
-    trade_agreements.register_trade_agreement_routes(app)
+    register_trade_agreement_routes(app)
     app.register_blueprint(province.bp)
     if upgrades.bp: app.register_blueprint(upgrades.bp)
     app.register_blueprint(intelligence.bp)

@@ -1,15 +1,19 @@
+import pytest
 from flask import Flask, session
+
+# Fully faked DB/cursor, manual Flask test_request_context - no live server needed.
+pytestmark = pytest.mark.no_server
 
 try:
     from app_core import market
-    import trade_agreements
+    from app_core.trade_agreements import services as trade_agreements
 except Exception:
     import os
     import sys
 
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from app_core import market
-    import trade_agreements
+    from app_core.trade_agreements import services as trade_agreements
 
 from tests.test_integration_market_edgecases import (
     fake_get_request_cursor_factory,
@@ -83,7 +87,7 @@ def test_trade_agreement_exec_emits_log(monkeypatch):
 
     # Monkeypatch DB access to use fake state
     monkeypatch.setattr(
-        "trade_agreements.get_db_connection",
+        "app_core.trade_agreements.services.get_db_connection",
         lambda: fake_get_db_connection_factory(state)(),
     )
 
