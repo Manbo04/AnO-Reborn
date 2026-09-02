@@ -1723,6 +1723,10 @@ body.page-rankings .rankings-table tbody td a {
     color: #fff;
     font-family: monospace;
     padding: 5px 0;
+    /* Clears the iOS home-indicator gesture bar instead of rendering
+       under it -- this bar is always fixed at the true viewport bottom
+       with no safe-area awareness otherwise. */
+    padding-bottom: calc(5px + var(--game-safe-bottom, 0px));
     z-index: 10000;
     overflow: hidden;
     white-space: nowrap;
@@ -1738,6 +1742,18 @@ body.page-rankings .rankings-table tbody td a {
 @keyframes tickerScroll {
     0% { transform: translate(0, 0); }
     100% { transform: translate(-100%, 0); }
+}
+
+/* The ticker is injected via document.body.appendChild in script.js
+   (initImmersion) on EVERY page, fixed at the real viewport bottom with
+   z-index 10000 -- nothing about it accounts for page content underneath.
+   On a short mobile viewport this reliably covers the last visible
+   card/row/input (reported live on /market and /hub, 2026-09-02). Reserve
+   real space at the bottom of the page instead of shrinking or removing
+   the ticker. :has() re-evaluates once script.js inserts the element, so
+   this applies with no JS changes and no dependency on game-shell-active. */
+body:has(> .news-ticker) {
+    padding-bottom: calc(var(--game-ticker-height) + var(--game-safe-bottom, 0px));
 }
 
 .province-base-building-row > div:first-child {
