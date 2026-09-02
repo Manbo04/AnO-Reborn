@@ -877,10 +877,11 @@ def province_slot_api(pId, slot_id):
                 continue
             qty = int(row["quantity"] or 0)
             can_build = allowed_mines is None or row["name"] in allowed_mines
-            if not can_build and qty == 0:
-                # Not ownable in this biome and none already built — hide it
-                # rather than offer a purchase that will be rejected server-side.
-                continue
+            # Locked-biome mines with none built stay in the list (grayed out,
+            # reference-only client-side) instead of being hidden entirely --
+            # matches classic view's "Other Raw Resources" (see biome_buildings.py),
+            # so a player can see a trade partner's mine cost/output here too
+            # without switching views. Purchase is still blocked server-side.
             entry = enrich_building_row(
                 {
                     "building_id": row["building_id"],
@@ -896,8 +897,9 @@ def province_slot_api(pId, slot_id):
         buildings.sort(key=lambda b: (-b["quantity"], b["display_name"]))
 
     suggest_build = None
-    if buildings:
-        starter = min(buildings, key=lambda b: (b["gold_cost"], b["display_name"]))
+    buildable = [b for b in buildings if b["can_build"]]
+    if buildable:
+        starter = min(buildable, key=lambda b: (b["gold_cost"], b["display_name"]))
         suggest_build = {
             "building_id": starter["building_id"],
             "display_name": starter["display_name"],
