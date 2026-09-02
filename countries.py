@@ -149,9 +149,12 @@ def get_revenue(cId, db=None):
         return cached
 
     with reuse_or_new_cursor(db, read_only=True) as db:
-        # Prefetch province ids, land, productivity, and population
+        # Prefetch province ids, land, productivity, population, and the
+        # demographic split (needed below to mirror the actual tax_income
+        # tick's age-weighted formula, not just the flat population).
         db.execute(
-            "SELECT id, land, productivity, population FROM provinces WHERE userid=%s",
+            "SELECT id, land, productivity, population, "
+            "pop_children, pop_working, pop_elderly FROM provinces WHERE userid=%s",
             (cId,),
         )
         province_rows = db.fetchall()
@@ -328,13 +331,25 @@ def get_revenue(cId, db=None):
         except Exception:
             policies = []
 
-        # Reuse already-fetched province data for tax income calculation
-        # province_rows is (id, land, productivity, population)
-        ti_provinces = [(row[3], row[1]) for row in province_rows]  # (pop, land)
+        # Reuse already-fetched province data for tax income calculation.
+        # province_rows is (id, land, productivity, population, pop_children,
+        # pop_working, pop_elderly).
+        ti_provinces = [
+            (row[3], row[1], row[4], row[5], row[6]) for row in province_rows
+        ]  # (pop, land, pc, pw, pe)
+
+        # Mirror app_core/game_ticks/taxes.py's has_demographic_data gate:
+        # only use the age-weighted formula once every province actually has
+        # a demographic split, else fall back to flat population exactly
+        # like the real tick does.
+        has_demographic_data = all(
+            pc is not None and pw is not None and pe is not None
+            for _, _, pc, pw, pe in ti_provinces
+        )
 
         ti_money = 0
         if ti_provinces:
-            for population, land in ti_provinces:
+            for population, land, pc, pw, pe in ti_provinces:
                 land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
                 if land_multiplier > 1:
                     land_multiplier = 1
@@ -346,7 +361,20 @@ def get_revenue(cId, db=None):
                 if policies and 4 in policies:
                     base_multiplier *= 0.98
                 multiplier = base_multiplier + (base_multiplier * land_multiplier)
-                ti_money += multiplier * population
+                # Children pay no tax and elderly pay a reduced rate --
+                # same DEMO_TAX_MULTIPLIER weighting the tax_income tick
+                # actually applies. Previously this projection always used
+                # raw population, so it silently never reflected the Aug 30
+                # tax rebalance even though the real tick did (player-reported).
+                if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
+                    taxable_population = (
+                        (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
+                        + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
+                        + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
+                    )
+                else:
+                    taxable_population = population
+                ti_money += multiplier * taxable_population
 
             # CG tax multiplier — mirror the actual tax_income task logic.
             # When FEATURE_DEMOGRAPHIC_CONSUMPTION is enabled, use the
@@ -362,9 +390,10 @@ def get_revenue(cId, db=None):
                     total_cg_need += (
                         pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
                     )
-                # We don't have per-province demographic splits in
-                # province_rows (only id, land, productivity, population),
-                # so fetch them in one query.
+                # province_rows now carries per-province pc/pw/pe too, but
+                # this aggregate query is left as-is (not broken, just
+                # slightly redundant) to keep this fix scoped to the tax
+                # calc above.
                 db.execute(
                     "SELECT COALESCE(SUM(pop_working), 0) AS pw,"
                     "       COALESCE(SUM(pop_children), 0) AS pc,"
@@ -416,7 +445,7 @@ def get_revenue(cId, db=None):
                         cg_ratio = available_to_consume / total_cg_need
                         ti_money *= 1 + (0.5 * cg_ratio)
             else:
-                total_pop_ti = sum(p for p, _ in ti_provinces)
+                total_pop_ti = sum(p for p, *_ in ti_provinces)
                 max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
                 if consumer_goods != 0 and max_cg != 0:
                     if max_cg <= consumer_goods:
