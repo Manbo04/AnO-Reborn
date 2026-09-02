@@ -53,7 +53,7 @@ from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_
 from app_core.game_ticks.food import rations_needed, rations_distribution_capacity, food_stats, compute_rations_distribution_cap, nation_distribution_status, fetch_nation_distribution_status, consumer_goods_distribution_capacity, calculate_demographic_rations_need, calculate_demographic_consumer_goods_need
 from app_core.game_ticks.energy import energy_info, energy_stats
 from app_core.game_ticks.taxes import calc_ti, tax_income, war_reparation_tax
-from app_core.game_ticks.population import calc_pg, population_growth, apply_population_aging, calculate_workforce_available, apply_workforce_hiring_and_debuffs, find_unit_category
+from app_core.game_ticks.population import population_growth, calculate_workforce_available, apply_workforce_hiring_and_debuffs, find_unit_category
 from app_core.game_ticks.revenue import generate_province_revenue
 from app_core.game_ticks.maintenance import backfill_missing_resources, cleanup_orphan_user_rows, refresh_bot_offers, market_bot_fight_wars, execute_due_trade_agreements, _create_game_tick_log, _finalize_game_tick_log, global_tick, BOT_USER_ID, BOT_OFFERS
 
