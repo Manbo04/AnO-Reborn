@@ -1,23 +1,6 @@
-from flask import (
-    request,
-    render_template,
-    session,
-    redirect,
-    flash,
-    current_app,
-)
-from helpers import login_required, error, empty_state, require_post_origin, get_influence
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-import variables  # noqa: E402
-import datetime  # noqa: E402
-from database import cache_response, rollback_db_cursor, get_request_cursor  # noqa: E402
-from database import get_coalition_members_table  # noqa: E402
-from typing import Optional  # noqa: E402
-
-# flake8: noqa -- Temporarily disable flake8 for this file to avoid blocking critical fixes; remove when refactoring is complete
+from helpers import error
+from database import get_request_cursor, get_coalition_members_table
+from typing import Optional
 
 
 def _coalition_members_sql(table_alias: str = "cm") -> Optional[str]:
