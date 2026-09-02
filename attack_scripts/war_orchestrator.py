@@ -220,7 +220,7 @@ def persist_fight_results(
                 if win_type != "Sustained" and war_id is not None:
                     Nation.set_peace(db, db.connection, war_id)
                 # Check for Looting Teams upgrade
-                from upgrades import get_upgrades
+                from app_core.upgrades.services import get_upgrades
                 winner_upgrades = get_upgrades(winner.user_id, db=db)
                 loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
 

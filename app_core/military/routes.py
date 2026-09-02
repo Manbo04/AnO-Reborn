@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, session, redirect
 from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor, cache_response, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
-from upgrades import get_upgrades
+from app_core.upgrades.services import get_upgrades
 
 from .repositories import ALL_UNITS, get_user_units_with_stats, get_manpower_and_gold
 from .services import compute_display_limits, process_sell_units, process_buy_units
