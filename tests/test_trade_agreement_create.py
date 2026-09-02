@@ -2,11 +2,14 @@
 
 import pytest
 
-from trade_agreements import (
+from app_core.trade_agreements.repositories import (
     VALID_TRADE_RESOURCES,
     normalize_trade_resource,
     resolve_trade_partner_id,
 )
+
+# Pure functions, fake cursor only - no live DB or app server needed.
+pytestmark = pytest.mark.no_server
 
 
 class FakeCursor:

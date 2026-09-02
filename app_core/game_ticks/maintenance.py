@@ -406,7 +406,7 @@ def execute_due_trade_agreements():
     """Find and execute all trade agreements that are due."""
     import time
     import traceback
-    from trade_agreements import execute_trade_agreement
+    from app_core.trade_agreements.services import execute_trade_agreement
     from database import get_db_connection
 
     start_time = time.perf_counter()
