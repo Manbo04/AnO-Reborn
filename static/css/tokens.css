@@ -106,6 +106,16 @@
     --game-navbar-height: 55px;
     --game-bottom-nav-height: 0px;
     --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Real height of the site-wide scrolling news ticker (static/script.js
+       initImmersion(), .news-ticker in game-experience.css) -- it's
+       position:fixed/bottom:0/z-index:10000 on every page via a plain
+       document.body.appendChild, so nothing reserves space for it by
+       default and it permanently overlaps whatever content sits at the
+       bottom of the viewport. Small on desktop (lots of extra whitespace
+       below the fold); on mobile it eats a real chunk of a short viewport
+       and reliably covers the last card/row. Used below to pad real
+       content clear of it instead of shrinking/removing the ticker. */
+    --game-ticker-height: 34px;
     --game-glow-accent: 0 0 12px rgba(0, 167, 225, 0.35);
     --game-card-shadow: var(--shadow-card);
     --game-glass-blur: blur(24px);
