@@ -1,21 +1,4 @@
-from flask import (
-    request,
-    render_template,
-    session,
-    redirect,
-    flash,
-    current_app,
-)
-from helpers import login_required, error, empty_state, require_post_origin, get_influence
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-import variables  # noqa: E402
-import datetime  # noqa: E402
-from database import cache_response, rollback_db_cursor, get_request_cursor  # noqa: E402
-from database import get_coalition_members_table  # noqa: E402
-from typing import Optional  # noqa: E402
+from helpers import empty_state
 
 
 def _no_coalition_response():
