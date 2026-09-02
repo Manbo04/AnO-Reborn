@@ -23,6 +23,20 @@
     width: 100%;
 }
 
+/* Grid items default to min-width:auto, i.e. "never shrink below my
+   content's intrinsic width" -- so a card holding a wide table (e.g.
+   rankings' .templatetable, white-space:nowrap + overflow-x:auto at
+   768px) silently blows out the grid track instead of triggering that
+   table's own internal scrollbar. Confirmed live on /rankings: the
+   Population column rendered 414px wide inside a 390px viewport,
+   clipped outright with zero scroll affordance since body has
+   overflow-x:hidden. This is the standard fix -- let items actually
+   shrink to their track so overflow is handled inside the card, not by
+   blowing out the page. */
+.game-panel-grid > * {
+    min-width: 0;
+}
+
 @media (min-width: 768px) {
     .game-panel-grid--2 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
