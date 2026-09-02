@@ -188,25 +188,6 @@
                 </div>
             </div>
 
-            {% if news|length %}
-            <div class="game-glass game-panel" style="margin-bottom: 20px;">
-                <div class="game-panel-head">
-                    <div class="game-panel-title">Recent activity</div>
-                    <a class="game-btn game-btn-ghost game-btn-sm" href="#" onclick="countrynews(); return false;">View log &rarr;</a>
-                </div>
-                {% for new in news[:5] %}
-                <div class="game-list-row" style="cursor: default;">
-                    <div class="game-row" style="align-items: flex-start;">
-                        <span class="material-icons-outlined" style="color: var(--accent); margin-top: 1px;">article</span>
-                        <div>
-                            <div>{{ new[0] }}</div>
-                            <div class="game-faint" style="font-size: 11.5px; margin-top: 2px;">{{ new[1] | timeago }}</div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
             {% endif %}
 
             {% if status %}
@@ -646,6 +627,26 @@
                 }
             }
             </script>
+
+            {% if status and news|length %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-head">
+                    <div class="game-panel-title">Recent activity</div>
+                    <a class="game-btn game-btn-ghost game-btn-sm" href="#" onclick="countrynews(); return false;">View log &rarr;</a>
+                </div>
+                {% for new in news[:5] %}
+                <div class="game-list-row" style="cursor: default;">
+                    <div class="game-row" style="align-items: flex-start;">
+                        <span class="material-icons-outlined" style="color: var(--accent); margin-top: 1px;">article</span>
+                        <div>
+                            <div>{{ new[0] }}</div>
+                            <div class="game-faint" style="font-size: 11.5px; margin-top: 2px;">{{ new[1] | timeago }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
             {# The full province list that used to live here is gone -- it duplicated the
                top-of-page Provinces preview panel (added 2026-09-01), and the full list with
