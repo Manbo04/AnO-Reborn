@@ -19,7 +19,7 @@ import login
 
 from wars.routes import wars_bp
 from app_core.treaties import bp as treaties_bp
-import policies
+from app_core import policies
 import statistics
 import requests
 from app_core.trade_agreements import register_trade_agreement_routes

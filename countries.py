@@ -7,7 +7,7 @@ import variables
 from dotenv import load_dotenv
 import logging
 from collections import defaultdict
-from policies import get_user_policies
+from app_core.policies.services import get_user_policies
 from wars.service import target_data
 import math
 from database import (
