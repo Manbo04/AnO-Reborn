@@ -343,6 +343,15 @@
                     if (fallback) fallback.style.display = 'grid';
                     return;
                 }
+                // Chart.js measures its container's box the instant it's constructed. If that
+                // happens before the surrounding layout has finished its first pass, it measures
+                // 0x0 and permanently bakes a 0x0 canvas -- chart.resize() does NOT recover from
+                // this (confirmed live 2026-09-02), only creating fresh after layout settles does.
+                // Two rAFs guarantee at least one full layout+paint has run.
+                if (canvasEl.closest('.country-demographics-chart-wrap').getBoundingClientRect().width === 0) {
+                    requestAnimationFrame(() => requestAnimationFrame(initCountryCharts));
+                    return;
+                }
                 const ctx = canvasEl.getContext('2d');
                 if (!ctx) {
                     if (fallback) fallback.style.display = 'grid';
