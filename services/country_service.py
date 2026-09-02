@@ -63,7 +63,7 @@ class CountryService:
         import logging
         from helpers import error, get_influence
         from database import get_request_cursor, rollback_db_cursor, get_coalition_members_table
-        from policies import get_user_policies
+        from app_core.policies.services import get_user_policies
         import variables
         from countries import get_revenue, get_econ_statistics, format_econ_statistics
 
