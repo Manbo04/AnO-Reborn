@@ -18,7 +18,7 @@ import signup
 import login
 
 from wars.routes import wars_bp
-from treaties import treaties_bp
+from app_core.treaties import bp as treaties_bp
 import policies
 import statistics
 import requests
