@@ -642,7 +642,6 @@ class CountryService:
             "statistics": statistics,
             "policies": policies,
             "resource_rows": resource_rows,
-            "building_rows": building_rows,
             "technology_rows": technology_rows,
             "last_active": last_active,
             "total_children": total_children,
