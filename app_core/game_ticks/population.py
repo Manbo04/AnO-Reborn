@@ -53,94 +53,6 @@ from app_core.game_ticks.food import rations_needed
 
 
 
-# Function for calculating population growth for a given province
-def calc_pg(pId, rations):
-    from database import get_db_cursor
-
-    with get_db_cursor() as db:
-        # Single query to get all province data at once
-        db.execute(
-            """SELECT p.population, p.cityCount, p.land, p.happiness,
-                      p.pollution, p.userId, pol.education
-               FROM provinces p
-               LEFT JOIN policies pol ON pol.user_id = p.userId
-               WHERE p.id=%s""",
-            (pId,),
-        )
-        row = db.fetchone()
-        if not row:
-            return rations, 0
-
-        curPop = row[0] if row[0] is not None else 0
-        cities = row[1] if row[1] is not None else 0
-        land = row[2] if row[2] is not None else 0
-        happiness = int(row[3]) if row[3] is not None else 0
-        pollution = row[4] if row[4] is not None else 0
-        # row[6] (policies) no longer used after policy overhaul
-
-        maxPop = variables.DEFAULT_MAX_POPULATION  # Base max population: 1 million
-        maxPop += (
-            cities * variables.CITY_MAX_POPULATION_ADDITION
-        )  # Each city adds 750,000
-        maxPop += (
-            land * variables.LAND_MAX_POPULATION_ADDITION
-        )  # Each land slot adds 120,000
-
-        # Calculate happiness impact on max population
-        happiness_multiplier = (
-            (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
-        )
-
-        # Calculate pollution impact on max population
-        pollution_multiplier = (
-            (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
-        )
-
-        maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
-
-        if maxPop < variables.DEFAULT_MAX_POPULATION:
-            maxPop = variables.DEFAULT_MAX_POPULATION
-
-        rations_needed = curPop // variables.RATIONS_PER
-
-        if rations_needed < 1:
-            rations_needed = 1  # Trying to not get division by zero error
-
-        rations_needed_percent = rations / rations_needed
-        if rations_needed_percent > 1:
-            rations_needed_percent = 1
-
-        # Slower, controlled population growth (prevents snowballing).
-        # Squared so growth falls off steeply once distribution capacity
-        # can't keep up with population, not just linearly (Discord report:
-        # nation fed for 9.5M but at 15M pop still "grows enormously
-        # quickly" — a 63%-fed nation was only losing 37% of its growth
-        # rate under the old linear scaling).
-        base_growth_rate = (rations_needed_percent**2) * 0.15
-
-        # Diminishing returns: growth slows as population approaches max
-        pop_ratio = curPop / maxPop if maxPop > 0 else 1
-        diminishing_factor = max(0.05, 1 - (pop_ratio**2))
-        growth_rate = base_growth_rate * diminishing_factor
-
-        # Calculates the new rations of the player
-        new_rations = rations - rations_needed
-        if new_rations < 0:
-            new_rations = 0
-        new_rations = int(new_rations)
-
-        newPop = int(round((maxPop / 100) * growth_rate))
-
-        fullPop = int(curPop + newPop)
-
-        if fullPop < 0:
-            fullPop = 0
-
-        return new_rations, fullPop
-
-
-
-
 # Optimized population growth to minimize per-province queries and log noise
 def population_growth():  # Function for growing population
     from database import get_db_connection
@@ -370,12 +282,15 @@ def population_growth():  # Function for growing population
             if rations_ratio > 1:
                 rations_ratio = 1
 
-            # Squared: see calc_pg() above for the reasoning (player-reported
+            # Squared so growth falls off steeply once distribution capacity
+            # can't keep up with population, not just linearly (player-reported
             # over-fast growth while significantly under distribution capacity).
             base_growth_rate = (rations_ratio**2) * 0.15
 
             pop_ratio = curPop / maxPop if maxPop > 0 else 1
-            diminishing_factor = max(0.05, 1 - (pop_ratio**2))
+            diminishing_factor = max(
+                variables.POP_GROWTH_DIMINISHING_FLOOR, 1 - (pop_ratio**2)
+            )
             growth_rate = base_growth_rate * diminishing_factor
 
             newPop = int(round((maxPop / 100) * growth_rate))
@@ -520,181 +435,6 @@ def population_growth():  # Function for growing population
 
 # PHASE 3: Workforce & Aging System Functions
 # ============================================
-
-
-def apply_population_aging(province_id):
-    """
-    Apply daily aging and education graduation to a province.
-
-    Process:
-    1. Elderly death: pop_elderly *= (1 - DEMO_AGING_RATES['elderly_death'])
-    2. Working -> Elderly: pop_elderly +=
-       pop_working * DEMO_AGING_RATES['working_to_elderly']
-    3. Children -> Working: shift based on education graduation
-
-    Education graduation:
-    - Assumes each school/university has capacity
-      (defined in BUILDING_EMPLOYMENT_MATRICES)
-    - Graduates are placed into edu_highschool or edu_college
-      based on graduation_priority
-    - Non-graduate educated children stay as edu_none
-
-    Returns: True if successful, False if province
-    not found or error
-    """
-    if not variables.FEATURE_PHASE3_WORKFORCE:
-        return False
-
-    from database import get_db_cursor
-
-    try:
-        with get_db_cursor() as db:
-            # Fetch current demographic state
-            db.execute(
-                """
-                SELECT pop_children, pop_working, pop_elderly, userId
-                FROM provinces
-                WHERE id = %s
-                """,
-                (province_id,),
-            )
-            row = db.fetchone()
-            if not row:
-                return False
-
-            pop_children, pop_working, pop_elderly, user_id = row
-
-            # Self-heal: a province with working population but zero recorded
-            # education is corrupt state (workers must belong to an education
-            # tier, or jobs_available=0 floors every building at 20% efficiency —
-            # e.g. power plants underproduce and can't run factories). This
-            # happened to a couple of provinces whose starting workforce was
-            # never counted into edu_none. Treat unaccounted workers as base
-            # (uneducated) so they can be employed. Idempotent: only fires when
-            # education is fully zero.
-            if (pop_working or 0) > 0:
-                db.execute(
-                    """
-                    UPDATE provinces
-                    SET edu_none = pop_working
-                    WHERE id = %s
-                      AND COALESCE(edu_none,0)+COALESCE(edu_highschool,0)
-                          +COALESCE(edu_college,0) = 0
-                      AND pop_working > 0
-                    """,
-                    (province_id,),
-                )
-
-            # Check policies for Universal Healthcare
-            db.execute(
-                "SELECT education FROM policies WHERE user_id = %s",
-                (user_id,),
-            )
-            policy_row = db.fetchone()
-            policies = policy_row[0] if policy_row else []
-
-            # Apply healthcare reduction to elderly death rate
-            elderly_death_rate = variables.DEMO_AGING_RATES["elderly_death"]
-            if variables.POLICY_UNIVERSAL_HEALTHCARE in policies:
-                elderly_death_rate *= (
-                    variables.POLICY_HEALTHCARE_ELDERLY_DEATH_REDUCTION
-                )
-
-            # Step 1: Apply elderly death rate
-            elderly_deaths = int(round(pop_elderly * elderly_death_rate))
-            pop_elderly = max(0, pop_elderly - elderly_deaths)
-
-            # Step 2: Shift working -> elderly
-            working_to_elderly = int(
-                round(pop_working * variables.DEMO_AGING_RATES["working_to_elderly"])
-            )
-            pop_elderly += working_to_elderly
-            pop_working = max(0, pop_working - working_to_elderly)
-
-            # Step 3: Shift children -> working (with education graduation logic)
-            # Calculate total graduation capacity from schools/universities
-            # in THIS province
-            db.execute(
-                """
-                SELECT bd.name, COALESCE(SUM(ub.quantity), 0)
-                FROM user_buildings ub
-                JOIN building_dictionary bd
-                    ON bd.building_id = ub.building_id
-                WHERE ub.province_id = %s
-                    AND bd.name IN ('high_school', 'universities')
-                GROUP BY bd.name
-                """,
-                (province_id,),
-            )
-            school_rows = {r[0]: int(r[1]) for r in db.fetchall()}
-            hs_buildings = school_rows.get("high_school", 0)
-            uni_buildings = school_rows.get("universities", 0)
-            # Each school building can graduate 500 students per tick
-            hs_capacity = hs_buildings * 500
-            uni_capacity = uni_buildings * 500
-            school_capacity = hs_capacity + uni_capacity
-
-            # Apply Mandatory Schooling policy to graduation rate
-            graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
-            if variables.POLICY_MANDATORY_SCHOOLING in policies:
-                graduation_rate *= variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
-
-            # Calculate how many children can graduate
-            can_graduate = min(
-                pop_children,
-                int(round(pop_children * graduation_rate)),
-            )
-            graduates = min(can_graduate, school_capacity) if school_capacity > 0 else 0
-
-            # Remaining children who age but don't graduate
-            non_graduates = can_graduate - graduates
-
-            # Distribute graduates: universities first, then high schools
-            if graduates > 0:
-                uni_grads = min(graduates, uni_capacity)
-                hs_grads = min(graduates - uni_grads, hs_capacity)
-
-                if uni_grads > 0:
-                    db.execute(
-                        "UPDATE provinces SET edu_college = "
-                        "edu_college + %s WHERE id = %s",
-                        (uni_grads, province_id),
-                    )
-                if hs_grads > 0:
-                    db.execute(
-                        "UPDATE provinces SET edu_highschool = "
-                        "edu_highschool + %s WHERE id = %s",
-                        (hs_grads, province_id),
-                    )
-
-            if non_graduates > 0:
-                db.execute(
-                    "UPDATE provinces SET edu_none = edu_none + %s " "WHERE id = %s",
-                    (non_graduates, province_id),
-                )
-
-            # Children who do age (educated or not)
-            pop_working += can_graduate
-            pop_children = max(0, pop_children - can_graduate)
-
-            # Write back updated demographics
-            db.execute(
-                """
-                UPDATE provinces
-                SET pop_children = %s,
-                    pop_working = %s,
-                    pop_elderly = %s
-                WHERE id = %s
-                """,
-                (pop_children, pop_working, pop_elderly, province_id),
-            )
-
-            return True
-    except Exception as e:
-        log_verbose(f"apply_population_aging error on province {province_id}: {e}")
-        return False
-
-
 
 
 def calculate_workforce_available(user_id):

@@ -29,27 +29,6 @@ class DummyCtx:
         return False
 
 
-def test_calc_pg_handles_missing_population(monkeypatch):
-    """If SELECT population returns None, calc_pg should not raise and
-    should return a (rations_delta, fullPop) tuple."""
-
-    dummy = DummyCursor(rows=[None])
-
-    # Patch the database helpers that calc_pg imports at runtime
-    import database
-
-    monkeypatch.setattr(
-        database, "get_db_cursor", lambda *args, **kwargs: DummyCtx(dummy)
-    )
-    # fetchone_first is used later to read owner/policies — make it return defaults
-    monkeypatch.setattr(database, "fetchone_first", lambda db, default=None: default)
-
-    # No exception should be raised and return types should be ints
-    rations_delta, fullPop = tasks.calc_pg(1, 0)
-    assert isinstance(rations_delta, int)
-    assert isinstance(fullPop, int)
-
-
 def test_safe_update_productivity_clamps_overflow():
     """Ensure _safe_update_productivity clamps big values instead of writing
     an out-of-range integer to the DB."""

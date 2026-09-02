@@ -28,6 +28,15 @@ CITY_POP_SOFTNESS = 67
 LAND_POP_CAP = 20_000_000
 LAND_POP_SOFTNESS = 167
 
+# Minimum growth-rate multiplier once a nation is near/at its population cap
+# (diminishing_factor floor in calc_population_growth). Was 0.05: births
+# collapsed to ~5% of the uncapped rate near cap while children_to_working
+# graduation kept draining pop_children at a flat rate regardless, so
+# long-running near-cap nations saw their children bracket collapse toward
+# zero (2026-09-02 finding). Raised so births near cap can keep pace with
+# graduation without removing the cap-slowing effect entirely.
+POP_GROWTH_DIMINISHING_FLOOR = 0.3
+
 DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER = 0.009  # 9%
 
 LAND_FARM_PRODUCTION_ADDITION = 3
@@ -134,7 +143,10 @@ FEATURE_DEMOGRAPHIC_TAX = True  # toggle age-weighted tax rates on/off
 DEMO_AGING_RATES = {
     "elderly_death": 0.002,  # 0.2% of elderly die per tick
     "working_to_elderly": 0.001,  # 0.1% move to elderly per tick
-    "children_to_working": 0.02,  # 2% graduate to working per tick (was 0.5%)
+    # 1% graduate to working per tick (was 0.5%, then 2% -- at 2% this ran
+    # ~25x faster than births could replenish near the pop cap, see
+    # POP_GROWTH_DIMINISHING_FLOOR above; halved 2026-09-02).
+    "children_to_working": 0.01,
 }
 
 # Education distribution (when children graduate)
