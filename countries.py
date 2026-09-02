@@ -141,6 +141,7 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId, db=None):
     from database import query_cache
+    from app_core.game_ticks.population import find_unit_category
 
     # Check cache first - expensive calculation
     cache_key = f"revenue_{cId}"
@@ -179,6 +180,8 @@ def get_revenue(cId, db=None):
                 "advanced_machinery": "advancedmachinery",
                 "stronger_explosives": "strongerexplosives",
                 "integrated_steelmaking": "integratedsteelmaking",
+                "cheaper_materials": "cheapermaterials",
+                "online_shopping": "onlineshopping",
             }
             for (tech_name,) in db.fetchall() or []:
                 legacy = _tech_to_legacy.get(tech_name)
@@ -188,6 +191,16 @@ def get_revenue(cId, db=None):
             upgrades = {}
         land_by_id = {row[0]: row[1] for row in province_rows}
         prod_by_id = {row[0]: row[2] for row in province_rows}
+
+        # Fetched here (not just before the tax calc further down) so the
+        # building loop below can also apply POLICY_INDUSTRIAL_SUBSIDIES to
+        # operating_costs, mirroring the real tick.
+        try:
+            db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
+            policies_row = db.fetchone()
+            policies = policies_row[0] if policies_row else []
+        except Exception:
+            policies = []
 
         revenue = {"gross": {}, "gross_theoretical": {}, "net": {}}
 
@@ -263,6 +276,24 @@ def get_revenue(cId, db=None):
 
                 operating_costs = infra[building]["money"] * build_count
 
+                # Same upkeep discounts app_core/game_ticks/revenue.py applies
+                # to the real tick -- missing here meant a subsidies/tech
+                # player's Revenue tab showed buildings as unaffordable (or
+                # more expensive than they really are) more often than
+                # reality, understating projected net production. Same bug
+                # shape as the tax/CG fixes above, found by sweeping for
+                # other duplicated tick formulas.
+                unit_category = find_unit_category(building)
+                if unit_category == "industry" and upgrades.get("cheapermaterials"):
+                    operating_costs *= 0.8
+                if building == "malls" and upgrades.get("onlineshopping"):
+                    operating_costs *= 0.7
+                if (
+                    variables.POLICY_INDUSTRIAL_SUBSIDIES in policies
+                    and building in variables.POLICY_SUBSIDIES_AFFECTED_BUILDINGS
+                ):
+                    operating_costs *= variables.POLICY_SUBSIDIES_UPKEEP_REDUCTION
+
                 # Add to gross/net resource production only if this building would
                 # actually operate given the player's money. We keep `gross` and
                 # `gross_theoretical` as unconditional projections, but `net`
@@ -322,14 +353,6 @@ def get_revenue(cId, db=None):
                     # Only subtract upkeep from net if building operates
                     if will_operate:
                         revenue["net"][resource] -= total
-
-        # Fetch policies for tax calculation
-        try:
-            db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
-            policies_row = db.fetchone()
-            policies = policies_row[0] if policies_row else []
-        except Exception:
-            policies = []
 
         # Reuse already-fetched province data for tax income calculation.
         # province_rows is (id, land, productivity, population, pop_children,
@@ -406,6 +429,19 @@ def get_revenue(cId, db=None):
                     pw_sum = float(demo_row[0] or 0)
                     pc_sum = float(demo_row[1] or 0)
                     pe_sum = float(demo_row[2] or 0)
+                    # Same healthcare-policy adjustment taxes.py applies to
+                    # the real tick (POLICY_UNIVERSAL_HEALTHCARE makes
+                    # elderly consume +20% more CG) -- missing here meant
+                    # this projection understated CG need, and therefore
+                    # overstated the tax-multiplier outcome, for any player
+                    # running that policy. Same bug shape as the tax-rate
+                    # projection fix above, found by sweeping for other
+                    # duplicated tick formulas.
+                    elderly_cg_multiplier = (
+                        variables.POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER
+                        if variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+                        else 1.0
+                    )
                     total_cg_need = (
                         pw_sum
                         * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
@@ -413,6 +449,7 @@ def get_revenue(cId, db=None):
                         * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
                         + pe_sum
                         * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
+                        * elderly_cg_multiplier
                     )
                 # Distribution capacity check
                 db.execute(
