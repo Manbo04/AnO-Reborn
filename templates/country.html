@@ -336,7 +336,8 @@
                 initCountryCharts();
             }
 
-            function initCountryCharts() {
+            function initCountryCharts(retriesLeft) {
+                if (retriesLeft === undefined) retriesLeft = 20;
                 const canvasEl = document.getElementById('demographicsRadarChart');
                 const fallback = document.getElementById('demographicsFallback');
                 if (!canvasEl || typeof Chart === 'undefined') {
@@ -346,10 +347,17 @@
                 // Chart.js measures its container's box the instant it's constructed. If that
                 // happens before the surrounding layout has finished its first pass, it measures
                 // 0x0 and permanently bakes a 0x0 canvas -- chart.resize() does NOT recover from
-                // this (confirmed live 2026-09-02), only creating fresh after layout settles does.
-                // Two rAFs guarantee at least one full layout+paint has run.
+                // this (confirmed live 2026-09-02), only creating fresh once layout has settled
+                // does. Retry on a plain timer rather than requestAnimationFrame: rAF is fully
+                // suspended for backgrounded/inactive tabs (confirmed live 2026-09-02 via
+                // automated testing), which would stall the retry indefinitely for a page loaded
+                // in a background tab; setTimeout still runs there.
                 if (canvasEl.closest('.country-demographics-chart-wrap').getBoundingClientRect().width === 0) {
-                    requestAnimationFrame(() => requestAnimationFrame(initCountryCharts));
+                    if (retriesLeft <= 0) {
+                        if (fallback) fallback.style.display = 'grid';
+                        return;
+                    }
+                    setTimeout(() => initCountryCharts(retriesLeft - 1), 50);
                     return;
                 }
                 const ctx = canvasEl.getContext('2d');
