@@ -503,24 +503,6 @@
             }
             </script>
 
-                <h2 class="templatecontentheaderleft">Buildings</h2>
-                <div class="stat-grid">
-                    {% if building_rows and building_rows|length > 0 %}
-                    {% for building_name, building_qty in building_rows %}
-                    <div class="templatedivflex2left stat-card">
-                        <strong class="stat-label">{{ building_name }}</strong>
-                        <span class="stat-value">{{ (building_qty or 0) }}</span>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="templatedivflex2left stat-card stat-card-wide">
-                        <em>No buildings</em>
-                    </div>
-                    {% endif %}
-                </div>
-
-
-
             <h2 class="templatecontentheaderleft">Provinces</h2>
 
             <div class="game-card-list game-card-list--mobile-only">

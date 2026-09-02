@@ -638,24 +638,6 @@
             }
             </script>
 
-            <div class="game-glass game-panel" style="margin-bottom: 20px;">
-                <div class="game-panel-title" style="margin-bottom: 16px;">Buildings</div>
-                <div class="stat-grid">
-                    {% if building_rows and building_rows|length > 0 %}
-                    {% for building_name, building_qty in building_rows %}
-                    <div class="templatedivflex2left stat-card">
-                        <strong class="stat-label">{{ building_name }}</strong>
-                        <span class="stat-value">{{ (building_qty or 0) }}</span>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="templatedivflex2left stat-card stat-card-wide">
-                        <em>No buildings</em>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
             {# The full province list that used to live here is gone -- it duplicated the
                top-of-page Provinces preview panel (added 2026-09-01), and the full list with
                every real stat is already one click away via that panel's "View all" link to
