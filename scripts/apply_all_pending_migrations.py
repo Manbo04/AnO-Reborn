@@ -65,6 +65,7 @@ MIGRATION_FILES = [
     "0057_add_global_chat.sql",
     "0058_add_devlog_and_discussions.sql",
     "0059_coalition_members_joined_at.sql",
+    "0060_add_login_verifications.sql",
 ]
 
 
