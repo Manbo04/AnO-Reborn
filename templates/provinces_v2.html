@@ -16,13 +16,18 @@
     <div class="templatedivcontent ">
 
         <div class="game-grid-3">
-        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] or 0 %} {% set productivity = province[6] %} {% set energy = province[7] %} {% set has_image = pId in (provinces_with_images|default([])) %}
+        {% for province in provinces %} {% set cityCount = province[0] %} {% set population = province[1] %} {% set name = province[2] %} {% set pId = province[3] %} {% set land = province[4] %} {% set happiness = province[5] or 0 %} {% set productivity = province[6] %} {% set energy = province[7] %} {% set pop_children = province[8] or 0 %} {% set pop_working = province[9] or 0 %} {% set pop_elderly = province[10] or 0 %} {% set has_image = pId in (provinces_with_images|default([])) %}
         {# Mirrors calc_ti()'s per-province formula (app_core/game_ticks/taxes.py) using its
            real constants (variables.DEFAULT_TAX_INCOME=0.75, DEFAULT_LAND_TAX_MULTIPLIER=0.02),
            hourly x24 for a daily figure. Excludes the nation-wide consumer-goods multiplier
-           (a real bottleneck, but not attributable to one province) -- an estimate, labeled as such. #}
+           (a real bottleneck, but not attributable to one province) -- an estimate, labeled as such.
+           Age-weighted taxable population (DEMO_TAX_MULTIPLIER: children=0.0, elderly=0.45,
+           working=1.0) when demographic data exists, else falls back to raw population --
+           using raw population unconditionally overstated the estimate since children pay no
+           tax at all. #}
         {% set land_multiplier = [((land - 1) * 0.02), 1] | min %}
-        {% set est_daily_tax = (0.75 * (1 + land_multiplier)) * population * 24 %}
+        {% set taxable_population = (pop_working + (pop_elderly * 0.45)) if (pop_working + pop_children + pop_elderly) > 0 else population %}
+        {% set est_daily_tax = (0.75 * (1 + land_multiplier)) * taxable_population * 24 %}
         <a href="/province/{{ pId }}" class="game-glass game-panel game-mini-card">
             <div class="game-spread" style="margin-bottom: 14px;">
                 <div class="game-row">
