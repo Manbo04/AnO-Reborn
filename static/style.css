@@ -5797,12 +5797,31 @@ html.page-tutorial .resourcedivcontent {
    .game-page-bg below unless overridden. This class-selector rule
    (specificity 0,1,1) beats that bare-element one (0,0,1) regardless of
    !important vs !important tie-break rules, since specificity is compared
-   first. Applied via body_class on pages using the new redesign; note this
-   means an equipped store cosmetic (cosmetics.css, also a body class,
-   gradients not photos) won't show through on a game-page-v2 page — real
-   product tradeoff, not an oversight, revisit if that turns out to matter. */
+   first. Applied via body_class on pages using the new redesign. */
 body.game-page-v2 {
     background: transparent !important;
+}
+
+/* An equipped background cosmetic (cosmetics.css, applied as a body class --
+   see equipped_bg_css_class in templates/layout.html) used to be invisible
+   on every game-page-v2 page even though the class really was on <body>:
+   a plain element's background paints straight onto the document canvas,
+   which sits behind literally everything -- including the fixed, opaque
+   .game-page-bg photo div two rules up -- regardless of z-index, and that
+   div's own inline `style="background-image: url(...)"` then painted the
+   page's default photo on top of it anyway. Rather than duplicate every
+   cosmetic's gradient a second time here, just point .game-page-bg's
+   background at whatever body's already resolved to -- `inherit` copies
+   body's *computed* background (the equipped cosmetic's gradient when one
+   is equipped, or nothing when it isn't, in which case the rule is a no-op
+   and the ordinary page photo still shows via the inline style beneath it).
+   !important is required only to beat that inline style once a cosmetic
+   *is* equipped. No known body class other than the ten `bg-*` cosmetics
+   matches this substring (audited 2026-09-03).
+   Player-reported 2026-09-03: equipped store backgrounds never showed up
+   anywhere outside the Store page itself. */
+body[class*="bg-"] .game-page-bg {
+    background: inherit !important;
 }
 
 /* .templatecontainer and .templatediv (the universal page-wrapper classes,
@@ -12462,13 +12481,11 @@ html.has-touch.game-reduced-motion .touch-active {
 /* Full-width CTA inside a card, filling the card edge to edge instead of
    floating with .templatedivbutton's default intrinsic width — a page-scoped
    override, per the skill's documented pattern for this kind of thing. */
-.store-package-card form,
 .store-cosmetic-body form {
     width: 100%;
     margin-top: auto;
 }
 
-.store-package-card .templatedivbutton,
 .store-cosmetic-body .templatedivbutton {
     width: 100%;
     margin: 0;
@@ -12487,7 +12504,7 @@ html.has-touch.game-reduced-motion .touch-active {
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-body.game-page-v2 .store-package-card:not(.store-package-card--featured) {
+body.game-page-v2 .store-package-card {
     background: var(--game-glass-bg-strong);
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
@@ -12517,62 +12534,6 @@ body.game-page-v2 .store-package-card:not(.store-package-card--featured) {
 
 .store-package-card .store-package-gems .material-icons-outlined {
     font-size: 1.1rem;
-}
-
-.store-package-card .store-package-price {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    margin-bottom: 10px;
-}
-
-/* Featured tier: inverted accent fill, like a "Most Popular" plan on a
-   pricing page — bolder than the other cards, not just a label. Placed
-   AFTER the base .store-package-card rules above on purpose: equal
-   specificity, so source order decides the winner — this must come later
-   to actually override them (see the countries-page nation-card bug this
-   session already hit once for the same reason). */
-.store-package-card--featured {
-    position: relative;
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--colorTwo);
-    overflow: visible;
-}
-
-.store-package-card--featured:hover {
-    border-color: var(--accent-hover);
-}
-
-.store-package-card--featured .store-package-name,
-.store-package-card--featured .store-package-price {
-    color: var(--colorTwo);
-}
-
-.store-package-card--featured .store-package-gems {
-    color: #fff;
-}
-
-.store-package-card--featured .templatedivbutton {
-    background: var(--colorTwo);
-    color: var(--accent);
-    box-shadow: none;
-}
-
-.store-package-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--gems);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 999px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    white-space: nowrap;
 }
 
 /* --- Cosmetics gallery --- */
@@ -12606,6 +12567,27 @@ body.game-page-v2 .store-cosmetic-card {
     background-size: cover;
     background-position: center;
     border-bottom: 1px solid var(--border);
+}
+
+.store-namecolor-preview,
+.store-badge-preview,
+.store-title-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.store-namecolor-preview span {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.store-title-preview span {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--colorOne);
+    text-align: center;
+    padding: 0 12px;
 }
 
 .store-cosmetic-body {
@@ -12714,5 +12696,103 @@ body.game-page-v2 .store-cosmetic-card {
 
 .bg-royal-amethyst {
     background: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed !important;
+}
+
+.bg-crimson-wasteland {
+    background: linear-gradient(135deg, #3a0d0d, #7a1f1f 45%, #b33939 80%, #7a1f1f 100%) fixed !important;
+}
+
+.bg-golden-savanna {
+    background: linear-gradient(135deg, #6b4e05, #c9971c 45%, #f2c14e 80%, #e0a72e 100%) fixed !important;
+}
+
+.bg-arctic-frost {
+    background: linear-gradient(135deg, #0d2b3e, #3a6b8a 45%, #a8dadc 80%, #e8f6f8 100%) fixed !important;
+}
+
+.bg-volcanic-ember {
+    background: radial-gradient(circle at 30% 70%, #ff6b35 0%, #7a1f1f 45%, #1a0505 100%) fixed !important;
+}
+
+.bg-deep-ocean-trench {
+    background: linear-gradient(180deg, #041c32, #04293a 40%, #064663 70%, #001220 100%) fixed !important;
+}
+
+.bg-cherry-blossom-dusk {
+    background: linear-gradient(135deg, #ffb7c5, #f78fb3 40%, #6a4c93 80%, #2e1a47 100%) fixed !important;
+}
+
+/*
+ * Country-page border cosmetics — applied via game_hero's extra_class param
+ * on the Country page hero card, keyed by the cosmetics.css_class column.
+ * Seeded catalog: see migrations/0062_seed_store_cosmetic_catalog.sql.
+ */
+
+.border-golden-crest {
+    outline: 3px solid #d4a843;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(212, 168, 67, 0.15);
+}
+
+.border-obsidian-frame {
+    outline: 3px solid #2b2b33;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(43, 43, 51, 0.25);
+}
+
+.border-emerald-laurel {
+    outline: 3px solid #2ea043;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(46, 160, 67, 0.15);
+}
+
+.border-royal-crimson {
+    outline: 3px solid #b3243e;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(179, 36, 62, 0.15);
+}
+
+.border-frostbound-edge {
+    outline: 3px solid #7fd6e0;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(127, 214, 224, 0.2);
+}
+
+.border-molten-core {
+    outline: 3px solid #ff6b35;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(255, 107, 53, 0.2);
+}
+
+/*
+ * Shared "nation name flair" chrome (equipped name color / badge / title),
+ * rendered via the render_nation_name macro (templates/macros/game_ui.html)
+ * and its JS mirror (static/js/nation_flair.js). One shared block reused
+ * everywhere a nation's name renders -- chat, rankings, Country page.
+ */
+
+/*
+ * display: inline (not inline-flex) is deliberate: several existing
+ * surfaces (e.g. the rankings table's nation <a>) truncate long names with
+ * `text-overflow: ellipsis`, which only works reliably on plain inline
+ * content -- a flex child breaks that truncation and silently clips the
+ * name (found via a live repro on /rankings, 2026-09-03).
+ */
+.nation-name-flair {
+    display: inline;
+}
+
+.nation-flair-badge {
+    font-size: 16px;
+    vertical-align: -3px;
+    margin-right: 3px;
+}
+
+.nation-flair-title {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.75;
+    margin-left: 4px;
+    color: inherit;
 }
 
