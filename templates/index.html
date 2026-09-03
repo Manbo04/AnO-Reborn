@@ -26,8 +26,8 @@
       }
     }{% endset %}
 {% block title %} Home {% endblock %} {% block extra_head %}
-<script src="{{ url_for('static', filename='parallaxify.js') }}"></script>
-<script src="{{ url_for('static', filename='scroller.js') }}"></script>
+<script src="{{ url_for('static', filename='parallaxify.js') }}?v={{ asset_version }}"></script>
+<script src="{{ url_for('static', filename='scroller.js') }}?v={{ asset_version }}"></script>
 {% endblock %} {% block body %}
 <style>
     .templatecontainer {
