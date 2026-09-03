@@ -203,27 +203,24 @@
     </style>
 
     <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=2" type="image/png">
-    {% if session.get('user_id') is none %}
-    <script data-ad-client="ca-pub-2399873064840158" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    {% endif %}
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RZVBFFEGHM"></script>
+    <!-- Google Analytics + AdSense are loaded by static/js/cookie-consent.js, only after
+         the visitor accepts the cookie banner (see partials/cookie_consent.html). -->
     <script>
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
-
-        gtag('config', 'G-RZVBFFEGHM');
+        window.anoCookieConsentConfig = {
+            gaId: 'G-RZVBFFEGHM',
+            adsenseClient: 'ca-pub-2399873064840158',
+            showAds: {{ 'true' if session.get('user_id') is none else 'false' }}
+        };
     </script>
+    <script src="{{ url_for('static', filename='js/cookie-consent.js') }}?v=1" defer></script>
 
     <!-- WOW.js removed: library was never loaded, causing silent errors -->
     {% block head %} {% endblock %}
 </head>
 
 <body class="has-side-ads {% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% if equipped_bg_css_class %} {{ equipped_bg_css_class }}{% endif %}{% block body_class %}{% endblock %}">
+
+    {% include 'partials/cookie_consent.html' %}
 
     {% include 'partials/side_ads.html' %}
 
@@ -633,6 +630,8 @@
                     <a href="/signup">Sign up</a>
 
                     <a href="/mechanics">Game Mechanics</a>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
                 </nav>
 
             </div>

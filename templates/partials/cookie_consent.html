@@ -1,0 +1,68 @@
+{# Cookie consent banner. Google Analytics + AdSense are dead weight in the
+   DOM until static/js/cookie-consent.js reads a real "accepted" choice from
+   localStorage and injects them — see that file for the loading logic. #}
+<div id="ano-cookie-consent" class="ano-cookie-consent" role="dialog" aria-label="Cookie consent" aria-live="polite" hidden>
+    <div class="ano-cookie-consent-inner">
+        <p class="ano-cookie-consent-text">
+            We use cookies to keep you signed in and, if you agree, to see how the game is used
+            and show ads to logged-out visitors. See our
+            <a href="/privacy">Privacy Policy</a> for details.
+        </p>
+        <div class="ano-cookie-consent-actions">
+            <button type="button" id="ano-cookie-reject" class="templatedivbutton ano-cookie-btn-secondary">Necessary only</button>
+            <button type="button" id="ano-cookie-accept" class="templatedivbutton">Accept</button>
+        </div>
+    </div>
+</div>
+<style>
+.ano-cookie-consent {
+    position: fixed;
+    left: 0;
+    right: 0;
+    /* Sits above the sitewide news ticker (fixed, bottom:0, z-index 10000,
+       injected on every page by script.js) instead of fighting it for the
+       same pixels -- see the ticker's own z-index note in game-experience.css. */
+    bottom: calc(var(--game-ticker-height, 34px) + var(--game-safe-bottom, 0px));
+    z-index: 10001;
+    background: var(--foreground);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
+    padding: var(--game-space-md, 16px);
+}
+.ano-cookie-consent-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--game-space-md, 16px);
+}
+.ano-cookie-consent-text {
+    flex: 1 1 320px;
+    margin: 0;
+    color: var(--colorOne);
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+.ano-cookie-consent-text a {
+    color: var(--accent);
+}
+.ano-cookie-consent-actions {
+    display: flex;
+    gap: var(--game-space-sm, 8px);
+    flex: 0 0 auto;
+}
+.ano-cookie-btn-secondary {
+    background: transparent !important;
+    color: var(--colorOne) !important;
+    border: 1px solid var(--border);
+}
+@media (max-width: 600px) {
+    .ano-cookie-consent-actions {
+        width: 100%;
+    }
+    .ano-cookie-consent-actions .templatedivbutton {
+        flex: 1 1 0;
+    }
+}
+</style>

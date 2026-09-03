@@ -224,6 +224,9 @@ def google_signup_route():
             if not username or not continent_str:
                 return error(400, "Missing fields")
 
+            if not request.form.get("terms_agree"):
+                return error(400, "You must agree to the Terms of Service and Privacy Policy")
+
             if len(username) > 20:
                 return error(400, "Country name cannot exceed 20 characters")
 

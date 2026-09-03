@@ -151,6 +151,8 @@ def sitemap():
         ("/mechanics/consumer_goods", "monthly", "0.6"),
         ("/mechanics/rations", "monthly", "0.6"),
         ("/mechanics/war", "monthly", "0.6"),
+        ("/privacy", "yearly", "0.3"),
+        ("/terms", "yearly", "0.3"),
         ("/forgot_password", "yearly", "0.4"),
         ("/rankings", "daily", "0.7"),
         ("/countries", "daily", "0.7"),
@@ -242,6 +244,12 @@ def dev_reset_tutorial():
 
 @bp.route("/mechanics", methods=["GET"])
 def mechanics(): return render_template("mechanics.html")
+
+@bp.route("/privacy", methods=["GET"])
+def privacy_policy(): return render_template("privacy_policy.html")
+
+@bp.route("/terms", methods=["GET"])
+def terms_of_service(): return render_template("terms_of_service.html")
 
 @bp.route("/mechanics/consumer_goods", methods=["GET"])
 def mechanics_consumer_goods(): return render_template("mechanics/consumer_goods.html")
