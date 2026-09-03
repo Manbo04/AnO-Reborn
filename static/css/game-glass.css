@@ -1203,6 +1203,7 @@ body.game-shell-active .dropdown-content a.active {
 .game-chat-feed {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     gap: 12px;
     max-height: 360px;
     overflow-y: auto;
