@@ -1,0 +1,68 @@
+{#- One Store section's grid of cosmetic cards (Backgrounds / Name Colors /
+    Badges / Titles / Country Borders). Rendered both as part of the full
+    /store page and, standalone, as the JSON payload the equip/unequip/buy
+    AJAX endpoints hand back so a click updates this section in place
+    instead of doing a full page reload (player-reported 2026-09-03) --
+    keep this the ONLY place that draws a cosmetic card so the two call
+    sites can't drift apart. #}
+{% from 'macros/game_ui.html' import game_button %}
+
+{% macro cosmetic_actions(cosmetic, gems) %}
+{% if cosmetic.equipped %}
+<span class="store-cosmetic-equipped-badge"><span class="material-icons-outlined">check_circle</span>Equipped</span>
+<form action="{{ url_for('store_bp.unequip_cosmetic', cosmetic_type=cosmetic.cosmetic_type) }}" method="POST" class="store-cosmetic-action-form" data-store-ajax="unequip">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Unequip', variant='secondary', type='submit') }}
+</form>
+
+{% elif cosmetic.owned %}
+<form action="{{ url_for('store_bp.equip_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST" class="store-cosmetic-action-form" data-store-ajax="equip">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Equip', icon='check', type='submit') }}
+</form>
+
+{% else %}
+<span class="store-cosmetic-price{% if gems < cosmetic.price_gems %} store-cosmetic-price--insufficient{% endif %}">
+    <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ cosmetic.price_gems | commas }} Gems
+</span>
+{% if gems < cosmetic.price_gems %}
+<span class="store-section-intro">Not enough Gems — <a href="#buy-gems">buy more above</a>.</span>
+{% endif %}
+<form action="{{ url_for('store_bp.buy_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST" class="store-cosmetic-action-form" data-store-ajax="buy">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Buy', icon='shopping_cart', type='submit') }}
+</form>
+{% endif %}
+{% endmacro %}
+
+{% if cosmetics %}
+<div class="game-panel-grid game-panel-grid--3">
+    {% for cosmetic in cosmetics %}
+    <div class="store-cosmetic-card" data-cosmetic-id="{{ cosmetic.id }}">
+        {% if cosmetic.cosmetic_type == 'background' %}
+        <div class="store-cosmetic-preview {{ cosmetic.css_class }}"{% if cosmetic.preview_image_url %} style="background-image: url('{{ cosmetic.preview_image_url }}');"{% endif %}></div>
+        {% elif cosmetic.cosmetic_type == 'name_color' %}
+        <div class="store-cosmetic-preview store-namecolor-preview">
+            <span style="color: {{ cosmetic.value }};">Sample Nation</span>
+        </div>
+        {% elif cosmetic.cosmetic_type == 'badge' %}
+        <div class="store-cosmetic-preview store-badge-preview">
+            <span class="material-icons-outlined" style="font-size: 40px;">{{ cosmetic.value }}</span>
+        </div>
+        {% elif cosmetic.cosmetic_type == 'title' %}
+        <div class="store-cosmetic-preview store-title-preview">
+            <span>{{ cosmetic.name }}</span>
+        </div>
+        {% elif cosmetic.cosmetic_type == 'country_border' %}
+        <div class="store-cosmetic-preview {{ cosmetic.css_class }}"></div>
+        {% endif %}
+        <div class="store-cosmetic-body">
+            <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
+            {{ cosmetic_actions(cosmetic, gems) }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="store-empty-catalog">No {{ empty_label }} are available right now. Check back soon.</div>
+{% endif %}
