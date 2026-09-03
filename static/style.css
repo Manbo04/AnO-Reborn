@@ -6984,11 +6984,22 @@ body.game-shell-active .dropdown-content a.active {
 .game-chat-feed {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     gap: 12px;
     max-height: 360px;
     overflow-y: auto;
     padding-right: 4px;
+}
+
+/* Bottom-anchors a short message list next to the composer instead of
+   floating at the top with dead space below -- margin-top:auto on just
+   the first child (not justify-content: flex-end on the scroll container
+   itself) so normal top-anchored scrolling still works once messages
+   overflow max-height (justify-content: flex-end on an overflowing
+   scroll container hits a real flexbox "negative scroll" quirk: scrollTop
+   0 lands on the bottom-anchored oldest message, making the newest
+   messages unreachable by scrolling). */
+.game-chat-feed > .game-chat-msg:first-child {
+    margin-top: auto;
 }
 
 .game-chat-msg {
