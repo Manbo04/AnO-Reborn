@@ -1,6 +1,6 @@
 {% extends "layout.html" %} {% block title %} Welcome {% endblock %}{% block body_class %} page-hub game-page-v2{% endblock %}
 {% block body %}
-{% from 'macros/game_ui.html' import game_hero %}
+{% from 'macros/game_ui.html' import game_hero, render_nation_name %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/hungaryparliament.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
@@ -43,7 +43,7 @@
                             <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
                                 <img src="/flag/country/{{ m.sender_id }}" alt="">
                                 <div>
-                                    <div class="game-chat-name">{{ m.sender_username }}{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
+                                    <div class="game-chat-name">{{ render_nation_name(m.sender_id, m.sender_username, m.flair) }}{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
                                     <div class="game-chat-bubble">{{ m.content }}</div>
                                 </div>
                             </div>
@@ -148,6 +148,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/nation_flair.js') }}"></script>
 <script>
 (function() {
     var root = document.getElementById('hubChatRoot');
@@ -164,7 +165,8 @@
         div.className = 'game-chat-msg' + (mine ? ' game-chat-msg--mine' : '');
         div.innerHTML = '<img src="/flag/country/' + m.sender_id + '" alt="">' +
             '<div><div class="game-chat-name"></div><div class="game-chat-bubble"></div></div>';
-        div.querySelector('.game-chat-name').textContent = m.sender_username + (mine ? ' (you)' : '') + ' · just now';
+        div.querySelector('.game-chat-name').innerHTML = renderNationFlairHTML(m.sender_username, m.flair) +
+            (mine ? ' (you)' : '') + ' · just now';
         div.querySelector('.game-chat-bubble').textContent = m.content;
         messagesEl.insertBefore(div, messagesEl.firstChild);
         messagesEl.scrollTop = 0;

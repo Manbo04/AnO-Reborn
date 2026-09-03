@@ -545,6 +545,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 </form>
             </div>
             <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+            <script src="{{ url_for('static', filename='js/nation_flair.js') }}"></script>
             <script>
             (function() {
                 var root = document.getElementById('coalitionChatRoot');
@@ -561,7 +562,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
                     var sender = document.createElement('span');
                     sender.className = 'chat-message-sender';
-                    sender.textContent = m.sender_username;
+                    sender.innerHTML = renderNationFlairHTML(m.sender_username, m.flair);
                     var text = document.createElement('span');
                     text.className = 'chat-message-text';
                     text.textContent = m.content;

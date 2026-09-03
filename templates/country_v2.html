@@ -1,5 +1,5 @@
 {% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country game-page-v2{% endblock %}
-{% from 'macros/game_ui.html' import game_button, game_hero %}
+{% from 'macros/game_ui.html' import game_button, game_hero, render_nation_name %}
 {% block head %} {% if flag != None %}
 <meta property="og:image" content="/flag/country/{{ cId }}" /> {% endif %}
 <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
@@ -15,15 +15,16 @@
 
 <div class="templatediv">
 
+    {% set display_name = render_nation_name(cId, username, {'name_color': name_color, 'badge_icon': badge_icon, 'badge_name': badge_name, 'title': title}) %}
     {% if status %}
-    {% call game_hero(username, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None) %}
+    {% call game_hero(display_name, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None, extra_class=country_border_css_class) %}
         <div class="game-row" style="gap: 10px;">
             <a class="game-btn game-btn-secondary" href="/provinces"><span class="material-icons-outlined">account_balance</span> View provinces</a>
             <a class="game-btn game-btn-primary" href="/upgrades"><span class="material-icons-outlined">engineering</span> Manage economy</a>
         </div>
     {% endcall %}
     {% else %}
-    {{ game_hero(username, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None) }}
+    {{ game_hero(display_name, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None, extra_class=country_border_css_class) }}
     {% endif %}
 
     <div class="templatedivcontent">

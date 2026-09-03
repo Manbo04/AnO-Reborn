@@ -34,7 +34,7 @@ def purchase_cosmetic(db, user_id, cosmetic_id):
     cosmetic = get_cosmetic(db, cosmetic_id)
     if not cosmetic:
         raise StoreError("No such cosmetic exists.")
-    _id, slug, name, price_gems, css_class, is_active = cosmetic
+    _id, slug, name, price_gems, css_class, cosmetic_type, is_active = cosmetic
     if not is_active:
         raise StoreError("This cosmetic is no longer available.")
 
@@ -64,6 +64,7 @@ def purchase_cosmetic(db, user_id, cosmetic_id):
 
     return {
         "cosmetic_id": cosmetic_id,
+        "cosmetic_type": cosmetic_type,
         "name": name,
         "gems_spent": price_gems,
         "gems_before": gems_before,

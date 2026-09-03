@@ -34,9 +34,10 @@
 
 {#- The full-bleed-photo page header: badge + title + subtitle, with an optional trailing
     action slot (a button/row) via {% call %}. Called plainly (no {% call %}) when a page has
-    no trailing action. #}
-{% macro game_hero(title, badge_text=None, badge_icon=None, subtitle=None, image_url=None) %}
-<div class="game-glass game-hero">
+    no trailing action. extra_class is used by the Country page to apply an equipped
+    country-border cosmetic (see static/css/cosmetics.css .border-*). #}
+{% macro game_hero(title, badge_text=None, badge_icon=None, subtitle=None, image_url=None, extra_class=None) %}
+<div class="game-glass game-hero{{ ' ' ~ extra_class if extra_class else '' }}">
     <div class="game-hero-main">
         {% if image_url %}<img class="game-hero-thumb" src="{{ image_url }}" alt="" />{% endif %}
         <div>
@@ -48,3 +49,15 @@
     {% if caller is defined %}{{ caller() }}{% endif %}
 </div>
 {% endmacro %}
+
+{#- Renders a nation's display name with equipped flair (name color, badge
+    icon, title). `flair` is the dict shape returned by
+    app_core.store.repositories.get_equipped_flair() / the chat
+    repositories' per-message "flair" key:
+    {'name_color': hex_or_None, 'badge_icon': icon_or_None,
+     'badge_name': tooltip_or_None, 'title': text_or_None}.
+    Safe to call with flair=None (falls back to a plain name). #}
+{% macro render_nation_name(user_id, display_name, flair=None) %}
+{%- set flair = flair or {} -%}
+<span class="nation-name-flair"{% if flair.name_color %} style="color: {{ flair.name_color }};"{% endif %}>{%- if flair.badge_icon -%}<span class="material-icons-outlined nation-flair-badge"{% if flair.badge_name %} title="{{ flair.badge_name }}"{% endif %}>{{ flair.badge_icon }}</span>{%- endif -%}<span class="nation-flair-name">{{ display_name }}</span>{%- if flair.title -%}<span class="nation-flair-title">{{ flair.title }}</span>{%- endif -%}</span>
+{%- endmacro %}

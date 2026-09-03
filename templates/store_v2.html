@@ -3,6 +3,38 @@
 {% block body %}
 {% from 'macros/game_ui.html' import game_button, game_glass_panel, game_hero %}
 
+{#- Shared Buy/Equip/Unequip action block for a cosmetic card -- every
+    Store section (background, name color, badge, title, country border)
+    uses this verbatim so equip/unequip/buy behavior can't drift between
+    categories. #}
+{% macro cosmetic_actions(cosmetic) %}
+{% if cosmetic.equipped %}
+<span class="store-cosmetic-equipped-badge"><span class="material-icons-outlined">check_circle</span>Equipped</span>
+<form action="{{ url_for('store_bp.unequip_cosmetic', cosmetic_type=cosmetic.cosmetic_type) }}" method="POST">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Unequip', variant='secondary', type='submit') }}
+</form>
+
+{% elif cosmetic.owned %}
+<form action="{{ url_for('store_bp.equip_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Equip', icon='check', type='submit') }}
+</form>
+
+{% else %}
+<span class="store-cosmetic-price{% if gems < cosmetic.price_gems %} store-cosmetic-price--insufficient{% endif %}">
+    <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ cosmetic.price_gems | commas }} Gems
+</span>
+{% if gems < cosmetic.price_gems %}
+<span class="store-section-intro">Not enough Gems — <a href="#buy-gems">buy more above</a>.</span>
+{% endif %}
+<form action="{{ url_for('store_bp.buy_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    {{ game_button('Buy', icon='shopping_cart', type='submit') }}
+</form>
+{% endif %}
+{% endmacro %}
+
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/mall.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
@@ -36,7 +68,7 @@
         {% endif %}
         {% endcall %}
 
-        {% call game_glass_panel('Cosmetics', icon='palette', id='cosmetics') %}
+        {% call game_glass_panel('Backgrounds', icon='palette', id='cosmetics') %}
         <p class="store-section-intro">Spend Gems to unlock a custom page background.</p>
         {% if cosmetics %}
         <div class="game-panel-grid game-panel-grid--3">
@@ -45,38 +77,95 @@
                 <div class="store-cosmetic-preview {{ cosmetic.css_class }}"{% if cosmetic.preview_image_url %} style="background-image: url('{{ cosmetic.preview_image_url }}');"{% endif %}></div>
                 <div class="store-cosmetic-body">
                     <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-
-                    {% if cosmetic.equipped %}
-                    <span class="store-cosmetic-equipped-badge"><span class="material-icons-outlined">check_circle</span>Equipped</span>
-                    <form action="{{ url_for('store_bp.unequip_cosmetic') }}" method="POST">
-                        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-                        {{ game_button('Unequip', variant='secondary', type='submit') }}
-                    </form>
-
-                    {% elif cosmetic.owned %}
-                    <form action="{{ url_for('store_bp.equip_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
-                        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-                        {{ game_button('Equip', icon='check', type='submit') }}
-                    </form>
-
-                    {% else %}
-                    <span class="store-cosmetic-price{% if gems < cosmetic.price_gems %} store-cosmetic-price--insufficient{% endif %}">
-                        <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ cosmetic.price_gems | commas }} Gems
-                    </span>
-                    {% if gems < cosmetic.price_gems %}
-                    <span class="store-section-intro">Not enough Gems — <a href="#buy-gems">buy more above</a>.</span>
-                    {% endif %}
-                    <form action="{{ url_for('store_bp.buy_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
-                        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-                        {{ game_button('Buy', icon='shopping_cart', type='submit') }}
-                    </form>
-                    {% endif %}
+                    {{ cosmetic_actions(cosmetic) }}
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="store-empty-catalog">No cosmetics are available right now. Check back soon.</div>
+        <div class="store-empty-catalog">No backgrounds are available right now. Check back soon.</div>
+        {% endif %}
+        {% endcall %}
+
+        {% call game_glass_panel('Name Colors', icon='format_color_text', id='name-colors') %}
+        <p class="store-section-intro">Spend Gems to color your nation's name everywhere it appears — chat, rankings, and your Country page.</p>
+        {% if name_color_cosmetics %}
+        <div class="game-panel-grid game-panel-grid--3">
+            {% for cosmetic in name_color_cosmetics %}
+            <div class="store-cosmetic-card">
+                <div class="store-cosmetic-preview store-namecolor-preview">
+                    <span style="color: {{ cosmetic.value }};">Sample Nation</span>
+                </div>
+                <div class="store-cosmetic-body">
+                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
+                    {{ cosmetic_actions(cosmetic) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="store-empty-catalog">No name colors are available right now. Check back soon.</div>
+        {% endif %}
+        {% endcall %}
+
+        {% call game_glass_panel('Badges', icon='military_tech', id='badges') %}
+        <p class="store-section-intro">Spend Gems to show a badge icon next to your nation's name.</p>
+        {% if badge_cosmetics %}
+        <div class="game-panel-grid game-panel-grid--3">
+            {% for cosmetic in badge_cosmetics %}
+            <div class="store-cosmetic-card">
+                <div class="store-cosmetic-preview store-badge-preview">
+                    <span class="material-icons-outlined" style="font-size: 40px;">{{ cosmetic.value }}</span>
+                </div>
+                <div class="store-cosmetic-body">
+                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
+                    {{ cosmetic_actions(cosmetic) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="store-empty-catalog">No badges are available right now. Check back soon.</div>
+        {% endif %}
+        {% endcall %}
+
+        {% call game_glass_panel('Titles', icon='workspace_premium', id='titles') %}
+        <p class="store-section-intro">Spend Gems to show a title next to your nation's name.</p>
+        {% if title_cosmetics %}
+        <div class="game-panel-grid game-panel-grid--3">
+            {% for cosmetic in title_cosmetics %}
+            <div class="store-cosmetic-card">
+                <div class="store-cosmetic-preview store-title-preview">
+                    <span>{{ cosmetic.name }}</span>
+                </div>
+                <div class="store-cosmetic-body">
+                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
+                    {{ cosmetic_actions(cosmetic) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="store-empty-catalog">No titles are available right now. Check back soon.</div>
+        {% endif %}
+        {% endcall %}
+
+        {% call game_glass_panel('Country Borders', icon='border_style', id='country-borders') %}
+        <p class="store-section-intro">Spend Gems to add a border accent to your Country page.</p>
+        {% if country_border_cosmetics %}
+        <div class="game-panel-grid game-panel-grid--3">
+            {% for cosmetic in country_border_cosmetics %}
+            <div class="store-cosmetic-card">
+                <div class="store-cosmetic-preview {{ cosmetic.css_class }}"></div>
+                <div class="store-cosmetic-body">
+                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
+                    {{ cosmetic_actions(cosmetic) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="store-empty-catalog">No country borders are available right now. Check back soon.</div>
         {% endif %}
         {% endcall %}
 

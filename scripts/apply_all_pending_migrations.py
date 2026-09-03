@@ -55,6 +55,8 @@ MIGRATION_FILES = [
     "0043_planes_missiles_use_aluminium.sql",
     "0044_military_stat_rebalance.sql",
     "0045_add_login_events.sql",
+    "0048_add_store_gems_cosmetics.sql",
+    "0049_seed_store_catalog.sql",
     "0050_fix_coalition_messages_fk.sql",
     "0051_nukes_require_uranium.sql",
     "0052_add_patreon_gems.sql",
@@ -66,6 +68,8 @@ MIGRATION_FILES = [
     "0058_add_devlog_and_discussions.sql",
     "0059_coalition_members_joined_at.sql",
     "0060_add_login_verifications.sql",
+    "0061_add_store_cosmetic_types.sql",
+    "0062_seed_store_cosmetic_catalog.sql",
 ]
 
 

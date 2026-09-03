@@ -124,7 +124,9 @@ class CountryService:
                           c.id AS coalition_id, cm.role,
                           c.name as colName,
                           p.total_pop, p.avg_happiness,
-                          p.avg_productivity, p.province_count
+                          p.avg_productivity, p.province_count,
+                          nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name,
+                          tt.name AS title, cb.css_class AS country_border_css_class
                    FROM users u
                    INNER JOIN stats s ON u.id=s.id
                    LEFT JOIN {members_tbl} cm ON u.id=cm.userid
@@ -139,6 +141,10 @@ class CountryService:
                        WHERE userid = %s
                        GROUP BY userid
                    ) p ON u.id = p.userid
+                   LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+                   LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+                   LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                   LEFT JOIN cosmetics cb ON cb.id = s.equipped_country_border_cosmetic_id AND cb.is_active = TRUE
                    WHERE u.id=%s"""
         else:
             _CORE_COUNTRY_SQL = None
@@ -148,7 +154,9 @@ class CountryService:
                           NULL::integer AS coalition_id, NULL::integer AS role,
                           NULL::text AS colName,
                           p.total_pop, p.avg_happiness,
-                          p.avg_productivity, p.province_count
+                          p.avg_productivity, p.province_count,
+                          nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name,
+                          tt.name AS title, cb.css_class AS country_border_css_class
                    FROM users u
                    INNER JOIN stats s ON u.id=s.id
                    LEFT JOIN (
@@ -161,6 +169,10 @@ class CountryService:
                        WHERE userid = %s
                        GROUP BY userid
                    ) p ON u.id = p.userid
+                   LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+                   LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+                   LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                   LEFT JOIN cosmetics cb ON cb.id = s.equipped_country_border_cosmetic_id AND cb.is_active = TRUE
                    WHERE u.id=%s"""
 
         with get_request_cursor(read_only=True) as db:
@@ -198,6 +210,11 @@ class CountryService:
                 happiness,
                 productivity,
                 provinceCount,
+                name_color,
+                badge_icon,
+                badge_name,
+                title,
+                country_border_css_class,
             ) = row
 
             coalition_id = coalition_id or 0
@@ -650,4 +667,9 @@ class CountryService:
             "total_military": total_military,
             "gdp": gdp,
             "at_risk_provinces": at_risk_provinces,
+            "name_color": name_color,
+            "badge_icon": badge_icon,
+            "badge_name": badge_name,
+            "title": title,
+            "country_border_css_class": country_border_css_class,
         }

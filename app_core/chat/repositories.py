@@ -17,6 +17,22 @@ from database import get_db_cursor, get_coalition_members_table
 
 MAX_MESSAGE_LENGTH = 1000
 
+# Shared "equipped name flair" join, inlined directly into each chat query
+# below (rather than a separate batch lookup) to avoid an N+1 per page load
+# -- see app_core/store/repositories.py::get_equipped_flair for the
+# single/batch-call-site equivalent used by the Country page.
+_FLAIR_JOIN_SQL = """
+    LEFT JOIN stats st ON st.id = u.id
+    LEFT JOIN cosmetics nc ON nc.id = st.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+    LEFT JOIN cosmetics bd ON bd.id = st.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+    LEFT JOIN cosmetics tt ON tt.id = st.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+"""
+_FLAIR_SELECT_SQL = "nc.value, bd.value, bd.name, tt.name"
+
+
+def _flair_dict(name_color, badge_icon, badge_name, title):
+    return {"name_color": name_color, "badge_icon": badge_icon, "badge_name": badge_name, "title": title}
+
 
 def is_coalition_member(user_id, coalition_id):
     members_tbl = get_coalition_members_table()
@@ -41,25 +57,31 @@ def create_coalition_message(coalition_id, sender_id, content):
             (coalition_id, sender_id, content),
         )
         row = db.fetchone()
-        db.execute("SELECT username FROM users WHERE id=%s", (sender_id,))
-        username_row = db.fetchone()
+        db.execute(
+            f"SELECT u.username, {_FLAIR_SELECT_SQL} FROM users u {_FLAIR_JOIN_SQL} WHERE u.id=%s",
+            (sender_id,),
+        )
+        sender_row = db.fetchone()
     return {
         "id": row[0],
         "coalition_id": coalition_id,
         "sender_id": sender_id,
-        "sender_username": username_row[0] if username_row else "Unknown",
+        "sender_username": sender_row[0] if sender_row else "Unknown",
         "content": content,
         "created_at": row[1].isoformat(),
+        "flair": _flair_dict(*sender_row[1:]) if sender_row else _flair_dict(None, None, None, None),
     }
 
 
 def list_coalition_messages(coalition_id, limit=50):
     with get_db_cursor(read_only=True) as db:
         db.execute(
-            """
-            SELECT cm.id, cm.sender_id, u.username, cm.content, cm.created_at
+            f"""
+            SELECT cm.id, cm.sender_id, u.username, cm.content, cm.created_at,
+                   {_FLAIR_SELECT_SQL}
             FROM coalition_messages cm
             JOIN users u ON u.id = cm.sender_id
+            {_FLAIR_JOIN_SQL}
             WHERE cm.coalition_id = %s
             ORDER BY cm.id DESC
             LIMIT %s
@@ -75,6 +97,7 @@ def list_coalition_messages(coalition_id, limit=50):
             "sender_username": r[2],
             "content": r[3],
             "created_at": r[4].isoformat(),
+            "flair": _flair_dict(*r[5:]),
         }
         for r in reversed(rows)
     ]
@@ -91,24 +114,30 @@ def create_global_chat_message(sender_id, content):
             (sender_id, content),
         )
         row = db.fetchone()
-        db.execute("SELECT username FROM users WHERE id=%s", (sender_id,))
-        username_row = db.fetchone()
+        db.execute(
+            f"SELECT u.username, {_FLAIR_SELECT_SQL} FROM users u {_FLAIR_JOIN_SQL} WHERE u.id=%s",
+            (sender_id,),
+        )
+        sender_row = db.fetchone()
     return {
         "id": row[0],
         "sender_id": sender_id,
-        "sender_username": username_row[0] if username_row else "Unknown",
+        "sender_username": sender_row[0] if sender_row else "Unknown",
         "content": content,
         "created_at": row[1].isoformat(),
+        "flair": _flair_dict(*sender_row[1:]) if sender_row else _flair_dict(None, None, None, None),
     }
 
 
 def list_global_chat_messages(limit=30):
     with get_db_cursor(read_only=True) as db:
         db.execute(
-            """
-            SELECT gcm.id, gcm.sender_id, u.username, gcm.content, gcm.created_at
+            f"""
+            SELECT gcm.id, gcm.sender_id, u.username, gcm.content, gcm.created_at,
+                   {_FLAIR_SELECT_SQL}
             FROM global_chat_messages gcm
             JOIN users u ON u.id = gcm.sender_id
+            {_FLAIR_JOIN_SQL}
             ORDER BY gcm.id DESC
             LIMIT %s
             """,
@@ -122,6 +151,7 @@ def list_global_chat_messages(limit=30):
             "sender_username": r[2],
             "content": r[3],
             "created_at": r[4].isoformat(),
+            "flair": _flair_dict(*r[5:]),
         }
         for r in reversed(rows)
     ]
@@ -138,25 +168,31 @@ def create_direct_message(sender_id, recipient_id, content):
             (sender_id, recipient_id, content),
         )
         row = db.fetchone()
-        db.execute("SELECT username FROM users WHERE id=%s", (sender_id,))
-        username_row = db.fetchone()
+        db.execute(
+            f"SELECT u.username, {_FLAIR_SELECT_SQL} FROM users u {_FLAIR_JOIN_SQL} WHERE u.id=%s",
+            (sender_id,),
+        )
+        sender_row = db.fetchone()
     return {
         "id": row[0],
         "sender_id": sender_id,
         "recipient_id": recipient_id,
-        "sender_username": username_row[0] if username_row else "Unknown",
+        "sender_username": sender_row[0] if sender_row else "Unknown",
         "content": content,
         "created_at": row[1].isoformat(),
+        "flair": _flair_dict(*sender_row[1:]) if sender_row else _flair_dict(None, None, None, None),
     }
 
 
 def list_conversation_messages(user_a, user_b, limit=50):
     with get_db_cursor(read_only=True) as db:
         db.execute(
-            """
-            SELECT dm.id, dm.sender_id, dm.recipient_id, u.username, dm.content, dm.created_at
+            f"""
+            SELECT dm.id, dm.sender_id, dm.recipient_id, u.username, dm.content, dm.created_at,
+                   {_FLAIR_SELECT_SQL}
             FROM direct_messages dm
             JOIN users u ON u.id = dm.sender_id
+            {_FLAIR_JOIN_SQL}
             WHERE (dm.sender_id = %s AND dm.recipient_id = %s)
                OR (dm.sender_id = %s AND dm.recipient_id = %s)
             ORDER BY dm.id DESC
@@ -173,6 +209,7 @@ def list_conversation_messages(user_a, user_b, limit=50):
             "sender_username": r[3],
             "content": r[4],
             "created_at": r[5].isoformat(),
+            "flair": _flair_dict(*r[6:]),
         }
         for r in reversed(rows)
     ]
