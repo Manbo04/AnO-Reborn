@@ -429,7 +429,10 @@ def create_app():
     # Root route registrations
     signup.register_signup_routes(app)
     login.register_login_routes(app)
-    
+
+    from login_verification import register_login_verification_routes
+    register_login_verification_routes(app)
+
     # Google Auth Registration
     from app_core.auth.google_auth import register_google_auth_routes
     register_google_auth_routes(app)
