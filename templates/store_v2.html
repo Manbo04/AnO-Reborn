@@ -3,44 +3,12 @@
 {% block body %}
 {% from 'macros/game_ui.html' import game_button, game_glass_panel, game_hero %}
 
-{#- Shared Buy/Equip/Unequip action block for a cosmetic card -- every
-    Store section (background, name color, badge, title, country border)
-    uses this verbatim so equip/unequip/buy behavior can't drift between
-    categories. #}
-{% macro cosmetic_actions(cosmetic) %}
-{% if cosmetic.equipped %}
-<span class="store-cosmetic-equipped-badge"><span class="material-icons-outlined">check_circle</span>Equipped</span>
-<form action="{{ url_for('store_bp.unequip_cosmetic', cosmetic_type=cosmetic.cosmetic_type) }}" method="POST">
-    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-    {{ game_button('Unequip', variant='secondary', type='submit') }}
-</form>
-
-{% elif cosmetic.owned %}
-<form action="{{ url_for('store_bp.equip_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
-    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-    {{ game_button('Equip', icon='check', type='submit') }}
-</form>
-
-{% else %}
-<span class="store-cosmetic-price{% if gems < cosmetic.price_gems %} store-cosmetic-price--insufficient{% endif %}">
-    <img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ cosmetic.price_gems | commas }} Gems
-</span>
-{% if gems < cosmetic.price_gems %}
-<span class="store-section-intro">Not enough Gems — <a href="#buy-gems">buy more above</a>.</span>
-{% endif %}
-<form action="{{ url_for('store_bp.buy_cosmetic', cosmetic_id=cosmetic.id) }}" method="POST">
-    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-    {{ game_button('Buy', icon='shopping_cart', type='submit') }}
-</form>
-{% endif %}
-{% endmacro %}
-
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/mall.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
     {% call game_hero('Store', badge_icon='storefront', badge_text='Cosmetics only', subtitle="Gems are AnO's premium currency, earned by supporting the game on Patreon and spent on cosmetics below.") %}
-    <span class="game-hero-badge" style="margin: 0;"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm">&nbsp;You have {{ gems | commas }} Gems</span>
+    <span class="game-hero-badge" style="margin: 0;"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm">&nbsp;You have <span data-store-gems>{{ gems | commas }}</span> Gems</span>
     {% endcall %}
 
     <div class="templatedivcontent">
@@ -62,105 +30,105 @@
 
         {% call game_glass_panel('Backgrounds', icon='palette', id='cosmetics') %}
         <p class="store-section-intro">Spend Gems to unlock a custom page background.</p>
-        {% if cosmetics %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for cosmetic in cosmetics %}
-            <div class="store-cosmetic-card">
-                <div class="store-cosmetic-preview {{ cosmetic.css_class }}"{% if cosmetic.preview_image_url %} style="background-image: url('{{ cosmetic.preview_image_url }}');"{% endif %}></div>
-                <div class="store-cosmetic-body">
-                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-                    {{ cosmetic_actions(cosmetic) }}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="store-section-background" data-store-section="background">
+            {% with cosmetics=cosmetics, empty_label='backgrounds' %}
+            {% include 'partials/store_cosmetic_section.html' with context %}
+            {% endwith %}
         </div>
-        {% else %}
-        <div class="store-empty-catalog">No backgrounds are available right now. Check back soon.</div>
-        {% endif %}
         {% endcall %}
 
         {% call game_glass_panel('Name Colors', icon='format_color_text', id='name-colors') %}
         <p class="store-section-intro">Spend Gems to color your nation's name everywhere it appears — chat, rankings, and your Country page.</p>
-        {% if name_color_cosmetics %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for cosmetic in name_color_cosmetics %}
-            <div class="store-cosmetic-card">
-                <div class="store-cosmetic-preview store-namecolor-preview">
-                    <span style="color: {{ cosmetic.value }};">Sample Nation</span>
-                </div>
-                <div class="store-cosmetic-body">
-                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-                    {{ cosmetic_actions(cosmetic) }}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="store-section-name_color" data-store-section="name_color">
+            {% with cosmetics=name_color_cosmetics, empty_label='name colors' %}
+            {% include 'partials/store_cosmetic_section.html' with context %}
+            {% endwith %}
         </div>
-        {% else %}
-        <div class="store-empty-catalog">No name colors are available right now. Check back soon.</div>
-        {% endif %}
         {% endcall %}
 
         {% call game_glass_panel('Badges', icon='military_tech', id='badges') %}
         <p class="store-section-intro">Spend Gems to show a badge icon next to your nation's name.</p>
-        {% if badge_cosmetics %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for cosmetic in badge_cosmetics %}
-            <div class="store-cosmetic-card">
-                <div class="store-cosmetic-preview store-badge-preview">
-                    <span class="material-icons-outlined" style="font-size: 40px;">{{ cosmetic.value }}</span>
-                </div>
-                <div class="store-cosmetic-body">
-                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-                    {{ cosmetic_actions(cosmetic) }}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="store-section-badge" data-store-section="badge">
+            {% with cosmetics=badge_cosmetics, empty_label='badges' %}
+            {% include 'partials/store_cosmetic_section.html' with context %}
+            {% endwith %}
         </div>
-        {% else %}
-        <div class="store-empty-catalog">No badges are available right now. Check back soon.</div>
-        {% endif %}
         {% endcall %}
 
         {% call game_glass_panel('Titles', icon='workspace_premium', id='titles') %}
         <p class="store-section-intro">Spend Gems to show a title next to your nation's name.</p>
-        {% if title_cosmetics %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for cosmetic in title_cosmetics %}
-            <div class="store-cosmetic-card">
-                <div class="store-cosmetic-preview store-title-preview">
-                    <span>{{ cosmetic.name }}</span>
-                </div>
-                <div class="store-cosmetic-body">
-                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-                    {{ cosmetic_actions(cosmetic) }}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="store-section-title" data-store-section="title">
+            {% with cosmetics=title_cosmetics, empty_label='titles' %}
+            {% include 'partials/store_cosmetic_section.html' with context %}
+            {% endwith %}
         </div>
-        {% else %}
-        <div class="store-empty-catalog">No titles are available right now. Check back soon.</div>
-        {% endif %}
         {% endcall %}
 
         {% call game_glass_panel('Country Borders', icon='border_style', id='country-borders') %}
         <p class="store-section-intro">Spend Gems to add a border accent to your Country page.</p>
-        {% if country_border_cosmetics %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for cosmetic in country_border_cosmetics %}
-            <div class="store-cosmetic-card">
-                <div class="store-cosmetic-preview {{ cosmetic.css_class }}"></div>
-                <div class="store-cosmetic-body">
-                    <span class="store-cosmetic-name">{{ cosmetic.name }}</span>
-                    {{ cosmetic_actions(cosmetic) }}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="store-section-country_border" data-store-section="country_border">
+            {% with cosmetics=country_border_cosmetics, empty_label='country borders' %}
+            {% include 'partials/store_cosmetic_section.html' with context %}
+            {% endwith %}
         </div>
-        {% else %}
-        <div class="store-empty-catalog">No country borders are available right now. Check back soon.</div>
-        {% endif %}
         {% endcall %}
 
     </div>
 </div>
+
+<script>
+(function () {
+    // Progressive enhancement: intercept the Equip/Unequip/Buy forms so a
+    // click updates the Store in place instead of doing a full page
+    // navigation per click (player-reported 2026-09-03). Falls back to a
+    // normal form submit (full reload) if fetch fails for any reason, so
+    // the feature still works with JS/network issues.
+    var content = document.querySelector('.templatedivcontent');
+    if (!content) return;
+
+    var gemsDisplays = document.querySelectorAll('[data-store-gems]');
+
+    function setGems(gems) {
+        gemsDisplays.forEach(function (el) {
+            el.textContent = Number(gems).toLocaleString();
+        });
+    }
+
+    function setBusy(form, busy) {
+        var btn = form.querySelector('button');
+        if (btn) btn.disabled = busy;
+    }
+
+    content.addEventListener('submit', function (evt) {
+        var form = evt.target.closest('form.store-cosmetic-action-form');
+        if (!form) return;
+        evt.preventDefault();
+        setBusy(form, true);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(form),
+            credentials: 'same-origin',
+        })
+            .then(function (resp) {
+                return resp.json().then(function (data) {
+                    if (!resp.ok) throw new Error(data.error || 'Something went wrong.');
+                    return data;
+                });
+            })
+            .then(function (data) {
+                setGems(data.gems);
+                Object.keys(data.sections).forEach(function (cosmeticType) {
+                    var section = document.getElementById('store-section-' + cosmeticType);
+                    if (section) section.innerHTML = data.sections[cosmeticType];
+                });
+            })
+            .catch(function (err) {
+                alert(err.message || 'Something went wrong. Please try again.');
+                setBusy(form, false);
+            });
+    });
+})();
+</script>
 {% endblock %}

@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Blueprint, request, render_template, session, redirect, url_for
+from flask import Blueprint, request, render_template, session, redirect, url_for, jsonify
 
 from helpers import login_required, error, is_theme_v2_enabled
 from extensions import limiter
@@ -42,6 +42,68 @@ ANCHOR_FOR_TYPE = {
     "country_border": "country-borders",
 }
 
+# Label used in each section's "No X are available right now" empty state.
+SECTION_EMPTY_LABEL = {
+    "background": "backgrounds",
+    "name_color": "name colors",
+    "badge": "badges",
+    "title": "titles",
+    "country_border": "country borders",
+}
+
+
+def _wants_json():
+    """The store_v2.html Equip/Unequip/Buy forms fetch() with this header so
+    a click updates the page in place instead of doing a full navigation
+    (player-reported 2026-09-03); a plain form submit (no JS, or JS failed)
+    has no such header and gets the original redirect-based response."""
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+def _build_cosmetic_view(db, cosmetic_type, owned_ids, equipped_ids):
+    view = []
+    for cosmetic_id, slug, name, price_gems, css_class, value, preview_image_url in get_active_cosmetics(
+        db, cosmetic_type
+    ):
+        view.append(
+            {
+                "id": cosmetic_id,
+                "slug": slug,
+                "name": name,
+                "price_gems": price_gems,
+                "css_class": css_class,
+                "value": value,
+                "preview_image_url": preview_image_url,
+                "cosmetic_type": cosmetic_type,
+                "owned": cosmetic_id in owned_ids,
+                "equipped": cosmetic_id == equipped_ids.get(cosmetic_type),
+            }
+        )
+    return view
+
+
+def _render_sections(db, user_id):
+    """Re-render every cosmetic section's markup from the shared partial, for
+    the AJAX equip/unequip/buy responses below. Always re-rendering all five
+    (not just the one the click came from) keeps this correct with minimal
+    special-casing: buying spends Gems, which can flip the "insufficient
+    Gems" state of cosmetics in every other section too, not just the one
+    being bought from."""
+    gems = get_user_gems(db, user_id) or 0
+    owned_ids = get_user_owned_cosmetic_ids(db, user_id)
+    equipped_ids = get_equipped_cosmetic_ids(db, user_id)
+
+    sections = {}
+    for cosmetic_type, empty_label in SECTION_EMPTY_LABEL.items():
+        cosmetics = _build_cosmetic_view(db, cosmetic_type, owned_ids, equipped_ids)
+        sections[cosmetic_type] = render_template(
+            "partials/store_cosmetic_section.html",
+            cosmetics=cosmetics,
+            gems=gems,
+            empty_label=empty_label,
+        )
+    return gems, sections
+
 
 def _store_accessible():
     """FEATURE_STORE gates the store for everyone once the reviewed catalog
@@ -72,25 +134,7 @@ def store():
         patreon_tiers = get_active_patreon_tiers(db)
 
         def _build_view(cosmetic_type):
-            view = []
-            for cosmetic_id, slug, name, price_gems, css_class, value, preview_image_url in get_active_cosmetics(
-                db, cosmetic_type
-            ):
-                view.append(
-                    {
-                        "id": cosmetic_id,
-                        "slug": slug,
-                        "name": name,
-                        "price_gems": price_gems,
-                        "css_class": css_class,
-                        "value": value,
-                        "preview_image_url": preview_image_url,
-                        "cosmetic_type": cosmetic_type,
-                        "owned": cosmetic_id in owned_ids,
-                        "equipped": cosmetic_id == equipped_ids.get(cosmetic_type),
-                    }
-                )
-            return view
+            return _build_cosmetic_view(db, cosmetic_type, owned_ids, equipped_ids)
 
         template = "store_v2.html" if is_theme_v2_enabled("store") else "store.html"
         return render_template(
@@ -195,6 +239,8 @@ def buy_cosmetic(cosmetic_id):
             result = purchase_cosmetic(db, user_id, cosmetic_id)
         except StoreError as e:
             rollback_db_cursor(db)
+            if _wants_json():
+                return jsonify({"error": str(e)}), 400
             return error(400, str(e))
 
         # The equipped background is server-rendered into every page via
@@ -207,6 +253,20 @@ def buy_cosmetic(cosmetic_id):
         # layout state (e.g. gold balance) on cached pages.
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
+
+        if _wants_json():
+            # Commit the write now, before rendering. render_template() below
+            # runs Flask's context processors, at least one of which
+            # (inject_layout_context in app.py) does its own read on this
+            # same request-scoped connection -- if that read ever errors, the
+            # whole connection gets rolled back, silently discarding the
+            # write above along with it (this exact failure class already
+            # bit this codebase once, see the comment in
+            # inject_layout_context). Committing first makes that impossible:
+            # there's nothing left to roll back.
+            db.connection.commit()
+            gems, sections = _render_sections(db, user_id)
+            return jsonify({"gems": gems, "sections": sections})
 
     # Buying happens well below the fold; a plain redirect to the top of
     # /store made a successful purchase look like it did nothing
@@ -225,11 +285,27 @@ def equip_cosmetic(cosmetic_id):
         user_id = session["user_id"]
         cosmetic_type = get_owned_cosmetic(db, user_id, cosmetic_id)
         if not cosmetic_type:
+            if _wants_json():
+                return jsonify({"error": "You don't own this cosmetic."}), 400
             return error(400, "You don't own this cosmetic.")
         set_equipped_cosmetic(db, user_id, cosmetic_id, cosmetic_type)
 
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
+
+        if _wants_json():
+            # Commit the write now, before rendering. render_template() below
+            # runs Flask's context processors, at least one of which
+            # (inject_layout_context in app.py) does its own read on this
+            # same request-scoped connection -- if that read ever errors, the
+            # whole connection gets rolled back, silently discarding the
+            # write above along with it (this exact failure class already
+            # bit this codebase once, see the comment in
+            # inject_layout_context). Committing first makes that impossible:
+            # there's nothing left to roll back.
+            db.connection.commit()
+            gems, sections = _render_sections(db, user_id)
+            return jsonify({"gems": gems, "sections": sections})
 
     return redirect(url_for("store_bp.store") + f"#{ANCHOR_FOR_TYPE.get(cosmetic_type, 'cosmetics')}")
 
@@ -249,5 +325,19 @@ def unequip_cosmetic(cosmetic_type):
 
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
+
+        if _wants_json():
+            # Commit the write now, before rendering. render_template() below
+            # runs Flask's context processors, at least one of which
+            # (inject_layout_context in app.py) does its own read on this
+            # same request-scoped connection -- if that read ever errors, the
+            # whole connection gets rolled back, silently discarding the
+            # write above along with it (this exact failure class already
+            # bit this codebase once, see the comment in
+            # inject_layout_context). Committing first makes that impossible:
+            # there's nothing left to roll back.
+            db.connection.commit()
+            gems, sections = _render_sections(db, user_id)
+            return jsonify({"gems": gems, "sections": sections})
 
     return redirect(url_for("store_bp.store") + f"#{ANCHOR_FOR_TYPE.get(cosmetic_type, 'cosmetics')}")
