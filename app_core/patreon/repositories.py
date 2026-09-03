@@ -3,7 +3,7 @@
 
 def get_active_tiers(db):
     db.execute(
-        "SELECT title, gems_per_month FROM patreon_tiers WHERE is_active = TRUE"
+        "SELECT title, gems_per_month FROM patreon_tiers WHERE is_active = TRUE ORDER BY gems_per_month"
     )
     return db.fetchall()
 

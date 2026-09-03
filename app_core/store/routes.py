@@ -10,7 +10,6 @@ import game_ui
 
 from .repositories import (
     COSMETIC_TYPE_TO_EQUIP_COLUMN,
-    get_active_gem_packages,
     get_active_cosmetics,
     get_user_gems,
     get_user_owned_cosmetic_ids,
@@ -20,9 +19,17 @@ from .repositories import (
     get_gem_purchase_by_session_id,
 )
 from .services import StoreError, purchase_cosmetic, start_gem_purchase, handle_checkout_completed, handle_charge_refunded
+from app_core.patreon.repositories import get_active_tiers as get_active_patreon_tiers
 
 store_bp = Blueprint("store_bp", __name__)
 logger = logging.getLogger(__name__)
+
+# Real-money Gem purchases (Stripe checkout below) are built and were
+# verified working, but are off in the UI: the account behind
+# STRIPE_SECRET_KEY isn't a verified legal entity, so it can't go live
+# (Dede, 2026-09-03). Patreon is the only way to get Gems until that
+# changes -- see app_core/patreon/.
+PATREON_URL = "https://www.patreon.com/cw/Affairs_and_Order_Reborn"
 
 # Anchor each cosmetic_type's Store section scrolls to after buy/equip/
 # unequip, so a successful purchase lands back where the player clicked
@@ -37,9 +44,10 @@ ANCHOR_FOR_TYPE = {
 
 
 def _store_accessible():
-    """FEATURE_STORE gates the store for everyone once real Stripe keys and
-    the reviewed catalog are ready. Until then, staff can still preview the
-    real, live page (not a local demo) without exposing it to players."""
+    """FEATURE_STORE gates the store for everyone once the reviewed catalog
+    is ready (live since 2026-09-03; real-money Stripe checkout is still off
+    pending a verified legal entity -- see PATREON_URL above). Staff can
+    always preview the real, live page regardless of the flag."""
     if game_ui.FEATURE_STORE:
         return True
     from app_core.admin.services import SUPER_ADMIN_USER_IDS
@@ -61,7 +69,7 @@ def store():
         owned_ids = get_user_owned_cosmetic_ids(db, user_id)
         equipped_ids = get_equipped_cosmetic_ids(db, user_id)
 
-        gem_packages = get_active_gem_packages(db)
+        patreon_tiers = get_active_patreon_tiers(db)
 
         def _build_view(cosmetic_type):
             view = []
@@ -88,7 +96,8 @@ def store():
         return render_template(
             template,
             gems=gems,
-            gem_packages=gem_packages,
+            patreon_tiers=patreon_tiers,
+            patreon_url=PATREON_URL,
             cosmetics=_build_view("background"),
             name_color_cosmetics=_build_view("name_color"),
             badge_cosmetics=_build_view("badge"),

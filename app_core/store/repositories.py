@@ -15,18 +15,6 @@ def lock_user(db, user_id):
     db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
 
-def get_active_gem_packages(db):
-    db.execute(
-        """
-        SELECT id, name, gems_granted, price_cents, currency
-        FROM gem_packages
-        WHERE is_active = TRUE
-        ORDER BY sort_order, price_cents
-        """
-    )
-    return db.fetchall()
-
-
 def get_gem_package(db, gem_package_id):
     db.execute(
         """
