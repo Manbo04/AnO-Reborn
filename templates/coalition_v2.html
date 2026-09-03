@@ -408,7 +408,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             ] %}
                             {% for label, key, my_amt in res_list %}
                             <tr>
-                                <td>{{ label }}:</td>
+                                <td><img src="{{ url_for('static', filename=game_asset_path('resources', key)) }}?v=2" alt="{{ label }}" class="resource" loading="lazy" /> {{ label }}:</td>
                                 <td>{{ bankRaw.get(key, 0) | commas if bankRaw else "—" }}</td>
                                 <td>{{ my_amt | commas }}</td>
                                 <td><input class="loginsignupinput" autocomplete="on" name="{{ key }}" placeholder="Amount" /></td>
