@@ -89,11 +89,13 @@
     }
     </script>
     {% endif %}
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&display=swap" rel="stylesheet">
+    <!-- Roboto + Material Icons are self-hosted (static/css/fonts-local.css)
+         instead of loaded from fonts.googleapis.com/fonts.gstatic.com -- the
+         Google CDN link sent every visitor's IP to Google before they'd
+         accepted any cookies. See /privacy. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts-local.css') }}?v=1">
     <!-- Font Awesome (non-render-blocking) -->
     <!-- Served from cdnjs, not use.fontawesome.com: that CDN started 503ing
          (checked 2026-08-30), which silently blanked every fa-* icon site-wide
@@ -104,9 +106,6 @@
          which don't resolve against FA5's all.css without this compatibility layer. -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/v4-shims.min.css" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/v4-shims.min.css"></noscript>
-    <!-- Google Fonts (non-render-blocking) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"></noscript>
 
     {# jQuery removed — all templates converted to vanilla JS #}
     {# Chart.js & SimpleMDE loaded only on pages that need them via extra_head block #}
@@ -632,6 +631,7 @@
                     <a href="/mechanics">Game Mechanics</a>
                     <a href="/privacy">Privacy Policy</a>
                     <a href="/terms">Terms of Service</a>
+                    <a href="#" id="ano-cookie-settings-link">Cookie settings</a>
                 </nav>
 
             </div>
