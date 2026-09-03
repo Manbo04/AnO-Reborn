@@ -657,6 +657,9 @@ def discord_register():
             if not continent_str:
                 return error(400, "Biome selection is required")
 
+            if not request.form.get("terms_agree"):
+                return error(400, "You must agree to the Terms of Service and Privacy Policy")
+
             from app_core.economy.biome_buildings import CANONICAL_BIOMES
 
             try:
@@ -880,6 +883,9 @@ def signup():
         recaptcha_response = request.form.get("g-recaptcha-response")
         if not verify_recaptcha(recaptcha_response):
             return error(400, "reCAPTCHA verification failed")
+
+        if not request.form.get("terms_agree"):
+            return error(400, "You must agree to the Terms of Service and Privacy Policy")
 
         # Turns the continent number into 0-indexed
         continent_str = request.form.get("continent")

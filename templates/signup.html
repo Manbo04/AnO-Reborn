@@ -18,6 +18,22 @@
 .theme-dark .loginsignupdiv .signup-biome-resources .slidelist {
     color: #e8edf5 !important;
 }
+.ano-terms-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--colorOne);
+}
+.ano-terms-agree input {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+.ano-terms-agree a {
+    color: var(--accent);
+}
 </style>
 {% endblock %} {% block body%}
 <!-- START------------------------------------------------------------------------->
@@ -332,6 +348,11 @@
 
         <!--output for what biome user selects (goes from 1-7)-->
         <input class="hidden" id="imagesliderresult" name="continent" value="1" />
+
+        <label class="ano-terms-agree">
+            <input type="checkbox" name="terms_agree" value="1" required />
+            I'm at least 13 years old and agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
+        </label>
 
         <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
 
