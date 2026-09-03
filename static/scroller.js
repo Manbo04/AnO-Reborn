@@ -1,6 +1,3 @@
-//CONSTANTS
-let animateItems = document.querySelectorAll(".animate")
-
 //ADD STYLES
 addStyles()
 
@@ -81,7 +78,7 @@ const observer = new IntersectionObserver((entries, observer) => {
 }, observerOptions);
 
 window.addEventListener("load", () => {
-    animateItems.forEach(item => {
+    document.querySelectorAll(".animate").forEach(item => {
         observer.observe(item);
     });
 });
