@@ -351,8 +351,6 @@
 
 /* Color tokens (.theme-light / .theme-dark) moved to static/css/tokens.css — see that file for the canonical source. */
 
-@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap");
-
 body {
     background: var(--background) !important;
     padding: 0;

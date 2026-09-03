@@ -55,10 +55,9 @@
         }
     }
 
-    function showBanner() {
+    function wireBannerButtons() {
         var banner = document.getElementById("ano-cookie-consent");
         if (!banner) return;
-        banner.hidden = false;
 
         var accept = document.getElementById("ano-cookie-accept");
         var reject = document.getElementById("ano-cookie-reject");
@@ -78,13 +77,28 @@
         }
     }
 
+    function wireSettingsLink() {
+        var link = document.getElementById("ano-cookie-settings-link");
+        if (!link) return;
+        link.addEventListener("click", function (e) {
+            e.preventDefault();
+            var banner = document.getElementById("ano-cookie-consent");
+            if (banner) banner.hidden = false;
+        });
+    }
+
     function init() {
+        wireBannerButtons();
+        wireSettingsLink();
+
         var existing = getConsent();
         if (existing) {
             applyConsent(existing);
             return;
         }
-        showBanner();
+
+        var banner = document.getElementById("ano-cookie-consent");
+        if (banner) banner.hidden = false;
     }
 
     if (document.readyState === "loading") {
