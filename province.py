@@ -616,6 +616,15 @@ def province(pId):
             province["id"], province["has_image"]
         )
 
+        db.execute(
+            "SELECT COUNT(id) AS province_count FROM provinces WHERE userId = %s",
+            (user_id,),
+        )
+        province_count_row = db.fetchone()
+        province_count = (
+            province_count_row["province_count"] if province_count_row else 0
+        )
+
         distribution_status = nation_distribution
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             if distribution_status and food_score is not None and food_score < -1:
@@ -648,6 +657,8 @@ def province(pId):
                 cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
             province_base_layout=province_base_layout,
+            province_count=province_count,
+            province_rename_cost=PROVINCE_RENAME_COST,
         )
 
 
@@ -1100,6 +1111,121 @@ def get_province_price(user_id):
             price = int(8000000 * multiplier)
 
         return price
+
+
+PROVINCE_RENAME_COST = 10_000_000
+PROVINCE_NAME_MAX_LENGTH = 30
+
+
+@bp.route("/province/<int:pId>/rename", methods=["POST"])
+@login_required
+@require_post_origin
+def rename_province(pId):
+    """Rename a province. Costs PROVINCE_RENAME_COST gold per change."""
+    cId = session["user_id"]
+    new_name = (request.form.get("name") or "").strip()
+
+    if not new_name:
+        return error(400, "Province name cannot be empty")
+    if len(new_name) > PROVINCE_NAME_MAX_LENGTH:
+        return error(
+            400, f"Province name must be {PROVINCE_NAME_MAX_LENGTH} characters or fewer"
+        )
+
+    with get_request_cursor() as db:
+        db.execute(
+            "SELECT userId, provinceName FROM provinces WHERE id = %s", (pId,)
+        )
+        row = db.fetchone()
+        if not row:
+            return error(404, "Province doesn't exist")
+        if int(row[0]) != int(cId):
+            return error(403, "You do not own this province")
+
+        current_name = row[1]
+        if new_name == current_name:
+            return redirect(f"/province/{pId}")
+
+        # Atomic gold deduction, same pattern as coalition renames
+        db.execute(
+            "UPDATE stats SET gold = gold - %s "
+            "WHERE id = %s AND gold >= %s RETURNING gold",
+            (PROVINCE_RENAME_COST, cId, PROVINCE_RENAME_COST),
+        )
+        if not db.fetchone():
+            return error(
+                400,
+                f"Renaming a province costs {PROVINCE_RENAME_COST:,} gold, "
+                "which you don't have.",
+            )
+
+        db.execute(
+            "UPDATE provinces SET provinceName = %s WHERE id = %s",
+            (new_name, pId),
+        )
+
+    try:
+        from database import invalidate_view_cache, query_cache
+
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+    except Exception:
+        pass
+
+    from time import time as _now
+
+    return redirect(f"/province/{pId}?_={int(_now())}")
+
+
+@bp.route("/province/<int:pId>/delete", methods=["POST"])
+@login_required
+@require_post_origin
+def delete_province(pId):
+    """Permanently delete a province. Buildings/land on it are lost; the
+    price of the next province purchased drops accordingly since
+    get_province_price() is always computed from the user's live province
+    count. Requires typing the exact province name to confirm, and refuses
+    to delete a user's only remaining province."""
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        db.execute(
+            "SELECT userId, provinceName FROM provinces WHERE id = %s", (pId,)
+        )
+        row = db.fetchone()
+        if not row:
+            return error(404, "Province doesn't exist")
+        if int(row[0]) != int(cId):
+            return error(403, "You do not own this province")
+        province_name = row[1]
+
+        confirm_name = (request.form.get("confirm_name") or "").strip()
+        if confirm_name != province_name:
+            return error(400, "Confirmation text did not match the province name")
+
+        db.execute("SELECT COUNT(id) FROM provinces WHERE userId = %s", (cId,))
+        count_row = db.fetchone()
+        if not count_row or int(count_row[0]) <= 1:
+            return error(400, "You cannot delete your only remaining province")
+
+        db.execute("DELETE FROM provinces WHERE id = %s", (pId,))
+
+    try:
+        from database import invalidate_view_cache, query_cache
+
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+        invalidate_view_cache("military", user_id=cId)
+    except Exception:
+        pass
+
+    return redirect("/provinces")
 
 
 
