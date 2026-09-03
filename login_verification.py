@@ -1,17 +1,16 @@
-"""New-location login verification.
+"""New-location login alerts.
 
 Following the Discord-login account-takeover incident (2026-09-03, silent
 email-based account merge -- fixed separately in signup.py's callback()),
-logging in from an IP never seen before for that account no longer completes
-immediately. Instead a single-use confirmation link is sent to the account's
-linked Discord DM (preferred) or verified email, and the session is only
-established once that link is opened. This closes the gap where a stolen
-password, a guessed recovery flow, or any future auth bug still can't be
-used from an unrecognized location without the real owner's Discord/email.
-
-Accounts with no reachable Discord or verified email are exempted (fail
-open with a warning log) rather than risk permanently locking someone out --
-plenty of legacy/test accounts in this DB have neither.
+a login from an IP never seen before for that account triggers a heads-up
+(not a block): a single-use "secure your account" link goes to the
+account's linked Discord DM (preferred) or verified email. The login
+itself always completes immediately either way -- gating it behind a
+Discord/email click generated real "why can't I log in" confusion for
+legitimate players switching wifi/phones/laptops, not just attackers.
+Clicking the link never signs anyone in; it only lets the real owner kick
+off a password reset delivered to their own Discord/email if it wasn't
+them.
 """
 
 import logging
@@ -76,11 +75,9 @@ def _send_discord_dm(discord_user_id: str, confirm_url: str) -> bool:
     headers = {"Authorization": f"Bot {bot_token}", "Content-Type": "application/json"}
     message = (
         "**Affairs & Order — New login location**\n\n"
-        "Someone just tried to log into your nation from a location we haven't "
-        "seen before. If this was you, confirm it here (single use, expires in "
-        f"20 minutes):\n{confirm_url}\n\n"
-        "If this wasn't you, ignore this message and consider changing your "
-        "password."
+        "Your nation was just logged into from a location we haven't seen "
+        "before. If this was you, no action needed. If it wasn't, secure "
+        f"your account here:\n{confirm_url}\n"
     )
     try:
         channel_resp = requests.post(
@@ -126,14 +123,12 @@ def _send_email(email: str, confirm_url: str) -> bool:
             return False
         subject = "Affairs & Order | New login location"
         html_content = (
-            "<p>Someone just tried to log into your nation from a location we "
-            "haven't seen before. If this was you, click below to confirm "
-            "(single use, expires in 20 minutes):</p>"
+            "<p>Your nation was just logged into from a location we haven't "
+            "seen before. If this was you, no action needed. If it wasn't, "
+            "secure your account here:</p>"
             f"<p><a href='{confirm_url}'>{confirm_url}</a></p>"
-            "<p>If this wasn't you, ignore this email and consider changing "
-            "your password.</p>"
         )
-        text_content = f"Confirm this login: {confirm_url}"
+        text_content = f"If this wasn't you, secure your account: {confirm_url}"
         return send_email(email, subject, html_content, text_content)
     except Exception:
         logger.exception("login verification email failed")
@@ -143,10 +138,10 @@ def _send_email(email: str, confirm_url: str) -> bool:
 def start_login_verification(
     user_id: int, ip: str | None, fingerprint: str | None, auth_type: str
 ) -> bool:
-    """Create a pending verification and try to deliver it. Returns True if a
-    confirmation link was actually sent (Discord DM or email), False if there
-    was no reachable channel -- callers should fail the login open in that
-    case rather than lock the account holder out."""
+    """Create a pending "secure your account" link and try to deliver it as a
+    new-location alert. Returns True if it was actually sent (Discord DM or
+    email), False if there was no reachable channel -- either way the login
+    this is about has already completed."""
     with get_db_cursor() as db:
         db.execute(
             "SELECT email, discord_id, is_verified FROM users WHERE id=%s",
@@ -192,89 +187,21 @@ def start_login_verification(
     return True
 
 
-def flash_pending_verification_and_redirect():
-    flash(
-        "New location detected. We sent a confirmation link to your Discord "
-        "DMs or email -- open it to finish logging in."
-    )
-    return redirect("/login")
-
-
 def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | None, auth_type: str):
     """Call this instead of directly setting session['user_id'] after any
-    credential check succeeds. Either completes the login immediately (known
-    IP, or no reachable verification channel) or sends a confirmation link
-    and redirects back to /login with a flash message.
+    credential check succeeds.
+
+    The login always completes immediately -- this does not block or add
+    friction to normal play (players switch wifi/phones/laptops constantly,
+    and gating every new IP behind a Discord/email click generated real
+    "why can't I log in" confusion for legitimate players, not just
+    attackers). When the IP is one we haven't seen before for this account,
+    a best-effort heads-up (not a confirmation requirement) still goes to
+    the account's linked Discord DM or verified email, so the real owner at
+    least finds out promptly if it wasn't them.
 
     Returns a Flask response -- callers should `return` it directly.
     """
-    if ip_is_known_for_user(user_id, ip):
-        session.clear()
-        session["user_id"] = user_id
-        session.permanent = True
-        session.modified = True
-        try:
-            log_login_event(user_id, ip, fingerprint, auth_type)
-        except Exception:
-            pass
-        return redirect("/")
-
-    if start_login_verification(user_id, ip, fingerprint, auth_type):
-        return flash_pending_verification_and_redirect()
-
-    # No reachable Discord/email -- don't lock the real owner out.
-    session.clear()
-    session["user_id"] = user_id
-    session.permanent = True
-    session.modified = True
-    try:
-        log_login_event(user_id, ip, fingerprint, f"{auth_type}_unverified_location")
-    except Exception:
-        pass
-    return redirect("/")
-
-
-def confirm_login(token: str):
-    """Route handler for GET /confirm_login/<token>."""
-    from flask import current_app
-    import datetime as dt_module
-
-    with get_db_cursor() as db:
-        db.execute(
-            """
-            SELECT id, user_id, ip, fingerprint, auth_type, expires_at, consumed_at
-            FROM login_verifications WHERE token=%s
-            """,
-            (token,),
-        )
-        row = db.fetchone()
-
-    if not row:
-        flash("This login confirmation link is invalid.")
-        return redirect("/login")
-
-    v_id, user_id, ip, fingerprint, auth_type, expires_at, consumed_at = row
-
-    if consumed_at is not None:
-        flash("This login confirmation link was already used.")
-        return redirect("/login")
-
-    now = dt_module.datetime.now(dt_module.timezone.utc)
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=dt_module.timezone.utc)
-    if expires_at < now:
-        flash("This login confirmation link has expired. Please log in again.")
-        return redirect("/login")
-
-    with get_db_cursor() as db:
-        db.execute(
-            "UPDATE login_verifications SET consumed_at=NOW() WHERE id=%s", (v_id,)
-        )
-
-    current_app.config["SESSION_PERMANENT"] = True
-    import datetime as dt2
-    current_app.permanent_session_lifetime = dt2.timedelta(days=365)
-
     session.clear()
     session["user_id"] = user_id
     session.permanent = True
@@ -284,8 +211,88 @@ def confirm_login(token: str):
     except Exception:
         pass
 
-    flash("Login confirmed.")
+    if not ip_is_known_for_user(user_id, ip):
+        try:
+            start_login_verification(user_id, ip, fingerprint, auth_type)
+        except Exception:
+            logger.exception("new-location alert failed for user_id=%s", user_id)
+
     return redirect("/")
+
+
+def confirm_login(token: str):
+    """Route handler for GET /confirm_login/<token>.
+
+    This link is a "secure my account" action, NOT a login grant -- the
+    login it's about already completed (see complete_or_verify_login).
+    Clicking it never signs the clicker in as anyone; it just lets the real
+    account owner kick off a normal password reset (delivered to their own
+    linked Discord/email, same as /request_password_reset) if the new-
+    location login wasn't them.
+    """
+    import datetime as dt_module
+
+    with get_db_cursor() as db:
+        db.execute(
+            "SELECT id, user_id, expires_at, consumed_at FROM login_verifications WHERE token=%s",
+            (token,),
+        )
+        row = db.fetchone()
+
+    if not row:
+        flash("This link is invalid.")
+        return redirect("/login")
+
+    v_id, user_id, expires_at, consumed_at = row
+
+    if consumed_at is not None:
+        flash("This link was already used.")
+        return redirect("/login")
+
+    now = dt_module.datetime.now(dt_module.timezone.utc)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=dt_module.timezone.utc)
+    if expires_at < now:
+        flash("This link has expired.")
+        return redirect("/login")
+
+    with get_db_cursor() as db:
+        db.execute(
+            "UPDATE login_verifications SET consumed_at=NOW() WHERE id=%s", (v_id,)
+        )
+
+    from change import generateResetCode, generateUrlFromCode, send_discord_password_reset_dm
+
+    code = generateResetCode()
+    with get_db_cursor() as db:
+        db.execute(
+            """
+            INSERT INTO reset_codes (url_code, user_id, created_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET url_code = EXCLUDED.url_code,
+            created_at = EXCLUDED.created_at
+            """,
+            (code, user_id, int(dt_module.datetime.now(dt_module.timezone.utc).timestamp())),
+        )
+        db.execute("SELECT email, discord_id FROM users WHERE id=%s", (user_id,))
+        urow = db.fetchone()
+
+    reset_url = generateUrlFromCode(code)
+    sent = False
+    if urow:
+        email, discord_id = urow[0], urow[1]
+        if discord_id:
+            sent = send_discord_password_reset_dm(discord_id, reset_url)
+        if not sent and email:
+            from change import sendEmail
+
+            sent = sendEmail(email, code)
+
+    if sent:
+        flash("Confirmed -- a password reset link was sent to secure your account.")
+    else:
+        flash("Confirmed. Please use /forgot_password to secure your account.")
+    return redirect("/login")
 
 
 def register_login_verification_routes(app_instance):
