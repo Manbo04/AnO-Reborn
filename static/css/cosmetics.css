@@ -48,3 +48,94 @@
 .bg-royal-amethyst {
     background: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed !important;
 }
+
+.bg-crimson-wasteland {
+    background: linear-gradient(135deg, #3a0d0d, #7a1f1f 45%, #b33939 80%, #7a1f1f 100%) fixed !important;
+}
+
+.bg-golden-savanna {
+    background: linear-gradient(135deg, #6b4e05, #c9971c 45%, #f2c14e 80%, #e0a72e 100%) fixed !important;
+}
+
+.bg-arctic-frost {
+    background: linear-gradient(135deg, #0d2b3e, #3a6b8a 45%, #a8dadc 80%, #e8f6f8 100%) fixed !important;
+}
+
+.bg-volcanic-ember {
+    background: radial-gradient(circle at 30% 70%, #ff6b35 0%, #7a1f1f 45%, #1a0505 100%) fixed !important;
+}
+
+.bg-deep-ocean-trench {
+    background: linear-gradient(180deg, #041c32, #04293a 40%, #064663 70%, #001220 100%) fixed !important;
+}
+
+.bg-cherry-blossom-dusk {
+    background: linear-gradient(135deg, #ffb7c5, #f78fb3 40%, #6a4c93 80%, #2e1a47 100%) fixed !important;
+}
+
+/*
+ * Country-page border cosmetics — applied via game_hero's extra_class param
+ * on the Country page hero card, keyed by the cosmetics.css_class column.
+ * Seeded catalog: see migrations/0062_seed_store_cosmetic_catalog.sql.
+ */
+
+.border-golden-crest {
+    outline: 3px solid #d4a843;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(212, 168, 67, 0.15);
+}
+
+.border-obsidian-frame {
+    outline: 3px solid #2b2b33;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(43, 43, 51, 0.25);
+}
+
+.border-emerald-laurel {
+    outline: 3px solid #2ea043;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(46, 160, 67, 0.15);
+}
+
+.border-royal-crimson {
+    outline: 3px solid #b3243e;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(179, 36, 62, 0.15);
+}
+
+.border-frostbound-edge {
+    outline: 3px solid #7fd6e0;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(127, 214, 224, 0.2);
+}
+
+.border-molten-core {
+    outline: 3px solid #ff6b35;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(255, 107, 53, 0.2);
+}
+
+/*
+ * Shared "nation name flair" chrome (equipped name color / badge / title),
+ * rendered via the render_nation_name macro (templates/macros/game_ui.html)
+ * and its JS mirror (static/js/nation_flair.js). One shared block reused
+ * everywhere a nation's name renders -- chat, rankings, Country page.
+ */
+
+.nation-name-flair {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nation-flair-badge {
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+.nation-flair-title {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.75;
+    margin-left: 4px;
+}

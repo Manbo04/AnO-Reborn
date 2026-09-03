@@ -142,10 +142,15 @@ def rankings():
         try:
             db.execute(
                 """
-                SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop
+                SELECT u.id, u.username, COALESCE(SUM(p.population), 0) as total_pop,
+                       nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name, tt.name AS title
                 FROM users u
                 JOIN provinces p ON u.id = p.userid
-                GROUP BY u.id, u.username
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+                LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+                LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY total_pop DESC
                 LIMIT 10
                 """
@@ -160,10 +165,15 @@ def rankings():
         try:
             db.execute(
                 """
-                SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size
+                SELECT u.id, u.username, COALESCE(SUM(um.quantity), 0) as army_size,
+                       nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name, tt.name AS title
                 FROM users u
                 JOIN user_military um ON u.id = um.user_id
-                GROUP BY u.id, u.username
+                LEFT JOIN stats s ON s.id = u.id
+                LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+                LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+                LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY army_size DESC
                 LIMIT 10
                 """
@@ -178,9 +188,13 @@ def rankings():
         try:
             db.execute(
                 """
-                SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money
+                SELECT u.id, u.username, COALESCE(s.gold, 0) as total_money,
+                       nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name, tt.name AS title
                 FROM users u
                 JOIN stats s ON u.id = s.id
+                LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
+                LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
+                LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
                 ORDER BY total_money DESC
                 LIMIT 10
                 """

@@ -206,6 +206,27 @@ body.game-page-v2 .store-cosmetic-card {
     border-bottom: 1px solid var(--border);
 }
 
+.store-namecolor-preview,
+.store-badge-preview,
+.store-title-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.store-namecolor-preview span {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.store-title-preview span {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--colorOne);
+    text-align: center;
+    padding: 0 12px;
+}
+
 .store-cosmetic-body {
     padding: var(--game-space-md, 16px);
     display: flex;

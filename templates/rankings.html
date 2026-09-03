@@ -1,4 +1,5 @@
 {% extends "layout.html" %} {% block title %} Rankings {% endblock %}{% block body_class %} page-rankings{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import render_nation_name %}
 <div class="templatediv">
 
     <div class="templatedivtopper rankingstopper">
@@ -31,7 +32,7 @@
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
                         <td>
                             <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ nation[1] }}</a>
+                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
                         </td>
                         <td title="{{ nation[2] | fmt }}">{{ nation[2] | fmt }}</td>
                     </tr>
@@ -60,7 +61,7 @@
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
                         <td>
                             <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ nation[1] }}</a>
+                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
                         </td>
                         <td title="{{ nation[2] | fmt }}">{{ nation[2] | fmt }}</td>
                     </tr>
@@ -91,7 +92,7 @@
                         <td style="text-align: center;">#{{ idx + 1 }}</td>
                         <td>
                             <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ nation[1] }}</a>
+                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
                         </td>
                         <td title="${{ nation[2] | fmt }}">${{ nation[2] | fmt }}</td>
                     </tr>

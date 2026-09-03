@@ -9,12 +9,13 @@ from database import get_request_cursor, invalidate_user_cache, invalidate_view_
 import game_ui
 
 from .repositories import (
+    COSMETIC_TYPE_TO_EQUIP_COLUMN,
     get_active_gem_packages,
     get_active_cosmetics,
     get_user_gems,
     get_user_owned_cosmetic_ids,
-    get_equipped_cosmetic,
-    user_owns_cosmetic,
+    get_equipped_cosmetic_ids,
+    get_owned_cosmetic,
     set_equipped_cosmetic,
     get_gem_purchase_by_session_id,
 )
@@ -22,6 +23,17 @@ from .services import StoreError, purchase_cosmetic, start_gem_purchase, handle_
 
 store_bp = Blueprint("store_bp", __name__)
 logger = logging.getLogger(__name__)
+
+# Anchor each cosmetic_type's Store section scrolls to after buy/equip/
+# unequip, so a successful purchase lands back where the player clicked
+# instead of the top of the page (player-reported 2026-09-03).
+ANCHOR_FOR_TYPE = {
+    "background": "cosmetics",
+    "name_color": "name-colors",
+    "badge": "badges",
+    "title": "titles",
+    "country_border": "country-borders",
+}
 
 
 def _store_accessible():
@@ -47,32 +59,41 @@ def store():
 
         gems = get_user_gems(db, user_id) or 0
         owned_ids = get_user_owned_cosmetic_ids(db, user_id)
-        equipped_css_class = get_equipped_cosmetic(db, user_id)
+        equipped_ids = get_equipped_cosmetic_ids(db, user_id)
 
         gem_packages = get_active_gem_packages(db)
-        cosmetics = get_active_cosmetics(db)
 
-        cosmetics_view = []
-        for cosmetic_id, slug, name, price_gems, css_class, preview_image_url in cosmetics:
-            cosmetics_view.append(
-                {
-                    "id": cosmetic_id,
-                    "slug": slug,
-                    "name": name,
-                    "price_gems": price_gems,
-                    "css_class": css_class,
-                    "preview_image_url": preview_image_url,
-                    "owned": cosmetic_id in owned_ids,
-                    "equipped": css_class == equipped_css_class,
-                }
-            )
+        def _build_view(cosmetic_type):
+            view = []
+            for cosmetic_id, slug, name, price_gems, css_class, value, preview_image_url in get_active_cosmetics(
+                db, cosmetic_type
+            ):
+                view.append(
+                    {
+                        "id": cosmetic_id,
+                        "slug": slug,
+                        "name": name,
+                        "price_gems": price_gems,
+                        "css_class": css_class,
+                        "value": value,
+                        "preview_image_url": preview_image_url,
+                        "cosmetic_type": cosmetic_type,
+                        "owned": cosmetic_id in owned_ids,
+                        "equipped": cosmetic_id == equipped_ids.get(cosmetic_type),
+                    }
+                )
+            return view
 
         template = "store_v2.html" if is_theme_v2_enabled("store") else "store.html"
         return render_template(
             template,
             gems=gems,
             gem_packages=gem_packages,
-            cosmetics=cosmetics_view,
+            cosmetics=_build_view("background"),
+            name_color_cosmetics=_build_view("name_color"),
+            badge_cosmetics=_build_view("badge"),
+            title_cosmetics=_build_view("title"),
+            country_border_cosmetics=_build_view("country_border"),
         )
 
 
@@ -162,7 +183,7 @@ def buy_cosmetic(cosmetic_id):
     with get_request_cursor() as db:
         user_id = session["user_id"]
         try:
-            purchase_cosmetic(db, user_id, cosmetic_id)
+            result = purchase_cosmetic(db, user_id, cosmetic_id)
         except StoreError as e:
             rollback_db_cursor(db)
             return error(400, str(e))
@@ -178,10 +199,11 @@ def buy_cosmetic(cosmetic_id):
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    # Buying happens from the Cosmetics section, well below the fold; a plain
-    # redirect to the top of /store made a successful purchase look like it
-    # did nothing (player-reported 2026-09-03).
-    return redirect(url_for("store_bp.store") + "#cosmetics")
+    # Buying happens well below the fold; a plain redirect to the top of
+    # /store made a successful purchase look like it did nothing
+    # (player-reported 2026-09-03). Land back on the section it came from.
+    anchor = ANCHOR_FOR_TYPE.get(result["cosmetic_type"], "cosmetics")
+    return redirect(url_for("store_bp.store") + f"#{anchor}")
 
 
 @store_bp.route("/store/cosmetics/equip/<int:cosmetic_id>", methods=["POST"])
@@ -192,27 +214,31 @@ def equip_cosmetic(cosmetic_id):
 
     with get_request_cursor() as db:
         user_id = session["user_id"]
-        if not user_owns_cosmetic(db, user_id, cosmetic_id):
+        cosmetic_type = get_owned_cosmetic(db, user_id, cosmetic_id)
+        if not cosmetic_type:
             return error(400, "You don't own this cosmetic.")
-        set_equipped_cosmetic(db, user_id, cosmetic_id)
+        set_equipped_cosmetic(db, user_id, cosmetic_id, cosmetic_type)
 
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    return redirect(url_for("store_bp.store") + "#cosmetics")
+    return redirect(url_for("store_bp.store") + f"#{ANCHOR_FOR_TYPE.get(cosmetic_type, 'cosmetics')}")
 
 
-@store_bp.route("/store/cosmetics/unequip", methods=["POST"])
+@store_bp.route("/store/cosmetics/unequip/<cosmetic_type>", methods=["POST"])
 @login_required
-def unequip_cosmetic():
+def unequip_cosmetic(cosmetic_type):
     if not _store_accessible():
         return error(404, "Not found")
 
+    if cosmetic_type not in COSMETIC_TYPE_TO_EQUIP_COLUMN:
+        return error(400, "Unknown cosmetic type.")
+
     with get_request_cursor() as db:
         user_id = session["user_id"]
-        set_equipped_cosmetic(db, user_id, None)
+        set_equipped_cosmetic(db, user_id, None, cosmetic_type)
 
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    return redirect(url_for("store_bp.store") + "#cosmetics")
+    return redirect(url_for("store_bp.store") + f"#{ANCHOR_FOR_TYPE.get(cosmetic_type, 'cosmetics')}")

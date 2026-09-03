@@ -51,7 +51,7 @@
 
                     {% if cosmetic.equipped %}
                     <span class="store-cosmetic-equipped-badge"><span class="material-icons-outlined">check_circle</span>Equipped</span>
-                    <form action="{{ url_for('store_bp.unequip_cosmetic') }}" method="POST">
+                    <form action="{{ url_for('store_bp.unequip_cosmetic', cosmetic_type=cosmetic.cosmetic_type) }}" method="POST">
                         {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
                         {{ game_button('Unequip', variant='secondary', type='submit') }}
                     </form>
