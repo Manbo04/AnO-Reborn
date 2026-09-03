@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
 from app_core.auth.passwords import hash_password, password_matches
-from database import get_request_cursor
+from database import get_request_cursor, client_ip_from_headers, coarse_fingerprint_from_headers
+from login_verification import complete_or_verify_login
 from signup import verify_recaptcha
 import datetime
 import logging
@@ -40,8 +41,9 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
         safe_email = urllib.parse.quote(email)
         return redirect(f"/verification_pending?email={safe_email}")
 
-    session["user_id"] = user_id
-    return redirect("/")
+    ip = client_ip_from_headers(request.headers, request.remote_addr)
+    fingerprint = coarse_fingerprint_from_headers(request.headers)
+    return complete_or_verify_login(user_id, ip, fingerprint, "email")
 
 
 @email_auth_bp.route("/register/email", methods=["POST"])
@@ -126,6 +128,16 @@ def register_email():
         return redirect(f"/verification_pending?email={safe_email}")
 
     session["user_id"] = user_id
+    session.permanent = True
+    session.modified = True
+    try:
+        ip = client_ip_from_headers(request.headers, request.remote_addr)
+        fingerprint = coarse_fingerprint_from_headers(request.headers)
+        from database import log_login_event
+
+        log_login_event(user_id, ip, fingerprint, "email")
+    except Exception:
+        pass  # best-effort; a brand-new account has no prior IP to compare anyway
     from app_core.onboarding.service import post_signup_redirect
 
     return redirect(post_signup_redirect(user_id))

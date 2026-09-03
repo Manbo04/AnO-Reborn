@@ -139,7 +139,6 @@ def google_callback_route():
 
         if user:
             # User exists, log them in
-            session["user_id"] = user[0]
             try:
                 from signup import ensure_user_provisioned
                 ensure_user_provisioned(db, user[0])
@@ -149,13 +148,15 @@ def google_callback_route():
                 logger.error("ensure_user_provisioned failed in google callback: %s", e)
             current_app.config["SESSION_PERMANENT"] = True
             current_app.permanent_session_lifetime = datetime.timedelta(days=365)
-            session.permanent = True
-            session.modified = True
-            
-            # Clean up
-            session.pop("google_oauth2_state", None)
-            session.pop("google_oauth2_token", None)
-            return redirect("/")
+
+            from database import client_ip_from_headers, coarse_fingerprint_from_headers
+            from login_verification import complete_or_verify_login
+
+            ip = client_ip_from_headers(request.headers, request.remote_addr)
+            fingerprint = coarse_fingerprint_from_headers(request.headers)
+            # complete_or_verify_login() clears the session itself on the
+            # completed path, taking the google_oauth2_* keys with it.
+            return complete_or_verify_login(user[0], ip, fingerprint, "google")
         else:
             # User does not exist, go to signup
             return redirect("/google_signup")

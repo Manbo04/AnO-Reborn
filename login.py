@@ -18,6 +18,7 @@ from database import (
     log_login_event,
 )
 from signup import verify_recaptcha
+from login_verification import complete_or_verify_login
 
 load_dotenv()
 
@@ -193,13 +194,6 @@ def login():
                             pass
 
                     logger.debug("Password matches, logging in user.")
-                    session.clear()
-                    session["user_id"] = user[0]
-                    logger.debug(f"Session after set: {dict(session)}")
-                    # Mark session permanent so cookie persists
-                    session.permanent = True
-                    # Ensure Flask sees the session as modified and writes cookie
-                    session.modified = True
 
                     _ensure_policies_row(db, user[0])
 
@@ -221,17 +215,10 @@ def login():
                     except Exception:
                         pass  # best-effort; don't block login
 
-                    try:
-                        ip = client_ip_from_headers(request.headers, request.remote_addr)
-                        fingerprint = coarse_fingerprint_from_headers(request.headers)
-                        log_login_event(user[0], ip, fingerprint, "password")
-                    except Exception:
-                        pass  # best-effort; don't block login
-
-                    logger.debug("Returning redirect to / after login")
-
-                    response = redirect("/")
-                    return response  # redirects user to homepage
+                    ip = client_ip_from_headers(request.headers, request.remote_addr)
+                    fingerprint = coarse_fingerprint_from_headers(request.headers)
+                    logger.debug("Handing off to complete_or_verify_login for user_id=%s", user[0])
+                    return complete_or_verify_login(user[0], ip, fingerprint, "password")
                 else:
                     logger.debug("Password does not match.")
                     flash("Wrong username or password")
@@ -402,18 +389,14 @@ def discord_login():
         return redirect("/login?discord_error=unexpected")
 
     # Update last_active timestamp on Discord login
+    ip = client_ip_from_headers(request.headers, request.remote_addr)
+    fingerprint = coarse_fingerprint_from_headers(request.headers)
     try:
         with get_request_cursor() as db:
             db.execute(
                 "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s",
                 (user_id,),
             )
-            try:
-                ip = client_ip_from_headers(request.headers, request.remote_addr)
-                fingerprint = coarse_fingerprint_from_headers(request.headers)
-                log_login_event(user_id, ip, fingerprint, "discord")
-            except Exception:
-                pass  # best-effort; don't block login
             try:
                 from signup import ensure_user_provisioned
                 ensure_user_provisioned(db, user_id)
@@ -424,19 +407,9 @@ def discord_login():
     except Exception:
         pass  # best-effort; don't block login
 
-    session.clear()
-    session["user_id"] = user_id
-    session.permanent = True
-    session.modified = True
-    try:
-        session.pop("oauth2_state")
-    except KeyError:
-        pass
-
-    # Safely clear oauth token if present
-    session.pop("oauth2_token", None)
-
-    return redirect("/")
+    # complete_or_verify_login() clears the session itself (on the completed
+    # path); the oauth2_state/oauth2_token keys go with it either way.
+    return complete_or_verify_login(user_id, ip, fingerprint, "discord")
 
 
 # NOTE: developer-only debug endpoints `_debug_login` and `_force_set_cookie`
