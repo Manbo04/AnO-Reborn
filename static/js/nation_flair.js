@@ -11,14 +11,15 @@ window.renderNationFlairHTML = function (displayName, flair) {
         return d.innerHTML;
     }
 
-    var html = '<span class="nation-name-flair"' +
-        (flair.name_color ? ' style="color:' + esc(flair.name_color) + ';"' : '') + '>';
+    var html = '<span class="nation-name-flair">';
     if (flair.badge_icon) {
         html += '<span class="material-icons-outlined nation-flair-badge"' +
             (flair.badge_name ? ' title="' + esc(flair.badge_name) + '"' : '') + '>' +
             esc(flair.badge_icon) + '</span>';
     }
-    html += '<span class="nation-flair-name">' + esc(displayName) + '</span>';
+    html += '<span class="nation-flair-name"' +
+        (flair.name_color ? ' style="color:' + esc(flair.name_color) + ';"' : '') + '>' +
+        esc(displayName) + '</span>';
     if (flair.title) {
         html += '<span class="nation-flair-title">' + esc(flair.title) + '</span>';
     }

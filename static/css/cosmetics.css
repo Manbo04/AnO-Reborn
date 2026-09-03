@@ -122,15 +122,21 @@
  * everywhere a nation's name renders -- chat, rankings, Country page.
  */
 
+/*
+ * display: inline (not inline-flex) is deliberate: several existing
+ * surfaces (e.g. the rankings table's nation <a>) truncate long names with
+ * `text-overflow: ellipsis`, which only works reliably on plain inline
+ * content -- a flex child breaks that truncation and silently clips the
+ * name (found via a live repro on /rankings, 2026-09-03).
+ */
 .nation-name-flair {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    display: inline;
 }
 
 .nation-flair-badge {
     font-size: 16px;
-    vertical-align: middle;
+    vertical-align: -3px;
+    margin-right: 3px;
 }
 
 .nation-flair-title {
@@ -138,4 +144,5 @@
     font-weight: 600;
     opacity: 0.75;
     margin-left: 4px;
+    color: inherit;
 }
