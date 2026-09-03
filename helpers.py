@@ -15,14 +15,12 @@ load_dotenv()
 
 
 def client_ip_from_request() -> str | None:
-    """Resolve client IP; trust X-Forwarded-For only behind Railway/proxy."""
-    trust_proxy = os.getenv("TRUST_PROXY")
-    if trust_proxy is None:
-        trust_proxy = "1" if os.getenv("RAILWAY_ENVIRONMENT_NAME") else "0"
-    if trust_proxy == "1":
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+    """Resolve client IP.
+
+    app.py's ProxyFix(x_for=1) already rewrites request.remote_addr from
+    X-Forwarded-For's single trusted hop (Railway's proxy), so reading the
+    raw header here would let a client spoof it via extra fake hops.
+    """
     return request.remote_addr
 
 

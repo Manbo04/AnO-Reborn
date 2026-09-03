@@ -173,7 +173,7 @@ def request_password_reset():
             (code, cId, int(datetime.now().timestamp())),
         )
         inserted = db.fetchone()
-        client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
+        client_ip = request.remote_addr
         if inserted and inserted[0] == cId:
             logger.info(
                 "request_password_reset: set reset code for user_id=%s ip=%s",

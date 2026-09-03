@@ -181,11 +181,11 @@ def google_signup_route():
         try:
             ensure_signup_attempts_table()
             
-            # IP Rate Limiting
-            forwarded = request.headers.get("X-Forwarded-For") or request.headers.get(
-                "X-Forwarded-For".lower()
-            )
-            client_ip = forwarded.split(",")[0].strip() if forwarded else request.remote_addr
+            # IP Rate Limiting. app.py's ProxyFix(x_for=1) already rewrites
+            # remote_addr from the proxy's trusted hop; reading
+            # X-Forwarded-For directly would let a client spoof it and
+            # bypass the per-IP signup cap.
+            client_ip = request.remote_addr
 
             with get_request_cursor() as db:
                 db.execute(

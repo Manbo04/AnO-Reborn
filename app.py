@@ -244,7 +244,7 @@ def create_app():
         except AttributeError:
             elapsed = 0
         if elapsed > 1.0 and not request.path.startswith("/static/"):
-            client_ip = request.headers.get("X-Forwarded-For") or request.remote_addr
+            client_ip = request.remote_addr
             ua = request.headers.get("User-Agent", "")
             logger.info("SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s", request.method, request.path, elapsed, client_ip, ua[:200])
         if request.path.startswith("/static/"):

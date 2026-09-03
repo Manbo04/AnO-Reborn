@@ -2079,13 +2079,14 @@ def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
 
 
 def client_ip_from_headers(headers, remote_addr: Optional[str]) -> Optional[str]:
-    """Extract client IP, preferring X-Forwarded-For's first hop (app may run behind a proxy).
+    """Return the client IP.
 
-    Mirrors the extraction already used for signup rate-limiting in signup.py.
+    `remote_addr` is trusted as-is: app.py's ProxyFix(x_for=1) already rewrites
+    it from X-Forwarded-For's single trusted hop (Railway's proxy). The header
+    itself is never read here directly -- its leftmost entry is attacker-
+    controlled and trusting it would let a client spoof any IP, defeating the
+    new-location login alert and signup's per-IP abuse guard.
     """
-    forwarded = headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
     return remote_addr
 
 
