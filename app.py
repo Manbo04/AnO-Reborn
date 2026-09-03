@@ -729,8 +729,6 @@ def create_app():
                         }
 
                 ctx["country_name"] = cached_user["country_name"]
-                if ctx["country_name"] == "Terra Homeworld":
-                    ctx["admin_user_ids"].append(user_id)
                 ctx["coalition_id"] = cached_user["coalition_id"]
                 ctx["coalition_name"] = cached_user["coalition_name"]
                 ctx["equipped_bg_css_class"] = cached_user.get("equipped_bg_css_class")
