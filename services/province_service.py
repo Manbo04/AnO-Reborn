@@ -15,8 +15,8 @@ class ProvinceService:
         provinces = []
         provinces_with_images = set()
         for row in provinces_raw:
-            provinces.append(row[:8])
-            if len(row) > 8 and row[8]:
+            provinces.append(row[:11])
+            if len(row) > 11 and row[11]:
                 provinces_with_images.add(row[3])
 
         return {

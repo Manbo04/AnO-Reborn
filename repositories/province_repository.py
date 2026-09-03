@@ -1,4 +1,4 @@
-from database import get_request_cursor, query_cache
+from database import get_request_cursor, query_cache, provinces_has_demographics
 from psycopg2.extras import RealDictCursor
 
 class ProvinceRepository:
@@ -6,6 +6,11 @@ class ProvinceRepository:
 
     @staticmethod
     def get_provinces_paginated(user_id: int, page: int, per_page: int, has_image_col: str) -> tuple:
+        demo_col = (
+            "COALESCE(pop_children, 0), COALESCE(pop_working, 0), COALESCE(pop_elderly, 0)"
+            if provinces_has_demographics()
+            else "0, 0, 0"
+        )
         with get_request_cursor(read_only=True) as db:
             db.execute("SELECT COUNT(*) FROM provinces WHERE userId=(%s)", (user_id,))
             total_count = db.fetchone()
@@ -27,7 +32,7 @@ class ProvinceRepository:
                 (
                     f"SELECT CAST(citycount AS INTEGER) AS citycount, population, "
                     f"provinceName, id, land, happiness, "
-                    f"productivity, energy{has_image_col} "
+                    f"productivity, energy, {demo_col}{has_image_col} "
                     f"FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
                 ),
                 (user_id, per_page, offset),
