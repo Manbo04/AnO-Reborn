@@ -506,8 +506,6 @@ def callback():
 
         discord_email = (session.get("discord_email") or "").strip()
         if discord_email:
-            from database import assign_discord_id_to_user
-
             with get_request_cursor() as link_db:
                 link_db.execute(
                     """
@@ -520,18 +518,20 @@ def callback():
                 )
                 email_row = link_db.fetchone()
             if email_row:
-                linked_user_id, existing_discord = email_row[0], email_row[1]
-                if (
-                    existing_discord
-                    and str(existing_discord) != str(discord_user_id)
-                ):
-                    flash(
-                        "This email is already linked to a different Discord account. "
-                        "Log in with email/password or contact support."
-                    )
-                    return redirect("/login?discord_error=email_conflict")
-                assign_discord_id_to_user(linked_user_id, discord_user_id)
-                return redirect("/discord_login/")
+                # An account with this email already exists but isn't linked
+                # to this Discord identity. Do NOT auto-link and log in here:
+                # that would hand over an existing account to whoever's
+                # Discord happens to report a matching email, with no proof
+                # they own the site account (no password, no prior session).
+                # Real account takeover risk -- send them to prove ownership
+                # via password login and link Discord explicitly from
+                # /account instead (the session-gated 'link' intent above).
+                flash(
+                    "An account with this email already exists. Please log in "
+                    "with your existing method, then link Discord from your "
+                    "account settings."
+                )
+                return redirect("/login?discord_error=email_conflict")
 
         return redirect("/discord_signup")
     except Exception as e:
