@@ -17,7 +17,7 @@
             <span>You have <span class="store-gems-count">{{ gems | commas }}</span> Gems</span>
         </div>
 
-        {% call game_panel('Buy Gems', icon='diamond') %}
+        {% call game_panel('Buy Gems', icon='diamond', id='buy-gems') %}
         <p class="store-section-intro">Gems are AnO's premium currency, purchased with real money and spent on cosmetics below.</p>
         {% if gem_packages %}
         <div class="game-panel-grid game-panel-grid--3">
@@ -39,7 +39,7 @@
         {% endif %}
         {% endcall %}
 
-        {% call game_panel('Cosmetics', icon='palette', style='margin-top: var(--game-space-lg, 24px);') %}
+        {% call game_panel('Cosmetics', icon='palette', style='margin-top: var(--game-space-lg, 24px);', id='cosmetics') %}
         <p class="store-section-intro">Spend Gems to unlock a custom page background.</p>
         {% if cosmetics %}
         <div class="game-panel-grid game-panel-grid--3">

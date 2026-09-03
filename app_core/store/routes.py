@@ -178,7 +178,10 @@ def buy_cosmetic(cosmetic_id):
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    return redirect(url_for("store_bp.store"))
+    # Buying happens from the Cosmetics section, well below the fold; a plain
+    # redirect to the top of /store made a successful purchase look like it
+    # did nothing (player-reported 2026-09-03).
+    return redirect(url_for("store_bp.store") + "#cosmetics")
 
 
 @store_bp.route("/store/cosmetics/equip/<int:cosmetic_id>", methods=["POST"])
@@ -196,7 +199,7 @@ def equip_cosmetic(cosmetic_id):
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    return redirect(url_for("store_bp.store"))
+    return redirect(url_for("store_bp.store") + "#cosmetics")
 
 
 @store_bp.route("/store/cosmetics/unequip", methods=["POST"])
@@ -212,4 +215,4 @@ def unequip_cosmetic():
         invalidate_user_cache(user_id)
         invalidate_view_cache("store", user_id=user_id)
 
-    return redirect(url_for("store_bp.store"))
+    return redirect(url_for("store_bp.store") + "#cosmetics")

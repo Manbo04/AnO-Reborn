@@ -13,7 +13,7 @@
 
     <div class="templatedivcontent">
 
-        {% call game_glass_panel('Buy Gems', icon='diamond', style='margin-bottom: var(--game-space-lg, 24px);') %}
+        {% call game_glass_panel('Buy Gems', icon='diamond', style='margin-bottom: var(--game-space-lg, 24px);', id='buy-gems') %}
         <p class="store-section-intro">Gems are AnO's premium currency, purchased with real money and spent on cosmetics below.</p>
         {% if gem_packages %}
         {% set currency_symbols = {'usd': '$', 'eur': '€', 'gbp': '£'} %}
@@ -36,7 +36,7 @@
         {% endif %}
         {% endcall %}
 
-        {% call game_glass_panel('Cosmetics', icon='palette') %}
+        {% call game_glass_panel('Cosmetics', icon='palette', id='cosmetics') %}
         <p class="store-section-intro">Spend Gems to unlock a custom page background.</p>
         {% if cosmetics %}
         <div class="game-panel-grid game-panel-grid--3">
