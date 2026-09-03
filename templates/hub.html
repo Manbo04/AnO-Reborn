@@ -34,14 +34,12 @@
                     {% endif %}
                 </div>
                 <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
-                    <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1; max-height: none;">
+                    <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1;">
                         {% if chat_history and chat_history|length > 0 %}
-                            {# list_global_chat_messages() already returns oldest-first
-                               (it does its own reversed(rows) after the DESC-ordered
-                               query) -- reversing again here put newest messages at
-                               the top instead of the bottom like every other chat UI.
-                               Reported live (luciuskonst, #suggestions). #}
-                            {% for m in chat_history %}
+                            {# Player-requested (2026-09-02): newest message on top, feed
+                               scrolls within a fixed height instead of growing. Reversed
+                               here since list_global_chat_messages() returns oldest-first. #}
+                            {% for m in chat_history|reverse %}
                             <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
                                 <img src="/flag/country/{{ m.sender_id }}" alt="">
                                 <div>
@@ -158,7 +156,7 @@
     var messagesEl = document.getElementById('hubChatMessages');
     var form = document.getElementById('hubChatForm');
     var input = document.getElementById('hubChatInput');
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    messagesEl.scrollTop = 0;
 
     function renderMessage(m) {
         var div = document.createElement('div');
@@ -168,8 +166,8 @@
             '<div><div class="game-chat-name"></div><div class="game-chat-bubble"></div></div>';
         div.querySelector('.game-chat-name').textContent = m.sender_username + (mine ? ' (you)' : '') + ' · just now';
         div.querySelector('.game-chat-bubble').textContent = m.content;
-        messagesEl.appendChild(div);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        messagesEl.insertBefore(div, messagesEl.firstChild);
+        messagesEl.scrollTop = 0;
     }
 
     var socket = io();
