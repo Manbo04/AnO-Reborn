@@ -157,6 +157,26 @@
     var messagesEl = document.getElementById('hubChatMessages');
     var form = document.getElementById('hubChatForm');
     var input = document.getElementById('hubChatInput');
+
+    // The chat panel is height-matched to the Global News panel via
+    // align-items: stretch (News is taller, so it drives the height).
+    // The feed's CSS max-height (360px) is just a safety cap so the panel
+    // doesn't grow unbounded as messages pile up -- it undershoots the
+    // real available space, leaving messages cut short with a dead gap
+    // above the input. Stretch it to fill whatever room is actually there.
+    function syncChatFeedHeight() {
+        var available = root.getBoundingClientRect().height - form.getBoundingClientRect().height;
+        if (available > 120) {
+            messagesEl.style.maxHeight = available + 'px';
+        }
+    }
+    syncChatFeedHeight();
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(syncChatFeedHeight, 150);
+    });
+
     messagesEl.scrollTop = 0;
 
     function renderMessage(m) {
