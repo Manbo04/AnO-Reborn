@@ -11414,6 +11414,30 @@ body.page-country .revenue .stat-value {
     color: var(--danger);
 }
 
+/* Fix ragged card alignment on all /mechanics pages: .templatecontentpleft
+   (static/style.css ~L1766) is width:80% + margin:auto, which centers a
+   narrower text block than the h3 title and .templatetable siblings next
+   to it (both full column width, inherited text-align:center from the
+   .menuflex div rule) — three different left edges stacked in one card
+   read as uneven/misaligned. Scoped to .page-mechanics only, not a
+   sitewide override of these shared classes. */
+body.page-mechanics .templatedivflex2left,
+body.page-mechanics .templatedivflex2right {
+    text-align: left;
+}
+
+body.page-mechanics .templatecontentpleft {
+    width: 100%;
+    text-align: left;
+    margin: 8px 0 18px;
+}
+
+body.page-mechanics .templatecontentheader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 
 /* --- static/css/game-province.css --- */
 /**
