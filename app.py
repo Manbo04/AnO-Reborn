@@ -460,7 +460,11 @@ def create_app():
     from app_core.world_map.routes import bp as world_map_bp
     from app_core.game_map.routes import bp as game_map_bp
     from app_core.market.routes import market_bp
-    from app_core.store.routes import store_bp, stripe_webhook as store_stripe_webhook
+    from app_core.store.routes import (
+        store_bp,
+        stripe_webhook as store_stripe_webhook,
+        bmc_webhook as store_bmc_webhook,
+    )
     from app_core.military.routes import bp as military_bp
     from app_core.coalitions.routes import register_coalitions_routes
     from app_core.tutorial.routes import bp as tutorial_api_bp
@@ -511,6 +515,7 @@ def create_app():
     # store_bp is player-facing and must keep normal CSRF protection. The
     # webhook's auth boundary is the Stripe signature check inside the view.
     csrf.exempt(store_stripe_webhook)
+    csrf.exempt(store_bmc_webhook)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):

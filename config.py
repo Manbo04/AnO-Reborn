@@ -108,6 +108,14 @@ def warn_optional_integrations() -> None:
             "Patreon not configured (PATREON_ACCESS_TOKEN / PATREON_CAMPAIGN_ID). "
             "/patreon and the monthly Patreon Gems bonus will not work."
         )
+    # Non-fatal on purpose, same reasoning as Stripe/Patreon above: the
+    # webhook route 500s its own requests (see app_core/store/routes.py::
+    # bmc_webhook) when this is unset, it doesn't crash boot.
+    if not (os.getenv("BMC_WEBHOOK_SECRET") or "").strip():
+        log.warning(
+            "Buy Me a Coffee not configured (BMC_WEBHOOK_SECRET). "
+            "One-time Gem purchase Extras will not be credited automatically."
+        )
 
 
 # Parse on import to ensure environment variables are set

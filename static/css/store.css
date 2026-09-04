@@ -115,6 +115,36 @@ body.game-page-v2 .store-package-card {
     font-size: 1.1rem;
 }
 
+.store-package-card .store-package-price {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.store-subsection-title {
+    color: var(--colorOne);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.store-package-card--username {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--game-space-sm, 8px);
+}
+
+.store-username-value {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border-radius: var(--game-radius-sm);
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    user-select: all;
+}
+
 /* --- Cosmetics gallery --- */
 .store-cosmetic-card {
     background: var(--foreground);
