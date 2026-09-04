@@ -98,19 +98,34 @@ _NORMAL_UNIT_NAMES = {
 }
 
 
-def resolve_defender_composition(defender_id: int) -> Tuple[list, dict]:
+def resolve_defender_composition(
+    defender_id: int, domain: Optional[str] = None
+) -> Tuple[list, dict]:
     """Determine the 3 unit types (and quantities) an incoming attack can hit.
 
-    Prefers the defender's saved `/defense` composition (`Military.get_defense`).
-    Falls back to the top-3-owned-by-quantity auto-pick
-    (`Military.get_defending_units`) when the saved composition is missing or
-    invalid (not exactly 3 known unit types) — this preserves existing
-    behaviour for players who never configured `/defense`.
+    When `domain` is given (the attacker declared Ground/Naval/Air for this
+    strike), the defender can only respond with that domain's 3 unit types —
+    e.g. a naval attack can only be met with destroyers/cruisers/submarines,
+    never soldiers or fighters. This overrides any saved `/defense` choice or
+    top-3-owned auto-pick, since those ignore domain entirely.
+
+    Without a domain (legacy callers / pre-domain sessions), prefers the
+    defender's saved `/defense` composition (`Military.get_defense`) and falls
+    back to the top-3-owned-by-quantity auto-pick (`Military.get_defending_units`)
+    when the saved composition is missing or invalid (not exactly 3 known unit
+    types) — this preserves existing behaviour for players who never
+    configured `/defense`.
 
     Returns (defenselst, defenseunits) where defenselst is the ordered list of
     3 unit type names and defenseunits maps unit type -> quantity owned.
     """
     from attack_scripts.Nations import Military
+
+    if domain is not None:
+        domain_units = Military.UNIT_DOMAINS.get(domain, [])
+        defender_military = Military.get_military(defender_id)
+        defenseunits = {u: defender_military.get(u, 0) for u in domain_units}
+        return list(domain_units), defenseunits
 
     saved = Military.get_defense(defender_id)
     if len(saved) == 3 and all(u in _NORMAL_UNIT_NAMES for u in saved):

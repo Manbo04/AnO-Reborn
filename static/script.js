@@ -286,6 +286,29 @@ function submit_next(e) {
     }
 }
 
+function submit_domain(e) {
+    e.preventDefault();
+    var domain_field = document.querySelector("input[name=domain]");
+    if (!domain_field) return;
+    var checked = document.querySelector("input.domainradio:checked");
+    var warning = document.getElementById("domain-selection-warning");
+    if (!checked) {
+        if (warning) {
+            warning.style.display = "block";
+        } else {
+            var msg = document.createElement("p");
+            msg.id = "domain-selection-warning";
+            msg.style.cssText = "color:#c0392b;font-weight:bold;text-align:center;margin:8px 0;";
+            msg.textContent = "Please select an attack type before continuing.";
+            e.target.parentElement.insertAdjacentElement("beforebegin", msg);
+        }
+        return;
+    }
+    if (warning) warning.style.display = "none";
+    domain_field.value = checked.value;
+    e.target.parentElement.submit();
+}
+
 function war_target() {
     var element = document.getElementsByName("targeted_unit")[0];
     var all_inputs = document.querySelectorAll("input[type=checkbox]");
