@@ -40,14 +40,20 @@ body.game-page-v2:not([class*="bg-"]) {
 /* The .game-page-bg photo div (below) sits above body in paint order and
    carries its own per-page inline `style="background-image: url(...)",
    so fixing body's background above isn't enough on its own -- that photo
-   would still paint over the now-correct cosmetic gradient. Point
-   .game-page-bg's background at whatever body resolved to instead of
-   duplicating each cosmetic's gradient a second time here; `inherit` is a
-   no-op (and the ordinary page photo still shows through the inline style
-   beneath it) when nothing is equipped. !important is required only to
-   beat that inline style once a cosmetic *is* equipped. */
+   would still paint over the now-correct cosmetic gradient. `inherit`
+   looks like the obvious fix here but is wrong: .game-page-bg's actual DOM
+   parent is .templatecontainer (which the rule two blocks up forces
+   transparent), not body, and `inherit` only ever looks at the immediate
+   parent's computed value -- confirmed live 2026-09-04, .game-page-bg
+   stayed transparent even once body itself had the right gradient.
+   cosmetics.css stashes each cosmetic's value in --cosmetic-bg, a custom
+   property, which (unlike `background`) inherits straight through
+   .templatecontainer regardless of its own background, landing here with
+   body's actual equipped value. Undefined (no cosmetic equipped) makes
+   this whole declaration invalid, which is a no-op -- the ordinary page
+   photo still shows via the inline style beneath it. */
 body[class*="bg-"] .game-page-bg {
-    background: inherit !important;
+    background: var(--cosmetic-bg) !important;
 }
 
 /* .templatecontainer and .templatediv (the universal page-wrapper classes,
