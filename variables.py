@@ -141,13 +141,32 @@ FEATURE_DEMOGRAPHIC_TAX = True  # toggle age-weighted tax rates on/off
 # PHASE 3: AGING, EDUCATION & WORKFORCE (Phase 3)
 # Daily population aging rates (per tick, as fraction)
 DEMO_AGING_RATES = {
-    "elderly_death": 0.002,  # 0.2% of elderly die per tick
-    "working_to_elderly": 0.001,  # 0.1% move to elderly per tick
+    # Halved 2026-09-05 (was 0.002/0.001): near the population cap, growth
+    # throttles to POP_GROWTH_DIMINISHING_FLOOR and only feeds the small
+    # children bucket, which children_to_working (1%/tick) can't refill fast
+    # enough against the old working_to_elderly+elderly_death drain -- working
+    # population (the only 100%-taxed bracket) was shrinking ~0.06%/tick even
+    # while total population inched up, so nations at/near cap saw tax revenue
+    # decay indefinitely. Player-reported (staff-chat 2026-09-04, Lamlor/
+    # Mohammed): "population is increasing but revenue is going down."
+    "elderly_death": 0.001,  # 0.1% of elderly die per tick
+    "working_to_elderly": 0.0005,  # 0.05% move to elderly per tick
     # 1% graduate to working per tick (was 0.5%, then 2% -- at 2% this ran
     # ~25x faster than births could replenish near the pop cap, see
     # POP_GROWTH_DIMINISHING_FLOOR above; halved 2026-09-02).
     "children_to_working": 0.01,
 }
+
+# Organic births: children added per working-age person per tick, on top of
+# the capacity-driven growth in population.py's calc_population_growth().
+# Added 2026-09-05 alongside the DEMO_AGING_RATES halving above -- ties the
+# children inflow to the actual working population (a real birth rate)
+# instead of purely to spare capacity under maxPop, so the demographic
+# pipeline can sustain itself once growth throttles near the cap. Scaled by
+# the same diminishing_factor/rations_ratio as capacity growth and hard-capped
+# at maxPop in calc_population_growth(), so it never operates outside the
+# existing population-cap or starvation logic (no reopened whale-growth risk).
+DEMO_BIRTH_RATE = 0.00025
 
 # Education distribution (when children graduate)
 # Determined by available school/university capacity in province
