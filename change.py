@@ -179,6 +179,18 @@ def request_password_reset():
     logger = logging.getLogger(__name__)
     client_ip = request.remote_addr
 
+    # TEMPORARY diagnostic (ticket-0028, 2026-09-04): see
+    # helpers.session_cookie_fingerprint. Ambient session is otherwise
+    # unused by this route now -- logged only to catch a recurrence.
+    from helpers import session_cookie_fingerprint
+
+    logger.info(
+        "request_password_reset: ambient_session_user_id=%s cookie_fp=%s ip=%s",
+        session.get("user_id"),
+        session_cookie_fingerprint(),
+        client_ip,
+    )
+
     email = request.form.get("email")
     with get_request_cursor() as db:
         db.execute("SELECT id FROM users WHERE email=%s", (email,))
@@ -214,6 +226,17 @@ def account_request_password_reset():
     logger = logging.getLogger(__name__)
     cId = session["user_id"]
     client_ip = request.remote_addr
+
+    # TEMPORARY diagnostic (ticket-0028, 2026-09-04): see
+    # helpers.session_cookie_fingerprint.
+    from helpers import session_cookie_fingerprint
+
+    logger.info(
+        "account_request_password_reset: user_id=%s cookie_fp=%s ip=%s",
+        cId,
+        session_cookie_fingerprint(),
+        client_ip,
+    )
 
     password_raw = request.form.get("current_password")
     if not password_raw:
