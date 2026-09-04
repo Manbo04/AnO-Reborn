@@ -10793,6 +10793,13 @@ body.game-page-v2 .infodiv.country-customize-panel {
     line-height: 1.3;
 }
 
+.country-biome-card-resources {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: var(--accent);
+    line-height: 1.35;
+}
+
 .country-biome-card-badge {
     position: absolute;
     top: 8px;
@@ -11300,6 +11307,112 @@ body.page-country .revenue .stat-value {
     margin: 0 !important;
 }
 
+
+
+/* --- static/css/game-mechanics.css --- */
+/**
+ * Mechanics reference pages (/mechanics, /mechanics/biomes, /mechanics/resources).
+ * Reuses .country-biome-card / .country-biome-gallery (game-country.css) for the
+ * biome art cards; this file only adds the mine-chip row inside those cards and
+ * the biome x resource matrix table.
+ */
+
+.mechanics-biome-mines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.mechanics-biome-mine-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.mechanics-biome-mine-chip .material-icons-outlined {
+    font-size: 0.85rem;
+}
+
+.mechanics-matrix-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mechanics-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.mechanics-matrix th,
+.mechanics-matrix td {
+    padding: 8px 10px;
+    text-align: center;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.mechanics-matrix thead th {
+    background: var(--foregroundThree, var(--foreground));
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.mechanics-matrix tbody th {
+    text-align: left;
+    background: var(--foregroundTwo, var(--foreground));
+    position: sticky;
+    left: 0;
+}
+
+.mechanics-matrix-yes {
+    color: var(--success);
+    font-size: 1.1rem;
+}
+
+.mechanics-matrix-no {
+    color: var(--text-secondary);
+    opacity: 0.35;
+}
+
+.mechanics-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--game-radius-md);
+    background: var(--accent-subtle);
+    border: 1px solid rgba(0, 167, 225, 0.25);
+    margin-bottom: 16px;
+}
+
+.mechanics-callout .material-icons-outlined {
+    color: var(--accent);
+    margin-top: 1px;
+}
+
+.mechanics-callout p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.mechanics-callout-warning {
+    background: rgba(211, 86, 73, 0.1);
+    border-color: rgba(211, 86, 73, 0.3);
+}
+
+.mechanics-callout-warning .material-icons-outlined {
+    color: var(--danger);
+}
 
 
 /* --- static/css/game-province.css --- */
