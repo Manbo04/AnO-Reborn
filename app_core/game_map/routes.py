@@ -15,7 +15,7 @@ def _ensure_tables():
     """Create/alter game-map schema. Idempotent — safe to run on every boot."""
     try:
         import psycopg2
-        conn = psycopg2.connect(os.environ["DATABASE_PUBLIC_URL"])
+        conn = psycopg2.connect(os.environ.get("DATABASE_PUBLIC_URL") or os.environ["DATABASE_URL"])
         conn.autocommit = True
         cur = conn.cursor()
 

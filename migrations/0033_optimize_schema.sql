@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_treaties_status ON treaties(status);
 CREATE INDEX IF NOT EXISTS idx_peace_author ON peace(author);
 
 -- Coalition Applications (colId index already created in 0017)
-CREATE INDEX IF NOT EXISTS idx_col_applications_user_id ON col_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_col_applications_userid ON col_applications(userId);
 
 -- Coalition Banks Requests
 CREATE INDEX IF NOT EXISTS idx_colBanksRequests_reqId ON colBanksRequests(reqId);
@@ -27,22 +27,22 @@ CREATE INDEX IF NOT EXISTS idx_colBanksRequests_colId ON colBanksRequests(colId)
 
 -- Audits & Taxes
 CREATE INDEX IF NOT EXISTS idx_purchase_audit_user_id ON purchase_audit(user_id);
-CREATE INDEX IF NOT EXISTS idx_reparation_tax_sender_id ON reparation_tax(sender_id);
-CREATE INDEX IF NOT EXISTS idx_reparation_tax_receiver_id ON reparation_tax(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_reparation_tax_winner ON reparation_tax(winner);
+CREATE INDEX IF NOT EXISTS idx_reparation_tax_loser ON reparation_tax(loser);
 CREATE INDEX IF NOT EXISTS idx_revenue_user_id ON revenue(user_id);
 
 -- Administration & Metrics
-CREATE INDEX IF NOT EXISTS idx_admin_actions_admin_id ON admin_actions(admin_id);
-CREATE INDEX IF NOT EXISTS idx_admin_actions_target_user_id ON admin_actions(target_user_id);
-CREATE INDEX IF NOT EXISTS idx_game_economy_snapshots_resource ON game_economy_snapshots(resource);
+CREATE INDEX IF NOT EXISTS idx_admin_actions_actor ON admin_actions(actor);
+CREATE INDEX IF NOT EXISTS idx_admin_actions_user_id ON admin_actions(user_id);
+CREATE INDEX IF NOT EXISTS idx_game_economy_snapshots_resource ON game_economy_snapshots(resource_name);
 
 -- Background Tasks
+-- task_runs is (task_name PK, last_run) only — no status column exists in the real schema.
 CREATE INDEX IF NOT EXISTS idx_task_runs_task_name ON task_runs(task_name);
-CREATE INDEX IF NOT EXISTS idx_task_runs_status ON task_runs(status);
 
 -- Polls
 CREATE INDEX IF NOT EXISTS idx_poll_votes_user_id ON poll_votes(user_id);
-CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_id ON poll_votes(poll_id);
+CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_name ON poll_votes(poll_name);
 
 -- Discord Integration
 CREATE INDEX IF NOT EXISTS idx_discord_role_aliases_guild_id ON discord_role_aliases(guild_id);
@@ -66,8 +66,15 @@ DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;
 -- --------------------------------------------------------------------------
 -- 3) Clean up old legacy tables from the normalization process
 -- --------------------------------------------------------------------------
--- These were kept as backups in migration 0005 but are now redundant bloat.
-DROP TABLE IF EXISTS coalitions_legacy CASCADE;
+-- These were kept as backups in migration 0005. wars_legacy is genuinely
+-- unused (no app code references it) and safe to drop. coalitions_legacy is
+-- NOT bloat -- get_coalition_members_table() (database.py) actively prefers
+-- it, and every _members_tbl() call in app_core/coalitions/routes.py reads
+-- and writes it; migration 0059 (2026-09-01) even added a column to it.
+-- Dropping it here would destroy the live coalition-membership table.
+-- This line was never reached before this file's own column-name bugs
+-- (fixed 2026-09-04) made every prior run of this migration abort earlier
+-- in the same transaction -- do not restore the DROP.
 DROP TABLE IF EXISTS wars_legacy CASCADE;
 
 COMMIT;
