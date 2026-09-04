@@ -369,6 +369,20 @@ def invalidate_user_cache(user_id: int) -> None:
     except Exception as e:
         logger.exception("Failed to invalidate econ_stats cache for %s: %s", user_id, e)
 
+    # layout_user_equip_{user_id} (app.py's per-request template context)
+    # caches which cosmetic is equipped for 60s -- without invalidation here,
+    # equipping/unequipping a Store background looked broken for up to a
+    # minute after the click, on every page except /store itself, which
+    # rebuilds its own view straight from the DB (player-reported 2026-09-03).
+    key_layout_equip = f"layout_user_equip_{user_id}"
+    try:
+        if key_layout_equip in query_cache.cache:
+            del query_cache.cache[key_layout_equip]
+        else:
+            query_cache.invalidate(pattern=key_layout_equip)
+    except Exception as e:
+        logger.exception("Failed to invalidate layout equip cache for %s: %s", user_id, e)
+
 
 class DatabasePool:
     """Singleton database connection pool with timeout support"""
