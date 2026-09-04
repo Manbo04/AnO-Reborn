@@ -293,7 +293,32 @@ def population_growth():  # Function for growing population
             )
             growth_rate = base_growth_rate * diminishing_factor
 
-            newPop = int(round((maxPop / 100) * growth_rate))
+            capacity_growth = int(round((maxPop / 100) * growth_rate))
+
+            # Organic births: tied to actual working population instead of
+            # just spare capacity under maxPop, so the demographic pipeline
+            # (children -> working -> elderly -> death) can sustain itself
+            # once capacity_growth throttles near the cap. Same throttles as
+            # capacity growth (diminishing_factor, rations_ratio) so it can't
+            # outrun starvation or the population cap on its own.
+            pop_working = province_row.get("pop_working") or 0
+            birth_contribution = int(
+                round(
+                    pop_working
+                    * variables.DEMO_BIRTH_RATE
+                    * diminishing_factor
+                    * (rations_ratio**2)
+                )
+            )
+
+            newPop = capacity_growth + birth_contribution
+            # Hard cap: never let growth push a province past maxPop this
+            # tick, regardless of how capacity_growth/births combine (the
+            # anti-whale-exploit ceiling from the 2026-08-26 rebalance).
+            if curPop >= maxPop:
+                newPop = 0
+            else:
+                newPop = max(0, min(newPop, maxPop - curPop))
 
             starvation_deaths = 0
             grace_period = (user_total_provinces.get(user_id, 1) <= 1) and (user_total_land.get(user_id, 1) <= 20)

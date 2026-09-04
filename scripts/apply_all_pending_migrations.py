@@ -72,6 +72,7 @@ MIGRATION_FILES = [
     "0062_seed_store_cosmetic_catalog.sql",
     "0063_add_bmc_gem_purchases.sql",
     "0064_seed_bmc_gem_package_ids.sql",
+    "0065_reactivate_distribution_centers.sql",
 ]
 
 
