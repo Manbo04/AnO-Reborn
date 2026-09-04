@@ -5797,29 +5797,34 @@ html.page-tutorial .resourcedivcontent {
    .game-page-bg below unless overridden. This class-selector rule
    (specificity 0,1,1) beats that bare-element one (0,0,1) regardless of
    !important vs !important tie-break rules, since specificity is compared
-   first. Applied via body_class on pages using the new redesign. */
-body.game-page-v2 {
+   first. Applied via body_class on pages using the new redesign.
+
+   :not([class*="bg-"]) carves out an equipped background cosmetic
+   (cosmetics.css, also a body class -- see equipped_bg_css_class in
+   templates/layout.html): without it, this rule's specificity (0,1,1)
+   beat a bare `.bg-cherry-blossom-dusk` rule's (0,1,0) regardless of
+   !important vs !important or source order, forcing body's own background
+   to transparent even with a cosmetic equipped. The :not() adds another
+   attribute-level selector so this rule still wins on an ordinary
+   game-page-v2 page (0,2,1 > 0,1,0), but stops matching at all once a
+   `bg-*` class lands on body, clearing the way for that cosmetic's own
+   !important rule in cosmetics.css to apply instead. No known body class
+   other than the ten `bg-*` cosmetics matches this substring (audited
+   2026-09-03). Player-reported 2026-09-03: equipped store backgrounds
+   never showed up anywhere outside the Store page itself. */
+body.game-page-v2:not([class*="bg-"]) {
     background: transparent !important;
 }
 
-/* An equipped background cosmetic (cosmetics.css, applied as a body class --
-   see equipped_bg_css_class in templates/layout.html) used to be invisible
-   on every game-page-v2 page even though the class really was on <body>:
-   a plain element's background paints straight onto the document canvas,
-   which sits behind literally everything -- including the fixed, opaque
-   .game-page-bg photo div two rules up -- regardless of z-index, and that
-   div's own inline `style="background-image: url(...)"` then painted the
-   page's default photo on top of it anyway. Rather than duplicate every
-   cosmetic's gradient a second time here, just point .game-page-bg's
-   background at whatever body's already resolved to -- `inherit` copies
-   body's *computed* background (the equipped cosmetic's gradient when one
-   is equipped, or nothing when it isn't, in which case the rule is a no-op
-   and the ordinary page photo still shows via the inline style beneath it).
-   !important is required only to beat that inline style once a cosmetic
-   *is* equipped. No known body class other than the ten `bg-*` cosmetics
-   matches this substring (audited 2026-09-03).
-   Player-reported 2026-09-03: equipped store backgrounds never showed up
-   anywhere outside the Store page itself. */
+/* The .game-page-bg photo div (below) sits above body in paint order and
+   carries its own per-page inline `style="background-image: url(...)",
+   so fixing body's background above isn't enough on its own -- that photo
+   would still paint over the now-correct cosmetic gradient. Point
+   .game-page-bg's background at whatever body resolved to instead of
+   duplicating each cosmetic's gradient a second time here; `inherit` is a
+   no-op (and the ordinary page photo still shows through the inline style
+   beneath it) when nothing is equipped. !important is required only to
+   beat that inline style once a cosmetic *is* equipped. */
 body[class*="bg-"] .game-page-bg {
     background: inherit !important;
 }
