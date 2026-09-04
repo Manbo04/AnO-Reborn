@@ -8,7 +8,7 @@
     </div>
 
     <div class="templatedivcontent">
-        <p class="templatecontentpleft">Form alliances and pacts with other nations. Treaties offer mutual benefits, such as preventing wars via Non-Aggression Pacts.</p>
+        <p class="templatecontentpleft">Form alliances and pacts with other nations. Treaties offer mutual benefits, such as preventing wars via Non-Aggression Pacts and blocking espionage via Embassies.</p>
         
         <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">add_circle</span> Offer Treaty</h2>
         <div class="templateformdiv">
@@ -17,6 +17,7 @@
                 <select name="treaty_type" class="templateinput" required>
                     <option value="non_aggression">Non-Aggression Pact (NAP)</option>
                     <option value="mutual_defense">Mutual Defense Pact (MDP)</option>
+                    <option value="embassy">Embassy</option>
                 </select>
                 <button type="submit" class="templatebutton">Send Offer</button>
             </form>
@@ -38,6 +39,8 @@
                     <span style="color: #4CAF50; font-weight: bold;">Non-Aggression</span>
                     {% elif t[1] == 'mutual_defense' %}
                     <span style="color: #FF9800; font-weight: bold;">Mutual Defense</span>
+                    {% elif t[1] == 'embassy' %}
+                    <span style="color: #2196F3; font-weight: bold;">Embassy</span>
                     {% endif %}
                 </td>
                 <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
@@ -68,7 +71,8 @@
                 <td><a href="/country/{{ t[4] }}">{{ t[3] }}</a></td>
                 <td>
                     {% if t[1] == 'non_aggression' %}Non-Aggression
-                    {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
+                    {% elif t[1] == 'mutual_defense' %}Mutual Defense
+                    {% elif t[1] == 'embassy' %}Embassy{% endif %}
                 </td>
                 <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
                 <td>
@@ -101,7 +105,8 @@
                 <td><a href="/country/{{ t[4] }}">{{ t[3] }}</a></td>
                 <td>
                     {% if t[1] == 'non_aggression' %}Non-Aggression
-                    {% elif t[1] == 'mutual_defense' %}Mutual Defense{% endif %}
+                    {% elif t[1] == 'mutual_defense' %}Mutual Defense
+                    {% elif t[1] == 'embassy' %}Embassy{% endif %}
                 </td>
                 <td>{{ t[2].strftime('%Y-%m-%d') }}</td>
                 <td>

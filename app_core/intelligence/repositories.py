@@ -40,6 +40,21 @@ def decrease_unit_quantity(db, user_id, unit_name, amount):
     )
 
 
+def has_active_embassy(db, cId, eId):
+    """True if an active embassy treaty exists between the two nations, in
+    either direction. Mirrors the non_aggression check wars/routes.py uses
+    to block war declarations - an embassy blocks espionage the same way."""
+    db.execute(
+        """
+        SELECT id FROM nation_treaties
+        WHERE status = 'active' AND treaty_type = 'embassy'
+        AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
+        """,
+        (cId, eId, eId, cId),
+    )
+    return db.fetchone() is not None
+
+
 def get_username(db, user_id):
     db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
     row = db.fetchone()

@@ -115,6 +115,16 @@ def test_offer_treaty_rejects_duplicate():
     assert category == "warning"
 
 
+def test_offer_treaty_accepts_embassy_type():
+    db = QueuedCursor([
+        (2,),    # recipient found
+        None,    # no conflicting treaty
+    ])
+    ok, err, category = services.offer_treaty(db, 1, "rival", "embassy")
+    assert ok is True
+    assert db.calls[-1][1] == (1, 2, "embassy")
+
+
 def test_offer_treaty_success():
     db = QueuedCursor([
         (2,),    # recipient found
