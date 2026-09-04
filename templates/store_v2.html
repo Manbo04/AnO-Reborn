@@ -7,44 +7,53 @@
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
-    {% call game_hero('Store', badge_icon='storefront', badge_text='Cosmetics only', subtitle="Gems are AnO's premium currency, earned by supporting the game on Patreon and spent on cosmetics below.") %}
+    {% call game_hero('Store', badge_icon='storefront', badge_text='Cosmetics only', subtitle="Gems are AnO's premium currency, spent on cosmetics below.") %}
     <span class="game-hero-badge" style="margin: 0;"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm">&nbsp;You have <span data-store-gems>{{ gems | commas }}</span> Gems</span>
     {% endcall %}
 
     <div class="templatedivcontent">
 
         {% call game_glass_panel('Get Gems', icon='diamond', style='margin-bottom: var(--game-space-lg, 24px);', id='buy-gems') %}
-        <p class="store-section-intro">Gems are AnO's premium currency, spent on cosmetics below. Direct purchases aren't open yet — for now, Gems come from supporting the game on Patreon.</p>
-        {% if patreon_tiers %}
-        <div class="game-panel-grid game-panel-grid--3">
-            {% for title, gems_per_month in patreon_tiers %}
-            <div class="store-package-card">
-                <span class="store-package-name">{{ title }}</span>
-                <span class="store-package-gems"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ gems_per_month | commas }} Gems / month</span>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <div style="margin-top: var(--game-space-md, 16px);">{{ game_button('Support on Patreon', icon='favorite', href=patreon_url, target='_blank') }}</div>
+        <p class="store-section-intro">Gems are AnO's premium currency, spent on cosmetics below.</p>
+        <button type="button" class="store-getgems-toggle" id="get-gems-toggle" aria-expanded="false" aria-controls="get-gems-options" onclick="(function(btn){var el=document.getElementById('get-gems-options');var open=el.classList.toggle('hidden');btn.setAttribute('aria-expanded', open ? 'false' : 'true');btn.classList.toggle('store-getgems-toggle--open');})(this)">
+            <span class="material-icons-outlined">diamond</span>
+            <span>How to get Gems</span>
+            <span class="material-icons-outlined store-getgems-chevron">expand_more</span>
+        </button>
 
-        {% if bmc_gem_packages %}
-        <h3 class="store-subsection-title" style="margin-top: var(--game-space-lg, 24px);">One-time Gem packages</h3>
-        <p class="store-section-intro">Buy a one-time pack of Gems on Buy Me a Coffee. It'll ask you a question at checkout — paste in your exact username below so we know whose account to credit.</p>
-        <div class="store-package-card store-package-card--username">
-            <span class="store-package-name">Your AnO username</span>
-            <code class="store-username-value">{{ country_name }}</code>
-        </div>
-        <div class="game-panel-grid game-panel-grid--3" style="margin-top: var(--game-space-sm, 8px);">
-            {% for pkg_id, name, gems_granted, bmc_price_cents, currency, bmc_extra_id in bmc_gem_packages %}
-            <div class="store-package-card">
-                <span class="store-package-name">{{ name }}</span>
-                <span class="store-package-gems"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ gems_granted | commas }} Gems</span>
-                <span class="store-package-price">{{ "%.0f"|format(bmc_price_cents / 100) }} {{ currency | upper }}</span>
-                {{ game_button('Buy on Buy Me a Coffee', icon='favorite', href=bmc_page_url + '/e/' + bmc_extra_id|string, target='_blank') }}
+        <div id="get-gems-options" class="hidden" style="margin-top: var(--game-space-lg, 24px);">
+            <h3 class="store-subsection-title">Support on Patreon (monthly)</h3>
+            {% if patreon_tiers %}
+            <div class="game-panel-grid game-panel-grid--3">
+                {% for title, gems_per_month in patreon_tiers %}
+                <div class="store-package-card">
+                    <span class="store-package-name">{{ title }}</span>
+                    <span class="store-package-gems"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ gems_per_month | commas }} Gems / month</span>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% endif %}
+            <div style="margin-top: var(--game-space-md, 16px);">{{ game_button('Support on Patreon', icon='favorite', href=patreon_url, target='_blank') }}</div>
+
+            {% if bmc_gem_packages %}
+            <h3 class="store-subsection-title" style="margin-top: var(--game-space-lg, 24px);">One-time Gem packages</h3>
+            <p class="store-section-intro">Buy a one-time pack of Gems on Buy Me a Coffee. It'll ask you a question at checkout — paste in your exact username below so we know whose account to credit.</p>
+            <div class="store-package-card store-package-card--username">
+                <span class="store-package-name">Your AnO username</span>
+                <code class="store-username-value">{{ country_name }}</code>
+            </div>
+            <div class="game-panel-grid game-panel-grid--3" style="margin-top: var(--game-space-sm, 8px);">
+                {% for pkg_id, name, gems_granted, bmc_price_cents, currency, bmc_extra_id in bmc_gem_packages %}
+                <div class="store-package-card">
+                    <span class="store-package-name">{{ name }}</span>
+                    <span class="store-package-gems"><img src="{{ url_for('static', filename='images/resgems.png') }}" alt="" class="store-gem-icon store-gem-icon--sm"> {{ gems_granted | commas }} Gems</span>
+                    <span class="store-package-price">{{ "%.0f"|format(bmc_price_cents / 100) }} {{ currency | upper }}</span>
+                    {{ game_button('Buy on Buy Me a Coffee', icon='favorite', href=bmc_page_url + '/e/' + bmc_extra_id|string, target='_blank') }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
         {% endcall %}
 
         {% call game_glass_panel('Backgrounds', icon='palette', id='cosmetics') %}

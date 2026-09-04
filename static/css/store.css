@@ -145,6 +145,53 @@ body.game-page-v2 .store-package-card {
     user-select: all;
 }
 
+.store-getgems-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--game-radius-lg);
+    padding: 14px 18px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--colorOne);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+body.game-page-v2 .store-getgems-toggle {
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-color: var(--game-glass-border);
+}
+
+.store-getgems-toggle:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.store-getgems-toggle .material-icons-outlined:first-child {
+    color: var(--gems);
+}
+
+.store-getgems-toggle span:nth-child(2) {
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+.store-getgems-chevron {
+    transition: transform 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.store-getgems-toggle--open .store-getgems-chevron {
+    transform: rotate(180deg);
+}
+
 /* --- Cosmetics gallery --- */
 .store-cosmetic-card {
     background: var(--foreground);
