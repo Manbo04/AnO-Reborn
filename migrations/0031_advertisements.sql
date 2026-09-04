@@ -1,4 +1,4 @@
-CREATE TABLE advertisements (
+CREATE TABLE IF NOT EXISTS advertisements (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,

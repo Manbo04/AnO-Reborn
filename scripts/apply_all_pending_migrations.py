@@ -25,7 +25,7 @@ MIGRATION_FILES = [
     "0012_add_join_number.sql",
     "0013_add_demographics_education_schema.sql",
     "0015_add_hotpath_indexes.sql",
-    "0016_add_coalition_tax_rate.sql",
+    "0016_add_market_offer_hotpath_indexes.sql",
     "0017_add_performance_indexes.sql",
     "0018_cleanup_indexes_add_spyinfo.sql",
     "0019_fix_maintenance_costs.sql",
