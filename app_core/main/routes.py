@@ -147,6 +147,7 @@ def sitemap():
         ("/tutorial", "weekly", "0.8"),
         ("/mechanics", "weekly", "0.8"),
         ("/mechanics/resources", "monthly", "0.6"),
+        ("/mechanics/biomes", "monthly", "0.6"),
         ("/mechanics/revenue", "monthly", "0.6"),
         ("/mechanics/consumer_goods", "monthly", "0.6"),
         ("/mechanics/rations", "monthly", "0.6"),
@@ -265,6 +266,44 @@ def mechanics_rations(): return render_template("mechanics/rations.html")
 
 @bp.route("/mechanics/war", methods=["GET"])
 def mechanics_war(): return render_template("mechanics/war.html")
+
+@bp.route("/mechanics/biomes", methods=["GET"])
+def mechanics_biomes():
+    import game_ui
+    from app_core.economy.biome_buildings import (
+        ALL_MINE_BUILDINGS,
+        MINE_INFO,
+        mines_for_biome,
+    )
+
+    def mine_badge(mine_name):
+        return {
+            "name": mine_name,
+            "display_name": MINE_INFO[mine_name]["display_name"],
+            "resource": MINE_INFO[mine_name]["resource"],
+            "icon": game_ui.BUILDING_VISUAL_ICONS.get(mine_name, "domain"),
+        }
+
+    biomes = []
+    for biome in game_ui.nation_biome_choices():
+        allowed = mines_for_biome(biome["value"])
+        biomes.append({**biome, "mines": [mine_badge(m) for m in allowed]})
+
+    all_mines = [mine_badge(m) for m in ALL_MINE_BUILDINGS]
+    matrix = [
+        {
+            "biome": biome["label"],
+            "allowed": set(mines_for_biome(biome["value"])),
+        }
+        for biome in game_ui.nation_biome_choices()
+    ]
+
+    return render_template(
+        "mechanics/biomes.html",
+        biomes=biomes,
+        all_mines=all_mines,
+        matrix=matrix,
+    )
 
 @bp.route("/flag/<flag_type>/<int:flag_id>")
 def serve_flag(flag_type, flag_id):

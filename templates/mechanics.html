@@ -24,6 +24,9 @@
             <div class="templatedivflex2left" onclick="document.getElementById('resources').scrollIntoView({behavior: 'smooth'})">
                 <h3 class="smallheader"><span class="material-icons-outlined">inventory_2</span> Resources</h3>
             </div>
+            <div class="templatedivflex2left" onclick="document.getElementById('biomes').scrollIntoView({behavior: 'smooth'})">
+                <h3 class="smallheader"><span class="material-icons-outlined">public</span> Biomes</h3>
+            </div>
             <div class="templatedivflex2left" onclick="document.getElementById('military').scrollIntoView({behavior: 'smooth'})">
                 <h3 class="smallheader"><span class="material-icons-outlined">military_tech</span> Military</h3>
             </div>
@@ -112,11 +115,11 @@
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">domain</span> Max Population</h3>
-                    <p class="templatecontentpleft">Your maximum population is determined by cities, land, and happiness.</p>
+                    <p class="templatecontentpleft">Your maximum population is determined by cities, land, and happiness. Cities and land give diminishing returns at very high counts instead of scaling forever.</p>
                     <table class="templatetable">
                         <tr><td><strong>Base Maximum</strong></td><td>1,000,000</td></tr>
-                        <tr><td><strong>Per City</strong></td><td>+750,000</td></tr>
-                        <tr><td><strong>Per Land Slot</strong></td><td>+120,000</td></tr>
+                        <tr><td><strong>Per City</strong></td><td>~+750,000 early on, tapering off at large counts</td></tr>
+                        <tr><td><strong>Per Land Slot</strong></td><td>~+120,000 early on, tapering off at large counts</td></tr>
                         <tr><td><strong>Happiness Bonus</strong></td><td>+0.08% per % above 50</td></tr>
                         <tr><td><strong>Pollution Penalty</strong></td><td>-0.04% per % above 50</td></tr>
                     </table>
@@ -185,20 +188,20 @@
                         <a href="/mechanics/rations" class="templatedivbutton"><span class="material-icons-outlined">info</span> Full Rations Guide</a>
                     </p>
                     <table class="templatetable">
-                        <tr><td><strong>Consumption</strong></td><td>1 ration per 50,000 population per hour</td></tr>
-                        <tr><td><strong>Produced By</strong></td><td>Farms (12 rations/hour, +3 per land slot bonus)</td></tr>
+                        <tr><td><strong>Consumption</strong></td><td>~1 ration per 50,000 population per hour (children need 30% more, elderly 20% less)</td></tr>
+                        <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour, +3 per land slot bonus)</td></tr>
                         <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
-                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings (1 per 400k pop)</td></tr>
+                        <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings — capacity is tiered per building type, from 250k pop (Food Banks) up to 5M pop (Malls)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">local_gas_station</span> Oil & Gasoline</h3>
                     <p class="templatecontentpleft">Raw oil must be refined into gasoline for military vehicle fuel.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Raw Oil Produced By</strong></td><td>Oil Pumpjacks (24 oil/hour)</td></tr>
-                        <tr><td><strong>Gasoline Production</strong></td><td>Oil Refineries (20 oil/hour → 11 gasoline/hour)</td></tr>
-                        <tr><td><strong>Used For</strong></td><td>Tanks, Fighters, Bombers, Destroyers, Submarines</td></tr>
-                        <tr><td><strong>Critical For</strong></td><td>Military vehicle maintenance and combat operations</td></tr>
+                        <tr><td><strong>Raw Oil Produced By</strong></td><td>Oil Pumpjacks (100 oil/hour) — Desert, Grassland, Mountain Range, Jungle biomes only</td></tr>
+                        <tr><td><strong>Gasoline Production</strong></td><td>Oil Refineries (88 oil/hour → 44 gasoline/hour, 2:1)</td></tr>
+                        <tr><td><strong>Used For</strong></td><td>Tanks, Artillery, Fighters, Bombers, Apaches, Destroyers, Submarines, Cruisers (build cost)</td></tr>
+                        <tr><td><strong>Critical For</strong></td><td>Building new military units and vehicles</td></tr>
                     </table>
                 </div>
             </div>
@@ -208,21 +211,53 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Components</h3>
                     <p class="templatecontentpleft">Advanced industrial components combining raw materials from multiple sources.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Production</strong></td><td>Component Factories (5 components/hour output)</td></tr>
-                        <tr><td><strong>Input Materials</strong></td><td>Copper (20) + Steel (10) + Aluminium (15) per hour</td></tr>
+                        <tr><td><strong>Production</strong></td><td>Component Factories (20 components/hour output)</td></tr>
+                        <tr><td><strong>Input Materials</strong></td><td>Copper (80) + Steel (40) + Aluminium (60) per hour</td></tr>
                         <tr><td><strong>Used For</strong></td><td>Consumer goods manufacturing, military unit production</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">construction</span> Raw Materials</h3>
-                    <p class="templatecontentpleft">Iron, Coal, Bauxite, Uranium, Lead, and Lumber.</p>
+                    <p class="templatecontentpleft">Iron, Coal, Bauxite, Uranium, Lead, Copper, Oil, and Lumber — which ones you can mine depends on your <a href="#biomes" style="color: var(--accent);" onclick="document.getElementById('biomes').scrollIntoView({behavior: 'smooth'})">biome</a>.</p>
                     <table class="templatetable">
                         <tr><td><strong>Iron</strong></td><td>Steel production, construction</td></tr>
                         <tr><td><strong>Coal</strong></td><td>Power plants, steel</td></tr>
                         <tr><td><strong>Uranium</strong></td><td>Nuclear power, weapons</td></tr>
-                        <tr><td><strong>Bauxite</strong></td><td>Aluminum for aircraft</td></tr>
+                        <tr><td><strong>Bauxite</strong></td><td>Aluminium for aircraft</td></tr>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- BIOMES SECTION -->
+        <div id="biomes">
+            <table class="templatetable">
+                <tr>
+                    <th><span class="material-icons-outlined">public</span> Biomes</th>
+                </tr>
+            </table>
+            <p class="templatecontentpleft" style="text-align: center; margin-bottom: 15px;">
+                <a href="/mechanics/biomes" class="templatedivbutton"><span class="material-icons-outlined">info</span> Full Biomes Guide</a>
+            </p>
+
+            <div class="mechanics-callout">
+                <span class="material-icons-outlined">info</span>
+                <p>Your homeland biome (set at signup, changeable later from Country → Edit) determines which <strong>4 of the 8 raw-material mines</strong> you can build. Farms, power plants, refineries, factories, and all other buildings are available in every biome.</p>
+            </div>
+
+            <div class="country-biome-gallery">
+                {% for biome in nation_biome_choices() %}
+                <div class="country-biome-card" style="cursor: default;">
+                    <span class="country-biome-card-art">
+                        <img loading="lazy" alt="{{ biome.label }} biome" src="{{ url_for('static', filename=game_asset_path('biomes', biome.asset_key)) }}?v={{ asset_version }}">
+                    </span>
+                    <span class="country-biome-card-body">
+                        <span class="material-icons-outlined country-biome-card-icon" aria-hidden="true">{{ biome.icon }}</span>
+                        <span class="country-biome-card-label">{{ biome.label }}</span>
+                        <span class="country-biome-card-resources">Produces: {{ biome_resources(biome.value) | join(', ') }}</span>
+                    </span>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -240,9 +275,10 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Manpower</h3>
-                    <p class="templatecontentpleft">Manpower is required to recruit soldiers and operate military equipment. It regenerates each tick at <strong>10% of your total population</strong>.</p>
+                    <p class="templatecontentpleft">Manpower is required to recruit soldiers and operate military equipment. Your pool tracks a moving target tied to population, refreshed every 4 hours.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Generation</strong></td><td>10% of population per tick</td></tr>
+                        <tr><td><strong>Target Pool</strong></td><td>20% of total population</td></tr>
+                        <tr><td><strong>Adjustment</strong></td><td>Moves 15% of the way toward target every 4 hours — rises as population grows, falls back if it shrinks</td></tr>
                         <tr><td><strong>Soldiers</strong></td><td>1 manpower each</td></tr>
                         <tr><td><strong>Artillery</strong></td><td>2 manpower each</td></tr>
                         <tr><td><strong>Tanks</strong></td><td>4 manpower each</td></tr>
@@ -274,47 +310,45 @@
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Units</h3>
-                    <p class="templatecontentpleft">Ground units require fuel (gasoline) or food (rations) to maintain operational status.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Unit Costs</h3>
+                    <p class="templatecontentpleft">Resources and manpower are spent once, when you build the unit — not as ongoing upkeep.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Soldiers</strong></td><td>Infantry using rations. Cheapest unit, no fuel needed.</td></tr>
-                        <tr><td><strong>Tanks</strong></td><td>Heavy armor requiring 10 kg gasoline/hour. Superior defense.</td></tr>
-                        <tr><td><strong>Artillery</strong></td><td>Long-range bombardment requiring 8 kg gasoline/hour.</td></tr>
+                        <tr><td><strong>Soldiers</strong></td><td>$250 + 500 rations, 1 manpower</td></tr>
+                        <tr><td><strong>Tanks</strong></td><td>$7,000 + 5,000 components, 50,000 steel, 2,000 gasoline, 4 manpower</td></tr>
+                        <tr><td><strong>Artillery</strong></td><td>$14,000 + 3,000 components, 30,000 steel, 1,000 gasoline, 2 manpower</td></tr>
                     </table>
                 </div>
             </div>
 
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval Units</h3>
-                    <p class="templatecontentpleft">Aircraft and naval units require fuel maintenance to stay operational.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval Unit Costs</h3>
+                    <p class="templatecontentpleft">Built from aluminium (air) or steel (naval), plus components and gasoline.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Fighters</strong></td><td>Air superiority, requires 12 kg gasoline/hour</td></tr>
-                        <tr><td><strong>Bombers</strong></td><td>Strategic strikes, requires 15 kg gasoline/hour</td></tr>
-                        <tr><td><strong>Destroyers</strong></td><td>Naval combat, requires 14 kg gasoline/hour</td></tr>
-                        <tr><td><strong>Submarines</strong></td><td>Stealth naval, requires 10 kg gasoline/hour</td></tr>
+                        <tr><td><strong>Fighters</strong></td><td>$30,000 + 10,000 components, 20,000 aluminium, 5,000 gasoline</td></tr>
+                        <tr><td><strong>Bombers</strong></td><td>$22,000 + 15,000 components, 25,000 aluminium, 8,000 gasoline</td></tr>
+                        <tr><td><strong>Destroyers</strong></td><td>$26,000 + 15,000 components, 120,000 steel, 4,000 gasoline</td></tr>
+                        <tr><td><strong>Submarines</strong></td><td>$40,000 + 20,000 components, 150,000 steel, 5,000 gasoline</td></tr>
                     </table>
                 </div>
             </div>
 
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> Supply Line System</h3>
-                    <p class="templatecontentpleft">Units require a reliable supply of fuel or rations to maintain combat effectiveness.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> War Supplies</h3>
+                    <p class="templatecontentpleft">Each active war tracks a separate supply pool per side, used to fund attacks against that opponent.</p>
                     <table class="templatetable">
-                        <tr><td><strong>With Full Supplies</strong></td><td>Units operate at 100% combat effectiveness</td></tr>
-                        <tr><td><strong>Partial Supplies</strong></td><td>Units maintain proportional combat power</td></tr>
-                        <tr><td><strong>No Supplies</strong></td><td>Units remain in inventory but deal <strong>0 damage</strong> (non-combatant)</td></tr>
-                        <tr><td><strong>Unit Retention</strong></td><td>Units are <strong>never deleted</strong>; supply improves effectiveness</td></tr>
+                        <tr><td><strong>Regeneration</strong></td><td>+50 per side, every hour</td></tr>
+                        <tr><td><strong>Cap</strong></td><td>2,000 per side</td></tr>
+                        <tr><td><strong>Organized Supply Lines</strong></td><td>Upgrade that further boosts supply regeneration</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">opacity</span> Fuel Production</h3>
-                    <p class="templatecontentpleft">Gasoline is produced from raw oil in refineries.</p>
+                    <p class="templatecontentpleft">Gasoline is produced from raw oil in refineries and spent building vehicles.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Oil Refineries</strong></td><td>Convert 20,000 kg oil/hour → 75,000 kg gasoline/hour</td></tr>
-                        <tr><td><strong>Gasoline Uses</strong></td><td>Vehicle fuel for tanks, aircraft, naval units</td></tr>
-                        <tr><td><strong>Rations Uses</strong></td><td>Food consumption for soldiers (through population needs)</td></tr>
+                        <tr><td><strong>Oil Refineries</strong></td><td>Convert 88,000 kg oil/hour → 44,000 kg gasoline/hour (2:1)</td></tr>
+                        <tr><td><strong>Gasoline Uses</strong></td><td>Spent once building tanks, artillery, aircraft, and naval units</td></tr>
                     </table>
                 </div>
             </div>
@@ -335,9 +369,9 @@
                     <p class="templatecontentpleft"><strong>You must have Distribution Centers to use Rations and Consumer Goods.</strong></p>
                     <p class="templatecontentpleft">Even if you produce 1 million kg of rations, <strong>NOT A SINGLE CITIZEN WILL CONSUME THEM</strong> without distribution infrastructure.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Distribution Ratio</strong></td><td>1 building per 50,000 citizens</td></tr>
-                        <tr><td><strong>Rations Buildings</strong></td><td>Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
-                        <tr><td><strong>Consumer Goods Buildings</strong></td><td>Malls, General Stores, Gas Stations</td></tr>
+                        <tr><td><strong>Distribution Capacity</strong></td><td>Tiered per building type — Food Banks 250k pop, Gas Stations 1.0M, Distribution Centers 1.5M, Farmers Markets 2.0M, General Stores 2.5M, Malls 5.0M</td></tr>
+                        <tr><td><strong>Rations Buildings</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
+                        <tr><td><strong>Consumer Goods Buildings</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Malls</td></tr>
                         <tr><td><strong>Effect of Missing Distribution</strong></td><td>Population doesn't grow, happiness drops, taxes plummet</td></tr>
                         <tr><td><strong>Rule of Thumb</strong></td><td>Build distribution infrastructure FIRST, then production</td></tr>
                     </table>
@@ -358,9 +392,9 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">local_shipping</span> Distribution Bottleneck</h3>
                     <p class="templatecontentpleft"><strong style="color: #ff6b6b;">CRITICAL:</strong> Consumer goods and rations require distribution buildings to reach citizens. <strong>Without distribution infrastructure, your resources are USELESS.</strong></p>
                     <table class="templatetable">
-                        <tr><td><strong>Requirement</strong></td><td>1 distribution building per 400,000 population</td></tr>
-                        <tr><td><strong>Consumer Goods Distribution</strong></td><td>Distribution Centers, Malls, General Stores, Gas Stations</td></tr>
-                        <tr><td><strong>Rations Distribution</strong></td><td>Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
+                        <tr><td><strong>Requirement</strong></td><td>Capacity scales with building type (see table above) — cheap buildings like Food Banks serve less, Malls serve the most</td></tr>
+                        <tr><td><strong>Consumer Goods Distribution</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Malls</td></tr>
+                        <tr><td><strong>Rations Distribution</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
                         <tr><td><strong>Without Distribution</strong></td><td>Rations & CG are <strong>hoarded, not consumed</strong> → -30% taxes, no growth, -5 happiness</td></tr>
                         <tr><td><strong>Impact on Economy</strong></td><td>Missing distribution causes productivity collapse and economic shutdown</td></tr>
                     </table>

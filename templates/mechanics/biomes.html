@@ -1,0 +1,113 @@
+{% extends "layout.html" %} {% block title %} Biomes {% endblock %}
+{% block seo_title %}Biomes & Resources · Affairs and Order{% endblock %}
+{% block seo_description %}Which raw materials each biome produces in Affairs and Order — Tundra, Desert, Boreal Forest, Grassland, Savanna, Mountain Range, and Jungle.{% endblock %}
+{% block seo_canonical %}https://affairsandorder.com/mechanics/biomes{% endblock %}
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">public</span> Biomes</h1>
+    </div>
+    <div class="templatedivcontent">
+
+        <p class="templatecontentpleft" style="margin-bottom: 20px;">
+            <a href="/mechanics" class="templatedivbutton"><span class="material-icons-outlined">arrow_back</span> Back to Mechanics</a>
+        </p>
+
+        <div class="mechanics-callout">
+            <span class="material-icons-outlined">info</span>
+            <p>Every nation is founded on one of seven biomes. Your biome decides which <strong>4 of the 8 raw-material mines</strong> you can build in your provinces — every other building (farms, refineries, factories, distribution, civic, military) can be built in any biome. Trade or the market cover the resources your own biome can't dig up.</p>
+        </div>
+
+        <!-- Biome Gallery -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">terrain</span> Choose Your Biome, Choose Your Trade</th>
+            </tr>
+        </table>
+
+        <div class="country-biome-gallery" style="margin-bottom: 24px;">
+            {% for biome in biomes %}
+            <div class="country-biome-card" style="cursor: default;">
+                <span class="country-biome-card-art">
+                    <img loading="lazy" alt="{{ biome.label }} biome" src="{{ url_for('static', filename=game_asset_path('biomes', biome.asset_key)) }}?v={{ asset_version }}">
+                </span>
+                <span class="country-biome-card-body">
+                    <span class="material-icons-outlined country-biome-card-icon" aria-hidden="true">{{ biome.icon }}</span>
+                    <span class="country-biome-card-label">{{ biome.label }}</span>
+                    <span class="country-biome-card-tagline">{{ biome.tagline }}</span>
+                    <span class="mechanics-biome-mines">
+                        {% for mine in biome.mines %}
+                        <span class="mechanics-biome-mine-chip"><span class="material-icons-outlined">{{ mine.icon }}</span>{{ mine.resource | title }}</span>
+                        {% endfor %}
+                    </span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Quick Reference Matrix -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">grid_on</span> Full Reference: Biome × Mine</th>
+            </tr>
+        </table>
+
+        <div class="mechanics-matrix-wrap" style="margin-bottom: 20px;">
+            <table class="mechanics-matrix">
+                <thead>
+                    <tr>
+                        <th>Biome</th>
+                        {% for mine in all_mines %}
+                        <th><span class="material-icons-outlined" style="font-size: 1rem; vertical-align: middle;">{{ mine.icon }}</span> {{ mine.resource | title }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in matrix %}
+                    <tr>
+                        <th scope="row">{{ row.biome }}</th>
+                        {% for mine in all_mines %}
+                        <td>
+                            {% if mine.name in row.allowed %}
+                            <span class="mechanics-matrix-yes material-icons-outlined">check_circle</span>
+                            {% else %}
+                            <span class="mechanics-matrix-no material-icons-outlined">remove</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mechanics-callout mechanics-callout-warning">
+            <span class="material-icons-outlined">warning</span>
+            <p>Changing your biome (Country → Edit → Homeland biome) removes every industry building in every province — plan around your starting biome rather than switching casually.</p>
+        </div>
+
+        <!-- What's not biome-locked -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">all_inclusive</span> Available in Every Biome</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Food & Power</h3>
+                <p class="templatecontentpleft">Farms, all seven power plant types, and rations/consumer-goods distribution buildings can be built regardless of biome.</p>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Processing & Everything Else</h3>
+                <p class="templatecontentpleft">Steel Mills, Oil Refineries, Aluminium Refineries, Component Factories, Ammunition Factories, retail, civic, and military buildings are all biome-independent — only the raw mines above are gated.</p>
+            </div>
+        </div>
+
+        <p class="templatecontentpleft" style="text-align: center; margin-top: 8px;">
+            <a href="/mechanics/resources" class="templatedivbutton"><span class="material-icons-outlined">inventory_2</span> Full Resources Guide</a>
+        </p>
+
+    </div>
+</div>
+{% endblock %}

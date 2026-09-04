@@ -21,10 +21,10 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">restaurant</span> Rations (Food)</h3>
                 <p class="templatecontentpleft">The most critical resource - without rations, your population cannot grow.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Consumption Rate</strong></td><td>1 per 50,000 population/hour</td></tr>
-                    <tr><td><strong>Produced By</strong></td><td>Farms</td></tr>
+                    <tr><td><strong>Consumption Rate</strong></td><td>~1 per 50,000 population/hour (children need 30% more, elderly 20% less)</td></tr>
+                    <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour)</td></tr>
                     <tr><td><strong>Farm Bonus</strong></td><td>+3 rations per land slot</td></tr>
-                    <tr><td><strong>Distribution</strong></td><td>Distribution buildings must exist to move food; each distribution building can supply ~400k population.</td></tr>
+                    <tr><td><strong>Distribution</strong></td><td>Distribution buildings must exist to move food; capacity is tiered by type, from 250k pop (Food Banks) up to 5M pop (Malls) — see table below.</td></tr>
                     <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
                 </table>
             </div>
@@ -33,10 +33,35 @@
                 <p class="templatecontentpleft">Powers your infrastructure. Without energy, buildings operate inefficiently.</p>
                 <table class="templatetable">
                     <tr><td><strong>Without Power</strong></td><td>-15% tax income</td></tr>
-                    <tr><td><strong>Coal Burners</strong></td><td>Uses coal, produces energy</td></tr>
-                    <tr><td><strong>Oil Burners</strong></td><td>Uses oil, produces energy</td></tr>
-                    <tr><td><strong>Nuclear Plants</strong></td><td>Uses uranium, high output</td></tr>
-                    <tr><td><strong>Solar/Hydro</strong></td><td>No fuel cost</td></tr>
+                    <tr><td><strong>Coal Burners</strong></td><td>-11 coal/hour → +4 MW</td></tr>
+                    <tr><td><strong>Oil Burners</strong></td><td>-16 oil/hour → +5 MW</td></tr>
+                    <tr><td><strong>Nuclear Reactors</strong></td><td>-32 uranium/hour → +15 MW (highest output)</td></tr>
+                    <tr><td><strong>Hydro Dams</strong></td><td>+6 MW, no fuel</td></tr>
+                    <tr><td><strong>Solar / Wind / Geothermal</strong></td><td>+3 / +2 / +5 MW, no fuel</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Distribution Capacity -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">local_shipping</span> Distribution Capacity by Building</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr><td><strong>Food Banks</strong></td><td>250,000 population served</td></tr>
+                    <tr><td><strong>Gas Stations</strong></td><td>1,000,000 population served</td></tr>
+                    <tr><td><strong>Distribution Centers</strong></td><td>1,500,000 population served</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <table class="templatetable">
+                    <tr><td><strong>Farmers Markets</strong></td><td>2,000,000 population served (rations only)</td></tr>
+                    <tr><td><strong>General Stores</strong></td><td>2,500,000 population served</td></tr>
+                    <tr><td><strong>Malls</strong></td><td>5,000,000 population served — highest capacity</td></tr>
                 </table>
             </div>
         </div>
@@ -48,30 +73,35 @@
             </tr>
         </table>
 
+        <div class="mechanics-callout">
+            <span class="material-icons-outlined">public</span>
+            <p>All 8 raw-material mines are biome-gated — your homeland biome unlocks 4 of the 8. See the <a href="/mechanics/biomes" style="color: var(--accent); font-weight: 600;">Biomes Guide</a> for the full breakdown.</p>
+        </div>
+
         <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mining Resources</h3>
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mining Resources (per hour)</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Coal</strong></td><td>Coal Mines → Power, Steel</td></tr>
-                    <tr><td><strong>Iron</strong></td><td>Iron Mines → Steel production</td></tr>
-                    <tr><td><strong>Bauxite</strong></td><td>Bauxite Mines → Aluminum</td></tr>
-                    <tr><td><strong>Uranium</strong></td><td>Uranium Mines → Nuclear power, weapons</td></tr>
-                    <tr><td><strong>Lead</strong></td><td>Lead Mines → Ammunition</td></tr>
-                    <tr><td><strong>Copper</strong></td><td>Copper Mines → Electronics</td></tr>
+                    <tr><td><strong>Coal</strong></td><td>Coal Mines, 120/hr → Power, Steel</td></tr>
+                    <tr><td><strong>Iron</strong></td><td>Iron Mines, 70/hr → Steel production</td></tr>
+                    <tr><td><strong>Bauxite</strong></td><td>Bauxite Mines, 260/hr → Aluminium</td></tr>
+                    <tr><td><strong>Uranium</strong></td><td>Uranium Mines, 40/hr → Nuclear power, weapons</td></tr>
+                    <tr><td><strong>Lead</strong></td><td>Lead Mines, 80/hr → Ammunition</td></tr>
+                    <tr><td><strong>Copper</strong></td><td>Copper Mines, 120/hr → Components, ammunition</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">park</span> Other Raw Materials</h3>
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">park</span> Other Raw Materials (per hour)</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Oil</strong></td><td>Pumpjacks → Fuel, Military</td></tr>
-                    <tr><td><strong>Lumber</strong></td><td>Lumber Mills → Construction</td></tr>
+                    <tr><td><strong>Oil</strong></td><td>Pumpjacks, 100/hr → Gasoline</td></tr>
+                    <tr><td><strong>Lumber</strong></td><td>Lumber Mills, 150/hr → Construction</td></tr>
                 </table>
-                <h3 class="templatecontentheader" style="margin-top: 15px;"><span class="material-icons-outlined">settings</span> Processed Materials</h3>
+                <h3 class="templatecontentheader" style="margin-top: 15px;"><span class="material-icons-outlined">settings</span> Processed Materials (per hour, not biome-gated)</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Steel</strong></td><td>Steel Mills (iron + coal)</td></tr>
-                    <tr><td><strong>Aluminum</strong></td><td>Refineries (bauxite)</td></tr>
-                    <tr><td><strong>Components</strong></td><td>Component Factories</td></tr>
-                    <tr><td><strong>Ammunition</strong></td><td>Ammo Factories (lead)</td></tr>
+                    <tr><td><strong>Steel</strong></td><td>Steel Mills: 38 coal + 67 iron → 48 steel</td></tr>
+                    <tr><td><strong>Aluminium</strong></td><td>Refineries: 256 bauxite → 64 aluminium</td></tr>
+                    <tr><td><strong>Components</strong></td><td>Component Factories: 80 copper + 40 steel + 60 aluminium → 20 components</td></tr>
+                    <tr><td><strong>Ammunition</strong></td><td>Ammo Factories: 40 copper + 80 lead → 48 ammunition</td></tr>
                 </table>
             </div>
         </div>
