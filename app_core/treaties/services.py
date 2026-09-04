@@ -7,7 +7,7 @@ from .repositories import (
     insert_treaty_offer,
 )
 
-VALID_TREATY_TYPES = ["non_aggression", "mutual_defense"]
+VALID_TREATY_TYPES = ["non_aggression", "mutual_defense", "embassy"]
 
 
 def list_treaties(db, user_id):

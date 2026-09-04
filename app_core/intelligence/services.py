@@ -12,6 +12,7 @@ from .repositories import (
     insert_spy_operation,
     get_revealed_values,
     update_revealed_spyinfo,
+    has_active_embassy,
 )
 
 SPY_COOLDOWN_SECONDS = 3600 * 12
@@ -86,6 +87,11 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type):
         return False, 400, (
             f"12 hour cooldown for spying on another country. "
             f"{secs_left} seconds left."
+        )
+
+    if has_active_embassy(db, cId, eId):
+        return False, 403, (
+            "You cannot spy on a nation you have an active Embassy treaty with."
         )
 
     actual_spies = get_unit_quantity(db, cId, "spies")

@@ -94,6 +94,19 @@ def test_update_revealed_spyinfo_noop_when_nothing_whitelisted():
     assert db.calls == []
 
 
+def test_has_active_embassy_true_when_row_found():
+    db = QueuedCursor([(1,)])
+    assert repositories.has_active_embassy(db, 1, 2) is True
+    sql, params = db.calls[-1]
+    assert "treaty_type = 'embassy'" in sql
+    assert params == (1, 2, 2, 1)
+
+
+def test_has_active_embassy_false_when_no_row():
+    db = QueuedCursor([None])
+    assert repositories.has_active_embassy(db, 1, 2) is False
+
+
 # ---------------------------------------------------------------------------
 # services - pure sorting logic
 # ---------------------------------------------------------------------------
@@ -174,6 +187,7 @@ def test_resolve_spy_operation_blocks_new_target_during_cooldown(monkeypatch):
 
 def test_resolve_spy_operation_rejects_non_positive_spies(monkeypatch):
     monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     # actual_spies is fetched before the spies<=0 check even runs (matches
     # the original's query order exactly), so this needs a stub too.
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 5)
@@ -184,14 +198,25 @@ def test_resolve_spy_operation_rejects_non_positive_spies(monkeypatch):
 
 def test_resolve_spy_operation_rejects_insufficient_spies(monkeypatch):
     monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 3)
     ok, code, msg = services.resolve_spy_operation(None, 1, 2, 5, "resources")
     assert ok is False
     assert "don't have enough" in msg
 
 
+def test_resolve_spy_operation_blocked_by_active_embassy(monkeypatch):
+    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: True)
+    ok, code, msg = services.resolve_spy_operation(None, 1, 2, 5, "resources")
+    assert ok is False
+    assert code == 403
+    assert "Embassy" in msg
+
+
 def test_resolve_spy_operation_insert_failure_returns_500(monkeypatch):
     monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 100)
     monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: None)
     ok, code, msg = services.resolve_spy_operation(None, 1, 2, 5, "resources")
@@ -204,6 +229,7 @@ def test_resolve_spy_operation_own_side_dominant_reveals_with_no_losses(monkeypa
     # so multiplier = enemy_score/own_score = enemy_spies/spies <= 1 for every
     # object => "own wins" every time, and never > 10 => no spies executed.
     monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     unit_quantities = {1: 100, 2: 1}
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: unit_quantities[uid])
     monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: 777)
@@ -243,6 +269,7 @@ def test_resolve_spy_operation_enemy_dominant_no_reveal_and_spy_lost(monkeypatch
     # (spies - executed_spies hits 0) - and "enemy won" means nothing gets
     # revealed for that object either.
     monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     unit_quantities = {1: 1, 2: 1000}
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: unit_quantities[uid])
     monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: 888)

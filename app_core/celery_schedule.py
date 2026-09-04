@@ -26,6 +26,9 @@ TASK_RUN_THRESHOLDS = {
     # War supply regen (see maintenance.py global_tick) is also hourly-gated,
     # same reasoning as military_maintenance above.
     "war_supply_regen": int(os.getenv("WAR_SUPPLY_REGEN_MIN_INTERVAL", "3300")),
+    # Disasters are meant to fire at most once an hour per nation -- same
+    # hourly-safety reasoning as military_maintenance/war_supply_regen.
+    "natural_disasters": int(os.getenv("NATURAL_DISASTERS_MIN_INTERVAL", "3300")),
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -40,6 +43,10 @@ CELERY_BEAT_SCHEDULE = {
     "population_growth": {
         "task": "tasks.task_population_growth",
         "schedule": get_crontab_env("POP_GROWTH_CRON", crontab(minute="45")),
+    },
+    "natural_disasters": {
+        "task": "tasks.task_natural_disasters",
+        "schedule": get_crontab_env("NATURAL_DISASTERS_CRON", crontab(minute="15")),
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
