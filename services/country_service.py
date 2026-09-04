@@ -527,22 +527,26 @@ class CountryService:
 
             # GDP -- annualized (hourly revenue tick x 8760 hours/year), income approach:
             # gross money income + the market value of gross resource production, each
-            # resource priced at the highest currently-active real sell offer for it.
+            # resource priced at the quantity-weighted average of currently-active real
+            # sell offers for it (not the highest offer -- a single outlier listing
+            # shouldn't price the whole nation's output; weighting by amount reflects
+            # actual market depth rather than treating every offer equally).
             # Own-view only, since it's derived from `revenue` which is itself gated to
             # `status` above -- matches the existing privacy behavior of the Revenue tab.
             gdp = 0
             if status:
                 try:
                     db.execute(
-                        "SELECT resource, MAX(price) FROM offers WHERE type='sell' AND resource != 'money' GROUP BY resource"
+                        "SELECT resource, SUM(price * amount) / NULLIF(SUM(amount), 0) "
+                        "FROM offers WHERE type='sell' AND resource != 'money' GROUP BY resource"
                     )
-                    market_max_price = {r: (p or 0) for r, p in db.fetchall()}
+                    market_avg_price = {r: (p or 0) for r, p in db.fetchall()}
                 except Exception:
                     rollback_db_cursor(db)
-                    market_max_price = {}
+                    market_avg_price = {}
 
                 hourly_output = revenue["gross"].get("money", 0) or 0
-                for resource, price in market_max_price.items():
+                for resource, price in market_avg_price.items():
                     hourly_output += (revenue["gross"].get(resource, 0) or 0) * price
                 gdp = hourly_output * 24 * 365
 
