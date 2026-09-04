@@ -4639,7 +4639,12 @@ footer {
 .card-align-row > .templatedivflex2right {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    /* Explicit height (100%) here defeats the parent's align-items:stretch --
+       stretch only kicks in when the item's cross-size property computes to
+       auto. Leaving it auto is what actually makes side-by-side cards equal
+       height, which the margin-top:auto rule below depends on to bottom-align
+       each card's last table/list. */
+    height: auto;
 }
 
 /* Push tables/lists/divs to the bottom for perfect alignment, regardless of siblings.
