@@ -218,6 +218,7 @@ def create_app():
         "/login",
         "/login/email",
         "/request_password_reset",
+        "/account/request_password_reset",
         "/reset_password/",
         "/reset_password_recovery_key",
         "/discord_reset_password_page",
