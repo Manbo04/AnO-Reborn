@@ -452,6 +452,17 @@ class Military(Nation):
         "nukes",
     ]
 
+    # Domain a unit can fight in. Attacks are declared against one domain
+    # (ground/naval/air) and only that domain's 3 unit types can attack or
+    # defend for it — a destroyer can't intercept a land invasion. Special
+    # units (spies/icbms/nukes) aren't part of any domain; they use the
+    # separate single-unit attack path and can target anything.
+    UNIT_DOMAINS = {
+        "ground": ["soldiers", "tanks", "artillery"],
+        "naval": ["destroyers", "cruisers", "submarines"],
+        "air": ["fighters", "bombers", "apaches"],
+    }
+
     # description of the function: deal damage to random buildings based on particular_infra
     # particular_infra parameter example: for public_works -> {"libraries": 3, "hospitals": x, etc.}
     # note: also could use this for population damage when attack happens

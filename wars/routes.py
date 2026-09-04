@@ -477,25 +477,22 @@ def warChoose(war_id):
         if special_unit:
             selected_units[special_unit] = 0
             unit_amount = 1
+            session["war_domain"] = None
         else:
-            # Validate that all three unit selections were submitted and are
-            # distinct. Return a helpful 400 if any are missing/duplicated to
-            # avoid passing None keys into Units.attach_units which caused
-            # "Not enough unit type selected" errors in production.
-            u1 = request.form.get("u1")
-            u2 = request.form.get("u2")
-            u3 = request.form.get("u3")
-            if not u1 or not u2 or not u3:
-                return error(400, "Please select three unit types")
-            if len({u1, u2, u3}) < 3:
-                return error(400, "Please select three different unit types")
-            # Validate they are known unit types
-            if any(u not in Military.allUnits for u in (u1, u2, u3)):
-                return error(400, "Invalid unit type selected")
-            selected_units[u1] = 0
-            selected_units[u2] = 0
-            selected_units[u3] = 0
+            # The attacker declares one attack domain (ground/naval/air) for
+            # this strike. That domain's 3 unit types are used automatically
+            # — a destroyer can't be sent to a ground invasion it can't
+            # reach, so there's nothing left to hand-pick once the domain is
+            # chosen.
+            domain = request.form.get("domain")
+            if domain not in Military.UNIT_DOMAINS:
+                return error(
+                    400, "Please select an attack type (Ground, Naval, or Air)"
+                )
+            for unit in Military.UNIT_DOMAINS[domain]:
+                selected_units[unit] = 0
             unit_amount = 3
+            session["war_domain"] = domain
         attack_units = Units(cId, war_id=war_id)
         return_error = attack_units.attach_units(selected_units, unit_amount)
         if return_error:
@@ -667,6 +664,7 @@ def warResult():
     except Exception:
         logger.exception("Failed to rebuild Units from session")
         session.pop("attack_units", None)
+        session.pop("war_domain", None)
         return error(
             400,
             "Attack session expired. Please start again.",
@@ -674,6 +672,7 @@ def warResult():
     eId = session.get("enemy_id")
     if eId is None:
         session.pop("attack_units", None)
+        session.pop("war_domain", None)
         return error(400, "No enemy selected. Please start again.")
     with get_request_cursor() as db:
         db.execute("SELECT username FROM users WHERE id=(%s)", (session["user_id"],))
@@ -693,7 +692,8 @@ def warResult():
             # top-3-owned-by-quantity auto-pick (legacy behaviour).
             from attack_scripts.war_orchestrator import resolve_defender_composition
 
-            defenselst, defenseunits = resolve_defender_composition(eId)
+            war_domain = session.get("war_domain")
+            defenselst, defenseunits = resolve_defender_composition(eId, war_domain)
 
             defender = Units(eId, defenseunits, selected_units_list=defenselst)
             prev_defender = dict(defender.selected_units)
@@ -729,6 +729,7 @@ def warResult():
                 )
                 session.pop("attack_units", None)
                 session.pop("enemy_id", None)
+                session.pop("war_domain", None)
                 return error(
                     500, "An error occurred during the battle. Please try again."
                 )
@@ -843,6 +844,7 @@ def warResult():
 
     session.pop("attack_units", None)
     session.pop("enemy_id", None)
+    session.pop("war_domain", None)
     try:
         from app_core.discord_notify import notify_war_result
 
