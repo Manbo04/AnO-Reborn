@@ -379,7 +379,15 @@ INFRA_TYPE_BUILDINGS = {
         "city_parks",
         "monorails",
     ],
-    "military": ["army_bases", "harbours", "aerodomes", "admin_buildings", "silos"],
+    "military": [
+        "army_bases",
+        "harbours",
+        "aerodomes",
+        "admin_buildings",
+        "silos",
+        "drone_sites",
+        "missile_batteries",
+    ],
     "industry": [
         "farms",
         "pumpjacks",
@@ -440,6 +448,8 @@ BUILDINGS = [
     "aerodomes",
     "admin_buildings",
     "silos",
+    "drone_sites",
+    "missile_batteries",
     "city_parks",
     "monorails",  # Had to put them here so pollution would be minused at the end
 ]
@@ -516,6 +526,8 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "aerodomes_money": 55000,
     "admin_buildings_money": 90000,
     "silos_money": 340000,
+    "drone_sites_money": 5000,
+    "missile_batteries_money": 40000,
     ################
     # Industry — synced to NEW_INFRA engine values
     "farms_money": 3000,
@@ -642,6 +654,49 @@ MILDICT = {
         },
         "manpower": 0,
     },
+    # NEW ROSTER (2026-09-05, Discord #suggestions "add kamikaze drones")
+    "aircraft_carriers": {
+        "price": 220000,
+        "resources": {
+            "steel": 400000,
+            "aluminium": 200000,
+            "components": 60000,
+            "gasoline": 20000,
+        },
+        "manpower": 12,
+    },
+    # kamikaze_drones/cruise_missiles have no "resources" here -- those are
+    # spent when drone_sites/missile_batteries manufacture the unit
+    # (app_core/game_ticks/unit_production.py), not when the player activates
+    # it. "price" here is the gold-only activation cost
+    # (process_activate_units in app_core/military/services.py).
+    "kamikaze_drones": {"price": 3500, "manpower": 0},
+    "cruise_missiles": {"price": 250000, "manpower": 0},
+}
+
+# Per-unit resources consumed when a drone_site/missile_battery manufactures
+# one unit into the stockpile (hourly tick), and the gasoline burned per
+# launch. Kept in one place since both numbers are cross-referenced by
+# migrations/0066_drone_missile_carrier_units.sql -- if either changes here,
+# update that migration's unit_dictionary seed to match.
+UNIT_STOCKPILE_BUILDINGS = {
+    "drone_sites": {
+        "unit": "kamikaze_drones",
+        "cap_per_building": 10,  # matches building_dictionary.effect_value
+        "production_per_tick": 1,
+        "resource_cost": {"components": 400, "aluminium": 800},
+    },
+    "missile_batteries": {
+        "unit": "cruise_missiles",
+        "cap_per_building": 5,
+        "production_per_tick": 1,
+        "resource_cost": {"components": 8000, "aluminium": 12000, "steel": 5000},
+    },
+}
+
+UNIT_LAUNCH_FUEL_COST = {
+    "kamikaze_drones": 150,
+    "cruise_missiles": 2000,
 }
 
 PROVINCE_UNIT_PRICES = {
@@ -707,6 +762,10 @@ PROVINCE_UNIT_PRICES = {
     "admin_buildings_resource": {"steel": 135000, "aluminium": 110000},
     "silos_price": 350000000,
     "silos_resource": {"steel": 1080000, "aluminium": 480000},
+    "drone_sites_price": 15000000,
+    "drone_sites_resource": {"components": 200000, "steel": 150000, "aluminium": 100000},
+    "missile_batteries_price": 120000000,
+    "missile_batteries_resource": {"steel": 600000, "aluminium": 300000, "components": 150000},
     # Resource Extraction (Tier 1)
     # ALL must be buildable with raw Tier-0/1 resources only
     "farms_price": 1500000,
@@ -841,6 +900,12 @@ NEW_INFRA = {  # (NEW INFRA)
     "aerodomes": {"money": 55000},
     "admin_buildings": {"money": 90000},
     "silos": {"money": 340000},
+    # Unit production (kamikaze_drones/cruise_missiles) happens in the
+    # separate app_core/game_ticks/unit_production.py tick, not here — this
+    # entry only covers the building's gold upkeep, same as every other
+    # military building above.
+    "drone_sites": {"money": 5000},
+    "missile_batteries": {"money": 40000},
     # INDUSTRY
     "farms": {
         "money": 3000,

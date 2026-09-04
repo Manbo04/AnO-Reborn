@@ -14,7 +14,17 @@ ALL_UNITS = [
     "spies",
     "icbms",
     "nukes",
+    "aircraft_carriers",
+    "kamikaze_drones",
+    "cruise_missiles",
 ]
+
+# kamikaze_drones/cruise_missiles show up in the roster like any other unit
+# once activated, but aren't bought/sold directly through the generic
+# /military/<way>/<units> route -- they're produced by drone_sites/
+# missile_batteries into a stockpile (app_core/game_ticks/unit_production.py)
+# and moved into user_military via process_activate_units below.
+STOCKPILE_UNITS = {"kamikaze_drones", "cruise_missiles"}
 
 def get_user_units_with_stats(db, cId):
     """Get user units with combat stats and maintenance costs."""
@@ -260,6 +270,54 @@ def update_manpower_and_gold(db, cId, gold_delta, manpower_delta):
         "UPDATE stats SET gold = GREATEST(0, gold + %s), manpower = GREATEST(0, manpower + %s) WHERE id=%s",
         (gold_delta, manpower_delta, cId),
     )
+
+def get_unit_id_by_name(db, unit_name):
+    db.execute(
+        "SELECT unit_id FROM unit_dictionary WHERE name=%s AND is_active=TRUE",
+        (unit_name,),
+    )
+    row = db.fetchone()
+    return int(row[0]) if row else None
+
+
+def get_user_stockpile(db, cId):
+    """Manufactured-but-not-yet-activated units, keyed by unit name."""
+    db.execute(
+        """
+        SELECT ud.name, COALESCE(uus.quantity, 0)
+        FROM unit_dictionary ud
+        LEFT JOIN user_unit_stockpile uus
+            ON uus.unit_id = ud.unit_id AND uus.user_id = %s
+        WHERE ud.name = ANY(%s)
+        """,
+        (cId, list(STOCKPILE_UNITS)),
+    )
+    stockpile = {name: 0 for name in STOCKPILE_UNITS}
+    for name, qty in db.fetchall():
+        stockpile[name] = int(qty or 0)
+    return stockpile
+
+
+def get_stockpile_quantity(db, cId, unit_id):
+    db.execute(
+        "SELECT COALESCE(quantity, 0) FROM user_unit_stockpile "
+        "WHERE user_id=%s AND unit_id=%s",
+        (cId, unit_id),
+    )
+    row = db.fetchone()
+    return int(row[0]) if row else 0
+
+
+def move_stockpile_to_military(db, cId, unit_id, amount):
+    """Activate `amount` units: stockpile -> user_military. Caller has
+    already verified the stockpile holds enough."""
+    db.execute(
+        "UPDATE user_unit_stockpile SET quantity = quantity - %s, updated_at = now() "
+        "WHERE user_id=%s AND unit_id=%s",
+        (amount, cId, unit_id),
+    )
+    add_units(db, cId, unit_id, amount)
+
 
 def insert_revenue(db, cId, rev_type, name, description, units, wantedUnits):
     db.execute(
