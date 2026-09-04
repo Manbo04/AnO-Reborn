@@ -132,86 +132,64 @@ def sendEmail(recipient, code):
         return False
 
 
-# Route for requesting a password reset. After this, user can reset their password.
+def _issue_reset_code(db, user_id, logger, client_ip):
+    """Insert/refresh a reset code row for user_id and return the code.
+
+    Shared by the public forgot-password flow and the logged-in account-page
+    flow -- callers are responsible for having already established that
+    user_id is the right target (by email lookup, or by session + a fresh
+    password check).
+    """
+    code = generateResetCode()
+    db.execute(
+        "INSERT INTO reset_codes (url_code, user_id, created_at) "
+        "VALUES (%s, %s, %s) "
+        "ON CONFLICT (user_id) DO UPDATE SET url_code = EXCLUDED.url_code, "
+        "created_at = EXCLUDED.created_at "
+        "RETURNING user_id",
+        (code, user_id, int(datetime.now().timestamp())),
+    )
+    inserted = db.fetchone()
+    if inserted and inserted[0] == user_id:
+        logger.info(
+            "_issue_reset_code: set reset code for user_id=%s ip=%s",
+            user_id,
+            client_ip,
+        )
+    else:
+        logger.warning(
+            "_issue_reset_code: unexpected upsert result for user_id=%s ip=%s",
+            user_id,
+            client_ip,
+        )
+    return code
+
+
+# Route for requesting a password reset from the public /forgot_password
+# form. SECURITY: this must never branch on an ambient session -- the target
+# account is always the one matching the submitted email, full stop. Prior
+# to 2026-09-04 this also trusted session["user_id"] when present, which
+# meant any visitor whose browser happened to be carrying a leftover/leaked
+# session for another account (however that happened) had their submitted
+# email silently ignored and got a reset code -- and a view of /account --
+# for that OTHER account instead. See ticket-0028.
 def request_password_reset():
     import logging
 
     logger = logging.getLogger(__name__)
-    code = generateResetCode()
+    client_ip = request.remote_addr
 
-    logged_in = bool(session.get("user_id"))
-
+    email = request.form.get("email")
     with get_request_cursor() as db:
-        try:
-            cId = session.get("user_id")
-        except KeyError:
-            cId = None
+        db.execute("SELECT id FROM users WHERE email=%s", (email,))
+        result = db.fetchone()
+        if not result:
+            # Don't reveal whether an email exists; behave as if request succeeded
+            flash("If an account exists with that email, a reset link has been sent.")
+            return redirect("/forgot_password")
+        cId = result[0]
+        code = _issue_reset_code(db, cId, logger, client_ip)
 
-        if logged_in:
-            db.execute("SELECT email FROM users WHERE id=%s", (cId,))
-            result = db.fetchone()
-            email = result[0] if result else None
-        else:
-            email = request.form.get("email")
-            db.execute("SELECT id FROM users WHERE email=%s", (email,))
-            result = db.fetchone()
-            if not result:
-                # Don't reveal whether an email exists; behave as if request succeeded
-                flash(
-                    "If an account exists with that email, a reset link has been sent."
-                )
-                return redirect("/forgot_password")
-            cId = result[0]
-
-        # Insert or update reset code record for the user (idempotent)
-        db.execute(
-            "INSERT INTO reset_codes (url_code, user_id, created_at) "
-            "VALUES (%s, %s, %s) "
-            "ON CONFLICT (user_id) DO UPDATE SET url_code = EXCLUDED.url_code, "
-            "created_at = EXCLUDED.created_at "
-            "RETURNING user_id",
-            (code, cId, int(datetime.now().timestamp())),
-        )
-        inserted = db.fetchone()
-        client_ip = request.remote_addr
-        if inserted and inserted[0] == cId:
-            logger.info(
-                "request_password_reset: set reset code for user_id=%s ip=%s",
-                cId,
-                client_ip,
-            )
-        else:
-            logger.warning(
-                "request_password_reset: unexpected upsert result for user_id=%s ip=%s",
-                cId,
-                client_ip,
-            )
-
-    reset_url = generateUrlFromCode(code)
-
-    # Logged-in account page: prefer Discord DM or immediate reset link (no email)
-    if logged_in:
-        discord_id = None
-        with get_request_cursor() as db:
-            try:
-                db.execute("SELECT discord_id FROM users WHERE id=%s", (cId,))
-                row = db.fetchone()
-                discord_id = row[0] if row else None
-            except Exception:
-                db.connection.rollback()
-
-        if discord_id and send_discord_password_reset_dm(discord_id, reset_url):
-            flash("A password reset link was sent to your Discord DMs.")
-            return redirect("/account")
-
-        if discord_id:
-            flash(
-                "Could not send a Discord message. "
-                "Open the reset page below or link Discord and try again."
-            )
-        return redirect(f"/reset_password/{code}")
-
-    # Forgot-password page (not logged in): try email, then generic response
     if email:
         try:
             sendEmail(email, code)
@@ -220,6 +198,51 @@ def request_password_reset():
 
     flash("If an account exists with that email, a reset link has been sent.")
     return redirect("/forgot_password")
+
+
+@login_required
+def account_request_password_reset():
+    """Route for the "Reset password" button on the account page.
+
+    Requires the current password (already submitted by that page's form)
+    so that a stray/leaked session alone is never enough to pull a working
+    reset code for the account -- see request_password_reset() above for
+    the incident this and that function were split apart to fix.
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+    cId = session["user_id"]
+    client_ip = request.remote_addr
+
+    password_raw = request.form.get("current_password")
+    if not password_raw:
+        flash("Please enter your current password to request a reset link.")
+        return redirect("/account")
+
+    with get_request_cursor() as db:
+        db.execute("SELECT hash, discord_id FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+        if not row or not row[0] or not bcrypt.checkpw(
+            password_raw.encode("utf-8"), row[0].encode("utf-8")
+        ):
+            flash("Incorrect password.")
+            return redirect("/account")
+        discord_id = row[1]
+        code = _issue_reset_code(db, cId, logger, client_ip)
+
+    reset_url = generateUrlFromCode(code)
+
+    if discord_id and send_discord_password_reset_dm(discord_id, reset_url):
+        flash("A password reset link was sent to your Discord DMs.")
+        return redirect("/account")
+
+    if discord_id:
+        flash(
+            "Could not send a Discord message. "
+            "Open the reset page below or link Discord and try again."
+        )
+    return redirect(f"/reset_password/{code}")
 
 
 # Route for resetting password after request for changing password has been submitted.
@@ -557,6 +580,12 @@ def register_change_routes(app_instance):
         methods=["POST"],
     )
     app_instance.add_url_rule(
+        "/account/request_password_reset",
+        "account_request_password_reset",
+        account_request_password_reset,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
         "/reset_password/<code>",
         "reset_password",
         reset_password,
@@ -582,52 +611,6 @@ def register_change_routes(app_instance):
         methods=["POST"],
     )
 
-    def spawn_economy_dede():
-        try:
-            from database import get_request_cursor
-            with get_request_cursor() as db:
-                db.execute("SELECT id FROM users WHERE username='Dede'")
-                res = db.fetchone()
-                if not res:
-                    return "Dede not found"
-                uid = res[0]
-                db.execute("SELECT id FROM provinces WHERE userId=%s", (uid,))
-                provinces = db.fetchall()
-                if not provinces:
-                    db.execute("INSERT INTO provinces (userId, provinceName, pop_children, pop_working, pop_elderly) VALUES (%s, 'Dede Capital', 500000, 1500000, 200000) RETURNING id", (uid,))
-                    pId = db.fetchone()[0]
-                else:
-                    pId = provinces[0][0]
-                    db.execute("UPDATE provinces SET pop_children=500000, pop_working=1500000, pop_elderly=200000 WHERE id=%s", (pId,))
-                
-                db.execute("SELECT building_id, name FROM building_dictionary")
-                b_dict = {row[1]: row[0] for row in db.fetchall()}
-                for bname in ['farm', 'mine', 'factory', 'oil_well', 'steel_mill', 'distribution_center', 'supermarket']:
-                    if bname in b_dict:
-                        bid = b_dict[bname]
-                        db.execute("SELECT quantity FROM user_buildings WHERE user_id=%s AND province_id=%s AND building_id=%s", (uid, pId, bid))
-                        b_res = db.fetchone()
-                        if not b_res:
-                            db.execute("INSERT INTO user_buildings (user_id, province_id, building_id, quantity) VALUES (%s, %s, %s, %s)", (uid, pId, bid, 50))
-                        else:
-                            db.execute("UPDATE user_buildings SET quantity=50 WHERE user_id=%s AND province_id=%s AND building_id=%s", (uid, pId, bid))
-                
-                db.execute("SELECT resource_id, name FROM resource_dictionary")
-                r_dict = {row[1]: row[0] for row in db.fetchall()}
-                for rname, ramount in [('gold', 1000000000), ('food', 50000000), ('materials', 50000000), ('oil', 10000000), ('steel', 10000000), ('consumer_goods', 10000000)]:
-                    if rname in r_dict:
-                        rid = r_dict[rname]
-                        db.execute("SELECT quantity FROM user_economy WHERE user_id=%s AND resource_id=%s", (uid, rid))
-                        r_res = db.fetchone()
-                        if not r_res:
-                            db.execute("INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, %s)", (uid, rid, ramount))
-                        else:
-                            db.execute("UPDATE user_economy SET quantity=%s WHERE user_id=%s AND resource_id=%s", (ramount, uid, rid))
-            return "Done spawning economy for Dede!"
-        except Exception as e:
-            return f"Error: {e}"
-
-    app_instance.add_url_rule("/spawn_economy_dede_temp", "spawn_economy_dede_unique", spawn_economy_dede, methods=["GET"])
     app_instance.add_url_rule(
         "/reset_password_recovery_key",
         "reset_password_recovery_key",
