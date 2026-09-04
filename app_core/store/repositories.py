@@ -1,5 +1,7 @@
 """Raw SQL access for the premium-currency store (Gems + cosmetics)."""
 
+from psycopg2.extras import Json
+
 # One equip slot (a nullable FK column on `stats`) per cosmetic_type.
 COSMETIC_TYPE_TO_EQUIP_COLUMN = {
     "background": "equipped_background_cosmetic_id",
@@ -289,5 +291,113 @@ def mark_gem_purchase_refunded(db, payment_intent_id):
         RETURNING id, user_id, gems_granted
         """,
         (payment_intent_id,),
+    )
+    return db.fetchone()
+
+
+def get_gem_packages_for_bmc(db):
+    """Active packages with a BMC Extra wired up, for rendering Store buttons.
+    bmc_price_cents (not price_cents/Stripe's price) is what BMC actually
+    charges -- see migration 0063."""
+    db.execute(
+        """
+        SELECT id, name, gems_granted, bmc_price_cents, currency, bmc_extra_id
+        FROM gem_packages
+        WHERE is_active = TRUE AND bmc_extra_id IS NOT NULL
+        ORDER BY sort_order
+        """
+    )
+    return db.fetchall()
+
+
+def get_gem_package_by_bmc_extra_id(db, bmc_extra_id):
+    db.execute(
+        """
+        SELECT id, name, gems_granted, price_cents, currency
+        FROM gem_packages
+        WHERE bmc_extra_id = %s AND is_active = TRUE
+        """,
+        (bmc_extra_id,),
+    )
+    return db.fetchone()
+
+
+def get_user_id_by_username(db, username):
+    """Case-insensitive, matching the lookup used at login/signup elsewhere in the codebase."""
+    if not username:
+        return None
+    db.execute(
+        "SELECT id FROM users WHERE LOWER(username) = LOWER(%s) LIMIT 1",
+        (username.strip(),),
+    )
+    row = db.fetchone()
+    return row[0] if row else None
+
+
+def insert_bmc_gem_purchase_credited(
+    db, user_id, gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+    claimed_username, supporter_email, supporter_name, amount, currency,
+    gems_granted, raw_event,
+):
+    """Idempotent: ON CONFLICT DO NOTHING on (bmc_transaction_id, bmc_extra_line_id) --
+    a retried webhook delivery for an already-recorded line item inserts
+    nothing, and the caller must treat that as "already credited, don't
+    grant Gems again" rather than an error."""
+    db.execute(
+        """
+        INSERT INTO bmc_gem_purchases
+            (user_id, gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+             claimed_username, supporter_email, supporter_name, amount, currency,
+             gems_granted, status, credited_at, raw_event)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'credited', now(), %s)
+        ON CONFLICT (bmc_transaction_id, bmc_extra_line_id) DO NOTHING
+        RETURNING id
+        """,
+        (
+            user_id, gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+            claimed_username, supporter_email, supporter_name, amount, currency,
+            gems_granted, Json(raw_event),
+        ),
+    )
+    return db.fetchone()
+
+
+def insert_bmc_gem_purchase_unmatched(
+    db, gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+    claimed_username, supporter_email, supporter_name, amount, currency,
+    gems_granted, raw_event,
+):
+    """Same idempotency shape as insert_bmc_gem_purchase_credited, but no
+    user_id/credited_at -- the typed username didn't match an account, so no
+    Gems are granted. Kept as a row (not just a log line) so it's queryable
+    for manual follow-up."""
+    db.execute(
+        """
+        INSERT INTO bmc_gem_purchases
+            (gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+             claimed_username, supporter_email, supporter_name, amount, currency,
+             gems_granted, status, raw_event)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'unmatched', %s)
+        ON CONFLICT (bmc_transaction_id, bmc_extra_line_id) DO NOTHING
+        RETURNING id
+        """,
+        (
+            gem_package_id, bmc_transaction_id, bmc_extra_line_id,
+            claimed_username, supporter_email, supporter_name, amount, currency,
+            gems_granted, Json(raw_event),
+        ),
+    )
+    return db.fetchone()
+
+
+def mark_bmc_gem_purchase_refunded(db, bmc_transaction_id, bmc_extra_line_id):
+    db.execute(
+        """
+        UPDATE bmc_gem_purchases
+        SET status = 'refunded', refunded_at = now(), updated_at = now()
+        WHERE bmc_transaction_id = %s AND bmc_extra_line_id = %s AND status = 'credited'
+        RETURNING id, user_id, gems_granted
+        """,
+        (bmc_transaction_id, bmc_extra_line_id),
     )
     return db.fetchone()

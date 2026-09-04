@@ -18,18 +18,35 @@ from .repositories import (
     set_equipped_cosmetic,
     get_gem_purchase_by_session_id,
 )
-from .services import StoreError, purchase_cosmetic, start_gem_purchase, handle_checkout_completed, handle_charge_refunded
+from .services import (
+    StoreError,
+    purchase_cosmetic,
+    start_gem_purchase,
+    handle_checkout_completed,
+    handle_charge_refunded,
+    handle_bmc_extra_purchase,
+    handle_bmc_extra_refund,
+)
+from .repositories import get_gem_packages_for_bmc
 from app_core.patreon.repositories import get_active_tiers as get_active_patreon_tiers
 
 store_bp = Blueprint("store_bp", __name__)
 logger = logging.getLogger(__name__)
 
-# Real-money Gem purchases (Stripe checkout below) are built and were
-# verified working, but are off in the UI: the account behind
-# STRIPE_SECRET_KEY isn't a verified legal entity, so it can't go live
-# (Dede, 2026-09-03). Patreon is the only way to get Gems until that
-# changes -- see app_core/patreon/.
+# Real-money Gem purchases via Stripe checkout are built and were verified
+# working, but are off in the UI: the account behind STRIPE_SECRET_KEY isn't
+# a verified legal entity, so it can't go live (Dede, 2026-09-03). Buy Me a
+# Coffee "Extras" (below) is the one-time-purchase path used instead, and
+# Patreon (app_core/patreon/) is the recurring path.
 PATREON_URL = "https://www.patreon.com/cw/Affairs_and_Order_Reborn"
+
+# Each gem_packages row that should be purchasable one-time links to a BMC
+# "Extra" shop item via gem_packages.bmc_extra_id (see migration 0063).
+# BMC has no checkout API we control, so a page-level link is enough --
+# see app_core/store/services.py::handle_bmc_extra_purchase for how the
+# webhook maps a purchase back to an AnO account (a required custom
+# question on the Extra, not this URL).
+BMC_PAGE_URL = os.getenv("BMC_PAGE_URL", "https://www.buymeacoffee.com/affairsandorder")
 
 # Anchor each cosmetic_type's Store section scrolls to after buy/equip/
 # unequip, so a successful purchase lands back where the player clicked
@@ -132,6 +149,7 @@ def store():
         equipped_ids = get_equipped_cosmetic_ids(db, user_id)
 
         patreon_tiers = get_active_patreon_tiers(db)
+        bmc_gem_packages = get_gem_packages_for_bmc(db)
 
         def _build_view(cosmetic_type):
             return _build_cosmetic_view(db, cosmetic_type, owned_ids, equipped_ids)
@@ -142,6 +160,8 @@ def store():
             gems=gems,
             patreon_tiers=patreon_tiers,
             patreon_url=PATREON_URL,
+            bmc_gem_packages=bmc_gem_packages,
+            bmc_page_url=BMC_PAGE_URL,
             cosmetics=_build_view("background"),
             name_color_cosmetics=_build_view("name_color"),
             badge_cosmetics=_build_view("badge"),
@@ -221,6 +241,62 @@ def stripe_webhook():
         except Exception:
             rollback_db_cursor(db)
             logger.exception("store webhook: failed to process event %s", event_type)
+            return error(500, "Webhook processing failed")
+
+    return "", 200
+
+
+@store_bp.route("/store/bmc/webhook", methods=["POST"])
+def bmc_webhook():
+    """Buy Me a Coffee-only. No @login_required (no session cookie from
+    BMC) -- the HMAC signature check below is the entire auth boundary.
+    Kept CSRF-exempt via app.py (only this specific view, not the whole
+    blueprint), same as the Stripe webhook above."""
+    if not _store_accessible():
+        return error(404, "Not found")
+
+    import hashlib
+    import hmac
+    import json
+
+    webhook_secret = os.getenv("BMC_WEBHOOK_SECRET", "")
+    payload = request.get_data()
+    sig_header = request.headers.get("X-Signature-Sha256", "")
+
+    if not webhook_secret:
+        logger.error("bmc webhook: BMC_WEBHOOK_SECRET not set, rejecting")
+        return error(500, "Webhook not configured")
+
+    expected_sig = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_sig, sig_header):
+        logger.warning("bmc webhook: signature verification failed")
+        return error(400, "Invalid signature")
+
+    try:
+        event = json.loads(payload)
+    except ValueError:
+        return error(400, "Invalid JSON")
+
+    event_type = event.get("type")
+    event_data = event.get("data") or {}
+
+    with get_request_cursor() as db:
+        try:
+            if event_type == "extra_purchase.created":
+                for user_id, _gems in handle_bmc_extra_purchase(db, event_data):
+                    invalidate_user_cache(user_id)
+                invalidate_view_cache("store")
+            elif event_type == "extra_purchase.refunded":
+                for user_id, _gems in handle_bmc_extra_refund(db, event_data):
+                    invalidate_user_cache(user_id)
+                invalidate_view_cache("store")
+            # Unhandled event types (donations, memberships, etc.) are
+            # intentionally ignored (still 200, so BMC doesn't retry them
+            # forever) -- this endpoint only cares about the Extras that map
+            # to a gem_packages row.
+        except Exception:
+            rollback_db_cursor(db)
+            logger.exception("bmc webhook: failed to process event %s", event_type)
             return error(500, "Webhook processing failed")
 
     return "", 200

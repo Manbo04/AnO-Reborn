@@ -70,6 +70,8 @@ MIGRATION_FILES = [
     "0060_add_login_verifications.sql",
     "0061_add_store_cosmetic_types.sql",
     "0062_seed_store_cosmetic_catalog.sql",
+    "0063_add_bmc_gem_purchases.sql",
+    "0064_seed_bmc_gem_package_ids.sql",
 ]
 
 
