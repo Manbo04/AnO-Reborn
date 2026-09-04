@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, session, redirect
-from helpers import login_required, error, is_theme_v2_enabled
+from flask import Blueprint, render_template, session, redirect, request
+from helpers import login_required, error, is_theme_v2_enabled, session_cookie_fingerprint
 from database import get_request_cursor, rollback_db_cursor, users_table_has_column
 from psycopg2.extras import RealDictCursor
 
@@ -77,7 +77,21 @@ def account():
 
 @bp.route("/logout")
 def logout():
-    if session.get("user_id") is not None: session.clear()
+    # TEMPORARY diagnostic (ticket-0028, 2026-09-04): log the pre-clear
+    # cookie fingerprint + user_id so a recurrence can show whether a later
+    # request's session cookie fingerprint matches this one (client never
+    # applied the clear) or differs (server-side session mixup instead).
+    # See helpers.session_cookie_fingerprint for details; remove once
+    # confirmed or stale.
+    if session.get("user_id") is not None:
+        import logging
+        logging.getLogger(__name__).info(
+            "logout: user_id=%s cookie_fp=%s ip=%s",
+            session.get("user_id"),
+            session_cookie_fingerprint(),
+            request.remote_addr,
+        )
+        session.clear()
     return redirect("/")
 
 @bp.route("/forgot_password", methods=["GET"])

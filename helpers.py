@@ -24,6 +24,27 @@ def client_ip_from_request() -> str | None:
     return request.remote_addr
 
 
+def session_cookie_fingerprint() -> str | None:
+    """Short, non-reversible tag for the raw incoming session cookie.
+
+    TEMPORARY diagnostic added 2026-09-04 for ticket-0028 (a visitor's
+    browser was recognized server-side as another account's session with
+    no successful login in between). Logging this alongside user_id at
+    logout and at the password-reset endpoints lets a recurrence show
+    whether the SAME cookie value reappears after a logout (client never
+    applied the clear) or a DIFFERENT cookie resolves to the same account
+    (server-side session mixup) -- never log the raw cookie itself, only
+    this hash. Safe to remove once the mechanism is confirmed or this
+    hasn't recurred in a while.
+    """
+    raw = request.cookies.get("session")
+    if not raw:
+        return None
+    import hashlib
+
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
+
+
 def is_theme_v2_enabled(page_key: str) -> bool:
     """Feature flag for the 2026-08-30 UI redesign port (see
     /Users/dede/ano-redesign/plan/PRODUCTION_PORT_PLAN.md §4.5/§8) — deploy-time
