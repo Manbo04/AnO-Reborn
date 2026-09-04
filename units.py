@@ -267,6 +267,26 @@ class SubmarineUnit(BlueprintUnit):
         pass
 
 
+class CarrierUnit(BlueprintUnit):
+    unit_type = "aircraft_carriers"
+    damage = 300
+    supply_cost = 12
+    resource_cost = {"ammunition": 2, "gasoline": 4}
+
+    def __init__(self, amount):
+        self.amount = amount
+
+    def attack(self, defending_units):
+        if defending_units == "submarines":
+            self.bonus -= 0.3 * self.amount
+        elif defending_units in ("fighters", "bombers", "apaches"):
+            self.bonus += 0.3 * self.amount
+        return [self.damage * self.amount, self.bonus]
+
+    def buy():
+        pass
+
+
 # Special units attack method handled differently (not using the fight method)
 class IcbmUnit(BlueprintUnit):
     unit_type = "icbms"
@@ -332,9 +352,14 @@ class Units(Military):
         "spies",
         "icbms",
         "nukes",
+        "aircraft_carriers",
     ]
     # spyunit is not included here because it has no interactions with
-    # other units and thus does not run inside Units.attack.
+    # other units and thus does not run inside Units.attack. kamikaze_drones
+    # and cruise_missiles are likewise not included -- they never fight
+    # through the normal unit-selection war flow, only through their own
+    # bespoke launch routes in wars/routes.py (drone_strike,
+    # cruise_missile_strike), same shape as nuclear_strike/strategic_airstrike.
     allUnitInterfaces = [
         SoldierUnit,
         TankUnit,
@@ -347,6 +372,7 @@ class Units(Military):
         SubmarineUnit,
         IcbmUnit,
         NukeUnit,
+        CarrierUnit,
     ]
 
     """Units container and validator.

@@ -17,6 +17,7 @@ TASK_RUN_THRESHOLDS = {
     "tax_income": int(os.getenv("TAX_INCOME_MIN_INTERVAL", "65")),
     "population_growth": int(os.getenv("POP_GROWTH_MIN_INTERVAL", "100")),
     "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "100")),
+    "produce_unit_stockpiles": int(os.getenv("UNIT_PRODUCTION_MIN_INTERVAL", "100")),
     "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
     "global_tick": int(os.getenv("GLOBAL_TICK_MIN_INTERVAL", "540")),
     # Military maintenance is deducted inside global_tick but must run at most
@@ -39,6 +40,10 @@ CELERY_BEAT_SCHEDULE = {
     "generate_province_revenue": {
         "task": "tasks.task_generate_province_revenue",
         "schedule": get_crontab_env("PROV_REV_CRON", crontab(minute="25")),
+    },
+    "produce_unit_stockpiles": {
+        "task": "tasks.task_produce_unit_stockpiles",
+        "schedule": get_crontab_env("UNIT_PRODUCTION_CRON", crontab(minute="35")),
     },
     "population_growth": {
         "task": "tasks.task_population_growth",

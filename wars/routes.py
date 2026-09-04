@@ -23,6 +23,9 @@ import math
 import random
 import traceback
 
+import variables
+from wars.service import apply_building_damage
+
 # Add any other necessary imports here
 
 # Define the wars Blueprint
@@ -1524,6 +1527,283 @@ def strategic_airstrike():
         db.execute(
             "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
             (target_id, f"🚨 UNDER ATTACK: {defender_news}")
+        )
+
+    return redirect(f"/country/id={target_id}")
+
+
+# kamikaze_drones/cruise_missiles strike targets: military (silo) plus the
+# economic buildings Kaiser's suggestion asked for ("damaging the enemy
+# economy" with swarms), not just military infrastructure like
+# strategic_airstrike above. "silo" maps to the building_dictionary row
+# 'silos', same as strategic_airstrike's own convention; everything else
+# maps 1:1.
+STRIKE_TARGET_BUILDINGS = {
+    "silo": "silos",
+    "steel_mills": "steel_mills",
+    "component_factories": "component_factories",
+    "aluminium_refineries": "aluminium_refineries",
+    "oil_refineries": "oil_refineries",
+}
+# Damage points needed to destroy 1 of the target building. Silos are
+# reinforced military infrastructure (matches strategic_airstrike's existing
+# 15); ordinary economic buildings are softer.
+STRIKE_TARGET_THRESHOLDS = {
+    "silo": 15,
+    "steel_mills": 10,
+    "component_factories": 10,
+    "aluminium_refineries": 10,
+    "oil_refineries": 10,
+}
+
+
+def _require_active_war(db, attacker_id, target_id):
+    db.execute(
+        (
+            "SELECT id FROM wars "
+            "WHERE ((attacker=%s AND defender=%s) "
+            "OR (attacker=%s AND defender=%s)) "
+            "AND peace_date IS NULL"
+        ),
+        (attacker_id, target_id, target_id, attacker_id),
+    )
+    return db.fetchone() is not None
+
+
+def _spend_gasoline(db, user_id, amount):
+    """Returns True if the user had enough gasoline and it was deducted."""
+    db.execute(
+        """
+        SELECT ue.quantity FROM user_economy ue
+        JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+        WHERE ue.user_id = %s AND rd.name = 'gasoline'
+        """,
+        (user_id,),
+    )
+    row = db.fetchone()
+    have = int(row[0]) if row else 0
+    if have < amount:
+        return False
+    db.execute(
+        """
+        UPDATE user_economy SET quantity = quantity - %s
+        WHERE user_id = %s
+          AND resource_id = (SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline')
+        """,
+        (amount, user_id),
+    )
+    return True
+
+
+def _strike_news(db, attacker_id, target_id, attacker_msg, defender_msg):
+    db.execute("SELECT username FROM users WHERE id=%s", (attacker_id,))
+    row = db.fetchone()
+    attacker_name = row[0] if row else "Unknown"
+    db.execute("SELECT username FROM users WHERE id=%s", (target_id,))
+    row = db.fetchone()
+    target_name = row[0] if row else "Unknown"
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        (attacker_id, attacker_msg.format(target_name=target_name)),
+    )
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        (target_id, defender_msg.format(attacker_name=attacker_name)),
+    )
+
+
+@wars_bp.route("/drone_strike", methods=["POST"])
+@login_required
+def drone_strike():
+    """Launch kamikaze_drones (stockpile-backed, see
+    app_core/game_ticks/unit_production.py + app_core/military/services.py)
+    at a target building. Weak alone -- meant to be launched in swarms;
+    Kaiser's Discord suggestion (#suggestions "add kamikaze drones",
+    2026-08-25)."""
+    attacker_id = session["user_id"]
+    try:
+        target_id = int(request.form.get("target_id"))
+        strike_target = request.form.get("strike_target")
+        drones_count = int(request.form.get("drones_count"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid payload")
+
+    if attacker_id == target_id:
+        return error(400, "You cannot strike yourself!")
+    if strike_target not in STRIKE_TARGET_BUILDINGS:
+        return error(400, "Invalid target")
+    if drones_count <= 0:
+        return error(400, "Must launch at least 1 drone.")
+
+    with get_request_cursor() as db:
+        if not _require_active_war(db, attacker_id, target_id):
+            return error(403, "You are not at war with this nation.")
+
+        db.execute(
+            """
+            SELECT um.quantity, ud.unit_id
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = 'kamikaze_drones'
+            """,
+            (attacker_id,),
+        )
+        row = db.fetchone()
+        if not row or row[0] < drones_count:
+            return error(400, "You don't have enough kamikaze drones!")
+        unit_id = row[1]
+
+        fuel_cost = variables.UNIT_LAUNCH_FUEL_COST["kamikaze_drones"] * drones_count
+        if not _spend_gasoline(db, attacker_id, fuel_cost):
+            return error(400, f"Not enough gasoline (need {fuel_cost})")
+
+        # Kamikaze drones are one-way -- the full launched count is consumed
+        # regardless of whether they're intercepted, unlike bombers which
+        # return home if they survive.
+        db.execute(
+            "UPDATE user_military SET quantity = quantity - %s WHERE user_id = %s AND unit_id = %s",
+            (drones_count, attacker_id, unit_id),
+        )
+
+        # Interception: defending fighters + apaches (cheap slow drones are
+        # a point-defense target for more of the roster than bombers are).
+        db.execute(
+            """
+            SELECT COALESCE(SUM(um.quantity), 0)
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name IN ('fighters', 'apaches')
+            """,
+            (target_id,),
+        )
+        defender_interceptors = int(db.fetchone()[0] or 0)
+
+        intercept_effectiveness = random.uniform(0.5, 1.5)
+        intercepted = min(drones_count, int(defender_interceptors * intercept_effectiveness))
+        surviving_drones = drones_count - intercepted
+
+        hits = int(surviving_drones * random.uniform(0.5, 0.9))
+        damage_points = hits * 2
+
+        destroyed, had_target = apply_building_damage(
+            db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+            damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+        )
+
+        soldiers_lost = 0
+        if hits > 0 and random.random() < 0.10:
+            db.execute(
+                """
+                SELECT um.quantity, ud.unit_id
+                FROM user_military um
+                JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                WHERE um.user_id = %s AND ud.name = 'soldiers'
+                """,
+                (target_id,),
+            )
+            s_row = db.fetchone()
+            if s_row and s_row[0] > 0:
+                soldiers_lost = min(int(s_row[0]), hits)
+                db.execute(
+                    "UPDATE user_military SET quantity = quantity - %s WHERE user_id = %s AND unit_id = %s",
+                    (soldiers_lost, target_id, s_row[1]),
+                )
+
+        if not had_target:
+            damage_report = f"found no {strike_target.replace('_', ' ')} to destroy"
+        elif destroyed > 0:
+            damage_report = f"destroyed {destroyed} {strike_target.replace('_', ' ')}"
+        else:
+            damage_report = "failed to inflict meaningful damage"
+        if soldiers_lost:
+            damage_report += f" and killed {soldiers_lost} soldiers caught in the open"
+
+        _strike_news(
+            db, attacker_id, target_id,
+            attacker_msg=(
+                f"Your drone swarm on {{target_name}} had {surviving_drones}/{drones_count} "
+                f"drones evade interception ({intercepted} shot down). Result: {damage_report}."
+            ),
+            defender_msg=(
+                f"🚨 UNDER ATTACK: {{attacker_name}} launched {drones_count} kamikaze drones at you! "
+                f"Your defenses shot down {intercepted}. Result: {damage_report}."
+            ),
+        )
+
+    return redirect(f"/country/id={target_id}")
+
+
+@wars_bp.route("/cruise_missile_strike", methods=["POST"])
+@login_required
+def cruise_missile_strike():
+    """Launch cruise_missiles (stockpile-backed) at a target building.
+    Pricier and slower to manufacture than drones, but a guaranteed hit --
+    no interception roll, unlike drone_strike above."""
+    attacker_id = session["user_id"]
+    try:
+        target_id = int(request.form.get("target_id"))
+        strike_target = request.form.get("strike_target")
+        missiles_count = int(request.form.get("missiles_count"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid payload")
+
+    if attacker_id == target_id:
+        return error(400, "You cannot strike yourself!")
+    if strike_target not in STRIKE_TARGET_BUILDINGS:
+        return error(400, "Invalid target")
+    if missiles_count <= 0:
+        return error(400, "Must launch at least 1 missile.")
+
+    with get_request_cursor() as db:
+        if not _require_active_war(db, attacker_id, target_id):
+            return error(403, "You are not at war with this nation.")
+
+        db.execute(
+            """
+            SELECT um.quantity, ud.unit_id
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = 'cruise_missiles'
+            """,
+            (attacker_id,),
+        )
+        row = db.fetchone()
+        if not row or row[0] < missiles_count:
+            return error(400, "You don't have enough cruise missiles!")
+        unit_id = row[1]
+
+        fuel_cost = variables.UNIT_LAUNCH_FUEL_COST["cruise_missiles"] * missiles_count
+        if not _spend_gasoline(db, attacker_id, fuel_cost):
+            return error(400, f"Not enough gasoline (need {fuel_cost})")
+
+        db.execute(
+            "UPDATE user_military SET quantity = quantity - %s WHERE user_id = %s AND unit_id = %s",
+            (missiles_count, attacker_id, unit_id),
+        )
+
+        damage_points = missiles_count * 8
+        destroyed, had_target = apply_building_damage(
+            db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+            damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+        )
+
+        if not had_target:
+            damage_report = f"found no {strike_target.replace('_', ' ')} to destroy"
+        elif destroyed > 0:
+            damage_report = f"destroyed {destroyed} {strike_target.replace('_', ' ')}"
+        else:
+            damage_report = "landed hits but didn't accumulate enough damage to destroy one"
+
+        _strike_news(
+            db, attacker_id, target_id,
+            attacker_msg=(
+                f"Your {missiles_count} cruise missile(s) struck {{target_name}} unopposed. "
+                f"Result: {damage_report}."
+            ),
+            defender_msg=(
+                f"🚨 UNDER ATTACK: {{attacker_name}} struck you with {missiles_count} cruise "
+                f"missile(s). Result: {damage_report}."
+            ),
         )
 
     return redirect(f"/country/id={target_id}")

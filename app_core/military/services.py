@@ -1,5 +1,6 @@
 from .repositories import (
     ALL_UNITS,
+    STOCKPILE_UNITS,
     get_building_counts,
     get_user_units_with_stats,
     get_unit_costs,
@@ -10,11 +11,20 @@ from .repositories import (
     remove_units,
     add_units,
     update_manpower_and_gold,
-    insert_revenue
+    insert_revenue,
+    get_unit_id_by_name,
+    get_user_stockpile,
+    get_stockpile_quantity,
+    move_stockpile_to_military,
 )
 from app_core.upgrades.services import get_upgrades
 
-def compute_display_limits(cId, db, units_row=None):
+# Each carrier extends the reach of the owner's air wing -- reuses the same
+# "building/unit raises another unit's cap" shape army_bases already uses
+# for soldiers, rather than being a pure stat-stick.
+CARRIER_AIR_CAPACITY_BONUS = 500
+
+def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
     """Return limits as shown on the military page."""
     army_bases, harbours, aerodomes, admin_buildings, silos = get_building_counts(db, cId)
 
@@ -29,9 +39,10 @@ def compute_display_limits(cId, db, units_row=None):
     tanks = max(0, army_bases * 200 - military["tanks"])
     artillery = max(0, army_bases * 200 - military["artillery"])
 
-    # Air units share aerodome capacity
+    # Air units share aerodome capacity, extended by any carriers owned
     air_units = military["fighters"] + military["bombers"] + military["apaches"]
-    air_limit = max(0, aerodomes * 100 - air_units)
+    air_capacity = aerodomes * 100 + military["aircraft_carriers"] * CARRIER_AIR_CAPACITY_BONUS
+    air_limit = max(0, air_capacity - air_units)
     bombers = air_limit
     fighters = air_limit
     apaches = air_limit
@@ -42,6 +53,8 @@ def compute_display_limits(cId, db, units_row=None):
     submarines = naval_limit
     destroyers = naval_limit
     cruisers = max(0, harbours * 10 - military["cruisers"])
+    # Capital ships: rare, 1 per harbour
+    aircraft_carriers = max(0, harbours - military["aircraft_carriers"])
 
     # Specials
     spies = max(0, admin_buildings * 1 - military["spies"])
@@ -51,12 +64,19 @@ def compute_display_limits(cId, db, units_row=None):
     upgrades = get_upgrades(cId, db=db)
     if upgrades.get("increasedfunding"):
         spies = int(spies * 1.4)
-        
+
     if not upgrades.get("icbmsilo"):
         icbms = 0
-        
+
     if not upgrades.get("nucleartestingfacility"):
         nukes = 0
+
+    # Stockpile-backed units: "limit" is however many are sitting in the
+    # produce->stockpile->activate pipeline ready to activate, not a
+    # building-capacity formula.
+    stockpile = stockpile_row or {}
+    kamikaze_drones = int(stockpile.get("kamikaze_drones", 0))
+    cruise_missiles = int(stockpile.get("cruise_missiles", 0))
 
     return {
         "soldiers": soldiers,
@@ -71,6 +91,9 @@ def compute_display_limits(cId, db, units_row=None):
         "spies": spies,
         "icbms": icbms,
         "nukes": nukes,
+        "aircraft_carriers": aircraft_carriers,
+        "kamikaze_drones": kamikaze_drones,
+        "cruise_missiles": cruise_missiles,
     }
 
 def process_sell_units(db, cId, units, wantedUnits, mildict):
@@ -137,4 +160,33 @@ def process_buy_units(db, cId, units, wantedUnits, mildict):
     update_manpower_and_gold(db, cId, gold_delta=-totalPrice, manpower_delta=-needed_manpower)
     
     insert_revenue(db, cId, "expense", f"Buying {wantedUnits} {units} for your military.", "", units, wantedUnits)
+    return True, "Success"
+
+def process_activate_units(db, cId, units, wantedUnits, mildict):
+    """Move `wantedUnits` of a stockpile-backed unit (kamikaze_drones,
+    cruise_missiles) from user_unit_stockpile into user_military. Gold-only:
+    the resources were already spent when the drone site/missile battery
+    manufactured the unit (app_core/game_ticks/unit_production.py)."""
+    if units not in STOCKPILE_UNITS:
+        return False, "This unit is not activated from a stockpile"
+
+    unit_id = get_unit_id_by_name(db, units)
+    if not unit_id:
+        return False, "Unit definition not found or inactive"
+
+    available = get_stockpile_quantity(db, cId, unit_id)
+    if wantedUnits > available:
+        return False, f"Not enough {units} in your stockpile (have {available})"
+
+    price = int(mildict.get(units, {}).get("price", 0) or 0)
+    totalPrice = wantedUnits * price
+
+    _, gold = get_manpower_and_gold(db, cId)
+    if totalPrice > gold:
+        return False, f"Not enough money ({gold}/{totalPrice})"
+
+    move_stockpile_to_military(db, cId, unit_id, wantedUnits)
+    update_manpower_and_gold(db, cId, gold_delta=-totalPrice, manpower_delta=0)
+
+    insert_revenue(db, cId, "expense", f"Activating {wantedUnits} {units} from your stockpile.", "", units, wantedUnits)
     return True, "Success"

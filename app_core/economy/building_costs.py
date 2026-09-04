@@ -43,6 +43,8 @@ LAND_UNITS = frozenset(
         "aerodomes",
         "admin_buildings",
         "silos",
+        "drone_sites",
+        "missile_batteries",
         "farms",
         "pumpjacks",
         "coal_mines",

@@ -4,8 +4,8 @@ from database import get_request_cursor, cache_response, invalidate_user_cache, 
 from variables import MILDICT
 from app_core.upgrades.services import get_upgrades
 
-from .repositories import ALL_UNITS, get_user_units_with_stats, get_manpower_and_gold
-from .services import compute_display_limits, process_sell_units, process_buy_units
+from .repositories import ALL_UNITS, STOCKPILE_UNITS, get_user_units_with_stats, get_manpower_and_gold, get_user_stockpile
+from .services import compute_display_limits, process_sell_units, process_buy_units, process_activate_units
 
 bp = Blueprint("military", __name__)
 
@@ -19,7 +19,8 @@ def military():
         with get_request_cursor() as db:
             units_dict, units_active = get_user_units_with_stats(db, cId)
             manpower, _ = get_manpower_and_gold(db, cId)
-            limits = compute_display_limits(cId, db, units_dict)
+            stockpile = get_user_stockpile(db, cId)
+            limits = compute_display_limits(cId, db, units_dict, stockpile)
             upgrades = get_upgrades(cId, db=db)  # Reuse cursor
 
         template = "military_v2.html" if is_theme_v2_enabled("military") else "military.html"
@@ -31,6 +32,7 @@ def military():
             upgrades=upgrades,
             mildict=MILDICT,
             manpower=manpower,
+            stockpile=stockpile,
         )
 
 @bp.route("/military/<way>/<units>", methods=["POST"])
@@ -42,6 +44,9 @@ def military_sell_buy(way, units):
         with get_request_cursor() as db:
             if units not in ALL_UNITS:
                 return error(400, "No such unit exists.")
+
+            if units in STOCKPILE_UNITS:
+                return error(400, "This unit is activated from its stockpile — see /military/activate.")
 
             units_str = request.form.get(units)
             if not units_str:
@@ -73,3 +78,36 @@ def military_sell_buy(way, units):
             pass
 
         return redirect("/military")
+
+@bp.route("/military/activate/<units>", methods=["POST"])
+@login_required
+def military_activate(units):
+    cId = session["user_id"]
+
+    if units not in STOCKPILE_UNITS:
+        return error(400, "No such stockpile unit exists.")
+
+    units_str = request.form.get(units)
+    if not units_str:
+        return error(400, "Unit amount is required")
+
+    try:
+        wantedUnits = int(units_str)
+    except (ValueError, TypeError):
+        return error(400, "Unit amount must be a valid number")
+
+    if wantedUnits < 1:
+        return error(400, "You cannot activate less than 1 unit")
+
+    with get_request_cursor() as db:
+        success, msg = process_activate_units(db, cId, units, wantedUnits, MILDICT)
+        if not success:
+            return error(400, msg)
+
+    try:
+        invalidate_user_cache(cId)
+        invalidate_view_cache("military", user_id=cId)
+    except Exception:
+        pass
+
+    return redirect("/military")
