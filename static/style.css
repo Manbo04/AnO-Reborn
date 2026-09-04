@@ -5819,14 +5819,20 @@ body.game-page-v2:not([class*="bg-"]) {
 /* The .game-page-bg photo div (below) sits above body in paint order and
    carries its own per-page inline `style="background-image: url(...)",
    so fixing body's background above isn't enough on its own -- that photo
-   would still paint over the now-correct cosmetic gradient. Point
-   .game-page-bg's background at whatever body resolved to instead of
-   duplicating each cosmetic's gradient a second time here; `inherit` is a
-   no-op (and the ordinary page photo still shows through the inline style
-   beneath it) when nothing is equipped. !important is required only to
-   beat that inline style once a cosmetic *is* equipped. */
+   would still paint over the now-correct cosmetic gradient. `inherit`
+   looks like the obvious fix here but is wrong: .game-page-bg's actual DOM
+   parent is .templatecontainer (which the rule two blocks up forces
+   transparent), not body, and `inherit` only ever looks at the immediate
+   parent's computed value -- confirmed live 2026-09-04, .game-page-bg
+   stayed transparent even once body itself had the right gradient.
+   cosmetics.css stashes each cosmetic's value in --cosmetic-bg, a custom
+   property, which (unlike `background`) inherits straight through
+   .templatecontainer regardless of its own background, landing here with
+   body's actual equipped value. Undefined (no cosmetic equipped) makes
+   this whole declaration invalid, which is a no-op -- the ordinary page
+   photo still shows via the inline style beneath it. */
 body[class*="bg-"] .game-page-bg {
-    background: inherit !important;
+    background: var(--cosmetic-bg) !important;
 }
 
 /* .templatecontainer and .templatediv (the universal page-wrapper classes,
@@ -12668,63 +12674,88 @@ body.game-page-v2 .store-cosmetic-card {
  * — so equipping a cosmetic overrides the theme background, and having
  * none equipped leaves the normal theme toggle untouched.
  *
+ * Each rule also stashes its value in a --cosmetic-bg custom property.
+ * static/css/game-glass.css reads that var (not `background: inherit`) to
+ * paint the same gradient onto the .game-page-bg photo div on redesigned
+ * pages: .game-page-bg's actual DOM parent is .templatecontainer, not body,
+ * so plain CSS inheritance only sees .templatecontainer's own (transparent)
+ * background -- a custom property, unlike `background`, inherits straight
+ * through .templatecontainer regardless of what that element sets `background`
+ * to, so .game-page-bg still sees body's equipped-cosmetic value. Keep
+ * setting --cosmetic-bg here (not just `background`) in any cosmetic you add,
+ * or it'll render on the Store page but stay invisible everywhere else.
+ *
  * Seeded catalog: see migrations/0049_seed_store_catalog.sql. Add one rule
  * here per catalog item you seed, e.g.:
  *
  * .bg-sunset-gradient {
- *     background: linear-gradient(135deg, #ff7e5f, #feb47b) !important;
+ *     --cosmetic-bg: linear-gradient(135deg, #ff7e5f, #feb47b);
+ *     background: var(--cosmetic-bg) !important;
  * }
  * .bg-midnight-stars {
- *     background: url('/static/img/cosmetics/midnight-stars.jpg') center/cover fixed !important;
+ *     --cosmetic-bg: url('/static/img/cosmetics/midnight-stars.jpg') center/cover fixed;
+ *     background: var(--cosmetic-bg) !important;
  * }
  */
 
 .bg-sunset-horizon {
-    background: linear-gradient(135deg, #ff7e5f, #feb47b 45%, #ffd97d 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #ff7e5f, #feb47b 45%, #ffd97d 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-emerald-canopy {
-    background: linear-gradient(135deg, #0b3d2e, #1f6f4f 50%, #4caf7d 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #0b3d2e, #1f6f4f 50%, #4caf7d 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-aurora-borealis {
-    background: linear-gradient(135deg, #0f2027, #2c7a7b 40%, #7ee8c7 75%, #b892ff 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #0f2027, #2c7a7b 40%, #7ee8c7 75%, #b892ff 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-midnight-nebula {
-    background: radial-gradient(circle at 30% 20%, #3a1c71 0%, #17123a 45%, #05040f 100%) fixed !important;
+    --cosmetic-bg: radial-gradient(circle at 30% 20%, #3a1c71 0%, #17123a 45%, #05040f 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-neon-circuit {
-    background: linear-gradient(135deg, #0d0221 0%, #170b3b 40%, #240046 70%, #10002b 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #0d0221 0%, #170b3b 40%, #240046 70%, #10002b 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-royal-amethyst {
-    background: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #2d0a4e, #6a1b9a 45%, #b76fd4 80%, #ffd700 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-crimson-wasteland {
-    background: linear-gradient(135deg, #3a0d0d, #7a1f1f 45%, #b33939 80%, #7a1f1f 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #3a0d0d, #7a1f1f 45%, #b33939 80%, #7a1f1f 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-golden-savanna {
-    background: linear-gradient(135deg, #6b4e05, #c9971c 45%, #f2c14e 80%, #e0a72e 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #6b4e05, #c9971c 45%, #f2c14e 80%, #e0a72e 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-arctic-frost {
-    background: linear-gradient(135deg, #0d2b3e, #3a6b8a 45%, #a8dadc 80%, #e8f6f8 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #0d2b3e, #3a6b8a 45%, #a8dadc 80%, #e8f6f8 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-volcanic-ember {
-    background: radial-gradient(circle at 30% 70%, #ff6b35 0%, #7a1f1f 45%, #1a0505 100%) fixed !important;
+    --cosmetic-bg: radial-gradient(circle at 30% 70%, #ff6b35 0%, #7a1f1f 45%, #1a0505 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-deep-ocean-trench {
-    background: linear-gradient(180deg, #041c32, #04293a 40%, #064663 70%, #001220 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(180deg, #041c32, #04293a 40%, #064663 70%, #001220 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 .bg-cherry-blossom-dusk {
-    background: linear-gradient(135deg, #ffb7c5, #f78fb3 40%, #6a4c93 80%, #2e1a47 100%) fixed !important;
+    --cosmetic-bg: linear-gradient(135deg, #ffb7c5, #f78fb3 40%, #6a4c93 80%, #2e1a47 100%) fixed;
+    background: var(--cosmetic-bg) !important;
 }
 
 /*
