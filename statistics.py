@@ -7,7 +7,10 @@ from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES
 
 
 @login_required
-@cache_response(ttl_seconds=120, public=True)  # Cache statistics for 2 minutes — same data for everyone
+@cache_response(ttl_seconds=120)  # Per-user cache: the underlying data is the same for everyone,
+# but the rendered page bakes in session-specific nav chrome (own-country link, admin menu via
+# layout.html) — a shared public=True slot was leaking one user's identity/admin status into
+# every other visitor's page for the cache window. See docs/SESSION_LOG.md, 2026-07-04 session.
 def statistics():
     """Display market statistics and nation stats"""
 
@@ -134,7 +137,8 @@ def statistics():
     )
 
 
-@cache_response(ttl_seconds=300, public=True)  # Cache rankings for 5 minutes — public leaderboard
+@cache_response(ttl_seconds=300)  # Per-user cache — see statistics() above for why public=True
+# was removed (session-specific nav chrome baked into the cached page, leaking across users).
 def rankings():
     """Display the top leaderboards for nations and alliances."""
     with get_request_cursor() as db:
