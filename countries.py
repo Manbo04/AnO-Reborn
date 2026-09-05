@@ -953,14 +953,40 @@ def delete_own_account():
 
 
 def reset_account():
+    import bcrypt
     from flask import request, session, redirect, flash
     from helpers import error
     from database import get_request_cursor, invalidate_view_cache
     from signup import _init_economy_tables
-    
+
     reset_type = request.form.get("reset_type", "keep")
     cId = session["user_id"]
-    
+
+    # Step-up confirmation (2026-09-05 incident: a stolen session cookie was
+    # enough on its own to hard-delete an account's provinces/military/
+    # buildings/wars via this endpoint with a single POST). Both reset_type
+    # values wipe that data unconditionally below -- "keep" only differs in
+    # whether stats/economy also get reset -- so require the account's
+    # current password for either, not just "scratch". This adds no
+    # friction to normal play since it only gates the actual destructive
+    # action, not login.
+    confirm_password = request.form.get("confirm_password")
+    if not confirm_password:
+        return error(400, "Confirm your password to reset your account")
+    with get_request_cursor() as db:
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+    if not row or not row[0]:
+        return error(500, "Account data is missing. Please contact support.")
+    try:
+        password_ok = bcrypt.checkpw(
+            confirm_password.encode("utf-8"), row[0].encode("utf-8")
+        )
+    except Exception:
+        password_ok = False
+    if not password_ok:
+        return error(400, "Confirm your password to reset your account")
+
     try:
         with get_request_cursor() as db:
             db.execute("DELETE FROM user_military WHERE user_id=%s", (cId,))
