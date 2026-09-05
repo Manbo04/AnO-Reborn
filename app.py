@@ -168,23 +168,52 @@ def create_app():
             if _ctrl_stale:
                 try:
                     with get_request_cursor() as _db:
-                        _db.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
-                        if _db.fetchone() is None:
+                        _db.execute("SELECT COALESCE(session_epoch, 0) FROM users WHERE id = %s", (user_id,))
+                        _epoch_row = _db.fetchone()
+                        if _epoch_row is None:
                             session.clear()
                             return None
+                        current_epoch = _epoch_row[0]
                         _db.execute("SELECT COALESCE(is_banned, FALSE), COALESCE(ban_reason, ''), COALESCE(kick_pending, FALSE) FROM admin_user_controls WHERE user_id = %s", (user_id,))
                         control_row = _db.fetchone()
-                    session["_admin_ctrl"] = list(control_row) if control_row else None
+                    session["_admin_ctrl"] = [
+                        control_row[0] if control_row else False,
+                        control_row[1] if control_row else "",
+                        control_row[2] if control_row else False,
+                        current_epoch,
+                    ]
                     session["_admin_ctrl_ts"] = time()
                 except Exception:
                     session["_admin_ctrl"] = None
                     session["_admin_ctrl_ts"] = time()
             control_row = session.get("_admin_ctrl")
             if control_row:
-                is_banned, ban_reason, kick_pending = control_row
+                # Defensive unpack: a session whose cache was populated by
+                # the pre-session_epoch code (3-element list) may still be
+                # live right at deploy time, within its up-to-300s cache
+                # window. Fall back to the session's own embedded epoch
+                # (trivially equal to itself, so no false kick) rather than
+                # crashing on unpack -- it'll pick up the real DB epoch on
+                # the next stale refresh.
+                is_banned, ban_reason, kick_pending = control_row[0], control_row[1], control_row[2]
+                current_epoch = control_row[3] if len(control_row) > 3 else session.get("session_epoch", 0)
                 if is_banned:
                     session.clear()
                     return render_template("error.html", code=403, message=(f"Your account is banned. Reason: {ban_reason or 'No reason provided.'}")), 403
+                # Real, unconditional invalidation: session_epoch is a
+                # monotonic counter bumped by admin kick/ban and password
+                # changes (database.bump_session_epoch). Unlike
+                # kick_pending below -- a one-shot flag that whichever of a
+                # user's concurrent sessions polls the DB first silently
+                # consumes, leaving any other session on the same account
+                # untouched -- this compares against live DB state every
+                # time, so it kicks EVERY session carrying a stale value.
+                # Sessions from before this feature existed have no
+                # "session_epoch" key and default to 0, matching the
+                # column's default, so a deploy alone never mass-logs-out.
+                if session.get("session_epoch", 0) != current_epoch:
+                    session.clear()
+                    return redirect("/login")
                 if kick_pending:
                     try:
                         with get_request_cursor() as _db:

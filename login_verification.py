@@ -211,6 +211,20 @@ def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | No
     session["user_id"] = user_id
     session.permanent = True
     session.modified = True
+
+    # Embed the epoch current at login time so app.py's before_request can
+    # detect a stale session later (admin kick/ban or a password change
+    # bumps users.session_epoch -- see database.bump_session_epoch). Default
+    # to 0 (matches the column default) if the lookup fails so a DB hiccup
+    # here never blocks a login.
+    try:
+        with get_request_cursor() as db:
+            db.execute("SELECT session_epoch FROM users WHERE id = %s", (user_id,))
+            row = db.fetchone()
+        session["session_epoch"] = row[0] if row and row[0] is not None else 0
+    except Exception:
+        logger.exception("session_epoch lookup failed for user_id=%s", user_id)
+        session["session_epoch"] = 0
     try:
         log_login_event(user_id, ip, fingerprint, auth_type)
     except Exception:

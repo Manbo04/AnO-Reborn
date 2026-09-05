@@ -5,7 +5,7 @@ import glob
 import hmac
 from time import time
 from helpers import error, get_valid_int
-from database import get_request_cursor, invalidate_user_cache
+from database import get_request_cursor, invalidate_user_cache, bump_session_epoch
 from variables import RESOURCES as resources
 from .repositories import AdminRepository
 
@@ -184,6 +184,11 @@ def process_ban_user(actor, target_user_id, reason):
             return error(404, "Target user not found")
 
         AdminRepository.set_user_ban_status(db, target_user_id, True, reason, True)
+        # kick_pending above is a best-effort, one-shot nudge that only the
+        # first of the target's concurrent sessions to poll ever sees (see
+        # migration 0068). session_epoch is the mechanism that actually
+        # forces out every outstanding session for this user.
+        bump_session_epoch(db, target_user_id)
         AdminRepository.log_admin_action(db, actor, "admin_ban_user", target_user_id, f"reason={reason}")
     return None
 
@@ -209,6 +214,10 @@ def process_kick_user(actor, target_user_id, reason):
             return error(404, "Target user not found")
 
         AdminRepository.set_user_ban_status(db, target_user_id, False, None, True)
+        # See process_ban_user: kick_pending alone is racy across a user's
+        # concurrent sessions (migration 0068). session_epoch is what
+        # actually guarantees every session gets kicked.
+        bump_session_epoch(db, target_user_id)
         AdminRepository.log_admin_action(db, actor, "admin_kick_user", target_user_id, f"reason={reason}")
     return None
 

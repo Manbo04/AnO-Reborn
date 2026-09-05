@@ -75,6 +75,7 @@ MIGRATION_FILES = [
     "0065_reactivate_distribution_centers.sql",
     "0066_drone_missile_carrier_units.sql",
     "0067_login_verifications_delivered.sql",
+    "0068_add_users_session_epoch.sql",
 ]
 
 
