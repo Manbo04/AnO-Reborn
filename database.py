@@ -1877,6 +1877,32 @@ def _preserve_discord_link_before_password_reset(db, user_id: int) -> None:
         logger.warning("_preserve_discord_link_before_password_reset: %s", exc)
 
 
+def bump_session_epoch(db, user_id: int) -> None:
+    """Invalidate every outstanding session for user_id.
+
+    Each login embeds the users.session_epoch value current at that time
+    into the Flask session (see login_verification.complete_or_verify_login);
+    app.py's before_request compares the embedded value against this live
+    column on every request (via the same cached-lookup pattern used for
+    is_banned/kick_pending) and force-logs-out any session whose embedded
+    value is stale. Unlike admin_user_controls.kick_pending -- a one-shot
+    flag that whichever concurrent session polls the DB first silently
+    consumes, leaving any other session on the same account untouched --
+    bumping this counter is real monotonic state, so it kicks every session
+    with an old epoch, not just the first one to check.
+
+    Call this on: an admin kick/ban action, and any password change (the
+    standard "I think I've been compromised" recovery move should actually
+    log out every other session, not just change the password under them).
+    """
+    if not users_table_has_column("session_epoch"):
+        return
+    db.execute(
+        "UPDATE users SET session_epoch = session_epoch + 1 WHERE id = %s",
+        (user_id,),
+    )
+
+
 def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
     """Persist bcrypt hash on every password column; allow username/password login."""
     _preserve_discord_link_before_password_reset(db, user_id)
@@ -1903,6 +1929,13 @@ def set_user_password(db, user_id: int, hashed_bcrypt_utf8: str) -> None:
             """,
             (user_id,),
         )
+    # A password change is the standard "I think I've been compromised, lock
+    # everyone else out" move -- make it actually do that (see
+    # bump_session_epoch docstring / migration 0068).
+    try:
+        bump_session_epoch(db, user_id)
+    except Exception:
+        logger.warning("bump_session_epoch failed for user_id=%s", user_id, exc_info=True)
 
 
 def _ensure_users_join_number_index(db) -> None:
