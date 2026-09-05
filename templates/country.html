@@ -558,6 +558,10 @@
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
         <span class="stat-value">{{ revenue["net"]["rations"] | fmt }}</span>
+        {% set mil_rations = revenue.get("military_upkeep", {}).get("rations", 0) %}
+        {% if mil_rations %}
+        <small class="muted" title="Already subtracted above. Your army/navy/air force is eating this much of your rations production every hour.">&nbsp;includes -{{ mil_rations | fmt }} to military upkeep</small>
+        {% endif %}
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
@@ -634,7 +638,7 @@
                 </tr>
                 <tr>
                     <td><span class="material-icons-outlined" style="vertical-align: middle;">groups</span> Citizens</td>
-                    <td>{{ rations_need}} rations, {{ cg_needed }} consumer goods</td>
+                    <td>{{ citizen_rations_need }} rations, {{ cg_needed }} consumer goods</td>
                 </tr>
                 {% if distribution_status %}
                 <tr>

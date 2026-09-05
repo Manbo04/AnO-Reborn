@@ -552,15 +552,51 @@ class CountryService:
 
             # Calculate rations need from already-fetched provinces data
             # Each province needs at least 1 ration, or population // RATIONS_PER
-            rations_need = 0
+            citizen_rations_need = 0
             for prov in provinces:
                 pop = prov[2] if prov[2] else 0  # index 2 is population
                 consumption = pop // variables.RATIONS_PER
                 if consumption < 1:
                     consumption = 1
-                rations_need += consumption
-            if rations_need < 1:
-                rations_need = 1
+                citizen_rations_need += consumption
+            if citizen_rations_need < 1:
+                citizen_rations_need = 1
+
+            # Army/navy/air force ration upkeep is deducted from the same
+            # stockpile every hour by the military_maintenance tick (see
+            # app_core/game_ticks/maintenance.py), but wasn't counted in the
+            # Food reserves meter or distribution-status alert -- so a
+            # large-army nation looked well-fed right up until the
+            # maintenance tick fired and took a lump sum out of the
+            # stockpile (Discord report: player went "near max capacity"
+            # right after upkeep landed). `rations_need` below is the TRUE
+            # total draining the stockpile (mirrors get_revenue()'s net
+            # rations calc) and feeds the reserve meter/distribution status;
+            # `citizen_rations_need` stays civilian-only for the "Citizens"
+            # upkeep-cost table row, which already sits next to its own
+            # separate "Military" row.
+            military_rations_upkeep = 0
+            if status:
+                try:
+                    db.execute(
+                        """
+                        SELECT COALESCE(SUM(um.quantity * ud.maintenance_cost_amount), 0)
+                        FROM user_military um
+                        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                        JOIN resource_dictionary rd ON rd.resource_id = ud.maintenance_cost_resource_id
+                        WHERE um.user_id = %s
+                          AND um.quantity > 0
+                          AND ud.maintenance_cost_resource_id IS NOT NULL
+                          AND ud.maintenance_cost_amount > 0
+                          AND rd.name = 'rations'
+                        """,
+                        (cId,),
+                    )
+                    row = db.fetchone()
+                    military_rations_upkeep = int(row[0] or 0) if row else 0
+                except Exception:
+                    rollback_db_cursor(db)
+            rations_need = citizen_rations_need + military_rations_upkeep
 
             distribution_status = None
             food_score = None
@@ -657,6 +693,8 @@ class CountryService:
             "interactive_events": interactive_events,
             "cg_needed": cg_needed,
             "rations_need": rations_need,
+            "citizen_rations_need": citizen_rations_need,
+            "military_rations_upkeep": military_rations_upkeep,
             "distribution_status": distribution_status,
             "food_score": food_score,
             "expenses": expenses,
