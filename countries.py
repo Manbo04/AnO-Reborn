@@ -615,6 +615,13 @@ def get_revenue(cId, db=None):
             "gross": revenue["gross"],
             "gross_theoretical": revenue["gross_theoretical"],
             "net": revenue["net"],
+            # Already folded into `net` above, but exposed separately so the
+            # UI can show players how much of their production the army/navy/
+            # air force is eating -- without this a player only sees the
+            # final net number and can't tell how much headroom they have
+            # before adding more units (player-reported: couldn't tell how
+            # much rations production to add on top of an existing army).
+            "military_upkeep": dict(military_upkeep),
         }
         if "coalition_tax" in revenue:
             filtered_revenue["coalition_tax"] = revenue["coalition_tax"]
