@@ -74,6 +74,7 @@ MIGRATION_FILES = [
     "0064_seed_bmc_gem_package_ids.sql",
     "0065_reactivate_distribution_centers.sql",
     "0066_drone_missile_carrier_units.sql",
+    "0067_login_verifications_delivered.sql",
 ]
 
 

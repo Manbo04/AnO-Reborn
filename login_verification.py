@@ -139,9 +139,14 @@ def start_login_verification(
     user_id: int, ip: str | None, fingerprint: str | None, auth_type: str
 ) -> bool:
     """Create a pending "secure your account" link and try to deliver it as a
-    new-location alert. Returns True if it was actually sent (Discord DM or
-    email), False if there was no reachable channel -- either way the login
-    this is about has already completed."""
+    new-location alert. Always records a login_verifications row -- whether
+    or not delivery actually succeeds -- so a failed/silent alert still
+    leaves a durable, auditable trace that a new-location login happened
+    (see the 2026-09-05 incident: delivery had silently failed with zero
+    record, so nobody could tell the alert had ever fired). Returns True if
+    it was actually sent (Discord DM or email), False if there was no
+    reachable channel -- either way the login this is about has already
+    completed and the row is written regardless."""
     with get_db_cursor() as db:
         db.execute(
             "SELECT email, discord_id, is_verified FROM users WHERE id=%s",
@@ -168,23 +173,23 @@ def start_login_verification(
     if not delivered:
         logger.warning(
             "login verification: no reachable Discord/email for user_id=%s "
-            "(discord_id=%s, is_verified=%s) -- allowing login through unverified",
+            "(discord_id=%s, is_verified=%s) -- allowing login through "
+            "unverified, recording undelivered attempt",
             user_id,
             bool(discord_id),
             is_verified,
         )
-        return False
 
     with get_db_cursor() as db:
         db.execute(
             """
             INSERT INTO login_verifications
-                (user_id, token, ip, fingerprint, auth_type, delivery_method, expires_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (user_id, token, ip, fingerprint, auth_type, delivery_method, delivered, expires_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (user_id, token, ip, fingerprint, auth_type, delivery_method, expires_at),
+            (user_id, token, ip, fingerprint, auth_type, delivery_method, delivered, expires_at),
         )
-    return True
+    return delivered
 
 
 def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | None, auth_type: str):

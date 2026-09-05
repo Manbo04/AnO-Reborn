@@ -157,8 +157,12 @@
 
         <p style="color: #fff; font-weight: 600; margin-bottom: 20px; text-align: center;">Do you want to keep your current resources or start from scratch?</p>
 
-        <form action="/reset_account" method="POST" id="resetAccountForm" style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+        <form action="/reset_account" method="POST" id="resetAccountForm" style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%;">
             <input type="hidden" name="reset_type" id="reset_type_field" value="keep">
+            <input type="password" name="confirm_password" id="confirm_password_field"
+                   placeholder="Enter your password to confirm"
+                   autocomplete="current-password"
+                   style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25); color: #ecf0f1;">
             <button type="button" onclick="submitReset('keep')" class="reset-btn reset-btn-keep">Reset & Keep Resources</button>
             <button type="button" onclick="submitReset('scratch')" class="reset-btn reset-btn-full">Full Reset (Starter Kit)</button>
         </form>

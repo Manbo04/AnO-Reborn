@@ -502,6 +502,12 @@ function closeResetModal() {
 }
 
 function submitReset(type) {
+    var pwField = document.getElementById('confirm_password_field');
+    if (!pwField.value) {
+        alert('Enter your password to confirm the reset.');
+        pwField.focus();
+        return;
+    }
     if (confirm('Are you absolutely sure? This cannot be undone.')) {
         document.getElementById('reset_type_field').value = type;
         document.getElementById('resetAccountForm').submit();
