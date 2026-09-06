@@ -19,6 +19,8 @@ def account():
                 user_cols += ", discord_id"
             if users_table_has_column("recovery_key"):
                 user_cols += ", recovery_key"
+            if users_table_has_column("reset_count"):
+                user_cols += ", reset_count"
             db.execute(f"SELECT {user_cols} FROM users WHERE id=%s", (cId,))
             row = db.fetchone()
             if row:
@@ -40,6 +42,7 @@ def account():
     if not user:
         return error(404, "Account not found")
     user.setdefault("discord_id", None)
+    reset_count = user.pop("reset_count", 0) or 0
 
     discord_bot_link = None
     discord_link_ttl_minutes = 30
@@ -73,6 +76,7 @@ def account():
         discord_link_ttl_minutes=discord_link_ttl_minutes,
         has_recovery_key=has_recovery_key,
         referral_dashboard=referral_dashboard,
+        reset_is_first=(reset_count == 0),
     )
 
 @bp.route("/logout")
