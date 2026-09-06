@@ -13101,6 +13101,22 @@ body.nation-cyberpunk-theme {
     color-scheme: dark;
 }
 
+/* Matrix-style falling code, drawn by static/js/cyberpunk-matrix-rain.js
+   onto a canvas placed right after .game-page-overlay in the DOM (before
+   .templatediv) with no z-index override -- normal paint order then puts
+   it above the -2/-1 background layers but below the (later, also
+   z-index:auto) page content, so it reads through the frosted glass
+   panels instead of covering the readable text. */
+body.nation-cyberpunk-theme .cyberpunk-matrix-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: screen;
+}
+
 /* Neon grid + scanline texture painted onto the page's existing darkening
    overlay (game-glass.css .game-page-overlay), which already sits fixed
    between the background photo and all content. */

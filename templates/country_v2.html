@@ -12,6 +12,10 @@
 
 <div class="game-page-bg" style="background-image: url('{% if flag != None %}/flag/country/{{ cId }}{% else %}{{ url_for('static', filename='images/tajmahal.jpg') }}{% endif %}');"></div>
 <div class="game-page-overlay"></div>
+{% if cId|string == "1" %}
+<canvas id="cyberpunk-matrix-canvas" class="cyberpunk-matrix-canvas" aria-hidden="true"></canvas>
+<script src="{{ url_for('static', filename='js/cyberpunk-matrix-rain.js') }}"></script>
+{% endif %}
 
 <div class="templatediv">
 
