@@ -30,6 +30,9 @@ TASK_RUN_THRESHOLDS = {
     # Disasters are meant to fire at most once an hour per nation -- same
     # hourly-safety reasoning as military_maintenance/war_supply_regen.
     "natural_disasters": int(os.getenv("NATURAL_DISASTERS_MIN_INTERVAL", "3300")),
+    # Loan interest is meant to be garnished at most once an hour per nation --
+    # same hourly-safety reasoning as the other hourly-gated ticks above.
+    "loan_interest": int(os.getenv("LOAN_INTEREST_MIN_INTERVAL", "3300")),
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -52,6 +55,10 @@ CELERY_BEAT_SCHEDULE = {
     "natural_disasters": {
         "task": "tasks.task_natural_disasters",
         "schedule": get_crontab_env("NATURAL_DISASTERS_CRON", crontab(minute="15")),
+    },
+    "loan_interest": {
+        "task": "tasks.task_loan_interest",
+        "schedule": get_crontab_env("LOAN_INTEREST_CRON", crontab(minute="40")),
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",
