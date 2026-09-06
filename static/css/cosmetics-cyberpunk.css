@@ -1,0 +1,155 @@
+/*
+ * Dark cyberpunk cosmetic reskin for a single nation page.
+ * Scoped entirely under body.nation-cyberpunk-theme (set only in
+ * templates/country_v2.html's body_class block when cId == 1) -- no new
+ * markup required. Overrides the same design tokens every component
+ * already consumes (tokens.css) and layers ambient FX onto existing DOM
+ * (.game-page-overlay, .game-hero, .game-glass) so the rest of the site's
+ * look is untouched. Bundled by scripts/bundle_game_css.py -- edit this
+ * file, not style.css.
+ */
+
+body.nation-cyberpunk-theme {
+    --background: #05020f;
+    --foreground: #0c0620;
+    --foregroundTwo: #100a28;
+    --foregroundThree: #150e30;
+    --foregroundFour: #190f38;
+    --border: #2a1f55;
+    --colorOne: #d6f3ff;
+    --accent: #00fff2;
+    --accent-hover: #00c9ff;
+    --accent-subtle: #0a2438;
+    --gold: #ff2bd6;
+    --success: #39ff8f;
+    --danger: #ff2b4d;
+    --text-secondary: #8b8fc7;
+
+    --game-glass-bg: rgba(14, 8, 38, 0.55);
+    --game-glass-bg-strong: rgba(14, 8, 38, 0.84);
+    --game-glass-border: rgba(0, 255, 242, 0.35);
+
+    color-scheme: dark;
+}
+
+/* Neon grid + scanline texture painted onto the page's existing darkening
+   overlay (game-glass.css .game-page-overlay), which already sits fixed
+   between the background photo and all content. */
+body.nation-cyberpunk-theme .game-page-overlay {
+    background:
+        repeating-linear-gradient(0deg, rgba(0, 255, 242, 0.05) 0px, rgba(0, 255, 242, 0.05) 1px, transparent 1px, transparent 3px),
+        repeating-linear-gradient(90deg, rgba(255, 43, 214, 0.05) 0px, transparent 2px, transparent 40px, rgba(255, 43, 214, 0.05) 42px),
+        linear-gradient(180deg, rgba(5, 2, 15, 0.55) 0%, rgba(5, 2, 15, 0.9) 65%, #05020f 100%);
+    animation: cyberpunk-scan 8s linear infinite;
+}
+
+@keyframes cyberpunk-scan {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 0 240px, 200px 0, 0 0; }
+}
+
+/* Roaming horizontal light beam, purely decorative, never blocks clicks. */
+body.nation-cyberpunk-theme::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 160px;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 242, 0.07) 50%, transparent 100%);
+    animation: cyberpunk-beam 6s ease-in-out infinite;
+}
+
+@keyframes cyberpunk-beam {
+    0% { transform: translateY(-25vh); opacity: 0; }
+    12% { opacity: 1; }
+    88% { opacity: 1; }
+    100% { transform: translateY(125vh); opacity: 0; }
+}
+
+/* Glowing panel chrome -- hero banner + every glass card on the page. */
+body.nation-cyberpunk-theme .game-hero,
+body.nation-cyberpunk-theme .game-glass {
+    border-color: rgba(0, 255, 242, 0.4);
+    animation: cyberpunk-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes cyberpunk-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 255, 242, 0.15), 0 0 20px rgba(0, 255, 242, 0.22), 0 0 40px rgba(255, 43, 214, 0.1); }
+    50% { box-shadow: 0 0 0 1px rgba(0, 255, 242, 0.35), 0 0 34px rgba(0, 255, 242, 0.4), 0 0 60px rgba(255, 43, 214, 0.22); }
+}
+
+/* Flickering neon title, with an occasional RGB-split "glitch" beat. */
+body.nation-cyberpunk-theme .game-hero h1 {
+    color: #eafcff;
+    text-shadow: 0 0 8px rgba(0, 255, 242, 0.8), 0 0 18px rgba(0, 255, 242, 0.4);
+    animation: cyberpunk-flicker 5s linear infinite;
+}
+
+@keyframes cyberpunk-flicker {
+    0%, 89%, 93%, 100% {
+        text-shadow: 0 0 8px rgba(0, 255, 242, 0.8), 0 0 18px rgba(0, 255, 242, 0.4);
+        transform: translate(0, 0);
+    }
+    90% {
+        text-shadow: 2px 0 rgba(255, 43, 214, 0.9), -2px 0 rgba(0, 255, 242, 0.9);
+        transform: translate(-1px, 0);
+    }
+    91.5% {
+        text-shadow: -2px 0 rgba(255, 43, 214, 0.9), 2px 0 rgba(0, 255, 242, 0.9);
+        transform: translate(1px, 0);
+    }
+}
+
+body.nation-cyberpunk-theme .game-hero-sub,
+body.nation-cyberpunk-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+/* Buttons, stat cards, section headers pick up the same neon glow. */
+body.nation-cyberpunk-theme .game-btn-primary,
+body.nation-cyberpunk-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(0, 255, 242, 0.5);
+}
+
+body.nation-cyberpunk-theme .stat-card {
+    border-color: rgba(0, 255, 242, 0.25);
+}
+
+body.nation-cyberpunk-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(0, 255, 242, 0.5);
+}
+
+body.nation-cyberpunk-theme .templatedivtitle,
+body.nation-cyberpunk-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(0, 255, 242, 0.35);
+}
+
+/* Neon scrollbar to match, WebKit-only progressive enhancement. */
+body.nation-cyberpunk-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-cyberpunk-theme ::-webkit-scrollbar-track {
+    background: #05020f;
+}
+
+body.nation-cyberpunk-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00fff2, #ff2bd6);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-cyberpunk-theme,
+    body.nation-cyberpunk-theme::after,
+    body.nation-cyberpunk-theme .game-page-overlay,
+    body.nation-cyberpunk-theme .game-hero,
+    body.nation-cyberpunk-theme .game-glass,
+    body.nation-cyberpunk-theme .game-hero h1 {
+        animation: none !important;
+    }
+}

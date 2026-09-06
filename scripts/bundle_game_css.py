@@ -19,6 +19,7 @@ FILES = [
     "static/css/chat.css",
     "static/css/store.css",
     "static/css/cosmetics.css",
+    "static/css/cosmetics-cyberpunk.css",
 ]
 
 

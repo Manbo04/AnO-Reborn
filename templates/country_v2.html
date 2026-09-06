@@ -1,4 +1,4 @@
-{% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country game-page-v2{% endblock %}
+{% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country game-page-v2{% if cId|string == "1" %} nation-cyberpunk-theme{% endif %}{% endblock %}
 {% from 'macros/game_ui.html' import game_button, game_hero, render_nation_name %}
 {% block head %} {% if flag != None %}
 <meta property="og:image" content="/flag/country/{{ cId }}" /> {% endif %}
