@@ -238,6 +238,30 @@ def task_cleanup_old_spyinfo():
         print(f"[cleanup_old_spyinfo] Error: {exc}")
 
 
+@celery.task(name="tasks.task_backup_database")
+@leader_only(ttl_seconds=3600)
+def task_backup_database():
+    """Nightly full-table CSV backup to the celery-worker volume. See
+    app_core/backup/service.py; restore via scripts/restore_database_backup.py."""
+    from app_core.backup import service as backup_service
+
+    try:
+        result = backup_service.run_backup()
+        print(f"[backup_database] wrote {result['archive_path']} "
+              f"({result['table_count']} tables, {result['size_bytes']} bytes, "
+              f"{result['elapsed_seconds']}s)")
+    except Exception as exc:
+        print(f"[backup_database] FAILED: {exc}")
+        return
+
+    try:
+        deleted = backup_service.prune_old_backups()
+        if deleted:
+            print(f"[backup_database] pruned {len(deleted)} backups past retention: {deleted}")
+    except Exception as exc:
+        print(f"[backup_database] prune step failed: {exc}")
+
+
 @celery.task()
 def task_execute_trade_agreements():
     """Celery task to execute due trade agreements."""
