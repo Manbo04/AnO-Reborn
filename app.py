@@ -951,9 +951,9 @@ def create_app():
             try:
                 res_parts = [f"{weight_fmt(i[1])} {i[0]}" for i in MILDICT[unit]["resources"].items()]
                 resources = ", ".join(res_parts)
-                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower, {resources} each"
+                return f"{unit.replace('_', ' ').capitalize()} cost {fmt(price)} gold, {manpower} manpower, {resources} each"
             except KeyError:
-                return f"{unit.capitalize()} cost {fmt(price)} gold, {manpower} manpower each"
+                return f"{unit.replace('_', ' ').capitalize()} cost {fmt(price)} gold, {manpower} manpower each"
         except Exception: return unit
 
     @app.template_filter()
