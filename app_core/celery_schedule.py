@@ -97,6 +97,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_update_war_supplies",
         "schedule": get_crontab_env("WAR_SUPPLIES_CRON", crontab(minute="55")),
     },
+    "backup_database": {
+        "task": "tasks.task_backup_database",
+        "schedule": get_crontab_env("BACKUP_CRON", crontab(minute="10", hour="3")),
+    },
     # Dormant until FEATURE_PATREON_GEMS=true -- see app_core/patreon/service.py.
     "patreon_gem_grant": {
         "task": "tasks.task_patreon_gem_grant",

@@ -178,7 +178,7 @@ Your game will be live at: `your-app.railway.app`
 - [ ] Update ALLOWED_HOSTS/CORS if needed
 - [ ] Test Celery tasks work
 - [ ] Setup monitoring/logging
-- [ ] Plan for database backups
+- [x] Plan for database backups -- see [docs/BACKUPS.md](docs/BACKUPS.md)
 
 ---
 
@@ -195,7 +195,7 @@ Your game will be live at: `your-app.railway.app`
    - Setup uptime monitoring (UptimeRobot)
 
 3. **Backups**:
-   - Railway auto-backs up databases
-   - Consider additional backup strategy
+   - Nightly automated backup implemented 2026-09-06 -- see [docs/BACKUPS.md](docs/BACKUPS.md)
+   - Railway does NOT auto-back up this database; don't assume it does
 
 Need help with any specific step? Let me know!
