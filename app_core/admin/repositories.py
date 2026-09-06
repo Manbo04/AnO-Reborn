@@ -236,10 +236,58 @@ class AdminRepository:
 
     @staticmethod
     def add_province(db, target_user_id, province_name):
+        # Mirror province.py::createprovince: split starting population
+        # 60/30/10 working/children/elderly (not 100% children, which
+        # zeroes tax income under the age-weighted tax system) and place
+        # the province on a free adjacent hex tile.
+        db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
+        occupied_coords = set(db.fetchall())
+
+        db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE userId = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (target_user_id,))
+        user_coords = set(db.fetchall())
+
+        hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+        new_x, new_y = None, None
+
+        if not user_coords:
+            import random
+            if occupied_coords:
+                found = False
+                occupied_list = list(occupied_coords)
+                random.shuffle(occupied_list)
+                for ox, oy in occupied_list:
+                    for dx, dy in hex_directions:
+                        nx, ny = ox + dx, oy + dy
+                        if (nx, ny) not in occupied_coords:
+                            new_x, new_y = nx, ny
+                            found = True
+                            break
+                    if found:
+                        break
+                if not found:
+                    new_x, new_y = 0, 0
+            else:
+                new_x, new_y = 0, 0
+        else:
+            found = False
+            for ux, uy in user_coords:
+                for dx, dy in hex_directions:
+                    nx, ny = ux + dx, uy + dy
+                    if (nx, ny) not in occupied_coords:
+                        new_x, new_y = nx, ny
+                        found = True
+                        break
+                if found:
+                    break
+            if not found:
+                new_x, new_y = 0, 0
+
         db.execute(
-            "INSERT INTO provinces (userId, provinceName, pop_children) "
-            "VALUES (%s, %s, 1000000)",
-            (target_user_id, province_name),
+            "INSERT INTO provinces "
+            "(userId, provinceName, pop_children, pop_working, pop_elderly, "
+            "coordinate_x, coordinate_y) "
+            "VALUES (%s, %s, 300000, 600000, 100000, %s, %s)",
+            (target_user_id, province_name, new_x, new_y),
         )
 
     @staticmethod
