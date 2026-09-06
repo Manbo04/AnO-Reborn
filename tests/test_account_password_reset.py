@@ -26,23 +26,34 @@ def client():
         yield c
 
 
+@pytest.fixture
 def _create_user():
-    with get_db_cursor() as db:
-        username = f"pwreset_{uuid.uuid4().hex[:8]}"
-        email = f"{username}@example.invalid"
-        hashed = bcrypt.hashpw(TEST_PASSWORD.encode("utf-8"), bcrypt.gensalt(4)).decode("utf-8")
-        db.execute(
-            (
-                "INSERT INTO users (username, email, hash, date, auth_type) "
-                "VALUES (%s, %s, %s, %s, %s) RETURNING id"
-            ),
-            (username, email, hashed, "1970-01-01", "normal"),
-        )
-        user_id = db.fetchone()[0]
-    return user_id
+    created_ids = []
+
+    def _make():
+        with get_db_cursor() as db:
+            username = f"pwreset_{uuid.uuid4().hex[:8]}"
+            email = f"{username}@example.invalid"
+            hashed = bcrypt.hashpw(TEST_PASSWORD.encode("utf-8"), bcrypt.gensalt(4)).decode("utf-8")
+            db.execute(
+                (
+                    "INSERT INTO users (username, email, hash, date, auth_type) "
+                    "VALUES (%s, %s, %s, %s, %s) RETURNING id"
+                ),
+                (username, email, hashed, "1970-01-01", "normal"),
+            )
+            user_id = db.fetchone()[0]
+        created_ids.append(user_id)
+        return user_id
+
+    yield _make
+
+    if created_ids:
+        with get_db_cursor() as db:
+            db.execute("DELETE FROM users WHERE id = ANY(%s)", (created_ids,))
 
 
-def test_logged_in_reset_redirects_to_reset_page(client):
+def test_logged_in_reset_redirects_to_reset_page(client, _create_user):
     user_id = _create_user()
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
@@ -56,7 +67,7 @@ def test_logged_in_reset_redirects_to_reset_page(client):
     assert "/reset_password/" in resp.headers.get("Location", "")
 
 
-def test_logged_in_reset_requires_correct_current_password(client):
+def test_logged_in_reset_requires_correct_current_password(client, _create_user):
     user_id = _create_user()
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
@@ -81,7 +92,7 @@ def test_logged_in_reset_requires_login(client):
 
 
 @patch("change.send_discord_password_reset_dm", return_value=True)
-def test_logged_in_reset_sends_discord_dm(mock_dm, client):
+def test_logged_in_reset_sends_discord_dm(mock_dm, client, _create_user):
     user_id = _create_user()
     discord_id = "123456789012345678"
     with get_db_cursor() as db:
@@ -106,7 +117,7 @@ def test_logged_in_reset_sends_discord_dm(mock_dm, client):
     assert b"Discord DMs" in resp.data
 
 
-def test_public_reset_ignores_ambient_session(client):
+def test_public_reset_ignores_ambient_session(client, _create_user):
     """Regression test for ticket-0028: a visitor whose browser happens to
     carry a session for account A, but who submits account B's email to the
     public /forgot_password form, must get a reset code for B -- never A."""
