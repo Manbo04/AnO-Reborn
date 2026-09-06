@@ -183,31 +183,31 @@ body.game-page-v2 .page-military .stat-badge {
    buy/sell form/formaction/input stays exactly where it was in the DOM, so
    no purchasing behavior changes. */
 @media (min-width: 1000px) {
-    .page-military .land,
-    .page-military .air,
-    .page-military .water,
-    .page-military .special {
+    .page-military .landclick,
+    .page-military .airclick,
+    .page-military .waterclick,
+    .page-military .specialclick {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
         align-items: start;
     }
-    .page-military .land .menudiv,
-    .page-military .air .menudiv,
-    .page-military .water .menudiv,
-    .page-military .special .menudiv {
+    .page-military .landclick .menudiv,
+    .page-military .airclick .menudiv,
+    .page-military .waterclick .menudiv,
+    .page-military .specialclick .menudiv {
         margin: 0;
     }
-    .page-military .land .warflexparentcolors,
-    .page-military .air .warflexparentcolors,
-    .page-military .water .warflexparentcolors,
-    .page-military .special .warflexparentcolors {
+    .page-military .landclick .warflexparentcolors,
+    .page-military .airclick .warflexparentcolors,
+    .page-military .waterclick .warflexparentcolors,
+    .page-military .specialclick .warflexparentcolors {
         flex-direction: column;
     }
-    .page-military .land .unitimage,
-    .page-military .air .unitimage,
-    .page-military .water .unitimage,
-    .page-military .special .unitimage {
+    .page-military .landclick .unitimage,
+    .page-military .airclick .unitimage,
+    .page-military .waterclick .unitimage,
+    .page-military .specialclick .unitimage {
         max-width: 100%;
         max-height: 140px;
         object-fit: cover;
