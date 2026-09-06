@@ -29,11 +29,15 @@ def test_my_coalition_without_membership_shows_friendly_page(client):
         user_id = db.fetchone()[0]
         db.execute("DELETE FROM coalitions_legacy WHERE userid=%s", (user_id,))
 
-    with client.session_transaction() as sess:
-        sess["user_id"] = user_id
+    try:
+        with client.session_transaction() as sess:
+            sess["user_id"] = user_id
 
-    resp = client.get("/my_coalition", follow_redirects=True)
-    assert resp.status_code == 200
-    assert b"No coalition yet" in resp.data
-    assert b"Browse coalitions" in resp.data
-    assert b"Error</h1>" not in resp.data
+        resp = client.get("/my_coalition", follow_redirects=True)
+        assert resp.status_code == 200
+        assert b"No coalition yet" in resp.data
+        assert b"Browse coalitions" in resp.data
+        assert b"Error</h1>" not in resp.data
+    finally:
+        with get_db_cursor() as db:
+            db.execute("DELETE FROM users WHERE id=%s", (user_id,))

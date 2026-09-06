@@ -4,8 +4,12 @@
 {% block seo_canonical %}https://affairsandorder.com/tutorial{% endblock %}
 {% block title %} Tutorial {% endblock %}
 {% block extra_head %}
+{% if not session.get('user_id') %}
+{# Logged-in sessions already get tutorial.js/css from layout.html's global
+   include -- only guests (who skip that block) need it loaded here. #}
 <link href="{{ url_for('static', filename='tutorial.css') }}?v=12" rel="stylesheet" type="text/css" />
 <script defer src="{{ url_for('static', filename='tutorial.js') }}?v=12"></script>
+{% endif %}
 {% endblock %}
 {% from "tutorial_chapter_extras.html" import chapter_video_block, chapter_follow_block %}
 {% block body %}
