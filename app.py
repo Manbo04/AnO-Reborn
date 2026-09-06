@@ -19,6 +19,7 @@ import login
 
 from wars.routes import wars_bp
 from app_core.treaties import bp as treaties_bp
+from app_core.loans import bp as loans_bp
 from app_core import policies
 import statistics
 import requests
@@ -478,6 +479,7 @@ def create_app():
     app.register_blueprint(intelligence.bp)
     app.register_blueprint(wars_bp)
     app.register_blueprint(treaties_bp)
+    app.register_blueprint(loans_bp)
 
     # App Core DDD Registrations
     from app_core.main.routes import bp as main_bp

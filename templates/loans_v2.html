@@ -1,0 +1,93 @@
+{% extends "layout.html" %} {% block title %} Loans {% endblock %}{% block body_class %} page-loans game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('National Loans', badge_icon='account_balance_wallet', subtitle='Borrow against your own population-scaled capacity. Interest is deducted from your treasury every hour until repaid — an unpaid loan has a real cost, not just a number.') }}
+
+    <div class="templatedivcontent">
+
+        {% if status.has_active_loan %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span> Active Loan</h2>
+            <div class="stat-grid">
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">savings</span>Principal</strong>
+                    <span class="stat-value">${{ status.principal | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">account_balance_wallet</span>Outstanding Balance</strong>
+                    <span class="stat-value">${{ status.balance | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Interest Rate</strong>
+                    <span class="stat-value">{{ (status.interest_rate * 100) | round(1) }}% / hour</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">schedule</span>Next Hour's Interest</strong>
+                    <span class="stat-value">${{ status.hourly_interest | fmt }}</span>
+                </div>
+            </div>
+            <p class="templatecontentpleft" style="margin-top: 14px;">This is garnished from your treasury automatically every hour. If your gold can't cover it, the shortfall is added to your balance instead of being forgiven.</p>
+
+            <form action="/loans/repay" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px;">
+                <input type="number" name="amount" placeholder="Repayment amount" class="loginsignupinput" style="flex: 1; min-width: 200px;" min="1" step="1" required>
+                <button type="submit" class="game-btn game-btn-primary">Repay</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Take a Loan</h2>
+            <p class="templatecontentpleft">Your borrowing capacity scales with your population.</p>
+            <div class="stat-grid">
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">trending_up</span>Borrowing Capacity</strong>
+                    <span class="stat-value">${{ status.cap | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Interest Rate</strong>
+                    <span class="stat-value">{{ (status.interest_rate * 100) | round(1) }}% / hour</span>
+                </div>
+            </div>
+            <form action="/loans/take" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 14px;">
+                <input type="number" name="amount" placeholder="Loan amount (min ${{ status.min_amount | commas }})" class="loginsignupinput" style="flex: 1; min-width: 220px;" min="{{ status.min_amount }}" max="{{ status.cap }}" step="1" required>
+                <button type="submit" class="game-btn game-btn-primary">Borrow</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">history</span> Loan History</h2>
+        <div class="templateoutertablediv">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Principal</th>
+                <th>Status</th>
+                <th>Taken</th>
+                <th>Repaid</th>
+            </tr>
+            {% for h in history %}
+            <tr>
+                <td>${{ h[1] | fmt }}</td>
+                <td>
+                    {% if h[4] == 'active' %}
+                    <span style="color: #FF9800; font-weight: bold;">Active</span>
+                    {% else %}
+                    <span style="color: #4CAF50; font-weight: bold;">Repaid</span>
+                    {% endif %}
+                </td>
+                <td>{{ h[5].strftime('%Y-%m-%d') }}</td>
+                <td>{{ h[6].strftime('%Y-%m-%d') if h[6] else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not history %}
+            <tr><td colspan="4" style="text-align: center;">No loans taken yet.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -980,3 +980,9 @@ NEW_INFRA = {  # (NEW INFRA)
         "eff": {"pollution": 6},
     },
 }
+
+# National loans (borrowing against the nation's own population-scaled
+# capacity). One active loan per nation at a time -- see app_core/loans/.
+LOAN_CAP_PER_POPULATION = 40  # $ of borrowing capacity per population point
+LOAN_MIN_AMOUNT = 100_000
+LOAN_INTEREST_RATE_HOURLY = 0.01  # 1% of outstanding balance per hour

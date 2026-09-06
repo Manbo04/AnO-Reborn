@@ -57,6 +57,7 @@ from app_core.game_ticks.population import population_growth, calculate_workforc
 from app_core.game_ticks.revenue import generate_province_revenue
 from app_core.game_ticks.unit_production import produce_unit_stockpiles
 from app_core.game_ticks.disasters import run_natural_disasters
+from app_core.game_ticks.loan_interest import run_loan_interest
 from app_core.game_ticks.maintenance import backfill_missing_resources, cleanup_orphan_user_rows, refresh_bot_offers, market_bot_fight_wars, execute_due_trade_agreements, _create_game_tick_log, _finalize_game_tick_log, global_tick, BOT_USER_ID, BOT_OFFERS
 
 
@@ -107,6 +108,12 @@ def task_produce_unit_stockpiles():
 @leader_only(ttl_seconds=300)
 def task_natural_disasters():
     _run_with_deadlock_retries(run_natural_disasters, "natural_disasters")
+
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_loan_interest():
+    _run_with_deadlock_retries(run_loan_interest, "loan_interest")
 
 
 # Runs once a day

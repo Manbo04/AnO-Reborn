@@ -365,6 +365,9 @@
                         <a class="{{ 'active' if request.path.startswith('/trade-agreements') else '' }}" href="/trade-agreements"><span class="material-icons-outlined">
                             handshake
                         </span>Trade Deals</a>
+                        <a class="{{ 'active' if request.path.startswith('/loans') else '' }}" href="/loans"><span class="material-icons-outlined">
+                            account_balance_wallet
+                        </span>Loans</a>
                         <a class="{{ 'active' if request.path.startswith('/war') or request.path.startswith('/declare_war') or request.path.startswith('/find_targets') or request.path.startswith('/defense') or request.path.startswith('/peace_offers') or request.path.startswith('/intelligence') else '' }}" href="/wars"><span class="material-icons-outlined">
                             military_tech
                         </span>Wars<!--<span class="menubaranotification">1</span>--></a>
@@ -397,6 +400,9 @@
         <a class="menubara" href="/trade-agreements"><span class="material-icons-outlined">
                 handshake
             </span>Trade Deals</a>
+        <a class="menubara" href="/loans"><span class="material-icons-outlined">
+                account_balance_wallet
+            </span>Loans</a>
         <a class="menubara" href="/wars"><span class="material-icons-outlined">
                 military_tech
             </span>Wars<!--<span class="menubaranotification">1</span>--></a>
