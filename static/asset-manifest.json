@@ -161,6 +161,14 @@
     "oil_refineries": {
       "legacy": "oilrefinery.jpg",
       "path": "images/game/buildings/oil_refineries.png"
+    },
+    "drone_sites": {
+      "legacy": "dronesite.jpg",
+      "path": "images/game/buildings/drone_sites.png"
+    },
+    "missile_batteries": {
+      "legacy": "missilebattery.jpg",
+      "path": "images/game/buildings/missile_batteries.png"
     }
   },
   "units": {
@@ -211,6 +219,18 @@
     "nukes": {
       "legacy": "nuke.jpg",
       "path": "images/game/units/nukes.png"
+    },
+    "aircraft_carriers": {
+      "legacy": "aircraft_carrier.jpg",
+      "path": "images/game/units/aircraft_carriers.png"
+    },
+    "kamikaze_drones": {
+      "legacy": "kamikaze_drone.jpg",
+      "path": "images/game/units/kamikaze_drones.png"
+    },
+    "cruise_missiles": {
+      "legacy": "cruise_missile.jpg",
+      "path": "images/game/units/cruise_missiles.png"
     }
   },
   "resources": {

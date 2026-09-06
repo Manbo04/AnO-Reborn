@@ -698,6 +698,55 @@ body.game-page-v2 .page-military .stat-badge {
                     </div>
                 </div>
             </div>
+            <div class="menudiv">
+
+                <h2 class="templatecontentheaderleft">Aircraft Carriers</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["aircraft_carriers"]["quantity"] }} Aircraft Carriers</h3>
+
+                        <div class="combat-stats-box">
+                            {{ combat_stats_line("aircraft_carriers") }}
+                            {% if units["aircraft_carriers"]["maintenance_per_tick"] > 0 %}
+                            <p><strong>Maintenance:</strong> {{ units["aircraft_carriers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["aircraft_carriers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["aircraft_carriers"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
+                        <p class="templatecontentpleft">Aircraft carriers are the naval capital ship of your fleet. Each one you own extends the reach of your air wing, raising your Fighter Jets and Bombers capacity.</p>
+
+                        <ul>{{ "aircraft_carriers" | milres }}
+                        </ul>
+                        <form action="/aircraft_carriers" method="POST">
+                            <div class="purchasemilitarydiv">
+                                <input class="loginsignupinput" autocomplete="off" name="aircraft_carriers" type="number" placeholder="Amount" required />
+
+                                <div class="templatedivflex2 divflex2center">
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/aircraft_carriers') }}
+
+                                    </div>
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/aircraft_carriers') }}
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span class="limit-text">You can purchase {{ limits["aircraft_carriers"] }} more Aircraft Carriers today</span>
+                    </div>
+                    </form>
+                    <div class="templatedivflex2left">
+
+
+
+                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'aircraft_carriers')) }}?v=2" loading="lazy" />
+                    </div>
+                </div>
+            </div>
         </div>
         <!--SPECIAL-->
         <div class="special" id="special">
@@ -846,6 +895,94 @@ body.game-page-v2 .page-military .stat-badge {
 
 
                         <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'nukes')) }}?v=2" loading="lazy" />
+                    </div>
+                </div>
+            </div>
+            <div class="menudiv">
+
+                <h2 class="templatecontentheaderleft">Kamikaze Drones</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["kamikaze_drones"]["quantity"] }} Kamikaze Drones</h3>
+
+                        <div class="combat-stats-box">
+                            {{ combat_stats_line("kamikaze_drones") }}
+                            {% if units["kamikaze_drones"]["maintenance_per_tick"] > 0 %}
+                            <p><strong>Maintenance:</strong> {{ units["kamikaze_drones"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["kamikaze_drones"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["kamikaze_drones"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
+                        <p class="templatecontentpleft">Kamikaze drones are cheap, expendable loitering munitions. Your Drone Sites manufacture them automatically into a stockpile over time -- weak alone, they're meant to be activated and launched in swarms at an enemy's buildings during a war to damage their economy.</p>
+
+                        <p class="templatecontentpleft"><strong>{{ stockpile["kamikaze_drones"] }}</strong> drones are manufactured and sitting in your stockpile. Activating moves them into your usable military -- {{ "kamikaze_drones" | milres }}</p>
+
+                        <form action="/military/activate/kamikaze_drones" method="POST">
+                            <div class="purchasemilitarydiv">
+                                <input class="loginsignupinput" autocomplete="off" name="kamikaze_drones" type="number" placeholder="Amount" required />
+
+                                <div class="templatedivflex2 divflex2center">
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Activate', icon='bolt', formaction='/military/activate/kamikaze_drones') }}
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span class="limit-text">{{ stockpile["kamikaze_drones"] }} drones in your stockpile ready to activate</span>
+                    </div>
+                    </form>
+                    <div class="templatedivflex2left">
+
+
+
+                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'kamikaze_drones')) }}?v=2" loading="lazy" />
+                    </div>
+                </div>
+            </div>
+            <div class="menudiv">
+
+                <h2 class="templatecontentheaderleft">Cruise Missiles</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["cruise_missiles"]["quantity"] }} Cruise Missiles</h3>
+
+                        <div class="combat-stats-box">
+                            {{ combat_stats_line("cruise_missiles") }}
+                            {% if units["cruise_missiles"]["maintenance_per_tick"] > 0 %}
+                            <p><strong>Maintenance:</strong> {{ units["cruise_missiles"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["cruise_missiles"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruise_missiles"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
+                        <p class="templatecontentpleft">Cruise missiles are a precision strike weapon, manufactured over time by your Missile Batteries into a stockpile. Pricier and slower to produce than drones, but a guaranteed hit -- no need for a swarm.</p>
+
+                        <p class="templatecontentpleft"><strong>{{ stockpile["cruise_missiles"] }}</strong> missiles are manufactured and sitting in your stockpile. Activating moves them into your usable military -- {{ "cruise_missiles" | milres }}</p>
+
+                        <form action="/military/activate/cruise_missiles" method="POST">
+                            <div class="purchasemilitarydiv">
+                                <input class="loginsignupinput" autocomplete="off" name="cruise_missiles" type="number" placeholder="Amount" required />
+
+                                <div class="templatedivflex2 divflex2center">
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Activate', icon='bolt', formaction='/military/activate/cruise_missiles') }}
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span class="limit-text">{{ stockpile["cruise_missiles"] }} missiles in your stockpile ready to activate</span>
+                    </div>
+                    </form>
+                    <div class="templatedivflex2left">
+
+
+
+                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'cruise_missiles')) }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>

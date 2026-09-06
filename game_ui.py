@@ -93,6 +93,8 @@ BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "ammunition_factories": "ammunitionfactory.jpg",
     "aluminium_refineries": "aluminiumrefinery.jpg",
     "oil_refineries": "oilrefinery.jpg",
+    "drone_sites": "dronesite.jpg",
+    "missile_batteries": "missilebattery.jpg",
 }
 
 UNIT_LEGACY_IMAGES: dict[str, str] = {
@@ -108,6 +110,9 @@ UNIT_LEGACY_IMAGES: dict[str, str] = {
     "spies": "spy.jpg",
     "icbms": "icbm.jpg",
     "nukes": "nuke.jpg",
+    "aircraft_carriers": "aircraft_carrier.jpg",
+    "kamikaze_drones": "kamikaze_drone.jpg",
+    "cruise_missiles": "cruise_missile.jpg",
 }
 
 RESOURCE_LEGACY_IMAGES: dict[str, str] = {
@@ -229,6 +234,8 @@ PROVINCE_BASE_SLOTS: list[dict[str, Any]] = [
             "harbours",
             "admin_buildings",
             "silos",
+            "drone_sites",
+            "missile_batteries",
         ],
     },
 ]
@@ -316,6 +323,8 @@ BUILDING_VISUAL_ICONS: dict[str, str] = {
     "harbours": "anchor",
     "admin_buildings": "apartment",
     "silos": "warehouse",
+    "drone_sites": "flight_takeoff",
+    "missile_batteries": "rocket_launch",
 }
 
 BIOME_ICONS: dict[str, str] = {
@@ -581,7 +590,7 @@ def build_province_layout_payload(province: dict, units: dict) -> dict[str, Any]
                 "icon": slot["icon"],
                 "quantity": total,
                 "buildings": slot["buildings"],
-                "breakdown": breakdown[:6],
+                "breakdown": breakdown[:10],
                 "theme": theme,
             }
         )
