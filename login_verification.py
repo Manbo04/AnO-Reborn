@@ -228,7 +228,12 @@ def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | No
     try:
         log_login_event(user_id, ip, fingerprint, auth_type)
     except Exception:
-        pass
+        # Never block a login on this, but a silent swallow here means a
+        # real login leaves no forensic trail -- exactly the evidence
+        # ticket-0028-style reports need. Log it instead of hiding it.
+        logger.exception(
+            "log_login_event failed for user_id=%s auth_type=%s", user_id, auth_type
+        )
 
     if not ip_is_known_for_user(user_id, ip):
         try:
