@@ -546,7 +546,7 @@
         if (!toggle || !classic || !base) return;
 
         var key = 'ano_province_view';
-        var mode = localStorage.getItem(key) || 'base';
+        var mode = localStorage.getItem(key) || 'classic';
 
         function apply(m) {
             var isBase = m === 'base';
