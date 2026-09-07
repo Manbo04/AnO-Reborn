@@ -162,6 +162,31 @@ def create_app():
                 return redirect(url, code=301)
 
         user_id = session.get("user_id")
+
+        # TEMPORARY diagnostic (ticket-0028 recurrence, 2026-09-07): two
+        # independent reports of a browser rendering as a different real
+        # account with no login in between (Dede <-> Lamlor, and separately
+        # a player seeing owner-only UI for Dede's nation) neither showed a
+        # matching login_events row, and 4200+ live concurrent requests
+        # crafted against every implicated route/account under this exact
+        # code found zero cross-account leaks. If it recurs, this gives an
+        # exact (user_id, cookie fingerprint, path) trace to correlate
+        # against instead of reconstructing after the fact. See
+        # helpers.session_cookie_fingerprint -- logs only a non-reversible
+        # hash, never the raw cookie. Cheap (one log call, no DB/IO) so it's
+        # safe to leave on for every request; remove once confirmed or this
+        # hasn't recurred in a while.
+        if user_id and not request.path.startswith("/static/"):
+            from helpers import session_cookie_fingerprint
+
+            logging.getLogger(__name__).info(
+                "reqsess user_id=%s cookie_fp=%s path=%s ip=%s",
+                user_id,
+                session_cookie_fingerprint(),
+                request.path,
+                request.remote_addr,
+            )
+
         admin_ctrl_refresh_seconds = int(os.getenv("ADMIN_CTRL_REFRESH_SECONDS", "300"))
         if user_id:
             _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
