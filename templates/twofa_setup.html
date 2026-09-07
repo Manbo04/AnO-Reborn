@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block title %} Set Up Two-Factor Authentication {% endblock %}
+{% block body %}
+<img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
+
+<div class="templatediv noboxshadowtopper loginsignupdiv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            verified_user
+            </span>Set Up Two-Factor Authentication</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
+            <div class="templatedivflex2left" style="text-align: center; width: 100%; max-width: 420px; background: rgba(15, 20, 25, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
+
+                <p style="color: #ddd; margin-bottom: 20px; font-size: 1.05rem; line-height: 1.5;">
+                    Scan this code with your authenticator app (Google Authenticator, Authy, 1Password, etc.).
+                </p>
+
+                <div style="background: #fff; border-radius: 8px; padding: 12px; display: inline-block; max-width: 220px; width: 100%;">
+                    <img
+                        src="{{ qr_data_uri }}"
+                        alt="Two-factor authentication QR code"
+                        style="display: block; width: 100%; height: auto; max-width: 196px; margin: 0 auto;"
+                    />
+                </div>
+
+                <p style="color: #ccc; margin: 20px 0 6px; font-size: 0.9rem;">Can't scan it? Enter this code manually:</p>
+                <p style="user-select: all; word-break: break-all; font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 1.05rem; font-weight: 700; color: #4da3ff; background: rgba(255,255,255,0.06); border-radius: 6px; padding: 10px; margin-bottom: 25px;">{{ secret }}</p>
+
+                <form action="/account/2fa/confirm" method="POST" class="loginsignupform">
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% endif %}
+                    <input
+                        class="loginsignupinput w-full"
+                        name="code"
+                        placeholder="Enter the 6-digit code"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        required
+                    />
+                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
+                        <span class="material-icons-outlined">check</span>Confirm and Enable
+                    </button>
+                </form>
+
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="templatecontentheadercenter login-error-msg">
+                    {% for m in messages %}{{ m }}{% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <div class="templatecontentheadercenter" style="margin-top: 20px;">
+                    <a href="/account" class="templatelink">Cancel and go back to Account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

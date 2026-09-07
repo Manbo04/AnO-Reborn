@@ -247,6 +247,7 @@ def create_app():
     _RATE_LIMITED_AUTH_PATHS = (
         "/login",
         "/login/email",
+        "/login/2fa",
         "/request_password_reset",
         "/account/request_password_reset",
         "/reset_password/",

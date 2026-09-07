@@ -154,6 +154,19 @@ def google_callback_route():
 
             ip = client_ip_from_headers(request.headers, request.remote_addr)
             fingerprint = coarse_fingerprint_from_headers(request.headers)
+
+            from app_core.auth.totp import has_2fa_enabled
+
+            if has_2fa_enabled(user[0]):
+                import time as time_module
+
+                session.clear()
+                session["pending_2fa_user_id"] = user[0]
+                session["pending_2fa_auth_type"] = "google"
+                session["pending_2fa_started_at"] = time_module.time()
+                session.permanent = True
+                return redirect("/login/2fa")
+
             # complete_or_verify_login() clears the session itself on the
             # completed path, taking the google_oauth2_* keys with it.
             return complete_or_verify_login(user[0], ip, fingerprint, "google")

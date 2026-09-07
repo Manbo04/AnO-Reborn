@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block title %} Two-Factor Authentication {% endblock %}
+{% block body %}
+<img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
+
+<div class="templatediv noboxshadowtopper loginsignupdiv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            verified_user
+            </span>Two-Factor Authentication</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
+            <div class="templatedivflex2left" style="text-align: center; width: 100%; max-width: 420px; background: rgba(15, 20, 25, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
+
+                <div class="templatecontentheadercenter" style="margin-bottom: 20px; color: #fff; font-size: 1.1rem; line-height: 1.5;">
+                    Enter the 6-digit code from your authenticator app, or one of your backup codes.
+                </div>
+
+                <form action="/login/2fa" method="POST" class="loginsignupform">
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% endif %}
+                    <input
+                        class="loginsignupinput w-full"
+                        name="code"
+                        placeholder="6-digit code or backup code"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        autofocus
+                        required
+                    />
+                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
+                        <span class="material-icons-outlined">login</span>Verify
+                    </button>
+                </form>
+
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="templatecontentheadercenter login-error-msg">
+                    {% for m in messages %}{{ m }}{% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <div class="templatecontentheadercenter" style="margin-top: 20px;">
+                    <a href="/login" class="templatelink">Back to login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

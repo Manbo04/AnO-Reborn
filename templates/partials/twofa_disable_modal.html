@@ -1,0 +1,20 @@
+<!-- Disable Two-Factor Authentication Modal -->
+<div id="twofaDisableModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined" style="color: #ff4444;">warning</span> Disable Two-Factor Authentication</h2>
+        <p>This removes the extra login step protecting your account. Your saved backup codes will stop working too.</p>
+        <form action="/account/2fa/disable" method="POST" id="twofaDisableForm">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            {% endif %}
+            <div class="modal-input">
+                <label for="twofa_disable_password">Enter your password to confirm</label>
+                <input type="password" name="confirm_password" id="twofa_disable_password" autocomplete="current-password" required>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="closeTwofaDisableModal()" class="templatedivbutton">Cancel</button>
+                <button type="submit" class="templatedivbutton redactionbutton">Disable 2FA</button>
+            </div>
+        </form>
+    </div>
+</div>

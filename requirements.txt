@@ -77,3 +77,6 @@ Werkzeug==2.3.8
 WTForms==3.2.2
 yarl==1.24.2
 Flask-Limiter==3.8.0
+pyotp==2.9.0
+qrcode==7.4.2
+cryptography==43.0.3
