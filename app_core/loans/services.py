@@ -1,9 +1,12 @@
+from datetime import datetime, timedelta, timezone
+
 import variables
 
 from .repositories import (
     get_active_loan,
     get_total_population,
     get_gold,
+    get_last_repaid_at,
     insert_loan,
     credit_gold,
     debit_gold,
@@ -20,17 +23,40 @@ def compute_loan_cap(db, user_id):
     return int(population * variables.LOAN_CAP_PER_POPULATION)
 
 
+def compute_fee_rate(amount, cap):
+    """One-time origination fee, higher for loans above the
+    high-utilization threshold of the borrower's own cap."""
+    if cap > 0 and amount > cap * variables.LOAN_HIGH_UTILIZATION_THRESHOLD:
+        return variables.LOAN_HIGH_UTILIZATION_FEE
+    return variables.LOAN_ORIGINATION_FEE
+
+
+def cooldown_remaining(db, user_id):
+    """Returns a timedelta of cooldown left after the borrower's last fully
+    repaid loan, or None if there isn't one / it's expired."""
+    last_repaid_at = get_last_repaid_at(db, user_id)
+    if not last_repaid_at:
+        return None
+    elapsed = datetime.now(timezone.utc) - last_repaid_at
+    remaining = timedelta(hours=variables.LOAN_COOLDOWN_HOURS) - elapsed
+    return remaining if remaining.total_seconds() > 0 else None
+
+
 def get_loan_status(db, user_id):
     """Returns a template-friendly dict describing the nation's loan state,
     whether or not it currently has an active loan."""
     loan = get_active_loan(db, user_id)
     cap = compute_loan_cap(db, user_id)
     if not loan:
+        remaining = cooldown_remaining(db, user_id)
         return {
             "has_active_loan": False,
             "cap": cap,
             "min_amount": variables.LOAN_MIN_AMOUNT,
-            "interest_rate": variables.LOAN_INTEREST_RATE_HOURLY,
+            "origination_fee": variables.LOAN_ORIGINATION_FEE,
+            "high_utilization_fee": variables.LOAN_HIGH_UTILIZATION_FEE,
+            "high_utilization_threshold": variables.LOAN_HIGH_UTILIZATION_THRESHOLD,
+            "cooldown_hours_remaining": (remaining.total_seconds() / 3600) if remaining else 0,
         }
 
     loan_id, principal, balance, interest_rate, taken_at = loan
@@ -39,9 +65,8 @@ def get_loan_status(db, user_id):
         "loan_id": loan_id,
         "principal": float(principal),
         "balance": float(balance),
-        "interest_rate": float(interest_rate),
+        "fee_charged": float(balance) - float(principal),
         "taken_at": taken_at,
-        "hourly_interest": float(balance) * float(interest_rate),
         "cap": cap,
     }
 
@@ -50,6 +75,11 @@ def take_loan(db, user_id, amount):
     """Returns (ok, error_message_or_none, flash_category)."""
     if get_active_loan(db, user_id):
         return False, "You already have an active loan — repay it before borrowing again.", "warning"
+
+    remaining = cooldown_remaining(db, user_id)
+    if remaining:
+        hours_left = remaining.total_seconds() / 3600
+        return False, f"You're on cooldown after your last loan — {hours_left:.1f}h left.", "warning"
 
     try:
         amount = int(amount)
@@ -63,7 +93,9 @@ def take_loan(db, user_id, amount):
     if amount > cap:
         return False, f"That exceeds your borrowing capacity (${cap:,}, based on population).", "danger"
 
-    insert_loan(db, user_id, amount, variables.LOAN_INTEREST_RATE_HOURLY)
+    fee_rate = compute_fee_rate(amount, cap)
+    balance = int(round(amount * (1 + fee_rate)))
+    insert_loan(db, user_id, amount, balance)
     credit_gold(db, user_id, amount)
     return True, None, None
 

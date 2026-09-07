@@ -992,6 +992,13 @@ NEW_INFRA = {  # (NEW INFRA)
 
 # National loans (borrowing against the nation's own population-scaled
 # capacity). One active loan per nation at a time -- see app_core/loans/.
+# Redesigned 2026-09-07 (Discord #suggestions "Kurai suggestions") from
+# hourly-compounding interest to a one-time origination fee, to avoid the
+# "build cities, borrow against growth, repeat" glitch Kurai flagged while
+# still being friendlier to new players than an ongoing hourly drain.
 LOAN_CAP_PER_POPULATION = 40  # $ of borrowing capacity per population point
 LOAN_MIN_AMOUNT = 100_000
-LOAN_INTEREST_RATE_HOURLY = 0.01  # 1% of outstanding balance per hour
+LOAN_ORIGINATION_FEE = 0.10  # one-time fee added to principal at issuance
+LOAN_HIGH_UTILIZATION_THRESHOLD = 0.70  # fraction of borrowing cap
+LOAN_HIGH_UTILIZATION_FEE = 0.15  # fee charged instead of LOAN_ORIGINATION_FEE above the threshold
+LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully repaying the last one

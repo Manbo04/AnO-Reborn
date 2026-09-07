@@ -26,14 +26,28 @@ def get_gold(db, user_id):
     return float(row[0]) if row and row[0] is not None else 0.0
 
 
-def insert_loan(db, user_id, amount, interest_rate):
+def insert_loan(db, user_id, principal, balance, interest_rate=0):
     db.execute(
         """
         INSERT INTO user_loans (user_id, principal, balance, interest_rate)
         VALUES (%s, %s, %s, %s)
         RETURNING id
         """,
-        (user_id, amount, amount, interest_rate),
+        (user_id, principal, balance, interest_rate),
+    )
+    row = db.fetchone()
+    return row[0] if row else None
+
+
+def get_last_repaid_at(db, user_id):
+    db.execute(
+        """
+        SELECT repaid_at FROM user_loans
+        WHERE user_id = %s AND status = 'repaid'
+        ORDER BY repaid_at DESC
+        LIMIT 1
+        """,
+        (user_id,),
     )
     row = db.fetchone()
     return row[0] if row else None
