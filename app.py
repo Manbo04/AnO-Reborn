@@ -351,8 +351,16 @@ def create_app():
         return filename
     app.jinja_env.globals["asset"] = asset
 
+    # `filename="errors.log"` used to send every logger.* call (including
+    # the diagnostic logging several past incident investigations added,
+    # e.g. ticket-0028's cookie-fingerprint logging in helpers.py/change.py)
+    # to a local file on the container's ephemeral filesystem -- never to
+    # stdout, so it never reached `railway logs` at all. Logging to stdout
+    # at INFO (overridable via LOG_LEVEL) is what actually makes any of
+    # this diagnostic logging usable in production.
     logging_format = "====\\n%(levelname)s (%(created)f - %(asctime)s) (LINE %(lineno)d - %(filename)s - %(funcName)s): %(message)s"
-    logging.basicConfig(level=logging.ERROR, format=logging_format, filename="errors.log")
+    log_level = getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
+    logging.basicConfig(level=log_level, format=logging_format)
     logger = logging.getLogger(__name__)
 
     import threading, queue as queue_module
