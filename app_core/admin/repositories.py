@@ -1,5 +1,6 @@
 import os
 import ast
+import json
 from database import get_request_cursor, get_db_connection
 
 class AdminRepository:
@@ -48,12 +49,20 @@ class AdminRepository:
 
     @staticmethod
     def log_admin_action(db, actor, action, user_id, details):
+        # admin_actions.details is jsonb in production (the trigger-populated
+        # province_deleted rows store real JSON objects), but every caller
+        # here passes a plain string -- psycopg2 sends it as-is, and Postgres
+        # rejects a non-JSON string with an "invalid input syntax for type
+        # json" error, silently breaking every admin action that logs here
+        # (kick, ban, add_resource, add_provinces). json.dumps() always
+        # produces valid JSON regardless of whether `details` is already a
+        # string, dict, or anything else JSON-serializable.
         db.execute(
             (
                 "INSERT INTO admin_actions (actor, action, user_id, details) "
-                "VALUES (%s, %s, %s, %s)"
+                "VALUES (%s, %s, %s, %s::jsonb)"
             ),
-            (actor, action, user_id, details),
+            (actor, action, user_id, json.dumps(details)),
         )
 
     @staticmethod
