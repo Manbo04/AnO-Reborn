@@ -85,10 +85,22 @@ body.game-page-v2 .page-military .warflexparentcolors:hover {
     text-align: left;
     font-size: 0.92rem;
 }
+/* !important on the size properties: static/style.css's unrelated
+   ".templatedivcontent .warflexparentcolors .unitimage" rule (see the
+   desktop override further down for the full story) also has no media
+   query gating it, and outranks this rule on plain specificity (3 classes
+   vs. 2) at every width, not just desktop -- so mobile needs the same
+   defensive pinning or it's exposed to the same stretch-to-fill collision
+   the moment its percentage heights have a definite parent height to
+   resolve against. */
 .page-military .unitimage {
     width: 100%;
     max-width: 300px;
-    height: auto;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    align-self: auto !important;
     border-radius: 8px;
     margin: 0 auto;
     display: block;
@@ -239,11 +251,15 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
         display: block;
         width: 100%;
         max-width: none;
-        height: 120px;
-        min-height: 120px;
-        max-height: 120px;
-        flex: none;
-        align-self: auto;
+        /* !important: the mobile-first .unitimage rule above also has to
+           carry !important against the same legacy collision, so this
+           desktop override needs it too or the mobile rule's
+           height:auto!important would win here despite lower specificity. */
+        height: 120px !important;
+        min-height: 120px !important;
+        max-height: 120px !important;
+        flex: none !important;
+        align-self: auto !important;
         margin: 0;
         object-fit: cover;
         border-radius: var(--game-radius-sm, 8px);
