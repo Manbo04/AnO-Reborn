@@ -67,9 +67,23 @@ body.game-page-v2 .page-military .menuflex2 .templatedivflex2left:active {
 }
 .page-military .warflexparentcolors {
     display: flex;
-    flex-direction: column-reverse; /* Image on top on mobile, or text on top? Let's keep text on top */
+    flex-direction: column-reverse; /* photo (2nd in DOM) pinned to the top */
     gap: 20px;
     padding: 16px;
+    width: 100%;
+    margin: 0;
+    border-radius: var(--game-radius-lg, 16px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+body.game-page-v2 .page-military .warflexparentcolors:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+}
+.page-military .templatecontentpleft {
+    width: 100%;
+    margin: 0 0 8px;
+    text-align: left;
+    font-size: 0.92rem;
 }
 .page-military .unitimage {
     width: 100%;
@@ -128,37 +142,24 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
     border-radius: 6px;
     padding: 0 16px;
 }
+/* Plain inline stat row, no box/border -- matches the reference mockup's
+   .unit-stats (flex row, mono numbers, no chrome) instead of the previous
+   bordered/boxed treatment, which read as heavier than the rest of the card. */
 .page-military .combat-stats-box {
-    background: var(--foregroundTwo);
-    color: var(--colorOne);
-    padding: 12px;
-    border-radius: 8px;
-    margin: 12px 0;
-    border-left: 4px solid var(--accent);
-}
-body.game-page-v2 .page-military .combat-stats-box {
-    background: var(--game-glass-bg);
-    backdrop-filter: var(--game-glass-blur);
-    -webkit-backdrop-filter: var(--game-glass-blur);
+    margin: 10px 0;
 }
 .page-military .combat-stats-inline {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 14px;
     margin-bottom: 8px;
 }
 .page-military .stat-badge {
-    background: var(--foregroundThree);
     color: var(--colorOne);
-    padding: 4px 8px;
-    border-radius: 4px;
     font-family: monospace;
     font-size: 0.95rem;
-}
-body.game-page-v2 .page-military .stat-badge {
-    background: var(--game-glass-bg-strong);
-    border: 1px solid var(--game-glass-border);
+    font-weight: 700;
 }
 .page-military .limit-text {
     font-size: 0.9rem;
@@ -178,17 +179,23 @@ body.game-page-v2 .page-military .stat-badge {
     }
 }
 
-/* Compact card grid instead of full-width stacked sections, closer to the
-   reference mockup's unit-card layout -- CSS layout only, every real
+/* Compact card grid matching the reference mockup's unit-card layout
+   (/Users/dede/ano-redesign/military.html) -- CSS layout only, every real
    buy/sell form/formaction/input stays exactly where it was in the DOM, so
-   no purchasing behavior changes. */
+   no purchasing behavior changes. Mockup uses a 3-up grid with the photo
+   pinned to the top of each card and the branch tabs in a single row;
+   `minmax(240px, 1fr)` lets it fall back to 2 or 1 columns on medium
+   widths instead of forcing 3 columns too early. */
 @media (min-width: 1000px) {
+    .page-military .menuflex2 .templatedivflex2left {
+        flex: 1 1 0 !important;
+    }
     .page-military .landclick,
     .page-military .airclick,
     .page-military .waterclick,
     .page-military .specialclick {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 16px;
         align-items: start;
     }
@@ -202,7 +209,11 @@ body.game-page-v2 .page-military .stat-badge {
     .page-military .airclick .warflexparentcolors,
     .page-military .waterclick .warflexparentcolors,
     .page-military .specialclick .warflexparentcolors {
-        flex-direction: column;
+        /* Same as the mobile column-reverse below -- photo stays pinned to
+           the top of the card at every width, matching the mockup, instead
+           of flipping to text-first once the grid kicks in. */
+        flex-direction: column-reverse;
+        gap: 12px;
     }
     .page-military .landclick .unitimage,
     .page-military .airclick .unitimage,
@@ -210,7 +221,9 @@ body.game-page-v2 .page-military .stat-badge {
     .page-military .specialclick .unitimage {
         display: block;
         width: 100%;
-        height: 140px;
+        max-width: none;
+        height: 120px;
+        margin: 0;
         object-fit: cover;
         border-radius: var(--game-radius-sm, 8px);
     }
