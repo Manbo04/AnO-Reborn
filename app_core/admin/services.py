@@ -32,10 +32,17 @@ _ACTION_LABELS = {
     "admin_ban_user": ("Ban", "danger"),
     "admin_unban_user": ("Unban", "info"),
     "admin_kick_user": ("Kick", "warning"),
+    "admin_view_as_start": ("View As (start)", "warning"),
+    "admin_view_as_end": ("View As (end)", "info"),
     "province_deleted": ("Province Deleted", "muted"),
     "province_created": ("Province Created", "info"),
     "nation_reset": ("Nation Reset", "danger"),
 }
+
+# How long a "view as" session stays valid without the admin explicitly
+# exiting -- see process_start_view_as/finish_view_as and app.py's
+# before_request, which auto-expires it past this.
+VIEW_AS_MAX_SECONDS = int(os.getenv("VIEW_AS_MAX_SECONDS", str(30 * 60)))
 
 def format_action(action):
     label, _ = _ACTION_LABELS.get(action, (action.replace("_", " ").title(), "muted"))
@@ -118,6 +125,7 @@ def get_admin_command_center_data():
         "new_accounts_by_day": new_accounts_by_day,
         "new_accounts_total": new_accounts_total,
         "RESOURCES": resources,
+        "VIEW_AS_MAX_SECONDS": VIEW_AS_MAX_SECONDS,
     }
 
 def process_add_resource(actor, target_user_id, amount, resource):
@@ -220,6 +228,55 @@ def process_kick_user(actor, target_user_id, reason):
         bump_session_epoch(db, target_user_id)
         AdminRepository.log_admin_action(db, actor, "admin_kick_user", target_user_id, f"reason={reason}")
     return None
+
+def process_start_view_as(actor, target_user_id, reason):
+    """Validate + audit-log the start of a read-only 'view as' session.
+
+    Does not touch flask.session -- the caller (route) owns swapping
+    session["user_id"] to target_user_id and stashing the real admin id,
+    same division of responsibility as the rest of this module (no other
+    function here reads/writes flask.session either).
+    """
+    if target_user_id in SUPER_ADMIN_USER_IDS:
+        return error(400, "Cannot view as another privileged admin nation")
+    if not (reason or "").strip():
+        return error(400, "A reason is required to view as another account")
+
+    with get_request_cursor() as db:
+        AdminRepository.ensure_admin_tables(db)
+        target_row = AdminRepository.validate_target_user(db, target_user_id)
+        if not target_row:
+            return error(404, "Target user not found")
+
+        AdminRepository.log_admin_action(
+            db, actor, "admin_view_as_start", target_user_id, {"reason": reason}
+        )
+    return None
+
+def finish_view_as(actor, target_user_id, started_at, auto_expired=False):
+    """Log the end of a view-as session and notify the player.
+
+    Shared by both the explicit exit route and before_request's
+    auto-expiry path (app.py) so logging/notification stays identical
+    either way a session ends.
+    """
+    duration_seconds = int(time() - started_at) if started_at else None
+    with get_request_cursor() as db:
+        AdminRepository.ensure_admin_tables(db)
+        AdminRepository.log_admin_action(
+            db,
+            actor,
+            "admin_view_as_end",
+            target_user_id,
+            {"duration_seconds": duration_seconds, "auto_expired": auto_expired},
+        )
+        db.execute(
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+            (
+                target_user_id,
+                "Affairs & Order staff reviewed your account to help with a support request.",
+            ),
+        )
 
 
 def take_economy_snapshot():

@@ -170,6 +170,21 @@
             <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">logout</span>Kick User</button>
         </form>
 
+        <form action="/admin/command-center/view-as" method="POST" class="infodiv">
+            <div class="templatedivflex2 menuflex">
+                <div class="templatedivflex2left">
+                    <label>View As Nation ID</label>
+                    <input class="loginsignupinput" name="target_user_id" type="number" min="1" required>
+                </div>
+                <div class="templatedivflex2left">
+                    <label>Reason</label>
+                    <input class="loginsignupinput" name="reason" placeholder="e.g. ticket-0031 investigation" required>
+                </div>
+            </div>
+            <p class="game-faint" style="font-size: 12px;">Read-only, auto-exits after {{ (VIEW_AS_MAX_SECONDS // 60) if VIEW_AS_MAX_SECONDS else 30 }} min, fully audited below, and the player is notified afterward.</p>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">visibility</span>View As</button>
+        </form>
+
         {% if controlled_users %}
         <h2 class="templatecontentheaderleft">Active Controls</h2>
         <div class="templateoutertablediv inverttable">
