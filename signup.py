@@ -608,7 +608,9 @@ def discord_register():
                 )
 
             app.config["SESSION_PERMANENT"] = True
-            app.permanent_session_lifetime = datetime.timedelta(days=365)
+            from login_verification import SESSION_LIFETIME_DAYS
+
+            app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
 
             # Get Discord user info from session token
             token = session.get("oauth2_token")

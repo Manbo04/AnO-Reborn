@@ -147,7 +147,9 @@ def google_callback_route():
             except Exception as e:
                 logger.error("ensure_user_provisioned failed in google callback: %s", e)
             current_app.config["SESSION_PERMANENT"] = True
-            current_app.permanent_session_lifetime = datetime.timedelta(days=365)
+            from login_verification import SESSION_LIFETIME_DAYS
+
+            current_app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
 
             from database import client_ip_from_headers, coarse_fingerprint_from_headers
             from login_verification import complete_or_verify_login
@@ -292,7 +294,9 @@ def google_signup_route():
 
             session["user_id"] = user_id
             current_app.config["SESSION_PERMANENT"] = True
-            current_app.permanent_session_lifetime = datetime.timedelta(days=365)
+            from login_verification import SESSION_LIFETIME_DAYS
+
+            current_app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
             session.permanent = True
             session.modified = True
 

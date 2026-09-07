@@ -72,7 +72,9 @@ def login():
             )
             # Use application context to avoid circular imports / NameError
             current_app.config["SESSION_PERMANENT"] = True
-            current_app.permanent_session_lifetime = datetime.timedelta(days=365)
+            from login_verification import SESSION_LIFETIME_DAYS
+
+            current_app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
 
             # gets the password input from the form
             password = request.form.get("password")
@@ -347,7 +349,9 @@ def make_session(token=None, state=None, scope=None):
 def discord_login():
     # Use the Flask application context instead of importing app
     current_app.config["SESSION_PERMANENT"] = True
-    current_app.permanent_session_lifetime = datetime.timedelta(days=365)
+    from login_verification import SESSION_LIFETIME_DAYS
+
+    current_app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
 
     try:
         with get_request_cursor() as db:

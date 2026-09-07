@@ -29,6 +29,14 @@ logger = logging.getLogger(__name__)
 DISCORD_API_BASE = os.environ.get("API_BASE_URL", "https://discord.com/api")
 TOKEN_TTL = timedelta(minutes=20)
 
+# How long a logged-in session stays valid without the player visiting.
+# Was 365 days (duplicated as a literal across login.py, signup.py, and
+# google_auth.py) -- a session that silently renews for a year on every
+# request is exactly what turns a leftover "logged in as someone else for
+# support" tab into a real "why am I in the wrong account" report days
+# later (see ano-ticket-0028-recurrence-investigation-2026-09-06.md).
+SESSION_LIFETIME_DAYS = 30
+
 
 def _generate_token() -> str:
     return "".join(

@@ -28,7 +28,7 @@
         </div>
     {% endcall %}
     {% else %}
-    {{ game_hero(display_name, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, image_url=('/flag/country/' ~ cId) if flag else None, extra_class=country_border_css_class) }}
+    {{ game_hero(display_name, badge_icon='flag', badge_text=('In ' ~ colName) if colName else None, subtitle="You're viewing this nation's public profile — not your own.", image_url=('/flag/country/' ~ cId) if flag else None, extra_class=country_border_css_class) }}
     {% endif %}
 
     <div class="templatedivcontent">
