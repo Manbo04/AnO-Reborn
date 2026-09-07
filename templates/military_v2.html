@@ -88,10 +88,10 @@ body.game-page-v2 .page-military .menuflex2 .templatedivflex2left:active {
 .page-military .templatecontentheadercenter {
     margin-top: 8px;
 }
-/* {{ ... | milres }} is plain text dropped straight into a bare <ul> with
-   no <li> -- not an actual list, just a cost line -- so it was silently
-   inheriting the browser's default UA list margin (~17px top/bottom) for
-   no visual reason. */
+/* The "milres" Jinja filter's output is plain text dropped straight into
+   a bare <ul> with no <li> -- not an actual list, just a cost line -- so
+   it was silently inheriting the browser's default UA list margin
+   (~17px top/bottom) for no visual reason. */
 .page-military .menudiv ul {
     list-style: none;
     padding: 0;
