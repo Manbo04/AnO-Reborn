@@ -71,12 +71,21 @@ RATIONS_DISTRIBUTION_PER_BUILDING = {
 RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
 
 # Rations spoilage: banked rations above the buffer decay each hour instead of
-# sustaining unattended growth indefinitely. Tied specifically to
-# distribution_centers (not the full distribution-building mix, since some of
-# those are cheap enough to mass-build purely to game this) so the buffer
-# scales with a real, deliberate infrastructure investment.
+# sustaining unattended growth indefinitely. Every distribution building
+# contributes buffer capacity, scaled the same way it scales consumption
+# capacity in RATIONS_DISTRIBUTION_PER_BUILDING (~1.33x), so the buffer
+# tracks real infrastructure investment regardless of which building type
+# a player chose.
 RATIONS_BASELINE_BUFFER_DAYS = 14
-RATIONS_STORAGE_PER_DISTRIBUTION_CENTER = 2_000_000
+RATIONS_STORAGE_PER_BUILDING = {
+    "food_banks": 333_333,
+    "distribution_centers": 2_000_000,
+    "gas_stations": 1_333_333,
+    "general_stores": 3_333_333,
+    "farmers_markets": 2_666_667,
+    "malls": 6_666_667,
+}
+RATIONS_STORAGE_PER_BUILDING_DEFAULT = 2_000_000
 RATIONS_EXCESS_DECAY_RATE = 0.02
 
 # TEMP: 48h grace period after this mechanic's 2026-08-26 rollout, so accounts
