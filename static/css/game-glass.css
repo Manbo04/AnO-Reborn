@@ -878,9 +878,18 @@ body.game-page-v2 .templatecontentheaderleft {
    "building/unit/war card" wrapper used across military, province, and war
    -- opaque var(--foreground) fill, never touched by the theme-v2 port, so
    every one of those cards renders as a solid opaque block on every ported
-   page that uses it. One shared fix instead of a per-page one. */
+   page that uses it. One shared fix instead of a per-page one.
+
+   Uses -strong (62-82% opaque), not the base --game-glass-bg (32%): these
+   cards hold dense body-text descriptions (e.g. "Soldiers are cheap and
+   expendable...") sitting directly over a busy, sometimes-bright blurred
+   photo background -- 32% let too much of the photo through and read as
+   genuinely hard to read, not just stylistically translucent. Reported
+   directly ("words hard to see") on /military 2026-09-07. The base
+   --game-glass-bg stays right for smaller/lighter chrome elements; only
+   text-heavy content cards need the stronger fill. */
 body.game-page-v2 .warflexparentcolors {
-    background: var(--game-glass-bg);
+    background: var(--game-glass-bg-strong);
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
     border-color: var(--game-glass-border);
