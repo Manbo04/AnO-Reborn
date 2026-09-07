@@ -1101,7 +1101,8 @@ def wars():
                     }
 
                     for war_id, defender, attacker in war_attacker_defender_ids:
-                        # NOTE: update_supply is now performed in background; skip here
+                        # NOTE: supply regen now happens in global_tick's war_supply_regen
+                        # phase (app_core/game_ticks/maintenance.py); skip here
                         attacker_info = {}
                         defender_info = {}
 
