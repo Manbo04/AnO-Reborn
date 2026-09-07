@@ -147,6 +147,11 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
    bordered/boxed treatment, which read as heavier than the rest of the card. */
 .page-military .combat-stats-box {
     margin: 10px 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    display: block;
+    text-align: left;
 }
 .page-military .combat-stats-inline {
     display: flex;
@@ -197,13 +202,14 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 16px;
-        align-items: start;
+        align-items: stretch;
     }
     .page-military .landclick .menudiv,
     .page-military .airclick .menudiv,
     .page-military .waterclick .menudiv,
     .page-military .specialclick .menudiv {
         margin: 0;
+        height: 100%;
     }
     .page-military .landclick .warflexparentcolors,
     .page-military .airclick .warflexparentcolors,
@@ -211,9 +217,14 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
     .page-military .specialclick .warflexparentcolors {
         /* Same as the mobile column-reverse below -- photo stays pinned to
            the top of the card at every width, matching the mockup, instead
-           of flipping to text-first once the grid kicks in. */
+           of flipping to text-first once the grid kicks in. height:100% +
+           the grid's align-items:stretch above makes every card in a row
+           match the tallest one's height, instead of ragged bottoms when
+           one unit's description runs a line or two longer than its
+           neighbors'. */
         flex-direction: column-reverse;
         gap: 12px;
+        height: 100%;
     }
     .page-military .landclick .unitimage,
     .page-military .airclick .unitimage,
