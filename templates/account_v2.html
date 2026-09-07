@@ -179,6 +179,23 @@
             </form>
         {% endcall %}
 
+        {% call game_glass_panel('Two-Factor Authentication', icon='verified_user', style='margin-bottom: var(--game-space-lg, 24px);') %}
+            {% if has_2fa_enabled %}
+            <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(45, 159, 111, 0.15); border-left: 3px solid #2d9f6f;">
+                <span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.1rem;">check_circle</span>
+                Two-factor authentication is <strong>enabled</strong> on your account.
+            </p>
+            <button type="button" onclick="openTwofaDisableModal()" class="templatedivbutton templatecenteredbutton redactionbutton">
+                <span class="material-icons-outlined">lock_open</span>Disable Two-Factor Authentication
+            </button>
+            {% else %}
+            <p style="margin-bottom: 10px; opacity: 0.8;">Add an extra login step using an authenticator app (Google Authenticator, Authy, 1Password, etc.) so a stolen password alone isn't enough to get into your account.</p>
+            <a href="/account/2fa/setup" class="templatedivbutton templatecenteredbutton">
+                <span class="material-icons-outlined">verified_user</span>Enable Two-Factor Authentication
+            </a>
+            {% endif %}
+        {% endcall %}
+
         {% call game_glass_panel('General', icon='tune') %}
             <label class="templatecheckmarklabel fit">Dark Mode
                 <input type="checkbox" onchange="toggleTheme()" id="slider">
@@ -485,11 +502,16 @@ document.getElementById('logoutModal').addEventListener('click', function(e) {
     if (e.target === this) closeLogoutModal();
 });
 
+document.getElementById('twofaDisableModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTwofaDisableModal();
+});
+
 // Close modals with Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeDeleteModal();
         closeLogoutModal();
+        closeTwofaDisableModal();
     }
 });
 
@@ -499,6 +521,14 @@ function openResetModal() {
 
 function closeResetModal() {
     document.getElementById('resetAccountModal').style.display = 'none';
+}
+
+function openTwofaDisableModal() {
+    document.getElementById('twofaDisableModal').style.display = 'flex';
+}
+
+function closeTwofaDisableModal() {
+    document.getElementById('twofaDisableModal').style.display = 'none';
 }
 
 function submitReset(type) {
@@ -516,4 +546,5 @@ function submitReset(type) {
 </script>
 
 {% include "partials/reset_modal.html" %}
+{% include "partials/twofa_disable_modal.html" %}
 {% endblock %}

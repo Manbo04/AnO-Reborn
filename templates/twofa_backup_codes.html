@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %} Backup Codes {% endblock %}
+{% block body %}
+<img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
+
+<div class="templatediv noboxshadowtopper loginsignupdiv">
+
+    <div class="templatedivtopper noboxshadowtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+            key
+            </span>Two-Factor Authentication Enabled</h1>
+    </div>
+
+    <div class="templatedivcontent">
+        <div class="templatedivflex2 menuflex divflex2center flexwrap width100">
+            <div class="templatedivflex2left" style="text-align: center; width: 100%; max-width: 460px; background: rgba(15, 20, 25, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
+
+                <div style="background: rgba(255, 87, 34, 0.1); border-left: 4px solid #ff5722; padding: 15px; margin-bottom: 25px; text-align: left; border-radius: 4px;">
+                    <strong style="color: #ff5722; display: block; margin-bottom: 5px;"><span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.2rem;">warning</span> Save these backup codes now</strong>
+                    <span style="color: #ccc; font-size: 0.95rem;">Each code can be used once to log in if you lose access to your authenticator app. They are shown only this one time.</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 25px;">
+                    {% for code in backup_codes %}
+                    <div style="user-select: all; font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 1rem; font-weight: 700; color: #4da3ff; background: rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">{{ code }}</div>
+                    {% endfor %}
+                </div>
+
+                <p style="color: #ccc; margin-bottom: 25px; font-size: 0.95rem;">Store these somewhere safe (a password manager, printed and put away). Anyone who gets both your password and a backup code can log into your account.</p>
+
+                <a href="/account" class="templatedivbutton templatecenteredbutton w-full">
+                    <span class="material-icons-outlined">check</span>I've saved my codes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect, request
+from flask import Blueprint, render_template, session, redirect, request, flash, make_response
 from helpers import login_required, error, is_theme_v2_enabled, session_cookie_fingerprint
 from database import get_request_cursor, rollback_db_cursor, users_table_has_column
 from psycopg2.extras import RealDictCursor
@@ -68,6 +68,8 @@ def account():
     except Exception:
         pass
 
+    from app_core.auth import totp
+
     template = "account_v2.html" if is_theme_v2_enabled("account") else "account.html"
     return render_template(
         template,
@@ -75,9 +77,104 @@ def account():
         discord_bot_link=discord_bot_link,
         discord_link_ttl_minutes=discord_link_ttl_minutes,
         has_recovery_key=has_recovery_key,
+        has_2fa_enabled=totp.has_2fa_enabled(cId),
         referral_dashboard=referral_dashboard,
         reset_is_first=(reset_count == 0),
     )
+
+
+@bp.route("/account/2fa/setup", methods=["GET"])
+@login_required
+def twofa_setup():
+    from app_core.auth import totp
+
+    cId = session["user_id"]
+    if totp.has_2fa_enabled(cId):
+        flash("Two-factor authentication is already enabled. Disable it first to re-enroll.")
+        return redirect("/account")
+
+    try:
+        with get_request_cursor() as db:
+            secret = totp.start_or_resume_enrollment(db, cId)
+    except totp.TwoFactorUnavailableError:
+        flash("Two-factor authentication is temporarily unavailable. Please try again later.")
+        return redirect("/account")
+
+    with get_request_cursor() as db:
+        db.execute("SELECT username FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+    account_label = row[0] if row else f"user-{cId}"
+
+    qr_data_uri = totp.build_qr_data_uri(secret, account_label)
+
+    resp = make_response(
+        render_template("twofa_setup.html", secret=secret, qr_data_uri=qr_data_uri)
+    )
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@bp.route("/account/2fa/confirm", methods=["POST"])
+@login_required
+def twofa_confirm():
+    from app_core.auth import totp
+
+    cId = session["user_id"]
+    code = request.form.get("code", "")
+
+    try:
+        with get_request_cursor() as db:
+            backup_codes = totp.confirm_enrollment(db, cId, code)
+    except totp.TwoFactorUnavailableError:
+        flash("Two-factor authentication is temporarily unavailable. Please try again later.")
+        return redirect("/account")
+
+    if backup_codes is None:
+        flash("Invalid code. Please try again.")
+        return redirect("/account/2fa/setup")
+
+    resp = make_response(
+        render_template("twofa_backup_codes.html", backup_codes=backup_codes)
+    )
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@bp.route("/account/2fa/disable", methods=["POST"])
+@login_required
+def twofa_disable():
+    import bcrypt
+    from app_core.auth import totp
+
+    cId = session["user_id"]
+
+    # Step-up confirmation, identical shape to countries.py::reset_account()'s
+    # confirm_password gate -- a stolen session cookie alone must not be
+    # enough to turn off the second factor protecting the account.
+    confirm_password = request.form.get("confirm_password")
+    if not confirm_password:
+        return error(400, "Confirm your password to disable two-factor authentication")
+
+    with get_request_cursor() as db:
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+    if not row or not row[0]:
+        return error(500, "Account data is missing. Please contact support.")
+    try:
+        password_ok = bcrypt.checkpw(
+            confirm_password.encode("utf-8"), row[0].encode("utf-8")
+        )
+    except Exception:
+        password_ok = False
+    if not password_ok:
+        return error(400, "Confirm your password to disable two-factor authentication")
+
+    with get_request_cursor() as db:
+        totp.disable_2fa(db, cId)
+
+    flash("Two-factor authentication has been disabled.")
+    return redirect("/account")
+
 
 @bp.route("/logout")
 def logout():

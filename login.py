@@ -217,6 +217,17 @@ def login():
 
                     ip = client_ip_from_headers(request.headers, request.remote_addr)
                     fingerprint = coarse_fingerprint_from_headers(request.headers)
+
+                    from app_core.auth.totp import has_2fa_enabled
+
+                    if has_2fa_enabled(user[0]):
+                        session.clear()
+                        session["pending_2fa_user_id"] = user[0]
+                        session["pending_2fa_auth_type"] = "password"
+                        session["pending_2fa_started_at"] = time.time()
+                        session.permanent = True
+                        return redirect("/login/2fa")
+
                     logger.debug("Handing off to complete_or_verify_login for user_id=%s", user[0])
                     return complete_or_verify_login(user[0], ip, fingerprint, "password")
                 else:
@@ -407,6 +418,16 @@ def discord_login():
     except Exception:
         pass  # best-effort; don't block login
 
+    from app_core.auth.totp import has_2fa_enabled
+
+    if has_2fa_enabled(user_id):
+        session.clear()
+        session["pending_2fa_user_id"] = user_id
+        session["pending_2fa_auth_type"] = "discord"
+        session["pending_2fa_started_at"] = time.time()
+        session.permanent = True
+        return redirect("/login/2fa")
+
     # complete_or_verify_login() clears the session itself (on the completed
     # path); the oauth2_state/oauth2_token keys go with it either way.
     return complete_or_verify_login(user_id, ip, fingerprint, "discord")
@@ -418,10 +439,48 @@ def discord_login():
 # behind a config flag (e.g. app.config['ENABLE_DEV_ENDPOINTS'] == True).
 
 
+def login_2fa():
+    """Second-factor challenge, reached after a password/Discord/Google
+    credential check succeeds on an account with TOTP 2FA enabled (see the
+    gating snippet in login() and discord_login() above, and in
+    app_core/auth/google_auth.py's callback). Rate-limited via
+    app.py's _RATE_LIMITED_AUTH_PATHS -- a 6-digit code has only 1,000,000
+    combinations and the backup-code fallback shares this same endpoint.
+    """
+    PENDING_TTL_SECONDS = 600
+    pending_user_id = session.get("pending_2fa_user_id")
+    started_at = session.get("pending_2fa_started_at", 0)
+    if not pending_user_id or (time.time() - started_at) > PENDING_TTL_SECONDS:
+        session.pop("pending_2fa_user_id", None)
+        session.pop("pending_2fa_auth_type", None)
+        session.pop("pending_2fa_started_at", None)
+        flash("Please log in again.")
+        return redirect("/login")
+
+    if request.method == "POST":
+        from app_core.auth.totp import verify_login_code
+
+        code = (request.form.get("code") or "").strip()
+        if verify_login_code(pending_user_id, code):
+            auth_type = session.pop("pending_2fa_auth_type", "password")
+            session.pop("pending_2fa_user_id", None)
+            session.pop("pending_2fa_started_at", None)
+            ip = client_ip_from_headers(request.headers, request.remote_addr)
+            fingerprint = coarse_fingerprint_from_headers(request.headers)
+            return complete_or_verify_login(pending_user_id, ip, fingerprint, auth_type)
+        flash("Invalid code. Please try again.")
+        return render_template("login_2fa.html"), 400
+
+    return render_template("login_2fa.html")
+
+
 def register_login_routes(app_instance):
     """Register login routes. Called by app.py after app initialization."""
     app_instance.add_url_rule("/login/", "login_slash", login, methods=["GET", "POST"])
     app_instance.add_url_rule("/login", "login", login, methods=["GET", "POST"])
     app_instance.add_url_rule(
         "/discord_login/", "discord_login", discord_login, methods=["GET"]
+    )
+    app_instance.add_url_rule(
+        "/login/2fa", "login_2fa", login_2fa, methods=["GET", "POST"]
     )
