@@ -1,12 +1,13 @@
 import hmac
 import os
+from time import time
 from flask import Blueprint, request, render_template, session, redirect, jsonify, current_app, flash
-from helpers import login_required, get_valid_int
+from helpers import login_required, get_valid_int, error
 from .services import (
     admin_only_guard, get_admin_command_center_data, process_add_resource, process_add_provinces,
     process_ban_user, process_unban_user, process_kick_user, get_economy_dashboard_data,
     get_economy_api_data, take_economy_snapshot, trigger_tasks_service, admin_ai_agent_service,
-    get_ai_logs, action_badge_class
+    get_ai_logs, action_badge_class, process_start_view_as, finish_view_as
 )
 from .guards import admin_diag_authorized, admin_diag_denied_response, admin_diag_or_session
 from .repositories import AdminRepository
@@ -244,6 +245,57 @@ def admin_kick_user():
     if err_res: return err_res
     
     flash(f"Kick queued for user {target_user_id}")
+    return redirect("/admin/command-center")
+
+@admin_bp.route("/admin/command-center/view-as", methods=["POST"])
+@login_required
+def admin_view_as():
+    """Start a read-only 'view as' session (see the ticket-0028 investigation
+    memory for why this replaces staff logging into a player's real
+    account). Swaps session["user_id"] to the target for this admin's own
+    browser only -- app.py's before_request blocks every non-GET request
+    while _real_admin_id is set, so nothing can actually be changed while
+    impersonating, and the target's own session is never touched.
+    """
+    denied = admin_only_guard(session.get("user_id"))
+    if denied: return denied
+    if session.get("_real_admin_id"):
+        return error(400, "Already viewing as another account -- exit that session first")
+    target_user_id, err = get_valid_int("target_user_id", error_invalid="Invalid user ID", error_min="Target user ID must be positive")
+    if err: return err
+    reason = (request.form.get("reason") or "").strip()
+
+    err_res = process_start_view_as(session["user_id"], target_user_id, reason)
+    if err_res: return err_res
+
+    session["_real_admin_id"] = session["user_id"]
+    session["_view_as_reason"] = reason
+    session["_view_as_started_at"] = time()
+    session["user_id"] = target_user_id
+    session.modified = True
+
+    return redirect("/my_country")
+
+@admin_bp.route("/admin/view-as/exit", methods=["POST"])
+@login_required
+def admin_view_as_exit():
+    """Restore the admin's own session. Reachable even mid-view-as (this
+    route is the one exemption to the non-GET block in before_request)."""
+    real_admin_id = session.get("_real_admin_id")
+    if not real_admin_id:
+        return redirect("/admin/command-center")
+
+    target_user_id = session.get("user_id")
+    started_at = session.get("_view_as_started_at")
+    finish_view_as(real_admin_id, target_user_id, started_at, auto_expired=False)
+
+    session["user_id"] = real_admin_id
+    session.pop("_real_admin_id", None)
+    session.pop("_view_as_reason", None)
+    session.pop("_view_as_started_at", None)
+    session.modified = True
+
+    flash("Exited view-as mode")
     return redirect("/admin/command-center")
 
 @admin_bp.route("/admin/command-center/economy", methods=["GET"])

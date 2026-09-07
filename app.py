@@ -163,6 +163,35 @@ def create_app():
 
         user_id = session.get("user_id")
 
+        # Admin "view as" (see app_core/admin/routes.py::admin_view_as):
+        # session["user_id"] is temporarily swapped to the target account so
+        # every existing read route works unmodified, but every non-GET
+        # request is blocked outright while this is active -- an admin can
+        # look, never act, while impersonating. Auto-expires so a forgotten
+        # view-as session can't linger the way a real leftover login did in
+        # the ticket-0028 investigation this replaces.
+        real_admin_id = session.get("_real_admin_id")
+        if real_admin_id:
+            from app_core.admin.services import VIEW_AS_MAX_SECONDS, finish_view_as
+
+            started_at = session.get("_view_as_started_at", 0)
+            if time() - started_at > VIEW_AS_MAX_SECONDS:
+                try:
+                    finish_view_as(real_admin_id, user_id, started_at, auto_expired=True)
+                except Exception:
+                    logging.getLogger(__name__).exception(
+                        "finish_view_as (auto-expiry) failed for admin=%s target=%s",
+                        real_admin_id, user_id,
+                    )
+                session["user_id"] = real_admin_id
+                user_id = real_admin_id
+                session.pop("_real_admin_id", None)
+                session.pop("_view_as_reason", None)
+                session.pop("_view_as_started_at", None)
+                session.modified = True
+            elif request.method != "GET" and request.path != "/admin/view-as/exit":
+                return error(403, "Exit \"view as\" mode to take actions.")
+
         # TEMPORARY diagnostic (ticket-0028 recurrence, 2026-09-07): two
         # independent reports of a browser rendering as a different real
         # account with no login in between (Dede <-> Lamlor, and separately
@@ -727,6 +756,14 @@ def create_app():
 
         from app_core.auth.google_auth import is_google_auth_configured
 
+        view_as_active = bool(session.get("_real_admin_id"))
+        view_as_minutes_left = None
+        if view_as_active:
+            from app_core.admin.services import VIEW_AS_MAX_SECONDS
+
+            elapsed = time_module.time() - session.get("_view_as_started_at", 0)
+            view_as_minutes_left = max(0, int((VIEW_AS_MAX_SECONDS - elapsed) // 60))
+
         ctx = {
             **game_ui.game_ui_context(),
             "google_client_id": os.getenv("GOOGLE_CLIENT_ID"),
@@ -736,6 +773,8 @@ def create_app():
             "notification_count": get_notification_count(),
             "game_ui": {},
             "equipped_bg_css_class": None,
+            "view_as_active": view_as_active,
+            "view_as_minutes_left": view_as_minutes_left,
         }
 
         if "user_id" not in session:

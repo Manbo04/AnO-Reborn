@@ -219,6 +219,16 @@
 
 <body class="has-side-ads {% if FEATURE_GAME_SHELL and session.get('user_id') %}game-shell-active{% endif %}{% if equipped_bg_css_class %} {{ equipped_bg_css_class }}{% endif %}{% block body_class %}{% endblock %}">
 
+    {% if view_as_active %}
+    <div style="position: sticky; top: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; gap: var(--game-space-md); flex-wrap: wrap; padding: var(--game-space-sm) var(--game-space-md); background: var(--danger); color: #fff; font-size: 13px; text-align: center;">
+        <span><span class="material-icons-outlined" style="vertical-align: text-bottom; font-size: 16px;">visibility</span>
+            Viewing <strong>{{ country_name }}</strong>'s account as admin — read-only{% if view_as_minutes_left is not none %}, auto-exits in {{ view_as_minutes_left }} min{% endif %}</span>
+        <form action="/admin/view-as/exit" method="POST" style="margin: 0;">
+            <button type="submit" class="game-btn" style="background: #fff; color: var(--danger); border: none; padding: 2px 12px; font-size: 12px;">Exit view as</button>
+        </form>
+    </div>
+    {% endif %}
+
     {% include 'partials/cookie_consent.html' %}
 
     {% include 'partials/side_ads.html' %}
