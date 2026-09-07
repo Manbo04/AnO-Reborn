@@ -208,9 +208,11 @@ body.game-page-v2 .page-military .stat-badge {
     .page-military .airclick .unitimage,
     .page-military .waterclick .unitimage,
     .page-military .specialclick .unitimage {
-        max-width: 100%;
-        max-height: 140px;
+        display: block;
+        width: 100%;
+        height: 140px;
         object-fit: cover;
+        border-radius: var(--game-radius-sm, 8px);
     }
 }
 </style>
