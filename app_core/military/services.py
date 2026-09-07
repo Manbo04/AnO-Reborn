@@ -150,7 +150,7 @@ def process_buy_units(db, cId, units, wantedUnits, mildict):
         requiredResources = amount * wantedUnits
 
         if requiredResources > currentResources:
-            return False, f"{resource}: need {requiredResources-currentResources}"
+            return False, f"Not enough {resource} ({currentResources}/{requiredResources})"
 
     buy_deltas = {res: -(amt * wantedUnits) for res, amt in resources.items()}
     adjust_resources_batch(db, cId, buy_deltas)

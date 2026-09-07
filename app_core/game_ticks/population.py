@@ -155,11 +155,10 @@ def population_growth():  # Function for growing population
 
         # Preload distribution capacity per user
         dist_cap_map = {}
-        # Tracked separately from dist_cap_map (which spans 6 building types,
-        # some very cheap) so the rations-storage buffer below can't be
-        # trivially inflated by mass-building the cheapest distribution
-        # building -- it's tied specifically to distribution_centers.
-        distribution_centers_map = {}
+        # Rations-storage buffer: every distribution building contributes,
+        # scaled the same way it scales consumption capacity, so the buffer
+        # reflects total distribution investment regardless of building mix.
+        storage_buffer_map = {}
         if variables.FEATURE_RATIONS_DISTRIBUTION:
             dbdict.execute(
                 """
@@ -184,8 +183,12 @@ def population_growth():  # Function for growing population
                     bname, variables.RATIONS_DISTRIBUTION_PER_BUILDING_DEFAULT
                 )
                 dist_cap_map[uid] = dist_cap_map.get(uid, 0) + qty * cap
-                if bname == "distribution_centers":
-                    distribution_centers_map[uid] = qty
+                storage_cap = variables.RATIONS_STORAGE_PER_BUILDING.get(
+                    bname, variables.RATIONS_STORAGE_PER_BUILDING_DEFAULT
+                )
+                storage_buffer_map[uid] = (
+                    storage_buffer_map.get(uid, 0) + qty * storage_cap
+                )
 
         conn.commit()  # Release read locks from preload queries
 
@@ -222,14 +225,13 @@ def population_growth():  # Function for growing population
             # Rations spoilage: a banked surplus above the buffer decays each
             # hour instead of being able to sustain unattended growth
             # indefinitely. Buffer = free baseline (days of this user's
-            # current hourly need) + extra capacity from distribution_centers
-            # they've built.
+            # current hourly need) + extra capacity from distribution
+            # buildings they've built.
             spoilage = 0
             if not in_spoilage_grace_period:
                 buffer = (
                     needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS
-                    + distribution_centers_map.get(uid, 0)
-                    * variables.RATIONS_STORAGE_PER_DISTRIBUTION_CENTER
+                    + storage_buffer_map.get(uid, 0)
                 )
                 remaining_after_consumption = warehouse - actually_consumed
                 if remaining_after_consumption > buffer:
