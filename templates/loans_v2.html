@@ -6,7 +6,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('National Loans', badge_icon='account_balance_wallet', subtitle='Borrow against your own population-scaled capacity. Interest is deducted from your treasury every hour until repaid — an unpaid loan has a real cost, not just a number.') }}
+    {{ game_hero('National Loans', badge_icon='account_balance_wallet', subtitle='Borrow against your own population-scaled capacity. A one-time fee is added when you borrow — no ongoing interest, but borrowing over 70% of your capacity costs more, and there\'s a cooldown before your next loan.') }}
 
     <div class="templatedivcontent">
 
@@ -23,15 +23,11 @@
                     <span class="stat-value">${{ status.balance | fmt }}</span>
                 </div>
                 <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Interest Rate</strong>
-                    <span class="stat-value">{{ (status.interest_rate * 100) | round(1) }}% / hour</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">schedule</span>Next Hour's Interest</strong>
-                    <span class="stat-value">${{ status.hourly_interest | fmt }}</span>
+                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>One-Time Fee Charged</strong>
+                    <span class="stat-value">${{ status.fee_charged | fmt }}</span>
                 </div>
             </div>
-            <p class="templatecontentpleft" style="margin-top: 14px;">This is garnished from your treasury automatically every hour. If your gold can't cover it, the shortfall is added to your balance instead of being forgiven.</p>
+            <p class="templatecontentpleft" style="margin-top: 14px;">The fee was added to your balance when you borrowed — no ongoing interest. Repay whenever you like, at your own pace.</p>
 
             <form action="/loans/repay" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px;">
                 <input type="number" name="amount" placeholder="Repayment amount" class="loginsignupinput" style="flex: 1; min-width: 200px;" min="1" step="1" required>
@@ -48,14 +44,22 @@
                     <span class="stat-value">${{ status.cap | fmt }}</span>
                 </div>
                 <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Interest Rate</strong>
-                    <span class="stat-value">{{ (status.interest_rate * 100) | round(1) }}% / hour</span>
+                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Origination Fee</strong>
+                    <span class="stat-value">{{ (status.origination_fee * 100) | round(0) }}%</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">warning</span>Fee Above {{ (status.high_utilization_threshold * 100) | round(0) }}% of Cap</strong>
+                    <span class="stat-value">{{ (status.high_utilization_fee * 100) | round(0) }}%</span>
                 </div>
             </div>
+            {% if status.cooldown_hours_remaining > 0 %}
+            <p class="templatecontentpleft" style="margin-top: 14px; color: #FF9800;">You're on cooldown after your last loan — you can borrow again in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
+            {% else %}
             <form action="/loans/take" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 14px;">
                 <input type="number" name="amount" placeholder="Loan amount (min ${{ status.min_amount | commas }})" class="loginsignupinput" style="flex: 1; min-width: 220px;" min="{{ status.min_amount }}" max="{{ status.cap }}" step="1" required>
                 <button type="submit" class="game-btn game-btn-primary">Borrow</button>
             </form>
+            {% endif %}
         </div>
         {% endif %}
 
