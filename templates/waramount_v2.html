@@ -13,6 +13,7 @@
       }
       document.getElementById("supply-cost").innerText = display_supply_cost;
     }
+    window.addEventListener("DOMContentLoaded", () => attack_costs());
 </script>
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}');"></div>
@@ -34,7 +35,7 @@
                 <ul class="bold medium">{{selected_units[r] | capitalize}}</ul>
                 <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename='images/'+selected_units[r][:-1]+'.jpg') }}?v=2" />
                 <div class="templateflexfullinput">Available: {{unitamounts[r]}}</div>
-                <input onchange="attack_costs(event)" type="number" class="loginsignupinput templateflexfullinput unit_class" autocomplete="off" name="{{selected_units[r]}}" value="0" />
+                <input onchange="attack_costs(event)" type="number" class="loginsignupinput templateflexfullinput unit_class" autocomplete="off" name="{{selected_units[r]}}" value="{{unitamounts[r]}}" max="{{unitamounts[r]}}" min="0" />
             </div>
             {% endfor %}
         </div>
