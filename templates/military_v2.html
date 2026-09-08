@@ -234,7 +234,15 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
     .page-military .waterclick,
     .page-military .specialclick {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        /* Capped at 340px, not 1fr: on a wide monitor, 1fr let 3 columns
+           split the full window width evenly, stretching each card to
+           ~490px+ and dragging its image/text/padding up in visual scale
+           with it -- the actual source of "too big" on desktop. Capping
+           the track size keeps cards a fixed, compact width regardless of
+           window width; justify-content centers the now-narrower grid
+           instead of leaving it pinned to the left edge. */
+        grid-template-columns: repeat(auto-fit, minmax(240px, 340px));
+        justify-content: center;
         gap: 16px;
         align-items: start;
     }
