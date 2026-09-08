@@ -220,6 +220,38 @@
             </div>
             {% endif %}
 
+            {% if leader_name or currency_name or ruling_party or capital_province_name %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-title" style="margin-bottom: 12px;">National Profile</div>
+                <div class="stat-grid">
+                    {% if leader_name %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">person</span>Leader</strong>
+                        <span class="stat-value">{{ leader_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if ruling_party %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">groups</span>Ruling Party</strong>
+                        <span class="stat-value">{{ ruling_party }}</span>
+                    </div>
+                    {% endif %}
+                    {% if currency_name %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">payments</span>Currency</strong>
+                        <span class="stat-value">{{ currency_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if capital_province_name %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">location_city</span>Capital</strong>
+                        <span class="stat-value">{{ capital_province_name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             {% include 'partials/distribution_alert.html' %}
 
             {% include 'partials/coalition_recommendations.html' %}
@@ -1323,6 +1355,21 @@
                         </div>
                         <div class="country-lore-editor-wrap">
                             <textarea id="countryDescription" class="templatetextarea" name="description" placeholder="Write your nation's story — history, leaders, ambitions, or in-character voice.">{{ description|e }}</textarea>
+                        </div>
+                    </section>
+
+                    <section class="country-customize-section country-government-studio" aria-labelledby="country-government-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">account_balance</span>
+                            <div>
+                                <h3 id="country-government-heading" class="country-customize-section-title">Government details</h3>
+                                <p class="country-customize-section-hint">Optional larp flavor shown on your lore page.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-editor-wrap" style="padding: 15px 20px; display: grid; gap: 10px;">
+                            <input type="text" name="leader_name" class="loginsignupinput" value="{{ leader_name|e if leader_name else '' }}" placeholder="Nation leader's name" maxlength="60">
+                            <input type="text" name="currency_name" class="loginsignupinput" value="{{ currency_name|e if currency_name else '' }}" placeholder="National currency name" maxlength="40">
+                            <input type="text" name="ruling_party" class="loginsignupinput" value="{{ ruling_party|e if ruling_party else '' }}" placeholder="Ruling party or ideology" maxlength="60">
                         </div>
                     </section>
 

@@ -126,7 +126,8 @@ class CountryService:
                           p.total_pop, p.avg_happiness,
                           p.avg_productivity, p.province_count,
                           nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name,
-                          tt.name AS title, cb.css_class AS country_border_css_class
+                          tt.name AS title, cb.css_class AS country_border_css_class,
+                          u.leader_name, u.currency_name, u.ruling_party, cap.provinceName AS capital_province_name
                    FROM users u
                    INNER JOIN stats s ON u.id=s.id
                    LEFT JOIN {members_tbl} cm ON u.id=cm.userid
@@ -145,6 +146,7 @@ class CountryService:
                    LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                    LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
                    LEFT JOIN cosmetics cb ON cb.id = s.equipped_country_border_cosmetic_id AND cb.is_active = TRUE
+                   LEFT JOIN provinces cap ON cap.userid = u.id AND cap.is_capital
                    WHERE u.id=%s"""
         else:
             _CORE_COUNTRY_SQL = None
@@ -156,7 +158,8 @@ class CountryService:
                           p.total_pop, p.avg_happiness,
                           p.avg_productivity, p.province_count,
                           nc.value AS name_color, bd.value AS badge_icon, bd.name AS badge_name,
-                          tt.name AS title, cb.css_class AS country_border_css_class
+                          tt.name AS title, cb.css_class AS country_border_css_class,
+                          u.leader_name, u.currency_name, u.ruling_party, cap.provinceName AS capital_province_name
                    FROM users u
                    INNER JOIN stats s ON u.id=s.id
                    LEFT JOIN (
@@ -173,6 +176,7 @@ class CountryService:
                    LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                    LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
                    LEFT JOIN cosmetics cb ON cb.id = s.equipped_country_border_cosmetic_id AND cb.is_active = TRUE
+                   LEFT JOIN provinces cap ON cap.userid = u.id AND cap.is_capital
                    WHERE u.id=%s"""
 
         with get_request_cursor(read_only=True) as db:
@@ -215,6 +219,10 @@ class CountryService:
                 badge_name,
                 title,
                 country_border_css_class,
+                leader_name,
+                currency_name,
+                ruling_party,
+                capital_province_name,
             ) = row
 
             coalition_id = coalition_id or 0
@@ -686,6 +694,10 @@ class CountryService:
             "target_has_nuclear_facility": target_has_nuclear_facility,
             "colFlag": colFlag,
             "colRole": colRole,
+            "leader_name": leader_name,
+            "currency_name": currency_name,
+            "ruling_party": ruling_party,
+            "capital_province_name": capital_province_name,
             "productivity": productivity,
             "revenue": revenue,
             "news": news,
