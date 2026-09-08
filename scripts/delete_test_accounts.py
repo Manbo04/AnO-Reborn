@@ -1,65 +1,56 @@
 #!/usr/bin/env python3
-"""Delete all test bot accounts from the database."""
+"""Delete specific test accounts from the database.
 
-import os
-import psycopg2
+Edit test_ids below before running. Excludes 9999 (market bot, removed
+2026-09-08) and 9998 (supply bot) by convention.
+"""
 
-# Use public URL for external access
-os.environ["DATABASE_URL"] = (
-    "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@"
-    "interchange.proxy.rlwy.net:41077/railway"
-)
+from database import get_db_connection
 
-conn = psycopg2.connect(os.environ["DATABASE_URL"])
-cur = conn.cursor()
+test_ids = [735, 741, 751, 761, 769]  # Round 3: v_* accounts
 
-# Specific test account IDs identified from database
-# Excluding: 9999 (market bot), 9998 (supply bot)
-# Round 3: v_* accounts
-test_ids = [735, 741, 751, 761, 769]
-print(f"Deleting {len(test_ids)} test accounts: {test_ids}")
+with get_db_connection() as conn:
+    cur = conn.cursor()
 
-if not test_ids:
-    print("No test accounts found.")
-    conn.close()
-    exit(0)
+    print(f"Deleting {len(test_ids)} test accounts: {test_ids}")
 
-# Delete proInfra for provinces owned by test users
-cur.execute("SELECT id FROM provinces WHERE userId = ANY(%s)", (test_ids,))
-province_ids = [row[0] for row in cur.fetchall()]
-if province_ids:
-    cur.execute("DELETE FROM proInfra WHERE id = ANY(%s)", (province_ids,))
-    print(f"Deleted {cur.rowcount} proInfra records")
+    if not test_ids:
+        print("No test accounts found.")
+    else:
+        # Delete proInfra for provinces owned by test users
+        cur.execute("SELECT id FROM provinces WHERE userId = ANY(%s)", (test_ids,))
+        province_ids = [row[0] for row in cur.fetchall()]
+        if province_ids:
+            cur.execute("DELETE FROM proInfra WHERE id = ANY(%s)", (province_ids,))
+            print(f"Deleted {cur.rowcount} proInfra records")
 
-# Delete from related tables
-tables = [
-    ("provinces", "userId"),
-    ("stats", "id"),
-    ("resources", "id"),
-    ("military", "id"),
-    ("coalitions", "userId"),
-    ("offers", "user_id"),
-    ("trades", "offerer"),
-    ("trades", "offeree"),
-    ("wars", "attacker"),
-    ("wars", "defender"),
-    ("revenue", "user_id"),
-    ("policies", "user_id"),
-]
+        # Delete from related tables
+        tables = [
+            ("provinces", "userId"),
+            ("stats", "id"),
+            ("resources", "id"),
+            ("military", "id"),
+            ("coalitions", "userId"),
+            ("offers", "user_id"),
+            ("trades", "offerer"),
+            ("trades", "offeree"),
+            ("wars", "attacker"),
+            ("wars", "defender"),
+            ("revenue", "user_id"),
+            ("policies", "user_id"),
+        ]
 
-for table, col in tables:
-    try:
-        cur.execute(f"DELETE FROM {table} WHERE {col} = ANY(%s)", (test_ids,))
-        if cur.rowcount > 0:
-            print(f"Deleted {cur.rowcount} from {table}")
-    except Exception as e:
-        print(f"Skipped {table}: {e}")
-        conn.rollback()
+        for table, col in tables:
+            try:
+                cur.execute(f"DELETE FROM {table} WHERE {col} = ANY(%s)", (test_ids,))
+                if cur.rowcount > 0:
+                    print(f"Deleted {cur.rowcount} from {table}")
+            except Exception as e:
+                print(f"Skipped {table}: {e}")
+                conn.rollback()
 
-# Finally delete the users
-cur.execute("DELETE FROM users WHERE id = ANY(%s)", (test_ids,))
-print(f"Deleted {cur.rowcount} test user accounts")
+        # Finally delete the users
+        cur.execute("DELETE FROM users WHERE id = ANY(%s)", (test_ids,))
+        print(f"Deleted {cur.rowcount} test user accounts")
 
-conn.commit()
-print("Done!")
-conn.close()
+    print("Done!")
