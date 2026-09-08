@@ -33,7 +33,7 @@ GITHUB_REPO = "Manbo04/AnO-Reborn"
 
 def _get_signup_stats() -> dict:
     total = QueryHelper.fetch_one(
-        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') = 'normal'"
+        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') IN ('normal', 'email')"
     )
     signups_24h = QueryHelper.fetch_one(
         "SELECT COUNT(*) FROM users WHERE date >= to_char(NOW() - INTERVAL '24 hours', 'YYYY-MM-DD')"
