@@ -58,7 +58,7 @@ from app_core.game_ticks.revenue import generate_province_revenue
 from app_core.game_ticks.unit_production import produce_unit_stockpiles
 from app_core.game_ticks.disasters import run_natural_disasters
 from app_core.game_ticks.loan_interest import run_loan_interest
-from app_core.game_ticks.maintenance import backfill_missing_resources, cleanup_orphan_user_rows, refresh_bot_offers, market_bot_fight_wars, execute_due_trade_agreements, _create_game_tick_log, _finalize_game_tick_log, global_tick, BOT_USER_ID, BOT_OFFERS
+from app_core.game_ticks.maintenance import backfill_missing_resources, cleanup_orphan_user_rows, execute_due_trade_agreements, _create_game_tick_log, _finalize_game_tick_log, global_tick
 
 
 
@@ -201,13 +201,6 @@ def task_manpower_increase():
             )
         conn.commit()
 
-
-@celery.task
-@leader_only(ttl_seconds=300)
-def task_refresh_bot_offers():
-    """Celery task to refresh bot market offers every 5 minutes."""
-    _run_with_deadlock_retries(refresh_bot_offers, "refresh_bot_offers")
-    _run_with_deadlock_retries(market_bot_fight_wars, "market_bot_fight_wars")
 
 @celery.task()
 @leader_only(ttl_seconds=300)
