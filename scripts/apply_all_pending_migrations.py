@@ -81,6 +81,7 @@ MIGRATION_FILES = [
     "0071_add_bounties_and_world_events.sql",
     "0072_buff_aircraft_carrier_attack.sql",
     "0073_nation_customization_fields.sql",
+    "0074_seed_title_conqueror_of_worlds.sql",
 ]
 
 
