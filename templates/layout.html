@@ -12,14 +12,14 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
     <meta name="description" content="{% block seo_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country. In Affairs and Order you can trade with other players, join coalitions with like-minded countries, and wage war on adversaries.{% endblock %}">
-    <link rel="canonical" href="{% block seo_canonical %}https://affairsandorder.com{{ request.path if request else '/' }}{% endblock %}">
+    <link rel="canonical" href="{% block seo_canonical %}https://affairsandorder.org{{ request.path if request else '/' }}{% endblock %}">
     {% include 'partials/seo_structured_data.html' %}
     
     <!-- OpenGraph Tags -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% block og_title %}Affairs and Order · MMO Nation Game{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.{% endblock %}">
-    <meta property="og:url" content="{{ request.url if request else 'https://affairsandorder.com/' }}">
+    <meta property="og:url" content="{{ request.url if request else 'https://affairsandorder.org/' }}">
     <meta property="og:image" content="{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3">
 
     <!-- Twitter Card Tags -->

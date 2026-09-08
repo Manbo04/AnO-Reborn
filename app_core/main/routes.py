@@ -139,7 +139,7 @@ def google_search_console_verify():
 @bp.route("/sitemap.xml")
 def sitemap():
     """Public pages Google uses for sitelinks and rich results."""
-    site = "https://affairsandorder.com"
+    site = "https://affairsandorder.org"
     pages = [
         ("/", "daily", "1.0"),
         ("/signup", "monthly", "0.9"),
@@ -251,6 +251,9 @@ def privacy_policy(): return render_template("privacy_policy.html")
 
 @bp.route("/terms", methods=["GET"])
 def terms_of_service(): return render_template("terms_of_service.html")
+
+@bp.route("/dns_troubleshoot", methods=["GET"])
+def dns_troubleshoot(): return render_template("dns_troubleshoot.html")
 
 @bp.route("/mechanics/consumer_goods", methods=["GET"])
 def mechanics_consumer_goods(): return render_template("mechanics/consumer_goods.html")
