@@ -321,6 +321,12 @@ def create_app():
         return True
 
     app.teardown_request(teardown_request_connection)
+    # Also release on bare app-context teardown (e.g. Celery tasks that do
+    # `with app.app_context():` without a real request) -- teardown_request
+    # never fires there, so get_request_cursor()'s connection would otherwise
+    # never return to the pool. Safe to double-register: by the time this
+    # runs after a real request, teardown_request already cleared g._db_conn.
+    app.teardown_appcontext(teardown_request_connection)
 
     @app.after_request
     def after_request(response):
