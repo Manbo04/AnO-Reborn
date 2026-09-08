@@ -78,6 +78,7 @@ MIGRATION_FILES = [
     "0068_add_users_session_epoch.sql",
     "0069_add_user_loans.sql",
     "0070_add_totp_2fa.sql",
+    "0071_add_bounties_and_world_events.sql",
     "0072_buff_aircraft_carrier_attack.sql",
 ]
 

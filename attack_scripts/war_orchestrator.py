@@ -311,6 +311,16 @@ def persist_fight_results(
                         (winner_amount + transfer_amount, winner.user_id, resource),
                     )
 
+                # Pay out any open bounties on the defeated nation - this is
+                # the one unambiguous "nation X was defeated" moment in the
+                # codebase, on this same independent connection so the payout
+                # is atomic with the war's conclusion.
+                try:
+                    from app_core.bounties.services import claim_bounties
+                    claim_bounties(db, loser.user_id, winner.user_id)
+                except Exception:
+                    logger.exception("Bounty payout failed for war_id=%s", war_id)
+
             # Persist the new morale value
             db.execute(
                 f"UPDATE wars SET {morale_column}=(%s) WHERE id=(%s)",

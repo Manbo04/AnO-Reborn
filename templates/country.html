@@ -2101,6 +2101,41 @@
         </div>
         {% endif %}
 
+        {% if treaty_types %}
+        <div class="infodiv">
+            <h2 class="templatecontentheaderleft">Relations</h2>
+            {% if relations %}
+            <div style="display:flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                {% for r in relations %}
+                <span style="display:inline-block; padding: 4px 10px; border-radius: 999px; background: var(--accent-subtle); color: var(--accent); font-weight: 600; font-size: 0.85em;">
+                    {{ r.label }}{% if r.status == 'pending' %} ({{ 'awaiting them' if r.awaiting_them else 'awaiting you' }}){% endif %}
+                </span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="margin-bottom: 10px;">No treaties with {{ username }} yet.</p>
+            {% endif %}
+
+            <form action="/treaties/offer" method="post">
+                <input type="hidden" name="recipient_name" value="{{ username }}" />
+                <input type="hidden" name="next" value="/country/id={{ cId }}" />
+                <div class="templatedivflex2 divflex2center" style="align-items: flex-end;">
+                    <div class="templatedivflex2left flexchildvanilla">
+                        <label for="treaty_type">Propose a treaty</label>
+                        <select class="templateselect" name="treaty_type">
+                            {% for tt in treaty_types %}
+                            <option value="{{ tt }}">{{ treaty_type_labels.get(tt, tt) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left">
+                        {{ game_button('Propose', icon='handshake') }}
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
         <h2 class="templatecontentheaderleft">War</h2>
 
         <form action="/declare_war" method="post" class="infodiv">
@@ -2129,6 +2164,20 @@
                 <input type="hidden" name="defender" value="{{ username }}">
                 <input class="templatedivbutton templatecenteredbutton" type="submit" value="Declare">
                 -->
+        </form>
+
+        <form action="/bounties/place" method="post" class="infodiv">
+            <h2 class="templatecontentheaderleft">Bounty</h2>
+            <input type="hidden" name="target_id" value="{{ cId }}" />
+            {% if bounty_total %}
+            <p>There's already <strong>${{ '{:,}'.format(bounty_total) }}</strong> in open bounties on {{ username }}. Beat them in war to collect.</p>
+            {% else %}
+            <p>Place gold on {{ username }}'s head — it pays out automatically to whoever beats them in war.</p>
+            {% endif %}
+            <div class="center">
+                <input class="loginsignupinput" type="number" name="amount" min="1000" step="1" placeholder="Bounty amount (min $1,000)" required />
+            </div>
+            {{ game_button('Place Bounty', icon='gavel') }}
         </form>
 
         {% if can_invite_to_coalition %}
@@ -2208,10 +2257,11 @@
                         <label for="warType ">Choose operation</label>
                         <select class="templateselect" name="spy_type">
                             <option value="units" class="templateoption ">Spy on unit amounts</option>
-                            <!-- <option value="defending_units" class="templateoption ">Spy on defending units</option> -->
                             <option value="resources" class="templateoption ">Spy on resources</option>
-                            <!-- <option value="assasinate_spies" class="templateoption ">Assasinate spies</option> -->
+                            <option value="sabotage" class="templateoption ">Sabotage resources</option>
+                            <option value="assassinate_spies" class="templateoption ">Assassinate spies</option>
                         </select>
+                        <span data-tippy-content="<strong>Spy on unit amounts / resources</strong>: reveal what they have, no effect on them.<br><strong>Sabotage resources</strong>: destroy a small share of a resource they hold.<br><strong>Assassinate spies</strong>: kill a few of their spies.<br>All operations risk your spies being killed or detected by their counter-intelligence." style="cursor: help; margin-left: 6px;"><i class="fas fa-circle-info"></i></span>
                     </div>
                     <div class="templatedivflex2left ">
 
@@ -2326,6 +2376,13 @@
                     <div class="templatedivflex2left flexchildvanilla">
                         <label for="transferAmount">Amount:</label>
                         <input class="loginsignupinput" autocomplete="off" type="number" name="amount" placeholder="Amount" required/>
+                    </div>
+                </div>
+
+                <div class="templatedivflex2 divflex2center" style="margin-top: 10px;">
+                    <div class="templatedivflex2left flexchildvanilla" style="flex: 1 1 100%;">
+                        <label for="transferMessage">Message (optional):</label>
+                        <textarea class="templatetextarea" name="message" maxlength="240" placeholder="Say something to go with this gift..."></textarea>
                     </div>
                 </div>
 

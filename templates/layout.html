@@ -353,6 +353,12 @@
                         <a class="{{ 'active' if request.path.startswith('/assembly') else '' }}" href="/assembly"><span class="material-icons-outlined">
                             chat
                         </span>Assembly</a>
+                        <a class="{{ 'active' if request.path.startswith('/world_affairs') else '' }}" href="/world_affairs"><span class="material-icons-outlined">
+                            public
+                        </span>World Affairs</a>
+                        <a class="{{ 'active' if request.path.startswith('/bounties') else '' }}" href="/bounties"><span class="material-icons-outlined">
+                            gavel
+                        </span>Bounties</a>
                     </div>
                 </div>
             </div>
@@ -442,6 +448,12 @@
         <a class="menubara" href="/assembly"><span class="material-icons-outlined">
                 chat
             </span>Assembly</a>
+        <a class="menubara" href="/world_affairs"><span class="material-icons-outlined">
+                public
+            </span>World Affairs</a>
+        <a class="menubara" href="/bounties"><span class="material-icons-outlined">
+                gavel
+            </span>Bounties</a>
         <h3>Other</h3>
         <button type="button" class="menubara menubara-theme-toggle" data-theme-toggle onclick="toggleTheme()" aria-label="Switch to light mode" title="Switch to light mode">
             <span class="material-icons-outlined" data-theme-toggle-icon>light_mode</span>

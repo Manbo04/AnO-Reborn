@@ -737,9 +737,37 @@ def country(cId):
                 if row and row[0] in ("leader", "deputy_leader"):
                     can_invite_to_coalition = True
 
+    relations = []
+    treaty_types = []
+    treaty_type_labels = {}
+    if viewer_id and str(viewer_id) != str(cId):
+        from database import get_request_cursor
+        from app_core.treaties.services import (
+            get_relations_with, VALID_TREATY_TYPES, TREATY_TYPE_LABELS,
+        )
+
+        with get_request_cursor() as db:
+            relations = get_relations_with(db, viewer_id, cId)
+        treaty_types = VALID_TREATY_TYPES
+        treaty_type_labels = TREATY_TYPE_LABELS
+
+    bounty_total = 0
+    if viewer_id and str(viewer_id) != str(cId):
+        from database import get_request_cursor
+        from app_core.bounties.repositories import get_open_bounty_total_for_target
+
+        with get_request_cursor(read_only=True) as db:
+            bounty_total = get_open_bounty_total_for_target(db, cId)
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
-        template, can_invite_to_coalition=can_invite_to_coalition, **data
+        template,
+        can_invite_to_coalition=can_invite_to_coalition,
+        bounty_total=bounty_total,
+        relations=relations,
+        treaty_types=treaty_types,
+        treaty_type_labels=treaty_type_labels,
+        **data
     )
 
 def countries():

@@ -37,6 +37,22 @@ def get_outgoing_treaties(db, user_id):
     return db.fetchall()
 
 
+def get_treaties_between(db, a_id, b_id):
+    """All pending/active treaties between exactly these two nations - for
+    surfacing relations on a nation's own profile page (not the user's full
+    treaty inbox that get_active_treaties/etc. serve)."""
+    db.execute(
+        """
+        SELECT id, treaty_type, status, sender_id, recipient_id
+        FROM nation_treaties
+        WHERE status IN ('pending', 'active') AND
+        ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
+        """,
+        (a_id, b_id, b_id, a_id),
+    )
+    return db.fetchall()
+
+
 def find_user_id_by_username(db, username):
     db.execute("SELECT id FROM users WHERE username = %s", (username,))
     row = db.fetchone()
@@ -69,9 +85,11 @@ def insert_treaty_offer(db, sender_id, recipient_id, treaty_type):
 def activate_treaty(db, treaty_id, user_id):
     db.execute(
         "UPDATE nation_treaties SET status = 'active', updated_at = CURRENT_TIMESTAMP "
-        "WHERE id = %s AND recipient_id = %s AND status = 'pending'",
+        "WHERE id = %s AND recipient_id = %s AND status = 'pending' "
+        "RETURNING treaty_type, sender_id, recipient_id",
         (treaty_id, user_id),
     )
+    return db.fetchone()
 
 
 def set_treaty_rejected(db, treaty_id, user_id):

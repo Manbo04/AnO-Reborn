@@ -1,0 +1,59 @@
+{% extends "layout.html" %} {% block title %} Bounties {% endblock %}{% block body_class %} page-bounties game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Bounty Board', badge_icon='gavel', subtitle='Place gold on a nation\'s head. It pays out automatically to whoever beats them in war — place one from any nation\'s profile page.') }}
+
+    <div class="templatedivcontent">
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">local_fire_department</span> Open Bounties</h2>
+        <div class="templateoutertablediv">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Target</th>
+                <th>Amount</th>
+                <th>Posted By</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+            {% for b in bounties %}
+            <tr>
+                <td><a href="/country/id={{ b[4] }}">{{ b[3] }}</a></td>
+                <td>${{ '{:,}'.format(b[1]) }}</td>
+                <td><a href="/country/id={{ b[6] }}">{{ b[5] }}</a></td>
+                <td>{{ b[2].strftime('%Y-%m-%d') }}</td>
+                <td>
+                    {% if b[6]|string == session.user_id|string %}
+                    <form action="/bounties/cancel/{{ b[0] }}" method="post" style="display:inline;">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm">Cancel</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not bounties %}
+            <tr><td colspan="5" style="text-align: center;">No open bounties. Be the first.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+
+        {% if total_pages and total_pages > 1 %}
+        <div class="game-row" style="justify-content: center; gap: 12px; align-items: center; margin-top: 14px;">
+            {% if page > 1 %}
+            <a class="game-btn game-btn-ghost" href="{{ url_for('bounties.view_bounties', page=page-1) }}">Previous</a>
+            {% endif %}
+            <span class="game-faint">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+            <a class="game-btn game-btn-ghost" href="{{ url_for('bounties.view_bounties', page=page+1) }}">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

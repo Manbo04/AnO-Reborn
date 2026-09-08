@@ -61,6 +61,13 @@ def get_username(db, user_id):
     return row[0] if row else None
 
 
+def insert_news(db, user_id, message):
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        (user_id, message),
+    )
+
+
 def get_spy_reports_for_user(db, cId):
     """Caller must open the cursor with cursor_factory=RealDictCursor -
     rows are consumed as dict-like objects by the service layer."""
