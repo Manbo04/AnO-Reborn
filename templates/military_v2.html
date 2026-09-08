@@ -234,15 +234,20 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
     .page-military .waterclick,
     .page-military .specialclick {
         display: grid;
-        /* Capped at 340px, not 1fr: on a wide monitor, 1fr let 3 columns
-           split the full window width evenly, stretching each card to
-           ~490px+ and dragging its image/text/padding up in visual scale
-           with it -- the actual source of "too big" on desktop. Capping
-           the track size keeps cards a fixed, compact width regardless of
-           window width; justify-content centers the now-narrower grid
-           instead of leaving it pinned to the left edge. */
-        grid-template-columns: repeat(auto-fit, minmax(240px, 340px));
-        justify-content: center;
+        /* Capping the TRACK max (e.g. minmax(240px, 340px)) instead of
+           the container was tried and reverted: with auto-fit, Chrome
+           computes how many columns fit using the track's max bound, not
+           its min, once that max is a definite length -- so capping the
+           max at 340px made a 3-card row fit only 2 (3*340+2*16=1052 >
+           the ~1048px container), orphaning the 3rd card onto its own
+           half-empty row instead of shrinking all 3 to fit. Capping the
+           CONTAINER's max-width instead leaves auto-fit's min-based
+           column count untouched (still 3-up on this page) while still
+           bounding how wide each card can stretch on an ultrawide
+           monitor -- the actual "too big" complaint. */
+        max-width: 1100px;
+        margin: 0 auto;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 16px;
         align-items: start;
     }
