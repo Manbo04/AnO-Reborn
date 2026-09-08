@@ -40,4 +40,5 @@ def test_my_coalition_without_membership_shows_friendly_page(client):
         assert b"Error</h1>" not in resp.data
     finally:
         with get_db_cursor() as db:
+            db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (user_id,))
             db.execute("DELETE FROM users WHERE id=%s", (user_id,))
