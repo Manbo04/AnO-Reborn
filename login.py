@@ -102,13 +102,25 @@ def login():
             with get_request_cursor() as db:
                 has_verification, has_password = _detect_users_schema(db)
 
+                # auth_type filter includes 'email' alongside 'normal': the
+                # active default-signup route (/register/email in
+                # app_core/auth/email_auth.py) inserts new accounts with
+                # auth_type='email', but templates/login.html's "Default
+                # Login" form only ever posts here, to /login -- never to
+                # the separate, recaptcha-gated /login/email route that
+                # already handled 'email' accounts correctly. Excluding
+                # 'email' here meant every account created through the
+                # normal signup form since it started setting auth_type
+                # this way could never log back in ("Wrong username or
+                # password" with the correct password). Confirmed live on
+                # production: 45 real accounts have auth_type='email'.
                 if has_verification:
                     if has_password:
                         db.execute(
                             (
                                 "SELECT id, username, email, description, "
                                 "password, auth_type, is_verified FROM users "
-                                "WHERE (LOWER(trim(username))=LOWER(trim(%s)) OR LOWER(trim(email))=LOWER(trim(%s))) AND COALESCE(auth_type, 'normal') = 'normal'"
+                                "WHERE (LOWER(trim(username))=LOWER(trim(%s)) OR LOWER(trim(email))=LOWER(trim(%s))) AND COALESCE(auth_type, 'normal') IN ('normal', 'email')"
                             ),
                             (username, username),
                         )
@@ -118,7 +130,7 @@ def login():
                                 "SELECT id, username, email, description, "
                                 "hash, auth_type, "
                                 "is_verified FROM users WHERE (LOWER(trim(username))=LOWER(trim(%s)) OR LOWER(trim(email))=LOWER(trim(%s))) "
-                                "AND COALESCE(auth_type, 'normal') = 'normal'"
+                                "AND COALESCE(auth_type, 'normal') IN ('normal', 'email')"
                             ),
                             (username, username),
                         )
@@ -128,7 +140,7 @@ def login():
                             (
                                 "SELECT id, username, email, description, "
                                 "password, auth_type FROM users WHERE (LOWER(trim(username))=LOWER(trim(%s)) OR LOWER(trim(email))=LOWER(trim(%s))) "
-                                "AND COALESCE(auth_type, 'normal') = 'normal'"
+                                "AND COALESCE(auth_type, 'normal') IN ('normal', 'email')"
                             ),
                             (username, username),
                         )
@@ -137,7 +149,7 @@ def login():
                             (
                                 "SELECT id, username, email, description, "
                                 "hash, auth_type FROM users WHERE (LOWER(trim(username))=LOWER(trim(%s)) OR LOWER(trim(email))=LOWER(trim(%s))) "
-                                "AND COALESCE(auth_type, 'normal') = 'normal'"
+                                "AND COALESCE(auth_type, 'normal') IN ('normal', 'email')"
                             ),
                             (username, username),
                         )
