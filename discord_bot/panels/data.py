@@ -15,7 +15,7 @@ def fetch_leaderboard(limit: int = 10) -> List[Dict[str, Any]]:
                s.location
         FROM users u
         INNER JOIN stats s ON s.id = u.id
-        WHERE COALESCE(u.auth_type, 'normal') = 'normal'
+        WHERE COALESCE(u.auth_type, 'normal') IN ('normal', 'email')
         ORDER BY s.gold DESC NULLS LAST
         LIMIT %s
         """,
@@ -56,7 +56,7 @@ def fetch_active_wars(limit: int = 12) -> List[Dict[str, Any]]:
 
 def fetch_realm_inspector() -> Dict[str, Any]:
     nations = QueryHelper.fetch_one(
-        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') = 'normal'"
+        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') IN ('normal', 'email')"
     )
     provinces = QueryHelper.fetch_one("SELECT COUNT(*) FROM provinces")
     active_wars = 0
@@ -105,7 +105,7 @@ def fetch_analytics_snapshot() -> Dict[str, Any]:
     """Real player growth numbers for the #analytics panel -- total nations,
     24h activity/signups, and a daily-signups time series for the chart."""
     total = QueryHelper.fetch_one(
-        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') = 'normal'"
+        "SELECT COUNT(*) FROM users WHERE COALESCE(auth_type, 'normal') IN ('normal', 'email')"
     )
     dau = QueryHelper.fetch_one(
         "SELECT COUNT(*) FROM users WHERE last_active > NOW() - INTERVAL '24 hours'"
