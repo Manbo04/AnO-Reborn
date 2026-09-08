@@ -1,52 +1,106 @@
 {% extends "layout.html" %} {% block title %} Mass Purchase {% endblock %}{% block body_class %} page-mass-purchase game-page-v2{% endblock %} {% block body %}
-{% from 'macros/game_ui.html' import game_hero %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
+<style>
+/* Scoped to this page -- reuses the site's existing table/input/button
+   classes, just adds the checkbox column + select-all row this page
+   didn't have before (it used to be a plain listing with no form at all). */
+.page-mass-purchase .mass-purchase-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.page-mass-purchase .mass-purchase-controls .templatedivflex2 {
+    gap: 12px;
+}
+.page-mass-purchase .mass-purchase-select-all {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.page-mass-purchase .templatetable input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
+</style>
+
 <div class="templatediv">
 
-    {{ game_hero('Mass Purchase', badge_icon='payments') }}
+    {{ game_hero('Mass Purchase', badge_icon='payments', subtitle='Buy the same building across several provinces at once.') }}
 
     <div class="templatedivcontent">
 
+        {% if provinces %}
+        <form action="/mass_purchase/buy" method="POST" id="massPurchaseForm">
+            <div class="mass-purchase-controls">
+                <select name="building" class="templateselect" required>
+                    <option value="" disabled selected>Choose a building...</option>
+                    <optgroup label="City buildings">
+                        {% for b in city_buildings %}
+                        <option value="{{ b.name }}">{{ b.label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Land buildings">
+                        {% for b in land_buildings %}
+                        <option value="{{ b.name }}">{{ b.label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+
+                <input class="loginsignupinput" autocomplete="off" name="quantity" type="number" min="1" placeholder="Amount per province" required />
+            </div>
+
+            <label class="mass-purchase-select-all">
+                <input type="checkbox" id="massPurchaseSelectAll" />
+                Select all provinces
+            </label>
+
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2">
+                    <tr>
+                        <th></th>
+                        <th><span class="material-icons-outlined">account_balance</span>Province Name</th>
+                        <th><span class="material-icons-outlined">business</span>Cities</th>
+                        <th><span class="material-icons-outlined">landscape</span>Land</th>
+                    </tr>
+                    {% for province in provinces %}
+                    <tr>
+                        <td><input type="checkbox" class="mass-purchase-province-checkbox" name="province_ids" value="{{ province['id'] }}" /></td>
+                        <td><span class="material-icons-outlined">account_balance</span>{{ province['name'] }}</td>
+                        <td><span class="material-icons-outlined">business</span>{{ province['citycount'] }}</td>
+                        <td><span class="material-icons-outlined">landscape</span>{{ province['land'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div style="margin-top: 16px;">
+                {{ game_button('Buy in selected provinces', icon='payments', type='submit') }}
+            </div>
+        </form>
+
         <p class="templatecontentpleft landingpagecontent">
-            You can purchase infrastructure and land for each of your provinces individually. Visit the <a href="/provinces">Provinces</a> page to manage purchases for each province.
+            Need land, cities, or a building this list doesn't cover yet? Visit the <a href="/provinces">Provinces</a> page to manage a single province in full.
         </p>
 
-        {% if provinces %}
-        <h3 class="templatecontentheadercenter">Your Provinces</h3>
-
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th><span class="material-icons-outlined">
-                            account_balance
-                                </span>Province Name</th>
-                    <th><span class="material-icons-outlined">
-                            business
-                                </span>Cities</th>
-                    <th><span class="material-icons-outlined">
-                            landscape
-                                </span>Land</th>
-                    <th>Action</th>
-                </tr>
-                {% for province in provinces %}
-                <tr>
-                    <td><span class="material-icons-outlined">
-                            account_balance
-                            </span>{{ province['name'] }}</td>
-                    <td><span class="material-icons-outlined">
-                            business
-                            </span>{{ province['citycount'] }}</td>
-                    <td><span class="material-icons-outlined">
-                            landscape
-                            </span>{{ province['land'] }}</td>
-                    <td><a href="/province/{{ province['id'] }}" class="game-btn game-btn-primary game-btn-sm">Manage</a></td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+        <script>
+        (function () {
+            var selectAll = document.getElementById('massPurchaseSelectAll');
+            if (!selectAll) return;
+            selectAll.addEventListener('change', function () {
+                document.querySelectorAll('.mass-purchase-province-checkbox').forEach(function (cb) {
+                    cb.checked = selectAll.checked;
+                });
+            });
+        })();
+        </script>
         {% else %}
         <p class="templatecontentpleft">You don't have any provinces yet. <a href="/createprovince">Create a province</a> to get started.</p>
         {% endif %}

@@ -79,6 +79,11 @@ def warresult_deprecated(): return redirect("/warResult")
 @bp.route("/mass_purchase", methods=["GET"])
 @login_required
 def mass_purchase():
+    from app_core.economy.building_costs import BUILDING_DISPLAY_NAMES, CITY_UNITS, LAND_UNITS
+
+    def _display(name):
+        return BUILDING_DISPLAY_NAMES.get(name, name.replace("_", " ").title())
+
     cId = session["user_id"]
     with get_request_cursor() as db:
         db.execute("SELECT id, provinceName as name, CAST(citycount AS INTEGER) as citycount, land FROM provinces WHERE userId=%s ORDER BY provinceName", (cId,))
@@ -88,4 +93,11 @@ def mass_purchase():
             colnames = [desc[0] for desc in db.description]
             for row in provinces: province_list.append(dict(zip(colnames, row)))
     template = "mass_purchase_v2.html" if is_theme_v2_enabled("mass_purchase") else "mass_purchase.html"
-    return render_template(template, provinces=province_list)
+    city_buildings = sorted(({"name": n, "label": _display(n)} for n in CITY_UNITS), key=lambda b: b["label"])
+    land_buildings = sorted(({"name": n, "label": _display(n)} for n in LAND_UNITS), key=lambda b: b["label"])
+    return render_template(
+        template,
+        provinces=province_list,
+        city_buildings=city_buildings,
+        land_buildings=land_buildings,
+    )
