@@ -34,48 +34,48 @@
      "cta": "Upload an ad", "href": "/ads"}
 ] %}
 {% set rotating = rotating_ads | default({}) %}
-<aside class="side-ad-rail side-ad-rail--left" data-ad-rail data-rail-seed="0" aria-label="Game tips">
+<aside class="side-tip-rail side-tip-rail--left" data-tip-rail data-rail-seed="0" aria-label="Game tips">
     {% for ad in house_ads %}
-    <a class="house-ad house-ad--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
-        <span class="house-ad-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
-        <strong class="house-ad-title">{{ ad.title }}</strong>
-        <span class="house-ad-sub">{{ ad.sub }}</span>
-        <span class="house-ad-cta">{{ ad.cta }}</span>
+    <a class="tip-card tip-card--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
+        <span class="tip-card-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
+        <strong class="tip-card-title">{{ ad.title }}</strong>
+        <span class="tip-card-sub">{{ ad.sub }}</span>
+        <span class="tip-card-cta">{{ ad.cta }}</span>
     </a>
     {% endfor %}
     {% if rotating.side_ad_left %}
-    <a class="house-ad house-ad--player" href="{{ rotating.side_ad_left.target_url }}" target="_blank" rel="noopener" hidden>
+    <a class="tip-card tip-card--player" href="{{ rotating.side_ad_left.target_url }}" target="_blank" rel="noopener" hidden>
         <img src="{{ rotating.side_ad_left.image_url }}" alt="Player advertisement" loading="lazy" />
-        <span class="house-ad-playertag">Player ad</span>
+        <span class="tip-card-playertag">Player ad</span>
     </a>
     {% endif %}
 </aside>
-<aside class="side-ad-rail side-ad-rail--right" data-ad-rail data-rail-seed="5" aria-label="Game tips">
+<aside class="side-tip-rail side-tip-rail--right" data-tip-rail data-rail-seed="5" aria-label="Game tips">
     {% for ad in house_ads %}
-    <a class="house-ad house-ad--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
-        <span class="house-ad-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
-        <strong class="house-ad-title">{{ ad.title }}</strong>
-        <span class="house-ad-sub">{{ ad.sub }}</span>
-        <span class="house-ad-cta">{{ ad.cta }}</span>
+    <a class="tip-card tip-card--{{ ad.id }}" href="{{ ad.href }}" {% if ad.href.startswith('http') %}target="_blank" rel="noopener"{% endif %} hidden>
+        <span class="tip-card-icon"><span class="material-icons-outlined">{{ ad.icon }}</span></span>
+        <strong class="tip-card-title">{{ ad.title }}</strong>
+        <span class="tip-card-sub">{{ ad.sub }}</span>
+        <span class="tip-card-cta">{{ ad.cta }}</span>
     </a>
     {% endfor %}
     {% if rotating.side_ad_right %}
-    <a class="house-ad house-ad--player" href="{{ rotating.side_ad_right.target_url }}" target="_blank" rel="noopener" hidden>
+    <a class="tip-card tip-card--player" href="{{ rotating.side_ad_right.target_url }}" target="_blank" rel="noopener" hidden>
         <img src="{{ rotating.side_ad_right.image_url }}" alt="Player advertisement" loading="lazy" />
-        <span class="house-ad-playertag">Player ad</span>
+        <span class="tip-card-playertag">Player ad</span>
     </a>
     {% endif %}
 </aside>
 <script>
 (function () {
     'use strict';
-    var rails = document.querySelectorAll('[data-ad-rail]');
+    var rails = document.querySelectorAll('[data-tip-rail]');
     if (!rails.length) return;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var ROTATE_MS = 12000;
 
     rails.forEach(function (rail) {
-        var ads = Array.prototype.slice.call(rail.querySelectorAll('.house-ad'));
+        var ads = Array.prototype.slice.call(rail.querySelectorAll('.tip-card'));
         if (!ads.length) return;
         // Shuffle once per page load; offset the two rails so they differ.
         for (var i = ads.length - 1; i > 0; i--) {
