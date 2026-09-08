@@ -1,23 +1,23 @@
 {% extends "layout.html"%}
 {% block seo_title %}Affairs and Order · MMO Nation Game{% endblock %}
-{% block seo_description %}Affairs and Order is a free browser-based MMO nation simulator. Create your country, trade on the global market, join coalitions, and wage war. Play at affairsandorder.com.{% endblock %}
+{% block seo_description %}Affairs and Order is a free browser-based MMO nation simulator. Create your country, trade on the global market, join coalitions, and wage war. Play at affairsandorder.org.{% endblock %}
 {% block og_title %}Affairs and Order · MMO Nation Game{% endblock %}
 {% block twitter_title %}Affairs and Order · MMO Nation Game{% endblock %}
-{% block seo_canonical %}https://affairsandorder.com/{% endblock %}
+{% block seo_canonical %}https://affairsandorder.org/{% endblock %}
 {% set seo_graph_extra %},
     {
       "@type": "VideoGame",
-      "@id": "https://affairsandorder.com/#game",
+      "@id": "https://affairsandorder.org/#game",
       "name": "Affairs and Order",
       "alternateName": ["AffairsandOrder", "AnO"],
-      "url": "https://affairsandorder.com/",
+      "url": "https://affairsandorder.org/",
       "description": "Browser-based massively multiplayer nation building game. Simulate your country, trade resources, form coalitions, and fight wars.",
       "genre": ["Strategy", "Simulation", "MMO"],
       "gamePlatform": "Web browser",
       "applicationCategory": "Game",
       "operatingSystem": "Any",
       "image": "{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3",
-      "publisher": { "@id": "https://affairsandorder.com/#organization" },
+      "publisher": { "@id": "https://affairsandorder.org/#organization" },
       "offers": {
         "@type": "Offer",
         "price": "0",

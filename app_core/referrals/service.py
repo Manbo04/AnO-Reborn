@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 _schema_ready = False
 _CODE_ALPHABET = string.ascii_uppercase + string.digits
-_REFERRAL_SITE = "https://affairsandorder.com"
+_REFERRAL_SITE = "https://affairsandorder.org"
 
 
 def _normalize_code(code: str | None) -> str | None:
