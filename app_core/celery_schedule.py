@@ -76,10 +76,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_cleanup_orphan_user_rows",
         "schedule": get_crontab_env("ORPHAN_CLEANUP_CRON", crontab(minute="10", hour="1")),
     },
-    "refresh_bot_offers": {
-        "task": "tasks.task_refresh_bot_offers",
-        "schedule": get_crontab_env("BOT_OFFERS_CRON", crontab(minute="*/5")),
-    },
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
         "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),
