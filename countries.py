@@ -842,6 +842,21 @@ def update_info():
                 "UPDATE users SET description=%s WHERE id=%s", (description, cId)
             )
 
+        # Larp/customization fields (Discord #suggestions, Cheesar,
+        # 2026-08-31): purely cosmetic, no validation beyond a length cap
+        # matching the DB column width.
+        for field, max_len in (
+            ("leader_name", 60),
+            ("currency_name", 40),
+            ("ruling_party", 60),
+        ):
+            value = request.form.get(field)
+            if value is not None:
+                value = value.strip()[:max_len] or None
+                db.execute(
+                    f"UPDATE users SET {field}=%s WHERE id=%s", (value, cId)
+                )
+
         # Name changing
         new_name = request.form.get("countryName", "").strip()
         if new_name and len(new_name) >= 3 and len(new_name) <= 20:

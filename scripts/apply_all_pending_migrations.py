@@ -80,6 +80,7 @@ MIGRATION_FILES = [
     "0070_add_totp_2fa.sql",
     "0071_add_bounties_and_world_events.sql",
     "0072_buff_aircraft_carrier_attack.sql",
+    "0073_nation_customization_fields.sql",
 ]
 
 

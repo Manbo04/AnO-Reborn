@@ -104,6 +104,7 @@ def province(pId):
                    COALESCE(p.pop_children, 0) AS pop_children,
                    COALESCE(p.pop_working, 0) AS pop_working,
                    COALESCE(p.pop_elderly, 0) AS pop_elderly,
+                   p.is_capital, (p.flag_data IS NOT NULL) AS has_flag,
                    {image_select}
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
@@ -117,6 +118,7 @@ def province(pId):
                    p.land, p.energy AS electricity,
                    s.location,
                    0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                   p.is_capital, (p.flag_data IS NOT NULL) AS has_flag,
                    {image_select}
             FROM provinces p
             LEFT JOIN stats s ON p.userId = s.id
@@ -135,6 +137,7 @@ def province(pId):
                        p.land, p.energy AS electricity,
                        s.location,
                        0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                       FALSE AS is_capital, FALSE AS has_flag,
                        FALSE AS has_image
                 FROM provinces p
                 LEFT JOIN stats s ON p.userId = s.id
@@ -219,6 +222,9 @@ def province(pId):
             "land": result["land"],
             "electricity": result["electricity"],
             "location": (result["location"] or "Grassland").strip(),
+            "is_capital": bool(result.get("is_capital")),
+            "has_flag": bool(result.get("has_flag")),
+            "flag_url": f"/flag/province/{result['id']}" if result.get("has_flag") else None,
         }
 
         # Build units dict from user_buildings (Economy 2.0 normalized schema)
@@ -1226,6 +1232,92 @@ def delete_province(pId):
         pass
 
     return redirect("/provinces")
+
+
+@bp.route("/province/<int:pId>/set-capital", methods=["POST"])
+@login_required
+@require_post_origin
+def set_capital_province(pId):
+    """Designate a province as the nation's capital (shown on the lore
+    page). Discord #suggestions "country customisation/larp" (Cheesar,
+    2026-09-05). Purely cosmetic -- at most one capital per nation, enforced
+    by idx_provinces_one_capital_per_user (migration 0073)."""
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        db.execute("SELECT userId FROM provinces WHERE id = %s", (pId,))
+        row = db.fetchone()
+        if not row:
+            return error(404, "Province doesn't exist")
+        if int(row[0]) != int(cId):
+            return error(403, "You do not own this province")
+
+        db.execute(
+            "UPDATE provinces SET is_capital = FALSE WHERE userId = %s", (cId,)
+        )
+        db.execute(
+            "UPDATE provinces SET is_capital = TRUE WHERE id = %s", (pId,)
+        )
+
+    try:
+        from database import invalidate_view_cache, query_cache
+
+        invalidate_user_cache(cId)
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+        invalidate_view_cache("country", user_id=cId)
+    except Exception:
+        pass
+
+    return redirect(f"/province/{pId}")
+
+
+@bp.route("/province/<int:pId>/flag", methods=["POST"])
+@login_required
+@require_post_origin
+def upload_province_flag(pId):
+    """Upload a per-province flag image. Discord #suggestions "country
+    customisation/larp" (Cheesar, 2026-09-05). Same compress-and-store-as-
+    base64 pattern as the nation flag (see countries.py::update_info),
+    served back by app_core/main/routes.py::serve_flag."""
+    cId = session["user_id"]
+
+    flag = request.files.get("flag_input")
+    if not flag or not flag.filename:
+        return error(400, "No flag file provided")
+
+    allowed_extensions = ("png", "jpg", "jpeg")
+    if "." not in flag.filename or flag.filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
+        return error(400, "Bad flag file format")
+
+    with get_request_cursor() as db:
+        db.execute("SELECT userId FROM provinces WHERE id = %s", (pId,))
+        row = db.fetchone()
+        if not row:
+            return error(404, "Province doesn't exist")
+        if int(row[0]) != int(cId):
+            return error(403, "You do not own this province")
+
+        from helpers import compress_flag_image
+
+        flag_data, _extension = compress_flag_image(flag, max_size=300, quality=85)
+        db.execute(
+            "UPDATE provinces SET flag_data = %s WHERE id = %s", (flag_data, pId)
+        )
+
+    try:
+        from database import invalidate_view_cache, query_cache
+
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+    except Exception:
+        pass
+
+    return redirect(f"/province/{pId}")
 
 
 

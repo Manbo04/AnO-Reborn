@@ -44,6 +44,39 @@
         </form>
         {% endif %}
 
+        <h3 class="templatecontentheadercenter">Province flag</h3>
+        <p class="province-settings-hint">Optional larp flavor — a flag for this specific province.</p>
+        {% if province.flag_url %}
+        <div class="province-settings-preview">
+            <img src="{{ province.flag_url }}" alt="{{ province.name }} flag" class="province-settings-preview-image" />
+        </div>
+        {% endif %}
+        <form method="POST" action="/province/{{ province.id }}/flag" enctype="multipart/form-data" class="province-settings-form">
+            <label class="province-settings-label" for="province_flag_input">Choose flag image</label>
+            <input
+                class="loginsignupinput province-settings-file"
+                type="file"
+                name="flag_input"
+                id="province_flag_input"
+                accept="image/png,image/jpeg,image/jpg"
+            />
+            <button type="submit" class="templatedivbutton templatecenteredbutton province-settings-save">
+                <span class="material-icons-outlined">upload</span>Save flag
+            </button>
+        </form>
+
+        <h3 class="templatecontentheadercenter">Capital</h3>
+        {% if province.is_capital %}
+        <p class="province-settings-hint">This is your nation's capital.</p>
+        {% else %}
+        <p class="province-settings-hint">Designate this province as your nation's capital. Shown on your lore page.</p>
+        <form method="POST" action="/province/{{ province.id }}/set-capital">
+            <button type="submit" class="templatedivbutton templatecenteredbutton province-settings-save">
+                <span class="material-icons-outlined">location_city</span>Set as Capital
+            </button>
+        </form>
+        {% endif %}
+
         <h3 class="templatecontentheadercenter">Rename province</h3>
         <p class="province-settings-hint">Costs {{ province_rename_cost | default(10000000) | fmt }} gold each time you change the name.</p>
         <form method="POST" action="/province/{{ province.id }}/rename" class="province-settings-form">

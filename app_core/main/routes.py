@@ -341,6 +341,13 @@ def serve_flag(flag_type, flag_id):
                     cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
                     fname = cur.fetchone()
                     if fname and fname[0]: return send_from_directory("static/flags", fname[0])
+            elif flag_type == "province":
+                # No filesystem fallback for provinces -- flag_data (DB) is
+                # the only storage, added in migration 0073.
+                cur.execute("SELECT flag_data FROM provinces WHERE id = %s", (flag_id,))
+                row = cur.fetchone()
+                if not (row and row[0]):
+                    return send_from_directory("static/flags", "default_flag.jpg")
             else: return send_from_directory("static/flags", "default_flag.jpg")
         except Exception:
             cur.connection.rollback()
