@@ -1,7 +1,8 @@
+import os
 import subprocess
 
-db_url = "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@postgres-check-snapshot.railway.internal:5432/railway"
-print(f"Connecting to {db_url}...")
+db_url = os.environ["SNAPSHOT_CHECK_DATABASE_URL"]
+print("Connecting to snapshot-check database...")
 
 try:
     res = subprocess.run(["psql", db_url, "-c", "SELECT COUNT(*) FROM \"User\";"], capture_output=True, text=True, timeout=30)

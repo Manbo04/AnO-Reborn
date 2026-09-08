@@ -70,12 +70,9 @@ def load_chapters() -> list[dict]:
 
 def get_db_url() -> str:
     url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
-    if url:
-        return url
-    return (
-        "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@"
-        "interchange.proxy.rlwy.net:41077/railway"
-    )
+    if not url:
+        raise RuntimeError("DATABASE_PUBLIC_URL or DATABASE_URL must be set")
+    return url
 
 
 def db_connect():

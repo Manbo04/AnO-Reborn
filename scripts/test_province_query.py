@@ -3,10 +3,8 @@ import os
 import sys
 
 # Use public URL for external access
-os.environ["DATABASE_URL"] = os.environ.get(
-    "DATABASE_PUBLIC_URL",
-    "postgresql://postgres:yUhDEaGngcGPlRPrfqGIofVDwvRRXvcz@interchange.proxy.rlwy.net:41077/railway",
-)
+if os.environ.get("DATABASE_PUBLIC_URL"):
+    os.environ["DATABASE_URL"] = os.environ["DATABASE_PUBLIC_URL"]
 
 from psycopg2.extras import RealDictCursor
 from database import get_db_connection
