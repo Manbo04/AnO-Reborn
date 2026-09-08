@@ -2056,6 +2056,109 @@ def province_sell_buy(way, units, province_id):
     unit_display = units.replace("_", " ").title()
     flash(f"{action}: {unit_display}")
     return redirect(f"/province/{province_id}?_={int(_now())}")
+
+
+@bp.route("/mass_purchase/buy", methods=["POST"])
+@login_required
+@require_post_origin
+def mass_purchase_buy():
+    """Buy the same building, in the same quantity, across several
+    provinces in one submit. Discord #suggestions "Mass purchase"
+    (mohammad20891, 2026-09-08): the old /mass_purchase page just linked
+    off to each province's own buy form one at a time despite the name.
+
+    Scope for this first pass: buildings only (reuses purchase_building,
+    the same helper the single-province buy route delegates to for
+    buildings) -- land/cityCount purchases still go through the classic
+    per-province form. Each province is attempted independently so one
+    province running out of gold/resources/slots partway through the list
+    doesn't block or roll back the ones that already succeeded.
+    """
+    cId = session["user_id"]
+
+    building = (request.form.get("building") or "").strip().lower()
+    province_ids = request.form.getlist("province_ids")
+
+    try:
+        quantity = int(request.form.get("quantity", ""))
+    except (TypeError, ValueError):
+        flash("Enter a valid amount.")
+        return redirect("/mass_purchase")
+
+    if quantity < 1:
+        flash("Amount must be at least 1.")
+        return redirect("/mass_purchase")
+
+    if f"{building}_price" not in variables.PROVINCE_UNIT_PRICES:
+        flash("Pick a building to buy.")
+        return redirect("/mass_purchase")
+
+    if not province_ids:
+        flash("Select at least one province.")
+        return redirect("/mass_purchase")
+
+    province_id_ints = [int(p) for p in province_ids if p.isdigit()]
+    if not province_id_ints:
+        flash("Select at least one province.")
+        return redirect("/mass_purchase")
+
+    with get_request_cursor() as db:
+        # Only ever act on the requester's own provinces, regardless of what
+        # ids were submitted -- purchase_building also checks ownership per
+        # call, but filtering here keeps a tampered id list from even
+        # showing up as a per-province failure in the results flash.
+        db.execute(
+            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s)",
+            (cId, province_id_ints),
+        )
+        owned = {row[0]: row[1] for row in db.fetchall()}
+
+        bought_in = 0
+        total_spent = 0
+        failures = []
+        for pid, pname in owned.items():
+            try:
+                # No shared `policies=` here on purpose: purchase_building
+                # re-fetches them itself per call (one extra cheap SELECT
+                # per province) rather than this loop assuming they can't
+                # change mid-request.
+                result = purchase_building(db, cId, pid, building, quantity)
+                bought_in += 1
+                total_spent += result["gold_spent"]
+            except BuildingPurchaseError as exc:
+                failures.append(f"{pname}: {exc}")
+
+    try:
+        invalidate_user_cache(cId)
+        from database import query_cache, invalidate_view_cache
+
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+    except Exception:
+        pass
+
+    building_display = building.replace("_", " ").title()
+    if bought_in:
+        flash(
+            f"Bought {quantity} {building_display} in {bought_in} of "
+            f"{len(owned)} selected provinces (spent {total_spent:,} gold)."
+        )
+    if failures:
+        # Cap how many per-province errors get flashed -- selecting 20+
+        # provinces that all fail the same way (e.g. no free slots
+        # anywhere) shouldn't dump 20 near-identical lines on the page.
+        shown = failures[:5]
+        more = len(failures) - len(shown)
+        msg = "Skipped -- " + "; ".join(shown)
+        if more > 0:
+            msg += f"; and {more} more"
+        flash(msg)
+
+    return redirect("/mass_purchase")
+
+
 from flask import jsonify
 from database import get_request_cursor
 
