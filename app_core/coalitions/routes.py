@@ -1962,7 +1962,25 @@ def accept_treaty(offer_id):
         if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
             return error(400, "You aren't the leader of this coalition")
 
-        db.execute("UPDATE treaties SET status='Active' WHERE id=(%s)", (offer_id,))
+        db.execute(
+            "UPDATE treaties SET status='Active' WHERE id=(%s) "
+            "RETURNING col1_id, col2_id, treaty_name",
+            (offer_id,),
+        )
+        treaty_row = db.fetchone()
+        if treaty_row:
+            col1_id, col2_id, treaty_name = treaty_row
+            db.execute(
+                "SELECT id, name FROM colNames WHERE id IN (%s, %s)",
+                (col1_id, col2_id),
+            )
+            names = {row[0]: row[1] for row in db.fetchall()}
+            from app_core.world_affairs.services import log_event
+            log_event(
+                db, "coalition_treaty",
+                f"The {names.get(col1_id, 'Unknown')} and {names.get(col2_id, 'Unknown')} "
+                f"coalitions signed a treaty: {treaty_name}.",
+            )
 
     return redirect("/my_coalition")
 

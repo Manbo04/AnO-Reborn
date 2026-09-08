@@ -12,6 +12,7 @@ from .repositories import (
     decrement_gold, increment_gold
 )
 from .services import give_resource, report_trade_error
+from app_core.world_affairs.services import log_event
 
 market_bp = Blueprint("market_bp", __name__)
 logger = logging.getLogger(__name__)
@@ -555,6 +556,7 @@ def transfer(transferee):
 
         resource = request.form.get("resource")
         amount_str = request.form.get("amount")
+        gift_message = (request.form.get("message") or "").strip()[:240]
         if not amount_str:
             return error(400, "Amount is required")
         try:
@@ -591,6 +593,23 @@ def transfer(transferee):
             res = give_resource(cId, transferee_id, resource, amount, cursor=db)
             if res is not True:
                 return error(400, str(res))
+
+        sender_name = get_username(db, cId) or "A nation"
+        amount_desc = f"${amount:,}" if resource in ["gold", "money"] else f"{amount:,} {resource}"
+        recipient_msg = f"{sender_name} sent you {amount_desc}."
+        sender_msg = f"You sent {amount_desc} to your ally."
+        if gift_message:
+            recipient_msg += f' Message: "{gift_message}"'
+            sender_msg += f' Message: "{gift_message}"'
+        insert_news(db, transferee_id, recipient_msg)
+        insert_news(db, cId, sender_msg)
+
+        recipient_name = get_username(db, transferee_id) or "a nation"
+        log_event(
+            db, "aid",
+            f"{sender_name} sent {amount_desc} in aid to {recipient_name}.",
+            actor_id=cId, target_id=transferee_id,
+        )
 
         try:
             invalidate_user_cache(cId)

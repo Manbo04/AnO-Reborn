@@ -78,6 +78,19 @@
                 </tr>
             </table>
         </div>
+        {% if joinable_wars %}
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">group_add</span> Wars You Can Join</h2>
+        <p class="templatecontentpleft">A Mutual Defense partner of yours is under attack. Joining opens your own independent war against their aggressor.</p>
+        {% for jw in joinable_wars %}
+        <div class="infodiv" style="margin-bottom: 10px;">
+            <p><strong>{{ jw[2] }}</strong> is being attacked by <strong>{{ jw[1] }}</strong>.</p>
+            <form action="/wars/{{ jw[0] }}/join_ally" method="post">
+                {{ game_button('Join as ally', icon='shield') }}
+            </form>
+        </div>
+        {% endfor %}
+        {% endif %}
+
         {% if warsCount == 0 %}
         <!--if wars == False-->
         <h2 class="templatecontentheadercenter">You have no ongoing wars</h2>

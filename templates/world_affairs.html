@@ -1,0 +1,40 @@
+{% extends "layout.html" %} {% block title %} World Affairs {% endblock %}{% block body_class %} page-world-affairs game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('World Affairs', badge_icon='public', subtitle='Every war, sabotage, treaty, gift, alliance, coalition pact and bounty claim happening across every nation, newest first.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            {% for e in events %}
+            <div class="game-row" style="justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                <span>{{ e[2] }}</span>
+                <span class="game-faint" style="white-space: nowrap; margin-left: 12px;">{{ e[5].strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            {% endfor %}
+            {% if not events %}
+            <p style="text-align: center;">Nothing has happened yet. Go start something.</p>
+            {% endif %}
+        </div>
+
+        {% if total_pages and total_pages > 1 %}
+        <div class="game-row" style="justify-content: center; gap: 12px; align-items: center;">
+            {% if page > 1 %}
+            <a class="game-btn game-btn-ghost" href="{{ url_for('world_affairs.view_world_affairs', page=page-1) }}">Newer</a>
+            {% endif %}
+            <span class="game-faint">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+            <a class="game-btn game-btn-ghost" href="{{ url_for('world_affairs.view_world_affairs', page=page+1) }}">Older</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

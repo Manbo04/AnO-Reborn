@@ -25,6 +25,7 @@ import traceback
 
 import variables
 from wars.service import apply_building_damage
+from app_core.world_affairs.services import log_event
 
 # Add any other necessary imports here
 
@@ -977,7 +978,8 @@ def declare_war():
                 (
                     "INSERT INTO wars (attacker, defender, "
                     "war_type, agressor_message, start_date, "
-                    "last_visited) VALUES (%s, %s, %s, %s, %s, %s)"
+                    "last_visited) VALUES (%s, %s, %s, %s, %s, %s) "
+                    "RETURNING id"
                 ),
                 (
                     attacker.id,
@@ -988,10 +990,17 @@ def declare_war():
                     start_dates,
                 ),
             )
+            new_war_row = db.fetchone()
+            new_war_id = new_war_row[0] if new_war_row else None
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
             attacker_row = db.fetchone()
             attacker_name = (
                 attacker_row[0] if attacker_row else f"Nation {attacker.id}"
+            )
+            db.execute("SELECT username FROM users WHERE id=(%s)", (defender.id,))
+            defender_row = db.fetchone()
+            defender_name = (
+                defender_row[0] if defender_row else f"Nation {defender.id}"
             )
             # Insert news directly using current cursor (avoid nested DB contexts)
             attacker_news = f"{attacker_name} declared war!"
@@ -999,6 +1008,34 @@ def declare_war():
                 "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
                 (defender.id, attacker_news),
             )
+            log_event(
+                db, "war",
+                f"Conflict erupts! {attacker_name} has declared war on {defender_name}.",
+                actor_id=attacker.id, target_id=defender.id,
+            )
+
+            # Notify active Mutual Defense partners of the defender - they can
+            # join this war as a second, independent attacker against the
+            # aggressor via /wars/<war_id>/join_ally (see join_war_as_ally()).
+            if new_war_id is not None:
+                db.execute(
+                    """
+                    SELECT CASE WHEN sender_id = %s THEN recipient_id ELSE sender_id END
+                    FROM nation_treaties
+                    WHERE status = 'active' AND treaty_type = 'mutual_defense'
+                    AND (sender_id = %s OR recipient_id = %s)
+                    """,
+                    (defender.id, defender.id, defender.id),
+                )
+                for (ally_id,) in db.fetchall():
+                    db.execute(
+                        "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
+                        (
+                            ally_id,
+                            f"Your Mutual Defense partner {defender_name} is under attack "
+                            f"from {attacker_name}! Visit /wars to join the fight.",
+                        ),
+                    )
     except Exception as e:
         import logging
 
@@ -1008,6 +1045,104 @@ def declare_war():
         logger.error(tb)
         # Return a safe error message (traceback logged only)
         return error(500, f"Could not declare war; exception: {str(e)}")
+    return redirect("/wars")
+
+
+@wars_bp.route("/wars/<int:war_id>/join_ally", methods=["POST"])
+@login_required
+def join_war_as_ally(war_id):
+    """A Mutual Defense partner of a war's defender joins as a second,
+    independent 1v1 war against the original attacker - not a true multi-
+    nation war (the `wars` table is strictly attacker/defender), just a
+    second war row reusing declare_war's guards minus the province-count
+    gate (this is solidarity, not an unprovoked declaration)."""
+    ally_id = int(session.get("user_id"))
+    try:
+        with get_request_cursor() as db:
+            db.execute(
+                "SELECT attacker, defender FROM wars WHERE id=%s AND peace_date IS NULL",
+                (war_id,),
+            )
+            row = db.fetchone()
+            if not row:
+                return error(404, "That war doesn't exist or has already ended.")
+            original_attacker_id, original_defender_id = row
+
+            if ally_id in (original_attacker_id, original_defender_id):
+                return error(400, "You're already a combatant in this war.")
+
+            db.execute(
+                """
+                SELECT id FROM nation_treaties
+                WHERE status = 'active' AND treaty_type = 'mutual_defense'
+                AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
+                """,
+                (ally_id, original_defender_id, original_defender_id, ally_id),
+            )
+            if not db.fetchone():
+                return error(403, "You don't have an active Mutual Defense pact with that nation.")
+
+            # Same guards as declare_war, minus the province-count gate.
+            db.execute(
+                """
+                SELECT id FROM nation_treaties
+                WHERE status = 'active' AND treaty_type = 'non_aggression'
+                AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
+                """,
+                (ally_id, original_attacker_id, original_attacker_id, ally_id),
+            )
+            if db.fetchone():
+                return error(403, "You cannot join this war - you have an active Non-Aggression Pact with the aggressor!")
+
+            db.execute(
+                "SELECT id FROM wars WHERE ((attacker=%s AND defender=%s) "
+                "OR (attacker=%s AND defender=%s)) AND peace_date IS NULL",
+                (ally_id, original_attacker_id, original_attacker_id, ally_id),
+            )
+            if db.fetchone():
+                return error(400, "You're already at war with this nation!")
+
+            db.execute(
+                "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s AND defender=%s) "
+                "OR (attacker=%s AND defender=%s))",
+                (ally_id, original_attacker_id, original_attacker_id, ally_id),
+            )
+            current_peace = db.fetchone()
+            if current_peace and current_peace[0]:
+                if (current_peace[0] + 259200) > time.time():
+                    return error(403, "You can't join this war because a truce with the aggressor has not expired!")
+
+            db.execute("SELECT username FROM users WHERE id=(%s)", (ally_id,))
+            ally_row = db.fetchone()
+            ally_name = ally_row[0] if ally_row else f"Nation {ally_id}"
+            db.execute("SELECT username FROM users WHERE id=(%s)", (original_attacker_id,))
+            aggressor_row = db.fetchone()
+            aggressor_name = aggressor_row[0] if aggressor_row else f"Nation {original_attacker_id}"
+
+            start_dates = time.time()
+            db.execute(
+                "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
+                "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",
+                (
+                    ally_id, original_attacker_id, "Sustained",
+                    f"{ally_name} joins the fight in defense of their ally!",
+                    start_dates, start_dates,
+                ),
+            )
+            db.execute(
+                "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
+                (original_attacker_id, f"{ally_name} has joined the war against you in defense of their ally!"),
+            )
+            log_event(
+                db, "ally_join",
+                f"{ally_name} joined the war against {aggressor_name} in defense of their Mutual Defense partner.",
+                actor_id=ally_id, target_id=original_attacker_id,
+            )
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).error("Error in join_war_as_ally: %s\n%s", e, traceback.format_exc())
+        return error(500, f"Could not join this war; exception: {str(e)}")
     return redirect("/wars")
 
 
@@ -1145,6 +1280,31 @@ def wars():
             except Exception:
                 rollback_db_cursor(db)
                 warsCount = 0
+
+            joinable_wars = []
+            try:
+                db.execute(
+                    """
+                    SELECT w.id, ua.username, ud.username
+                    FROM wars w
+                    JOIN nation_treaties nt ON nt.status='active' AND nt.treaty_type='mutual_defense'
+                        AND ((nt.sender_id = w.defender AND nt.recipient_id = %s)
+                          OR (nt.recipient_id = w.defender AND nt.sender_id = %s))
+                    JOIN users ua ON ua.id = w.attacker
+                    JOIN users ud ON ud.id = w.defender
+                    WHERE w.peace_date IS NULL
+                      AND w.attacker != %s AND w.defender != %s
+                      AND NOT EXISTS (
+                          SELECT 1 FROM wars w2 WHERE w2.peace_date IS NULL
+                          AND ((w2.attacker=%s AND w2.defender=w.attacker) OR (w2.attacker=w.attacker AND w2.defender=%s))
+                      )
+                    """,
+                    (cId, cId, cId, cId, cId, cId),
+                )
+                joinable_wars = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+                joinable_wars = []
         template = "wars_v2.html" if is_theme_v2_enabled("wars") else "wars.html"
         return render_template(
             template,
@@ -1153,6 +1313,7 @@ def wars():
             war_info=war_info,
             yourCountry=yourCountry,
             current_defense=current_defense,
+            joinable_wars=joinable_wars,
         )
 
 

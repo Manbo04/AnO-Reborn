@@ -2021,7 +2021,12 @@ def get_global_events():
             """)
             for res in db.fetchall():
                 events.append(f"Conflict erupts! {res[0]} has declared war on {res[1]}.")
-                
+
+            # 5b. World Affairs feed - sabotage, aid, treaties, alliances,
+            # bounty claims, coalition treaties (see app_core/world_affairs)
+            from app_core.world_affairs.repositories import get_recent_messages
+            events.extend(get_recent_messages(db, 10))
+
             # 6. Nation Projects / Tech
             db.execute("""
                 SELECT u.username, td.name 

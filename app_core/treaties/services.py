@@ -2,12 +2,38 @@ from .repositories import (
     get_active_treaties,
     get_incoming_treaties,
     get_outgoing_treaties,
+    get_treaties_between,
     find_user_id_by_username,
     find_conflicting_treaty,
     insert_treaty_offer,
 )
 
-VALID_TREATY_TYPES = ["non_aggression", "mutual_defense", "embassy"]
+VALID_TREATY_TYPES = ["non_aggression", "mutual_defense", "embassy", "alliance"]
+
+TREATY_TYPE_LABELS = {
+    "non_aggression": "Non-Aggression Pact",
+    "mutual_defense": "Mutual Defense Pact",
+    "embassy": "Embassy",
+    "alliance": "Alliance",
+}
+
+
+def get_relations_with(db, viewer_id, other_id):
+    """Pending/active treaties between viewer_id and other_id, for display on
+    other_id's profile page. Returns a list of dicts with a human label and
+    whether viewer_id is the one waiting on the other party to accept."""
+    rows = get_treaties_between(db, viewer_id, other_id)
+    relations = []
+    for row in rows:
+        treaty_id, treaty_type, status, sender_id, recipient_id = row
+        relations.append({
+            "id": treaty_id,
+            "treaty_type": treaty_type,
+            "label": TREATY_TYPE_LABELS.get(treaty_type, treaty_type),
+            "status": status,
+            "awaiting_them": status == "pending" and str(sender_id) == str(viewer_id),
+        })
+    return relations
 
 
 def list_treaties(db, user_id):

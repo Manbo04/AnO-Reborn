@@ -13,9 +13,20 @@ from .repositories import (
     get_revealed_values,
     update_revealed_spyinfo,
     has_active_embassy,
+    insert_news,
 )
+from app_core.market.repositories import get_user_resource_quantity, decrement_resource
+from app_core.world_affairs.services import log_event
 
 SPY_COOLDOWN_SECONDS = 3600 * 12
+
+# Sabotage/assassination are capped so a single op can't cripple a nation -
+# they're meant to be felt, not devastating.
+SABOTAGE_LOSS_PCT = 0.05
+ASSASSINATION_LOSS_PCT = 0.10
+ASSASSINATION_MAX_KILL = 5
+
+VALID_SPY_TYPES = ("units", "resources", "sabotage", "assassinate_spies")
 
 
 def fetch_spy_reports(db, cId):
@@ -78,6 +89,9 @@ def submit_spy_amount(db, cId, eId):
 
 def resolve_spy_operation(db, cId, eId, spies, spy_type):
     """Runs one espionage operation. Returns (ok, status_code, error_message)."""
+    if spy_type not in VALID_SPY_TYPES:
+        return False, 400, "Invalid spy operation type."
+
     result = get_latest_spy_operation(db, cId)
     spyee, date = result if result else (None, 0)
 
@@ -108,15 +122,22 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type):
 
     enemy_spies = get_unit_quantity(db, eId, "spies")
 
-    executed_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
-    uncovered_spies = 0  # TODO: ADD NOTIFICATION FOR THIS
+    executed_spies = 0
+    uncovered_spies = 0
     uncovered = {}
 
     operation_id = insert_spy_operation(db, cId, eId, time.time())
     if not operation_id:
         return False, 500, "Failed to record spy operation"
 
-    object_list = variables.UNITS if spy_type == "units" else variables.RESOURCES
+    if spy_type == "sabotage":
+        object_list = variables.RESOURCES
+    elif spy_type == "assassinate_spies":
+        object_list = ["spies"]
+    elif spy_type == "units":
+        object_list = variables.UNITS
+    else:
+        object_list = variables.RESOURCES
 
     for obj in object_list:
         if spies - executed_spies > 0:
@@ -143,9 +164,53 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type):
                 uncovered[obj] = True
 
     uncovered_objects = [k for k, v in uncovered.items() if v]
-    if uncovered_objects:
-        revealed_map = get_revealed_values(db, eId, uncovered_objects, spy_type)
-        update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map)
+    news_message = None
+
+    if spy_type == "sabotage":
+        sabotaged = []
+        for resource in uncovered_objects:
+            current_qty = get_user_resource_quantity(db, eId, resource) or 0
+            if current_qty > 0:
+                loss = max(1, int(current_qty * SABOTAGE_LOSS_PCT))
+                if decrement_resource(db, eId, resource, loss):
+                    sabotaged.append((resource, loss))
+        if sabotaged:
+            details = ", ".join(f"{loss} {resource}" for resource, loss in sabotaged)
+            news_message = f"Your nation was sabotaged by foreign agents! You lost {details}."
+            attacker_name = get_username(db, cId) or "A nation"
+            target_name = get_username(db, eId) or "a nation"
+            log_event(
+                db, "sabotage",
+                f"{attacker_name} sabotaged {target_name}'s economy, destroying {details}.",
+                actor_id=cId, target_id=eId,
+            )
+    elif spy_type == "assassinate_spies":
+        if uncovered.get("spies"):
+            enemy_spy_count = get_unit_quantity(db, eId, "spies")
+            kill = min(
+                ASSASSINATION_MAX_KILL,
+                max(1, int(enemy_spy_count * ASSASSINATION_LOSS_PCT)),
+            )
+            if enemy_spy_count > 0:
+                decrease_unit_quantity(db, eId, "spies", kill)
+                news_message = f"Enemy agents assassinated {kill} of your spies!"
+                attacker_name = get_username(db, cId) or "A nation"
+                target_name = get_username(db, eId) or "a nation"
+                log_event(
+                    db, "assassination",
+                    f"{attacker_name}'s agents assassinated {kill} of {target_name}'s spies.",
+                    actor_id=cId, target_id=eId,
+                )
+    else:
+        if uncovered_objects:
+            revealed_map = get_revealed_values(db, eId, uncovered_objects, spy_type)
+            update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map)
+
+    if news_message is None and uncovered_spies > 0:
+        news_message = "Foreign spies were detected probing your nation's defenses."
+
+    if news_message:
+        insert_news(db, eId, news_message)
 
     decrease_unit_quantity(db, cId, "spies", executed_spies)
 
