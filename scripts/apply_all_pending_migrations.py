@@ -82,6 +82,7 @@ MIGRATION_FILES = [
     "0072_buff_aircraft_carrier_attack.sql",
     "0073_nation_customization_fields.sql",
     "0074_seed_title_conqueror_of_worlds.sql",
+    "0075_add_tutorial_step.sql",
 ]
 
 
