@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block title %}{{ preview_title }}{% endblock %}
+{% block body_class %} page-social-preview{% endblock %}
+{% block og_title %}{{ preview_title }}{% endblock %}
+{% block og_description %}{{ preview_description }}{% endblock %}
+{% block og_image %}{{ preview_image_url }}{% endblock %}
+{% block og_image_width %}1200{% endblock %}
+{% block og_image_height %}630{% endblock %}
+{% block twitter_title %}{{ self.og_title() }}{% endblock %}
+{% block twitter_description %}{{ self.og_description() }}{% endblock %}
+{% block twitter_image %}{{ self.og_image() }}{% endblock %}
+{% block body %}
+<div class="templatediv" style="max-width:480px;margin:64px auto;text-align:center;">
+    <img src="{{ preview_image_url }}" alt="{{ preview_title }}" style="width:100%;border-radius:var(--game-radius-md, 12px);border:1px solid var(--border, #3a4252);">
+    <h1 style="margin-top:24px;">{{ preview_title }}</h1>
+    <p style="color:var(--text-secondary, #8a97ab);">{{ preview_description }}</p>
+    <a href="/login" class="templatedivbutton templatecenteredbutton" style="display:inline-block;margin-top:16px;">
+        Sign in to view on Affairs and Order
+    </a>
+</div>
+{% endblock %}

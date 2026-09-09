@@ -257,6 +257,59 @@ def login_required(f):
     return decorated_function
 
 
+# Known social/chat link-unfurl crawlers — used to give a public, stripped
+# OG-tags preview to pages that are otherwise fully login-gated (coalition,
+# province), since these bots never authenticate and would otherwise only
+# ever see the generic /login redirect's tags. Substring match, lowercased.
+_SOCIAL_CRAWLER_UA_SUBSTRINGS = (
+    "discordbot",
+    "slackbot",
+    "twitterbot",
+    "facebookexternalhit",
+    "linkedinbot",
+    "telegrambot",
+    "whatsapp",
+    "skypeuripreview",
+    "redditbot",
+    "pinterest",
+    "embedly",
+    "vkshare",
+    "quora link preview",
+    "tumblr",
+    "iframely",
+)
+
+
+def is_social_crawler(user_agent) -> bool:
+    if not user_agent:
+        return False
+    ua = user_agent.lower()
+    return any(needle in ua for needle in _SOCIAL_CRAWLER_UA_SUBSTRINGS)
+
+
+def login_required_or_crawler_preview(preview_view):
+    """Like login_required, but a known social-media crawler (see
+    is_social_crawler) gets `preview_view(*args, **kwargs)` instead of the
+    /login redirect a real anonymous visitor still gets. Use this in place
+    of @login_required on a page you want Discord/Slack/etc. to be able to
+    unfurl with real per-entity OG tags, while keeping the actual page
+    itself fully gated. preview_view must be safe to call with no session
+    (it should render a minimal public-safe page, not the real one)."""
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if session.get("user_id", None):
+                return f(*args, **kwargs)
+            if is_social_crawler(request.headers.get("User-Agent")):
+                return preview_view(*args, **kwargs)
+            return redirect("/login")
+
+        return decorated_function
+
+    return decorator
+
+
 # Check for neccessary values without them user can't access a page
 # example: can't access /warchoose or /waramount without enemy_id
 def check_required(func):

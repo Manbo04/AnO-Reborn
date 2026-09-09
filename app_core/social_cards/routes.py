@@ -102,6 +102,20 @@ def _fmt_compact(value) -> str:
     return f"{n:,}"
 
 
+def render_preview_page(title: str, description: str, image_url: str):
+    """Minimal, login-free page for a known social crawler to unfurl —
+    used by province.py/coalitions/routes.py in place of the real page
+    when the requester has no session (see helpers.login_required_or_crawler_preview)."""
+    from flask import render_template
+
+    return render_template(
+        "social_preview.html",
+        preview_title=title,
+        preview_description=description,
+        preview_image_url=image_url,
+    )
+
+
 @bp.route("/social-card/country/<int:cid>.png")
 def country_card(cid):
     cache_key = f"country_{cid}"

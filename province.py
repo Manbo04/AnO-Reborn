@@ -9,6 +9,7 @@ from flask import (
 )
 from helpers import (
     login_required,
+    login_required_or_crawler_preview,
     error,
     require_post_origin,
     compress_province_image,
@@ -71,8 +72,21 @@ def provinces():
     )
 
 
+def _province_crawler_preview(pId):
+    from flask import abort, url_for
+    from app_core.social_cards.routes import _fetch_province_header, render_preview_page
+
+    data = _fetch_province_header(int(pId))
+    if data is None:
+        abort(404)
+    title = f"{data['name']} · Affairs and Order"
+    description = f"{data['name']} — {data['population']:,} population · {data['land']:,} land"
+    image_url = url_for("social_cards.province_card", province_id=int(pId), _external=True)
+    return render_preview_page(title, description, image_url)
+
+
 @bp.route("/province/<pId>", methods=["GET"])
-@login_required
+@login_required_or_crawler_preview(_province_crawler_preview)
 @cache_response(ttl_seconds=30)  # Cache province page
 def province(pId):
     from psycopg2.extras import RealDictCursor
