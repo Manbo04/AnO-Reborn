@@ -23,4 +23,11 @@ limiter = Limiter(
 # DB layer's concurrency model at all.
 # No cross-origin clients needed -- the chat UI is only ever served from this
 # same app, so CORS is left at its default (disabled).
-socketio = SocketIO(async_mode="threading")
+# manage_session=False: don't let Flask-SocketIO fork/copy flask.session per
+# connection (its default). None of our socketio.on handlers ever write to
+# session (app_core/chat/routes.py only reads session["user_id"]), so this is
+# a functional no-op for us -- it just removes a whole class of custom
+# session-handling machinery that runs outside Flask's own request-context
+# push/pop lifecycle, while we investigate a live account cross-contamination
+# bug (see memory: ano-session-cross-contamination-investigation-2026-09-08).
+socketio = SocketIO(async_mode="threading", manage_session=False)
