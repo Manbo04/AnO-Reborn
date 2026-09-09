@@ -85,6 +85,23 @@ def _fmt_num(value) -> str:
         return "0"
 
 
+def _fmt_compact(value) -> str:
+    """Human-readable large numbers, matching discord_bot/embeds.py's
+    _fmt_compact — the card's stat tiles are narrow, so a full
+    comma-formatted 9-figure population truncates instead of fitting."""
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return "0"
+    if n >= 1_000_000_000:
+        return f"{n / 1_000_000_000:.2f}B"
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    if n >= 10_000:
+        return f"{n / 1_000:.1f}K"
+    return f"{n:,}"
+
+
 @bp.route("/social-card/country/<int:cid>.png")
 def country_card(cid):
     cache_key = f"country_{cid}"
@@ -99,9 +116,9 @@ def country_card(cid):
         abort(404)
 
     stats = [
-        ("Population", _fmt_num(header["population"])),
+        ("Population", _fmt_compact(header["population"])),
         ("Provinces", _fmt_num(header["province_count"])),
-        ("Land", _fmt_num(header["total_land"])),
+        ("Land", _fmt_compact(header["total_land"])),
     ]
     if header.get("join_number"):
         stats.append(("Nation #", _fmt_num(header["join_number"])))
@@ -210,7 +227,7 @@ def coalition_card(coalition_id):
 
     stats = [
         ("Members", _fmt_num(data["members_count"])),
-        ("Population", _fmt_num(data["total_population"])),
+        ("Population", _fmt_compact(data["total_population"])),
         ("Provinces", _fmt_num(data["total_provinces"])),
     ]
     subtitle_parts = []
@@ -286,8 +303,8 @@ def province_card(province_id):
         abort(404)
 
     stats = [
-        ("Population", _fmt_num(data["population"])),
-        ("Land", _fmt_num(data["land"])),
+        ("Population", _fmt_compact(data["population"])),
+        ("Land", _fmt_compact(data["land"])),
         ("Cities", _fmt_num(data["citycount"])),
     ]
     if data.get("happiness") is not None:
