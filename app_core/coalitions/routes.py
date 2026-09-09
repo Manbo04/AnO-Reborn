@@ -9,7 +9,7 @@ from flask import (
     flash,
     current_app,
 )
-from helpers import login_required, error, empty_state, require_post_origin, get_bulk_influence, is_theme_v2_enabled
+from helpers import login_required, login_required_or_crawler_preview, error, empty_state, require_post_origin, get_bulk_influence, is_theme_v2_enabled
 import os
 from dotenv import load_dotenv
 
@@ -2250,11 +2250,34 @@ def view_outgoing_invites():
     )
 
 
+def _coalition_crawler_preview(coalition_id):
+    from flask import abort, url_for
+    from app_core.social_cards.routes import _fetch_coalition_header, render_preview_page
+
+    data = _fetch_coalition_header(int(coalition_id))
+    if data is None:
+        abort(404)
+    title = f"{data['name']} · Affairs and Order"
+    description = (
+        f"{data['name']} — {data['members_count']} member nation"
+        f"{'s' if data['members_count'] != 1 else ''} · {data['total_population']:,} total population"
+    )
+    image_url = url_for("social_cards.coalition_card", coalition_id=int(coalition_id), _external=True)
+    return render_preview_page(title, description, image_url)
+
+
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
 
-    # Apply login_required and cache_response decorators to read-heavy routes
-    coalition_wrapped = cache_response(ttl_seconds=30)(login_required(coalition))
+    # Apply login_required and cache_response decorators to read-heavy routes.
+    # coalition_wrapped: the crawler-preview decorator must be OUTERMOST (run
+    # before cache_response) — cache_response's cache key is "anon" for every
+    # anonymous request regardless of crawler-or-not, so if it wrapped the
+    # crawler branch too, whichever anonymous request type happened to land
+    # first within the 30s TTL would get served to the other type as well.
+    coalition_wrapped = login_required_or_crawler_preview(_coalition_crawler_preview)(
+        cache_response(ttl_seconds=30)(coalition)
+    )
     establish_coalition_wrapped = login_required(establish_coalition)
     coalitions_wrapped = cache_response(ttl_seconds=60)(login_required(coalitions))
     join_col_wrapped = login_required(join_col)
