@@ -12,28 +12,6 @@ from helpers import login_required
 
 bp = Blueprint("tutorial_api", __name__)
 
-_columns_ready = False
-
-
-def _ensure_tutorial_columns(db) -> None:
-    global _columns_ready
-    if _columns_ready:
-        return
-    db.execute(
-        "ALTER TABLE stats ADD COLUMN IF NOT EXISTS "
-        "tutorial_chapters_claimed INTEGER[] DEFAULT '{}'"
-    )
-    db.execute(
-        "ALTER TABLE stats ADD COLUMN IF NOT EXISTS "
-        "tutorial_graduated_at TIMESTAMPTZ"
-    )
-    db.execute(
-        "ALTER TABLE stats ADD COLUMN IF NOT EXISTS "
-        "tutorial_step INTEGER DEFAULT 0"
-    )
-    _columns_ready = True
-
-
 def _apply_rewards(db, user_id: int, rewards: dict[str, int]) -> dict[str, int]:
     granted: dict[str, int] = {}
     for resource, amount in rewards.items():
@@ -58,7 +36,6 @@ def _apply_rewards(db, user_id: int, rewards: dict[str, int]) -> dict[str, int]:
 def tutorial_progress():
     user_id = session["user_id"]
     with get_request_cursor() as db:
-        _ensure_tutorial_columns(db)
         db.execute(
             """
             SELECT tutorial_chapters_claimed, tutorial_graduated_at, tutorial_step
@@ -93,7 +70,6 @@ def claim_tutorial_reward():
         return jsonify({"ok": False, "error": "chapter_index or graduate required"}), 400
 
     with get_request_cursor() as db:
-        _ensure_tutorial_columns(db)
         db.execute(
             """
             SELECT tutorial_chapters_claimed, tutorial_graduated_at
@@ -194,14 +170,6 @@ def advance_tutorial_step_by_action(db, user_id: int, action: str) -> None:
     target_chapter = ACTION_CHAPTER_MAP.get(action)
     if target_chapter is None:
         return
-        
-    _ensure_tutorial_columns(db)
-    
-    # Try adding tutorial_step if it doesn't exist
-    try:
-        db.execute("ALTER TABLE stats ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0")
-    except Exception:
-        pass
 
     db.execute(
         "SELECT tutorial_chapters_claimed FROM stats WHERE id = %s",
