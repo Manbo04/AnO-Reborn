@@ -30,6 +30,17 @@ COPY --from=builder /root/.local /root/.local
 # Copy application code
 COPY . .
 
+# Hand-patch a real gunicorn bug (timeout mid-response corrupts the socket by
+# injecting a stray 500 onto an already-partially-written connection --
+# https://github.com/benoitc/gunicorn/issues/3410, fixed upstream in 26.2.1)
+# that we suspect caused AnO's account cross-contamination reports. The fix
+# isn't on PyPI yet as of this writing, so this patches our pinned 21.2.0
+# install directly instead of depending on a git+https install; see
+# scripts/patch_gunicorn_timeout_500_bug.py for the exact 3-line diff and why
+# a blind sed would be unsafe. Remove this step once gunicorn>=26.2.1 is a
+# normal PyPI-installable requirements.txt pin.
+RUN python3 scripts/patch_gunicorn_timeout_500_bug.py
+
 # Regenerate static/style.css from static/css/*.css source files. Without
 # this, style.css is just whatever was last committed verbatim -- CSS
 # source edits silently don't reach production even after a clean deploy
