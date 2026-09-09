@@ -1,7 +1,14 @@
 {% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country{% endblock %}
 {% from 'macros/game_ui.html' import game_button, render_nation_name %}
-{% block head %} {% if flag != None %}
-<meta property="og:image" content="/flag/country/{{ cId }}" /> {% endif %}
+{% block og_title %}{{ username }} · Affairs and Order{% endblock %}
+{% block og_description %}{{ username }} — {{ "{:,}".format(population) }} population · {{ provinceCount }} province{{ 's' if provinceCount != 1 else '' }}{% if leader_name %} · Led by {{ leader_name }}{% endif %}{% if colName %} · {{ colName }}{% endif %}{% endblock %}
+{% block og_image %}{{ url_for('social_cards.country_card', cid=cId, _external=True) }}{% endblock %}
+{% block og_image_width %}1200{% endblock %}
+{% block og_image_height %}630{% endblock %}
+{% block twitter_title %}{{ self.og_title() }}{% endblock %}
+{% block twitter_description %}{{ self.og_description() }}{% endblock %}
+{% block twitter_image %}{{ self.og_image() }}{% endblock %}
+{% block head %}
 <meta name="keywords" content="affairs and order, affairs and order game, country simulator, politics game, country game, nation building game, web game, nation game, create a nation game, mmo game">
 
 <meta name="description" content="{{ username }}'s country."> {% endblock %} {% block extra_head %}

@@ -1,4 +1,13 @@
-{% extends "layout.html"%} {% block title %} {{ name }} {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html"%} {% block title %} {{ name }} {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %}
+{% block og_title %}{{ name }} · Affairs and Order{% endblock %}
+{% block og_description %}{{ name }} — {{ members|length }} member nation{{ 's' if members|length != 1 else '' }} · {{ "{:,}".format(total_population) }} total population{% endblock %}
+{% block og_image %}{{ url_for('social_cards.coalition_card', coalition_id=colId, _external=True) }}{% endblock %}
+{% block og_image_width %}1200{% endblock %}
+{% block og_image_height %}630{% endblock %}
+{% block twitter_title %}{{ self.og_title() }}{% endblock %}
+{% block twitter_description %}{{ self.og_description() }}{% endblock %}
+{% block twitter_image %}{{ self.og_image() }}{% endblock %}
+{% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalitions.jpg') }}');"></div>
