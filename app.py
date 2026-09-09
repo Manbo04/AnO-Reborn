@@ -22,6 +22,7 @@ from app_core.treaties import bp as treaties_bp
 from app_core.loans import bp as loans_bp
 from app_core.world_affairs import bp as world_affairs_bp
 from app_core.bounties import bp as bounties_bp
+from app_core.social_cards import bp as social_cards_bp
 from app_core import policies
 import statistics
 import requests
@@ -553,6 +554,7 @@ def create_app():
     app.register_blueprint(loans_bp)
     app.register_blueprint(world_affairs_bp)
     app.register_blueprint(bounties_bp)
+    app.register_blueprint(social_cards_bp)
 
     # App Core DDD Registrations
     from app_core.main.routes import bp as main_bp

@@ -1,6 +1,14 @@
 {% extends "layout.html" %}
 {% block title %}{{ province['name'] }}{% endblock %}
 {% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
+{% block og_title %}{{ province['name'] }} · Affairs and Order{% endblock %}
+{% block og_description %}{{ province['name'] }} — {{ "{:,}".format(province['population']) }} population · {{ "{:,}".format(province['land']) }} land{% endblock %}
+{% block og_image %}{{ url_for('social_cards.province_card', province_id=province['id'], _external=True) }}{% endblock %}
+{% block og_image_width %}1200{% endblock %}
+{% block og_image_height %}630{% endblock %}
+{% block twitter_title %}{{ self.og_title() }}{% endblock %}
+{% block twitter_description %}{{ self.og_description() }}{% endblock %}
+{% block twitter_image %}{{ self.og_image() }}{% endblock %}
 {% block extra_head %}
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script defer src="{{ url_for('static', filename='province-demographics.js') }}?v=1"></script>
