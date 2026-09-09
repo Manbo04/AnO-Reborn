@@ -78,33 +78,36 @@
             <p>All 8 raw-material mines are biome-gated — your homeland biome unlocks 4 of the 8. See the <a href="/mechanics/biomes" style="color: var(--accent); font-weight: 600;">Biomes Guide</a> for the full breakdown.</p>
         </div>
 
-        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mining Resources (per hour)</h3>
-                <table class="templatetable">
-                    <tr><td><strong>Coal</strong></td><td>Coal Mines, 120/hr → Power, Steel</td></tr>
-                    <tr><td><strong>Iron</strong></td><td>Iron Mines, 70/hr → Steel production</td></tr>
-                    <tr><td><strong>Bauxite</strong></td><td>Bauxite Mines, 260/hr → Aluminium</td></tr>
-                    <tr><td><strong>Uranium</strong></td><td>Uranium Mines, 40/hr → Nuclear power, weapons</td></tr>
-                    <tr><td><strong>Lead</strong></td><td>Lead Mines, 80/hr → Ammunition</td></tr>
-                    <tr><td><strong>Copper</strong></td><td>Copper Mines, 120/hr → Components, ammunition</td></tr>
-                </table>
-            </div>
-            <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">park</span> Other Raw Materials (per hour)</h3>
-                <table class="templatetable">
-                    <tr><td><strong>Oil</strong></td><td>Pumpjacks, 100/hr → Gasoline</td></tr>
-                    <tr><td><strong>Lumber</strong></td><td>Lumber Mills, 150/hr → Construction</td></tr>
-                </table>
-                <h3 class="templatecontentheader" style="margin-top: 15px;"><span class="material-icons-outlined">settings</span> Processed Materials (per hour, not biome-gated)</h3>
-                <table class="templatetable">
-                    <tr><td><strong>Steel</strong></td><td>Steel Mills: 38 coal + 67 iron → 48 steel</td></tr>
-                    <tr><td><strong>Aluminium</strong></td><td>Refineries: 256 bauxite → 64 aluminium</td></tr>
-                    <tr><td><strong>Components</strong></td><td>Component Factories: 80 copper + 40 steel + 60 aluminium → 20 components</td></tr>
-                    <tr><td><strong>Ammunition</strong></td><td>Ammo Factories: 40 copper + 80 lead → 48 ammunition</td></tr>
-                </table>
-            </div>
+        <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mines &amp; Extractors — Cost to Build and Run</h3>
+        <div class="templateoutertablediv" style="overflow-x: auto; max-width: 100%;">
+            <table class="templatetable">
+                <tr>
+                    <th>Resource</th>
+                    <th>Building</th>
+                    <th>Build Cost</th>
+                    <th>Upkeep (per hour)</th>
+                    <th>Output (per hour)</th>
+                    <th>Used For</th>
+                </tr>
+                <tr><td>Coal</td><td>Coal Mines</td><td>$3.5M</td><td>$4,200</td><td>120 coal</td><td>Power, Steel</td></tr>
+                <tr><td>Iron</td><td>Iron Mines</td><td>$3.8M</td><td>$11,000</td><td>70 iron</td><td>Steel production</td></tr>
+                <tr><td>Bauxite</td><td>Bauxite Mines</td><td>$2.4M</td><td>$8,000</td><td>260 bauxite</td><td>Aluminium</td></tr>
+                <tr><td>Uranium</td><td>Uranium Mines</td><td>$5.5M</td><td>$45,000</td><td>40 uranium</td><td>Nuclear power, weapons</td></tr>
+                <tr><td>Lead</td><td>Lead Mines</td><td>$2.6M</td><td>$7,200</td><td>80 lead</td><td>Ammunition</td></tr>
+                <tr><td>Copper</td><td>Copper Mines</td><td>$2.8M</td><td>$5,000</td><td>120 copper</td><td>Components, ammunition</td></tr>
+                <tr><td>Oil</td><td>Pumpjacks</td><td>$3.0M</td><td>$9,500</td><td>100 oil</td><td>Gasoline</td></tr>
+                <tr><td>Lumber</td><td>Lumber Mills</td><td>$2.2M</td><td>$7,500</td><td>150 lumber</td><td>Construction</td></tr>
+            </table>
         </div>
+        <p class="templatecontentpleft" style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">Upkeep is deducted from your treasury every hour whether or not you're online. The "Cheaper Materials" upgrade cuts upkeep on all of these by 20%. Build cost is one-time; some also require iron/lumber on hand to construct — check the building's own buy panel on your province page for the exact resource cost.</p>
+
+        <h3 class="templatecontentheader" style="margin-top: 20px;"><span class="material-icons-outlined">settings</span> Processed Materials (per hour, not biome-gated)</h3>
+        <table class="templatetable">
+            <tr><td><strong>Steel</strong></td><td>Steel Mills: 38 coal + 67 iron → 48 steel</td></tr>
+            <tr><td><strong>Aluminium</strong></td><td>Refineries: 256 bauxite → 64 aluminium</td></tr>
+            <tr><td><strong>Components</strong></td><td>Component Factories: 80 copper + 40 steel + 60 aluminium → 20 components</td></tr>
+            <tr><td><strong>Ammunition</strong></td><td>Ammo Factories: 40 copper + 80 lead → 48 ammunition</td></tr>
+        </table>
 
         <!-- Resource Tips -->
         <table class="templatetable">

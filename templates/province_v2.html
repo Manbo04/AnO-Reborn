@@ -1341,63 +1341,64 @@
                         </tr>
                         <!--FOR CARSON - make these tds links in the future (using IDs)-->
 
+                        {% macro upkeep_hint(building, discounted=false) %}<br><small style="color:var(--text-secondary);font-weight:normal;">{{ (infra[building ~ "_money"] * (0.8 if (discounted and upgrades["cheapermaterials"]) else 1)) | round | int | fmt }}/hr</small>{% endmacro %}
                         <tr>
-                            <td>{{ units["army_bases"] }} Army Bases</td>
-                            <td>{{ units["farms"] }} Farms</td>
-                            <td>{{ units["component_factories"] }} Component Factories</td>
+                            <td>{{ units["army_bases"] }} Army Bases{{ upkeep_hint("army_bases") }}</td>
+                            <td>{{ units["farms"] }} Farms{{ upkeep_hint("farms", true) }}</td>
+                            <td>{{ units["component_factories"] }} Component Factories{{ upkeep_hint("component_factories") }}</td>
                         </tr>
                         <tr>
-                            <td>{{ units["aerodomes"] }} Air Bases</td>
+                            <td>{{ units["aerodomes"] }} Air Bases{{ upkeep_hint("aerodomes") }}</td>
                             <!-- #1 Raw resource -->
                             {% if province['location'] in ["Tundra", "Desert", "Boreal Forest", "Grassland"] %}
-                            <td>{{ units["iron_mines"] }} Iron Mines</td>
+                            <td>{{ units["iron_mines"] }} Iron Mines{{ upkeep_hint("iron_mines", true) }}</td>
                             {% elif province['location'] in ["Savanna", "Jungle", "Mountain Range"] %}
-                            <td>{{ units["coal_mines"] }} Coal Mines</td>
+                            <td>{{ units["coal_mines"] }} Coal Mines{{ upkeep_hint("coal_mines", true) }}</td>
                             {% endif %}
-                            <td>{{ units["steel_mills"] }} Steel Mills</td>
+                            <td>{{ units["steel_mills"] }} Steel Mills{{ upkeep_hint("steel_mills") }}</td>
                         </tr>
                         <tr>
-                            <td>{{ units["harbours"] }} Naval Bases</td>
+                            <td>{{ units["harbours"] }} Naval Bases{{ upkeep_hint("harbours") }}</td>
                             <!-- #2 Raw resource -->
                             {% if province['location'] in ["Tundra", "Savanna", "Jungle", "Grassland"] %}
-                            <td>{{ units["copper_mines"] }} Copper Mines</td>
+                            <td>{{ units["copper_mines"] }} Copper Mines{{ upkeep_hint("copper_mines", true) }}</td>
                             {% elif province['location'] in ["Mountain Range", "Desert"] %}
-                            <td>{{ units["pumpjacks"] }} Pumpjacks</td>
+                            <td>{{ units["pumpjacks"] }} Pumpjacks{{ upkeep_hint("pumpjacks", true) }}</td>
                             {% elif province['location'] in ["Boreal Forest"] %}
-                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            <td>{{ units["lumber_mills"] }} Lumber Mills{{ upkeep_hint("lumber_mills", true) }}</td>
                             {% endif %}
                             <!---->
-                            <td>{{ units["ammunition_factories"] }} Ammunition Factories</td>
+                            <td>{{ units["ammunition_factories"] }} Ammunition Factories{{ upkeep_hint("ammunition_factories") }}</td>
                         </tr>
                         <tr>
-                            <td>{{ units["admin_buildings"] }} Administrative Buildings</td>
+                            <td>{{ units["admin_buildings"] }} Administrative Buildings{{ upkeep_hint("admin_buildings") }}</td>
                             <!-- #3 Raw resource -->
                             {% if province['location'] in ["Tundra", "Savanna", "Boreal Forest"] %}
-                            <td>{{ units["lead_mines"] }} Lead Mines</td>
+                            <td>{{ units["lead_mines"] }} Lead Mines{{ upkeep_hint("lead_mines", true) }}</td>
                             {% elif province['location'] in ["Desert", "Grassland", "Mountain Range"] %}
-                            <td>{{ units["bauxite_mines"] }} Bauxite Mines</td>
+                            <td>{{ units["bauxite_mines"] }} Bauxite Mines{{ upkeep_hint("bauxite_mines", true) }}</td>
                             {% elif province['location'] in ["Jungle"] %}
-                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            <td>{{ units["lumber_mills"] }} Lumber Mills{{ upkeep_hint("lumber_mills", true) }}</td>
                             {% endif %}
                             <!---->
-                            <td>{{ units["aluminium_refineries"] }} Aluminium Refineries</td>
+                            <td>{{ units["aluminium_refineries"] }} Aluminium Refineries{{ upkeep_hint("aluminium_refineries") }}</td>
                         </tr>
                         <tr>
-                            <td>{{ units["silos"] }} Silos</td>
+                            <td>{{ units["silos"] }} Silos{{ upkeep_hint("silos") }}</td>
                             <!-- 4 Raw resource -->
                             {% if province['location'] in ["Jungle", "Grassland"] %}
-                            <td>{{ units["pumpjacks"] }} Pumpjacks</td>
+                            <td>{{ units["pumpjacks"] }} Pumpjacks{{ upkeep_hint("pumpjacks", true) }}</td>
                             {% elif province['location'] in ["Mountain Range"] %}
-                            <td>{{ units["lumber_mills"] }} Lumber Mills</td>
+                            <td>{{ units["lumber_mills"] }} Lumber Mills{{ upkeep_hint("lumber_mills", true) }}</td>
                             {% elif province['location'] in ["Desert", "Tundra"]%}
-                            <td>{{ units["uranium_mines"] }} Uranium Mines </td>
+                            <td>{{ units["uranium_mines"] }} Uranium Mines{{ upkeep_hint("uranium_mines", true) }}</td>
                             {% elif province['location'] in ["Savanna"] %}
-                            <td>{{ units["bauxite_mines"] }} Bauxite Mines</td>
+                            <td>{{ units["bauxite_mines"] }} Bauxite Mines{{ upkeep_hint("bauxite_mines", true) }}</td>
                             {% elif province['location'] in ["Boreal Forest"] %}
-                            <td>{{ units["coal_mines"] }} Coal mines</td>
+                            <td>{{ units["coal_mines"] }} Coal mines{{ upkeep_hint("coal_mines", true) }}</td>
                             {% endif %}
                             <!---->
-                            <td>{{ units["oil_refineries"] }} Oil Refineries</td>
+                            <td>{{ units["oil_refineries"] }} Oil Refineries{{ upkeep_hint("oil_refineries") }}</td>
                         </tr>
                     </table>
                 </div>
