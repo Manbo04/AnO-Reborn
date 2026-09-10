@@ -30,7 +30,7 @@ def get_email_config():
         "user": os.getenv("EMAIL_HOST_USER"),
         "password": os.getenv("EMAIL_HOST_PASSWORD"),
         "from_name": os.getenv("EMAIL_FROM_NAME", "Affairs and Order"),
-        "base_url": os.getenv("BASE_URL", "https://affairsandorder.com"),
+        "base_url": os.getenv("BASE_URL", "https://affairsandorder.org"),
     }
 
 

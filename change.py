@@ -42,7 +42,7 @@ def generateUrlFromCode(code):
     environment = os.getenv("ENVIRONMENT", "DEV")
 
     if environment == "PROD":
-        url = "https://affairsandorder.com"
+        url = os.getenv("GAME_BASE_URL", "https://affairsandorder.org")
     else:
         url = "http://localhost:5000"
 

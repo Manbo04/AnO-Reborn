@@ -20,7 +20,7 @@ def _resolve_bot_api_secret() -> str:
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "").strip()
 BOT_API_SECRET = _resolve_bot_api_secret()
 BOT_API_BASE_URL = (
-    os.getenv("BOT_API_BASE_URL", "https://affairsandorder.com").strip().rstrip("/")
+    os.getenv("BOT_API_BASE_URL", "https://affairsandorder.org").strip().rstrip("/")
 )
 GAME_BASE_URL = os.getenv("GAME_BASE_URL", BOT_API_BASE_URL).strip().rstrip("/")
 

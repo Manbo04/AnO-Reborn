@@ -35,7 +35,7 @@ if not logger.handlers:
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-BASE_URL = os.getenv("AI_AGENT_BASE_URL", "https://affairsandorder.com")
+BASE_URL = os.getenv("AI_AGENT_BASE_URL", "https://affairsandorder.org")
 AI_USER_ID = int(os.getenv("AI_AGENT_USER_ID", "1"))  # Dede
 AI_USERNAME = os.getenv("AI_AGENT_USERNAME", "Dede")
 AI_PASSWORD = os.getenv("AI_AGENT_PASSWORD", "")

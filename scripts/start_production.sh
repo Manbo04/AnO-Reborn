@@ -28,7 +28,7 @@ print("  cleared leader lock keys")
 PY
   export DISCORD_BOT_USE_WEB_EMBEDS=1
   export DISCORD_BOT_LEADER_LOCK_KEY="discord_bot:leader:v3"
-  export BOT_API_BASE_URL="${BOT_API_BASE_URL:-https://affairsandorder.com}"
+  export BOT_API_BASE_URL="${BOT_API_BASE_URL:-https://affairsandorder.org}"
   echo "[start] Starting Discord bot sidecar (embeds from web API)..."
   python3 scripts/run_discord_bot_if_leader.py >>/tmp/discord-bot.log 2>&1 &
 else
