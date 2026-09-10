@@ -2454,6 +2454,13 @@
                     </div>
                 </div>
 
+                <div class="templatedivflex2left" style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" name="keep_private" />
+                        Keep this out of the World Affairs feed
+                    </label>
+                </div>
+
                 <button class="templatedivbutton templatecenteredbutton" type="submit "><span class="material-icons-outlined ">
                         check
                         </span>Perform</button>
@@ -2518,6 +2525,21 @@
                     </div>
         </form>
 
+        <div class="templatedivflex2 divflex2center" style="margin-top: 10px;">
+            <div class="templatedivflex2left">
+                {% if is_embargoed_by_viewer %}
+                <form method="POST" action="/embargo/{{ cId }}/remove">
+                    {{ game_button('Remove Embargo', icon='block', variant='secondary') }}
+                </form>
+                <span class="text-muted" style="margin-left: 8px;">You are currently embargoing this nation - they cannot buy from or sell to you on the market.</span>
+                {% else %}
+                <form method="POST" action="/embargo/{{ cId }}">
+                    {{ game_button('Embargo This Nation', icon='block', variant='danger') }}
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
         </div>
         </div>
         <h2 class="templatecontentheaderleft ">Transfer Resources</h2>
@@ -2567,6 +2589,13 @@
                         <label for="transferMessage">Message (optional):</label>
                         <textarea class="templatetextarea" name="message" maxlength="240" placeholder="Say something to go with this gift..."></textarea>
                     </div>
+                </div>
+
+                <div class="templatedivflex2left" style="margin-top: 6px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" name="keep_private" />
+                        Keep this out of the World Affairs feed
+                    </label>
                 </div>
 
                 <div class="text-center mt-md">

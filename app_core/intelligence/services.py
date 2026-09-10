@@ -87,7 +87,7 @@ def submit_spy_amount(db, cId, eId):
         enemy_spies = 1
 
 
-def resolve_spy_operation(db, cId, eId, spies, spy_type):
+def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     """Runs one espionage operation. Returns (ok, status_code, error_message)."""
     if spy_type not in VALID_SPY_TYPES:
         return False, 400, "Invalid spy operation type."
@@ -177,13 +177,14 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type):
         if sabotaged:
             details = ", ".join(f"{loss} {resource}" for resource, loss in sabotaged)
             news_message = f"Your nation was sabotaged by foreign agents! You lost {details}."
-            attacker_name = get_username(db, cId) or "A nation"
-            target_name = get_username(db, eId) or "a nation"
-            log_event(
-                db, "sabotage",
-                f"{attacker_name} sabotaged {target_name}'s economy, destroying {details}.",
-                actor_id=cId, target_id=eId,
-            )
+            if not keep_private:
+                attacker_name = get_username(db, cId) or "A nation"
+                target_name = get_username(db, eId) or "a nation"
+                log_event(
+                    db, "sabotage",
+                    f"{attacker_name} sabotaged {target_name}'s economy, destroying {details}.",
+                    actor_id=cId, target_id=eId,
+                )
     elif spy_type == "assassinate_spies":
         if uncovered.get("spies"):
             enemy_spy_count = get_unit_quantity(db, eId, "spies")
@@ -194,13 +195,14 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type):
             if enemy_spy_count > 0:
                 decrease_unit_quantity(db, eId, "spies", kill)
                 news_message = f"Enemy agents assassinated {kill} of your spies!"
-                attacker_name = get_username(db, cId) or "A nation"
-                target_name = get_username(db, eId) or "a nation"
-                log_event(
-                    db, "assassination",
-                    f"{attacker_name}'s agents assassinated {kill} of {target_name}'s spies.",
-                    actor_id=cId, target_id=eId,
-                )
+                if not keep_private:
+                    attacker_name = get_username(db, cId) or "A nation"
+                    target_name = get_username(db, eId) or "a nation"
+                    log_event(
+                        db, "assassination",
+                        f"{attacker_name}'s agents assassinated {kill} of {target_name}'s spies.",
+                        actor_id=cId, target_id=eId,
+                    )
     else:
         if uncovered_objects:
             revealed_map = get_revealed_values(db, eId, uncovered_objects, spy_type)

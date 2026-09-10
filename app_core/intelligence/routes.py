@@ -93,9 +93,10 @@ def spyResult():
             return error(400, "Number of spies must be a valid number")
 
         spy_type = request.form.get("spy_type")
+        keep_private = request.form.get("keep_private") == "on"
 
         with get_request_cursor() as db:
-            ok, status_code, message = resolve_spy_operation(db, cId, eId, spies, spy_type)
+            ok, status_code, message = resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=keep_private)
 
         if not ok:
             return error(status_code, message)

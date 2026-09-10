@@ -281,6 +281,37 @@
         </div>
         {% endif %}
         </div>
+
+        <div class="game-glass game-panel" style="margin-top: 18px;">
+        {% if embargoes | length == 0 %}
+        <h2 class="templatecontentheadercenter">You have not embargoed any nations</h2>
+        {% else %}
+        <h2 class="templatecontentheaderleft">Embargoed nations</h2>
+        <p class="mb-md text-muted">These nations cannot buy from or sell to you on the market.</p>
+
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Nation</th>
+                    <th>Action</th>
+                </tr>
+                {% for embargoed_id, username in embargoes %}
+                <tr>
+                    <td><a href="/country/id={{ embargoed_id }}">{{ username }}</a></td>
+                    <td>
+                        <form method="POST" action="/embargo/{{ embargoed_id }}/remove">
+                            <input type="hidden" name="redirect_to" value="my_offers" />
+                            <button type="submit" class="material-icons iconred" onclick="return confirm('Remove embargo on {{ username }}?')">
+                                remove_circle_outline
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
