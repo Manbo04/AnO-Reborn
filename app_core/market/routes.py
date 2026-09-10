@@ -9,7 +9,7 @@ from .repositories import (
     get_offer_by_id, delete_offer, update_offer_amount, lock_users, get_user_gold_for_update,
     insert_offer, insert_trade, get_my_trades, get_my_offers, delete_trade, try_lock_trade,
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
-    decrement_gold, increment_gold
+    decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes
 )
 from .services import give_resource, report_trade_error
 from app_core.world_affairs.services import log_event
@@ -87,6 +87,9 @@ def buy_market_offer(offer_id):
             return error(400, "Offer not found")
         resource, total_amount, price_for_one, seller_id = row
 
+        if is_embargoed(db, seller_id, cId):
+            return error(403, "This nation has embargoed you and will not sell to you.")
+
         if not is_active_resource(db, resource):
             return error(400, "This resource is not currently tradable.")
 
@@ -134,6 +137,16 @@ def buy_market_offer(offer_id):
         else:
             update_offer_amount(db, offer_id, new_offer_amount)
 
+        try:
+            buyer_name = get_username(db, cId) or "A nation"
+            insert_news(
+                db, seller_id,
+                f"{buyer_name} purchased {amount_wanted:,} {resource} from your "
+                f"market offer for ${total_price:,}.",
+            )
+        except Exception:
+            pass
+
     try:
         invalidate_user_cache(cId)
         invalidate_user_cache(seller_id)
@@ -166,6 +179,9 @@ def sell_market_offer(offer_id):
         if not row:
             return error(400, "Offer not found")
         resource, total_amount, price_for_one, buyer_id = row
+
+        if is_embargoed(db, buyer_id, seller_id):
+            return error(403, "This nation has embargoed you and will not buy from you.")
 
         lock_users(db, [seller_id, buyer_id])
 
@@ -204,6 +220,16 @@ def sell_market_offer(offer_id):
             delete_offer(db, offer_id)
         else:
             update_offer_amount(db, offer_id, new_offer_amount)
+
+        try:
+            seller_name = get_username(db, seller_id) or "A nation"
+            insert_news(
+                db, buyer_id,
+                f"{seller_name} sold you {amount_wanted:,} {resource} for "
+                f"${total_price:,} via your market offer.",
+            )
+        except Exception:
+            pass
 
     try:
         invalidate_user_cache(seller_id)
@@ -290,9 +316,10 @@ def my_offers():
         offers["outgoing"] = outgoing
         offers["incoming"] = incoming
         offers["market"] = get_my_offers(db, cId)
+        embargoes = list_embargoes(db, cId)
 
     template = "my_offers_v2.html" if is_theme_v2_enabled("my_offers") else "my_offers.html"
-    return render_template(template, cId=cId, offers=offers)
+    return render_template(template, cId=cId, offers=offers, embargoes=embargoes)
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
@@ -557,6 +584,7 @@ def transfer(transferee):
         resource = request.form.get("resource")
         amount_str = request.form.get("amount")
         gift_message = (request.form.get("message") or "").strip()[:240]
+        keep_private = request.form.get("keep_private") == "on"
         if not amount_str:
             return error(400, "Amount is required")
         try:
@@ -604,12 +632,13 @@ def transfer(transferee):
         insert_news(db, transferee_id, recipient_msg)
         insert_news(db, cId, sender_msg)
 
-        recipient_name = get_username(db, transferee_id) or "a nation"
-        log_event(
-            db, "aid",
-            f"{sender_name} sent {amount_desc} in aid to {recipient_name}.",
-            actor_id=cId, target_id=transferee_id,
-        )
+        if not keep_private:
+            recipient_name = get_username(db, transferee_id) or "a nation"
+            log_event(
+                db, "aid",
+                f"{sender_name} sent {amount_desc} in aid to {recipient_name}.",
+                actor_id=cId, target_id=transferee_id,
+            )
 
         try:
             invalidate_user_cache(cId)
@@ -618,3 +647,41 @@ def transfer(transferee):
             pass
 
     return redirect(f"/country/id={transferee_id}")
+
+@market_bp.route("/embargo/<target_id>", methods=["POST"])
+@login_required
+def embargo_nation(target_id):
+    cId = session["user_id"]
+
+    try:
+        target_id = int(target_id)
+    except (ValueError, TypeError):
+        return error(400, "Invalid nation ID")
+
+    if target_id == cId:
+        return error(400, "You cannot embargo yourself")
+
+    with get_request_cursor() as db:
+        if not user_exists(db, target_id):
+            return error(404, "That nation does not exist")
+        add_embargo(db, cId, target_id)
+
+    return redirect(f"/country/id={target_id}")
+
+@market_bp.route("/embargo/<target_id>/remove", methods=["POST"])
+@login_required
+def remove_embargo_endpoint(target_id):
+    cId = session["user_id"]
+
+    try:
+        target_id = int(target_id)
+    except (ValueError, TypeError):
+        return error(400, "Invalid nation ID")
+
+    with get_request_cursor() as db:
+        remove_embargo(db, cId, target_id)
+
+    redirect_to = request.form.get("redirect_to")
+    if redirect_to == "my_offers":
+        return redirect("/my_offers")
+    return redirect(f"/country/id={target_id}")

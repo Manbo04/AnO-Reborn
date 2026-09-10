@@ -281,3 +281,36 @@ def user_exists(db, user_id):
     db.execute("SELECT id FROM stats WHERE id=%s", (user_id,))
     return db.fetchone() is not None
 
+def is_embargoed(db, embargoer_id, embargoed_id):
+    db.execute(
+        "SELECT 1 FROM market_embargoes WHERE embargoer_id=%s AND embargoed_id=%s",
+        (embargoer_id, embargoed_id),
+    )
+    return db.fetchone() is not None
+
+def add_embargo(db, embargoer_id, embargoed_id):
+    db.execute(
+        (
+            "INSERT INTO market_embargoes (embargoer_id, embargoed_id) "
+            "VALUES (%s, %s) ON CONFLICT DO NOTHING"
+        ),
+        (embargoer_id, embargoed_id),
+    )
+
+def remove_embargo(db, embargoer_id, embargoed_id):
+    db.execute(
+        "DELETE FROM market_embargoes WHERE embargoer_id=%s AND embargoed_id=%s",
+        (embargoer_id, embargoed_id),
+    )
+
+def list_embargoes(db, embargoer_id):
+    db.execute(
+        (
+            "SELECT me.embargoed_id, u.username FROM market_embargoes me "
+            "INNER JOIN users u ON u.id = me.embargoed_id "
+            "WHERE me.embargoer_id=%s ORDER BY me.created_at DESC"
+        ),
+        (embargoer_id,),
+    )
+    return db.fetchall()
+

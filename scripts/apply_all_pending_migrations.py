@@ -83,6 +83,7 @@ MIGRATION_FILES = [
     "0073_nation_customization_fields.sql",
     "0074_seed_title_conqueror_of_worlds.sql",
     "0075_add_tutorial_step.sql",
+    "0076_add_market_embargoes.sql",
 ]
 
 
