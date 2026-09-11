@@ -9,6 +9,15 @@ from helpers import error
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+# Google's token endpoint returns granted scopes as fully-qualified URIs
+# (e.g. "https://www.googleapis.com/auth/userinfo.email") even when the
+# short names ("email"/"profile") were requested. oauthlib treats that as
+# a scope mismatch and raises, which fetch_token() below can't distinguish
+# from a real error — surfacing as "Failed to retrieve token from Google"
+# on every single login/signup. Same fix already used in
+# discord_bot/dashboard.py for the same library.
+os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
+
 def is_google_auth_configured() -> bool:
     return bool(
         os.environ.get("GOOGLE_CLIENT_ID", "").strip()
