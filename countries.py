@@ -520,6 +520,48 @@ def get_revenue(cId, db=None):
                         cg_multiplier = consumer_goods / max_cg
                         ti_money *= 1 + (0.5 * cg_multiplier)
 
+            # Rations (food) shortage tax penalty -- mirrors
+            # app_core/game_ticks/taxes.py's tax_income() exactly. Missing
+            # here meant this projection always showed the full, undiscounted
+            # tax income even for a nation short on rations, while the real
+            # hourly tick was quietly paying out as little as 70% of that
+            # (player-reported: displayed "Net Raw" far exceeded actual
+            # treasury growth). Same bug shape as the other duplicated-tick-
+            # formula gaps fixed above.
+            total_pop_food = sum(p for p, *_ in ti_provinces)
+            needed_rations = max(int(total_pop_food // variables.RATIONS_PER), 1)
+            if variables.FEATURE_RATIONS_DISTRIBUTION:
+                db.execute(
+                    "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty "
+                    "FROM user_buildings ub "
+                    "JOIN building_dictionary bd "
+                    "  ON bd.building_id = ub.building_id "
+                    "WHERE ub.user_id = %s AND bd.name = ANY(%s) "
+                    "GROUP BY bd.name",
+                    (cId, variables.RATIONS_DISTRIBUTION_BUILDINGS),
+                )
+                r_dist_cap = 0
+                for drow in db.fetchall():
+                    bname = drow[0]
+                    qty = drow[1] or 0
+                    cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING.get(bname, 0)
+                    r_dist_cap += qty * cap
+                effective_rations = min(current_rations, r_dist_cap)
+            else:
+                effective_rations = current_rations
+
+            rcp = min(0.0, (effective_rations / needed_rations) - 1.0)
+            grace_period = (len(ti_provinces) <= 1) and (
+                sum(land for _, land, *_ in ti_provinces) <= 20
+            )
+            if grace_period:
+                food_tax_multiplier = 1.0
+            else:
+                food_tax_multiplier = 1.0 + (
+                    rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER)
+                )
+            ti_money *= food_tax_multiplier
+
         ti_money = math.floor(ti_money)
 
         # Deduct coalition tax so the displayed net matches what the player
