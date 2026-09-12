@@ -2281,7 +2281,17 @@ def get_global_events():
     except Exception as e:
         print("Error fetching global events:", e)
         pass
-        
+
+    # Escape every event string right before it leaves the server: this list
+    # mixes hardcoded/trusted copy with plenty of user-controlled DB values
+    # (usernames, province names, coalition names, world-affairs messages)
+    # that have no character restriction at signup/rename. The client
+    # inserts these strings into the DOM via innerHTML with no sanitization
+    # of its own, so an unescaped value here is a stored-XSS payload that
+    # would fire in every visitor's browser automatically on page load.
+    import html as _html
+    events = [_html.escape(str(e)) for e in events]
+
     return jsonify({"events": events})
 
 
