@@ -151,8 +151,23 @@ def get_province_map_nodes():
 
     return jsonify({"status": "success", "provinces": provinces, "planets": planets})
 @bp.route("/api/admin/run_migration", methods=["GET"])
+@login_required
 def run_migration_backdoor():
-    """Temporary backdoor to execute the migration and seeder on production."""
+    """Temporary backdoor to execute the migration and seeder on production.
+
+    Was completely unauthenticated (no login_required, no admin check) --
+    any anonymous internet request could trigger it, re-running ALTER
+    TABLE/index creation and re-seeding coordinate_x/coordinate_y for
+    every province still missing them. Gated behind the same super-admin
+    allowlist as the rest of the admin toolkit rather than removed
+    outright, since new provinces without coordinates may still depend on
+    this being re-run occasionally.
+    """
+    from app_core.admin.services import admin_only_guard
+
+    denied = admin_only_guard(session.get("user_id"))
+    if denied:
+        return denied
     try:
         from database import get_request_connection
         conn = get_request_connection()
