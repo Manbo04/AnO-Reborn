@@ -78,4 +78,4 @@ yarl==1.24.2
 Flask-Limiter==3.8.0
 pyotp==2.9.0
 qrcode==7.4.2
-cryptography==43.0.3
+cryptography==49.0.0
