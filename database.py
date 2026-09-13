@@ -224,9 +224,11 @@ def cache_response(ttl_seconds=60, public=False):
         # function so callers (routes/handlers) can invalidate cached pages
         # when underlying data changes (e.g. role changes, join requests).
         decorated_function._response_cache = cache
-        # Register the cache so other modules can invalidate it even if they
-        # don't have a direct reference to the decorated function object.
+        # Register the cache (and its lock) so other modules can invalidate
+        # it even if they don't have a direct reference to the decorated
+        # function object -- see invalidate_view_cache() / _invalidate_cache_dict().
         response_cache_registry[f.__name__] = cache
+        response_cache_lock_registry[f.__name__] = lock
 
         def invalidate(
             pattern: str | None = None,
@@ -243,25 +245,7 @@ def cache_response(ttl_seconds=60, public=False):
             cause removal). If all are None the entire cache for this view is
             cleared.
             """
-
-            with lock:
-                keys = list(cache.keys())
-                for k in keys:
-                    remove = False
-                    if pattern and pattern in k:
-                        remove = True
-                    if user_id is not None and f"_{user_id}_" in k:
-                        remove = True
-                    if page and page in k:
-                        remove = True
-                    if pattern is None and user_id is None and page is None:
-                        remove = True
-
-                    if remove:
-                        try:
-                            del cache[k]
-                        except KeyError:
-                            pass
+            _invalidate_cache_dict(cache, lock, user_id=user_id, page=page, pattern=pattern)
 
         def clear_cache():
             """Clear the full cache for this decorated view."""
@@ -303,6 +287,12 @@ query_cache = QueryCache(ttl_seconds=300)
 # Registry for per-view response caches created by `cache_response`.
 # Maps view function name -> the internal `cache` dict used by the decorator.
 response_cache_registry: Dict[str, dict] = {}
+# Parallel registry of each view's lock (see cache_response's own `lock`).
+# invalidate_view_cache() below reaches into the same cache dicts from
+# outside the decorator's closure -- it must acquire the same lock the
+# decorator itself uses, or this is just as unguarded as cache_response was
+# before that fix. Found in the follow-up sweep for this exact hazard class.
+response_cache_lock_registry: Dict[str, threading.Lock] = {}
 
 
 def invalidate_view_cache(
@@ -320,22 +310,39 @@ def invalidate_view_cache(
     cache = response_cache_registry.get(view_name)
     if not cache:
         return
-    keys = list(cache.keys())
-    for k in keys:
-        remove = False
-        if pattern and pattern in k:
-            remove = True
-        if user_id is not None and f"_{user_id}_" in k:
-            remove = True
-        if page and page in k:
-            remove = True
-        if pattern is None and user_id is None and page is None:
-            remove = True
-        if remove:
-            try:
-                del cache[k]
-            except KeyError:
-                pass
+    cache_lock = response_cache_lock_registry.get(view_name)
+    _invalidate_cache_dict(cache, cache_lock, user_id=user_id, page=page, pattern=pattern)
+
+
+def _invalidate_cache_dict(
+    cache: dict,
+    cache_lock,
+    user_id: int | None = None,
+    page: str | None = None,
+    pattern: str | None = None,
+) -> None:
+    """Shared removal logic for both invalidate_view_cache() and
+    cache_response()'s own per-decorator invalidate(), so there's exactly
+    one place that needs to remember to take the lock."""
+    import contextlib
+
+    with cache_lock if cache_lock is not None else contextlib.nullcontext():
+        keys = list(cache.keys())
+        for k in keys:
+            remove = False
+            if pattern and pattern in k:
+                remove = True
+            if user_id is not None and f"_{user_id}_" in k:
+                remove = True
+            if page and page in k:
+                remove = True
+            if pattern is None and user_id is None and page is None:
+                remove = True
+            if remove:
+                try:
+                    del cache[k]
+                except KeyError:
+                    pass
 
 
 def invalidate_user_cache(user_id: int) -> None:

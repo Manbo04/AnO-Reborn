@@ -6,6 +6,7 @@ import hmac
 import logging
 import os
 import secrets
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -900,6 +901,15 @@ def bot_resources():
 
 _heuristics_rate_limits = {}
 _heuristics_cleanup_time = 0.0
+# Guards both of the above. Found during the account-cross-contamination
+# investigation's follow-up sweep for the same unlocked-shared-dict hazard
+# class as database.py's cache_response(): the eviction loop below builds
+# `expired` from _heuristics_rate_limits.items() -- iterating that view
+# while a concurrent request (this endpoint is real Discord-bot traffic,
+# genuinely concurrent under gthread) inserts/deletes a key can raise
+# "RuntimeError: dictionary changed size during iteration" mid-iteration,
+# before the loop even reaches its own delete step.
+_heuristics_lock = threading.Lock()
 
 @bp.route("/api/bot/heuristics/sync", methods=["POST"])
 def bot_heuristics_sync():
@@ -910,22 +920,23 @@ def bot_heuristics_sync():
     payload = request.get_json(silent=True) or {}
     discord_user_id = str(payload.get("discord_user_id") or "").strip()
     action = str(payload.get("action") or "").strip()
-    
+
     if not discord_user_id:
         return jsonify({"error": "discord_user_id required"}), 400
-        
+
     if action == "xp_gain":
         now = time.time()
-        if now - _heuristics_cleanup_time > 300:
-            expired = [k for k, v in _heuristics_rate_limits.items() if now - v > 60]
-            for k in expired:
-                del _heuristics_rate_limits[k]
-            _heuristics_cleanup_time = now
-            
-        last_time = _heuristics_rate_limits.get(discord_user_id, 0)
-        if now - last_time < 55:
-            return jsonify({"error": "Rate limit exceeded"}), 429
-        _heuristics_rate_limits[discord_user_id] = now
+        with _heuristics_lock:
+            if now - _heuristics_cleanup_time > 300:
+                expired = [k for k, v in _heuristics_rate_limits.items() if now - v > 60]
+                for k in expired:
+                    del _heuristics_rate_limits[k]
+                _heuristics_cleanup_time = now
+
+            last_time = _heuristics_rate_limits.get(discord_user_id, 0)
+            if now - last_time < 55:
+                return jsonify({"error": "Rate limit exceeded"}), 429
+            _heuristics_rate_limits[discord_user_id] = now
         
     user_id = resolve_user_id_by_discord(discord_user_id)
     if not user_id:
