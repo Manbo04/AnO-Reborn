@@ -1,11 +1,28 @@
+import os
+
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO
 
+# storage_uri="memory://" (the Flask-Limiter default) counts requests
+# per-process, not shared -- under this app's --workers 4, each of the 4
+# gunicorn worker processes keeps its own independent counter, so the
+# real per-IP limit in production is up to ~4x weaker than the numbers
+# below suggest. redis is already a live, working dependency here (the
+# game-tick advisory-lock code in app_core/game_ticks/locks.py already
+# depends on reaching it successfully), so this switches to a real
+# shared store instead. swallow_errors=True is deliberate defense in
+# depth: if Redis is ever briefly unreachable, requests must still be
+# served (fail open on rate limiting), not break the whole site over a
+# non-critical dependency.
+_redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
+    storage_uri=_redis_url or "memory://",
+    swallow_errors=True,
+    in_memory_fallback_enabled=True,
 )
 
 # async_mode="threading": runs on gunicorn's existing gthread/sync workers with
