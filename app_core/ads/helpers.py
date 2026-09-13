@@ -51,6 +51,24 @@ def save_ad_image_upload(
     if ext not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
         return False, "Image must be JPG, PNG, GIF, or WebP."
 
+    # Extension alone is attacker-controlled (just the string after the last
+    # "."), so this on its own doesn't verify the uploaded bytes are really
+    # an image -- unlike countries.py/coalitions' flag uploads (which always
+    # re-encode through Pillow), this saved raw upload bytes verbatim under
+    # a public, guessable-format /static/uploads/ads/<uuid>.<ext> URL,
+    # reachable by any @login_required player (found 2026-09-13, alongside
+    # the target_url javascript: scheme issue in services.py). Validate the
+    # actual file header via Pillow before persisting anything to disk.
+    try:
+        from PIL import Image
+
+        upload.stream.seek(0)
+        with Image.open(upload.stream) as img:
+            img.verify()
+    except Exception:
+        return False, "File does not look like a valid image."
+    upload.stream.seek(0)
+
     dest_dir = os.path.join(static_folder, "uploads", "ads")
     os.makedirs(dest_dir, exist_ok=True)
     stored_name = f"{uuid.uuid4().hex}{ext}"
