@@ -97,10 +97,21 @@ def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
     }
 
 def process_sell_units(db, cId, units, wantedUnits, mildict):
+    # Serializes all buy/sell/activate calls for this user (same lock key
+    # and pattern as action_loop.py's build_structure/demolish_structure).
+    # Found 2026-09-13: without this, two concurrent sell requests both read
+    # the same currentUnits/gold before either commits, both pass their
+    # affordability check, and both proceed -- remove_units() is a blind
+    # `quantity = quantity - %s` with no floor (unlike gold, which is at
+    # least GREATEST(0, ...)-clamped), so a raced double-sell could pay out
+    # gold twice for units the account only had once, and could drive
+    # user_military.quantity negative.
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
     unit_costs = get_unit_costs(db, units, mildict)
     if not unit_costs:
         return False, "Unit definition not found or inactive"
-    
+
     unit_id = unit_costs["unit_id"]
     currentUnits = get_current_unit_quantity(db, cId, unit_id)
     if wantedUnits > currentUnits:
@@ -121,10 +132,21 @@ def process_sell_units(db, cId, units, wantedUnits, mildict):
     return True, "Success"
 
 def process_buy_units(db, cId, units, wantedUnits, mildict):
+    # Same race found in process_sell_units above, mirror image: two
+    # concurrent buy requests both read the same gold/manpower/resource
+    # balances before either commits, both pass their affordability check,
+    # and both call add_units() unconditionally -- update_manpower_and_gold's
+    # GREATEST(0, ...) clamp stops gold from going negative, but does
+    # nothing to stop the second request's add_units() call, so a raced
+    # double-buy grants double the units for a single purchase's worth of
+    # gold/resources. Serializing here matches build_structure's advisory
+    # lock in action_loop.py.
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
     unit_costs = get_unit_costs(db, units, mildict)
     if not unit_costs:
         return False, "Unit definition not found or inactive"
-        
+
     units_dict, _ = get_user_units_with_stats(db, cId)
     limits = compute_display_limits(cId, db, units_dict)
     
@@ -167,6 +189,12 @@ def process_activate_units(db, cId, units, wantedUnits, mildict):
     cruise_missiles) from user_unit_stockpile into user_military. Gold-only:
     the resources were already spent when the drone site/missile battery
     manufactured the unit (app_core/game_ticks/unit_production.py)."""
+    # Same race class as process_buy_units/process_sell_units above --
+    # move_stockpile_to_military's UPDATE has no `WHERE quantity >= %s`
+    # floor either, so two concurrent activations could double-grant units
+    # from a single stockpile balance.
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
     if units not in STOCKPILE_UNITS:
         return False, "This unit is not activated from a stockpile"
 
