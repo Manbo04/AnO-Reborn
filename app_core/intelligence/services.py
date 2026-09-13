@@ -89,6 +89,18 @@ def submit_spy_amount(db, cId, eId):
 
 def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     """Runs one espionage operation. Returns (ok, status_code, error_message)."""
+    # Serializes this attacker's spy operations (same pattern as
+    # wars/routes.py's drone_strike/cruise_missile_strike). Found
+    # 2026-09-13: `actual_spies` below is a stale read with no lock, and
+    # decrease_unit_quantity()'s deduction is `GREATEST(0, quantity - %s)`
+    # with no `WHERE quantity >= amount` guard -- two concurrent spy
+    # operations (same or different target; the 12h cooldown only applies
+    # to a *different* target) could both pass the spy-count check and both
+    # execute a full operation's real effects (intel reveal, sabotage,
+    # assassination) against a target using spies the attacker only had
+    # once -- a PvP-fairness bug, not just an economy one.
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
     if spy_type not in VALID_SPY_TYPES:
         return False, 400, "Invalid spy operation type."
 

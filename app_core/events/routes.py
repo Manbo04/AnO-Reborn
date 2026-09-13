@@ -39,7 +39,17 @@ def respond_event(event_id):
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        
+
+        # Serializes this user's event responses (same pattern as
+        # buildings/military/loans/spy elsewhere). Found 2026-09-13: the
+        # cost deduction below is a blind `quantity = quantity - %s` (no
+        # WHERE-guard), and the final "mark as resolved" UPDATE has no
+        # `AND resolved_at IS NULL` condition either -- two concurrent
+        # responses to the same event could both pass the `resolved_at is
+        # None` check, both deduct costs, and both grant rewards, netting a
+        # duplicate reward for a single cost payment.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
         # Check event
         db.execute("SELECT user_id, event_def_id, resolved_at FROM interactive_events WHERE id = %s", (event_id,))
         event = db.fetchone()

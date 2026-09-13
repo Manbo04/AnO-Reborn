@@ -1733,28 +1733,28 @@ def _require_active_war(db, attacker_id, target_id):
 
 
 def _spend_gasoline(db, user_id, amount):
-    """Returns True if the user had enough gasoline and it was deducted."""
-    db.execute(
-        """
-        SELECT ue.quantity FROM user_economy ue
-        JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
-        WHERE ue.user_id = %s AND rd.name = 'gasoline'
-        """,
-        (user_id,),
-    )
-    row = db.fetchone()
-    have = int(row[0]) if row else 0
-    if have < amount:
-        return False
+    """Returns True if the user had enough gasoline and it was deducted.
+
+    Both current callers already hold a pg_advisory_xact_lock(attacker_id)
+    for the whole request (see drone_strike/cruise_missile_strike), but the
+    deduction below is also made atomic/self-guarding on its own -- defense
+    in depth for any future caller that forgets the lock, matching the
+    give_resource()-style `WHERE quantity >= amount` pattern used safely
+    elsewhere in the app. Previously this UPDATE had no such guard at all
+    (not even a GREATEST(0, ...) floor), so it could drive gasoline negative
+    if ever called unlocked.
+    """
     db.execute(
         """
         UPDATE user_economy SET quantity = quantity - %s
         WHERE user_id = %s
           AND resource_id = (SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline')
+          AND quantity >= %s
+        RETURNING quantity
         """,
-        (amount, user_id),
+        (amount, user_id, amount),
     )
-    return True
+    return db.fetchone() is not None
 
 
 def _strike_news(db, attacker_id, target_id, attacker_msg, defender_msg):
@@ -1798,6 +1798,20 @@ def drone_strike():
         return error(400, "Must launch at least 1 drone.")
 
     with get_request_cursor() as db:
+        # Serializes this attacker's strike launches (same pattern as
+        # action_loop.py's build_structure / app_core/military/services.py).
+        # Found 2026-09-13: neither the drone-count check below nor
+        # _spend_gasoline's deduction has any WHERE-guarded/atomic floor --
+        # _spend_gasoline's UPDATE has no `AND quantity >= amount` at all,
+        # and the drone-quantity UPDATE right after it is the same shape.
+        # Without this lock, two concurrent launches both pass their reads
+        # before either commits and both proceed to the (unconditional)
+        # combat resolution below -- doubling real, irreversible damage to
+        # the target (building destruction, soldiers killed) from a single
+        # drone/gasoline payment, not just an economy exploit against the
+        # attacker's own account.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
+
         if not _require_active_war(db, attacker_id, target_id):
             return error(403, "You are not at war with this nation.")
 
@@ -1917,6 +1931,9 @@ def cruise_missile_strike():
         return error(400, "Must launch at least 1 missile.")
 
     with get_request_cursor() as db:
+        # Same race as drone_strike above -- see the comment there.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
+
         if not _require_active_war(db, attacker_id, target_id):
             return error(403, "You are not at war with this nation.")
 

@@ -73,6 +73,16 @@ def get_loan_status(db, user_id):
 
 def take_loan(db, user_id, amount):
     """Returns (ok, error_message_or_none, flash_category)."""
+    # Serializes this user's loan take/repay calls (same pattern as
+    # action_loop.py's build_structure and app_core/military/services.py's
+    # process_buy_units). Found 2026-09-13: without this, two concurrent
+    # take_loan requests both read "no active loan" before either commits,
+    # both pass, and both insert_loan()+credit_gold() -- a raced double-take
+    # duplicates the loan principal as real, uncapped free gold, with no
+    # corresponding second debt properly trackable (get_active_loan only
+    # ever returns one row).
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
+
     if get_active_loan(db, user_id):
         return False, "You already have an active loan — repay it before borrowing again.", "warning"
 
@@ -102,6 +112,14 @@ def take_loan(db, user_id, amount):
 
 def repay_loan(db, user_id, amount):
     """Returns (ok, error_message_or_none, flash_category)."""
+    # Same lock as take_loan above. Without it, two concurrent repay
+    # requests both read the same stale `balance` and `gold`, both call
+    # debit_gold() (real gold lost each time), but both compute
+    # `new_balance = balance - amount` from the same stale balance -- the
+    # loan's tracked balance only drops once even though the player paid
+    # twice.
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
+
     loan = get_active_loan(db, user_id)
     if not loan:
         return False, "You don't have an active loan.", "warning"

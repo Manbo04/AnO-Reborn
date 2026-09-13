@@ -1533,6 +1533,23 @@ def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
 
     with get_request_cursor() as db:
+        # Serializes this user's buy/sell calls on this route (same pattern
+        # as action_loop.py's build_structure, app_core/military/services.py,
+        # and the other fixes made 2026-09-13 during the economy-race sweep).
+        # This is the PRIMARY, most heavily-used province building purchase
+        # path (every Buy/Sell button in templates/province_v2.html posts
+        # here; /api/province/<id>/quick_build is a separate, already-locked
+        # newer AJAX path) and had no protection at all. `gold` is read once
+        # near the top and reused stale throughout; the buy-side deduction
+        # is a blind `UPDATE stats SET gold=gold-%s` with no floor; and for
+        # land/cityCount specifically, the grant is an ABSOLUTE
+        # `SET {units}=%s` computed from a stale `currentUnits` read (not a
+        # relative increment) -- two concurrent buys can each charge gold
+        # correctly (relative decrement) while the second SET silently
+        # overwrites the first's quantity gain, so a race here can charge a
+        # player twice while granting the purchase only once.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+
         import logging
 
         try:
