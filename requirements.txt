@@ -50,7 +50,7 @@ pycodestyle==2.14.0
 pyflakes==3.4.0
 Pygments==2.20.0
 pytest==9.0.3
-python-dotenv==0.14.0
+python-dotenv==1.2.2
 python-engineio==4.13.5
 python-http-client==3.3.7
 python-socketio==5.16.4
