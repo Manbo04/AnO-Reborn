@@ -138,9 +138,25 @@ def cache_response(ttl_seconds=60, public=False):
 
     def decorator(f):
         cache = OrderedDict()
+        # Every read/write/evict/invalidate touching `cache` must hold this
+        # lock. Under gthread's real multi-threaded workers, an unguarded
+        # OrderedDict here is a genuine race: one thread iterating
+        # cache.items() in _evict_expired_entries while another concurrently
+        # inserts/deletes a key can raise "RuntimeError: OrderedDict mutated
+        # during iteration" -- a real, load-dependent, intermittent crash
+        # inside a decorated view under ordinary concurrent traffic, not just
+        # overload. QueryCache (above) already gets this right with its own
+        # threading.Lock(); this decorator reimplemented caching without one.
+        # Found via the AnO account-cross-contamination investigation
+        # (2026-09-12/13) -- not confirmed as an identity-mixing mechanism
+        # (the cache key is still always computed fresh from each thread's
+        # own session), but a real, independently-verified crash-risk bug in
+        # code directly in that investigation's blast radius (/country/<id>).
+        lock = threading.Lock()
         max_entries = int(os.getenv("RESPONSE_CACHE_MAX_ENTRIES", "500"))
 
         def _evict_expired_entries(now_ts):
+            # Caller must hold `lock`.
             expired = [k for k, (_, ts) in cache.items() if now_ts - ts >= ttl_seconds]
             for k in expired:
                 try:
@@ -149,6 +165,7 @@ def cache_response(ttl_seconds=60, public=False):
                     pass
 
         def _enforce_size_limit():
+            # Caller must hold `lock`.
             while len(cache) > max_entries:
                 try:
                     cache.popitem(last=False)
@@ -167,17 +184,20 @@ def cache_response(ttl_seconds=60, public=False):
             cache_key = f"{f.__name__}_{user_id}_{page_id}"
 
             # Check if response is cached
-            if cache_key in cache:
-                response, timestamp = cache[cache_key]
-                if time() - timestamp < ttl_seconds:
-                    cache.move_to_end(cache_key)
-                    return response
-                try:
-                    del cache[cache_key]
-                except KeyError:
-                    pass
+            with lock:
+                entry = cache.get(cache_key)
+                if entry is not None:
+                    response, timestamp = entry
+                    if time() - timestamp < ttl_seconds:
+                        cache.move_to_end(cache_key)
+                        return response
+                    try:
+                        del cache[cache_key]
+                    except KeyError:
+                        pass
 
-            # Call actual function
+            # Call actual function (outside the lock -- may run real DB
+            # queries/rendering, must not block other requests' cache hits).
             response = f(*args, **kwargs)
 
             # Do not cache error responses (avoids serving stale 500s after fixes)
@@ -190,13 +210,14 @@ def cache_response(ttl_seconds=60, public=False):
                 return response
 
             # Cache the response
-            cache[cache_key] = (response, time())
-            cache.move_to_end(cache_key)
-            # Best-effort cleanup to keep memory bounded.
-            now_ts = time()
-            if len(cache) > max_entries:
-                _evict_expired_entries(now_ts)
-            _enforce_size_limit()
+            with lock:
+                cache[cache_key] = (response, time())
+                cache.move_to_end(cache_key)
+                # Best-effort cleanup to keep memory bounded.
+                now_ts = time()
+                if len(cache) > max_entries:
+                    _evict_expired_entries(now_ts)
+                _enforce_size_limit()
             return response
 
         # Expose the internal cache and invalidation helpers on the decorated
@@ -223,28 +244,30 @@ def cache_response(ttl_seconds=60, public=False):
             cleared.
             """
 
-            keys = list(cache.keys())
-            for k in keys:
-                remove = False
-                if pattern and pattern in k:
-                    remove = True
-                if user_id is not None and f"_{user_id}_" in k:
-                    remove = True
-                if page and page in k:
-                    remove = True
-                if pattern is None and user_id is None and page is None:
-                    remove = True
+            with lock:
+                keys = list(cache.keys())
+                for k in keys:
+                    remove = False
+                    if pattern and pattern in k:
+                        remove = True
+                    if user_id is not None and f"_{user_id}_" in k:
+                        remove = True
+                    if page and page in k:
+                        remove = True
+                    if pattern is None and user_id is None and page is None:
+                        remove = True
 
-                if remove:
-                    try:
-                        del cache[k]
-                    except KeyError:
-                        pass
+                    if remove:
+                        try:
+                            del cache[k]
+                        except KeyError:
+                            pass
 
         def clear_cache():
             """Clear the full cache for this decorated view."""
 
-            cache.clear()
+            with lock:
+                cache.clear()
 
         decorated_function.invalidate = invalidate
         decorated_function.clear_cache = clear_cache
