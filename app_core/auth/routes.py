@@ -192,7 +192,36 @@ def logout():
             session_cookie_fingerprint(),
             request.remote_addr,
         )
+        user_id = session.get("user_id")
         session.clear()
+
+        # Force-disconnect any live Socket.IO connections for this user.
+        # extensions.py's manage_session=False means a connection's Flask
+        # session is frozen to whatever cookie was present at the original
+        # connect handshake (documented python-socketio behavior) -- a tab
+        # that stays connected across this logout would otherwise keep
+        # sending/receiving chat events as the now-logged-out user until it
+        # happens to reconnect on its own. close_room() drops every socket
+        # in that user's personal room (joined on connect, see
+        # app_core/chat/routes.py); Socket.IO's client auto-reconnects by
+        # default, which re-establishes the connection against the
+        # browser's *current* cookie -- the new user if one logged back in
+        # on the same tab, or none if genuinely logged out.
+        try:
+            from flask_socketio import close_room
+
+            # Must pass namespace explicitly: close_room()'s default lookup
+            # reads flask.request.namespace, an attribute Flask-SocketIO
+            # only sets while dispatching an actual socket event -- on a
+            # plain HTTP route like this one it doesn't exist and would
+            # raise AttributeError every time. This app registers no
+            # custom namespaces (join_room/emit throughout use the
+            # implicit default), so "/" is always correct here.
+            close_room(f"user_{user_id}", namespace="/")
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "logout: failed to close socketio room for user_id=%s", user_id
+            )
     return redirect("/")
 
 @bp.route("/forgot_password", methods=["GET"])
