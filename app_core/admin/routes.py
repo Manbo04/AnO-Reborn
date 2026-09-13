@@ -374,3 +374,26 @@ def admin_identity_diagnostics():
             r["created_at"] = r["created_at"].isoformat()
 
     return jsonify({"count": len(rows), "rows": rows})
+
+@admin_bp.route("/admin/command-center/identity-diagnostics/test-trigger", methods=["POST"])
+@login_required
+def admin_identity_diagnostics_test_trigger():
+    """TEMPORARY: end-to-end live verification for the CRITICAL tripwire
+    (DB insert + Discord DM), added 2026-09-13, remove once confirmed.
+    Deliberately corrupts THIS request's own in-memory session (does not
+    touch the real cookie/DB) to simulate a mismatch, then runs the real
+    check function through this app's real request/teardown lifecycle --
+    unlike a bare local test harness, this actually commits."""
+    denied = admin_only_guard(session.get("user_id"))
+    if denied: return denied
+
+    from app_core.identity_diagnostics import check_session_cookie_consistency
+
+    real_user_id = session.get("user_id")
+    session["user_id"] = -1  # corrupt ambient session only, not the cookie
+    try:
+        check_session_cookie_consistency("/admin/test-trigger")
+    finally:
+        session["user_id"] = real_user_id
+
+    return jsonify({"status": "triggered"})
