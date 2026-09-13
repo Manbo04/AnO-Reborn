@@ -402,9 +402,11 @@ def callback():
 
     discord_state = make_session(state=oauth_state)
 
-    # Fetch the token. If a state mismatch occurs, attempt a controlled
-    # fallback by re-creating the session with the incoming `state` value
-    # from the request and retrying once.
+    # Fetch the token using only this browser's own session-stored state
+    # (set above). A MismatchingStateError here hard-fails below (see the
+    # except block) -- it does not fall back to trusting any state value
+    # from the incoming request, which would reopen the login-CSRF hole
+    # the oauth_state check above exists to close.
     try:
         auth_response = request.url
         environment = os.getenv("ENVIRONMENT", "DEV")
