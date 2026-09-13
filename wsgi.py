@@ -52,6 +52,26 @@ def _boot_once() -> None:
         print(f"[wsgi] schema_compat={'ok' if schema_compat_succeeded() else 'failed'}")
     except Exception as exc:
         print(f"[wsgi] WARN ensure_schema_compat: {exc}")
+    finally:
+        # With --preload, this whole function runs once in the gunicorn
+        # MASTER process before it forks --workers 4 children.
+        # ensure_schema_compat() above opens real connections via the
+        # shared db_pool singleton to run its migration steps. Each forked
+        # worker already safely detects+discards any inherited pool state
+        # on its own first get_connection() call (DatabasePool._pid check),
+        # so this was never a correctness issue -- but closing here means
+        # workers fork with an already-empty pool (cheap, clean re-init on
+        # first real use) instead of first having to force-close copies of
+        # connections the master opened and was still nominally holding,
+        # and the master itself (which serves no requests, just manages
+        # the forked workers for its whole lifetime) no longer leaks idle
+        # Postgres connections it never explicitly released.
+        try:
+            from database import close_database_pool
+
+            close_database_pool()
+        except Exception as exc:
+            print(f"[wsgi] WARN close_database_pool: {exc}")
     os.environ["ANO_BOOT_DONE"] = "1"
 
 
