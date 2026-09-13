@@ -3,6 +3,23 @@ from database import get_coalition_members_table
 
 class CountryService:
     @staticmethod
+    def _is_same_country(a, b):
+        """Numeric-safe identity comparison for country/user ids.
+
+        cId always arrives as a raw string from the URL route (plain
+        string converter, not <int:cId>); comparing it against a
+        session user_id (int) with str() vs int() gave inconsistent
+        results for non-canonical numeric strings (e.g. "01" vs 1).
+        Real traffic never produces those (every link is built from a
+        plain int), but normalize to one int-based comparison so every
+        "is this the profile owner" check agrees.
+        """
+        try:
+            return a is not None and b is not None and int(a) == int(b)
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
     def get_countries_paginated(cId, search, lowerinf, upperinf, province_range, sort, sortway, page, per_page):
         # Default sort
         if not sort:
@@ -397,10 +414,7 @@ class CountryService:
             total_land = sum(prov[4] if prov[4] else 0 for prov in provinces)
             at_risk_provinces = sum(1 for prov in provinces if (prov[5] or 0) < 35)
 
-            try:
-                status = int(cId) == int(session["user_id"])
-            except (KeyError, TypeError, ValueError):
-                status = False
+            status = CountryService._is_same_country(cId, session.get("user_id"))
             spy = {"count": 0}
             nuke_count = 0
             icbm_count = 0
@@ -433,7 +447,7 @@ class CountryService:
             news = []
             news_amount = 0
             current_user_id = session.get("user_id")
-            if current_user_id and int(cId) == current_user_id:
+            if CountryService._is_same_country(cId, current_user_id):
                 try:
                     db.execute(
                         "SELECT message,date,id FROM news WHERE destination_id=(%s)",
@@ -447,7 +461,7 @@ class CountryService:
                     news_amount = 0
 
             interactive_events = []
-            if current_user_id and int(cId) == current_user_id:
+            if CountryService._is_same_country(cId, current_user_id):
                 try:
                     db.execute(
                         "SELECT id, event_def_id, created_at FROM interactive_events WHERE user_id=%s AND resolved_at IS NULL",
@@ -608,7 +622,7 @@ class CountryService:
 
             distribution_status = None
             food_score = None
-            is_owner = session_user_id is not None and str(session_user_id) == str(cId)
+            is_owner = CountryService._is_same_country(cId, session_user_id)
             if variables.FEATURE_RATIONS_DISTRIBUTION and population and is_owner:
                 try:
                     from tasks import fetch_nation_distribution_status, food_stats

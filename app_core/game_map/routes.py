@@ -7,8 +7,15 @@ from helpers import login_required
 
 bp = Blueprint("game_map", __name__)
 
-# Token-based private access. Set GAME_MAP_TOKEN env var on Railway to change this.
-_DEFAULT_TOKEN = "3f8a92e1b4d6c7"
+# Token-based private access. Must be set via GAME_MAP_TOKEN on Railway --
+# no hardcoded fallback (a fallback baked into the public repo is itself
+# the live token if the env var is ever unset, e.g. found+fixed 2026-09-13:
+# GAME_MAP_TOKEN was never actually set in Railway, so a hardcoded default
+# here had been the real, working, publicly-readable token in production).
+# When unset, the token check can never match any real request (empty
+# string never equals a real path segment), so the route just always 404s
+# -- fails closed instead of silently falling back to a public secret.
+_DEFAULT_TOKEN = ""
 
 
 def _ensure_tables():
