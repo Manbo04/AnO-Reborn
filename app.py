@@ -29,7 +29,6 @@ import requests
 from app_core.trade_agreements import register_trade_agreement_routes
 import logging
 from variables import MILDICT, PROVINCE_UNIT_PRICES
-from flaskext.markdown import Markdown
 from psycopg2.extras import RealDictCursor
 from datetime import datetime as dt
 import string
@@ -461,7 +460,55 @@ def create_app():
         def emit(self, record):
             send_discord_webhook(record)
 
-    Markdown(app)
+    @app.template_filter("markdown")
+    def markdown_filter(text):
+        """Render user-controlled markdown (nation `description`) safely.
+
+        Found+fixed 2026-09-13: this used to be Flask-Markdown's own
+        `markdown` filter (`Markdown(app)`, an unmaintained extension whose
+        __call__ does `Markup(self._instance.convert(stream))` with ZERO
+        sanitization). Python-Markdown passes raw HTML in its input straight
+        through to its output by default, so `description` -- fully
+        unvalidated user input written verbatim in countries.py's
+        update_info() -- was rendered completely unescaped on every visit to
+        /country/<id> via templates/country.html and country_v2.html. Live-
+        verified via the designated test account (id 16): a raw
+        `<div id=xss-poc-marker>` in `description` came back as literal,
+        executable HTML in the served page, not escaped text. A real
+        `<script>` there would have been a genuine stored XSS reachable by
+        every visitor to that nation's public profile page -- directly in
+        the blast radius of this session's whole account-cross-contamination
+        investigation (a victim's own authenticated browser silently
+        running attacker JS on /country/<id> would explain "a real action
+        attributed to a real logged-in victim" better than anything else
+        checked today). Fixed by sanitizing through the same bleach
+        allowlist the richmedia filter below already uses correctly, and
+        dropping the Flask-Markdown dependency entirely (nothing else in
+        the codebase used its extension-registration features; it was also
+        about to break the Flask 3.x CVE-remediation bump anyway, since it
+        imports the `flask.Markup` attribute removed in Flask 2.4+).
+        """
+        import markdown as _md
+        import bleach
+        from markupsafe import Markup
+
+        if not text:
+            return Markup("")
+        html = _md.markdown(text, extensions=["nl2br"])
+        html = bleach.clean(
+            html,
+            tags=[
+                "p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li",
+                "a", "blockquote", "code", "pre", "h1", "h2", "h3", "img",
+            ],
+            attributes={
+                "a": ["href", "title", "rel"],
+                "img": ["src", "alt", "title"],
+            },
+            strip=True,
+        )
+        html = bleach.linkify(html)
+        return Markup(html)
 
     @app.template_filter("richmedia")
     def richmedia_filter(text):
