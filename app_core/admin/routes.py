@@ -324,3 +324,53 @@ def admin_trigger_snapshot():
     take_economy_snapshot()
     flash("Economy snapshot taken successfully.")
     return redirect("/admin/command-center/economy")
+
+@admin_bp.route("/admin/command-center/identity-diagnostics", methods=["GET"])
+@login_required
+def admin_identity_diagnostics():
+    """Query the persistent identity_diagnostic_log table (see
+    app_core/identity_diagnostics.py) without needing Railway CLI/log
+    access, which has repeatedly rolled over before an incident could be
+    traced. Query params: user_id (int), since_hours (int, default 24,
+    max 720 = 30 days), severity ('info'/'critical'/omit for all),
+    limit (default 200, max 2000)."""
+    denied = admin_only_guard(session.get("user_id"))
+    if denied: return denied
+
+    user_id = request.args.get("user_id", type=int)
+    since_hours = min(request.args.get("since_hours", default=24, type=int) or 24, 720)
+    severity = (request.args.get("severity") or "").strip().lower()
+    limit = min(request.args.get("limit", default=200, type=int) or 200, 2000)
+
+    conditions = ["created_at >= now() - (%s || ' hours')::interval"]
+    params = [since_hours]
+    if user_id is not None:
+        conditions.append("session_user_id = %s")
+        params.append(user_id)
+    if severity in ("info", "critical"):
+        conditions.append("severity = %s")
+        params.append(severity)
+    params.append(limit)
+
+    from database import get_request_cursor
+
+    with get_request_cursor() as db:
+        db.execute(
+            f"""
+            SELECT id, created_at, route, session_user_id, cookie_fp, ip,
+                   worker_pid, thread_id, cache_hit, severity, detail
+            FROM identity_diagnostic_log
+            WHERE {" AND ".join(conditions)}
+            ORDER BY id DESC
+            LIMIT %s
+            """,
+            params,
+        )
+        cols = [c[0] for c in db.description]
+        rows = [dict(zip(cols, r)) for r in db.fetchall()]
+
+    for r in rows:
+        if r.get("created_at") is not None:
+            r["created_at"] = r["created_at"].isoformat()
+
+    return jsonify({"count": len(rows), "rows": rows})

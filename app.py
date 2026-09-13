@@ -219,6 +219,26 @@ def create_app():
                 request.remote_addr,
             )
 
+        # Persistent (DB, 30+ day retention) diagnostic for the routes most
+        # implicated in the 2026-09 account-cross-contamination investigation
+        # -- added here (before_request) rather than inside the view
+        # functions themselves so it fires on every request including a
+        # cache_response cache HIT on /country/<id> (which skips the view
+        # function body entirely). Railway's own log retention repeatedly
+        # rolled over before an incident could be traced (lost the Sept 9
+        # and an already-once-pulled Sept 12 window); this exists so the
+        # next occurrence has real per-request forensic data instead of
+        # starting from Discord screenshots again. See
+        # app_core/identity_diagnostics.py. Remove once confirmed/stale.
+        if request.path.startswith("/country/id=") or request.path.startswith("/join/"):
+            from app_core.identity_diagnostics import (
+                log_identity_diagnostic,
+                check_session_cookie_consistency,
+            )
+
+            log_identity_diagnostic(request.path)
+            check_session_cookie_consistency(request.path)
+
         admin_ctrl_refresh_seconds = int(os.getenv("ADMIN_CTRL_REFRESH_SECONDS", "300"))
         if user_id:
             _ctrl_cache_ts = session.get("_admin_ctrl_ts", 0)
