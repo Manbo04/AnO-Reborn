@@ -69,6 +69,43 @@ def log_identity_diagnostic(route, cache_hit=None):
     _safe_insert(route, session_user_id, cache_hit, "info", None)
 
 
+def _alert_staff_of_critical(route, detail):
+    """Real-time page, not a passive DB row: DM the account owner the
+    moment a CRITICAL identity_diagnostic_log row is written. A tripwire
+    nobody queries until days later isn't actually a tripwire -- this
+    turns it into an instant alert.
+    """
+    try:
+        from database import get_request_cursor
+        from app_core.discord_notify import send_staff_bot_dm
+
+        with get_request_cursor() as db:
+            db.execute("SELECT discord_id FROM users WHERE id=1")
+            row = db.fetchone()
+        discord_id = row[0] if row and row[0] else None
+        if not discord_id:
+            return
+
+        message = (
+            "🚨 **CRITICAL identity_diagnostic_log tripwire fired**\n\n"
+            f"Route: `{route}`\n"
+            f"Ambient session user_id: `{detail.get('ambient_session_user_id')}`\n"
+            f"Freshly-decoded cookie user_id: `{detail.get('freshly_decoded_cookie_user_id')}`\n"
+            f"Worker PID: `{detail.get('worker_pid')}`  Thread: `{detail.get('thread_id')}`\n\n"
+            "A request's own session and its own cookie disagreed on identity "
+            "-- this should be structurally impossible under correct Flask "
+            "behavior. Check /admin/command-center/identity-diagnostics?"
+            "severity=critical for full context."
+        )
+        send_staff_bot_dm(discord_id, message)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception(
+            "_alert_staff_of_critical failed for route=%s", route
+        )
+
+
 def check_session_cookie_consistency(route):
     """Independently re-decode the raw incoming session cookie and compare
     its user_id against flask.session's already-resolved user_id for this
@@ -98,21 +135,17 @@ def check_session_cookie_consistency(route):
         ambient_user_id = session.get("user_id")
 
         if fresh_user_id != ambient_user_id:
-            _safe_insert(
-                route,
-                ambient_user_id,
-                None,
-                "critical",
-                {
-                    "check": "session_cookie_consistency_mismatch",
-                    "ambient_session_user_id": ambient_user_id,
-                    "freshly_decoded_cookie_user_id": fresh_user_id,
-                    "path": request.path,
-                    "worker_pid": os.getpid(),
-                    "thread_id": threading.get_ident(),
-                    "timestamp": time(),
-                },
-            )
+            detail = {
+                "check": "session_cookie_consistency_mismatch",
+                "ambient_session_user_id": ambient_user_id,
+                "freshly_decoded_cookie_user_id": fresh_user_id,
+                "path": request.path,
+                "worker_pid": os.getpid(),
+                "thread_id": threading.get_ident(),
+                "timestamp": time(),
+            }
+            _safe_insert(route, ambient_user_id, None, "critical", detail)
+            _alert_staff_of_critical(route, detail)
     except Exception:
         import logging
 
