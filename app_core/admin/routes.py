@@ -76,10 +76,6 @@ def db_diagnostics():
         current_app.logger.exception("DB diagnostics failed")
         return jsonify({"error": str(e)}), 500
 
-@admin_bp.route("/admin/init-database-DO-NOT-RUN-TWICE", methods=["GET"])
-def admin_init_database():
-    return "Database already initialized. Remove this route from app.py", 200
-
 @admin_bp.route("/admin/debug_wealth")
 @login_required
 def admin_debug_wealth():
