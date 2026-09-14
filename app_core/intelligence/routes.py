@@ -64,7 +64,6 @@ def spyAmount():
         return redirect("/intelligence")
 
 
-# TODO: add notifications
 @bp.route("/spyResult", methods=["GET", "POST"])
 @login_required
 def spyResult():
@@ -96,7 +95,7 @@ def spyResult():
         keep_private = request.form.get("keep_private") == "on"
 
         with get_request_cursor() as db:
-            ok, status_code, message = resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=keep_private)
+            ok, status_code, message, spy_entry = resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=keep_private)
 
         if not ok:
             return error(status_code, message)
@@ -106,4 +105,10 @@ def spyResult():
         except Exception:
             pass
 
-        return redirect("/intelligence")
+        session["spyEntry"] = spy_entry
+        try:
+            session["eId"] = int(eId)
+        except (TypeError, ValueError):
+            session["eId"] = None
+
+        return redirect("/spyResult")

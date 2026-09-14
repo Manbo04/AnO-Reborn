@@ -9,14 +9,18 @@
     <div class="templatedivcontent">
         <p>Enemy nation: {{ enemyNation or 'Unknown' }}</p>
 
-        <h3>Revealed</h3>
-        {% if spyEntry %}
+        <h3>Outcome</h3>
+        {% if spyEntry and spyEntry.message %}
+            <p>{{ spyEntry.message }}</p>
+        {% endif %}
+        {% set details = spyEntry.items() | rejectattr('0', 'equalto', 'message') | list if spyEntry else [] %}
+        {% if details %}
             <ul>
-            {% for k, v in spyEntry.items() %}
+            {% for k, v in details %}
                 <li>{{ k }}: {{ v }}</li>
             {% endfor %}
             </ul>
-        {% else %}
+        {% elif not spyEntry %}
             <p>No intelligence gathered.</p>
         {% endif %}
 

@@ -88,7 +88,10 @@ def submit_spy_amount(db, cId, eId):
 
 
 def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
-    """Runs one espionage operation. Returns (ok, status_code, error_message)."""
+    """Runs one espionage operation.
+    Returns (ok, status_code, error_message, spy_entry) - spy_entry is a dict
+    describing the outcome for the attacker (for the /spyResult page), None
+    on failure."""
     # Serializes this attacker's spy operations (same pattern as
     # wars/routes.py's drone_strike/cruise_missile_strike). Found
     # 2026-09-13: `actual_spies` below is a stale read with no lock, and
@@ -102,7 +105,7 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
 
     if spy_type not in VALID_SPY_TYPES:
-        return False, 400, "Invalid spy operation type."
+        return False, 400, "Invalid spy operation type.", None
 
     result = get_latest_spy_operation(db, cId)
     spyee, date = result if result else (None, 0)
@@ -113,24 +116,24 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
         return False, 400, (
             f"12 hour cooldown for spying on another country. "
             f"{secs_left} seconds left."
-        )
+        ), None
 
     if has_active_embassy(db, cId, eId):
         return False, 403, (
             "You cannot spy on a nation you have an active Embassy treaty with."
-        )
+        ), None
 
     actual_spies = get_unit_quantity(db, cId, "spies")
 
     if spies <= 0:
-        return False, 400, "Must send at least 1 spy."
+        return False, 400, "Must send at least 1 spy.", None
 
     if spies > actual_spies:
         missing = actual_spies - spies
         return False, 400, (
             f"You don't have enough spies ({spies}/{actual_spies}). "
             f"Missing {missing} spies"
-        )
+        ), None
 
     enemy_spies = get_unit_quantity(db, eId, "spies")
 
@@ -140,7 +143,7 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
 
     operation_id = insert_spy_operation(db, cId, eId, time.time())
     if not operation_id:
-        return False, 500, "Failed to record spy operation"
+        return False, 500, "Failed to record spy operation", None
 
     if spy_type == "sabotage":
         object_list = variables.RESOURCES
@@ -177,6 +180,9 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
 
     uncovered_objects = [k for k, v in uncovered.items() if v]
     news_message = None
+    spy_entry = {}
+    attacker_name = get_username(db, cId) or "A nation"
+    target_name = get_username(db, eId) or "a nation"
 
     if spy_type == "sabotage":
         sabotaged = []
@@ -188,15 +194,19 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
                     sabotaged.append((resource, loss))
         if sabotaged:
             details = ", ".join(f"{loss} {resource}" for resource, loss in sabotaged)
-            news_message = f"Your nation was sabotaged by foreign agents! You lost {details}."
+            # Named directly to the victim so their intel tells them who hit them,
+            # regardless of keep_private - that flag only controls the public
+            # World Affairs post below, not this personal notification.
+            news_message = f"Your nation was sabotaged by {attacker_name}! You lost {details}."
+            spy_entry = {resource: f"-{loss}" for resource, loss in sabotaged}
             if not keep_private:
-                attacker_name = get_username(db, cId) or "A nation"
-                target_name = get_username(db, eId) or "a nation"
                 log_event(
                     db, "sabotage",
                     f"{attacker_name} sabotaged {target_name}'s economy, destroying {details}.",
                     actor_id=cId, target_id=eId,
                 )
+        else:
+            spy_entry = {"message": "Your spies attempted sabotage but couldn't inflict any damage."}
     elif spy_type == "assassinate_spies":
         if uncovered.get("spies"):
             enemy_spy_count = get_unit_quantity(db, eId, "spies")
@@ -206,26 +216,35 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
             )
             if enemy_spy_count > 0:
                 decrease_unit_quantity(db, eId, "spies", kill)
-                news_message = f"Enemy agents assassinated {kill} of your spies!"
+                news_message = f"{attacker_name}'s agents assassinated {kill} of your spies!"
+                spy_entry = {"spies killed": kill}
                 if not keep_private:
-                    attacker_name = get_username(db, cId) or "A nation"
-                    target_name = get_username(db, eId) or "a nation"
                     log_event(
                         db, "assassination",
                         f"{attacker_name}'s agents assassinated {kill} of {target_name}'s spies.",
                         actor_id=cId, target_id=eId,
                     )
+            else:
+                spy_entry = {"message": "The enemy had no spies left to assassinate."}
+        else:
+            spy_entry = {"message": "Your spies attempted an assassination but were unable to succeed."}
     else:
         if uncovered_objects:
             revealed_map = get_revealed_values(db, eId, uncovered_objects, spy_type)
             update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map)
+            spy_entry = revealed_map
+        else:
+            spy_entry = {"message": "Your spies were unable to gather any intelligence this time."}
 
     if news_message is None and uncovered_spies > 0:
-        news_message = "Foreign spies were detected probing your nation's defenses."
+        news_message = f"Foreign spies from {attacker_name} were detected probing your nation's defenses."
 
     if news_message:
         insert_news(db, eId, news_message)
 
+    if uncovered_spies > 0:
+        spy_entry["spies detected by enemy"] = uncovered_spies
+
     decrease_unit_quantity(db, cId, "spies", executed_spies)
 
-    return True, 200, None
+    return True, 200, None, spy_entry
