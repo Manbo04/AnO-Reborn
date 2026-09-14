@@ -727,6 +727,8 @@ class CountryService:
             "statistics": statistics,
             "policies": policies,
             "resource_rows": resource_rows,
+            "building_rows": building_rows,
+            "total_buildings": sum(qty for _, qty in building_rows) if building_rows else 0,
             "technology_rows": technology_rows,
             "last_active": last_active,
             "total_children": total_children,
