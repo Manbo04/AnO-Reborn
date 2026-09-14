@@ -276,12 +276,28 @@ POLICY_SCHOOLING_HAPPINESS_BONUS = 3  # +3 happiness (educated populace)
 
 POLICY_SUBSIDIES_UPKEEP_REDUCTION = 0.7  # -30% upkeep for industrial buildings
 POLICY_SUBSIDIES_POLLUTION_MULTIPLIER = 1.3  # +30% pollution from industry
+# Per templates/mechanics.html, this policy is documented to affect
+# "Industrial Districts, Factories, Steel Mills, Power Plants" -- i.e. every
+# building in the "electricity" category (INFRA_TYPE_BUILDINGS["electricity"])
+# and both *_factories buildings, not just coal/oil burners and
+# component_factories. Previously only 2 of the 7 power plant types (and 1 of
+# the 2 factory types) were listed, so nations running on hydro/nuclear/solar/
+# wind/geothermal power (a very common late-game choice, since those are the
+# only power plants with zero pollution to begin with) saw no upkeep discount
+# at all from this policy -- matching the player report that expenses never
+# actually went down.
 POLICY_SUBSIDIES_AFFECTED_BUILDINGS = [
     "industrial_district",
     "component_factories",
+    "ammunition_factories",
     "steel_mills",
     "coal_burners",
     "oil_burners",
+    "hydro_dams",
+    "nuclear_reactors",
+    "solar_fields",
+    "wind_farms",
+    "geothermal_plants",
 ]
 
 POLICY_RATIONING_CONSUMPTION_REDUCTION = 0.85  # -15% rations consumption
