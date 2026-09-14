@@ -1331,6 +1331,12 @@ def upload_province_flag(pId):
     except Exception:
         pass
 
+    # Also invalidate the /flag/province/<id> image route's own in-process
+    # cache -- separate from query_cache, was only expiring on its 5-minute
+    # TTL otherwise.
+    from app_core.main.routes import serve_flag
+    getattr(serve_flag, "_cache", {}).pop(f"province_{pId}", None)
+
     return redirect(f"/province/{pId}")
 
 

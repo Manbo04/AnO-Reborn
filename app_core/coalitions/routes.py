@@ -1369,6 +1369,13 @@ def update_col_info(coalition_id):
             from database import query_cache
 
             query_cache.invalidate(f"coalition_influence_{coalition_id}")
+
+            # Also invalidate the /flag/coalition/<id> image route's own
+            # in-process cache -- separate from query_cache, was only
+            # expiring on its 5-minute TTL otherwise.
+            from app_core.main.routes import serve_flag
+
+            getattr(serve_flag, "_cache", {}).pop(f"coalition_{coalition_id}", None)
         else:
             return error(400, "File format not supported")
 

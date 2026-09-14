@@ -321,7 +321,7 @@ def serve_flag(flag_type, flag_id):
         body, mimetype, cached_at = cached
         if time_module.time() - cached_at < 300:
             response = Response(body, mimetype=mimetype)
-            response.headers["Cache-Control"] = "public, max-age=3600"
+            response.headers["Cache-Control"] = "public, max-age=30, must-revalidate"
             return response
         else: del serve_flag._cache[cache_key]
 
@@ -366,7 +366,7 @@ def serve_flag(flag_type, flag_id):
 
                 if len(serve_flag._cache) < 500: serve_flag._cache[cache_key] = (flag_data, mimetype, time_module.time())
                 response = Response(flag_data, mimetype=mimetype)
-                response.headers["Cache-Control"] = "public, max-age=3600"
+                response.headers["Cache-Control"] = "public, max-age=30, must-revalidate"
                 return response
             except Exception as e: pass
 

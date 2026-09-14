@@ -971,6 +971,14 @@ def update_info():
                 # Invalidate flag cache so new flag shows immediately
                 query_cache.invalidate(f"flag_{cId}")
 
+                # Also invalidate the /flag/<type>/<id> image route's own
+                # in-process cache -- it's separate from query_cache and
+                # was previously only expiring on its 5-minute TTL, so a
+                # freshly uploaded flag kept serving the old image for up
+                # to 5 minutes.
+                from app_core.main.routes import serve_flag
+                getattr(serve_flag, "_cache", {}).pop(f"country_{cId}", None)
+
         """
         bg_flag = request.files["bg_flag_input"]
         if bg_flag and allowed_file(bg_flag.filename):
