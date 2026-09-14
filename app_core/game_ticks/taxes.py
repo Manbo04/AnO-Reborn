@@ -473,6 +473,7 @@ def tax_income():
             money_updates = []
             cg_updates = []
             coalition_bank_deposits = {}  # colId -> total_gold_to_deposit
+            tax_transaction_rows = []  # (colId, user_id, user_id, 'tax', amount, 'deposit')
 
             for user_id in all_user_ids:
                 current_money = stats_map.get(user_id)
@@ -598,6 +599,14 @@ def tax_income():
                         coalition_bank_deposits[col_id] = (
                             coalition_bank_deposits.get(col_id, 0) + tax_deducted
                         )
+                        # Logged distinctly (resource='tax', not 'money') so
+                        # bankers/tax collectors/leaders can see coalition tax
+                        # revenue in the existing bank transaction log instead
+                        # of it being indistinguishable from manual deposits
+                        # (Kurai's coalition-tax-visibility suggestion).
+                        tax_transaction_rows.append(
+                            (col_id, user_id, user_id, "tax", tax_deducted, "deposit")
+                        )
 
                 msg = (
                     f"Updated money for user id: {user_id}."
@@ -638,6 +647,22 @@ def tax_income():
                 except Exception as e:
                     print(f"Alliance tax deposit failed: {e}")
                     conn.rollback()
+                if tax_transaction_rows:
+                    try:
+                        execute_batch(
+                            db,
+                            """
+                            INSERT INTO col_bank_transactions
+                                (coalition_id, user_id, actor_id, resource, amount, direction)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            tax_transaction_rows,
+                            page_size=100,
+                        )
+                    except Exception as e:
+                        # Non-critical: the actual gold movement above already
+                        # succeeded, this only affects the visibility log.
+                        print(f"Alliance tax transaction log failed: {e}")
             if cg_updates:
                 try:
                     # Get consumer_goods resource_id

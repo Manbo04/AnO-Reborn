@@ -80,6 +80,8 @@ def warresult_deprecated(): return redirect("/warResult")
 @login_required
 def mass_purchase():
     from app_core.economy.building_costs import BUILDING_DISPLAY_NAMES, CITY_UNITS, LAND_UNITS
+    from app_core.game_ticks.energy import energy_info
+    from app_core.game_ticks.food import food_stats
 
     def _display(name):
         return BUILDING_DISPLAY_NAMES.get(name, name.replace("_", " ").title())
@@ -92,6 +94,24 @@ def mass_purchase():
         if provinces:
             colnames = [desc[0] for desc in db.description]
             for row in provinces: province_list.append(dict(zip(colnames, row)))
+
+    # Player-requested status indicators (Mohammad, mass-purchase thread) --
+    # so a bad province is visible in this list before opening it, instead of
+    # having to click into each one individually. Electricity is a genuine
+    # per-province figure (built consumers vs. producers in THAT province).
+    # Rations are a *national* pool under FEATURE_RATIONS_DISTRIBUTION (see
+    # province.py's enough_rations logic) -- showing a fake per-province
+    # rations number would misrepresent the mechanic, so that's surfaced once
+    # for the whole nation instead of duplicated per row.
+    for province in province_list:
+        consumption, production = energy_info(province["id"])
+        province["powered"] = production >= consumption
+
+    rations_ok = True
+    if province_list:
+        food_score = food_stats(cId)
+        rations_ok = food_score >= -1.0
+
     template = "mass_purchase_v2.html" if is_theme_v2_enabled("mass_purchase") else "mass_purchase.html"
     city_buildings = sorted(({"name": n, "label": _display(n)} for n in CITY_UNITS), key=lambda b: b["label"])
     land_buildings = sorted(({"name": n, "label": _display(n)} for n in LAND_UNITS), key=lambda b: b["label"])
@@ -100,4 +120,5 @@ def mass_purchase():
         provinces=province_list,
         city_buildings=city_buildings,
         land_buildings=land_buildings,
+        rations_ok=rations_ok,
     )

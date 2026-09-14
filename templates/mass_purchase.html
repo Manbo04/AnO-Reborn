@@ -16,6 +16,13 @@
         {% if provinces %}
         <h3 class="templatecontentheadercenter">Your Provinces</h3>
 
+        {% if not rations_ok %}
+        <p class="templatecontentpleft" style="color: var(--danger, #d9534f); font-weight: bold;">
+            <span class="material-icons-outlined" style="vertical-align: middle;">warning</span>
+            Nation-wide rations shortage — your provinces aren't getting enough food right now.
+        </p>
+        {% endif %}
+
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
                 <tr>
@@ -28,6 +35,9 @@
                     <th><span class="material-icons-outlined">
                             landscape
                                 </span>Land</th>
+                    <th><span class="material-icons-outlined">
+                            bolt
+                                </span>Power</th>
                     <th>Action</th>
                 </tr>
                 {% for province in provinces %}
@@ -41,6 +51,7 @@
                     <td><span class="material-icons-outlined">
                             landscape
                             </span>{{ province['land'] }}</td>
+                    <td>{% if province['powered'] %}Powered{% else %}<span style="color: var(--danger, #d9534f); font-weight: bold;">Blackout</span>{% endif %}</td>
                     <td><a href="/province/{{ province['id'] }}" class="templatedivbutton templatecenteredbutton">Manage</a></td>
                 </tr>
                 {% endfor %}

@@ -38,6 +38,12 @@
     <div class="templatedivcontent">
 
         {% if provinces %}
+        {% if not rations_ok %}
+        <div class="game-badge game-badge-bad" style="margin-bottom: 12px; display: inline-flex;">
+            <span class="material-icons-outlined" style="font-size: 16px;">warning</span>
+            Nation-wide rations shortage — your provinces aren't getting enough food right now
+        </div>
+        {% endif %}
         <form action="/mass_purchase/buy" method="POST" id="massPurchaseForm">
             <div class="mass-purchase-controls">
                 <select name="building" class="templateselect" required>
@@ -69,6 +75,7 @@
                         <th><span class="material-icons-outlined">account_balance</span>Province Name</th>
                         <th><span class="material-icons-outlined">business</span>Cities</th>
                         <th><span class="material-icons-outlined">landscape</span>Land</th>
+                        <th><span class="material-icons-outlined">bolt</span>Power</th>
                     </tr>
                     {% for province in provinces %}
                     <tr>
@@ -76,6 +83,13 @@
                         <td><span class="material-icons-outlined">account_balance</span>{{ province['name'] }}</td>
                         <td><span class="material-icons-outlined">business</span>{{ province['citycount'] }}</td>
                         <td><span class="material-icons-outlined">landscape</span>{{ province['land'] }}</td>
+                        <td>
+                            {% if province['powered'] %}
+                            <span class="game-badge game-badge-good"><span class="game-badge-dot" style="background: var(--success);"></span>Powered</span>
+                            {% else %}
+                            <span class="game-badge game-badge-bad"><span class="game-badge-dot" style="background: var(--danger);"></span>Blackout</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </table>
