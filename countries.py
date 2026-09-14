@@ -261,6 +261,60 @@ def get_revenue(cId, db=None):
         current_rations = econ_row[1] if econ_row else 0
         consumer_goods = int(econ_row[2]) if econ_row else 0
 
+        # PHASE 3: Workforce efficiency + pension-crisis gold penalty --
+        # mirrors app_core/game_ticks/revenue.py's
+        # apply_workforce_hiring_and_debuffs exactly. Missing here meant this
+        # projection always assumed full (1.0x) production efficiency and
+        # never showed the pension-crisis upkeep cost, so an understaffed or
+        # elderly-heavy nation's "Net Raw" projection overstated real
+        # production (and, via the gold penalty, real net money) relative to
+        # what the real tick actually pays out. Same bug shape as the other
+        # duplicated-tick-formula gaps fixed above, found by sweeping for
+        # other divergences (player-reported: monetary net doesn't reflect
+        # real income/expenses).
+        efficiency_multiplier = 1.0
+        pension_gold_penalty = 0
+        if variables.FEATURE_PHASE3_WORKFORCE:
+            db.execute(
+                "SELECT COALESCE(SUM(pop_working), 0), COALESCE(SUM(pop_elderly), 0), "
+                "COALESCE(SUM(edu_none), 0), COALESCE(SUM(edu_highschool), 0), "
+                "COALESCE(SUM(edu_college), 0) FROM provinces WHERE userid = %s",
+                (cId,),
+            )
+            wf_row = db.fetchone()
+            if wf_row:
+                total_pop_working = int(wf_row[0] or 0)
+                total_pop_elderly = int(wf_row[1] or 0)
+                edu_none = int(wf_row[2] or 0)
+                edu_highschool = int(wf_row[3] or 0)
+                edu_college = int(wf_row[4] or 0)
+                jobs_available = edu_none + edu_highschool + edu_college
+
+                jobs_needed = 0
+                for building_name, matrix_data in (
+                    variables.BUILDING_EMPLOYMENT_MATRICES.items()
+                ):
+                    workers_per = matrix_data.get("worker_count", 0)
+                    building_total = sum(
+                        proinfra_by_id.get(p, {}).get(building_name, 0)
+                        for p in provinces
+                    )
+                    jobs_needed += workers_per * building_total
+
+                pension_ratio = 0.0
+                if total_pop_working > 0:
+                    pension_ratio = total_pop_elderly / total_pop_working
+
+                if jobs_needed > 0:
+                    employment_ratio = jobs_available / jobs_needed
+                    efficiency_multiplier = min(
+                        1.0,
+                        max(variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio),
+                    )
+
+                if pension_ratio > variables.PENSION_CRISIS_RATIO:
+                    pension_gold_penalty = variables.PENSION_CRISIS_GOLD_PENALTY
+
         # Simulated funds used while computing `net`; do not mutate DB
         simulated_funds = current_money
 
@@ -347,6 +401,11 @@ def get_revenue(cId, db=None):
                         multiplier += 0.5
                     if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
                         multiplier += 0.36
+
+                    # PHASE 3 workforce efficiency (see above) -- applied last,
+                    # exactly like revenue.py's plus_amount_multiplier *=
+                    # efficiency_multiplier.
+                    multiplier *= efficiency_multiplier
 
                     adjusted_total = build_count * amount * multiplier
                     # Normalize to integer to mirror production rounding
@@ -589,6 +648,14 @@ def get_revenue(cId, db=None):
         revenue["net"]["money"] += ti_money - coalition_tax_deducted
         if coalition_tax_deducted:
             revenue["coalition_tax"] = coalition_tax_deducted
+
+        # Pension-crisis gold penalty (see workforce block above) -- a flat
+        # per-tick gold cost the real tick deducts once elderly population
+        # exceeds PENSION_CRISIS_RATIO of the working population. `net` only
+        # (mirrors how building operating costs are net-only above), since
+        # this is an expense, not a change in gross production.
+        if pension_gold_penalty:
+            revenue["net"]["money"] -= pension_gold_penalty
 
         # Military maintenance upkeep (rations for soldiers, gasoline for
         # vehicles/aircraft/ships, components for spies). The global tick
