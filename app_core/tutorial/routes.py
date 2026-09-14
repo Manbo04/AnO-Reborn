@@ -164,7 +164,8 @@ def advance_tutorial_step_by_action(db, user_id: int, action: str) -> None:
     ACTION_CHAPTER_MAP = {
         "build_farm": 0,
         "build_distribution_center": 1,
-        "build_mine": 2, 
+        "build_mine": 2,
+        "build_food_bank": 3,
     }
     
     target_chapter = ACTION_CHAPTER_MAP.get(action)

@@ -251,6 +251,8 @@ def purchase_building(
             advance_tutorial_step_by_action(db, user_id, "build_distribution_center")
         elif name == "mines":
             advance_tutorial_step_by_action(db, user_id, "build_mine")
+        elif name == "food_banks":
+            advance_tutorial_step_by_action(db, user_id, "build_food_bank")
     except Exception as exc:
         pass # Fail silently so we don't break the purchase transaction
 
