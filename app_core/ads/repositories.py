@@ -1,3 +1,5 @@
+from psycopg2.extras import RealDictCursor
+
 from database import get_request_cursor
 
 class AdRepository:
@@ -17,7 +19,7 @@ class AdRepository:
             return db.fetchall()
             
     def get_pending_ads(self):
-        with get_request_cursor(read_only=True) as db:
+        with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
             db.execute(
                 "SELECT id, user_id, image_url, target_url, ad_type, status, created_at FROM advertisements WHERE status = 'pending' ORDER BY created_at ASC"
             )

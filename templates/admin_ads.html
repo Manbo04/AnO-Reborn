@@ -94,31 +94,33 @@
             {% endwith %}
 
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                {% if ads and ads|length > 0 %}
-                    {% for ad in ads %}
+                {% if pending_ads and pending_ads|length > 0 %}
+                    {% for ad in pending_ads %}
                     <div class="ad-card">
                         <div style="text-align: center;">
-                            <img src="{{ url_for('static', filename='uploads/ads/' ~ ad.image_filename) if ad.image_filename else ad.image_url }}" alt="Ad Preview" class="ad-image-preview">
+                            <img src="{{ ad.image_url }}" alt="Ad Preview" class="ad-image-preview">
                         </div>
                         <div class="ad-details">
                             <p><strong>ID:</strong> {{ ad.id }}</p>
-                            <p><strong>URL:</strong> <a href="{{ ad.target_url }}" target="_blank" style="color: var(--accent);">{{ ad.target_url }}</a></p>
-                            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                                <span class="stats-badge" title="Impressions"><span class="material-icons-outlined" style="font-size: 1em; vertical-align: middle;">visibility</span> {{ ad.impressions|default(0) }}</span>
-                                <span class="stats-badge" title="Clicks"><span class="material-icons-outlined" style="font-size: 1em; vertical-align: middle;">ads_click</span> {{ ad.clicks|default(0) }}</span>
-                            </div>
+                            <p><strong>Type:</strong> {{ ad.ad_type }}</p>
+                            <p><strong>URL:</strong> <a href="{{ ad.target_url }}" target="_blank" rel="noopener" style="color: var(--accent);">{{ ad.target_url }}</a></p>
+                            <p><strong>Submitted:</strong> {{ ad.created_at }}</p>
                         </div>
                         <div class="ad-actions">
-                            <form action="/admin/ads/{{ ad.id }}/toggle" method="POST" style="flex: 1;">
+                            <form action="{{ url_for('ads.admin_ads') }}" method="POST" style="flex: 1;">
                                 {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
-                                <button type="submit" class="templatedivbutton w-full" style="padding: 5px; font-size: 0.9em; {{ 'background: var(--text-secondary); border-color: var(--border);' if not ad.is_active else '' }}">
-                                    {{ 'Enable' if not ad.is_active else 'Disable' }}
+                                <input type="hidden" name="ad_id" value="{{ ad.id }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="templatedivbutton w-full" style="padding: 5px; font-size: 0.9em;">
+                                    <span class="material-icons-outlined" style="font-size: 1.2em; vertical-align: middle;">check</span> Approve
                                 </button>
                             </form>
-                            <form action="/admin/ads/{{ ad.id }}/delete" method="POST" style="flex: 1;" onsubmit="return confirm('Are you sure you want to delete this ad?');">
+                            <form action="{{ url_for('ads.admin_ads') }}" method="POST" style="flex: 1;">
                                 {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+                                <input type="hidden" name="ad_id" value="{{ ad.id }}">
+                                <input type="hidden" name="action" value="reject">
                                 <button type="submit" class="templatedivbutton btn-danger w-full" style="padding: 5px; font-size: 0.9em;">
-                                    <span class="material-icons-outlined" style="font-size: 1.2em; vertical-align: middle;">delete</span> Delete
+                                    <span class="material-icons-outlined" style="font-size: 1.2em; vertical-align: middle;">close</span> Reject
                                 </button>
                             </form>
                         </div>
@@ -127,7 +129,7 @@
                 {% else %}
                     <div style="grid-column: 1 / -1;" class="empty-state">
                         <span class="material-icons-outlined" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">find_in_page</span>
-                        <p>No advertisements found.</p>
+                        <p>No pending advertisements.</p>
                         <a href="{{ url_for('ads.upload_ad') }}" class="templatelink" style="margin-top: 10px; display: inline-block;">Upload the first ad</a>
                     </div>
                 {% endif %}
