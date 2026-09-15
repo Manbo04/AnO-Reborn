@@ -33,7 +33,7 @@
                     </div>
                     {% endif %}
                 </div>
-                <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
+                <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" data-current-username="{{ username }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
                     <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1;">
                         {% if chat_history and chat_history|length > 0 %}
                             {# Player-requested (2026-09-02): newest message on top, feed
@@ -154,6 +154,7 @@
     var root = document.getElementById('hubChatRoot');
     if (!root) return;
     var currentUserId = root.dataset.currentUserId;
+    var currentUsername = root.dataset.currentUsername;
     var messagesEl = document.getElementById('hubChatMessages');
     var form = document.getElementById('hubChatForm');
     var input = document.getElementById('hubChatInput');
@@ -179,7 +180,7 @@
 
     messagesEl.scrollTop = 0;
 
-    function renderMessage(m) {
+    function renderMessageNode(m) {
         var div = document.createElement('div');
         var mine = String(m.sender_id) === String(currentUserId);
         div.className = 'game-chat-msg' + (mine ? ' game-chat-msg--mine' : '');
@@ -188,8 +189,30 @@
         div.querySelector('.game-chat-name').innerHTML = renderNationFlairHTML(m.sender_username, m.flair) +
             (mine ? ' (you)' : '') + ' · just now';
         div.querySelector('.game-chat-bubble').textContent = m.content;
+        return div;
+    }
+
+    function renderMessage(m) {
+        messagesEl.insertBefore(renderMessageNode(m), messagesEl.firstChild);
+        messagesEl.scrollTop = 0;
+    }
+
+    // Messages we've rendered locally the instant they were sent, before the
+    // server has echoed them back. Reconciled (swapped for the real node,
+    // with correct id/flair) rather than re-appended, so the confirmation
+    // round-trip doesn't duplicate or reorder them.
+    var pendingOwnMessages = [];
+
+    function renderOptimisticMessage(content) {
+        var div = renderMessageNode({
+            sender_id: currentUserId,
+            sender_username: currentUsername,
+            flair: null,
+            content: content,
+        });
         messagesEl.insertBefore(div, messagesEl.firstChild);
         messagesEl.scrollTop = 0;
+        pendingOwnMessages.push({content: content, el: div});
     }
 
     var socket = io();
@@ -203,8 +226,24 @@
 
     socket.on('connect', joinRoom);
     if (socket.connected) joinRoom();
+    // A dropped/restored connection re-joins Socket.IO's default room
+    // automatically, but not our custom 'global_chat' room -- without this,
+    // any reconnect (sleep, brief network blip, backgrounded tab) silently
+    // stops delivering global chat, including the echo of your own sends.
+    socket.on('disconnect', function() {
+        joined = false;
+    });
 
     socket.on('global_chat_message', function(m) {
+        if (String(m.sender_id) === String(currentUserId)) {
+            for (var i = 0; i < pendingOwnMessages.length; i++) {
+                if (pendingOwnMessages[i].content === m.content) {
+                    pendingOwnMessages[i].el.replaceWith(renderMessageNode(m));
+                    pendingOwnMessages.splice(i, 1);
+                    return;
+                }
+            }
+        }
         renderMessage(m);
     });
 
@@ -213,6 +252,7 @@
         var content = input.value.trim();
         if (!content) return;
         socket.emit('global_chat_message', {content: content});
+        renderOptimisticMessage(content);
         input.value = '';
     });
 
