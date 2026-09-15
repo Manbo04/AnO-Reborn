@@ -965,6 +965,37 @@ def bot_heuristics_sync():
     return jsonify({"error": "Unknown action"}), 400
 
 
+@bp.route("/api/bot/devlog", methods=["POST"])
+def bot_post_devlog():
+    """Mirror the weekly Discord recap into the in-game Devlog (see scripts/
+    weekly_discord_announcement.sh). Exists because that script runs from a
+    local launchd job that can't reach the production Postgres directly —
+    it goes through this already-authenticated internal API instead, same
+    as the Discord bot does for everything else here.
+    """
+    err = _require_bot_secret()
+    if err:
+        return err
+    payload = request.get_json(silent=True) or {}
+    title = str(payload.get("title") or "").strip()
+    body = str(payload.get("body") or "").strip()
+
+    from app_core.community.repositories import (
+        create_devlog_entry,
+        TITLE_MAX_LENGTH,
+        DEVLOG_BODY_MAX_LENGTH,
+    )
+
+    if not title or len(title) > TITLE_MAX_LENGTH:
+        return jsonify({"error": f"title must be 1-{TITLE_MAX_LENGTH} chars"}), 400
+    if not body or len(body) > DEVLOG_BODY_MAX_LENGTH:
+        return jsonify({"error": f"body must be 1-{DEVLOG_BODY_MAX_LENGTH} chars"}), 400
+
+    author_id = int(os.getenv("DEVLOG_AUTHOR_USER_ID", "1"))
+    entry = create_devlog_entry(author_id, title, body)
+    return jsonify({"ok": True, "id": entry["id"], "created_at": entry["created_at"].isoformat()})
+
+
 def register_bot_api_routes(app_instance):
   app_instance.register_blueprint(bp)
 
