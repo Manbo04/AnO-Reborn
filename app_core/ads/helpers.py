@@ -17,19 +17,37 @@ _AD_CACHE_TTL = 60.0
 _NSFW_SCORE_REJECT_THRESHOLD = 0.85
 
 
-def _is_nsfw(image_bytes: bytes) -> Optional[bool]:
+_NSFW_MIME_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+
+
+def _is_nsfw(image_bytes: bytes, ext: str = ".jpg") -> Optional[bool]:
     """Classify image bytes via Cloudmersive. Returns None if the check
     couldn't be performed (missing key, API error, timeout) so callers can
-    fail open rather than block ad submissions on a third-party outage."""
+    fail open rather than block ad submissions on a third-party outage.
+
+    Live-tested 2026-09-15 against the real free-tier API:
+    - A valid image occasionally took >10s to respond under load, so the
+      timeout below is 15s (not 10s) to cut down on spurious fail-opens
+      from a merely-slow response rather than an actual outage.
+    - Sending a generic "application/octet-stream" content-type made the
+      API reject a genuinely valid PNG as "not a valid image type" (400)
+      -- it needs the real image/* mime type matching the actual bytes."""
     api_key = os.getenv("CLOUDMERSIVE_API_KEY")
     if not api_key:
         return None
+    mime = _NSFW_MIME_TYPES.get(ext.lower(), "image/jpeg")
     try:
         resp = requests.post(
             "https://api.cloudmersive.com/image/nsfw/classify",
             headers={"Apikey": api_key},
-            files={"imageFile": ("image", image_bytes)},
-            timeout=10,
+            files={"imageFile": (f"image{ext}", image_bytes, mime)},
+            timeout=15,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -103,7 +121,7 @@ def save_ad_image_upload(
     # submissions entirely.
     image_bytes = upload.stream.read()
     upload.stream.seek(0)
-    if _is_nsfw(image_bytes):
+    if _is_nsfw(image_bytes, ext):
         return False, "Image was flagged by content moderation. Please choose a different image."
 
     dest_dir = os.path.join(static_folder, "uploads", "ads")
