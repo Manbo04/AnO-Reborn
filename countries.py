@@ -464,13 +464,15 @@ def get_revenue(cId, db=None):
                 land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
                 if land_multiplier > 1:
                     land_multiplier = 1
+                # No policy adjusts base_multiplier in the real tick
+                # (app_core/game_ticks/taxes.py) -- policies 1/4/6 are
+                # Universal Healthcare/Rationing Program/University Grants,
+                # none of which are documented or coded to touch tax income.
+                # This display used to apply a fabricated +1%/-2%/-2% tax
+                # bonus for having them selected, silently showing players a
+                # tax projection that didn't match what the tick actually
+                # paid out (found 2026-09-15 during an architecture audit).
                 base_multiplier = variables.DEFAULT_TAX_INCOME
-                if policies and 1 in policies:
-                    base_multiplier *= 1.01
-                if policies and 6 in policies:
-                    base_multiplier *= 0.98
-                if policies and 4 in policies:
-                    base_multiplier *= 0.98
                 multiplier = base_multiplier + (base_multiplier * land_multiplier)
                 # Children pay no tax and elderly pay a reduced rate --
                 # same DEMO_TAX_MULTIPLIER weighting the tax_income tick
