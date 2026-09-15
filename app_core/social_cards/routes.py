@@ -21,7 +21,7 @@ from database import (
     get_coalition_members_table,
 )
 
-from .card_generator import render_card
+from .card_generator import render_card_gif
 
 bp = Blueprint("social_cards", __name__)
 
@@ -46,8 +46,8 @@ def _cache_set(key, body):
     _CACHE[key] = (body, time_module.time())
 
 
-def _png_response(body: bytes) -> Response:
-    response = Response(body, mimetype="image/png")
+def _gif_response(body: bytes) -> Response:
+    response = Response(body, mimetype="image/gif")
     response.headers["Cache-Control"] = "public, max-age=600"
     return response
 
@@ -116,12 +116,12 @@ def render_preview_page(title: str, description: str, image_url: str):
     )
 
 
-@bp.route("/social-card/country/<int:cid>.png")
+@bp.route("/social-card/country/<int:cid>.gif")
 def country_card(cid):
     cache_key = f"country_{cid}"
     cached = _cache_get(cache_key)
     if cached is not None:
-        return _png_response(cached)
+        return _gif_response(cached)
 
     header = _fetch_country_header(cid)
     if header is None:
@@ -143,7 +143,7 @@ def country_card(cid):
     elif header.get("location"):
         subtitle = f"A {header['location']} nation"
 
-    png = render_card(
+    gif = render_card_gif(
         kind_label="Nation Dossier",
         title=header["username"],
         subtitle=subtitle,
@@ -152,8 +152,8 @@ def country_card(cid):
         accent_hex=header.get("name_color"),
         ribbon_text=(f"Coalition: {header['coalition_name']}" if header.get("coalition_name") else None),
     )
-    _cache_set(cache_key, png)
-    return _png_response(png)
+    _cache_set(cache_key, gif)
+    return _gif_response(gif)
 
 
 def _fetch_country_header(cid: int):
@@ -226,12 +226,12 @@ def _fetch_country_header(cid: int):
         }
 
 
-@bp.route("/social-card/coalition/<int:coalition_id>.png")
+@bp.route("/social-card/coalition/<int:coalition_id>.gif")
 def coalition_card(coalition_id):
     cache_key = f"coalition_{coalition_id}"
     cached = _cache_get(cache_key)
     if cached is not None:
-        return _png_response(cached)
+        return _gif_response(cached)
 
     data = _fetch_coalition_header(coalition_id)
     if data is None:
@@ -251,7 +251,7 @@ def coalition_card(coalition_id):
         subtitle_parts.append(data["coalition_type"])
     subtitle = " · ".join(subtitle_parts) if subtitle_parts else None
 
-    png = render_card(
+    gif = render_card_gif(
         kind_label="Coalition",
         title=data["name"],
         subtitle=subtitle,
@@ -259,8 +259,8 @@ def coalition_card(coalition_id):
         flag_bytes=_fetch_flag_bytes("coalition", coalition_id),
         accent_hex="#d4a843",  # --gold — coalitions read as the game's "guild" concept
     )
-    _cache_set(cache_key, png)
-    return _png_response(png)
+    _cache_set(cache_key, gif)
+    return _gif_response(gif)
 
 
 def _fetch_coalition_header(coalition_id: int):
@@ -303,12 +303,12 @@ def _fetch_coalition_header(coalition_id: int):
         }
 
 
-@bp.route("/social-card/province/<int:province_id>.png")
+@bp.route("/social-card/province/<int:province_id>.gif")
 def province_card(province_id):
     cache_key = f"province_{province_id}"
     cached = _cache_get(cache_key)
     if cached is not None:
-        return _png_response(cached)
+        return _gif_response(cached)
 
     data = _fetch_province_header(province_id)
     if data is None:
@@ -328,7 +328,7 @@ def province_card(province_id):
     if data.get("is_capital") and data.get("owner_username"):
         subtitle = f"Capital province of {data['owner_username']}"
 
-    png = render_card(
+    gif = render_card_gif(
         kind_label="Province",
         title=data["name"],
         subtitle=subtitle,
@@ -336,8 +336,8 @@ def province_card(province_id):
         flag_bytes=_fetch_flag_bytes("province", province_id),
         accent_hex="#2d9f6f",  # --success — provinces read as the "growth" unit of the game
     )
-    _cache_set(cache_key, png)
-    return _png_response(png)
+    _cache_set(cache_key, gif)
+    return _gif_response(gif)
 
 
 def _fetch_province_header(province_id: int):
