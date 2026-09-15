@@ -425,6 +425,16 @@ label {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     border-bottom: 2px solid var(--accent);
     transition: box-shadow 0.2s ease;
+    /* Keeps this on its own stable GPU compositing layer. Without it,
+       a fixed element carrying backdrop-filter (see game-shell-active
+       override in game-glass.css) can get demoted/re-promoted mid-scroll
+       on long, image-heavy pages (military.html especially -- 4 unit
+       categories x several units each, all with photos), which shows up
+       as the navbar and resource-HUD strip briefly detaching to the
+       wrong screen position with a blank gap above them until the next
+       repaint catches up. Reported by Dede 2026-09-15, reproduced via
+       programmatic scroll on /military at mobile width. */
+    will-change: transform;
 }
 
 /* No background change on hover — Safari samples the top edge for toolbar tinting */
@@ -7251,6 +7261,11 @@ body.game-shell-active .templatediv {
        cut, since this strip is visible on nearly every page. */
     -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, black var(--game-space-md), black calc(100% - var(--game-space-md)), transparent 100%);
+    /* Same compositing-stability reasoning as .navbarparent in
+       static/style.css: a sticky element with a mask-image needs its
+       own GPU layer, or it can visibly detach to the wrong position
+       during a scroll on long pages instead of tracking smoothly. */
+    will-change: transform;
 }
 
 .game-hud::-webkit-scrollbar {
