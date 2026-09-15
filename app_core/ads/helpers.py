@@ -7,11 +7,37 @@ import time
 import uuid
 from typing import Any, Dict, Optional, Tuple
 
+import requests
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 _AD_CACHE: Dict[str, Any] = {"loaded_at": 0.0, "payload": None}
 _AD_CACHE_TTL = 60.0
+
+_NSFW_SCORE_REJECT_THRESHOLD = 0.85
+
+
+def _is_nsfw(image_bytes: bytes) -> Optional[bool]:
+    """Classify image bytes via Cloudmersive. Returns None if the check
+    couldn't be performed (missing key, API error, timeout) so callers can
+    fail open rather than block ad submissions on a third-party outage."""
+    api_key = os.getenv("CLOUDMERSIVE_API_KEY")
+    if not api_key:
+        return None
+    try:
+        resp = requests.post(
+            "https://api.cloudmersive.com/image/nsfw/classify",
+            headers={"Apikey": api_key},
+            files={"imageFile": ("image", image_bytes)},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if not data.get("Successful"):
+            return None
+        return data.get("Score", 0.0) >= _NSFW_SCORE_REJECT_THRESHOLD
+    except Exception:
+        return None
 
 
 def reset_ad_cache() -> None:
@@ -68,6 +94,17 @@ def save_ad_image_upload(
     except Exception:
         return False, "File does not look like a valid image."
     upload.stream.seek(0)
+
+    # Ads are shown in rotation to every visitor, not just the uploader, so
+    # unlike flags (small, re-encoded, low stakes) this is worth an explicit
+    # content check. Fails open (allows the upload) if CLOUDMERSIVE_API_KEY
+    # is unset or the API errors/times out -- moderation is defense in depth
+    # here, not the only gate, so a third-party outage shouldn't block ad
+    # submissions entirely.
+    image_bytes = upload.stream.read()
+    upload.stream.seek(0)
+    if _is_nsfw(image_bytes):
+        return False, "Image was flagged by content moderation. Please choose a different image."
 
     dest_dir = os.path.join(static_folder, "uploads", "ads")
     os.makedirs(dest_dir, exist_ok=True)
