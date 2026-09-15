@@ -8144,6 +8144,14 @@ body.page-country .templatedivcontent .infodiv {
         white-space: nowrap;
         width: 100%;
         -webkit-overflow-scrolling: touch;
+        /* Same reasoning as .game-hud/.menuflex2: a wide table's last
+           column just gets hard-clipped by the viewport edge with no
+           hint there's more to scroll to. Fade it instead of cutting
+           it off flush. Right-edge only (not both edges like .game-hud)
+           since the first column is pinned via position: sticky above
+           and is never actually scrolled past on the left. */
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
     }
 
     /* Freeze the first column (row label -- name, unit, etc.) so scrolling
