@@ -736,9 +736,15 @@ def discord_register():
                         session.pop("user_id", None)
                         return error(500, "Account provisioning failed, please try again.")
 
-            session["user_id"] = user_id
-            session.permanent = True
-            session.modified = True
+            from database import client_ip_from_headers, coarse_fingerprint_from_headers
+            from login_verification import establish_authenticated_session
+
+            establish_authenticated_session(
+                user_id,
+                client_ip_from_headers(request.headers, request.remote_addr),
+                coarse_fingerprint_from_headers(request.headers),
+                "discord",
+            )
 
             # Mark attempt as successful
             with get_request_cursor() as db:
@@ -1040,8 +1046,15 @@ def signup():
                 return redirect(f"/verification_pending?email={safe_email}")
             else:
                 from change import create_recovery_key_for_user
+                from database import client_ip_from_headers, coarse_fingerprint_from_headers
+                from login_verification import establish_authenticated_session
 
-                session["user_id"] = user_id
+                establish_authenticated_session(
+                    user_id,
+                    client_ip_from_headers(request.headers, request.remote_addr),
+                    coarse_fingerprint_from_headers(request.headers),
+                    "password",
+                )
                 raw_key = create_recovery_key_for_user(db, user_id)
                 from app_core.onboarding.service import post_signup_redirect
 
@@ -1129,8 +1142,15 @@ def verify_email():
             )
 
             from change import create_recovery_key_for_user
+            from database import client_ip_from_headers, coarse_fingerprint_from_headers
+            from login_verification import establish_authenticated_session
 
-            session["user_id"] = user_id
+            establish_authenticated_session(
+                user_id,
+                client_ip_from_headers(request.headers, request.remote_addr),
+                coarse_fingerprint_from_headers(request.headers),
+                "password",
+            )
             raw_key = create_recovery_key_for_user(cur, user_id)
             if raw_key:
                 session["pending_recovery_key"] = raw_key

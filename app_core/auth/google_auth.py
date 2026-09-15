@@ -301,17 +301,20 @@ def google_signup_route():
                     (client_ip,),
                 )
 
-            session["user_id"] = user_id
+            from database import client_ip_from_headers, coarse_fingerprint_from_headers
+            from login_verification import SESSION_LIFETIME_DAYS, establish_authenticated_session
+
             current_app.config["SESSION_PERMANENT"] = True
-            from login_verification import SESSION_LIFETIME_DAYS
-
             current_app.permanent_session_lifetime = datetime.timedelta(days=SESSION_LIFETIME_DAYS)
-            session.permanent = True
-            session.modified = True
-
-            session.pop("google_oauth2_state", None)
-            session.pop("google_oauth2_token", None)
-            session.pop("google_email", None)
+            establish_authenticated_session(
+                user_id,
+                client_ip_from_headers(request.headers, request.remote_addr),
+                coarse_fingerprint_from_headers(request.headers),
+                "google",
+            )
+            # establish_authenticated_session() already clears the session,
+            # so the pending google_oauth2_state/token/email keys are gone
+            # with it -- no need to pop them individually anymore.
 
             from app_core.onboarding.service import post_signup_redirect
 

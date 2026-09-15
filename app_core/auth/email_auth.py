@@ -127,17 +127,14 @@ def register_email():
         safe_email = urllib.parse.quote(email)
         return redirect(f"/verification_pending?email={safe_email}")
 
-    session["user_id"] = user_id
-    session.permanent = True
-    session.modified = True
-    try:
-        ip = client_ip_from_headers(request.headers, request.remote_addr)
-        fingerprint = coarse_fingerprint_from_headers(request.headers)
-        from database import log_login_event
+    from login_verification import establish_authenticated_session
 
-        log_login_event(user_id, ip, fingerprint, "email")
-    except Exception:
-        pass  # best-effort; a brand-new account has no prior IP to compare anyway
+    establish_authenticated_session(
+        user_id,
+        client_ip_from_headers(request.headers, request.remote_addr),
+        coarse_fingerprint_from_headers(request.headers),
+        "email",
+    )
     from app_core.onboarding.service import post_signup_redirect
 
     return redirect(post_signup_redirect(user_id))

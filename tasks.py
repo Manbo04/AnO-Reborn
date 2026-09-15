@@ -363,3 +363,25 @@ def task_ai_agent():
         print(f"ai_agent: completed — {result}")
     except Exception as e:
         print(f"ai_agent: failed — {e}")
+
+
+# ---------------------------------------------------------------------------
+# New-location login alert (see login_verification.py)
+# ---------------------------------------------------------------------------
+
+
+@celery.task(name="tasks.task_send_login_verification")
+def task_send_login_verification(user_id, ip, fingerprint, auth_type):
+    """Send the new-location login DM/email off the login request path.
+
+    start_login_verification() makes up to two sequential Discord API calls
+    (10s timeout each) -- doing that inline in complete_or_verify_login()
+    could add ~20s to a login. It only uses get_db_cursor (pool-based, no
+    Flask request/app context needed), so it's safe to run here as-is.
+    """
+    try:
+        from login_verification import start_login_verification
+
+        start_login_verification(user_id, ip, fingerprint, auth_type)
+    except Exception as e:
+        print(f"send_login_verification: failed for user_id={user_id} — {e}")

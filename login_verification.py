@@ -200,20 +200,21 @@ def start_login_verification(
     return delivered
 
 
-def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | None, auth_type: str):
-    """Call this instead of directly setting session['user_id'] after any
-    credential check succeeds.
+def establish_authenticated_session(
+    user_id: int, ip: str | None, fingerprint: str | None, auth_type: str
+) -> None:
+    """Call this instead of directly setting session['user_id'] anywhere a
+    credential check succeeds OR a new account is created.
 
-    The login always completes immediately -- this does not block or add
-    friction to normal play (players switch wifi/phones/laptops constantly,
-    and gating every new IP behind a Discord/email click generated real
-    "why can't I log in" confusion for legitimate players, not just
-    attackers). When the IP is one we haven't seen before for this account,
-    a best-effort heads-up (not a confirmation requirement) still goes to
-    the account's linked Discord DM or verified email, so the real owner at
-    least finds out promptly if it wasn't them.
-
-    Returns a Flask response -- callers should `return` it directly.
+    Always clears any pre-existing session data first. Without this, a
+    stale session from a previous account (or an in-progress OAuth/2FA
+    flow) on the same browser could merge into the new one -- signup.py,
+    google_auth.py, and email_auth.py's account-creation branches were each
+    independently setting session["user_id"] directly, skipping this clear,
+    while their own login branches correctly went through here. That's a
+    real candidate root cause for the account cross-contamination reports
+    investigated 2026-09-12 but never confirmed (found 2026-09-15 during an
+    architecture audit).
     """
     session.clear()
     session["user_id"] = user_id
@@ -245,10 +246,35 @@ def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | No
 
     if not ip_is_known_for_user(user_id, ip):
         try:
-            start_login_verification(user_id, ip, fingerprint, auth_type)
-        except Exception:
-            logger.exception("new-location alert failed for user_id=%s", user_id)
+            # Dispatched to Celery, not called inline: start_login_verification
+            # makes up to two sequential Discord API calls (10s timeout each)
+            # which could otherwise add ~20s to this login request.
+            from tasks import celery as celery_app
 
+            celery_app.send_task(
+                "tasks.task_send_login_verification",
+                args=[user_id, ip, fingerprint, auth_type],
+            )
+        except Exception:
+            logger.exception("new-location alert dispatch failed for user_id=%s", user_id)
+
+
+def complete_or_verify_login(user_id: int, ip: str | None, fingerprint: str | None, auth_type: str):
+    """Call this instead of directly setting session['user_id'] after any
+    credential check succeeds.
+
+    The login always completes immediately -- this does not block or add
+    friction to normal play (players switch wifi/phones/laptops constantly,
+    and gating every new IP behind a Discord/email click generated real
+    "why can't I log in" confusion for legitimate players, not just
+    attackers). When the IP is one we haven't seen before for this account,
+    a best-effort heads-up (not a confirmation requirement) still goes to
+    the account's linked Discord DM or verified email, so the real owner at
+    least finds out promptly if it wasn't them.
+
+    Returns a Flask response -- callers should `return` it directly.
+    """
+    establish_authenticated_session(user_id, ip, fingerprint, auth_type)
     return redirect("/")
 
 
