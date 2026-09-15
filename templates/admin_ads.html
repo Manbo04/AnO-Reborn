@@ -98,7 +98,7 @@
                     {% for ad in pending_ads %}
                     <div class="ad-card">
                         <div style="text-align: center;">
-                            <img src="{{ ad.image_url }}" alt="Ad Preview" class="ad-image-preview">
+                            <img src="{{ url_for('ads.serve_ad_image', ad_id=ad.id) }}" alt="Ad Preview" class="ad-image-preview">
                         </div>
                         <div class="ad-details">
                             <p><strong>ID:</strong> {{ ad.id }}</p>

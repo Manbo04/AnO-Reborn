@@ -45,7 +45,7 @@ def test_load_rotating_ads_caches_results():
             calls["count"] += 1
 
         def fetchone(self):
-            return ("/static/uploads/ads/top.png", "https://example.com")
+            return (1, "/static/uploads/ads/top.png", "https://example.com", None)
 
         def fetchall(self):
             return []
@@ -60,10 +60,37 @@ def test_load_rotating_ads_caches_results():
     assert calls["count"] == 2
 
 
+def test_load_rotating_ads_prefers_db_image_route_when_image_data_present():
+    """Regression test: an approved ad with a persisted DB copy (migration
+    0077) should be served via /ads/image/<id>, not the raw stored URL that
+    may 404 after a redeploy wipes static/uploads/ads/."""
+    reset_ad_cache()
+
+    class FakeCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, *args, **kwargs):
+            pass
+
+        def fetchone(self):
+            return (7, "/static/uploads/ads/top.png", "https://example.com", "base64data")
+
+        def fetchall(self):
+            return []
+
+    result = load_rotating_ads(lambda **kwargs: FakeCursor())
+    assert result["top_ad"]["image_url"] == "/ads/image/7"
+
+
 def test_save_ad_image_upload_rejects_missing_file(tmp_path):
-    ok, msg = save_ad_image_upload(None, str(tmp_path))
+    ok, msg, image_data = save_ad_image_upload(None, str(tmp_path))
     assert not ok
     assert "required" in msg.lower()
+    assert image_data is None
 
 
 def _fake_png_upload():
@@ -84,9 +111,10 @@ def test_save_ad_image_upload_rejects_nsfw_content(tmp_path, monkeypatch):
     fake_response.json.return_value = {"Successful": True, "Score": 0.99}
     fake_response.raise_for_status.return_value = None
     with patch("app_core.ads.helpers.requests.post", return_value=fake_response):
-        ok, msg = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
+        ok, msg, image_data = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
     assert not ok
     assert "moderation" in msg.lower()
+    assert image_data is None
 
 
 def test_save_ad_image_upload_allows_safe_content(tmp_path, monkeypatch):
@@ -95,24 +123,44 @@ def test_save_ad_image_upload_allows_safe_content(tmp_path, monkeypatch):
     fake_response.json.return_value = {"Successful": True, "Score": 0.01}
     fake_response.raise_for_status.return_value = None
     with patch("app_core.ads.helpers.requests.post", return_value=fake_response):
-        ok, url = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
+        ok, url, image_data = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
     assert ok
     assert url.startswith("/static/uploads/ads/")
+    assert image_data  # base64-encoded, non-empty
 
 
 def test_save_ad_image_upload_fails_open_without_api_key(tmp_path, monkeypatch):
     monkeypatch.delenv("CLOUDMERSIVE_API_KEY", raising=False)
-    ok, url = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
+    ok, url, image_data = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
     assert ok
     assert url.startswith("/static/uploads/ads/")
+    assert image_data
+
+
+def test_save_ad_image_upload_stores_base64_matching_original_bytes(tmp_path, monkeypatch):
+    """Regression test: the DB copy (migration 0077) must round-trip to the
+    exact bytes uploaded, since it's now the canonical, persistent copy --
+    static/uploads/ads/ is wiped on every Railway redeploy."""
+    import base64
+
+    monkeypatch.delenv("CLOUDMERSIVE_API_KEY", raising=False)
+    upload = _fake_png_upload()
+    upload.stream.seek(0)
+    original_bytes = upload.stream.read()
+    upload.stream.seek(0)
+
+    ok, url, image_data = save_ad_image_upload(upload, str(tmp_path))
+    assert ok
+    assert base64.b64decode(image_data) == original_bytes
 
 
 def test_save_ad_image_upload_fails_open_on_api_error(tmp_path, monkeypatch):
     monkeypatch.setenv("CLOUDMERSIVE_API_KEY", "fake-key")
     with patch("app_core.ads.helpers.requests.post", side_effect=Exception("timeout")):
-        ok, url = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
+        ok, url, image_data = save_ad_image_upload(_fake_png_upload(), str(tmp_path))
     assert ok
     assert url.startswith("/static/uploads/ads/")
+    assert image_data
 
 
 def test_get_pending_ads_uses_dict_cursor():
@@ -175,6 +223,7 @@ def test_admin_ads_template_renders_pending_ad_with_approve_reject():
     env.globals["url_for"] = lambda endpoint, **kwargs: {
         "ads.admin_ads": "/admin/ads",
         "ads.upload_ad": "/ads",
+        "ads.serve_ad_image": f"/ads/image/{kwargs.get('ad_id')}",
     }.get(endpoint, "/" + endpoint)
     env.globals["get_flashed_messages"] = lambda with_categories=False: []
 
@@ -204,6 +253,67 @@ def test_admin_ads_template_renders_pending_ad_with_approve_reject():
     assert "Reject" in out
     assert "No pending advertisements" not in out
     assert "https://example.com" in out
+
+
+def _ads_only_test_client():
+    """A minimal Flask app with just the ads blueprint registered, so these
+    tests don't pull in the full app.py import chain (which needs a live
+    DB connection this sandbox can't reach -- see ano-live-railway-db-default
+    memory: no public Postgres proxy is configured for this project)."""
+    from flask import Flask
+
+    from app_core.ads.routes import bp
+
+    app = Flask(__name__)
+    app.config["TESTING"] = True
+    app.register_blueprint(bp)
+    return app.test_client()
+
+
+def test_serve_ad_image_decodes_db_stored_png():
+    """Regression test: /ads/image/<id> must serve the persisted DB copy
+    (migration 0077), not 404/redirect, when image_data is present."""
+    import base64
+    from io import BytesIO
+
+    from PIL import Image
+
+    buf = BytesIO()
+    Image.new("RGB", (4, 4), color=(10, 20, 30)).save(buf, format="PNG")
+    png_bytes = buf.getvalue()
+    b64 = base64.b64encode(png_bytes).decode("ascii")
+
+    client = _ads_only_test_client()
+    with patch(
+        "app_core.ads.routes.ad_service.get_ad_image",
+        return_value=(b64, "/static/uploads/ads/whatever.png"),
+    ):
+        resp = client.get("/ads/image/1")
+
+    assert resp.status_code == 200
+    assert resp.mimetype == "image/png"
+    assert resp.data == png_bytes
+
+
+def test_serve_ad_image_falls_back_to_stored_url_without_image_data():
+    """Regression test: rows uploaded before migration 0077 backfilled
+    image_data should still resolve to something rather than a bare 404."""
+    client = _ads_only_test_client()
+    with patch(
+        "app_core.ads.routes.ad_service.get_ad_image",
+        return_value=(None, "https://cdn.example.com/ad.png"),
+    ):
+        resp = client.get("/ads/image/1", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "https://cdn.example.com/ad.png"
+
+
+def test_serve_ad_image_404s_for_unknown_ad():
+    client = _ads_only_test_client()
+    with patch("app_core.ads.routes.ad_service.get_ad_image", return_value=None):
+        resp = client.get("/ads/image/999999")
+    assert resp.status_code == 404
 
 
 def test_set_user_password_preserves_discord_snowflake():

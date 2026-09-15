@@ -84,6 +84,7 @@ MIGRATION_FILES = [
     "0074_seed_title_conqueror_of_worlds.sql",
     "0075_add_tutorial_step.sql",
     "0076_add_market_embargoes.sql",
+    "0077_add_ads_image_data.sql",
 ]
 
 

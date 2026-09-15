@@ -3,12 +3,21 @@ from psycopg2.extras import RealDictCursor
 from database import get_request_cursor
 
 class AdRepository:
-    def create_ad(self, user_id, image_url, target_url, ad_type):
+    def create_ad(self, user_id, image_url, target_url, ad_type, image_data=None):
         with get_request_cursor() as db:
             db.execute(
-                "INSERT INTO advertisements (user_id, image_url, target_url, ad_type) VALUES (%s, %s, %s, %s)",
-                (user_id, image_url, target_url, ad_type)
+                "INSERT INTO advertisements (user_id, image_url, target_url, ad_type, image_data) VALUES (%s, %s, %s, %s, %s)",
+                (user_id, image_url, target_url, ad_type, image_data)
             )
+
+    def get_ad_image(self, ad_id):
+        """Returns (image_data_b64, image_url) for the serving route, or None."""
+        with get_request_cursor(read_only=True) as db:
+            db.execute(
+                "SELECT image_data, image_url FROM advertisements WHERE id = %s",
+                (ad_id,)
+            )
+            return db.fetchone()
             
     def get_ads_by_user(self, user_id):
         with get_request_cursor(read_only=True) as db:

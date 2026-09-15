@@ -1,6 +1,7 @@
 """Helpers for player-submitted advertisements."""
 from __future__ import annotations
 
+import base64
 import os
 import re
 import time
@@ -82,18 +83,25 @@ def normalize_ad_image_url(image_url: str | None) -> str | None:
 
 def save_ad_image_upload(
     upload: FileStorage, static_folder: str
-) -> Tuple[bool, str]:
-    """Persist an uploaded ad image under static/uploads/ads/."""
+) -> Tuple[bool, str, Optional[str]]:
+    """Persist an uploaded ad image and return (ok, image_url_or_error, image_data_b64).
+
+    Also base64-encodes the image for `advertisements.image_data` (migration
+    0077) because static/uploads/ads/ lives on the web service's local disk,
+    which Railway wipes on every redeploy -- any ad approved/pending across a
+    redeploy lost its image (404), found 2026-09-15 via a broken preview in
+    /admin/ads. The filesystem copy is kept as a same-deploy fast path only;
+    the DB copy (served via ads.serve_ad_image) is canonical."""
     if not upload or not upload.filename:
-        return False, "Advertisement image is required."
+        return False, "Advertisement image is required.", None
 
     filename = secure_filename(upload.filename)
     if not filename:
-        return False, "Invalid image filename."
+        return False, "Invalid image filename.", None
 
     ext = os.path.splitext(filename)[1].lower()
     if ext not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
-        return False, "Image must be JPG, PNG, GIF, or WebP."
+        return False, "Image must be JPG, PNG, GIF, or WebP.", None
 
     # Extension alone is attacker-controlled (just the string after the last
     # "."), so this on its own doesn't verify the uploaded bytes are really
@@ -110,7 +118,7 @@ def save_ad_image_upload(
         with Image.open(upload.stream) as img:
             img.verify()
     except Exception:
-        return False, "File does not look like a valid image."
+        return False, "File does not look like a valid image.", None
     upload.stream.seek(0)
 
     # Ads are shown in rotation to every visitor, not just the uploader, so
@@ -122,13 +130,15 @@ def save_ad_image_upload(
     image_bytes = upload.stream.read()
     upload.stream.seek(0)
     if _is_nsfw(image_bytes, ext):
-        return False, "Image was flagged by content moderation. Please choose a different image."
+        return False, "Image was flagged by content moderation. Please choose a different image.", None
 
     dest_dir = os.path.join(static_folder, "uploads", "ads")
     os.makedirs(dest_dir, exist_ok=True)
     stored_name = f"{uuid.uuid4().hex}{ext}"
     upload.save(os.path.join(dest_dir, stored_name))
-    return True, normalize_ad_image_url(stored_name) or f"/static/uploads/ads/{stored_name}"
+    image_url = normalize_ad_image_url(stored_name) or f"/static/uploads/ads/{stored_name}"
+    image_data = base64.b64encode(image_bytes).decode("ascii")
+    return True, image_url, image_data
 
 
 def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
@@ -141,11 +151,19 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
     top_ad = None
     side_ad_left = None
     side_ad_right = None
+    def _image_src(ad_id, image_data, image_url):
+        # Prefer the DB-backed serve route (survives redeploys); fall back to
+        # the raw stored URL only for rows uploaded before migration 0077
+        # ever got a chance to backfill image_data.
+        if image_data:
+            return f"/ads/image/{ad_id}"
+        return normalize_ad_image_url(image_url)
+
     try:
         with get_db_cursor(read_only=True) as db:
             db.execute(
                 """
-                SELECT image_url, target_url
+                SELECT id, image_url, target_url, image_data
                 FROM advertisements
                 WHERE status = 'approved' AND ad_type = 'top'
                 ORDER BY RANDOM() LIMIT 1
@@ -153,13 +171,13 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
             )
             row = db.fetchone()
             if row:
-                image_url = normalize_ad_image_url(row[0])
-                if image_url:
-                    top_ad = {"image_url": image_url, "target_url": row[1]}
+                image_src = _image_src(row[0], row[3], row[1])
+                if image_src:
+                    top_ad = {"image_url": image_src, "target_url": row[2]}
 
             db.execute(
                 """
-                SELECT image_url, target_url
+                SELECT id, image_url, target_url, image_data
                 FROM advertisements
                 WHERE status = 'approved' AND ad_type = 'side'
                 ORDER BY RANDOM() LIMIT 2
@@ -167,18 +185,18 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
             )
             side_rows = db.fetchall()
             if side_rows:
-                left_url = normalize_ad_image_url(side_rows[0][0])
-                if left_url:
+                left_src = _image_src(side_rows[0][0], side_rows[0][3], side_rows[0][1])
+                if left_src:
                     side_ad_left = {
-                        "image_url": left_url,
-                        "target_url": side_rows[0][1],
+                        "image_url": left_src,
+                        "target_url": side_rows[0][2],
                     }
                 if len(side_rows) > 1:
-                    right_url = normalize_ad_image_url(side_rows[1][0])
-                    if right_url:
+                    right_src = _image_src(side_rows[1][0], side_rows[1][3], side_rows[1][1])
+                    if right_src:
                         side_ad_right = {
-                            "image_url": right_url,
-                            "target_url": side_rows[1][1],
+                            "image_url": right_src,
+                            "target_url": side_rows[1][2],
                         }
     except Exception:
         pass
