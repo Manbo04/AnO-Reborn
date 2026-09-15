@@ -19,13 +19,13 @@
 
         {% call game_panel('Get Gems', icon='diamond', id='buy-gems') %}
         <p class="store-section-intro">Gems are AnO's premium currency, spent on cosmetics below.</p>
-        <button type="button" class="store-getgems-toggle" id="get-gems-toggle" aria-expanded="false" aria-controls="get-gems-options" onclick="(function(btn){var el=document.getElementById('get-gems-options');var open=el.classList.toggle('hidden');btn.setAttribute('aria-expanded', open ? 'false' : 'true');btn.classList.toggle('store-getgems-toggle--open');})(this)">
+        <button type="button" class="store-getgems-toggle store-getgems-toggle--open" id="get-gems-toggle" aria-expanded="true" aria-controls="get-gems-options" onclick="(function(btn){var el=document.getElementById('get-gems-options');var open=el.classList.toggle('hidden');btn.setAttribute('aria-expanded', open ? 'false' : 'true');btn.classList.toggle('store-getgems-toggle--open');})(this)">
             <span class="material-icons-outlined">diamond</span>
             <span>How to get Gems</span>
             <span class="material-icons-outlined store-getgems-chevron">expand_more</span>
         </button>
 
-        <div id="get-gems-options" class="hidden" style="margin-top: var(--game-space-lg, 24px);">
+        <div id="get-gems-options" style="margin-top: var(--game-space-lg, 24px);">
             <h3 class="store-subsection-title">Support on Patreon (monthly)</h3>
             {% if patreon_tiers %}
             <div class="game-panel-grid game-panel-grid--3">
