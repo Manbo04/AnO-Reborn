@@ -153,9 +153,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case "get_nation_info": {
         const identifier = args?.identifier as string;
+        // A nation's own table is "users" (its name is users.username) --
+        // there is no "countries" table in the real schema. Found 2026-09-15
+        // during an architecture audit; this tool would have failed at
+        // runtime on every call (not caught earlier since this server isn't
+        // part of the deployed services).
         const query = isNaN(Number(identifier))
-          ? `SELECT * FROM countries WHERE LOWER(name) = LOWER($1) LIMIT 1`
-          : `SELECT * FROM countries WHERE id = $1 LIMIT 1`;
+          ? `SELECT * FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`
+          : `SELECT * FROM users WHERE id = $1 LIMIT 1`;
         const result = await pool.query(query, [identifier]);
         return {
           content: [
@@ -316,6 +321,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
         // Also get members
+        // NOT VERIFIED / likely still wrong, same "countries" table mistake
+        // as get_nation_info above (fixed 2026-09-15). Left as-is here: the
+        // real Python app resolves coalition membership dynamically via
+        // database.get_coalition_members_table() (there is no plain
+        // "coalition_members" table -- it's either "coalitions_legacy" or
+        // "coalitions" itself depending on migration state), which this
+        // query doesn't account for at all. Needs its own investigation
+        // into the live schema before trusting a fix here.
         const members = await pool.query(
           `SELECT c.id, c.name FROM countries c
            JOIN coalition_members cm ON c.id = cm.country_id
