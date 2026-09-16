@@ -753,17 +753,17 @@ def coalitions():
         if search:
             # Search by coalition name or ID
             if search.isdigit():
-                where_conditions.append("c.id = %s")
+                where_conditions.append("cn.id = %s")
                 params.append(int(search))
             else:
-                where_conditions.append("c.name ILIKE %s")
+                where_conditions.append("cn.name ILIKE %s")
                 params.append(f"%{search}%")
 
         # Type filter
         if sort == "invite_only":
-            where_conditions.append("c.type = 'Invite Only'")
+            where_conditions.append("cn.type = 'Invite Only'")
         elif sort == "open":
-            where_conditions.append("c.type = 'Open'")
+            where_conditions.append("cn.type = 'Open'")
 
         where_clause = ""
         if where_conditions:
@@ -783,15 +783,15 @@ def coalitions():
             order_by = f"members {order_dir}"
         elif actual_sort == "age":
             # Age: older = smaller date, so reverse the direction
-            order_by = f"c.date {'ASC' if sortway == 'desc' else 'DESC'}"
+            order_by = f"cn.date {'ASC' if sortway == 'desc' else 'DESC'}"
         else:
             order_by = f"total_influence {order_dir}"
 
         # Count total matching coalitions
         count_query = f"""
-            SELECT COUNT(DISTINCT c.id)
-            FROM colNames c
-            INNER JOIN {_members_tbl()} coal ON c.id = coal.colid
+            SELECT COUNT(DISTINCT cn.id)
+            FROM colNames cn
+            INNER JOIN {_members_tbl()} coal ON cn.id = coal.colid
             {where_clause}
         """
         db.execute(count_query, tuple(params))
@@ -1895,13 +1895,29 @@ def set_tax_rate(coalition_id):
 def offer_treaty():
     cId = session["user_id"]
 
-    col2_name = request.form.get("coalition_name")
+    col2_name = (request.form.get("coalition_name") or "").strip()
     if col2_name == "":
         return error(400, "Please enter a coalition name")
 
     with get_request_cursor() as db:
-        db.execute("SELECT id FROM colNames WHERE name=(%s)", (col2_name,))
+        # Coalition names aren't normalized (mixed casing, stray whitespace),
+        # and this field has no autocomplete, so match case/whitespace-
+        # insensitively first, falling back to a substring search.
+        db.execute("SELECT id FROM colNames WHERE TRIM(name) ILIKE %s", (col2_name,))
         row = db.fetchone()
+        if not row:
+            db.execute(
+                "SELECT id, name FROM colNames WHERE name ILIKE %s LIMIT 2",
+                (f"%{col2_name}%",),
+            )
+            matches = db.fetchall()
+            if len(matches) == 1:
+                row = matches[0]
+            elif len(matches) > 1:
+                return error(
+                    400,
+                    f"Multiple coalitions match '{col2_name}' — please enter the exact name",
+                )
         if not row:
             return error(400, f"No such coalition: {col2_name}")
         col2_id = row[0]
