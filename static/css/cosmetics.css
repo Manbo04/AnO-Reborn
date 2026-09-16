@@ -99,6 +99,26 @@
 }
 
 /*
+ * Molten Forge — player-requested (germanicusjuliuscaesar / "Terra Homeworld",
+ * ticket-0032): "fire like a forge dripping down the screen". Animated via
+ * `background-position`, deliberately left off the `!important` declaration
+ * below (only the `background` shorthand carries it) since a browser will
+ * not animate a property that's marked !important elsewhere on the rule.
+ */
+.bg-molten-forge {
+    --cosmetic-bg:
+        repeating-linear-gradient(180deg, rgba(255, 159, 28, 0.24) 0px, rgba(255, 159, 28, 0.24) 3px, transparent 3px, transparent 34px) fixed,
+        radial-gradient(circle at 25% 15%, #ff9f1c 0%, #d1421a 32%, #5c1408 58%, #1a0503 80%, #050100 100%) fixed;
+    background: var(--cosmetic-bg) !important;
+    animation: molten-forge-drip 4.5s linear infinite;
+}
+
+@keyframes molten-forge-drip {
+    from { background-position: 0 0, center; }
+    to   { background-position: 0 34px, center; }
+}
+
+/*
  * Country-page border cosmetics — applied via game_hero's extra_class param
  * on the Country page hero card, keyed by the cosmetics.css_class column.
  * Seeded catalog: see migrations/0062_seed_store_cosmetic_catalog.sql.
