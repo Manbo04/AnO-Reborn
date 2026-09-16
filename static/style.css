@@ -13292,3 +13292,181 @@ body.nation-cyberpunk-theme ::-webkit-scrollbar-thumb {
     }
 }
 
+
+/* --- static/css/cosmetics-forge.css --- */
+/*
+ * Molten-forge cosmetic reskin for a single nation page (ticket-0032,
+ * germanicusjuliuscaesar / "Terra Homeworld", requested "fire like a forge
+ * dripping down the screen" -- the same personal-page treatment as
+ * cosmetics-cyberpunk.css, themed in fire instead of neon). Scoped
+ * entirely under body.nation-forge-theme (set only in
+ * templates/country_v2.html's body_class block when cId == 69697588) --
+ * no new markup required. Overrides the same design tokens every
+ * component already consumes (tokens.css) and layers ambient FX onto
+ * existing DOM (.game-page-overlay, .game-hero, .game-glass) so the rest
+ * of the site's look is untouched. Bundled by scripts/bundle_game_css.py
+ * -- edit this file, not style.css.
+ */
+
+body.nation-forge-theme {
+    --background: #0d0402;
+    --foreground: #170702;
+    --foregroundTwo: #1e0a03;
+    --foregroundThree: #260d04;
+    --foregroundFour: #2d1005;
+    --border: #5c2410;
+    --colorOne: #ffe4c9;
+    --accent: #ff8c2b;
+    --accent-hover: #ffab5c;
+    --accent-subtle: #3a1508;
+    --gold: #ffb020;
+    --success: #7bd66a;
+    --danger: #ff3b3b;
+    --text-secondary: #d1907a;
+
+    --game-glass-bg: rgba(30, 8, 3, 0.55);
+    --game-glass-bg-strong: rgba(30, 8, 3, 0.84);
+    --game-glass-border: rgba(255, 140, 43, 0.35);
+
+    color-scheme: dark;
+}
+
+/* Molten drips falling down the screen, drawn by
+   static/js/forge-embers-rain.js onto a canvas placed right after
+   .game-page-overlay in the DOM (before .templatediv) with no z-index
+   override -- normal paint order then puts it above the -2/-1 background
+   layers but below the (later, also z-index:auto) page content, so it
+   reads through the frosted glass panels instead of covering the
+   readable text. */
+body.nation-forge-theme .forge-embers-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.55;
+    mix-blend-mode: screen;
+}
+
+/* Slow-scrolling molten streaks + warm ember glow painted onto the
+   page's existing darkening overlay (game-glass.css .game-page-overlay),
+   which already sits fixed between the background photo and all
+   content. */
+body.nation-forge-theme .game-page-overlay {
+    background:
+        repeating-linear-gradient(180deg, rgba(255, 140, 43, 0.07) 0px, rgba(255, 140, 43, 0.07) 2px, transparent 2px, transparent 36px),
+        radial-gradient(circle at 20% 10%, rgba(255, 140, 43, 0.18) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(13, 4, 2, 0.55) 0%, rgba(13, 4, 2, 0.9) 65%, #0d0402 100%);
+    animation: forge-drip-scroll 3.2s linear infinite;
+}
+
+@keyframes forge-drip-scroll {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 0 36px, 0 0, 0 0; }
+}
+
+/* Roaming downward ember flare, purely decorative, never blocks clicks --
+   the fire counterpart of the cyberpunk theme's horizontal scan beam. */
+body.nation-forge-theme::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(180deg, transparent 0%, rgba(255, 140, 43, 0.1) 50%, transparent 100%);
+    animation: forge-beam 5s ease-in-out infinite;
+}
+
+@keyframes forge-beam {
+    0% { transform: translateY(-25vh); opacity: 0; }
+    12% { opacity: 1; }
+    88% { opacity: 1; }
+    100% { transform: translateY(125vh); opacity: 0; }
+}
+
+/* Glowing panel chrome -- hero banner + every glass card on the page,
+   pulsing like heat shimmer off a forge. */
+body.nation-forge-theme .game-hero,
+body.nation-forge-theme .game-glass {
+    border-color: rgba(255, 140, 43, 0.4);
+    animation: forge-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes forge-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(255, 140, 43, 0.15), 0 0 20px rgba(255, 140, 43, 0.22), 0 0 40px rgba(255, 59, 59, 0.12); }
+    50% { box-shadow: 0 0 0 1px rgba(255, 140, 43, 0.4), 0 0 34px rgba(255, 140, 43, 0.45), 0 0 60px rgba(255, 59, 59, 0.28); }
+}
+
+/* Molten-glow title, with an occasional brighter "flare" beat. */
+body.nation-forge-theme .game-hero h1 {
+    color: #fff1e0;
+    text-shadow: 0 0 8px rgba(255, 140, 43, 0.85), 0 0 20px rgba(255, 90, 20, 0.5);
+    animation: forge-flicker 4s ease-in-out infinite;
+}
+
+@keyframes forge-flicker {
+    0%, 85%, 100% {
+        text-shadow: 0 0 8px rgba(255, 140, 43, 0.85), 0 0 20px rgba(255, 90, 20, 0.5);
+    }
+    90% {
+        text-shadow: 0 0 4px rgba(255, 200, 120, 0.7), 0 0 14px rgba(255, 90, 20, 0.4);
+    }
+    95% {
+        text-shadow: 0 0 14px rgba(255, 176, 32, 1), 0 0 30px rgba(255, 59, 59, 0.6);
+    }
+}
+
+body.nation-forge-theme .game-hero-sub,
+body.nation-forge-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+/* Buttons, stat cards, section headers pick up the same molten glow. */
+body.nation-forge-theme .game-btn-primary,
+body.nation-forge-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(255, 140, 43, 0.5);
+}
+
+body.nation-forge-theme .stat-card {
+    border-color: rgba(255, 140, 43, 0.25);
+}
+
+body.nation-forge-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(255, 140, 43, 0.5);
+}
+
+body.nation-forge-theme .templatedivtitle,
+body.nation-forge-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(255, 140, 43, 0.35);
+}
+
+/* Molten scrollbar to match, WebKit-only progressive enhancement. */
+body.nation-forge-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-forge-theme ::-webkit-scrollbar-track {
+    background: #0d0402;
+}
+
+body.nation-forge-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffb020, #ff3b3b);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-forge-theme,
+    body.nation-forge-theme::after,
+    body.nation-forge-theme .game-page-overlay,
+    body.nation-forge-theme .game-hero,
+    body.nation-forge-theme .game-glass,
+    body.nation-forge-theme .game-hero h1 {
+        animation: none !important;
+    }
+}
+
