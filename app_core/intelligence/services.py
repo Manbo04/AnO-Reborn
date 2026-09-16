@@ -97,11 +97,10 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     # 2026-09-13: `actual_spies` below is a stale read with no lock, and
     # decrease_unit_quantity()'s deduction is `GREATEST(0, quantity - %s)`
     # with no `WHERE quantity >= amount` guard -- two concurrent spy
-    # operations (same or different target; the 12h cooldown only applies
-    # to a *different* target) could both pass the spy-count check and both
-    # execute a full operation's real effects (intel reveal, sabotage,
-    # assassination) against a target using spies the attacker only had
-    # once -- a PvP-fairness bug, not just an economy one.
+    # operations could both pass the spy-count check and both execute a
+    # full operation's real effects (intel reveal, sabotage, assassination)
+    # against a target using spies the attacker only had once -- a
+    # PvP-fairness bug, not just an economy one.
     db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
 
     if spy_type not in VALID_SPY_TYPES:
@@ -111,10 +110,18 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     spyee, date = result if result else (None, 0)
 
     current_time = time.time()
-    if str(spyee) != str(eId) and current_time - date < SPY_COOLDOWN_SECONDS:
-        secs_left = int(current_time - date)
+    # Cooldown applies regardless of target. Previously this only fired
+    # when switching to a *different* target (`str(spyee) != str(eId)`),
+    # so two nations locked in a running spy war never hit it at all --
+    # reported on Discord 2026-09-16 by a player spying the same rival
+    # multiple times an hour. Per-op-type cooldowns (e.g. recon spammable,
+    # assassination throttled) are a deliberate follow-up, not done here --
+    # `spyinfo` doesn't record which op type was run, so that needs its own
+    # schema change.
+    if current_time - date < SPY_COOLDOWN_SECONDS:
+        secs_left = int(SPY_COOLDOWN_SECONDS - (current_time - date))
         return False, 400, (
-            f"12 hour cooldown for spying on another country. "
+            f"12 hour cooldown between espionage operations. "
             f"{secs_left} seconds left."
         ), None
 
