@@ -13630,7 +13630,7 @@ body.nation-bloodshed-theme ::-webkit-scrollbar-thumb {
 body.nation-bloodshed-theme .bloodshed-fx-toggle {
     position: fixed;
     right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--game-ticker-height, 34px) + var(--game-safe-bottom, 0px) + 12px);
     z-index: 20;
     display: flex;
     align-items: center;
