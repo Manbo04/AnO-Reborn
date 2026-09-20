@@ -13470,3 +13470,198 @@ body.nation-forge-theme ::-webkit-scrollbar-thumb {
     }
 }
 
+
+/* --- static/css/cosmetics-bloodshed.css --- */
+/*
+ * "Dehumanize yourself and face to bloodshed" cosmetic reskin for a single
+ * nation page (ticket-0033, FikusMikus / nation id 69697644, requested a
+ * glitchy VHS text-wall background). Scoped entirely under
+ * body.nation-bloodshed-theme (set only in templates/country_v2.html's
+ * body_class block when cId == 69697644) -- no new markup required.
+ * Overrides the same design tokens every component already consumes
+ * (tokens.css) and layers ambient FX onto existing DOM
+ * (.game-page-overlay, .game-hero, .game-glass) so the rest of the site's
+ * look is untouched. Bundled by scripts/bundle_game_css.py -- edit this
+ * file, not style.css.
+ *
+ * The reference image FikusMikus sent is a fast full-frame strobing GIF
+ * (~30fps, near-black <-> dense-white-text swings) -- a genuine
+ * photosensitive-seizure risk, which is why Dede told them in the ticket
+ * he'd add a warning/toggle before shipping it. Rather than embedding
+ * that raw GIF, static/js/bloodshed-glitch.js draws the same "wall of
+ * repeating glitch text" look with a smooth continuous scroll (safe by
+ * default, no toggle needed) and keeps the flashier RGB-split/static
+ * "glitch pulse" beats rate-limited to a few seconds apart -- and gated
+ * behind the on-page toggle (.bloodshed-fx-toggle) this file styles
+ * below, which the script also auto-disables under
+ * prefers-reduced-motion.
+ */
+
+body.nation-bloodshed-theme {
+    --background: #050505;
+    --foreground: #0d0d0d;
+    --foregroundTwo: #131313;
+    --foregroundThree: #1a1a1a;
+    --foregroundFour: #202020;
+    --border: #3d3d3d;
+    --colorOne: #f5f5f5;
+    --accent: #ff1a2e;
+    --accent-hover: #ff4d5e;
+    --accent-subtle: #2a0a0d;
+    --gold: #ff8a94;
+    --success: #6bffb0;
+    --danger: #ff5050;
+    --text-secondary: #a3a3a3;
+
+    --game-glass-bg: rgba(10, 10, 10, 0.6);
+    --game-glass-bg-strong: rgba(10, 10, 10, 0.88);
+    --game-glass-border: rgba(255, 26, 46, 0.35);
+
+    color-scheme: dark;
+}
+
+/* Wall of scrolling glitch text, drawn by static/js/bloodshed-glitch.js
+   onto a canvas placed right after .game-page-overlay in the DOM (before
+   .templatediv) with no z-index override -- normal paint order then puts
+   it above the -2/-1 background layers but below the (later, also
+   z-index:auto) page content, so it reads through the frosted glass
+   panels instead of covering the readable text. */
+body.nation-bloodshed-theme .bloodshed-glitch-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: screen;
+}
+
+/* Static scanline texture + heavy vignette painted onto the page's
+   existing darkening overlay (game-glass.css .game-page-overlay), which
+   already sits fixed between the background photo and all content. */
+body.nation-bloodshed-theme .game-page-overlay {
+    background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0px, rgba(255, 255, 255, 0.035) 1px, transparent 1px, transparent 3px),
+        radial-gradient(ellipse at center, transparent 35%, rgba(5, 5, 5, 0.7) 100%),
+        linear-gradient(180deg, rgba(5, 5, 5, 0.55) 0%, rgba(5, 5, 5, 0.92) 65%, #050505 100%);
+}
+
+/* Slow-roaming red scanline, purely decorative, never blocks clicks --
+   smooth continuous motion (no strobing), safe regardless of the FX
+   toggle below. */
+body.nation-bloodshed-theme::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    pointer-events: none;
+    z-index: 5;
+    background: rgba(255, 26, 46, 0.65);
+    box-shadow: 0 0 12px 2px rgba(255, 26, 46, 0.5);
+    animation: bloodshed-scanline 7s linear infinite;
+}
+
+@keyframes bloodshed-scanline {
+    0% { transform: translateY(-10vh); opacity: 0; }
+    8% { opacity: 1; }
+    92% { opacity: 1; }
+    100% { transform: translateY(110vh); opacity: 0; }
+}
+
+/* Glass chrome -- hero banner + every glass card on the page. Only a
+   border tint, no pulsing box-shadow animation here: the reference image
+   is already high-contrast enough without adding more flashing. */
+body.nation-bloodshed-theme .game-hero,
+body.nation-bloodshed-theme .game-glass {
+    border-color: rgba(255, 26, 46, 0.4);
+}
+
+body.nation-bloodshed-theme .game-hero h1 {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 26, 46, 0.7), 0 0 18px rgba(255, 26, 46, 0.35);
+}
+
+body.nation-bloodshed-theme .game-hero-sub,
+body.nation-bloodshed-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+body.nation-bloodshed-theme .game-btn-primary,
+body.nation-bloodshed-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(255, 26, 46, 0.5);
+}
+
+body.nation-bloodshed-theme .stat-card {
+    border-color: rgba(255, 26, 46, 0.25);
+}
+
+body.nation-bloodshed-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(255, 26, 46, 0.5);
+}
+
+body.nation-bloodshed-theme .templatedivtitle,
+body.nation-bloodshed-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(255, 26, 46, 0.35);
+}
+
+body.nation-bloodshed-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-bloodshed-theme ::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+body.nation-bloodshed-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #f5f5f5, #ff1a2e);
+    border-radius: 6px;
+}
+
+/* Flash-FX toggle -- the "togglable option to not have seizure inducing
+   images" Dede promised FikusMikus in ticket-0033. Fixed, small, always
+   visible (so it also doubles as the "warning of lights" he mentioned:
+   its presence signals there's a flash effect to turn off), placed clear
+   of any game UI at every width per the mobile-first rules in
+   CLAUDE.md. Toggled by static/js/bloodshed-glitch.js. */
+body.nation-bloodshed-theme .bloodshed-fx-toggle {
+    position: fixed;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--colorOne);
+    background: rgba(10, 10, 10, 0.82);
+    border: 1px solid rgba(255, 26, 46, 0.45);
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+}
+
+body.nation-bloodshed-theme .bloodshed-fx-toggle[aria-pressed="false"] {
+    opacity: 0.6;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 480px) {
+    body.nation-bloodshed-theme .bloodshed-fx-toggle {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-bloodshed-theme::after {
+        animation: none !important;
+    }
+}
+
