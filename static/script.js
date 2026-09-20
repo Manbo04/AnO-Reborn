@@ -453,12 +453,33 @@ function initImmersion() {
 
             contentEl.style.animation = `tickerScroll ${durationMs}ms linear infinite`;
             contentEl.style.animationDelay = `${delay}ms`;
+
+            syncTickerHeightVar();
+        }
+
+        // --game-ticker-height drives both the body's reserved bottom padding
+        // (game-experience.css) and the cookie banner's `bottom` offset (so it
+        // stacks above the ticker instead of overlapping it). It was a
+        // hardcoded 34px guess that the ticker's real rendered height (padding
+        // + monospace line-height + safe-area inset) doesn't always match --
+        // on a real iPhone viewport it renders ~37px, leaving the cookie
+        // banner's bottom edge a few px inside the ticker's top edge. Measure
+        // the actual box instead of guessing at it.
+        function syncTickerHeightVar() {
+            const h = tickerContainer.offsetHeight;
+            if (h > 0) {
+                document.documentElement.style.setProperty('--game-ticker-height', h + 'px');
+            }
         }
 
         document.body.appendChild(tickerContainer);
+        syncTickerHeightVar();
         fetchEventsAndAnimate();
         // Update the events periodically every minute without breaking the animation flow
         setInterval(fetchEventsAndAnimate, 60000);
+        // Re-measure on viewport changes (rotation, mobile address-bar show/hide,
+        // safe-area-inset changes) instead of trusting one measurement forever.
+        window.addEventListener('resize', syncTickerHeightVar);
     }
 
     // 2. Subtle Background Animations (transform-based, GPU composited — no paint jank)
