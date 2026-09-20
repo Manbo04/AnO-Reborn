@@ -1,0 +1,165 @@
+/*
+ * Imperial gold-and-black cosmetic reskin for a single nation page
+ * (ticket-0030, the_kaiser_of_europe / "Lamlor", id 781: "flag waving in
+ * the background", letters "in the same font as my name" (his Discord
+ * name is styled in Unicode Fraktur), and "gold and black" colours) --
+ * same personal-page treatment as cosmetics-cyberpunk.css /
+ * cosmetics-forge.css. Scoped entirely under body.nation-imperial-theme
+ * (set only in templates/country_v2.html's body_class block when cId ==
+ * 781) -- no new markup required beyond the inline <svg> wave filter
+ * defined in that same template. Bundled by scripts/bundle_game_css.py
+ * -- edit this file, not style.css.
+ */
+
+/* Self-hosted, matching the site-wide policy in fonts-local.css (never
+   send visitors' IPs to fonts.googleapis.com/fonts.gstatic.com pre-consent
+   -- see /privacy). Downloaded once from Google Fonts' CSS API and stored
+   under static/fonts/, same as Roboto/Material Icons. */
+@font-face {
+    font-family: 'UnifrakturCook';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/static/fonts/unifrakturcook-bold.woff2') format('woff2');
+}
+
+body.nation-imperial-theme {
+    --background: #0a0805;
+    --foreground: #120e08;
+    --foregroundTwo: #171209;
+    --foregroundThree: #1d160b;
+    --foregroundFour: #241c0e;
+    --border: #6b4e12;
+    --colorOne: #fff3d6;
+    --accent: #d4af37;
+    --accent-hover: #f0c94a;
+    --accent-subtle: #2a2008;
+    --gold: #ffd700;
+    --success: #7bd66a;
+    --danger: #ff3b3b;
+    --text-secondary: #c9a227;
+
+    --game-glass-bg: rgba(18, 14, 8, 0.55);
+    --game-glass-bg-strong: rgba(18, 14, 8, 0.86);
+    --game-glass-border: rgba(212, 175, 55, 0.4);
+
+    color-scheme: dark;
+}
+
+/* The flag "waving in the background": an SVG feTurbulence/feDisplacementMap
+   filter (defined inline in templates/country_v2.html as #kaiser-flag-wave,
+   only when cId == 781) applied to the existing .game-page-bg flag photo in
+   place of its default blur/Ken-Burns pan -- the cloth-like ripple itself is
+   the motion, so the pan is switched off and the photo is scaled up so the
+   displaced edges never show a transparent gap. */
+body.nation-imperial-theme .game-page-bg {
+    filter: url(#kaiser-flag-wave) blur(0.5px) brightness(0.92);
+    animation: none;
+    transform: scale(1.18);
+}
+
+/* Drifting gold dust, drawn by static/js/imperial-gold-dust.js onto a
+   canvas placed right after .game-page-overlay in the DOM (before
+   .templatediv) with no z-index override -- same "particles on a canvas
+   between the background and the content" technique as
+   cyberpunk-matrix-rain.js / forge-embers-rain.js. */
+body.nation-imperial-theme .imperial-gold-dust-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+}
+
+/* Warm darkening + fine gold filigree line painted onto the page's
+   existing darkening overlay (game-glass.css .game-page-overlay). */
+body.nation-imperial-theme .game-page-overlay {
+    background:
+        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.045) 0px, rgba(212, 175, 55, 0.045) 1px, transparent 1px, transparent 26px),
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.16) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(10, 8, 5, 0.55) 0%, rgba(10, 8, 5, 0.9) 65%, #0a0805 100%);
+}
+
+/* Glowing gold panel chrome -- hero banner + every glass card on the page. */
+body.nation-imperial-theme .game-hero,
+body.nation-imperial-theme .game-glass {
+    border-color: rgba(212, 175, 55, 0.45);
+    animation: imperial-pulse 3.6s ease-in-out infinite;
+}
+
+@keyframes imperial-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.18), 0 0 20px rgba(212, 175, 55, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.4); }
+    50% { box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.4), 0 0 36px rgba(212, 175, 55, 0.38), inset 0 0 30px rgba(0, 0, 0, 0.4); }
+}
+
+/* Blackletter title, matching the Fraktur style of "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗", glowing gold.
+   The nation name renders through the render_nation_name macro as nested
+   spans (.nation-name-flair > .nation-flair-name) -- a site-wide `* {
+   font-family: Roboto... }` rule in style.css matches those spans directly,
+   which beats inheriting font-family down from h1 no matter how specific
+   the h1 rule is (a direct match, even from `*`, always outranks an
+   inherited value), so the spans need their own explicit rule too. */
+body.nation-imperial-theme .game-hero h1,
+body.nation-imperial-theme .game-hero h1 .nation-name-flair,
+body.nation-imperial-theme .game-hero h1 .nation-flair-name {
+    font-family: 'UnifrakturCook', 'Roboto', serif;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffe9a8;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.9), 0 0 26px rgba(255, 215, 0, 0.4);
+}
+
+body.nation-imperial-theme .game-hero-sub,
+body.nation-imperial-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+/* Section headers pick up the same blackletter treatment + gold glow. */
+body.nation-imperial-theme .templatedivtitle,
+body.nation-imperial-theme .templatecontentheaderleft {
+    font-family: 'UnifrakturCook', 'Roboto', serif;
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
+}
+
+body.nation-imperial-theme .game-btn-primary,
+body.nation-imperial-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+body.nation-imperial-theme .stat-card {
+    border-color: rgba(212, 175, 55, 0.25);
+}
+
+body.nation-imperial-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+}
+
+/* Gold scrollbar to match, WebKit-only progressive enhancement. */
+body.nation-imperial-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-imperial-theme ::-webkit-scrollbar-track {
+    background: #0a0805;
+}
+
+body.nation-imperial-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffd700, #6b4e12);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-imperial-theme .game-hero,
+    body.nation-imperial-theme .game-glass {
+        animation: none !important;
+    }
+    body.nation-imperial-theme .game-page-bg {
+        filter: none;
+        transform: none;
+        animation: none;
+    }
+}
