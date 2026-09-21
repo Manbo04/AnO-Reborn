@@ -229,7 +229,22 @@ def create_app():
         # next occurrence has real per-request forensic data instead of
         # starting from Discord screenshots again. See
         # app_core/identity_diagnostics.py. Remove once confirmed/stale.
-        if request.path.startswith("/country/id=") or request.path.startswith("/join/"):
+        #
+        # Widened 2026-09-21 (hillbilly/South Appalachia report): this only
+        # covered /country/id= and /join/, so a real recurrence anywhere
+        # else would produce zero evidence -- indistinguishable from "no
+        # bug happened at all". Added the other routes previously named in
+        # cross-contamination reports (my_country, account, statistics,
+        # rankings, military) so a genuine identity mismatch gets caught
+        # wherever it actually lands, not just on these two.
+        _diag_watched = (
+            request.path.startswith("/country/id=")
+            or request.path.startswith("/join/")
+            or request.path.startswith("/account")
+            or request.path.startswith("/military")
+            or request.path in ("/my_country", "/statistics", "/rankings")
+        )
+        if _diag_watched:
             from app_core.identity_diagnostics import (
                 log_identity_diagnostic,
                 check_session_cookie_consistency,

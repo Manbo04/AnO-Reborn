@@ -8,8 +8,11 @@ less) before a report could be traced -- both the Sept 9 and the already-once
 -pulled Sept 12 windows became permanently unavailable within the same
 investigation. This writes a small, persistent (DB table, 30+ day retention)
 row per request on the routes most implicated so far (/country/<id>,
-/join/<coalition_id>), so the *next* occurrence can be traced with real
-per-request forensic data instead of starting from Discord screenshots again.
+/join/<coalition_id>, and as of 2026-09-21 also /my_country, /account,
+/military, /statistics, /rankings -- widened after a report on one of
+these produced zero evidence under the narrower coverage), so the *next*
+occurrence can be traced with real per-request forensic data instead of
+starting from Discord screenshots again.
 
 Deliberately cheap and fire-and-forget: a logging failure must never break
 the request it's instrumenting.
