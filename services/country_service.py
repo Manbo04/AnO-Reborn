@@ -724,6 +724,13 @@ class CountryService:
             "distribution_status": distribution_status,
             "food_score": food_score,
             "expenses": expenses,
+            "expenses_total_cost": sum(
+                (row[3] or 0) for row in expenses if row[1] == "expense"
+            ) if expenses else 0,
+            "expenses_total_revenue": sum(
+                (row[3] or 0) for row in expenses if row[1] != "expense"
+            ) if expenses else 0,
+            "expenses_count": len(expenses) if expenses else 0,
             "statistics": statistics,
             "policies": policies,
             "resource_rows": resource_rows,

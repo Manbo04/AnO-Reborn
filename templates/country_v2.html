@@ -884,6 +884,11 @@
 
             {% if expenses %}
             <h2 class="templatecontentheaderleft">Purchases</h2>
+            <p class="templatecontentpleft">
+                {{ expenses_count }} transaction{{ 's' if expenses_count != 1 else '' }} —
+                total cost <span class="text-danger">{{ expenses_total_cost | fmt }}</span>,
+                total revenue <span class="text-success">{{ expenses_total_revenue | fmt }}</span>
+            </p>
             <div class="templateoutertablediv">
                 <table class="templatetable">
                     <thead><tr><th>Type</th><th>Item / Resource</th><th>Amount</th><th>Date</th></tr></thead>

@@ -29,7 +29,7 @@
 
     {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
     {% if province["own"] %}
-    {% call game_hero(province['name'], badge_icon='account_balance') %}
+    {% call game_hero(province['name'], badge_icon='account_balance', image_url=province.flag_url if province.has_flag else None) %}
         <div class="game-row" style="gap: 10px;">
             <button type="button" class="game-btn game-btn-secondary" id="provinceEditToggle" aria-expanded="false" aria-controls="provinceEditPanel">
                 <span class="material-icons-outlined">edit</span> Edit
@@ -63,7 +63,7 @@
     })();
     </script>
     {% else %}
-    {{ game_hero(province['name'], badge_icon='account_balance') }}
+    {{ game_hero(province['name'], badge_icon='account_balance', image_url=province.flag_url if province.has_flag else None) }}
     {% endif %}
     {% endif %}
 

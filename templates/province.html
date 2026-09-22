@@ -23,9 +23,9 @@
 
     {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
     <div class="templatedivtopper provincetopper{% if province.has_image %} provincetopper--custom{% endif %}"{% if province.has_image %} style="background-image: url('{{ province.image_url }}');"{% endif %}>
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
+        <h1 class="templatedivtitle">{% if province.has_flag %}<img src="{{ province.flag_url }}" alt="" style="height: 1em; vertical-align: middle; margin-right: 8px; border-radius: 2px;">{% else %}<span class="material-icons-outlined iconlarge">
                 account_balance
-            </span>{{ province['name'] }}</h1>
+            </span>{% endif %}{{ province['name'] }}</h1>
     </div>
     {% endif %}
 
