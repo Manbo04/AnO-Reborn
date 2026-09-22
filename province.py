@@ -585,6 +585,9 @@ def province(pId):
             "production_breakdown": production_breakdown,
             "net": affordable_production - energy_consumption,
             "production_multiplier": production_multiplier,
+            "productivity_pct": prod_val,
+            "productivity_multiplier": productivity_multiplier,
+            "efficiency_multiplier": efficiency_multiplier,
         }
         has_power = affordable_production >= energy_consumption
 
