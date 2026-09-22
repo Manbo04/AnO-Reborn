@@ -1,0 +1,148 @@
+{% extends "layout.html" %} {% block title %} Bonds Market {% endblock %}{% block body_class %} page-bonds game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Bonds Market', badge_icon='request_quote', subtitle='Borrow directly from other players. List a Bond with your own rate and term — interest is paid to your investor automatically every day, and the principal comes due at maturity. Missing too many interest payments, or failing to cover principal at maturity, defaults the Bond: the game keeps collecting what you still owe and you\'re locked out of issuing a new one for a while.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Issue a Bond</h2>
+            <div class="stat-grid">
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">trending_up</span>Issuance Capacity</strong>
+                    <span class="stat-value">${{ status.available_to_issue | fmt }} <span style="opacity:.6;font-size:.8em;">of ${{ status.cap | fmt }}</span></span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Allowed Daily Rate</strong>
+                    <span class="stat-value">{{ (status.min_rate * 100) | round(2) }}% – {{ (status.max_rate * 100) | round(2) }}%</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">schedule</span>Allowed Term</strong>
+                    <span class="stat-value">{{ status.min_term }} – {{ status.max_term }} days</span>
+                </div>
+            </div>
+
+            {% if status.cooldown_hours_remaining > 0 %}
+            <p class="templatecontentpleft" style="margin-top: 14px; color: #FF9800;">You defaulted on a Bond recently — you can issue a new one in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
+            {% else %}
+            <form action="/bonds/create" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 14px; gap: 10px;">
+                <input type="number" name="principal" placeholder="Principal (min ${{ status.min_principal | commas }})" class="loginsignupinput" style="flex: 1; min-width: 180px;" min="{{ status.min_principal }}" step="1" required>
+                <input type="number" name="daily_interest_rate" placeholder="Daily interest % (e.g. 1.0)" class="loginsignupinput" style="flex: 1; min-width: 160px;" min="{{ status.min_rate * 100 }}" max="{{ status.max_rate * 100 }}" step="0.01" required>
+                <input type="number" name="term_days" placeholder="Term (days)" class="loginsignupinput" style="flex: 1; min-width: 120px;" min="{{ status.min_term }}" max="{{ status.max_term }}" step="1" required>
+                <label class="templatecontentpleft" style="display:flex; align-items:center; gap:6px; min-width: 220px;">
+                    <input type="checkbox" name="auto_escrow"> Auto-escrow principal daily (safer for investors)
+                </label>
+                <button type="submit" class="game-btn game-btn-primary">List Bond</button>
+            </form>
+            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .75; font-size: .9em;">Terms can only be edited or cancelled while a Bond is unsold. Once an investor funds it, it can't be recalled before maturity.</p>
+            {% endif %}
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">storefront</span> Open Market</h2>
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Issuer</th>
+                <th>Principal</th>
+                <th>Daily Rate</th>
+                <th>Term</th>
+                <th>Escrow</th>
+                <th></th>
+            </tr>
+            {% for b in status.listed_bonds %}
+            <tr>
+                <td><a href="/country/id={{ b[1] }}">{{ b[2] }}</a></td>
+                <td>${{ b[3] | fmt }}</td>
+                <td>{{ (b[4] * 100) | round(2) }}%/day</td>
+                <td>{{ b[5] }}d</td>
+                <td>{{ 'Yes' if b[6] else 'No' }}</td>
+                <td>
+                    {% if b[1] == session['user_id'] %}
+                    <form action="/bonds/{{ b[0] }}/cancel" method="post" style="display:inline;">
+                        <button type="submit" class="game-btn game-btn-secondary">Cancel</button>
+                    </form>
+                    {% else %}
+                    <form action="/bonds/{{ b[0] }}/fund" method="post" style="display:inline;">
+                        <button type="submit" class="game-btn game-btn-primary" onclick="return confirm('Fund this bond for ${{ '{:,.0f}'.format(b[3]) }}? It can\'t be cashed out before maturity.');">Invest</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not status.listed_bonds %}
+            <tr><td colspan="6" style="text-align: center;">No Bonds currently listed.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">account_balance</span> Bonds You've Issued</h2>
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Investor</th>
+                <th>Principal</th>
+                <th>Escrowed</th>
+                <th>Status</th>
+                <th>Matures</th>
+            </tr>
+            {% for b in status.my_issued_bonds %}
+            <tr>
+                <td>{{ b[2] or '—' }}</td>
+                <td>${{ b[3] | fmt }}</td>
+                <td>${{ b[7] | fmt }}</td>
+                <td>
+                    {% if b[8] == 'active' %}<span style="color:#4CAF50;font-weight:bold;">Active</span>
+                    {% elif b[8] == 'listed' %}<span style="opacity:.7;">Listed</span>
+                    {% elif b[8] == 'repaid' %}<span style="color:#4CAF50;font-weight:bold;">Repaid</span>
+                    {% elif b[8] == 'defaulted' %}<span style="color:#F44336;font-weight:bold;">Defaulted{% if b[10] and b[10] > 0 %} (${{ b[10] | fmt }} still owed){% endif %}</span>
+                    {% else %}{{ b[8] }}
+                    {% endif %}
+                </td>
+                <td>{{ b[12].strftime('%Y-%m-%d') if b[12] else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not status.my_issued_bonds %}
+            <tr><td colspan="5" style="text-align: center;">You haven't issued any Bonds.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">savings</span> Your Investments</h2>
+        <div class="templateoutertablediv">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Issuer</th>
+                <th>Principal</th>
+                <th>Escrowed</th>
+                <th>Status</th>
+                <th>Matures</th>
+            </tr>
+            {% for b in status.my_invested_bonds %}
+            <tr>
+                <td><a href="/country/id={{ b[1] }}">{{ b[2] }}</a></td>
+                <td>${{ b[3] | fmt }}</td>
+                <td>${{ b[6] | fmt }}</td>
+                <td>
+                    {% if b[7] == 'active' %}<span style="color:#4CAF50;font-weight:bold;">Active</span>
+                    {% elif b[7] == 'repaid' %}<span style="color:#4CAF50;font-weight:bold;">Repaid</span>
+                    {% elif b[7] == 'defaulted' %}<span style="color:#F44336;font-weight:bold;">Defaulted{% if b[8] and b[8] > 0 %} (${{ b[8] | fmt }} still being collected){% endif %}</span>
+                    {% else %}{{ b[7] }}
+                    {% endif %}
+                </td>
+                <td>{{ b[10].strftime('%Y-%m-%d') if b[10] else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not status.my_invested_bonds %}
+            <tr><td colspan="5" style="text-align: center;">You haven't invested in any Bonds.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
