@@ -86,6 +86,7 @@ MIGRATION_FILES = [
     "0076_add_market_embargoes.sql",
     "0077_add_ads_image_data.sql",
     "0078_seed_molten_forge_background.sql",
+    "0079_add_national_currency.sql",
 ]
 
 

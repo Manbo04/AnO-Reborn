@@ -1018,3 +1018,13 @@ LOAN_ORIGINATION_FEE = 0.10  # one-time fee added to principal at issuance
 LOAN_HIGH_UTILIZATION_THRESHOLD = 0.70  # fraction of borrowing cap
 LOAN_HIGH_UTILIZATION_FEE = 0.15  # fee charged instead of LOAN_ORIGINATION_FEE above the threshold
 LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully repaying the last one
+
+# National currency (central bank) -- see app_core/currency/. Discord
+# #suggestions ("national currency", Kurai, 2026-09-16): each nation can
+# convert its own gold into its own currency (display name is the existing
+# cosmetic users.currency_name field) and back, at this single fixed global
+# rate. The rate is intentionally NOT player-adjustable: because it never
+# changes, minting and redeeming are exactly value-neutral round-trip
+# (5 gold -> 1 currency -> 5 gold), so there's no window where changing a
+# rate between two conversions could mint gold from nothing.
+CURRENCY_GOLD_PER_UNIT = 5  # gold cost to mint 1 unit of national currency; same rate redeems it back

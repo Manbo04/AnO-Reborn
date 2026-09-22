@@ -878,6 +878,16 @@ def country(cId):
         with get_request_cursor(read_only=True) as db:
             is_embargoed_by_viewer = is_embargoed(db, viewer_id, cId)
 
+    # Central bank (national currency) status -- only meaningful/shown for
+    # the owner's own view, same viewer_id == cId check the blocks above use.
+    currency_status = None
+    if viewer_id and str(viewer_id) == str(cId):
+        from database import get_request_cursor
+        from app_core.currency.services import get_currency_status
+
+        with get_request_cursor(read_only=True) as db:
+            currency_status = get_currency_status(db, cId)
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
@@ -887,6 +897,7 @@ def country(cId):
         treaty_types=treaty_types,
         treaty_type_labels=treaty_type_labels,
         is_embargoed_by_viewer=is_embargoed_by_viewer,
+        currency_status=currency_status,
         **data
     )
 
