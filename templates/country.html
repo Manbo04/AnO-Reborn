@@ -148,6 +148,14 @@
                             <td><span class="pulse-indicator"></span>0</td>
                             {% endif %}
                         </tr>
+                        {% if status %}
+                        <tr>
+                            <td><span class="material-icons-outlined">
+                                trending_up
+                                </span>Growth rate:</td>
+                            <td class="{{ 'text-success' if growth_rate.percent > 0 else ('text-danger' if growth_rate.percent < 0 else '') }}" title="Projected population change next tick, based on your current rations distribution and population cap.">{{ '%+.2f'|format(growth_rate.percent) }}%/hr ({{ '%+d'|format(growth_rate.delta) }})</td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <td><span class="material-icons-outlined">
                                 people_alt

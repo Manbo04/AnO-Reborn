@@ -96,6 +96,7 @@ class CountryService:
         from app_core.policies.services import get_user_policies
         import variables
         from countries import get_revenue, get_econ_statistics, format_econ_statistics
+        from app_core.game_ticks.population import get_population_growth
 
         session = {"user_id": session_user_id}
 
@@ -540,10 +541,21 @@ class CountryService:
 
                 for key, value in default_statistics_data().items():
                     statistics.setdefault(key, value)
+
+                # Growth rate (Discord suggestion from Kurai, 2026-09-21) --
+                # projected population change for the next tick, computed
+                # from the same rations-distribution math as revenue/GDP
+                # above, so it's gated the same way (own-view only).
+                try:
+                    growth_rate = get_population_growth(cId, db=db)
+                except Exception:
+                    rollback_db_cursor(db)
+                    growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
             else:
                 revenue = default_revenue_data()
                 expenses = []
                 statistics = default_statistics_data()
+                growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
 
             # Total standing military (unit count, summed across all branches) --
             # already public elsewhere (statistics.py's rankings query), so not
@@ -727,6 +739,7 @@ class CountryService:
             "capital_province_name": capital_province_name,
             "productivity": productivity,
             "revenue": revenue,
+            "growth_rate": growth_rate,
             "news": news,
             "news_amount": news_amount,
             "interactive_events": interactive_events,

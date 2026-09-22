@@ -399,6 +399,19 @@ def invalidate_user_cache(user_id: int) -> None:
     except Exception as e:
         logger.exception("Failed to invalidate econ_stats cache for %s: %s", user_id, e)
 
+    # pop_growth_{user_id} (app_core.game_ticks.population.get_population_growth,
+    # the nation page's growth-rate display) shares the same 5-minute TTL and
+    # reads user_buildings (distribution capacity) -- same staleness risk as
+    # revenue_/econ_stats_ above, so it's invalidated alongside them.
+    key_pop_growth = f"pop_growth_{user_id}"
+    try:
+        if key_pop_growth in query_cache.cache:
+            del query_cache.cache[key_pop_growth]
+        else:
+            query_cache.invalidate(pattern=key_pop_growth)
+    except Exception as e:
+        logger.exception("Failed to invalidate pop_growth cache for %s: %s", user_id, e)
+
     # layout_user_equip_{user_id} (app.py's per-request template context)
     # caches which cosmetic is equipped for 60s -- without invalidation here,
     # equipping/unequipping a Store background looked broken for up to a
