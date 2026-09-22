@@ -79,7 +79,12 @@ class CountryRepository:
 
             range_filter = ""
             if province_range > 0:
-                range_filter += " AND provinces_count <= %s"
+                # Regression from the country_repository migration (d2a3506a): the
+                # pre-refactor SQL used `provinces_count >= %s` (a floor -- can't war
+                # someone with far fewer provinces than you), which the refactor
+                # silently flipped to `<=`, inverting the filter. Restored per
+                # tests/test_countries_page.py::test_province_range_filtering.
+                range_filter += " AND provinces_count >= %s"
                 params.append(province_range)
             if upperinf is not None and lowerinf is not None and upperinf > 0 and lowerinf > 0:
                 range_filter += " AND influence >= %s AND influence <= %s"

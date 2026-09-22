@@ -409,8 +409,11 @@ def coalition(coalition_id):
                         ) = row
                         active_treaties["ids"].append(offer_id)
                         # Show the OTHER coalition, not the current one
-                        # Use a local variable to avoid overwriting the outer coalition_id
-                        if col1_id == coalition_id:
+                        # Use a local variable to avoid overwriting the outer coalition_id.
+                        # coalition_id arrives as a raw string from the URL (no <int:> converter)
+                        # while col1_id/col2_id come back as ints from the DB -- str(...) normalizes
+                        # both sides so this comparison isn't silently always-False.
+                        if str(col1_id) == str(coalition_id):
                             other_col_id = col2_id
                             other_col_name = col2_name
                         else:
