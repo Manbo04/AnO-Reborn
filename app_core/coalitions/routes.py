@@ -1,4 +1,11 @@
-from .repositories import _require_coalition_member, _coalition_id_for_user, get_user_role, _coalition_members_sql, _members_tbl
+from .repositories import (
+    _require_coalition_member,
+    _coalition_id_for_user,
+    get_user_role,
+    _coalition_members_sql,
+    _members_tbl,
+    BUILD_SHARE_QUALIFYING_ROLES,
+)
 from .services import _no_coalition_response
 
 from flask import (
@@ -248,6 +255,13 @@ def coalition(coalition_id):
             user_role = row[0] if row else None
         except Exception:
             user_role = None
+
+        try:
+            db.execute("SELECT allow_coalition_builds FROM users WHERE id=%s", (cId,))
+            row = db.fetchone()
+            allow_coalition_builds = bool(row[0]) if row else False
+        except Exception:
+            allow_coalition_builds = False
 
         if (
             user_role in ["leader", "deputy_leader", "domestic_minister"]
@@ -658,6 +672,8 @@ def coalition(coalition_id):
             coalitionLand=coalition_land,
             coalitionAverageLand=coalition_avg_land,
             tax_rate=tax_rate,
+            allow_coalition_builds=allow_coalition_builds,
+            build_share_qualifying_roles=BUILD_SHARE_QUALIFYING_ROLES,
         )
 
 
@@ -1103,6 +1119,39 @@ def my_coalition():
             return _no_coalition_response()
 
     return redirect(f"/coalition/{coalition_id}")
+
+
+# Self-service opt-in toggle for "share my province-planning access with
+# coalition leadership" (Kurai's suggestion, seconded by germanicusjuliuscaesar
+# for the domestic minister role -- suggestions channel, 2026-09-17). Always
+# acts on the LOGGED-IN user's own row -- there is no target-user parameter,
+# so this route can never be used to flip someone else's setting.
+def toggle_build_sharing():
+    cId = session["user_id"]
+    enabled = request.form.get("enabled") in ("on", "true", "1")
+
+    with get_request_cursor() as db:
+        db.execute(
+            "UPDATE users SET allow_coalition_builds=%s WHERE id=%s",
+            (enabled, cId),
+        )
+        coalition_id = _coalition_id_for_user(db, cId)
+
+    if coalition_id:
+        try:
+            invalidate_view_cache("coalition", page=f"/coalition/{coalition_id}")
+        except Exception as e:
+            print(f"toggle_build_sharing: cache invalidation failed: {e}", flush=True)
+
+    flash(
+        "Coalition build-sharing enabled."
+        if enabled
+        else "Coalition build-sharing disabled."
+    )
+
+    if coalition_id:
+        return redirect(f"/coalition/{coalition_id}")
+    return redirect("/")
 
 
 # Route for giving someone a role in your coalition
@@ -2309,6 +2358,9 @@ def register_coalitions_routes(app_instance):
     join_col_wrapped = login_required(join_col)
     leave_col_wrapped = login_required(leave_col)
     my_coalition_wrapped = cache_response(ttl_seconds=30)(login_required(my_coalition))
+    toggle_build_sharing_wrapped = login_required(
+        require_post_origin(toggle_build_sharing)
+    )
     give_position_wrapped = login_required(give_position)
     adding_wrapped = login_required(adding)
     removing_requests_wrapped = login_required(removing_requests)
@@ -2382,6 +2434,11 @@ def register_coalitions_routes(app_instance):
     )
     app_instance.add_url_rule(
         "/my_coalition", view_func=my_coalition_wrapped, methods=["GET"]
+    )
+    app_instance.add_url_rule(
+        "/coalition/build-sharing",
+        view_func=toggle_build_sharing_wrapped,
+        methods=["POST"],
     )
     app_instance.add_url_rule(
         "/give_position", view_func=give_position_wrapped, methods=["POST"]

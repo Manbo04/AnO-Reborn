@@ -312,6 +312,24 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 }
             </script>
 
+            {% if userInCurCol %}
+            <div class="infodiv" style="margin-top: 20px;">
+                <h3 class="templatecontentheadercenter">Share Build Access</h3>
+                <p class="templatecontentpleft" style="font-size: 0.85em;">
+                    Let your coalition's leader, deputy leader, banker, or domestic minister
+                    view your province and build for you — handy if you want help planning
+                    without handing out your login. Off by default, and you can turn it off
+                    again any time.
+                </p>
+                <form action="/coalition/build-sharing" method="POST">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="enabled" value="on" onchange="this.form.submit()" {% if allow_coalition_builds %}checked{% endif %} />
+                        Share my province build access with coalition leadership
+                    </label>
+                </form>
+            </div>
+            {% endif %}
+
             {% if userInCurCol and user_role != "leader" %}
             <div class="infodiv" style="margin-top: 20px;">
                 <form action="/leave/{{ colId }}" method="POST">

@@ -83,8 +83,15 @@
         {% include 'partials/province_info.html' %}
 
 
-        {% if province["own"] %}
+        {% if province["can_plan_builds"] %}
         <div class="province-owner-tools game-stack">
+            {% if province["shared_build_access"] %}
+            <div class="infodiv" style="border-left: 3px solid var(--accent, #7c9); padding-left: 10px;">
+                <span class="material-icons-outlined" style="vertical-align: middle;">groups</span>
+                You're planning builds for this member's province via shared coalition
+                access. Gold and resources are spent from <strong>their</strong> nation, not yours.
+            </div>
+            {% endif %}
             <div class="infodiv province-owner-build">
                 <h3 class="templatecontentheadercenter">Quick Build (Normalized)</h3>
                 <form method="POST" action="/build_structure">
@@ -114,6 +121,7 @@
                 </form>
             </div>
 
+            {% if province["own"] %}
             <form method="POST" class="province-purchase-grid game-panel-grid game-panel-grid--2">
                 <div class="infodiv province-purchase-panel">
                         <script>
@@ -225,6 +233,7 @@
                         </div>
                 </div>
             </form>
+            {% endif %}
         </div>
         {% endif %}
         {% if province["own"] %}

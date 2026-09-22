@@ -31,6 +31,7 @@ from database import (
 import os
 import math
 from action_loop import build_structure, ActionLoopError
+from app_core.coalitions.repositories import can_manage_province_builds
 from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
 from app_core.economy.building_costs import enrich_building_row, get_build_cost
 from app_core.economy.building_purchase import (
@@ -355,6 +356,21 @@ def province(pId):
         province["free_cityCount"] = province["citycount"] - used_city_slots
         province["free_land"] = province["land"] - used_land_slots
         province["own"] = province["user"] == cId
+        # Coalition "share-build" access (opt-in, see app_core/coalitions):
+        # lets a qualifying coalition role plan/build in this province when
+        # its owner has explicitly turned sharing on. Deliberately separate
+        # from `own` -- this must only ever unlock the build/demolish
+        # actions, never rename/delete/flag/set-capital or anything else
+        # gated on `own` elsewhere in this template.
+        try:
+            province["can_plan_builds"] = province["own"] or can_manage_province_builds(
+                db, cId, province["user"]
+            )
+        except Exception:
+            province["can_plan_builds"] = province["own"]
+        province["shared_build_access"] = (
+            province["can_plan_builds"] and not province["own"]
+        )
 
         # Check consumer goods and rations from normalized economy data
         db.execute(
@@ -627,7 +643,17 @@ def province(pId):
         province_base_layout = None
         if FEATURE_PROVINCE_BASE_VIEW:
             province["own"] = province.get("own", province["user"] == cId)
-            province_base_layout = build_province_layout_payload(province, units)
+            # Shallow copy so the base-view canvas's "own" (may act on this
+            # province -- owner OR opted-in shared coalition access) doesn't
+            # leak into `province["own"]`, which the rest of this template
+            # uses to gate owner-only actions (rename/delete/flag/etc).
+            layout_province = dict(province)
+            layout_province["own"] = province.get(
+                "can_plan_builds", province["own"]
+            )
+            province_base_layout = build_province_layout_payload(
+                layout_province, units
+            )
 
         if province.get("location"):
             # Normalize location to avoid strict case-sensitive and whitespace template mismatch errors
@@ -832,11 +858,21 @@ def province_layout_api(pId):
         if not row:
             return jsonify({"error": "Province not found"}), 404
         owner_id = row.get("userid") or row.get("userId")
-        if owner_id is None or int(owner_id) != int(cId):
+        if owner_id is None:
+            return jsonify({"error": "Forbidden"}), 403
+        owner_id = int(owner_id)
+        can_plan = owner_id == int(cId) or can_manage_province_builds(
+            db, cId, owner_id
+        )
+        if not can_plan:
             return jsonify({"error": "Forbidden"}), 403
 
         province = dict(row)
         province["location"] = (province.get("location") or "Grassland").strip()
+        # Gates the interactive build controls in the base-view JS -- true
+        # here means "may act on this province" (owner or opted-in shared
+        # access), already verified above.
+        province["own"] = True
 
         db.execute(
             """
@@ -848,7 +884,7 @@ def province_layout_api(pId):
                 AND ub.province_id = %s
             WHERE bd.is_active = TRUE
             """,
-            (cId, pId),
+            (owner_id, pId),
         )
         units = {r["name"]: r["quantity"] for r in db.fetchall()}
 
@@ -979,6 +1015,7 @@ def province_quick_build_api(pId):
             {"ok": False, "error": "Quantity must be 1–50 (negative to demolish)"}
         ), 400
 
+    effective_user_id = cId
     with get_request_cursor(cursor_factory=RealDictCursor, read_only=True) as db:
         db.execute(
             "SELECT userId AS owner_id FROM provinces WHERE id = %s",
@@ -987,16 +1024,23 @@ def province_quick_build_api(pId):
         row = db.fetchone()
         if not row:
             return jsonify({"ok": False, "error": "Province not found"}), 404
-        if int(row["owner_id"]) != int(cId):
-            return jsonify({"ok": False, "error": "Forbidden"}), 403
+        owner_id = int(row["owner_id"])
+        if owner_id != int(cId):
+            if not can_manage_province_builds(db, cId, owner_id):
+                return jsonify({"ok": False, "error": "Forbidden"}), 403
+        effective_user_id = owner_id
 
     try:
         if quantity < 0:
             from action_loop import demolish_structure
 
-            demolish_structure(cId, building_id, -quantity, province_id=pId)
+            demolish_structure(
+                effective_user_id, building_id, -quantity, province_id=pId
+            )
         else:
-            build_structure(cId, building_id, quantity, province_id=pId)
+            build_structure(
+                effective_user_id, building_id, quantity, province_id=pId
+            )
     except Exception as e:
         # Catch ActionLoopError and psycopg2 DatabaseError (from triggers)
         import psycopg2
@@ -1007,10 +1051,10 @@ def province_quick_build_api(pId):
         return jsonify({"ok": False, "error": err_msg}), 400
 
     try:
-        invalidate_user_cache(cId)
-        invalidate_view_cache("province", user_id=cId)
-        invalidate_view_cache("provinces", user_id=cId)
-        invalidate_view_cache("military", user_id=cId)
+        invalidate_user_cache(effective_user_id)
+        invalidate_view_cache("province", user_id=effective_user_id)
+        invalidate_view_cache("provinces", user_id=effective_user_id)
+        invalidate_view_cache("military", user_id=effective_user_id)
     except Exception:
         pass
 
@@ -1029,7 +1073,9 @@ def province_quick_build_api(pId):
         province_row = db.fetchone()
         province = dict(province_row) if province_row else {}
         province["location"] = (province.get("location") or "Grassland").strip()
-        province["own"] = province.get("owner_id") == cId
+        # Already verified above (owner or opted-in shared access) -- gates
+        # the interactive build controls in the base-view JS response.
+        province["own"] = True
 
         db.execute(
             """
@@ -1041,7 +1087,7 @@ def province_quick_build_api(pId):
                 AND ub.province_id = %s
             WHERE bd.is_active = TRUE
             """,
-            (cId, pId),
+            (effective_user_id, pId),
         )
         units = {r["name"]: r["quantity"] for r in db.fetchall()}
 
@@ -1068,6 +1114,12 @@ def build_structure_action():
     except (TypeError, ValueError):
         return error(400, "Invalid building selection or quantity.")
 
+    # Defaults to the acting user; only overridden below when this is a
+    # coalition "share-build" action on a member's opted-in province, and
+    # ONLY after the permission check passes. All gold/resource/building
+    # state must land on the province OWNER, never on the acting leader.
+    effective_user_id = cId
+
     if province_id:
         try:
             province_id_int = int(province_id)
@@ -1081,22 +1133,25 @@ def build_structure_action():
             row = db.fetchone()
             if not row:
                 return error(404, "Province not found")
-            if row[0] != cId:
-                return error(403, "You do not own this province")
+            owner_id = row[0]
+            if owner_id != cId:
+                if not can_manage_province_builds(db, cId, owner_id):
+                    return error(403, "You do not own this province")
+            effective_user_id = owner_id
 
     try:
         if quantity < 0:
             from action_loop import demolish_structure
 
             demolish_structure(
-                cId,
+                effective_user_id,
                 building_id,
                 -quantity,
                 province_id=int(province_id) if province_id else None,
             )
         else:
             build_structure(
-                cId,
+                effective_user_id,
                 building_id,
                 quantity,
                 province_id=int(province_id) if province_id else None,
@@ -1107,10 +1162,10 @@ def build_structure_action():
     try:
         from database import invalidate_view_cache
 
-        invalidate_user_cache(cId)
-        invalidate_view_cache("province", user_id=cId)
-        invalidate_view_cache("provinces", user_id=cId)
-        invalidate_view_cache("military", user_id=cId)
+        invalidate_user_cache(effective_user_id)
+        invalidate_view_cache("province", user_id=effective_user_id)
+        invalidate_view_cache("provinces", user_id=effective_user_id)
+        invalidate_view_cache("military", user_id=effective_user_id)
     except Exception:
         pass
 
