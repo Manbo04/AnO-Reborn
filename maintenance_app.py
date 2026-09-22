@@ -14,31 +14,16 @@ restore the real app.
 import os
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, Response, request
-from werkzeug.middleware.proxy_fix import ProxyFix
+from flask import Flask, Response
 
 app = Flask(__name__)
 
-# Same ProxyFix config as the real app.py -- added 2026-09-23 purely to test
-# a specific hypothesis: the real app trusts exactly one proxy hop
-# (x_for=1) for X-Forwarded-For, but this domain is Cloudflare-fronted in
-# front of Railway's own edge (confirmed via response headers carrying both
-# `server: cloudflare` and `x-railway-edge`) -- a genuine two-hop chain. If
-# x_for=1 resolves to the wrong IP under two real hops, every "which real
-# player is this" signal downstream (login_events, identity diagnostics,
-# rate limiting) could be silently wrong. This endpoint has zero auth/
-# session/DB code -- read-only diagnostic only.
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=1, x_host=1, x_prefix=1)
-
-
-@app.route("/debug-ip")
-def debug_ip():
-    return {
-        "remote_addr_after_proxyfix": request.remote_addr,
-        "raw_x_forwarded_for_header": request.headers.get("X-Forwarded-For"),
-        "cf_connecting_ip_header": request.headers.get("CF-Connecting-IP"),
-        "true_client_ip_header": request.headers.get("True-Client-IP"),
-    }, 200
+# 2026-09-23 note: a temporary /debug-ip route lived here briefly to confirm
+# a real IP-resolution bug (this domain's Cloudflare+Railway proxy chain
+# defeated the old single-hop ProxyFix config -- see helpers.py's
+# client_ip_from_request() and tests/test_client_ip_cloudflare_spoofing.py
+# for the confirmed fix). Removed once verified; this page still has zero
+# auth/session/DB code.
 
 _DEFAULT_DEADLINE = "2026-09-23T16:38:32Z"
 DEADLINE_ISO = os.environ.get("MAINTENANCE_DEADLINE", _DEFAULT_DEADLINE)
