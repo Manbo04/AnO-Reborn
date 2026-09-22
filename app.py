@@ -62,6 +62,16 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# Off by default (ANO_OUTGOING_COOKIE_DIAG=1 to enable) -- catches an
+# outgoing response's Set-Cookie encoding a DIFFERENT user than the request
+# that produced it started as, the actual shape of the account
+# cross-contamination reports, not just a single request's internal
+# cookie/session consistency (which check_session_cookie_consistency below
+# already covers). See app_core/identity_diagnostics.py's
+# _OutgoingCookieMismatchMiddleware docstring for the full history.
+from app_core.identity_diagnostics import install_outgoing_cookie_diagnostic
+install_outgoing_cookie_diagnostic(app)
+
 def create_app():
     global app
     app.url_map.strict_slashes = False
