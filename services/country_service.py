@@ -1,6 +1,19 @@
 from repositories.country_repository import CountryRepository
 from database import get_coalition_members_table
 
+
+def _scale_revenue_dict(value, factor):
+    """Recursively multiply every numeric leaf in a revenue-shaped dict by
+    `factor` (used to derive a daily projection from the hourly `revenue`
+    dict without touching the cached/expensive get_revenue() calculation
+    itself -- see country_v2.html's Hourly/Daily revenue toggle)."""
+    if isinstance(value, dict):
+        return {k: _scale_revenue_dict(v, factor) for k, v in value.items()}
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value * factor
+    return value
+
+
 class CountryService:
     @staticmethod
     def _is_same_country(a, b):
@@ -724,6 +737,7 @@ class CountryService:
             "distribution_status": distribution_status,
             "food_score": food_score,
             "expenses": expenses,
+            "revenue_daily": _scale_revenue_dict(revenue, 24),
             "expenses_total_cost": sum(
                 (row[3] or 0) for row in expenses if row[1] == "expense"
             ) if expenses else 0,

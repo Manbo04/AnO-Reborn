@@ -654,9 +654,18 @@
                 {{ revenue['gross_theoretical'].get(resource, 0) | fmt }}
                 <small class="muted" title="Projected (applies productivity & rounding): {{ revenue['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue['gross'].get(resource, 0) | fmt }}</small>
             {% endmacro %}
+            {% macro show_gross_daily(resource) %}
+                {{ revenue_daily['gross_theoretical'].get(resource, 0) | fmt }}
+                <small class="muted" title="Projected (applies productivity & rounding): {{ revenue_daily['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue_daily['gross'].get(resource, 0) | fmt }}</small>
+            {% endmacro %}
 
             {% if status %}
-            <div class="templatedivflex2">
+            <div class="game-row" style="gap: 8px; margin-bottom: 10px;">
+                <button type="button" class="game-btn game-btn-secondary game-btn-sm" id="revenuePeriodToggle">
+                    <span class="material-icons-outlined">calendar_today</span> Show daily figures
+                </button>
+            </div>
+            <div class="templatedivflex2" id="revenue-hourly-panel">
                 <div class="templatedivflex2left">
 
                     <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
@@ -828,6 +837,191 @@
 
                 </div>
             </div>
+
+            <div class="templatedivflex2" id="revenue-daily-panel" hidden>
+                <div class="templatedivflex2left">
+
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Gross Raw <small class="font-normal-sub">(Daily)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary gross</strong>
+        <span class="stat-value">{{ revenue_daily["gross"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue_daily.get("coalition_tax", 0) | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue_daily["gross"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ show_gross_daily('oil') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ show_gross_daily('coal') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ show_gross_daily('uranium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ show_gross_daily('iron') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ show_gross_daily('lead') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ show_gross_daily('bauxite') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ show_gross_daily('copper') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ show_gross_daily('lumber') }}</span>
+    </div>
+</div>
+                    <br>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Gross Processed <small class="font-normal-sub">(Daily)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ show_gross_daily('components') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ show_gross_daily('steel') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ show_gross_daily('consumer_goods') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ show_gross_daily('aluminium') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ show_gross_daily('gasoline') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ show_gross_daily('ammunition') }}</span>
+    </div>
+</div>
+
+                </div>
+                <div class="templatedivflex2right">
+
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Net Raw <small class="font-normal-sub">(Daily)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label">Coalition tax</strong>
+        <span class="stat-value">-{{ revenue_daily.get("coalition_tax", 0) | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["rations"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["oil"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["coal"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["uranium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["iron"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["lead"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["bauxite"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["copper"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["lumber"] | weight_fmt }}</span>
+    </div>
+</div>
+                    <br>
+                    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
+                                article
+                                </span>Net Processed <small class="font-normal-sub">(Daily)</small></h2>
+<div class="stat-grid">
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["components"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["steel"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["consumer_goods"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["aluminium"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["gasoline"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
+        <span class="stat-value">{{ revenue_daily["net"]["ammunition"] | weight_fmt }}</span>
+    </div>
+</div>
+
+                </div>
+            </div>
+            <script>
+            (function () {
+                var btn = document.getElementById('revenuePeriodToggle');
+                var hourly = document.getElementById('revenue-hourly-panel');
+                var daily = document.getElementById('revenue-daily-panel');
+                if (!btn || !hourly || !daily) return;
+                btn.addEventListener('click', function () {
+                    var showingDaily = !daily.hidden;
+                    hourly.hidden = !showingDaily;
+                    daily.hidden = showingDaily;
+                    btn.innerHTML = showingDaily
+                        ? '<span class="material-icons-outlined">calendar_today</span> Show daily figures'
+                        : '<span class="material-icons-outlined">calendar_today</span> Show hourly figures';
+                });
+            })();
+            </script>
 
             <h2 class="templatecontentheaderleft">Upkeep Costs</h2>
 
