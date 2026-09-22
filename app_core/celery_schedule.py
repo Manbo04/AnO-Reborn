@@ -33,6 +33,11 @@ TASK_RUN_THRESHOLDS = {
     # Loan interest is meant to be garnished at most once an hour per nation --
     # same hourly-safety reasoning as the other hourly-gated ticks above.
     "loan_interest": int(os.getenv("LOAN_INTEREST_MIN_INTERVAL", "3300")),
+    # Bonds market interest/escrow/maturity settlement is meant to run at
+    # most once a day per bond (Kurai's spec: interest deducted "on a daily
+    # basis") -- generous buffer under 24h so scheduler drift can't skip a
+    # whole day.
+    "bond_tick": int(os.getenv("BOND_TICK_MIN_INTERVAL", "82800")),
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -59,6 +64,10 @@ CELERY_BEAT_SCHEDULE = {
     "loan_interest": {
         "task": "tasks.task_loan_interest",
         "schedule": get_crontab_env("LOAN_INTEREST_CRON", crontab(minute="40")),
+    },
+    "bond_tick": {
+        "task": "tasks.task_bond_tick",
+        "schedule": get_crontab_env("BOND_TICK_CRON", crontab(minute="50", hour="4")),
     },
     "war_reparation_tax": {
         "task": "tasks.task_war_reparation_tax",

@@ -1019,6 +1019,23 @@ LOAN_HIGH_UTILIZATION_THRESHOLD = 0.70  # fraction of borrowing cap
 LOAN_HIGH_UTILIZATION_FEE = 0.15  # fee charged instead of LOAN_ORIGINATION_FEE above the threshold
 LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully repaying the last one
 
+# Player-to-player Bonds market (Discord #suggestions "Bonds market" from
+# Kurai, 2026-09-16) -- deliberately separate from the national-loan system
+# above: here one player funds another player's bond directly. The issuer
+# sets rate+term before it sells; once funded it can't be cashed out early;
+# daily interest is auto-deducted to the lender by
+# app_core/game_ticks/bond_tick.py; an issuer may opt into auto-escrow to
+# amortize principal daily instead of owing it as a lump sum at maturity.
+# See app_core/bonds/ and migration 0079_add_bonds_market.sql.
+BOND_CAP_PER_POPULATION = 30  # $ of total outstanding (listed+active) bond principal per population point
+BOND_MIN_PRINCIPAL = 50_000
+BOND_MIN_INTEREST_RATE = 0.001  # 0.1%/day
+BOND_MAX_INTEREST_RATE = 0.02   # 2%/day
+BOND_MIN_TERM_DAYS = 3
+BOND_MAX_TERM_DAYS = 30
+BOND_MAX_DEFAULT_STRIKES = 3    # missed daily interest payments before a bond is force-defaulted early instead of waiting for maturity
+BOND_DEFAULT_COOLDOWN_DAYS = 14  # can't issue a new bond this long after defaulting on one
+
 # National currency (central bank) -- see app_core/currency/. Discord
 # #suggestions ("national currency", Kurai, 2026-09-16): each nation can
 # convert its own gold into its own currency (display name is the existing

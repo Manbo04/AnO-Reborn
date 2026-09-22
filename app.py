@@ -20,6 +20,7 @@ import login
 from wars.routes import wars_bp
 from app_core.treaties import bp as treaties_bp
 from app_core.loans import bp as loans_bp
+from app_core.bonds import bp as bonds_bp
 from app_core.currency import bp as currency_bp
 from app_core.world_affairs import bp as world_affairs_bp
 from app_core.bounties import bp as bounties_bp
@@ -635,6 +636,7 @@ def create_app():
     app.register_blueprint(wars_bp)
     app.register_blueprint(treaties_bp)
     app.register_blueprint(loans_bp)
+    app.register_blueprint(bonds_bp)
     app.register_blueprint(currency_bp)
     app.register_blueprint(world_affairs_bp)
     app.register_blueprint(bounties_bp)
