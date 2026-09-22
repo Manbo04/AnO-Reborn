@@ -28,7 +28,7 @@ app = Flask(__name__)
 # player is this" signal downstream (login_events, identity diagnostics,
 # rate limiting) could be silently wrong. This endpoint has zero auth/
 # session/DB code -- read-only diagnostic only.
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=1, x_host=1, x_prefix=1)
 
 
 @app.route("/debug-ip")
