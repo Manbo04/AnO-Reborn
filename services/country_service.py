@@ -264,14 +264,16 @@ class CountryService:
             productivity = productivity or 0
             provinceCount = provinceCount or 0
 
+            public_province_info = False
             try:
                 db.execute(
-                    "SELECT join_number, last_active FROM users WHERE id=%s",
+                    "SELECT join_number, last_active, public_province_info FROM users WHERE id=%s",
                     (cId,),
                 )
                 opt = db.fetchone()
                 if opt:
                     join_number, last_active = opt[0], opt[1]
+                    public_province_info = bool(opt[2]) if len(opt) > 2 else False
             except Exception:
                 rollback_db_cursor(db)
 
@@ -758,6 +760,7 @@ class CountryService:
                 (row[3] or 0) for row in expenses if row[1] != "expense"
             ) if expenses else 0,
             "expenses_count": len(expenses) if expenses else 0,
+            "public_province_info": public_province_info,
             "statistics": statistics,
             "policies": policies,
             "resource_rows": resource_rows,

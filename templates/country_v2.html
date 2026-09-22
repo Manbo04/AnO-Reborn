@@ -90,6 +90,30 @@
 
         </div>
 
+        {% if not status and public_province_info %}
+        <div class="game-glass game-panel" style="margin-bottom: 20px;">
+            <div class="game-panel-head">
+                <div>
+                    <div class="game-panel-title">Provinces</div>
+                    <p class="game-faint" style="margin-top: 2px;">{{ provinceCount }} province{{ 's' if provinceCount != 1 }} &middot; made public by this nation</p>
+                </div>
+            </div>
+            {% for province in provinces[:10] %}
+            <a class="game-list-row" href="/province/{{ province[1] }}">
+                <div class="game-row">
+                    <span class="material-icons-outlined" style="color: var(--accent);">account_balance</span>
+                    <div>
+                        <div style="font-weight: 600;">{{ province[0] }}</div>
+                        <div class="game-faint" style="font-size: 11.5px;">{{ province[2] | fmt }} pop</div>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <p class="game-faint">No provinces yet.</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!--View-->
         <div class="view" id="view">
 
@@ -287,6 +311,45 @@
                         <span class="stat-value">{{ capital_province_name }}</span>
                     </div>
                     {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if status and currency_status %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-title" style="margin-bottom: 12px;">
+                    <span class="material-icons-outlined" style="vertical-align: -6px;">account_balance</span>
+                    National Central Bank{% if currency_name %} — {{ currency_name }}{% endif %}
+                </div>
+                <div class="stat-grid">
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">payments</span>Gold Treasury</strong>
+                        <span class="stat-value">${{ currency_status.gold | fmt }}</span>
+                    </div>
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">account_balance_wallet</span>{{ currency_name if currency_name else 'National Currency' }} Balance</strong>
+                        <span class="stat-value">{{ currency_status.currency_balance | fmt }}</span>
+                    </div>
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">sync_alt</span>Fixed Exchange Rate</strong>
+                        <span class="stat-value">{{ currency_status.rate }} gold = 1</span>
+                    </div>
+                </div>
+                <p class="templatecontentpleft" style="margin-top: 12px;">
+                    Convert gold from your treasury into
+                    {{ currency_name if currency_name else 'your national currency' }}, or back, at this fixed rate.
+                    Round-tripping never gains or loses gold — the rate never changes.
+                    {% if not currency_name %}Give your currency a name in the form below to replace this generic label.{% endif %}
+                </p>
+                <div class="game-row" style="flex-wrap: wrap; gap: 16px; margin-top: 14px;">
+                    <form action="/currency/mint" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
+                        <input type="number" name="units" placeholder="Units to mint" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" required>
+                        <button type="submit" class="game-btn game-btn-primary">Mint from Gold</button>
+                    </form>
+                    <form action="/currency/redeem" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
+                        <input type="number" name="units" placeholder="Units to redeem" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" max="{{ currency_status.currency_balance }}" required>
+                        <button type="submit" class="game-btn game-btn-secondary">Redeem to Gold</button>
+                    </form>
                 </div>
             </div>
             {% endif %}
@@ -2781,18 +2844,19 @@
         </div>
         <h2 class="templatecontentheaderleft ">Transfer Resources</h2>
 
-        <form method="POST" onsubmit="var tid=this.querySelector('input[name=transferee]').value;if(!tid){alert('Please enter a nation ID');return false;}this.action='/transfer/'+tid;">
+        <form method="POST" id="transferForm" onsubmit="var tid=this.querySelector('input[name=transferee]').value;if(!tid){alert('Please enter a nation ID');return false;}this.action='/transfer/'+tid;">
             <div class="infodiv ">
-                <p class="mb-md text-muted">Transfer resources to another nation</p>
+                <p class="mb-md text-muted">Transfer resources to another nation — add more rows to send several resource kinds in one package</p>
 
-                <div class="templatedivflex2 divflex2center ">
-                    <div class="templatedivflex2left flexchildvanilla ">
-                        <label for="transferTarget">Target Nation ID:</label>
-                        <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{{ cId }}" required/>
-                    </div>
+                <div class="templatedivflex2left flexchildvanilla " style="margin-bottom: 10px;">
+                    <label for="transferTarget">Target Nation ID:</label>
+                    <input class="loginsignupinput" autocomplete="off" type="number" name="transferee" placeholder="Enter nation ID" value="{{ cId }}" required/>
+                </div>
 
+                <div id="transferRows">
+                <div class="templatedivflex2 divflex2center transfer-row">
                     <div class="templatedivflex2left flexchildvanilla ">
-                        <label for="transferResource">Resource:</label>
+                        <label>Resource:</label>
                         <select name="resource" class="templateselect " required>
                             <option disabled selected value="">Choose one</option>
                             <option value="gold" class="templateoption ">Money</option>
@@ -2816,9 +2880,17 @@
                     </div>
 
                     <div class="templatedivflex2left flexchildvanilla">
-                        <label for="transferAmount">Amount:</label>
+                        <label>Amount:</label>
                         <input class="loginsignupinput" autocomplete="off" type="number" name="amount" placeholder="Amount" required/>
                     </div>
+                    <div class="templatedivflex2left flexchildvanilla transfer-row-remove" style="flex: 0 0 auto; align-self: flex-end; display: none;">
+                        <button type="button" class="game-btn game-btn-ghost game-btn-sm" onclick="this.closest('.transfer-row').remove()"><span class="material-icons-outlined">close</span></button>
+                    </div>
+                </div>
+                </div>
+
+                <div class="text-center" style="margin: 8px 0;">
+                    <button type="button" class="game-btn game-btn-secondary game-btn-sm" id="addTransferRow"><span class="material-icons-outlined">add</span> Add another resource</button>
                 </div>
 
                 <div class="templatedivflex2 divflex2center" style="margin-top: 10px;">
@@ -2841,6 +2913,20 @@
 
             </div>
         </form>
+        <script>
+        (function () {
+            var addBtn = document.getElementById('addTransferRow');
+            var rowsWrap = document.getElementById('transferRows');
+            if (!addBtn || !rowsWrap) return;
+            addBtn.addEventListener('click', function () {
+                var rows = rowsWrap.querySelectorAll('.transfer-row');
+                var clone = rows[0].cloneNode(true);
+                clone.querySelectorAll('select, input[type=number]').forEach(function (el) { el.value = ''; });
+                clone.querySelector('.transfer-row-remove').style.display = '';
+                rowsWrap.appendChild(clone);
+            });
+        })();
+        </script>
     </div>
         {% endif %}
 </div>

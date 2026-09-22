@@ -581,49 +581,87 @@ def transfer(transferee):
         if not user_exists(db, transferee_id):
             return error(404, "That nation does not exist")
 
-        resource = request.form.get("resource")
-        amount_str = request.form.get("amount")
+        # Bulk aid support (player-requested: send multiple resource kinds in
+        # one package instead of one gift per resource). The form repeats
+        # "resource"/"amount" field names for each row the player added
+        # client-side; Flask's getlist pairs them up positionally. Single-item
+        # gifts (the original UI shape) still work the same way -- getlist on
+        # a form with exactly one "resource"/"amount" pair just returns
+        # 1-item lists.
+        resource_list = request.form.getlist("resource")
+        amount_list = request.form.getlist("amount")
         gift_message = (request.form.get("message") or "").strip()[:240]
         keep_private = request.form.get("keep_private") == "on"
-        if not amount_str:
-            return error(400, "Amount is required")
-        try:
-            amount = int(amount_str)
-        except (ValueError, TypeError):
-            return error(400, "Amount must be a valid number")
 
-        if resource not in ["gold", "money"] and not is_active_resource(db, resource):
-            return error(400, "No such resource")
+        if not resource_list or not amount_list:
+            return error(400, "Pick at least one resource and amount")
+        if len(resource_list) != len(amount_list):
+            return error(400, "Mismatched resource/amount rows")
 
-        if amount < 1:
-            return error(400, "Amount cannot be less than 1")
+        # Merge duplicate resource rows (e.g. two "gold" rows) into one so a
+        # single balance check/decrement covers the combined amount.
+        merged = {}
+        order = []
+        for resource, amount_str in zip(resource_list, amount_list):
+            resource = (resource or "").strip()
+            if not resource:
+                continue
+            if not amount_str:
+                return error(400, "Amount is required for every resource row")
+            try:
+                amount = int(amount_str)
+            except (ValueError, TypeError):
+                return error(400, "Amount must be a valid number")
+            if amount < 1:
+                return error(400, "Amount cannot be less than 1")
+            norm = "gold" if resource == "money" else resource
+            if norm not in merged:
+                merged[norm] = 0
+                order.append(norm)
+            merged[norm] += amount
 
-        if resource in ["gold", "money"]:
-            user_money = get_user_gold_for_update(db, cId)
-            if user_money is None:
-                return error(500, "Your nation data could not be found")
+        if not merged:
+            return error(400, "Pick at least one resource and amount")
+        if len(merged) > 20:
+            return error(400, "Too many resource kinds in one package")
 
-            if amount > user_money:
-                return error(400, "You don't have enough money.")
+        # Validate every resource kind exists BEFORE touching any balance, so
+        # a bad row in a bulk package can't partially apply.
+        for resource in order:
+            if resource != "gold" and not is_active_resource(db, resource):
+                return error(400, f"No such resource: {resource}")
 
-            if not decrement_gold(db, cId, amount):
-                return error(400, "You don't have enough money.")
+        # Pre-check every balance up front too (still re-checked atomically
+        # at debit time below) so a package that's affordable on gold but not
+        # on, say, steel fails cleanly with nothing charged yet.
+        for resource, amount in merged.items():
+            if resource == "gold":
+                have = get_user_gold_for_update(db, cId)
+                if have is None:
+                    return error(500, "Your nation data could not be found")
+            else:
+                have = get_user_resource_quantity(db, cId, resource)
+                if have is None:
+                    return error(400, f"No such resource: {resource}")
+            if amount > have:
+                return error(400, f"You don't have enough {resource if resource != 'gold' else 'money'}.")
 
-            increment_gold(db, transferee_id, amount)
-
-        else:
-            user_resource = get_user_resource_quantity(db, cId, resource)
-            if user_resource is None:
-                return error(400, "No such resource")
-
-            if amount > user_resource:
-                return error(400, "You don't have enough resources.")
-            res = give_resource(cId, transferee_id, resource, amount, cursor=db)
-            if res is not True:
-                return error(400, str(res))
+        for resource, amount in merged.items():
+            if resource == "gold":
+                if not decrement_gold(db, cId, amount):
+                    return error(400, "You don't have enough money.")
+                increment_gold(db, transferee_id, amount)
+            else:
+                res = give_resource(cId, transferee_id, resource, amount, cursor=db)
+                if res is not True:
+                    return error(400, str(res))
 
         sender_name = get_username(db, cId) or "A nation"
-        amount_desc = f"${amount:,}" if resource in ["gold", "money"] else f"{amount:,} {resource}"
+        item_descs = [
+            f"${amount:,}" if resource == "gold" else f"{amount:,} {resource}"
+            for resource, amount in ((r, merged[r]) for r in order if r in merged)
+        ]
+        amount_desc = ", ".join(item_descs)
         recipient_msg = f"{sender_name} sent you {amount_desc}."
         sender_msg = f"You sent {amount_desc} to your ally."
         if gift_message:

@@ -1747,6 +1747,17 @@ def ensure_schema_compat() -> None:
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS flag_data TEXT"
                 ),
             )
+            # Coalition "share-build" opt-in (ticket: Kurai + germanicusjuliuscaesar,
+            # suggestions channel, 2026-09-17): lets a member allow qualifying
+            # coalition roles to view/plan their province builds. Off by default —
+            # must be an explicit, reversible opt-in, never silently on.
+            core_ok &= _run_schema_step(
+                "users_allow_coalition_builds",
+                lambda db: db.execute(
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+                    "allow_coalition_builds BOOLEAN NOT NULL DEFAULT FALSE"
+                ),
+            )
         else:
             logger.info(
                 "users is a compatibility view — skipping ALTER TABLE users steps"
@@ -1814,6 +1825,22 @@ def ensure_schema_compat() -> None:
             )
 
         _run_schema_step("col_bank_transactions", _create_col_bank_transactions)
+
+        # Player-requested (Cheesar, customization/larp suggestions thread):
+        # opt-in to show your province list on your public country page --
+        # today it's only ever visible to the profile owner (status==True in
+        # countries.py/country_service.py), even though it's not sensitive
+        # data. Off by default so nobody's info becomes public without them
+        # choosing it.
+        _run_schema_step(
+            "users_public_province_info",
+            lambda db: db.execute(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS public_province_info BOOLEAN NOT NULL DEFAULT FALSE
+                """
+            ),
+        )
         _schema_compat_succeeded = core_ok
         _coalition_members_table_cache = None
         _table_column_cache.clear()
