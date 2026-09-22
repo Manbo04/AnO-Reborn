@@ -14,13 +14,73 @@ import base64
 load_dotenv()
 
 
+import ipaddress
+
+# Cloudflare's own published edge IP ranges (https://www.cloudflare.com/ips/,
+# fetched 2026-09-23 -- changes rarely, but re-verify periodically). Used
+# only to decide whether CF-Connecting-IP is safe to trust (see below), not
+# for anything security-authoritative beyond that.
+_CLOUDFLARE_RANGES = [
+    ipaddress.ip_network(cidr)
+    for cidr in [
+        "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22",
+        "103.31.4.0/22", "141.101.64.0/18", "108.162.192.0/18",
+        "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22",
+        "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+        "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+        "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32",
+        "2405:b500::/32", "2405:8100::/32", "2a06:98c0::/29",
+        "2c0f:f248::/32",
+    ]
+]
+
+
+def _is_cloudflare_ip(ip_str):
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    return any(ip in net for net in _CLOUDFLARE_RANGES)
+
+
 def client_ip_from_request() -> str | None:
     """Resolve client IP.
 
-    app.py's ProxyFix(x_for=1) already rewrites request.remote_addr from
-    X-Forwarded-For's single trusted hop (Railway's proxy), so reading the
-    raw header here would let a client spoof it via extra fake hops.
+    FIXED 2026-09-23 (found live during the account-cross-contamination
+    investigation): the app is Cloudflare-fronted in front of Railway's
+    own edge -- Railway's own internal ingress always appends one extra
+    constant hop of its own (confirmed empirically) on top of whatever
+    Cloudflare added, so app.py's old ProxyFix(x_for=1) resolved
+    request.remote_addr to Railway's own internal hop IP for EVERY
+    visitor, not the real client -- confirmed live: every visitor
+    resolved to the same handful of addresses (previously misread as a
+    "shared mobile-carrier CGNAT pool" across multiple unrelated
+    investigations). Bumping x_for further doesn't fix it either --
+    Cloudflare's edge-to-origin routing for this app doesn't reliably
+    carry the original client IP in X-Forwarded-For at all (confirmed via
+    a real IPv6 client whose address never appeared in the header chain).
+
+    Cloudflare provides CF-Connecting-IP specifically for this: a single
+    header it sets to the true client IP on every proxied request,
+    deliberately not relying on X-Forwarded-For chain length/order. BUT
+    it is fully spoofable by anyone who bypasses Cloudflare and hits
+    Railway's own public *.up.railway.app fallback domain directly --
+    confirmed live: a forged CF-Connecting-IP sent to that domain was
+    reflected back verbatim. So it's only safe to trust when the request
+    demonstrably came through Cloudflare: check that the hop Railway's
+    own edge says it received the connection FROM (the entry immediately
+    before Railway's own constant internal hop in X-Forwarded-For) falls
+    within Cloudflare's published IP ranges. If that doesn't hold (no
+    CF-Connecting-IP, chain too short, or that hop isn't Cloudflare's),
+    fall back to ProxyFix's already-resolved remote_addr -- the same
+    (currently imperfect, but never worse) behavior as before this fix.
     """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    xff = request.headers.get("X-Forwarded-For")
+    if cf_ip and xff:
+        hops = [h.strip() for h in xff.split(",") if h.strip()]
+        if len(hops) >= 2 and _is_cloudflare_ip(hops[-2]):
+            return cf_ip
     return request.remote_addr
 
 
