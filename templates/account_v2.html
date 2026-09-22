@@ -27,7 +27,7 @@
                         </tr>
                         <tr>
                             <td>Email:</td>
-                            <td>{{ user["email"] }}</td>
+                            <td>{{ user["email"] | mask_email }}</td>
                             <td><input class="loginsignupinput" name="email" placeholder="New email" /></td>
                         </tr>
                         <tr>

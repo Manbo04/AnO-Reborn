@@ -403,6 +403,24 @@
 
     </div>
     {% if session.get('user_id') != None %}
+    <div class="identity-banner" role="status" aria-live="polite">
+        Logged in as <strong>{{ country_name }}</strong> &middot; not you?
+        <a href="/logout">Log out</a>
+    </div>
+    <style>
+        .identity-banner {
+            background: var(--game-surface-2, #1a2035);
+            color: var(--game-text-secondary, #a0a8c0);
+            font-size: 0.82rem;
+            text-align: center;
+            padding: 4px 10px;
+            border-bottom: 1px solid var(--game-border, #2a3150);
+        }
+        .identity-banner strong { color: var(--game-text-primary, #fff); }
+        .identity-banner a { color: var(--game-accent, #7dd3fc); text-decoration: underline; margin-left: 4px; }
+    </style>
+    {% endif %}
+    {% if session.get('user_id') != None %}
     <div class="menubardiv" id="menubardiv">
 
         <h3>Internal Affairs</h3>

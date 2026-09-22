@@ -1001,6 +1001,25 @@ def create_app():
             return (words[0][0] + words[1][0]).upper()
         return str(name)[:2].upper()
 
+    @app.template_filter()
+    def mask_email(email):
+        """"someone@example.com" -> "s***e@e***e.com". Defense-in-depth for
+        the account-cross-contamination investigation: reduces the blast
+        radius of any future wrong-account display while the actual
+        mechanism is still being traced, without hiding the account's
+        identity entirely (first/last char kept so the real owner can still
+        recognize their own address)."""
+        if not email or "@" not in str(email):
+            return email
+        local, _, domain = str(email).partition("@")
+        def _mask(s):
+            if len(s) <= 2:
+                return s[0] + "*" * max(len(s) - 1, 1)
+            return s[0] + "*" * (len(s) - 2) + s[-1]
+        domain_name, _, tld = domain.rpartition(".")
+        masked_domain = (_mask(domain_name) + "." + tld) if domain_name else _mask(domain)
+        return _mask(local) + "@" + masked_domain
+
     # --- RESTORED JINJA2 FILTERS ---
     @app.template_filter()
     def commas(value):
