@@ -1123,9 +1123,49 @@ def update_info():
 
 # TODO: check if you can DELETE with one statement
 def delete_own_account():
+    """FIXED 2026-09-23: found live while auditing countries.py during the
+    account cross-contamination investigation -- unrelated bug, but a
+    real, serious gap directly in that investigation's blast radius.
+    This is a strictly MORE destructive action than reset_account right
+    above it (permanently deletes the users row itself, not just game
+    progress) yet had NONE of that route's protection: reset_account was
+    hardened after a real 2026-09-05 incident where a stolen session
+    cookie alone was enough to trigger destructive actions with a single
+    POST, requiring the account's current password for either reset
+    type. delete_own_account still only checked login_required -- the
+    "type your username to confirm" step in the UI (templates/
+    account_v2.html / account.html) is client-side JavaScript only, never
+    re-checked server-side, so it provides zero real protection against
+    an attacker who already holds a valid session cookie (via a leaked/
+    stolen cookie, or, notably, exactly the class of bug this session's
+    cache_response fix closed) and can just POST directly. Now requires
+    the account's current password, same as reset_account.
+    """
+    import bcrypt
+    from flask import request
+    from helpers import error
+
     cId = session["user_id"]
+
+    confirm_password = request.form.get("confirm_password")
+    if not confirm_password:
+        return error(400, "Confirm your password to delete your account")
+    with get_request_cursor() as db:
+        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+    if not row or not row[0]:
+        return error(500, "Account data is missing. Please contact support.")
+    try:
+        password_ok = bcrypt.checkpw(
+            confirm_password.encode("utf-8"), row[0].encode("utf-8")
+        )
+    except Exception:
+        password_ok = False
+    if not password_ok:
+        return error(400, "Confirm your password to delete your account")
+
     from repositories.country_repository import CountryRepository
-    
+
     CountryRepository.delete_own_account(cId)
     session.clear()
     return redirect("/")

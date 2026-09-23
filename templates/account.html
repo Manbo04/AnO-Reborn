@@ -267,6 +267,10 @@
             <label>Type your country name to confirm: <strong>{{ user.username }}</strong></label>
             <input type="text" id="deleteConfirmInput" placeholder="Enter country name" />
         </div>
+        <div class="modal-input">
+            <label>Enter your password to confirm</label>
+            <input type="password" id="deleteConfirmPassword" placeholder="Password" autocomplete="current-password" />
+        </div>
         <div class="modal-buttons">
             <button onclick="closeDeleteModal()" class="templatedivbutton">Cancel</button>
             <button onclick="executeDelete()" class="templatedivbutton redactionbutton" id="confirmDeleteBtn" disabled>Delete Forever</button>
@@ -504,6 +508,7 @@ const expectedName = {{ user.username | tojson }};
 function confirmDeleteAccount() {
     document.getElementById('deleteAccountModal').style.display = 'flex';
     document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('deleteConfirmPassword').value = '';
     document.getElementById('confirmDeleteBtn').disabled = true;
 }
 
@@ -519,13 +524,19 @@ function closeLogoutModal() {
     document.getElementById('logoutModal').style.display = 'none';
 }
 
-document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+function updateDeleteBtnState() {
     const btn = document.getElementById('confirmDeleteBtn');
-    btn.disabled = this.value !== expectedName;
-});
+    const nameOk = document.getElementById('deleteConfirmInput').value === expectedName;
+    const pwOk = document.getElementById('deleteConfirmPassword').value.length > 0;
+    btn.disabled = !(nameOk && pwOk);
+}
+
+document.getElementById('deleteConfirmInput').addEventListener('input', updateDeleteBtnState);
+document.getElementById('deleteConfirmPassword').addEventListener('input', updateDeleteBtnState);
 
 function executeDelete() {
-    if (document.getElementById('deleteConfirmInput').value === expectedName) {
+    const password = document.getElementById('deleteConfirmPassword').value;
+    if (document.getElementById('deleteConfirmInput').value === expectedName && password) {
         // Create and submit form to delete account
         const form = document.createElement('form');
         form.method = 'POST';
@@ -535,6 +546,11 @@ function executeDelete() {
         csrf.name = 'csrf_token';
         csrf.value = '{% if csrf_token is defined %}{{ csrf_token() }}{% endif %}';
         form.appendChild(csrf);
+        const pwField = document.createElement('input');
+        pwField.type = 'hidden';
+        pwField.name = 'confirm_password';
+        pwField.value = password;
+        form.appendChild(pwField);
         document.body.appendChild(form);
         form.submit();
     }
