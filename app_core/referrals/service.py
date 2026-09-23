@@ -228,15 +228,32 @@ def try_grant_milestones(db, referred_user_id: int) -> list[dict[str, Any]]:
         rewards = MILESTONE_REWARDS.get(milestone_days, {})
         if not rewards:
             continue
+        # FIXED 2026-09-23: this function runs from app.py's before_request
+        # on every request once a per-session 2-minute throttle elapses --
+        # NOT a per-request-serialized DB throttle, so multiple concurrent
+        # requests from the same browser (a single page load fires many in
+        # parallel, confirmed via this session's own load-testing) can all
+        # read the same stale session timestamp and all reach here at once.
+        # The INSERT below is ON CONFLICT DO NOTHING for idempotency, but
+        # the old code never checked whether ITS OWN insert actually won
+        # that race before paying out -- every concurrent caller would
+        # unconditionally call _apply_rewards() regardless, double- (or
+        # N-times-) paying the referrer for one milestone. RETURNING id
+        # makes this atomic: only the caller whose insert actually landed a
+        # new row proceeds to pay out.
         db.execute(
             """
             INSERT INTO referral_milestone_payouts
               (referrer_user_id, referred_user_id, milestone_days)
             VALUES (%s, %s, %s)
             ON CONFLICT DO NOTHING
+            RETURNING id
             """,
             (referrer_id, referred_user_id, milestone_days),
         )
+        if db.fetchone() is None:
+            # Lost the race to a concurrent caller -- they already paid it.
+            continue
         granted = _apply_rewards(db, referrer_id, rewards)
         payouts.append(
             {
