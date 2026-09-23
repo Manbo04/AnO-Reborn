@@ -325,7 +325,12 @@ def create_app():
                     except Exception: pass
                     session.clear()
                     return redirect("/login")
-        if user_id:
+        # Skipped during admin "view as": user_id is the impersonated player
+        # here, and this ping is a real write on their behalf -- it would
+        # mark them "online now" and count an admin's browsing as one of
+        # their referral active days (process_referral_activity), which can
+        # pay their inviter a milestone reward they never earned.
+        if user_id and not session.get("_real_admin_id"):
             now = time()
             last_ping = session.get("_last_active_ping", 0)
             # Must stay well under the 5-minute window _hub_context() uses for
