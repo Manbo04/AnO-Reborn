@@ -704,7 +704,7 @@ def warResult():
             prev_attacker = dict(attacker.selected_units)
             db.execute(
                 (
-                    "SELECT war_type FROM wars "
+                    "SELECT id, war_type FROM wars "
                     "WHERE ((attacker=%s AND defender=%s) "
                     "OR (attacker=%s AND defender=%s)) "
                     "AND peace_date IS NULL"
@@ -719,7 +719,64 @@ def warResult():
             war_rows = db.fetchall()
             if not war_rows:
                 return error(500, "Something went wrong")
-            war_type = war_rows[-1][0]
+            war_id_for_guard, war_type = war_rows[-1]
+
+            # FIXED 2026-09-23: found live while auditing wars/ during the
+            # account cross-contamination investigation -- unrelated bug,
+            # real replay/double-resolution race. attack_units/enemy_id/
+            # war_domain live in the client-side signed session cookie
+            # (this app has no server-side session store -- confirmed no
+            # SESSION_TYPE/Flask-Session config), so session.pop()'ing them
+            # at the end of this GET route does NOT stop a second,
+            # concurrent request carrying the SAME still-valid stale cookie
+            # (double-click, browser back+resubmit, two tabs) from also
+            # reading the identical attack_units and re-entering this
+            # branch. Military.fight() -> persist_fight_results() applies
+            # casualties AND, if morale drops to 0, a full war-ending
+            # resource transfer from loser to winner -- via its OWN
+            # independent connection that commits immediately, with no
+            # lock and no per-attack idempotency token. A replayed request
+            # could apply a second, spurious round of casualties/looting
+            # for a single attack the player only meant to submit once.
+            #
+            # There's no existing per-attack nonce to key an idempotency
+            # check on. wars.last_visited looked like a reusable timestamp
+            # for a one-shot debounce gate, but it's a `real` (single-
+            # precision float) column -- accurate to ~7 significant digits,
+            # too coarse to represent a current Unix timestamp (~10 digits)
+            # precisely enough for a sub-second comparison, confirmed
+            # empirically (an intended 1-second-window check behaved
+            # unpredictably due to rounding, not an actual locking
+            # problem). Added migrations/0081 for a dedicated
+            # last_attack_resolved_at DOUBLE PRECISION column instead of
+            # reusing/altering last_visited's existing informational use.
+            # A WHERE-guarded UPDATE against that column only succeeds once
+            # inside a 1-second window for this war; Postgres serializes
+            # concurrent UPDATEs to the same row (the second blocks, then
+            # re-evaluates its WHERE against the just-committed fresh
+            # value), so a genuine race is rejected here, before any
+            # combat resolution or casualties are ever applied. Legitimate
+            # sequential attacks (which need multiple full page
+            # round-trips through warChoose/warAmount first) are far
+            # enough apart not to collide with this window.
+            now_ts = time.time()
+            db.execute(
+                """
+                UPDATE wars SET last_attack_resolved_at = %s
+                WHERE id = %s
+                  AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
+                RETURNING id
+                """,
+                (now_ts, war_id_for_guard, now_ts),
+            )
+            if not db.fetchone():
+                session.pop("attack_units", None)
+                session.pop("enemy_id", None)
+                session.pop("war_domain", None)
+                return error(
+                    400,
+                    "This attack was already resolved. Please start a new attack.",
+                )
             try:
                 winner, win_condition, attack_effects = Military.fight(
                     attacker, defender
