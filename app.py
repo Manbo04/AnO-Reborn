@@ -396,7 +396,11 @@ def create_app():
             client_ip = request.remote_addr
             ua = request.headers.get("User-Agent", "")
             logger.info("SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s", request.method, request.path, elapsed, client_ip, ua[:200])
-        if request.path.startswith("/static/"):
+        # status_code < 400: a /static/ path can still produce an error page
+        # (404 for a missing asset, or before_request's ban/kick 403 page,
+        # which renders for whatever path triggered it). Those are per-user
+        # or transient and must never be handed to a shared cache for a week.
+        if request.path.startswith("/static/") and response.status_code < 400:
             if request.path.endswith((".css", ".js")):
                 response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
             else:
@@ -713,6 +717,20 @@ def create_app():
 
     environment = os.getenv("ENVIRONMENT", "DEV")
     app.secret_key = config.get_secret_key()
+
+    # Never let a live session cookie ride on a response that shared caches
+    # (Cloudflare, carrier/corporate proxies) are told they may store and
+    # replay -- see app_core/auth/session_interface.py for the full write-up.
+    # Every login path here sets session.permanent = True and
+    # SESSION_REFRESH_EACH_REQUEST defaults to True, so without this Flask
+    # re-issues the player's real signed cookie on EVERY response, including
+    # the /static/*.css|.js assets that after_request below marks
+    # `Cache-Control: public, max-age=3600` -- fetched by every browser on
+    # essentially every page view, so whichever logged-in player filled a
+    # shared cache entry donated their live session to everyone served it.
+    from app_core.auth.session_interface import PublicCacheSafeSessionInterface
+
+    app.session_interface = PublicCacheSafeSessionInterface()
 
     from flask_wtf.csrf import CSRFProtect, CSRFError
 
