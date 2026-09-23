@@ -227,22 +227,6 @@ def tutorial():
         tutorial_constants=tutorial_constants,
     )
 
-@bp.route("/dev/reset_tutorial", methods=["GET"])
-@login_required
-def dev_reset_tutorial():
-    from database import get_request_cursor
-    try:
-        user_id = session["user_id"]
-        with get_request_cursor() as db:
-            # 1. Ensure the column exists on production!
-            db.execute("ALTER TABLE stats ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0")
-            # 2. Reset the tutorial for the user
-            db.execute("UPDATE stats SET tutorial_step = 0, tutorial_chapters_claimed = '{}', tutorial_graduated_at = NULL WHERE id = %s", (user_id,))
-        return "Migration applied and tutorial reset! Go to /provinces"
-    except Exception as e:
-        import traceback
-        return f"Error: {str(e)}<br><pre>{traceback.format_exc()}</pre>"
-
 @bp.route("/mechanics", methods=["GET"])
 def mechanics(): return render_template("mechanics.html")
 
