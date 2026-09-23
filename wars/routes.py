@@ -896,7 +896,25 @@ def declare_war():
             )
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
-            
+
+            # FIXED 2026-09-23: found live while auditing wars/ during the
+            # account cross-contamination investigation -- unrelated bug,
+            # real duplicate-war race. Unlike establish_coalition's similar
+            # SELECT-then-INSERT check (protected by a real DB UNIQUE
+            # constraint), `wars` has no constraint on (attacker, defender)
+            # at all -- two concurrent declare_war calls for the same pair
+            # (in either attacker/defender order) could both pass the
+            # "not already at war" check below before either commits,
+            # creating two simultaneous active war rows between the same
+            # two nations. That doubles the attacker's total
+            # attacker_supplies/attacker_morale pool for the ground-war
+            # flow (warChoose/warAmount), and a peace offer accepted on one
+            # war row would leave the other one silently still active.
+            # Locked on both nation ids (LEAST/GREATEST so it serializes
+            # regardless of which side calls first) to close the race.
+            lo_id, hi_id = min(attacker.id, defender.id), max(attacker.id, defender.id)
+            db.execute("SELECT pg_advisory_xact_lock(%s, %s)", (lo_id, hi_id))
+
             # Treaties check: Prevent war if an active Non-Aggression pact exists
             db.execute(
                 """
