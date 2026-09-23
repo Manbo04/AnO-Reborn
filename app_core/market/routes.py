@@ -508,17 +508,31 @@ def accept_trade(trade_id):
                 except Exception as exc:
                     report_trade_error("accept_trade: transactional buy failed", exc=exc)
                     return error(400, "Trade acceptance failed")
+
+            # FIXED 2026-09-23: found live while auditing app_core/market/
+            # during the account cross-contamination investigation --
+            # unrelated bug, real double-accept race. try_lock_trade() uses
+            # a SESSION-level pg_try_advisory_lock (not the transaction-
+            # scoped pg_advisory_xact_lock used everywhere else in this
+            # codebase), explicitly released below in `finally`. This
+            # delete_trade_by_id() call used to happen AFTER that finally
+            # block -- meaning the lock was released while the trade row
+            # (the actual idempotency marker) still existed, opening a real
+            # window: a second accept_trade call (double-click, two tabs)
+            # could acquire the now-free lock, find the trade still
+            # present via get_trade_by_id(), and run the entire resource/
+            # gold transfer a second time for one trade offer, all before
+            # either request got around to deleting the row. Moved inside
+            # this same try block so the row is gone before the lock is
+            # ever released -- a second racer's get_trade_by_id() then
+            # correctly finds nothing.
+            delete_trade_by_id(db, trade_id)
         finally:
             if lock_acquired:
                 try:
                     unlock_trade(db, trade_id)
                 except Exception:
                     pass
-
-        try:
-            delete_trade_by_id(db, trade_id)
-        except Exception:
-            pass
 
         _offerer_username = get_username(db, offerer)
         _offeree_username = get_username(db, offeree)

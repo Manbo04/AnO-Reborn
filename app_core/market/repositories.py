@@ -257,10 +257,28 @@ def unlock_trade(db, trade_id):
     db.execute("SELECT pg_advisory_unlock(%s)", (int(trade_id),))
 
 def get_trade_by_id(db, trade_id):
+    """FIXED 2026-09-23: found live while auditing app_core/market/ during
+    the account cross-contamination investigation -- unrelated bug, real
+    double-accept race in accept_trade() (see its route in routes.py).
+    try_lock_trade()'s pg_try_advisory_lock is SESSION-scoped, released
+    immediately by unlock_trade() -- NOT tied to the surrounding
+    transaction's commit. A plain (non-locking) SELECT here meant a second
+    concurrent accept_trade call could see the trade row as still present
+    even after the first call's delete_trade_by_id(), because under READ
+    COMMITTED a plain SELECT never waits on another session's uncommitted
+    changes -- it just reads the last COMMITTED snapshot, and that DELETE
+    doesn't commit until the whole request's transaction ends at teardown,
+    well after unlock_trade() already ran. Adding FOR UPDATE makes the
+    real Postgres row lock the actual correctness mechanism (the advisory
+    lock remains a fast, non-blocking "already busy" UX layer on top): a
+    second racer's FOR UPDATE blocks on the first's held lock and, once
+    unblocked by the first's commit, re-reads the fresh (deleted) state --
+    same idiom get_offer_by_id() in this same file already uses correctly.
+    """
     db.execute(
         (
             "SELECT offeree, type, offerer, resource, amount, price "
-            "FROM trades WHERE offer_id=%s"
+            "FROM trades WHERE offer_id=%s FOR UPDATE"
         ),
         (trade_id,),
     )
