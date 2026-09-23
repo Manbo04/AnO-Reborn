@@ -120,6 +120,18 @@ class QueryCache:
                 self.cache = {k: v for k, v in self.cache.items() if pattern not in k}
 
 
+def _response_from_snapshot(snapshot):
+    """Build a brand-new Werkzeug/Flask Response from a cache_response()
+    snapshot (body bytes, status, header list) -- never the shared object
+    stored in the cache itself. See cache_response()'s docstring for why
+    handing back the literal cached object is unsafe (Flask's own
+    session-cookie logic mutates whatever object a view "returns")."""
+    from flask import Response
+
+    body, status, headers = snapshot
+    return Response(body, status=status, headers=headers)
+
+
 def cache_response(ttl_seconds=60, public=False):
     """
     Decorator to cache full page responses
@@ -175,7 +187,7 @@ def cache_response(ttl_seconds=60, public=False):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Create cache key from function name and user session
-            from flask import session, request
+            from flask import session, request, current_app
 
             user_id = "public" if public else session.get("user_id", "anon")
             # Include full URL with query string so different
@@ -187,10 +199,10 @@ def cache_response(ttl_seconds=60, public=False):
             with lock:
                 entry = cache.get(cache_key)
                 if entry is not None:
-                    response, timestamp = entry
+                    snapshot, timestamp = entry
                     if time() - timestamp < ttl_seconds:
                         cache.move_to_end(cache_key)
-                        return response
+                        return _response_from_snapshot(snapshot)
                     try:
                         del cache[cache_key]
                     except KeyError:
@@ -200,25 +212,62 @@ def cache_response(ttl_seconds=60, public=False):
             # queries/rendering, must not block other requests' cache hits).
             response = f(*args, **kwargs)
 
+            # FIXED 2026-09-23: found live while chasing the account
+            # cross-contamination investigation -- this decorator used to
+            # cache and hand back the literal response object `f()`
+            # returned. For a view returning a real, mutable Werkzeug
+            # Response (jsonify()/make_response() -- an immutable string
+            # or tuple return value is safe, since Flask builds a fresh
+            # Response from those on every call regardless of caching),
+            # every cache hit returned that SAME object instance.
+            # Flask's own session-cookie-refresh logic
+            # (SecureCookieSessionInterface.save_session) then calls
+            # response.set_cookie() on whatever object a view "returns"
+            # -- including this cache's shared one -- on every request
+            # from a logged-in user, since every login path in this app
+            # sets session.permanent = True and
+            # SESSION_REFRESH_EACH_REQUEST defaults to True (never
+            # overridden here). Werkzeug's set_cookie() APPENDS to the
+            # Set-Cookie header (headers.add(), confirmed against the
+            # installed werkzeug source) rather than replacing it. For a
+            # public=True view -- shared across ALL users, not just one
+            # -- this meant a single cached response object could
+            # accumulate multiple different users' valid signed session
+            # cookies over its cache lifetime, all sent out together to
+            # whoever's request happened to hit that cache entry next: a
+            # real, load-bearing candidate mechanism for players getting
+            # logged into each other's accounts, consistent with it only
+            # showing up under concurrent real traffic. Fixed by never
+            # storing or returning the literal response object again:
+            # normalize to a Response and snapshot its body/status/headers
+            # (real, immutable byte data) into the cache, and always
+            # rehydrate a brand-new Response from that snapshot on every
+            # return path -- so anything downstream (Flask's own
+            # post-processing) can only ever mutate a private, single-use
+            # object. The entry sitting in `cache` itself is never
+            # touched again after it's stored.
+            normalized = current_app.make_response(response)
+
             # Do not cache error responses (avoids serving stale 500s after fixes)
-            status_code = 200
-            if isinstance(response, tuple) and len(response) > 1:
-                status_code = response[1]
-            elif hasattr(response, "status_code"):
-                status_code = response.status_code
-            if status_code >= 400:
-                return response
+            if normalized.status_code >= 400:
+                return normalized
+
+            snapshot = (
+                normalized.get_data(),
+                normalized.status_code,
+                list(normalized.headers),
+            )
 
             # Cache the response
             with lock:
-                cache[cache_key] = (response, time())
+                cache[cache_key] = (snapshot, time())
                 cache.move_to_end(cache_key)
                 # Best-effort cleanup to keep memory bounded.
                 now_ts = time()
                 if len(cache) > max_entries:
                     _evict_expired_entries(now_ts)
                 _enforce_size_limit()
-            return response
+            return _response_from_snapshot(snapshot)
 
         # Expose the internal cache and invalidation helpers on the decorated
         # function so callers (routes/handlers) can invalidate cached pages
