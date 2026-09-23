@@ -140,14 +140,26 @@ def debug_leviathan():
     except Exception as e:
         return f"Database Error: {e}", 500
 
-@admin_bp.route("/admin/debug/exploits")
+@admin_bp.route("/admin/debug/exploits", methods=["GET", "POST"])
 @login_required
 def debug_exploits():
+    """FIXED 2026-09-23: the wipe action zeroes suspicious gold/resources/
+    coalition banks SERVER-WIDE (not scoped to one player). It used to
+    trigger off a bare GET query param (?wipe=true), gated only by an
+    authenticated admin session with no secondary secret -- unlike
+    debug_leviathan's wipe, which requires knowing ADMIN_WIPE_SECRET.
+    Flask-WTF's CSRFProtect (app.py) only covers POST/PUT/PATCH/DELETE by
+    default, so a GET-triggered wipe was invisible to CSRF protection: any
+    admin visiting a crafted link or <img> tag while logged in would
+    silently trigger the wipe. No template linked to this endpoint, so
+    moving the wipe to POST (now CSRF-token-protected, matching every
+    other destructive action in this module) breaks nothing.
+    """
     denied = _require_admin_diag_or_session()
     if denied:
         return denied
     try:
-        wipe = request.args.get("wipe") == "true"
+        wipe = request.method == "POST" and request.form.get("wipe") == "true"
         data = AdminRepository.get_exploits_debug(wipe)
         if wipe:
             return jsonify({"status": "Wiped all suspicious users and banks across the entire server!"})
