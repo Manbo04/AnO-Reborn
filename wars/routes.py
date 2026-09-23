@@ -634,6 +634,43 @@ def warTarget():
                 400,
                 "Attack session expired. Please start again.",
             )
+
+        # FIXED 2026-09-23: same replay race as warResult() (see its
+        # docstring for the full mechanism) -- attack_units is sourced
+        # from the client-side signed session cookie with no server-side
+        # session store, and this POST route has no idempotency check
+        # before Military.special_fight() applies casualties/infra damage
+        # and decrements the attacker's special unit via its own
+        # independent, immediately-committing connection. A double-click
+        # or resubmitted POST carrying the same still-valid stale cookie
+        # could apply a second round of damage from a single special
+        # attack (e.g. a nuke/ICBM sent via this legacy special-unit path,
+        # separate from the dedicated /nuclear_strike route also fixed
+        # this session). Reuses the same wars.last_attack_resolved_at gate
+        # (migrations/0081) added for warResult -- one shared "has this
+        # war's most recent attack already been resolved" gate covers
+        # both paths a war's combat can be resolved through.
+        if attack_units.war_id is not None:
+            now_ts = time.time()
+            with get_request_cursor() as db:
+                db.execute(
+                    """
+                    UPDATE wars SET last_attack_resolved_at = %s
+                    WHERE id = %s
+                      AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
+                    RETURNING id
+                    """,
+                    (now_ts, attack_units.war_id, now_ts),
+                )
+                if not db.fetchone():
+                    session.pop("attack_units", None)
+                    session.pop("enemy_id", None)
+                    session.pop("war_domain", None)
+                    return error(
+                        400,
+                        "This attack was already resolved. Please start a new attack.",
+                    )
+
         special_fight_result = Military.special_fight(
             attack_units, defender, defender.selected_units_list[0]
         )
