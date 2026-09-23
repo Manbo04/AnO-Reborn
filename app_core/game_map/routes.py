@@ -1,3 +1,4 @@
+import hmac
 import os
 import math
 from flask import Blueprint, render_template, session, jsonify, request, redirect, abort
@@ -145,8 +146,23 @@ def _hex_neighbors(q: int, r: int) -> list[tuple[int, int]]:
 
 @bp.route("/game_map/<path:token>")
 def game_map_auth(token: str):
-    """Visit this URL once to unlock access to /game_map in the current session."""
-    if token == GAME_MAP_TOKEN:
+    """Visit this URL once to unlock access to /game_map in the current session.
+
+    FIXED 2026-09-23: found live while auditing app_core/game_map/ during
+    the account cross-contamination investigation -- unrelated bug, but a
+    real hardening gap directly in the same "secret token gates access"
+    family as the 09-13 fix noted above this file's GAME_MAP_TOKEN default.
+    `token == GAME_MAP_TOKEN` is a plain string comparison, not
+    constant-time -- Python short-circuits on the first mismatched
+    character, so response timing leaks how many leading characters of a
+    guess are correct, letting an attacker recover the real token faster
+    than brute force. Every other secret-token comparison in this
+    codebase (app_core/admin/guards.py, app_core/market/routes.py's wipe
+    secrets, etc.) already uses hmac.compare_digest for exactly this
+    reason -- this one was just missed. The empty-string GAME_MAP_TOKEN
+    default is unaffected and still correctly fails closed either way.
+    """
+    if hmac.compare_digest(token, GAME_MAP_TOKEN):
         session["game_map_authorized"] = True
         return redirect("/game_map")
     abort(404)
