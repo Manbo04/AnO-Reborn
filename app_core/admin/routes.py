@@ -14,6 +14,17 @@ from .repositories import AdminRepository
 
 admin_bp = Blueprint('admin', __name__)
 
+# Multi-step war flow state (wars/routes.py) that /warResult consumes on a
+# plain GET -- which view-as does not block. Dropped on view-as start/exit
+# so an attack staged under one identity can never resolve under the
+# other (e.g. the admin's own staged attack firing as the viewed player).
+_WAR_FLOW_SESSION_KEYS = ("attack_units", "enemy_id", "war_domain", "from_wartarget")
+
+
+def _clear_war_flow_session():
+    for key in _WAR_FLOW_SESSION_KEYS:
+        session.pop(key, None)
+
 
 def _require_admin_diag_or_session():
     if not admin_diag_or_session(session.get("user_id")):
@@ -276,6 +287,7 @@ def admin_view_as():
     err_res = process_start_view_as(session["user_id"], target_user_id, reason)
     if err_res: return err_res
 
+    _clear_war_flow_session()
     session["_real_admin_id"] = session["user_id"]
     session["_view_as_reason"] = reason
     session["_view_as_started_at"] = time()
@@ -297,6 +309,7 @@ def admin_view_as_exit():
     started_at = session.get("_view_as_started_at")
     finish_view_as(real_admin_id, target_user_id, started_at, auto_expired=False)
 
+    _clear_war_flow_session()
     session["user_id"] = real_admin_id
     session.pop("_real_admin_id", None)
     session.pop("_view_as_reason", None)

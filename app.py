@@ -197,6 +197,9 @@ def create_app():
                         "finish_view_as (auto-expiry) failed for admin=%s target=%s",
                         real_admin_id, user_id,
                     )
+                from app_core.admin.routes import _clear_war_flow_session
+
+                _clear_war_flow_session()
                 session["user_id"] = real_admin_id
                 user_id = real_admin_id
                 session.pop("_real_admin_id", None)
