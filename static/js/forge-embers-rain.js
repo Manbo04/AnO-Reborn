@@ -84,7 +84,30 @@
         }
 
         resize();
-        window.addEventListener('resize', resize);
+        // Mobile browsers fire 'resize' every time the address bar shows or
+        // hides during a scroll. resize() reallocates the canvas (wiping it)
+        // and restarts every particle, which read as the whole page
+        // glitching/tearing mid-scroll (player recording 2026-09-23). Only a
+        // real width change (rotation, window resize) re-lays it out.
+        var lastWidth = window.innerWidth;
+        window.addEventListener('resize', function () {
+            if (window.innerWidth === lastWidth) return;
+            lastWidth = window.innerWidth;
+            resize();
+        });
+
+        // Touch devices: pause drawing while the page is scrolling so the
+        // canvas repaints don't compete with the scroll itself.
+        if (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+            var resumeTimer = null;
+            window.addEventListener('scroll', function () {
+                stop();
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(function () {
+                    if (!document.hidden) start();
+                }, 200);
+            }, { passive: true });
+        }
         document.addEventListener('visibilitychange', function () {
             if (document.hidden) {
                 stop();

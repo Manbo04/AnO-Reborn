@@ -121,3 +121,40 @@ html.has-touch.game-reduced-motion .touch-active {
 [data-swipe-nav] {
     touch-action: pan-y;
 }
+
+/* ---------------------------------------------------------------------
+   Touch-device scroll performance (player screen recording 2026-09-23:
+   page tearing / cards flashing blank while scrolling on Android Chrome).
+   Everything below animated a property that forces a full repaint on
+   EVERY frame, on top of the scroll itself:
+   - .game-page-bg: an infinite Ken Burns scale() on a full-screen layer
+     that also has filter: blur(7px) -> the blur is re-rasterised
+     continuously. Kept the photo, blur and tint; only the motion stops.
+   - Theme overlays animating background-position (forge drips,
+     cyberpunk scanlines) -> full-viewport repaint per frame.
+   - Theme "pulse" animating box-shadow on every .game-glass panel ->
+     every card on the page repaints per frame. Glow stays, static.
+   - mix-blend-mode: screen on the fixed full-screen FX canvases forces
+     everything under them to be re-composited each frame.
+   Transform/opacity-only beams are cheap on the compositor and stay.
+   !important because the cosmetics-* files load after this one. */
+@media (hover: none) and (pointer: coarse) {
+    .game-page-bg {
+        animation: none !important;
+        transform: none !important;
+        background-attachment: scroll !important;
+    }
+
+    body[class*="-theme"] .game-page-overlay,
+    body[class*="-theme"] .game-glass,
+    .bg-molten-forge {
+        animation: none !important;
+    }
+
+    body[class*="-theme"] .forge-embers-canvas,
+    body[class*="-theme"] .cyberpunk-matrix-canvas,
+    body[class*="-theme"] .imperial-gold-dust-canvas,
+    body[class*="-theme"] .bloodshed-glitch-canvas {
+        mix-blend-mode: normal !important;
+    }
+}

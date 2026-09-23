@@ -21,13 +21,13 @@
 <div class="game-page-overlay"></div>
 {% if cId|string == "1" %}
 <canvas id="cyberpunk-matrix-canvas" class="cyberpunk-matrix-canvas" aria-hidden="true"></canvas>
-<script src="{{ url_for('static', filename='js/cyberpunk-matrix-rain.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cyberpunk-matrix-rain.js') }}?v={{ asset_version }}"></script>
 {% elif cId|string == "69697588" %}
 <canvas id="forge-embers-canvas" class="forge-embers-canvas" aria-hidden="true"></canvas>
-<script src="{{ url_for('static', filename='js/forge-embers-rain.js') }}"></script>
+<script src="{{ url_for('static', filename='js/forge-embers-rain.js') }}?v={{ asset_version }}"></script>
 {% elif cId|string == "69697644" %}
 <canvas id="bloodshed-glitch-canvas" class="bloodshed-glitch-canvas" aria-hidden="true"></canvas>
-<script src="{{ url_for('static', filename='js/bloodshed-glitch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bloodshed-glitch.js') }}?v={{ asset_version }}"></script>
 {% elif cId|string == "781" %}
 <!-- Wind-ripple distortion for the flag background photo above --
      feDisplacementMap needs a noise source (feTurbulence) whose
@@ -46,7 +46,7 @@
     </filter>
 </svg>
 <canvas id="imperial-gold-dust-canvas" class="imperial-gold-dust-canvas" aria-hidden="true"></canvas>
-<script src="{{ url_for('static', filename='js/imperial-gold-dust.js') }}"></script>
+<script src="{{ url_for('static', filename='js/imperial-gold-dust.js') }}?v={{ asset_version }}"></script>
 {% endif %}
 
 <div class="templatediv">
