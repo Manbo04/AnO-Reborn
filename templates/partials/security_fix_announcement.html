@@ -1,0 +1,102 @@
+{# One-time dismissable announcement about the account-mixup security fix.
+   Shows once per browser (localStorage, not time-based) until closed via
+   the X button -- bump ANNOUNCEMENT_VERSION below to re-show a new notice
+   later without touching this template's structure. #}
+<div id="ano-security-announcement" class="ano-security-announcement" role="dialog" aria-label="Site announcement" aria-live="polite" hidden>
+    <div class="ano-security-announcement-inner">
+        <span class="material-icons-outlined ano-security-announcement-icon" aria-hidden="true">verified_user</span>
+        <div class="ano-security-announcement-text">
+            <strong>We found and fixed the account mix-up issue.</strong>
+            Some players were briefly seeing another nation's account while browsing —
+            we took the game offline to investigate, found the real cause, and fixed it.
+            Your nation and data were never touched. Thanks for your patience.
+        </div>
+        <button type="button" id="ano-security-announcement-close" class="ano-security-announcement-close" aria-label="Close announcement">
+            <span class="material-icons-outlined" aria-hidden="true">close</span>
+        </button>
+    </div>
+</div>
+<script>
+(function () {
+    "use strict";
+    var VERSION = "1";
+    var STORAGE_KEY = "ano_announcement_dismissed_v" + VERSION;
+    var banner = document.getElementById("ano-security-announcement");
+    if (!banner) return;
+
+    var dismissed = false;
+    try {
+        dismissed = window.localStorage.getItem(STORAGE_KEY) === "1";
+    } catch (e) {
+        dismissed = false;
+    }
+    if (!dismissed) {
+        banner.hidden = false;
+    }
+
+    var closeBtn = document.getElementById("ano-security-announcement-close");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function () {
+            banner.hidden = true;
+            try {
+                window.localStorage.setItem(STORAGE_KEY, "1");
+            } catch (e) {
+                // Private browsing / storage disabled: banner reappears next
+                // visit, acceptable fallback -- closing it always works for
+                // the current page view regardless.
+            }
+        });
+    }
+})();
+</script>
+<style>
+.ano-security-announcement {
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    background: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    padding: var(--game-space-sm, 10px) var(--game-space-md, 16px);
+}
+.ano-security-announcement-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--game-space-md, 16px);
+}
+.ano-security-announcement-icon {
+    flex: 0 0 auto;
+    color: var(--success, #22c55e);
+    font-size: 22px;
+}
+.ano-security-announcement-text {
+    flex: 1 1 320px;
+    color: var(--colorOne);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+.ano-security-announcement-close {
+    flex: 0 0 auto;
+    background: transparent;
+    border: none;
+    color: var(--colorOne);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    opacity: 0.7;
+}
+.ano-security-announcement-close:hover {
+    opacity: 1;
+    background: var(--border);
+}
+@media (max-width: 600px) {
+    .ano-security-announcement-text {
+        font-size: 0.85rem;
+    }
+}
+</style>

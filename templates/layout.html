@@ -233,6 +233,10 @@
 
     {% include 'partials/cookie_consent.html' %}
 
+    {% if session.get('user_id') %}
+    {% include 'partials/security_fix_announcement.html' %}
+    {% endif %}
+
     {% include 'partials/side_ads.html' %}
 
     <!--
