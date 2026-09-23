@@ -24,14 +24,20 @@ class FakeCursor:
 
     def execute(self, sql, params=None):
         sql_lower = " ".join(sql.lower().split())
-        if "select tutorial_chapters_claimed from stats" in sql_lower:
-            uid = params[0]
+        if "update stats set tutorial_chapters_claimed" in sql_lower:
+            # Atomic _claim_chapter(): check + write in one UPDATE ... RETURNING.
+            idx, uid, _ = params
             row = self.state["stats"][uid]
-            self._last = (row["claimed"],)
-        elif "update stats set tutorial_chapters_claimed = %s, tutorial_step = %s" in sql_lower:
-            claimed, tutorial_step, uid = params
-            self.state["stats"][uid]["claimed"] = list(claimed)
-            self.state["stats"][uid]["tutorial_step"] = tutorial_step
+            if idx in row["claimed"]:
+                self._last = None
+            else:
+                row["claimed"].append(idx)
+                self._last = (list(row["claimed"]),)
+        elif "update stats set tutorial_step = %s" in sql_lower:
+            step, uid, _ = params
+            row = self.state["stats"][uid]
+            if row["tutorial_step"] < step:
+                row["tutorial_step"] = step
         elif "update stats set gold = gold + %s" in sql_lower:
             amount, uid = params
             self.state["stats"][uid]["gold"] += amount

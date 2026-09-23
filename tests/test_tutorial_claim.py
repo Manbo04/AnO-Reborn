@@ -10,24 +10,33 @@ class FakeCursor:
         self._last = None
 
     def execute(self, sql, params=None):
-        sql_lower = sql.lower()
-        if "tutorial_chapters_claimed" in sql_lower and "from stats" in sql_lower:
+        # Emulates the atomic claim statements in app_core/tutorial/routes.py
+        # (_claim_chapter/_claim_graduation): the "not already claimed" check
+        # and the write are one UPDATE ... RETURNING, so fetchone() is None
+        # when the claim was already taken.
+        sql_lower = " ".join(sql.lower().split())
+        if sql_lower.startswith("select 1 from stats"):
             uid = params[0]
-            row = self.state["stats"].setdefault(
-                uid, {"claimed": [], "graduated_at": None, "gold": 0}
-            )
-            self._last = (row["claimed"], row["graduated_at"])
+            self._last = (1,) if uid in self.state["stats"] else None
         elif "update stats set tutorial_chapters_claimed" in sql_lower:
-            uid = params[1]
-            self.state["stats"][uid]["claimed"] = list(params[0])
+            idx, uid, _ = params
+            row = self.state["stats"][uid]
+            if idx in row["claimed"]:
+                self._last = None
+            else:
+                row["claimed"].append(idx)
+                self._last = (list(row["claimed"]),)
         elif "update stats set tutorial_graduated_at" in sql_lower:
             uid = params[0]
-            self.state["stats"][uid]["graduated_at"] = "now"
+            row = self.state["stats"][uid]
+            if row["graduated_at"] is not None:
+                self._last = None
+            else:
+                row["graduated_at"] = "now"
+                self._last = ("now",)
         elif "update stats set gold = gold + %s" in sql_lower:
             amt, uid = params
             self.state["stats"][uid]["gold"] += amt
-        elif "alter table stats" in sql_lower:
-            pass
 
     def fetchone(self):
         return self._last
