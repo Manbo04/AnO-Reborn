@@ -83,6 +83,44 @@ def account():
     )
 
 
+@bp.route("/account/reveal_email", methods=["POST"])
+@login_required
+def reveal_email():
+    """Step-up confirmation before returning the account's real email --
+    same shape as reset_account()/delete_own_account()/twofa_disable()
+    (all require the current password, not just a valid session, per the
+    2026-09-05 incident where a stolen session cookie alone was enough to
+    trigger destructive actions). The account page previously showed
+    mask_email(user.email) to anyone with a valid session; per Dede's
+    request this closes that too -- a leaked/stolen session cookie
+    (exactly the class of bug the cache_response fix closed) should not
+    be enough to read the account's real email either. AJAX endpoint
+    (not a page route): the account page never embeds the real email in
+    its initial HTML anymore, only after this call succeeds.
+    """
+    import bcrypt
+
+    cId = session["user_id"]
+    confirm_password = request.form.get("confirm_password")
+    if not confirm_password:
+        return {"ok": False, "error": "Confirm your password to view your email"}, 400
+
+    with get_request_cursor() as db:
+        db.execute("SELECT hash, email FROM users WHERE id=%s", (cId,))
+        row = db.fetchone()
+    if not row or not row[0]:
+        return {"ok": False, "error": "Account data is missing. Please contact support."}, 500
+
+    try:
+        password_ok = bcrypt.checkpw(confirm_password.encode("utf-8"), row[0].encode("utf-8"))
+    except Exception:
+        password_ok = False
+    if not password_ok:
+        return {"ok": False, "error": "Incorrect password"}, 400
+
+    return {"ok": True, "email": row[1]}
+
+
 @bp.route("/account/2fa/setup", methods=["GET"])
 @login_required
 def twofa_setup():

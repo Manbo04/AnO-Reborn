@@ -1,0 +1,16 @@
+<!-- Reveal Email Modal -->
+<div id="revealEmailModal" class="confirmation-modal" style="display: none;">
+    <div class="modal-content">
+        <h2><span class="material-icons-outlined">visibility</span> View Email Address</h2>
+        <p>Enter your password to view your account's email address.</p>
+        <div class="modal-input">
+            <label for="reveal_email_password">Password</label>
+            <input type="password" id="reveal_email_password" autocomplete="current-password" required>
+        </div>
+        <p id="revealEmailError" style="color:#ff4444; display:none;"></p>
+        <div class="modal-buttons">
+            <button type="button" onclick="closeRevealEmailModal()" class="templatedivbutton">Cancel</button>
+            <button type="button" onclick="submitRevealEmail()" class="templatedivbutton">Show Email</button>
+        </div>
+    </div>
+</div>

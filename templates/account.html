@@ -28,7 +28,12 @@
                         </tr>
                         <tr>
                             <td>Email:</td>
-                            <td>{{ user["email"] | mask_email }}</td>
+                            <td>
+                                <span id="emailDisplayValue">Hidden</span>
+                                <button type="button" class="templatedivbutton templatecenteredbutton" style="padding: 3px 10px; margin-left: 8px; width: auto;" onclick="openRevealEmailModal()">
+                                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">visibility</span> Show
+                                </button>
+                            </td>
                             <td><input class="loginsignupinput" name="email" placeholder="New email" /></td>
                         </tr>
                         <tr>
@@ -569,14 +574,59 @@ document.getElementById('twofaDisableModal').addEventListener('click', function(
     if (e.target === this) closeTwofaDisableModal();
 });
 
+document.getElementById('revealEmailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeRevealEmailModal();
+});
+
 // Close modals with Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeDeleteModal();
         closeLogoutModal();
         closeTwofaDisableModal();
+        closeRevealEmailModal();
     }
 });
+
+function openRevealEmailModal() {
+    document.getElementById('revealEmailError').style.display = 'none';
+    document.getElementById('reveal_email_password').value = '';
+    document.getElementById('revealEmailModal').style.display = 'flex';
+    document.getElementById('reveal_email_password').focus();
+}
+
+function closeRevealEmailModal() {
+    document.getElementById('revealEmailModal').style.display = 'none';
+}
+
+async function submitRevealEmail() {
+    const pwField = document.getElementById('reveal_email_password');
+    const errEl = document.getElementById('revealEmailError');
+    const pw = pwField.value;
+    if (!pw) {
+        errEl.textContent = 'Enter your password.';
+        errEl.style.display = 'block';
+        return;
+    }
+    try {
+        const resp = await fetch('/account/reveal_email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'confirm_password=' + encodeURIComponent(pw)
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            document.getElementById('emailDisplayValue').textContent = data.email;
+            closeRevealEmailModal();
+        } else {
+            errEl.textContent = data.error || 'Something went wrong.';
+            errEl.style.display = 'block';
+        }
+    } catch (e) {
+        errEl.textContent = 'Network error, try again.';
+        errEl.style.display = 'block';
+    }
+}
 
 function openResetModal() {
     document.getElementById('resetAccountModal').style.display = 'flex';
@@ -610,5 +660,6 @@ function submitReset(type) {
 
     {% include "partials/reset_modal.html" %}
     {% include "partials/twofa_disable_modal.html" %}
+    {% include "partials/reveal_email_modal.html" %}
 </div>
 {% endblock %}
