@@ -1447,6 +1447,23 @@ def nuclear_strike():
     weapon_name = "nukes" if weapon_type == "nuke" else "icbms"
 
     with get_request_cursor() as db:
+        # FIXED 2026-09-23: same race class already fixed in drone_strike/
+        # cruise_missile_strike on 2026-09-13 (see drone_strike's
+        # docstring) -- the weapon-quantity read below and the UPDATE
+        # decrementing it have no lock between them. user_military.quantity
+        # has a real CHECK (quantity >= 0) constraint, so this did NOT let
+        # two concurrent strikes fire off a single nuke -- confirmed by
+        # test: the first concurrent UPDATE commits, the second blocks on
+        # Postgres's own row lock and, once unblocked, re-evaluates against
+        # the now-lower committed value, going negative and raising an
+        # unhandled psycopg2.errors.CheckViolation instead of this
+        # function's intended graceful "you don't have any nukes!" error.
+        # A double-click or two tabs firing the same strike got an ugly
+        # 500 crash. Locked per-attacker so the second racer's own read
+        # correctly sees the post-first-strike quantity and is rejected
+        # cleanly -- same pattern as every other strike route in this file.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
+
         # Require an active war with the target before allowing a strike
         db.execute(
             (
@@ -1463,7 +1480,7 @@ def nuclear_strike():
         # Check weapon quantity
         db.execute(
             """
-            SELECT um.quantity, ud.unit_id 
+            SELECT um.quantity, ud.unit_id
             FROM user_military um
             JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
             WHERE um.user_id = %s AND ud.name = %s
@@ -1550,6 +1567,22 @@ def strategic_airstrike():
         return error(400, "Must send at least 1 bomber.")
 
     with get_request_cursor() as db:
+        # FIXED 2026-09-23: same race class already fixed in drone_strike/
+        # cruise_missile_strike on 2026-09-13, and the same underlying bug
+        # as nuclear_strike above -- the bombers-quantity read below and
+        # the UPDATE decrementing lost_bombers have no lock between them.
+        # Most of the time lost_bombers is well under the attacker's
+        # stock, so this doesn't reach user_military's CHECK
+        # (quantity >= 0) constraint at all -- but when the defender's
+        # fighters shoot down the full batch sent (lost_bombers ==
+        # quantity), two concurrent strikes hit exactly the same crash
+        # confirmed for nuclear_strike: the second racer's UPDATE blocks,
+        # re-evaluates against the now-lower committed value, goes
+        # negative, and raises an unhandled CheckViolation instead of a
+        # clean rejection. Locked per-attacker, matching the established
+        # pattern for every other strike route in this file.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
+
         # Require an active war with the target before allowing a strike
         db.execute(
             (
@@ -1566,7 +1599,7 @@ def strategic_airstrike():
         # Check attacker bombers
         db.execute(
             """
-            SELECT um.quantity, ud.unit_id 
+            SELECT um.quantity, ud.unit_id
             FROM user_military um
             JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
             WHERE um.user_id = %s AND ud.name = 'bombers'
