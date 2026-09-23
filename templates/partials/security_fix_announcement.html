@@ -72,13 +72,20 @@
     font-size: 22px;
 }
 .ano-security-announcement-text {
-    flex: 1 1 320px;
+    /* 320px basis + default min-width:auto pushed the close button off the
+       right edge on phones (horizontal page scroll). */
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
     color: var(--colorOne);
     font-size: 0.9rem;
     line-height: 1.4;
 }
 .ano-security-announcement-close {
     flex: 0 0 auto;
+    /* Page-scoped mobile rules like body.page-market button {width:100%}
+       stretched this icon button across the screen. */
+    width: auto !important;
     background: transparent;
     border: none;
     color: var(--colorOne);

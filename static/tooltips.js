@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
             delay: [100, 50]
         });
 
+        // A tapped tooltip on a phone stayed pinned on screen while the page
+        // scrolled under it. Close all open tooltips on any scroll.
+        if (typeof tippy.hideAll === 'function') {
+            window.addEventListener('scroll', () => tippy.hideAll({ duration: 0 }), { passive: true });
+        }
+
         const mechanicsLink = `<br><br><a href='/mechanics' style='color: #4da8da; text-decoration: underline; font-size: 0.9em; font-weight: 500;'>📖 View Mechanics</a>`;
         const resourceDict = {};
 

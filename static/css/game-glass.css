@@ -1221,6 +1221,48 @@ body.game-shell-active .dropdown-content a.active {
     color: var(--colorOne);
 }
 
+/* Six tiles (Population breakdown) in a wrapping flex row left the 6th
+   stranded alone on a second line at desktop widths. Even grid instead:
+   6 / 3 / 2 columns, with the divider dropped on each row's first tile. */
+.game-stat-row.game-stat-row--grid6 {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    row-gap: 12px;
+}
+
+.game-stat-row--grid6 .game-stat {
+    min-width: 0;
+    padding: 4px 14px;
+}
+
+.game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+    border-left: none;
+    padding-left: 4px;
+}
+
+@media (max-width: 1200px) {
+    .game-stat-row.game-stat-row--grid6 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+        border-left: 1px solid var(--game-glass-border);
+        padding-left: 14px;
+    }
+    .game-stat-row--grid6 .game-stat:nth-child(3n+1) {
+        border-left: none;
+        padding-left: 4px;
+    }
+}
+
+@media (max-width: 620px) {
+    .game-stat-row.game-stat-row--grid6 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .game-stat-row--grid6 .game-stat {
+        margin-bottom: 0;
+    }
+}
+
 @media (max-width: 620px) {
     .game-stat-row .game-stat {
         flex: 1 1 42%;

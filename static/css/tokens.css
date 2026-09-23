@@ -122,6 +122,25 @@
     --game-radius-2xl: 28px;
 }
 
+/* Touch devices: no backdrop blur anywhere. Dozens of large blurred panels
+   over an animated page/theme background make Android Chrome drop tiles
+   mid-scroll -- whole cards flash blank grey, then repaint (player screen
+   recording 2026-09-23). Use the stronger, more opaque glass tint instead
+   so text stays readable without the blur behind it. */
+@media (hover: none) and (pointer: coarse) {
+    :root,
+    .theme-light,
+    .theme-dark {
+        --game-glass-blur: none;
+        --game-glass-bg: var(--game-glass-bg-strong);
+    }
+
+    body * {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+}
+
 .theme-dark {
     --game-panel-bg: var(--foregroundTwo);
 }

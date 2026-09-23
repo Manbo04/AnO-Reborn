@@ -5788,6 +5788,25 @@ html.page-tutorial .resourcedivcontent {
     --game-radius-2xl: 28px;
 }
 
+/* Touch devices: no backdrop blur anywhere. Dozens of large blurred panels
+   over an animated page/theme background make Android Chrome drop tiles
+   mid-scroll -- whole cards flash blank grey, then repaint (player screen
+   recording 2026-09-23). Use the stronger, more opaque glass tint instead
+   so text stays readable without the blur behind it. */
+@media (hover: none) and (pointer: coarse) {
+    :root,
+    .theme-light,
+    .theme-dark {
+        --game-glass-blur: none;
+        --game-glass-bg: var(--game-glass-bg-strong);
+    }
+
+    body * {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+}
+
 .theme-dark {
     --game-panel-bg: var(--foregroundTwo);
 }
@@ -7015,6 +7034,48 @@ body.game-shell-active .dropdown-content a.active {
     font-size: 19px;
     font-weight: 800;
     color: var(--colorOne);
+}
+
+/* Six tiles (Population breakdown) in a wrapping flex row left the 6th
+   stranded alone on a second line at desktop widths. Even grid instead:
+   6 / 3 / 2 columns, with the divider dropped on each row's first tile. */
+.game-stat-row.game-stat-row--grid6 {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    row-gap: 12px;
+}
+
+.game-stat-row--grid6 .game-stat {
+    min-width: 0;
+    padding: 4px 14px;
+}
+
+.game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+    border-left: none;
+    padding-left: 4px;
+}
+
+@media (max-width: 1200px) {
+    .game-stat-row.game-stat-row--grid6 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+        border-left: 1px solid var(--game-glass-border);
+        padding-left: 14px;
+    }
+    .game-stat-row--grid6 .game-stat:nth-child(3n+1) {
+        border-left: none;
+        padding-left: 4px;
+    }
+}
+
+@media (max-width: 620px) {
+    .game-stat-row.game-stat-row--grid6 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .game-stat-row--grid6 .game-stat {
+        margin-bottom: 0;
+    }
 }
 
 @media (max-width: 620px) {
@@ -9816,6 +9877,10 @@ body.page-rankings .rankings-table tbody td a {
 }
 
 .onboarding-checklist-dismiss {
+    /* Same stretch as the announcement close button: page-scoped mobile
+       "button { width: 100% }" rules (market/statistics/...) hit it. */
+    width: auto !important;
+    flex: 0 0 auto;
     flex-shrink: 0;
     border: none;
     background: transparent;
