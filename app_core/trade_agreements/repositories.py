@@ -140,7 +140,25 @@ def get_agreements_for_user(db, user_id):
 
 
 def lock_active_agreement(db, agreement_id):
-    """Lock and fetch an active agreement's execution fields. Used by execute_trade_agreement."""
+    """Lock and fetch an active agreement's execution fields. Used by execute_trade_agreement.
+
+    FIXED 2026-09-23: found live while auditing for the account
+    cross-contamination investigation -- unrelated bug, real double-spend.
+    activate_agreement() sets next_execution=now() in its own transaction,
+    then accept_trade_agreement (the route) calls execute_trade_agreement()
+    a moment later in a SEPARATE connection/transaction. In that narrow
+    window the agreement is genuinely 'active' with next_execution<=now()
+    in the database -- visible to a concurrent scheduled tick
+    (task_execute_trade_agreements runs every ~65s, app_core/celery_schedule.py),
+    which could independently call execute_trade_agreement() for the same
+    agreement_id. The FOR UPDATE lock here serializes the two callers but
+    previously did NOT stop the second one (after waiting for the lock) from
+    blindly re-executing -- complete_or_reschedule_agreement() had already
+    pushed next_execution into the future by then, so requiring
+    next_execution <= now() here means the second caller correctly sees
+    "not due anymore" and returns no row instead of double-transferring
+    resources. See tests/test_trade_agreement_no_double_execution.py.
+    """
     db.execute(
         """
         SELECT id, proposer_id, proposer_resource, proposer_amount,
@@ -148,6 +166,7 @@ def lock_active_agreement(db, agreement_id):
                execution_count, max_executions, interval_hours
         FROM trade_agreements
         WHERE id = %s AND status = 'active'
+          AND (next_execution IS NULL OR next_execution <= now())
         FOR UPDATE
         """,
         (agreement_id,),
