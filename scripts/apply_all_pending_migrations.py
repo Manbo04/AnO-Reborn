@@ -88,6 +88,7 @@ MIGRATION_FILES = [
     "0078_seed_molten_forge_background.sql",
     "0079_add_national_currency.sql",
     "0080_add_bonds_market.sql",
+    "0081_add_war_last_attack_resolved_at.sql",
 ]
 
 
