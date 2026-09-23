@@ -6730,6 +6730,15 @@ body.game-page-v2 .warflexparentcolors {
     font-size: 18px;
 }
 
+/* Desktop: the theme toggle lives in the topbar icon row with search/bell/
+   avatar. The standalone floated .navbar-theme-toggle is only for mobile,
+   where .navbarparentloginsignupdiv (and this row with it) is hidden. */
+@media all and (min-width: 621px) {
+    .navbar-theme-toggle {
+        display: none !important;
+    }
+}
+
 .game-topbar-notif-dot {
     position: absolute;
     top: 5px;

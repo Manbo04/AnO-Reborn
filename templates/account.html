@@ -29,10 +29,12 @@
                         <tr>
                             <td>Email:</td>
                             <td>
-                                <span id="emailDisplayValue">Hidden</span>
-                                <button type="button" class="templatedivbutton templatecenteredbutton" style="padding: 3px 10px; margin-left: 8px; width: auto;" onclick="openRevealEmailModal()">
-                                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">visibility</span> Show
-                                </button>
+                                <div class="account-email-reveal">
+                                    <span id="emailDisplayValue">Hidden</span>
+                                    <button type="button" class="templatedivbutton" onclick="openRevealEmailModal()">
+                                        <span class="material-icons-outlined">visibility</span>Show
+                                    </button>
+                                </div>
                             </td>
                             <td><input class="loginsignupinput" name="email" placeholder="New email" /></td>
                         </tr>
@@ -52,7 +54,7 @@
                             <td>Discord:</td>
                             <td>{% if user.get('discord_id') %}Linked{% else %}Not Linked{% endif %}</td>
                             <td>
-                                <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton" style="width: auto; padding: 5px 15px;">
+                                <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton">
                                     <span class="material-icons-outlined">link</span>{% if user.get('discord_id') %}Relink{% else %}Link{% endif %} Discord
                                 </button>
                             </td>
@@ -440,6 +442,29 @@
     color: #4CAF50;
     font-weight: bold;
     font-size: 0.9rem;
+}
+
+.account-email-reveal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.account-email-reveal .templatedivbutton {
+    width: auto;
+    margin: 0;
+    padding: 4px 12px;
+}
+
+.account-email-reveal .templatedivbutton .material-icons-outlined {
+    font-size: 16px;
+}
+
+/* .discordbutton's global margin-top: 17px is for the login page; here it
+   pushed Relink Discord off the row's vertical centre. */
+.templatetable .discordbutton {
+    margin: 5px auto;
 }
 
 .account-action-form {
