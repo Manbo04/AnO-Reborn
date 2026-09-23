@@ -72,6 +72,35 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 from app_core.identity_diagnostics import install_outgoing_cookie_diagnostic
 install_outgoing_cookie_diagnostic(app)
 
+def resolve_cache_control(path, status_code, existing):
+    """The Cache-Control this app's after_request should put on a response.
+
+    Pulled out of after_request so it can be tested directly, and so the two
+    rules below are stated once instead of being buried in header assignments.
+
+    1. A view that explicitly asked for `no-store` keeps it. after_request used
+       to overwrite every non-/static/ response unconditionally, which silently
+       downgraded the deliberate `no-store` on /account/2fa/setup (renders the
+       raw TOTP secret + QR) and /account/2fa/confirm (renders the one-time
+       backup codes) to `private, max-age=5` -- i.e. allowed the browser to
+       write standing account-recovery secrets to its on-disk cache, where a
+       back-button or a shared machine can bring them back after logout.
+    2. Only successful /static/ responses are publicly cacheable. A /static/
+       path can still produce an error page -- a 404 for a missing asset, or
+       before_request's per-user ban/kick 403, which renders for whatever path
+       triggered it -- and neither should be handed to a shared cache for a
+       week. (Session cookies are kept off public responses separately, by
+       app_core/auth/session_interface.PublicCacheSafeSessionInterface.)
+    """
+    if "no-store" in (existing or "").lower():
+        return existing
+    if path.startswith("/static/") and status_code < 400:
+        if path.endswith((".css", ".js")):
+            return "public, max-age=3600, must-revalidate"
+        return "public, max-age=604800, must-revalidate"
+    return "private, max-age=5, must-revalidate"
+
+
 def create_app():
     global app
     app.url_map.strict_slashes = False
@@ -396,17 +425,9 @@ def create_app():
             client_ip = request.remote_addr
             ua = request.headers.get("User-Agent", "")
             logger.info("SLOW REQUEST: %s %s took %.2fs; ip=%s ua=%s", request.method, request.path, elapsed, client_ip, ua[:200])
-        # status_code < 400: a /static/ path can still produce an error page
-        # (404 for a missing asset, or before_request's ban/kick 403 page,
-        # which renders for whatever path triggered it). Those are per-user
-        # or transient and must never be handed to a shared cache for a week.
-        if request.path.startswith("/static/") and response.status_code < 400:
-            if request.path.endswith((".css", ".js")):
-                response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
-            else:
-                response.headers["Cache-Control"] = "public, max-age=604800, must-revalidate"
-        else:
-            response.headers["Cache-Control"] = "private, max-age=5, must-revalidate"
+        response.headers["Cache-Control"] = resolve_cache_control(
+            request.path, response.status_code, response.headers.get("Cache-Control")
+        )
 
         # Security headers
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
