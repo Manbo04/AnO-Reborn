@@ -2077,29 +2077,59 @@ def accept_treaty(offer_id):
 
 # Route for breaking a treaty with another coalition
 def break_treaty(offer_id):
+    """FIXED 2026-09-23: found live while auditing coalitions/ during the
+    account cross-contamination investigation -- unrelated bug, real
+    broken access control. This deleted the treaty row by id alone, with
+    no check that the treaty actually involved the caller's own
+    coalition -- unlike accept_treaty, which correctly scopes its lookup
+    to col2_id=user_coalition. Any leader/deputy_leader/foreign_ambassador
+    of ANY coalition could break a treaty between two entirely unrelated
+    coalitions just by guessing/enumerating offer_id. Now requires the
+    treaty to have the caller's coalition as col1_id or col2_id.
+    """
     cId = session["user_id"]
 
-    user_role = get_user_role(cId)
-
-    if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
-        return error(400, "You aren't the leader of this coalition")
-
     with get_request_cursor() as db:
-        db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
+        user_coalition = _coalition_id_for_user(db, cId)
+        if not user_coalition:
+            return _no_coalition_response()
+
+        user_role = get_user_role(cId)
+        if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(400, "You aren't the leader of this coalition")
+
+        db.execute(
+            "DELETE FROM treaties WHERE id=%s AND (col1_id=%s OR col2_id=%s) RETURNING id",
+            (offer_id, user_coalition, user_coalition),
+        )
+        if not db.fetchone():
+            return error(400, "You do not have such a treaty")
 
     return redirect("/my_coalition")
 
 
 def decline_treaty(offer_id):
+    """FIXED 2026-09-23: same missing-ownership-check bug as break_treaty
+    (see its docstring) -- this let any qualifying-role user decline/
+    delete ANY pending treaty offer by id, regardless of whether it
+    involved their own coalition."""
     cId = session["user_id"]
 
-    user_role = get_user_role(cId)
-
-    if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
-        return error(400, "You aren't the leader of this coalition")
-
     with get_request_cursor() as db:
-        db.execute("DELETE FROM treaties WHERE id=(%s)", (offer_id,))
+        user_coalition = _coalition_id_for_user(db, cId)
+        if not user_coalition:
+            return _no_coalition_response()
+
+        user_role = get_user_role(cId)
+        if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(400, "You aren't the leader of this coalition")
+
+        db.execute(
+            "DELETE FROM treaties WHERE id=%s AND (col1_id=%s OR col2_id=%s) RETURNING id",
+            (offer_id, user_coalition, user_coalition),
+        )
+        if not db.fetchone():
+            return error(400, "You do not have such a treaty")
 
     return redirect("/my_coalition")
 
