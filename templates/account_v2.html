@@ -417,6 +417,13 @@
 }
 </style>
 
+{# Modals must exist before the script below wires listeners onto them --
+   included after it, getElementById('twofaDisableModal') was null and the
+   TypeError aborted the rest of the script (Escape/backdrop close). #}
+{% include "partials/reset_modal.html" %}
+{% include "partials/twofa_disable_modal.html" %}
+{% include "partials/reveal_email_modal.html" %}
+
 <script>
 function showDiscordCopied() {
     var el = document.getElementById("discord-link-copied-msg");
@@ -611,7 +618,4 @@ function submitReset(type) {
 }
 </script>
 
-{% include "partials/reset_modal.html" %}
-{% include "partials/twofa_disable_modal.html" %}
-{% include "partials/reveal_email_modal.html" %}
 {% endblock %}
