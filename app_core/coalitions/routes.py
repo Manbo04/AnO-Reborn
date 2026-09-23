@@ -1876,11 +1876,26 @@ def remove_bank_request(bankId):
 
 # Route for accepting a bank request from the coalition bank
 def accept_bank_request(bankId):
+    """FIXED 2026-09-23: found live while auditing coalitions/ during the
+    account cross-contamination investigation -- unrelated bug, real
+    double-grant race. The initial SELECT had no row lock, and the request
+    row was only deleted AFTER withdraw() succeeded -- if two bankers (or
+    one banker double-clicking / two tabs) accepted the SAME bankId
+    concurrently, both could read the row before either deleted it, and
+    both withdraw() calls would succeed independently as long as the bank
+    had enough funds for two payouts, crediting the requester twice for
+    one request. FOR UPDATE here serializes concurrent accepts: the whole
+    flow (read, withdraw, delete) runs in one request-scoped transaction
+    (get_request_cursor reuses one connection per request), so a second
+    accept blocks on this row lock until the first commits and deletes the
+    row, then finds nothing -- same idiom as
+    trade_agreements/repositories.py's lock_active_agreement().
+    """
     cId = session["user_id"]
 
     with get_request_cursor() as db:
         db.execute(
-            "SELECT colId, resource, amount, reqId FROM colBanksRequests WHERE id=(%s)",
+            "SELECT colId, resource, amount, reqId FROM colBanksRequests WHERE id=(%s) FOR UPDATE",
             (bankId,),
         )
         result = db.fetchone()
