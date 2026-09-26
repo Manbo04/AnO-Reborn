@@ -566,8 +566,20 @@
                 // Horizontal bars, one row per province, with the box growing to fit:
                 // a fixed 260px vertical chart squeezed 20-80 province labels into
                 // unreadable 45-degree slivers (player report, 2026-09-25).
+                // Past ~16 provinces the box stops growing and the chart scrolls inside
+                // it (100 provinces made a 2400px-tall panel otherwise).
                 const chartWrap = canvasEl.closest('.country-demographics-chart-wrap');
-                chartWrap.style.height = Math.max(200, 70 + provinceNames.length * 24) + 'px';
+                const chartHeight = Math.max(200, 70 + provinceNames.length * 22);
+                const boxHeight = Math.min(chartHeight, 440);
+                chartWrap.style.height = boxHeight + 'px';
+                if (chartHeight > boxHeight) {
+                    const inner = document.createElement('div');
+                    inner.style.position = 'relative';
+                    inner.style.height = (chartHeight - 16) + 'px';
+                    canvasEl.parentNode.insertBefore(inner, canvasEl);
+                    inner.appendChild(canvasEl);
+                    chartWrap.style.overflowY = 'auto';
+                }
 
                 // Gradient for children bars (blue)
                 const childrenGradient = ctx.createLinearGradient(0, 0, 600, 0);
