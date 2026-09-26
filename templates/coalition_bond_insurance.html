@@ -1,0 +1,80 @@
+{% extends "layout.html" %} {% block title %} Bond Insurance {% endblock %}{% block body_class %} page-coalition-bond-insurance game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Bond Insurance', badge_icon='verified_user', subtitle='Leadership chooses which members of ' ~ (col_name or 'your coalition') ~ ' are insured. If an insured member defaults on a Bond, the coalition bank pays their lender what the bank\'s money can cover, and the member then owes that amount to the bank instead. It\'s collected from their gold every day until it\'s repaid.') }}
+
+    <div class="templatedivcontent">
+
+        <p class="templatecontentpleft" style="margin-bottom: 14px;"><a href="/coalition/{{ coalition_id }}" style="color:#4da8da;">&larr; Back to coalition</a></p>
+
+        <div class="stat-grid" style="margin-bottom: 18px;">
+            <div class="templatedivflex2left stat-card">
+                <strong class="stat-label"><span class="material-icons-outlined">account_balance</span>Bank money available</strong>
+                <span class="stat-value">${{ page.bank_money | fmt }}</span>
+            </div>
+            <div class="templatedivflex2left stat-card">
+                <strong class="stat-label"><span class="material-icons-outlined">verified_user</span>Your bonds</strong>
+                <span class="stat-value">{{ 'Insured' if page.me_insured else 'Not insured' }}</span>
+            </div>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Members</h2>
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Member</th>
+                <th>Active bond debt</th>
+                <th>Insured</th>
+                {% if page.is_officer %}<th></th>{% endif %}
+            </tr>
+            {% for m in page.members %}
+            <tr>
+                <td><a href="/country/id={{ m.id }}">{{ m.username }}</a></td>
+                <td>${{ m.active_debt | fmt }}</td>
+                <td>{{ 'Yes' if m.insured else 'No' }}</td>
+                {% if page.is_officer %}
+                <td>
+                    <form action="/coalition/{{ coalition_id }}/bond-insurance/set" method="post" style="display:inline;">
+                        <input type="hidden" name="member_id" value="{{ m.id }}">
+                        <input type="hidden" name="insured" value="{{ '0' if m.insured else '1' }}">
+                        <button type="submit" class="game-btn {{ 'game-btn-secondary' if m.insured else 'game-btn-primary' }}">{{ 'Remove' if m.insured else 'Insure' }}</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">receipt_long</span> Claims paid</h2>
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Bond</th>
+                <th>Defaulted member</th>
+                <th>Lender paid</th>
+                <th>Bank paid</th>
+                <th>Still owed to bank</th>
+            </tr>
+            {% for c in page.claims %}
+            <tr>
+                <td>#{{ c.bond_id }}</td>
+                <td><a href="/country/id={{ c.issuer_id }}">{{ c.issuer }}</a></td>
+                <td>{{ c.lender }}</td>
+                <td>${{ c.paid | fmt }}</td>
+                <td>${{ c.owed | fmt }}</td>
+            </tr>
+            {% endfor %}
+            {% if not page.claims %}
+            <tr><td colspan="5" style="text-align: center;">No insurance claims yet.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

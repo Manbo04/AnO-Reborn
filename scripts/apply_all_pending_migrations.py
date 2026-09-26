@@ -89,6 +89,7 @@ MIGRATION_FILES = [
     "0079_add_national_currency.sql",
     "0080_add_bonds_market.sql",
     "0081_add_war_last_attack_resolved_at.sql",
+    "0082_coalition_bank_trades_and_bond_insurance.sql",
 ]
 
 

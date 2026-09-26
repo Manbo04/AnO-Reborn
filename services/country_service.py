@@ -553,9 +553,22 @@ class CountryService:
                 except Exception:
                     rollback_db_cursor(db)
                     growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
+
+                # Bond interest (Kurai, 2026-09-23): moved once a day by
+                # bond_tick, outside the hourly revenue above, so it gets its
+                # own lines on the revenue tab.
+                try:
+                    from app_core.bonds.repositories import get_daily_bond_interest
+
+                    received, paid = get_daily_bond_interest(db, cId)
+                    bond_interest = {"received": received, "paid": paid}
+                except Exception:
+                    rollback_db_cursor(db)
+                    bond_interest = {"received": 0, "paid": 0}
             else:
                 revenue = default_revenue_data()
                 expenses = []
+                bond_interest = {"received": 0, "paid": 0}
                 statistics = default_statistics_data()
                 growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
 
@@ -753,6 +766,7 @@ class CountryService:
             "food_score": food_score,
             "expenses": expenses,
             "revenue_daily": _scale_revenue_dict(revenue, 24),
+            "bond_interest": bond_interest,
             "expenses_total_cost": sum(
                 (row[3] or 0) for row in expenses if row[1] == "expense"
             ) if expenses else 0,

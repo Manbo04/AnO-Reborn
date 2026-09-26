@@ -1,0 +1,96 @@
+{% extends "layout.html" %} {% block title %} Bank Trades {% endblock %}{% block body_class %} page-coalition-bank-trades game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Bank Trades', badge_icon='swap_horiz', subtitle='Swap resources with ' ~ (col_name or 'your coalition') ~ '\'s bank. Offer what you\'ll give and what you want back. Your side is held until a leader, deputy or banker accepts or declines, and it\'s returned if they decline or you cancel.') }}
+
+    <div class="templatedivcontent">
+
+        <p class="templatecontentpleft" style="margin-bottom: 14px;"><a href="/coalition/{{ coalition_id }}" style="color:#4da8da;">&larr; Back to coalition</a></p>
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Propose a trade</h2>
+            <form action="/coalition/{{ coalition_id }}/bank-trades/propose" method="post" class="game-row" style="flex-wrap: wrap; gap: 10px;">
+                <label class="templatecontentpleft" style="display:flex; flex-direction:column; gap:4px; flex: 1; min-width: 150px;">You give
+                    <select name="give_resource" class="loginsignupinput" required>
+                        {% for key, label in page.resources %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="templatecontentpleft" style="display:flex; flex-direction:column; gap:4px; flex: 1; min-width: 130px;">Amount
+                    <input type="number" name="give_amount" class="loginsignupinput" min="1" step="1" required>
+                </label>
+                <label class="templatecontentpleft" style="display:flex; flex-direction:column; gap:4px; flex: 1; min-width: 150px;">Bank gives you
+                    <select name="want_resource" class="loginsignupinput" required>
+                        {% for key, label in page.resources %}<option value="{{ key }}"{% if loop.index == 2 %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="templatecontentpleft" style="display:flex; flex-direction:column; gap:4px; flex: 1; min-width: 130px;">Amount
+                    <input type="number" name="want_amount" class="loginsignupinput" min="1" step="1" required>
+                </label>
+                <input type="text" name="note" maxlength="200" placeholder="Note for the banker (optional)" class="loginsignupinput" style="flex: 1 1 100%;">
+                <button type="submit" class="game-btn game-btn-primary" style="min-height: 44px;">Send to bankers</button>
+            </form>
+            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .75; font-size: .9em;">Up to {{ page.max_pending }} trades can wait at once. Bankers get a notification when you send one.</p>
+        </div>
+
+        {% if page.is_officer and page.bank %}
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">account_balance</span> Bank holdings</h2>
+        <div class="stat-grid" style="margin-bottom: 18px;">
+            {% for key, label in page.resources %}
+            <div class="templatedivflex2left stat-card">
+                <strong class="stat-label">{{ label }}</strong>
+                <span class="stat-value">{{ page.bank.get(key, 0) | fmt }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">swap_horiz</span> {{ 'All trades' if page.is_officer else 'Your trades' }}</h2>
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>#</th>
+                {% if page.is_officer %}<th>Member</th>{% endif %}
+                <th>Gives</th>
+                <th>Wants</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+            {% for t in page.trades %}
+            <tr>
+                <td>{{ t.id }}</td>
+                {% if page.is_officer %}<td><a href="/country/id={{ t.user_id }}">{{ t.username }}</a></td>{% endif %}
+                <td>{{ t.give_amount | fmt }} {{ t.give_label }}</td>
+                <td>{{ t.want_amount | fmt }} {{ t.want_label }}{% if t.note %}<br><small style="opacity:.7;">&ldquo;{{ t.note }}&rdquo;</small>{% endif %}</td>
+                <td>{{ t.status | capitalize }}{% if t.resolved_by and t.status != 'pending' %}<br><small style="opacity:.7;">by {{ t.resolved_by }}</small>{% endif %}</td>
+                <td style="white-space: nowrap;">
+                    {% if t.status == 'pending' %}
+                        {% if page.is_officer %}
+                        <form action="/coalition/bank-trades/{{ t.id }}/accept" method="post" style="display:inline;">
+                            <button type="submit" class="game-btn game-btn-primary">Accept</button>
+                        </form>
+                        <form action="/coalition/bank-trades/{{ t.id }}/decline" method="post" style="display:inline;">
+                            <button type="submit" class="game-btn game-btn-secondary">Decline</button>
+                        </form>
+                        {% endif %}
+                        {% if t.user_id == session['user_id'] %}
+                        <form action="/coalition/bank-trades/{{ t.id }}/cancel" method="post" style="display:inline;">
+                            <button type="submit" class="game-btn game-btn-secondary">Cancel</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not page.trades %}
+            <tr><td colspan="{{ 6 if page.is_officer else 5 }}" style="text-align: center;">No bank trades yet.</td></tr>
+            {% endif %}
+        </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -162,3 +162,24 @@ def get_bonds_as_lender(db, user_id, limit=25):
         (user_id, limit),
     )
     return db.fetchall()
+
+
+def get_daily_bond_interest(db, user_id):
+    """(received, paid) daily interest across this player's active bonds --
+    what bond_tick will move at its next daily run, for the country page's
+    revenue breakdown (bond interest isn't part of the hourly tax/production
+    revenue, so it was otherwise invisible)."""
+    db.execute(
+        """
+        SELECT
+            COALESCE(SUM(principal * daily_interest_rate) FILTER (WHERE lender_id = %s), 0),
+            COALESCE(SUM(principal * daily_interest_rate) FILTER (WHERE issuer_id = %s), 0)
+        FROM bonds
+        WHERE status = 'active' AND (lender_id = %s OR issuer_id = %s)
+        """,
+        (user_id, user_id, user_id, user_id),
+    )
+    row = db.fetchone()
+    if not row:
+        return 0.0, 0.0
+    return float(row[0] or 0), float(row[1] or 0)

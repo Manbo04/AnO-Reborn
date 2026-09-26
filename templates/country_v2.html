@@ -773,6 +773,12 @@
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
+    {% if bond_interest and (bond_interest.received or bond_interest.paid) %}
+    <div class="templatedivflex2left stat-card" data-tippy-content="Interest on your active bonds, paid once a day (not hourly). Received is from bonds you funded; paid is on bonds you issued.<br><br><a href='/bonds' style='color:#4da8da;text-decoration:underline;'>&#128214; View bonds</a>">
+        <strong class="stat-label">Bond interest <small class="font-normal-sub">(per day)</small></strong>
+        <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
+    </div>
+    {% endif %}
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
         <span class="stat-value">{{ revenue["gross"]["rations"] | fmt }}</span>
@@ -946,6 +952,12 @@
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue_daily.get("coalition_tax", 0) | fmt }}</span>
     </div>
+    {% if bond_interest and (bond_interest.received or bond_interest.paid) %}
+    <div class="templatedivflex2left stat-card" data-tippy-content="Interest on your active bonds, paid once a day (not hourly). Received is from bonds you funded; paid is on bonds you issued.<br><br><a href='/bonds' style='color:#4da8da;text-decoration:underline;'>&#128214; View bonds</a>">
+        <strong class="stat-label">Bond interest <small class="font-normal-sub">(per day)</small></strong>
+        <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
+    </div>
+    {% endif %}
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
         <span class="stat-value">{{ revenue_daily["gross"]["rations"] | fmt }}</span>
