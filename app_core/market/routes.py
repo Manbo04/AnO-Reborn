@@ -384,8 +384,10 @@ def post_trade_offer(offer_type, offeree_id):
             insert_trade(db, cId, offer_type, resource, amount, price, offeree_id)
 
         elif offer_type == "buy":
-            insert_trade(db, cId, offer_type, resource, amount, price, offeree_id)
-
+            # Escrow first, insert last: every error() below still ends in a
+            # teardown COMMIT, so inserting up front left an unfunded buy offer
+            # behind whenever the buyer couldn't pay -- and accepting it
+            # credited the seller amount*price gold that was never escrowed.
             money_to_take_away = amount * price
             current_money = get_user_gold_for_update(db, cId)
             if current_money is None:
@@ -398,6 +400,8 @@ def post_trade_offer(offer_type, offeree_id):
             if res is not True:
                 report_trade_error(f"trade_offer: escrow take money failed: {res}")
                 return error(400, str(res))
+
+            insert_trade(db, cId, offer_type, resource, amount, price, offeree_id)
 
             flash("You just posted a market offer")
 
