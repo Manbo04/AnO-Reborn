@@ -33,7 +33,7 @@ class CountryRepository:
                         cm.colid,
                         c.name,
                         COALESCE(p.provinces_count, 0) AS provinces_count,
-                        NULL::integer AS join_number,
+                        u.join_number,
                         {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u

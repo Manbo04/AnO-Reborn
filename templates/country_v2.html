@@ -243,8 +243,9 @@
                     </div>
                     <div style="margin-bottom: 14px;">
                         <div class="game-spread" style="font-size: 12.5px; margin-bottom: 6px;">
-                            <span class="game-row" style="gap: 7px;"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}?v=3" alt=""><span class="game-faint">Food reserves</span></span>
-                            <span>{{ rations_pct | round }}%</span>
+                            <span class="game-row" style="gap: 7px;"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}?v=3" alt=""><span class="game-faint" data-tippy-content="How much of this hour's rations need you have in stock. A full bar means at least one hour covered &mdash; there is no cap on how much food you can store.">Food reserves</span></span>
+                            {# Shown as hours of cover: a bare "100%" read like a storage cap. #}
+                            <span>{% if rations_need and resources.rations >= rations_need %}{{ ((resources.rations / rations_need) | int) | fmt }}h of rations{% else %}{{ rations_pct | round }}% of this hour's need{% endif %}</span>
                         </div>
                         <div class="game-meter"><div class="game-meter-fill {{ 'good' if rations_pct >= 100 else ('warn' if rations_pct >= 50 else 'bad') }}" style="width: {{ rations_pct }}%;"></div></div>
                     </div>
@@ -536,12 +537,12 @@
                     return;
                 }
 
-                // Weight formatter: kg -> t -> kt -> Mt
-                function formatWeight(value) {
-                    if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Mt';
-                    if (value >= 1000000) return (value / 1000000).toFixed(1) + ' kt';
-                    if (value >= 1000) return (value / 1000).toFixed(1) + ' t';
-                    return value.toFixed(0) + ' kg';
+                // These are people, not weights (tooltip used to print "kt"/"t").
+                function formatPeople(value) {
+                    if (value >= 1000000000) return (value / 1000000000).toFixed(2) + 'B';
+                    if (value >= 1000000) return (value / 1000000).toFixed(2) + 'M';
+                    if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+                    return value.toFixed(0);
                 }
 
                 // Province data from backend
@@ -562,18 +563,24 @@
                 const elderlyData = provinces.map(p => p.elderly);
                 const hasProvinceData = provinceNames.length > 0;
 
+                // Horizontal bars, one row per province, with the box growing to fit:
+                // a fixed 260px vertical chart squeezed 20-80 province labels into
+                // unreadable 45-degree slivers (player report, 2026-09-25).
+                const chartWrap = canvasEl.closest('.country-demographics-chart-wrap');
+                chartWrap.style.height = Math.max(200, 70 + provinceNames.length * 24) + 'px';
+
                 // Gradient for children bars (blue)
-                const childrenGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                const childrenGradient = ctx.createLinearGradient(0, 0, 600, 0);
                 childrenGradient.addColorStop(0, 'rgba(54, 162, 235, 0.9)');
                 childrenGradient.addColorStop(1, 'rgba(54, 162, 235, 0.5)');
 
                 // Gradient for working bars (green/teal)
-                const workingGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                const workingGradient = ctx.createLinearGradient(0, 0, 600, 0);
                 workingGradient.addColorStop(0, 'rgba(75, 192, 92, 0.9)');
                 workingGradient.addColorStop(1, 'rgba(75, 192, 92, 0.5)');
 
                 // Gradient for elderly bars (grey)
-                const elderlyGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                const elderlyGradient = ctx.createLinearGradient(0, 0, 600, 0);
                 elderlyGradient.addColorStop(0, 'rgba(159, 168, 174, 0.9)');
                 elderlyGradient.addColorStop(1, 'rgba(159, 168, 174, 0.5)');
 
@@ -615,17 +622,16 @@
                             duration: 1500,
                             easing: 'easeInOutQuart'
                         },
+                        indexAxis: 'y',
                         scales: {
-                            x: {
+                            y: {
                                 stacked: true,
                                 ticks: {
-                                    autoSkip: true,
-                                    maxRotation: 45,
-                                    minRotation: 45,
+                                    autoSkip: false,
                                     font: { size: 11 }
                                 }
                             },
-                            y: {
+                            x: {
                                 stacked: true,
                                 beginAtZero: true,
                                 ticks: {
@@ -648,7 +654,7 @@
                                 }
                             },
                             title: {
-                                display: true,
+                                display: false,
                                 text: 'National Demographics by Province',
                                 font: {
                                     size: 16,
@@ -668,15 +674,15 @@
                                     label: function(context) {
                                         let label = context.dataset.label || '';
                                         if (label) label += ': ';
-                                        label += formatWeight(context.parsed.y);
+                                        label += formatPeople(context.parsed.x);
                                         return label;
                                     },
                                     footer: function(tooltipItems) {
                                         let total = 0;
                                         tooltipItems.forEach(item => {
-                                            total += item.parsed.y;
+                                            total += item.parsed.x;
                                         });
-                                        return 'Total: ' + formatWeight(total);
+                                        return 'Total: ' + formatPeople(total);
                                     }
                                 }
                             }
@@ -735,6 +741,11 @@
                     <span class="material-icons-outlined">calendar_today</span> Show daily figures
                 </button>
             </div>
+            <p class="game-faint" style="margin: 0 0 12px; font-size: 13px;">
+                Gross shows what your buildings could make at full capacity. <strong>Projected</strong> is what the next tick
+                will actually produce after workers, productivity, power and upkeep money are taken into account &mdash;
+                if it's lower, one of those is holding your buildings back.
+            </p>
             <div class="templatedivflex2" id="revenue-hourly-panel">
                 <div class="templatedivflex2left">
 
@@ -1148,16 +1159,20 @@
 
             {% if expenses %}
             <h2 class="templatecontentheaderleft">Purchases</h2>
+            {# `amount` is a quantity of the item bought (land, cities, buildings), not
+               money -- so these are item counts. Newest first, latest 50 only: the full
+               history (1000+ rows for some nations) used to render oldest-first. #}
             <p class="templatecontentpleft">
-                {{ expenses_count }} transaction{{ 's' if expenses_count != 1 else '' }} —
-                total cost <span class="text-danger">{{ expenses_total_cost | fmt }}</span>,
-                total revenue <span class="text-success">{{ expenses_total_revenue | fmt }}</span>
+                {{ expenses_count | fmt }} purchase{{ 's' if expenses_count != 1 else '' }} —
+                <span class="text-danger">{{ expenses_total_cost | fmt }}</span> items bought{% if expenses_total_revenue %},
+                <span class="text-success">{{ expenses_total_revenue | fmt }}</span> items gained{% endif %}{% if expenses_count > 50 %}
+                · showing the latest 50{% endif %}
             </p>
             <div class="templateoutertablediv">
                 <table class="templatetable">
                     <thead><tr><th>Type</th><th>Item / Resource</th><th>Amount</th><th>Date</th></tr></thead>
                     <tbody>
-                    {% for name, type, resource, amount, date in expenses %}
+                    {% for name, type, resource, amount, date in expenses[:50] %}
                     <tr>
                         <td>{% if type == 'expense' %}<span class="text-danger">Expense</span>{% else %}<span class="text-success">Revenue</span>{% endif %}</td>
                         <td>{{ resource | formatname }}</td>

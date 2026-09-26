@@ -1,5 +1,6 @@
 from repositories.province_repository import ProvinceRepository
-from database import provinces_has_image_data
+from database import provinces_has_image_data, get_request_cursor
+from app_core.economy.building_costs import CITY_UNITS, LAND_UNITS
 
 class ProvinceService:
     @staticmethod
@@ -19,8 +20,30 @@ class ProvinceService:
             if len(row) > 11 and row[11]:
                 provinces_with_images.add(row[3])
 
+        # Slots in use per province, for the overview cards (same CITY_UNITS /
+        # LAND_UNITS split the build check in building_purchase.get_free_slots uses).
+        slots_used = {}
+        page_ids = [row[3] for row in provinces]
+        if page_ids:
+            with get_request_cursor(read_only=True) as db:
+                db.execute(
+                    """
+                    SELECT ub.province_id,
+                           COALESCE(SUM(ub.quantity) FILTER (WHERE bd.name = ANY(%s)), 0),
+                           COALESCE(SUM(ub.quantity) FILTER (WHERE bd.name = ANY(%s)), 0)
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                    WHERE ub.user_id = %s AND ub.province_id = ANY(%s)
+                    GROUP BY ub.province_id
+                    """,
+                    (list(CITY_UNITS), list(LAND_UNITS), user_id, page_ids),
+                )
+                for pid, used_city, used_land in db.fetchall():
+                    slots_used[pid] = {"city": int(used_city), "land": int(used_land)}
+
         return {
             "provinces": provinces,
+            "slots_used": slots_used,
             "provinces_with_images": provinces_with_images,
             "current_page": current_page,
             "total_pages": total_pages,

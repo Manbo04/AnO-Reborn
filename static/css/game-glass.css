@@ -1240,7 +1240,9 @@ body.game-shell-active .dropdown-content a.active {
     padding-left: 4px;
 }
 
-@media (max-width: 1200px) {
+/* Six across only fits on wide screens; below ~1500px each cell got ~180px and
+   values like "11.19M (12.7%)" wrapped into a squished two-line mess. */
+@media (max-width: 1500px) {
     .game-stat-row.game-stat-row--grid6 {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1472,4 +1474,11 @@ body.game-shell-active .dropdown-content a.active {
     margin-top: 5px;
     flex-shrink: 0;
     box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* The `hidden` attribute loses to any class that sets display (e.g. the
+   revenue hourly/daily panels are display:flex), which made toggles that
+   flip .hidden do nothing visible. */
+[hidden] {
+    display: none !important;
 }

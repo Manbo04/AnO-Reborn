@@ -630,3 +630,30 @@ body.page-country .templatedivcontent .infodiv {
     /* Keep standalone buttons tappable but not enormous */
     .templatedivbutton { padding: 10px 16px !important; margin: 4px 0 !important; }
 }
+
+/* Countries filter controls: one even row, equal widths and heights, instead
+   of mixed-size controls with the search box sitting lower than the rest. */
+@media (min-width: 769px) {
+    .countries-filter-row {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 10px !important;
+        align-items: center;
+    }
+    .countries-filter-row > div {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .countries-filter-row select,
+    .countries-filter-row input,
+    .countries-filter-row .smallactionbutton {
+        width: 100% !important;
+        height: 40px;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    .countries-filter-row .smallactionbutton {
+        padding: 0 22px !important;
+    }
+}

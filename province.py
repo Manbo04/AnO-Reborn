@@ -66,6 +66,7 @@ def provinces():
         template,
         provinces=data["provinces"],
         provinces_with_images=data["provinces_with_images"],
+        slots_used=data.get("slots_used", {}),
         current_page=data["current_page"],
         total_pages=data["total_pages"],
         total_count=data["total_count"],

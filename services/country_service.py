@@ -526,7 +526,7 @@ class CountryService:
                 try:
                     db.execute(
                         "SELECT name, type, resource, amount, date "
-                        "FROM revenue WHERE user_id=%s",
+                        "FROM revenue WHERE user_id=%s ORDER BY id DESC",
                         (cId,),
                     )
                     expenses = db.fetchall()

@@ -45,6 +45,10 @@
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
                 <div class="game-spread"><span class="game-faint">Population</span><span class="game-mono">{{ population | fmt }}</span></div>
                 <div class="game-spread"><span class="game-faint">Happiness</span><span class="game-mono">{{ happiness | round }}%</span></div>
+                <div class="game-spread"><span class="game-faint">Productivity</span><span class="game-mono">{{ (productivity if productivity is not none else 50) | round }}%</span></div>
+                {% set used = slots_used.get(pId, {}) if slots_used is defined else {} %}
+                <div class="game-spread"><span class="game-faint">Cities in use</span><span class="game-mono">{{ used.get('city', 0) | fmt }} / {{ cityCount | fmt }}</span></div>
+                <div class="game-spread"><span class="game-faint">Land in use</span><span class="game-mono">{{ used.get('land', 0) | fmt }} / {{ land | fmt }}</span></div>
                 <div class="game-spread"><span class="game-faint">Est. tax revenue</span><span class="game-mono">${{ est_daily_tax | fmt }}/day</span></div>
             </div>
             <div class="game-meter" style="margin-top: 10px;"><div class="game-meter-fill {{ 'good' if happiness >= 60 else ('warn' if happiness >= 35 else 'bad') }}" style="width: {{ happiness }}%;"></div></div>

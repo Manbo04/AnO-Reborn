@@ -280,3 +280,23 @@ body.page-military .templatedivcontent .infodiv {
         height: auto;
     }
 }
+
+/* Wars action buttons: equal-width row like the military page's tabs instead of
+   content-sized buttons with uneven gaps (player report: "weirdly squished"). */
+@media (min-width: 769px) {
+    .wars-action-strip {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px !important;
+    }
+    .wars-action-strip > div {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .wars-action-strip .smallactionbutton {
+        width: 100% !important;
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+}
