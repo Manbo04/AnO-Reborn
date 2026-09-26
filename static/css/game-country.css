@@ -110,6 +110,10 @@ body.game-page-v2 .country-demographics-chart-wrap {
 .country-demographics-chart-wrap .chart-canvas-responsive {
     width: 100% !important;
     height: 100% !important;
+    /* The generic .chart-canvas-responsive caps canvases at 450px; for big nations
+       the chart is taller than that and scrolls inside the wrap, so lift the cap
+       or all rows get crushed into 450px with blank scroll space below. */
+    max-height: none;
     margin: 0;
 }
 
