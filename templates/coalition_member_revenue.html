@@ -1,0 +1,64 @@
+{% extends "layout.html" %} {% block title %} {{ member_name }} · Revenue {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<style>
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.rev-pos { color: var(--success, #51cf66); }
+.rev-neg { color: var(--danger, #ff6b6b); }
+</style>
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalitions.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero(member_name, badge_icon='trending_up', badge_text='Revenue') }}
+
+    <div class="templatedivcontent">
+        <div class="infodiv">
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+            <a href="/coalition/{{ colId }}" class="game-btn game-btn-sm">
+                <span class="material-icons-outlined">arrow_back</span>Coalition
+            </a>
+            <a href="/country/id={{ member_id }}" class="game-btn game-btn-sm">
+                <span class="material-icons-outlined">flag</span>Country page
+            </a>
+        </div>
+
+        <p class="text-muted" style="margin-bottom:12px; font-size:0.9em;">
+            Projected income for the next hourly tick. {{ member_name }} is sharing this with the coalition.
+            {% if coalition_tax %}Net money is after {{ coalition_tax | commas }} alliance tax.{% endif %}
+        </p>
+
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Resource</th>
+                    <th>Gross / hr</th>
+                    <th>Net / hr</th>
+                    <th>Net / day</th>
+                </tr>
+                {% for res, gross, net in rows %}
+                {% if gross or net %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename=game_asset_path('resources', res)) }}?v=2" alt="" class="resource" loading="lazy" /> {{ res | replace('_', ' ') | title }}</td>
+                    <td>{{ gross | commas }}</td>
+                    <td class="{{ 'rev-neg' if net < 0 else 'rev-pos' }}">{{ ('+' if net > 0 else '') ~ (net | commas) }}</td>
+                    <td class="{{ 'rev-neg' if net < 0 else 'rev-pos' }}">{{ ('+' if net > 0 else '') ~ ((net * 24) | commas) }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                {% if not rows|selectattr(1)|list and not rows|selectattr(2)|list %}
+                <tr><td colspan="4">No income or upkeep projected for the next tick.</td></tr>
+                {% endif %}
+            </table>
+        </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

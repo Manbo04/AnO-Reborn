@@ -42,6 +42,41 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+.member-revenue-link { margin-left: 6px; vertical-align: middle; opacity: 0.8; }
+.member-revenue-link .material-icons-outlined { font-size: 18px; }
+.banklog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.banklog-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.taxlog-details > summary { cursor: pointer; padding: 10px 0; min-height: 44px; }
+.col-settings-form { display: flex; flex-direction: column; gap: 14px; }
+.col-settings-form { align-items: stretch; text-align: left; }
+.col-settings-form label.col-check {
+    display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px;
+    width: 100%; cursor: pointer; text-align: left;
+}
+.col-settings-form label.col-check input { flex: 0 0 20px; margin: 3px 8px 0 0; width: 20px; height: 20px; }
+.col-settings-form label.col-check > span { flex: 1 1 auto; }
+.col-settings-form .col-hint { font-size: 0.8em; color: var(--text-secondary); display: block; margin-top: 2px; }
+.access-matrix th, .access-matrix td { text-align: center; }
+.access-matrix th { white-space: normal; min-width: 72px; line-height: 1.2; }
+.access-matrix td:first-child, .access-matrix th:first-child { text-align: left; white-space: normal; min-width: 180px; }
+.access-matrix input[type="checkbox"] { width: 20px; height: 20px; }
+.role-names-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 560px;
+}
+@media (min-width: 640px) { .role-names-grid { grid-template-columns: 1fr 1fr; } }
+.role-names-grid label { display: block; font-size: 0.8em; color: var(--text-secondary); margin-bottom: 4px; text-align: left; }
+.role-names-grid input { width: 100%; box-sizing: border-box; }
 </style>
 
 <div class="templatediv">
@@ -223,8 +258,11 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         <td data-sort="{{ loop.index }}">{{ loop.index }})</td>
                         <td data-sort="{{ username.lower() }}">
                             <a href="/country/id={{ member_id }}">{{ username }}</a>
+                            {% if member_id in revenue_viewable_ids %}
+                            <a href="/coalition/{{ colId }}/member/{{ member_id }}/revenue" title="View {{ username }}'s revenue (shared with the coalition)" class="member-revenue-link"><span class="material-icons-outlined">trending_up</span></a>
+                            {% endif %}
                         </td>
-                        <td data-sort="{{ role }}">{{ role.replace('_', ' ').title() }}</td>
+                        <td data-sort="{{ role }}">{{ role_labels.get(role, role.replace('_', ' ').title()) }}</td>
                         <td data-sort="{{ influence if influence else 0 }}"><span class="material-icons-outlined">
                             people_alt
                             </span>{{ (influence if influence else 0) | fmt }}</td>
@@ -315,16 +353,23 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
             {% if userInCurCol %}
             <div class="infodiv" style="margin-top: 20px;">
                 <h3 class="templatecontentheadercenter">Share Build Access</h3>
+                {% set build_roles = [] %}
+                {% for r in coalition_roles if r in col_settings.info_access.province_builds %}{% set _ = build_roles.append(role_labels[r]) %}{% endfor %}
                 <p class="templatecontentpleft" style="font-size: 0.85em;">
-                    Let your coalition's leader, deputy leader, banker, or domestic minister
-                    view your province and build for you — handy if you want help planning
-                    without handing out your login. Off by default, and you can turn it off
-                    again any time.
+                    Let your coalition's {{ build_roles | join(', ') }} view your provinces and
+                    build for you, handy if you want help planning without handing out your
+                    login. Roles your leader allows can also see your Revenue breakdown.
+                    You can turn it off again any time.
                 </p>
+                {% if col_settings.share_builds_default and not builds_choice_set %}
+                <p class="templatecontentpleft" style="font-size: 0.85em; color: var(--text-secondary);">
+                    Your coalition shares by default, so this is on until you change it.
+                </p>
+                {% endif %}
                 <form action="/coalition/build-sharing" method="POST">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" name="enabled" value="on" onchange="this.form.submit()" {% if allow_coalition_builds %}checked{% endif %} />
-                        Share my province build access with coalition leadership
+                        Share my province build access and revenue with coalition leadership
                     </label>
                 </form>
             </div>
@@ -449,7 +494,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                                 <span class="material-icons-outlined">arrow_downward</span>Deposit
                             </button>
                         </div>
-                        {% if user_role in ["leader", "deputy_leader", "banker"] %}
+                        {% if user_role in ["leader", "deputy_leader", "banker"] and not col_settings.bank_require_requests %}
                         <div class="templatedivflex2left">
                             <button formaction="/withdraw_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
                                 <span class="material-icons-outlined">arrow_upward</span>Withdraw
@@ -464,6 +509,38 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         {% endif %}
                     </div>
                 </form>
+                {% if col_settings.bank_require_requests %}
+                <p style="margin-top:8px; color: var(--text-secondary); font-size:0.85em; text-align:center;">
+                    Your coalition runs accountable banking: every withdrawal, including officers', goes through a request{% if not col_settings.bank_self_approve %} that someone other than the requester approves{% endif %}.
+                </p>
+                {% endif %}
+
+                <div class="banklog-links" style="justify-content:center; margin-top:12px;">
+                    <a href="/coalition/{{ coalition_id }}/bank-trades" class="game-btn game-btn-sm"><span class="material-icons-outlined">swap_horiz</span>Bank trades</a>
+                    <a href="/coalition/{{ coalition_id }}/bond-insurance" class="game-btn game-btn-sm"><span class="material-icons-outlined">shield</span>Bond insurance</a>
+                </div>
+
+                {% if my_bank_requests %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Your Pending Requests</h2>
+                <form method="POST">
+                    <div class="templateoutertablediv inverttable">
+                        <table class="templatetable templatetable2">
+                            <tr>
+                                <th>Request</th>
+                                <th>Cancel</th>
+                            </tr>
+                            {% for req_id, req_amount, req_resource in my_bank_requests %}
+                            <tr>
+                                <td>{{ req_amount | commas }} {{ req_resource | replace('_', ' ') }}</td>
+                                <td>
+                                    <button type="submit" formaction="/remove_bank_request/{{ req_id }}" class="iconbutton" title="Cancel request" onclick="return confirm('Cancel this request?');"><span class="material-icons iconred">remove_circle_outline</span></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </form>
+                {% endif %}
 
                 {% if user_role in ["leader", "deputy_leader", "banker"] and bankRequests %}
                 <h2 class="templatecontentheaderleft" style="margin-top:20px;">Pending Withdrawal Requests</h2>
@@ -476,13 +553,18 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                                 <th>Action</th>
                             </tr>
                             {% for data in bankRequests %}
+                            {% set own_req = data[0] == current_user_id %}
                             <tr>
-                                <td><a href="/country/id={{ data[0] }}">{{ data[4] }}</a></td>
-                                <td>{{ data[1] | commas }} {{ data[2] }}</td>
+                                <td><a href="/country/id={{ data[0] }}">{{ data[4] }}</a>{% if own_req %} (you){% endif %}</td>
+                                <td>{{ data[1] | commas }} {{ data[2] | replace('_', ' ') }}</td>
                                 <td>
                                     <div class="templatedivflex2 menuflex">
                                         <div class="templatedivflex2left">
+                                            {% if own_req and not col_settings.bank_self_approve %}
+                                            <span style="font-size:0.8em; color: var(--text-secondary);" title="Your coalition requires another banker to approve your own requests">Needs another banker</span>
+                                            {% else %}
                                             <button type="submit" formaction="/accept_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconblue">check_circle_outline</span></button>
+                                            {% endif %}
                                         </div>
                                         <div class="templatedivflex2left">
                                             <button type="submit" formaction="/remove_bank_request/{{ data[3] }}" class="iconbutton"><span class="material-icons iconred">remove_circle_outline</span></button>
@@ -499,7 +581,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 {% if contributions_by_user %}
                 <h2 class="templatecontentheaderleft" style="margin-top:20px;">Contribution History</h2>
                 <p style="margin-bottom:12px; color: var(--text-secondary); font-size:0.9em;">Cumulative deposits per member since tracking was enabled.</p>
-                {% if user_role in ["leader", "deputy_leader", "banker"] %}
+                {% if can_see_all_bank_logs %}
                 {% set show_ids = contributions_by_user.keys() | list %}
                 {% else %}
                 {% set show_ids = [current_user_id] %}
@@ -530,11 +612,18 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 </div>
                 {% endif %}
 
-                {% if bank_transactions %}
                 <h2 class="templatecontentheaderleft" style="margin-top:20px;">Recent Bank Transactions</h2>
-                <p style="margin-bottom:12px; color: var(--text-secondary); font-size:0.9em;">
-                    {% if user_role in ["leader", "deputy_leader", "banker"] %}Last 50 deposits and withdrawals across the whole coalition.{% else %}Your last 50 deposits and withdrawals.{% endif %}
-                </p>
+                <div class="banklog-actions">
+                    <p style="color: var(--text-secondary); font-size:0.9em; margin:0;">
+                        {% if can_see_all_bank_logs %}Last {{ recent_log_limit }} deposits and withdrawals across the whole coalition.{% else %}Your last {{ recent_log_limit }} deposits and withdrawals.{% endif %}
+                        Tax income is logged separately.
+                    </p>
+                    <div class="banklog-links">
+                        <a href="/coalition/{{ colId }}/bank_log?kind=bank" class="game-btn game-btn-sm"><span class="material-icons-outlined">list</span>Full log</a>
+                        <a href="/coalition/{{ colId }}/bank_log.csv?kind=bank" class="game-btn game-btn-sm"><span class="material-icons-outlined">download</span>CSV</a>
+                    </div>
+                </div>
+                {% if bank_transactions %}
                 <div class="templateoutertablediv">
                     <table class="templatetable templatetable2">
                         <tr>
@@ -549,14 +638,50 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         <tr>
                             <td>{{ created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>{{ "Deposit" if direction == "deposit" else "Withdraw" }}</td>
-                            <td><a href="/country/id={{ uid }}">{{ uname }}</a></td>
+                            <td>{% if uname %}<a href="/country/id={{ uid }}">{{ uname }}</a>{% else %}Deleted nation{% endif %}</td>
                             <td>{{ res | replace('_', ' ') | title }}</td>
                             <td>{{ amt | commas }}</td>
-                            <td>{% if actor_id != uid %}<a href="/country/id={{ actor_id }}">{{ actor_uname }}</a>{% else %}—{% endif %}</td>
+                            <td>{% if actor_id != uid and actor_uname %}<a href="/country/id={{ actor_id }}">{{ actor_uname }}</a>{% else %}—{% endif %}</td>
                         </tr>
                         {% endfor %}
                     </table>
                 </div>
+                {% else %}
+                <p style="color: var(--text-secondary); font-size:0.9em;">No deposits or withdrawals yet.</p>
+                {% endif %}
+
+                {% if can_see_tax_logs %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Tax Income</h2>
+                <div class="banklog-actions">
+                    <p style="color: var(--text-secondary); font-size:0.9em; margin:0;">Last {{ recent_log_limit }} hourly alliance tax payments into the bank.</p>
+                    <div class="banklog-links">
+                        <a href="/coalition/{{ colId }}/bank_log?kind=tax" class="game-btn game-btn-sm"><span class="material-icons-outlined">list</span>Full log</a>
+                        <a href="/coalition/{{ colId }}/bank_log.csv?kind=tax" class="game-btn game-btn-sm"><span class="material-icons-outlined">download</span>CSV</a>
+                    </div>
+                </div>
+                {% if tax_transactions %}
+                <details class="taxlog-details">
+                    <summary>Show {{ tax_transactions|length }} recent tax payments</summary>
+                    <div class="templateoutertablediv">
+                        <table class="templatetable templatetable2">
+                            <tr>
+                                <th>Time</th>
+                                <th>Member</th>
+                                <th>Money</th>
+                            </tr>
+                            {% for created_at, uname, uid, actor_uname, actor_id, direction, res, amt in tax_transactions %}
+                            <tr>
+                                <td>{{ created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{% if uname %}<a href="/country/id={{ uid }}">{{ uname }}</a>{% else %}Deleted nation{% endif %}</td>
+                                <td>{{ amt | commas }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </details>
+                {% else %}
+                <p style="color: var(--text-secondary); font-size:0.9em;">No tax income logged yet.</p>
+                {% endif %}
                 {% endif %}
             </div>
             {% endif %}
@@ -668,14 +793,9 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         <div class="templatedivflex2left">
                             <select class="templateselect" name="role" required>
                                 <option class="templateoption" selected disabled>Choose Position</option>
-                                <option value="leader" class="templateoption">Leader</option>
-                                <option value="deputy_leader" class="templateoption">Deputy Leader</option>
-                                <option value="banker" class="templateoption">Banker</option>
-                                <option value="tax_collector" class="templateoption">Tax Collector</option>
-                                <option value="foreign_ambassador" class="templateoption">Foreign Ambassador</option>
-                                <option value="general" class="templateoption">General</option>
-                                <option value="domestic_minister" class="templateoption">Domestic Minister</option>
-                                <option value="member" class="templateoption">Member</option>
+                                {% for r in coalition_roles %}
+                                <option value="{{ r }}" class="templateoption">{{ role_labels[r] }}</option>
+                                {% endfor %}
                                 <option value="kick" class="templateoption" style="color:#ff4d4d;font-weight:bold;">Kick Member</option>
                             </select>
                         </div>
@@ -683,7 +803,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             <select class="templateselect" name="username" required>
                                 <option class="templateoption" selected disabled value="">Choose Member</option>
                                 {% for member_id, username, role, influence, provinces, last_active, joined_at in members|sort(attribute=1) %}
-                                <option value="{{ username }}" class="templateoption">{{ username }} ({{ role.replace('_', ' ').title() }})</option>
+                                <option value="{{ username }}" class="templateoption">{{ username }} ({{ role_labels.get(role, role.replace('_', ' ').title()) }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -695,14 +815,14 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 <div class="templateoutertablediv inverttable" style="margin-top:15px;">
                     <table class="templatetable templatetable2">
                         <tr><th>Role</th><th>About</th><th>Members</th></tr>
-                        <tr><td>Leaders</td><td>Power over all aspects of the coalition.</td><td>{{ member_roles.get("leader") }}</td></tr>
-                        <tr><td>Deputy Leader</td><td>Power over all aspects of the coalition, excluding coalition name and flag.</td><td>{{ member_roles.get("deputy_leader") }}</td></tr>
-                        <tr><td>Domestic Minister</td><td>Permission to add and remove members, and change roles of people below them.</td><td>{{ member_roles.get("domestic_minister") }}</td></tr>
-                        <tr><td>Banker</td><td>Able to accept withdrawal requests and withdraw resources from the bank.</td><td>{{ member_roles.get("banker") }}</td></tr>
-                        <tr><td>Tax Collector</td><td>Permission to edit tax brackets and change who is in them.</td><td>{{ member_roles.get("tax_collector") }}</td></tr>
-                        <tr><td>Foreign Ambassador</td><td>Power to add and remove treaties.</td><td>{{ member_roles.get("foreign_ambassador") }}</td></tr>
-                        <tr><td>General</td><td>Ability to declare coalition wars, edit war message, and edit war range.</td><td>{{ member_roles.get("general") }}</td></tr>
-                        <tr><td>Member</td><td>Can deposit into the bank and request withdrawals.</td><td>{{ member_roles.get("member") }}</td></tr>
+                        <tr><td>{{ role_labels["leader"] }}</td><td>Power over all aspects of the coalition.</td><td>{{ member_roles.get("leader") }}</td></tr>
+                        <tr><td>{{ role_labels["deputy_leader"] }}</td><td>Power over all aspects of the coalition, excluding coalition name and flag.</td><td>{{ member_roles.get("deputy_leader") }}</td></tr>
+                        <tr><td>{{ role_labels["domestic_minister"] }}</td><td>Permission to add and remove members, and change roles of people below them.</td><td>{{ member_roles.get("domestic_minister") }}</td></tr>
+                        <tr><td>{{ role_labels["banker"] }}</td><td>Able to accept withdrawal requests and withdraw resources from the bank{% if col_settings.bank_require_requests %} (your coalition requires requests for every withdrawal){% endif %}.</td><td>{{ member_roles.get("banker") }}</td></tr>
+                        <tr><td>{{ role_labels["tax_collector"] }}</td><td>Permission to edit tax brackets and change who is in them.</td><td>{{ member_roles.get("tax_collector") }}</td></tr>
+                        <tr><td>{{ role_labels["foreign_ambassador"] }}</td><td>Power to add and remove treaties.</td><td>{{ member_roles.get("foreign_ambassador") }}</td></tr>
+                        <tr><td>{{ role_labels["general"] }}</td><td>Ability to declare coalition wars, edit war message, and edit war range.</td><td>{{ member_roles.get("general") }}</td></tr>
+                        <tr><td>{{ role_labels["member"] }}</td><td>Can deposit into the bank and request withdrawals.</td><td>{{ member_roles.get("member") }}</td></tr>
                     </table>
                 </div>
 
@@ -900,6 +1020,75 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     </div>
                     <button class="templatedivbutton templatecenteredbutton" type="submit" style="margin-top:10px;">
                         <span class="material-icons-outlined">check</span>Update
+                    </button>
+                </div>
+            </form>
+
+            <h2 class="templatecontentheaderleft">Role Names</h2>
+            <form action="/coalition/{{ colId }}/role_names" method="POST">
+                <div class="infodiv" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+                    <p class="templatecontentpleft" style="font-size:0.85em;margin:0;">Rename your coalition's roles. Permissions stay the same, only the name changes. Leave a box blank to use the default.</p>
+                    <div class="role-names-grid">
+                        {% for r in coalition_roles %}
+                        <div>
+                            <label for="role_{{ r }}">{{ default_role_labels[r] }}</label>
+                            <input type="text" class="loginsignupinput" id="role_{{ r }}" name="role_{{ r }}" maxlength="{{ role_label_max_len }}" placeholder="{{ default_role_labels[r] }}" value="{{ role_labels[r] if role_labels[r] != default_role_labels[r] else '' }}" />
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="templatedivbutton templatecenteredbutton" type="submit">
+                        <span class="material-icons-outlined">badge</span>Save Role Names
+                    </button>
+                </div>
+            </form>
+
+            <h2 class="templatecontentheaderleft">Banking, Sharing &amp; Visibility</h2>
+            <form action="/coalition/{{ colId }}/settings" method="POST">
+                <div class="infodiv col-settings-form">
+                    <label class="col-check">
+                        <input type="checkbox" name="share_builds_default" {% if col_settings.share_builds_default %}checked{% endif %} />
+                        <span>Share Build Access on by default
+                            <span class="col-hint">Members who haven't chosen for themselves share their province builds and revenue with the roles below. Members are notified and can still turn it off.</span>
+                        </span>
+                    </label>
+                    <label class="col-check">
+                        <input type="checkbox" name="bank_require_requests" {% if col_settings.bank_require_requests %}checked{% endif %} />
+                        <span>Accountable banking: every withdrawal goes through a request
+                            <span class="col-hint">Leaders, deputies and bankers can't withdraw directly. They file a request like everyone else, and it shows up in the bank log with who approved it.</span>
+                        </span>
+                    </label>
+                    <label class="col-check">
+                        <input type="checkbox" name="bank_self_approve" {% if col_settings.bank_self_approve %}checked{% endif %} />
+                        <span>Bankers can approve their own requests
+                            <span class="col-hint">Turn off to require a second banker, deputy or leader to sign off.</span>
+                        </span>
+                    </label>
+
+                    <div>
+                        <strong>Who can see what</strong>
+                        <span class="col-hint">Leaders always see everything. Members always see their own bank transactions. Province builds and revenue are only shown for members who are sharing.</span>
+                    </div>
+                    <div class="templateoutertablediv">
+                        <table class="templatetable templatetable2 access-matrix">
+                            <tr>
+                                <th>Information</th>
+                                {% for r in coalition_roles if r != "leader" %}
+                                <th>{{ role_labels[r] }}</th>
+                                {% endfor %}
+                            </tr>
+                            {% for key, label in info_access_labels.items() %}
+                            <tr>
+                                <td>{{ label }}</td>
+                                {% for r in coalition_roles if r != "leader" %}
+                                <td><input type="checkbox" name="access_{{ key }}" value="{{ r }}" aria-label="{{ role_labels[r] }}: {{ label }}" {% if r in col_settings.info_access[key] %}checked{% endif %} /></td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+
+                    <button class="templatedivbutton templatecenteredbutton" type="submit">
+                        <span class="material-icons-outlined">save</span>Save Settings
                     </button>
                 </div>
             </form>

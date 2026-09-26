@@ -1807,6 +1807,14 @@ def ensure_schema_compat() -> None:
                     "allow_coalition_builds BOOLEAN NOT NULL DEFAULT FALSE"
                 ),
             )
+            # Coalition QOL wishlist (luciuskonst, 2026-09-26): leaders can make
+            # build-sharing the coalition default. A member's own explicit choice
+            # (this flag) always wins over that default; members who never touched
+            # the toggle follow it. Anyone already opted in made that choice.
+            core_ok &= _run_schema_step(
+                "users_coalition_builds_choice_set",
+                _ensure_users_coalition_builds_choice_set,
+            )
         else:
             logger.info(
                 "users is a compatibility view — skipping ALTER TABLE users steps"
@@ -1874,6 +1882,23 @@ def ensure_schema_compat() -> None:
             )
 
         _run_schema_step("col_bank_transactions", _create_col_bank_transactions)
+
+        # Per-coalition display names for the fixed role keys (luciuskonst's
+        # Coalition QOL wishlist, 2026-09-26). Permissions still key off the
+        # internal role; this only changes what the role is called.
+        _run_schema_step(
+            "col_role_names",
+            lambda db: db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS col_role_names (
+                    coalition_id INTEGER NOT NULL,
+                    role TEXT NOT NULL,
+                    display_name TEXT NOT NULL,
+                    PRIMARY KEY (coalition_id, role)
+                )
+                """
+            ),
+        )
 
         # Player-requested (Cheesar, customization/larp suggestions thread):
         # opt-in to show your province list on your public country page --
@@ -2072,6 +2097,17 @@ def _ensure_users_join_number_index(db) -> None:
         logger.warning("idx_users_join_number: %s", exc)
 
 
+def _ensure_users_coalition_builds_choice_set(db) -> None:
+    db.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+        "coalition_builds_choice_set BOOLEAN NOT NULL DEFAULT FALSE"
+    )
+    db.execute(
+        "UPDATE users SET coalition_builds_choice_set = TRUE "
+        "WHERE allow_coalition_builds AND NOT coalition_builds_choice_set"
+    )
+
+
 def _ensure_colnames_optional_columns(db) -> None:
     for stmt, label in (
         (
@@ -2085,6 +2121,23 @@ def _ensure_colnames_optional_columns(db) -> None:
         (
             "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS name_changes_used INTEGER DEFAULT 0",
             "colNames.name_changes_used",
+        ),
+        # Coalition QOL wishlist (luciuskonst, 2026-09-26)
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS share_builds_default BOOLEAN NOT NULL DEFAULT FALSE",
+            "colNames.share_builds_default",
+        ),
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS bank_require_requests BOOLEAN NOT NULL DEFAULT FALSE",
+            "colNames.bank_require_requests",
+        ),
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS bank_self_approve BOOLEAN NOT NULL DEFAULT TRUE",
+            "colNames.bank_self_approve",
+        ),
+        (
+            "ALTER TABLE colNames ADD COLUMN IF NOT EXISTS info_access JSONB",
+            "colNames.info_access",
         ),
     ):
         try:

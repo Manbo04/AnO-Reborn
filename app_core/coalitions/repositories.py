@@ -77,59 +77,215 @@ BUILD_SHARE_QUALIFYING_ROLES = (
 )
 
 
-def can_manage_province_builds(db, actor_id, owner_id) -> bool:
-    """Can `actor_id` view/build in a province owned by `owner_id`?
+# Internal role keys, highest rank first. Permissions always key off these;
+# coalitions can only change the DISPLAY name (see get_role_labels).
+COALITION_ROLES = (
+    "leader",
+    "deputy_leader",
+    "domestic_minister",
+    "banker",
+    "tax_collector",
+    "foreign_ambassador",
+    "general",
+    "member",
+)
 
-    Always true for the owner acting on their own province. Otherwise only
-    true when ALL of the following hold:
-      - `owner_id` has explicitly opted in (`users.allow_coalition_builds`)
-      - both users are members of the SAME coalition
-      - `actor_id`'s role in that coalition is one of the qualifying roles
+DEFAULT_ROLE_LABELS = {
+    "leader": "Leader",
+    "deputy_leader": "Deputy Leader",
+    "domestic_minister": "Domestic Minister",
+    "banker": "Banker",
+    "tax_collector": "Tax Collector",
+    "foreign_ambassador": "Foreign Ambassador",
+    "general": "General",
+    "member": "Member",
+}
 
-    Fails closed (returns False) on any lookup error or missing data --
-    this gates real account-state access, so an unopted-in member's data
-    must never leak because of a schema hiccup or a stale cache.
+ROLE_LABEL_MAX_LEN = 32
+
+# Coalition information-visibility settings (luciuskonst's Coalition QOL
+# wishlist, 2026-09-26). Each key maps to the roles that may see it; the
+# defaults reproduce the behaviour from before the setting existed. Leaders
+# can always see everything, so a leader can never lock themselves out.
+# province_builds / member_revenue additionally require the member to be
+# sharing with their coalition (member_shares_with_coalition).
+INFO_ACCESS_DEFAULTS = {
+    "bank_balances": COALITION_ROLES,
+    "bank_logs": ("leader", "deputy_leader", "banker"),
+    "tax_logs": ("leader", "deputy_leader", "banker", "tax_collector"),
+    "province_builds": BUILD_SHARE_QUALIFYING_ROLES,
+    "member_revenue": ("leader", "deputy_leader"),
+}
+
+INFO_ACCESS_LABELS = {
+    "bank_balances": "Coalition bank balances",
+    "bank_logs": "Everyone's bank transactions & contributions",
+    "tax_logs": "Coalition tax income log",
+    "province_builds": "Plan/build in sharing members' provinces",
+    "member_revenue": "Sharing members' Revenue breakdown",
+}
+
+
+def get_role_labels(db, coalition_id) -> dict:
+    """{role_key: display name} for a coalition, falling back to defaults."""
+    labels = dict(DEFAULT_ROLE_LABELS)
+    rows = _optional_fetch(
+        db,
+        "SELECT role, display_name FROM col_role_names WHERE coalition_id=%s",
+        (coalition_id,),
+        many=True,
+    )
+    for role, display_name in rows or []:
+        if role in labels and display_name:
+            labels[role] = display_name
+    return labels
+
+
+def normalize_info_access(raw) -> dict:
+    """Turn the stored JSON (or None) into {key: frozenset(roles)}."""
+    access = {}
+    raw = raw if isinstance(raw, dict) else {}
+    for key, default in INFO_ACCESS_DEFAULTS.items():
+        roles = raw.get(key)
+        if isinstance(roles, list):
+            chosen = {r for r in roles if r in COALITION_ROLES}
+        else:
+            chosen = set(default)
+        chosen.add("leader")
+        access[key] = frozenset(chosen)
+    return access
+
+
+def get_coalition_settings(db, coalition_id) -> dict:
+    """Leader-configurable coalition settings with safe defaults."""
+    settings = {
+        "share_builds_default": False,
+        "bank_require_requests": False,
+        "bank_self_approve": True,
+        "info_access": normalize_info_access(None),
+    }
+    row = _optional_fetch(
+        db,
+        "SELECT share_builds_default, bank_require_requests, "
+        "bank_self_approve, info_access FROM colNames WHERE id=%s",
+        (coalition_id,),
+    )
+    if row:
+        settings["share_builds_default"] = bool(row[0])
+        settings["bank_require_requests"] = bool(row[1])
+        settings["bank_self_approve"] = row[2] is None or bool(row[2])
+        settings["info_access"] = normalize_info_access(row[3])
+    return settings
+
+
+def role_can_see(settings, key, role) -> bool:
+    return role in settings["info_access"].get(key, ())
+
+
+def _optional_fetch(db, sql, params, many=False):
+    """Run a read inside a SAVEPOINT so a failure (e.g. a column not yet
+    migrated) never aborts -- or rolls back -- the caller's transaction.
+    Returns None on failure."""
+    try:
+        db.execute("SAVEPOINT coalition_optional_read")
+    except Exception:
+        return None
+    try:
+        db.execute(sql, params)
+        result = db.fetchall() if many else db.fetchone()
+        db.execute("RELEASE SAVEPOINT coalition_optional_read")
+        return result
+    except Exception:
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT coalition_optional_read")
+        except Exception:
+            pass
+        return None
+
+
+def member_shares_with_coalition(db, owner_id) -> bool:
+    """Is `owner_id` sharing builds/revenue with their coalition?
+
+    The member's own explicit toggle always wins. Members who never touched
+    it follow their coalition's `share_builds_default`. Fails closed.
     """
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return False
+    row = _optional_fetch(
+        db,
+        f"""
+        SELECT u.allow_coalition_builds, u.coalition_builds_choice_set,
+               COALESCE(c.share_builds_default, FALSE)
+        FROM users u
+        LEFT JOIN {members_tbl} m ON m.userid = u.id
+        LEFT JOIN colNames c ON c.id = m.colid
+        WHERE u.id = %s
+        """,
+        (owner_id,),
+    )
+    if not row:
+        return False
+    allow, choice_set, coalition_default = row
+    if choice_set:
+        return bool(allow)
+    return bool(allow) or bool(coalition_default)
+
+
+def _shared_coalition_role(db, actor_id, owner_id):
+    """(coalition_id, actor_role) when both are in the same coalition, else None."""
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return None
+    db.execute(f"SELECT colid FROM {members_tbl} WHERE userid=%s", (owner_id,))
+    owner_row = db.fetchone()
+    if not owner_row or not owner_row[0]:
+        return None
+    db.execute(f"SELECT colid, role FROM {members_tbl} WHERE userid=%s", (actor_id,))
+    actor_row = db.fetchone()
+    if not actor_row or not actor_row[0] or actor_row[0] != owner_row[0]:
+        return None
+    return actor_row[0], actor_row[1]
+
+
+def _can_access_member_info(db, actor_id, owner_id, key) -> bool:
     try:
         actor_id = int(actor_id)
         owner_id = int(owner_id)
     except (TypeError, ValueError):
         return False
-
     if actor_id == owner_id:
         return True
-
-    members_tbl = _coalition_members_sql()
-    if not members_tbl:
-        return False
-
     try:
-        db.execute(
-            "SELECT allow_coalition_builds FROM users WHERE id=%s", (owner_id,)
-        )
-        row = db.fetchone()
-        if not row or not row[0]:
+        shared = _shared_coalition_role(db, actor_id, owner_id)
+        if not shared:
             return False
-
-        db.execute(
-            f"SELECT colid FROM {members_tbl} WHERE userid=%s", (owner_id,)
-        )
-        owner_row = db.fetchone()
-        if not owner_row or not owner_row[0]:
+        coalition_id, actor_role = shared
+        if not member_shares_with_coalition(db, owner_id):
             return False
-        owner_colid = owner_row[0]
-
-        db.execute(
-            f"SELECT colid, role FROM {members_tbl} WHERE userid=%s", (actor_id,)
-        )
-        actor_row = db.fetchone()
-        if not actor_row or not actor_row[0]:
-            return False
-        actor_colid, actor_role = actor_row[0], actor_row[1]
-
-        if actor_colid != owner_colid:
-            return False
-
-        return actor_role in BUILD_SHARE_QUALIFYING_ROLES
+        return role_can_see(get_coalition_settings(db, coalition_id), key, actor_role)
     except Exception:
         return False
+
+
+def can_manage_province_builds(db, actor_id, owner_id) -> bool:
+    """Can `actor_id` view/build in a province owned by `owner_id`?
+
+    Always true for the owner acting on their own province. Otherwise only
+    true when ALL of the following hold:
+      - `owner_id` is sharing (explicit opt-in, or never chose and their
+        coalition made sharing the default -- member_shares_with_coalition)
+      - both users are members of the SAME coalition
+      - `actor_id`'s role is allowed `province_builds` by that coalition's
+        visibility settings (defaults to BUILD_SHARE_QUALIFYING_ROLES)
+
+    Fails closed (returns False) on any lookup error or missing data --
+    this gates real account-state access, so an unshared member's data
+    must never leak because of a schema hiccup or a stale cache.
+    """
+    return _can_access_member_info(db, actor_id, owner_id, "province_builds")
+
+
+def can_view_member_revenue(db, actor_id, owner_id) -> bool:
+    """Same gate as can_manage_province_builds, for the `member_revenue` key."""
+    return _can_access_member_info(db, actor_id, owner_id, "member_revenue")

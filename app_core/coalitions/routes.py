@@ -5,10 +5,20 @@ from .repositories import (
     _coalition_members_sql,
     _members_tbl,
     BUILD_SHARE_QUALIFYING_ROLES,
+    COALITION_ROLES,
+    DEFAULT_ROLE_LABELS,
+    INFO_ACCESS_LABELS,
+    ROLE_LABEL_MAX_LEN,
+    get_coalition_settings,
+    get_role_labels,
+    role_can_see,
+    member_shares_with_coalition,
+    can_view_member_revenue,
 )
 from .services import _no_coalition_response
 
 from flask import (
+    Response,
     request,
     render_template,
     session,
@@ -17,6 +27,9 @@ from flask import (
     current_app,
 )
 from helpers import login_required, login_required_or_crawler_preview, error, empty_state, require_post_origin, get_bulk_influence, is_theme_v2_enabled
+import csv
+import io
+import json
 import os
 from dotenv import load_dotenv
 
@@ -27,6 +40,45 @@ from database import cache_response, rollback_db_cursor, get_request_cursor, inv
 from database import get_coalition_members_table  # noqa: E402
 from typing import Optional  # noqa: E402
 from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES  # noqa: E402
+
+
+RECENT_LOG_LIMIT = 50
+FULL_LOG_PAGE_SIZE = 100
+CSV_EXPORT_MAX_ROWS = 50_000
+BANK_LOG_KINDS = ("bank", "tax")
+
+
+def _fetch_bank_log(db, coalition_id, kind, only_user_id=None, limit=50, offset=0):
+    """Rows of col_bank_transactions for one log.
+
+    kind="bank": real deposits/withdrawals; kind="tax": the hourly alliance
+    tax income rows (logged with resource='tax', see game_ticks/taxes.py).
+    only_user_id restricts to one member's own rows.
+    Row shape: (created_at, username, user_id, actor_username, actor_id,
+                direction, resource, amount)
+    """
+    where = ["cbt.coalition_id = %s"]
+    params = [coalition_id]
+    where.append("cbt.resource = 'tax'" if kind == "tax" else "cbt.resource <> 'tax'")
+    if only_user_id is not None:
+        where.append("cbt.user_id = %s")
+        params.append(only_user_id)
+    params.extend([limit, offset])
+    db.execute(
+        f"""
+        SELECT cbt.created_at, u.username, cbt.user_id,
+               a.username, cbt.actor_id,
+               cbt.direction, cbt.resource, cbt.amount
+        FROM col_bank_transactions cbt
+        LEFT JOIN users u ON u.id = cbt.user_id
+        LEFT JOIN users a ON a.id = cbt.actor_id
+        WHERE {" AND ".join(where)}
+        ORDER BY cbt.created_at DESC, cbt.id DESC
+        LIMIT %s OFFSET %s
+        """,
+        tuple(params),
+    )
+    return db.fetchall()
 
 
 # Route for viewing a coalition's page
@@ -256,12 +308,22 @@ def coalition(coalition_id):
         except Exception:
             user_role = None
 
+        col_settings = get_coalition_settings(db, coalition_id)
+        role_labels = get_role_labels(db, coalition_id)
+
+        # Effective sharing (own explicit choice, else the coalition default)
+        # plus whether the member ever made that choice themselves.
+        allow_coalition_builds = False
+        builds_choice_set = False
         try:
-            db.execute("SELECT allow_coalition_builds FROM users WHERE id=%s", (cId,))
+            db.execute(
+                "SELECT coalition_builds_choice_set FROM users WHERE id=%s", (cId,)
+            )
             row = db.fetchone()
-            allow_coalition_builds = bool(row[0]) if row else False
+            builds_choice_set = bool(row[0]) if row else False
+            allow_coalition_builds = member_shares_with_coalition(db, cId)
         except Exception:
-            allow_coalition_builds = False
+            rollback_db_cursor(db)
 
         if (
             user_role in ["leader", "deputy_leader", "domestic_minister"]
@@ -450,7 +512,7 @@ def coalition(coalition_id):
             ingoing_length = 0
             active_length = 0
 
-        if userInCurCol:
+        if userInCurCol and role_can_see(col_settings, "bank_balances", user_role):
             bankRaw = {
                 "money": None,
                 "rations": None,
@@ -530,12 +592,26 @@ def coalition(coalition_id):
                 """SELECT br.reqId, br.amount, br.resource, br.id, u.username
                    FROM colBanksRequests br
                    INNER JOIN users u ON br.reqId = u.id
-                   WHERE br.colId=(%s)""",
+                   WHERE br.colId=(%s)
+                   ORDER BY br.id ASC""",
                 (coalition_id,),
             )
             bankRequests = db.fetchall()
         else:
             bankRequests = []
+
+        # Every member sees (and can cancel) their own pending requests.
+        my_bank_requests = []
+        if userInCurCol:
+            try:
+                db.execute(
+                    "SELECT id, amount, resource FROM colBanksRequests "
+                    "WHERE colId=%s AND reqId=%s ORDER BY id ASC",
+                    (coalition_id, cId),
+                )
+                my_bank_requests = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
 
         # Members list is now logged elsewhere for debugging if needed
 
@@ -592,42 +668,53 @@ def coalition(coalition_id):
                 contributions_by_user[uid] = {"username": uname, "flag_data": flag_data, "resources": {}}
             contributions_by_user[uid]["resources"][res] = amt
 
-        # Recent bank transaction log — leaders/deputies/bankers see everyone's,
-        # regular members see only their own (matches contribution-history visibility)
+        # Recent bank transaction log. Tax income is its own log so daily tax
+        # rows don't push real deposits/withdrawals out of view (luciuskonst's
+        # Coalition QOL wishlist). Who sees the whole coalition's log is a
+        # coalition setting; everyone always sees their own transactions.
+        can_see_all_bank_logs = userInCurCol and role_can_see(
+            col_settings, "bank_logs", user_role
+        )
+        can_see_tax_logs = userInCurCol and role_can_see(
+            col_settings, "tax_logs", user_role
+        )
         bank_transactions = []
+        tax_transactions = []
         if userInCurCol:
             try:
-                if user_role in ("leader", "deputy_leader", "banker"):
-                    db.execute(
-                        """
-                        SELECT cbt.created_at, u.username, cbt.user_id,
-                               a.username, cbt.actor_id,
-                               cbt.direction, cbt.resource, cbt.amount
-                        FROM col_bank_transactions cbt
-                        JOIN users u ON u.id = cbt.user_id
-                        JOIN users a ON a.id = cbt.actor_id
-                        WHERE cbt.coalition_id = %s
-                        ORDER BY cbt.created_at DESC
-                        LIMIT 50
-                        """,
-                        (coalition_id,),
+                bank_transactions = _fetch_bank_log(
+                    db,
+                    coalition_id,
+                    "bank",
+                    None if can_see_all_bank_logs else cId,
+                    limit=RECENT_LOG_LIMIT,
+                )
+                if can_see_tax_logs:
+                    tax_transactions = _fetch_bank_log(
+                        db, coalition_id, "tax", None, limit=RECENT_LOG_LIMIT
                     )
-                else:
-                    db.execute(
-                        """
-                        SELECT cbt.created_at, u.username, cbt.user_id,
-                               a.username, cbt.actor_id,
-                               cbt.direction, cbt.resource, cbt.amount
-                        FROM col_bank_transactions cbt
-                        JOIN users u ON u.id = cbt.user_id
-                        JOIN users a ON a.id = cbt.actor_id
-                        WHERE cbt.coalition_id = %s AND cbt.user_id = %s
-                        ORDER BY cbt.created_at DESC
-                        LIMIT 50
-                        """,
-                        (coalition_id, cId),
-                    )
-                bank_transactions = db.fetchall()
+            except Exception:
+                rollback_db_cursor(db)
+
+        # Members sharing with the coalition whose Revenue this viewer may open.
+        revenue_viewable_ids = set()
+        if userInCurCol and role_can_see(col_settings, "member_revenue", user_role):
+            try:
+                db.execute(
+                    f"""
+                    SELECT m.userid
+                    FROM {_members_tbl()} m
+                    JOIN users u ON u.id = m.userid
+                    WHERE m.colid = %s AND m.userid <> %s
+                      AND (
+                        (u.coalition_builds_choice_set AND u.allow_coalition_builds)
+                        OR (NOT u.coalition_builds_choice_set
+                            AND (u.allow_coalition_builds OR %s))
+                      )
+                    """,
+                    (coalition_id, cId, col_settings["share_builds_default"]),
+                )
+                revenue_viewable_ids = {r[0] for r in db.fetchall()}
             except Exception:
                 rollback_db_cursor(db)
 
@@ -663,6 +750,19 @@ def coalition(coalition_id):
             name_changes_used=name_changes_used,
             contributions_by_user=contributions_by_user,
             bank_transactions=bank_transactions,
+            tax_transactions=tax_transactions,
+            can_see_all_bank_logs=can_see_all_bank_logs,
+            can_see_tax_logs=can_see_tax_logs,
+            recent_log_limit=RECENT_LOG_LIMIT,
+            my_bank_requests=my_bank_requests,
+            revenue_viewable_ids=revenue_viewable_ids,
+            col_settings=col_settings,
+            role_labels=role_labels,
+            coalition_roles=COALITION_ROLES,
+            default_role_labels=DEFAULT_ROLE_LABELS,
+            info_access_labels=INFO_ACCESS_LABELS,
+            role_label_max_len=ROLE_LABEL_MAX_LEN,
+            builds_choice_set=builds_choice_set,
             current_user_id=cId,
             # Coalition statistics
             coalitionProvinces=coalition_provinces,
@@ -1132,7 +1232,8 @@ def toggle_build_sharing():
 
     with get_request_cursor() as db:
         db.execute(
-            "UPDATE users SET allow_coalition_builds=%s WHERE id=%s",
+            "UPDATE users SET allow_coalition_builds=%s, "
+            "coalition_builds_choice_set=TRUE WHERE id=%s",
             (enabled, cId),
         )
         coalition_id = _coalition_id_for_user(db, cId)
@@ -1760,6 +1861,14 @@ def withdraw_from_bank(coalition_id):
         if guard:
             return guard
 
+        if get_coalition_settings(db, coalition_id)["bank_require_requests"]:
+            flash(
+                "Your coalition requires every withdrawal to go through a "
+                "request. Use Request Withdrawal instead.",
+                "warning",
+            )
+            return redirect(f"/coalition/{coalition_id}")
+
     resources = ["money"] + variables.RESOURCES
 
     withdrew_resources = []
@@ -1859,11 +1968,17 @@ def remove_bank_request(bankId):
             return error(400, "Bank request not found")
         coalition_id = row[0]
 
+        # The requester can always cancel their own request; anyone else
+        # needs a banking role.
+        db.execute("SELECT reqId FROM colBanksRequests WHERE id=%s", (bankId,))
+        req_row = db.fetchone()
+        own_request = bool(req_row) and int(req_row[0]) == int(cId)
+
         guard = _require_coalition_member(
             db,
             cId,
             coalition_id,
-            roles=["leader", "deputy_leader", "banker"],
+            roles=None if own_request else ["leader", "deputy_leader", "banker"],
         )
         if guard:
             return guard
@@ -1912,6 +2027,16 @@ def accept_bank_request(bankId):
         )
         if guard:
             return guard
+
+        if int(user_id) == int(cId) and not get_coalition_settings(
+            db, coalition_id
+        )["bank_self_approve"]:
+            flash(
+                "Your coalition doesn't let bankers approve their own "
+                "withdrawal requests. Another banker has to approve it.",
+                "warning",
+            )
+            return redirect(f"/coalition/{coalition_id}")
 
         # Verify the requester is still in the coalition
         db.execute(f"SELECT role FROM {_members_tbl()} WHERE userid=%s AND colid=%s", (user_id, coalition_id))
@@ -2386,6 +2511,276 @@ def _coalition_crawler_preview(coalition_id):
     return render_preview_page(title, description, image_url)
 
 
+def _leader_guard(db, user_id, coalition_id):
+    return _require_coalition_member(db, user_id, coalition_id, roles=["leader"])
+
+
+# Leader-only coalition settings: build-sharing default, accountable banking,
+# and who can see what (luciuskonst's Coalition QOL wishlist, 2026-09-26).
+def update_coalition_settings(coalition_id):
+    cId = session["user_id"]
+    form = request.form
+
+    with get_request_cursor() as db:
+        guard = _leader_guard(db, cId, coalition_id)
+        if guard:
+            return guard
+
+        before = get_coalition_settings(db, coalition_id)
+
+        share_default = form.get("share_builds_default") == "on"
+        require_requests = form.get("bank_require_requests") == "on"
+        self_approve = form.get("bank_self_approve") == "on"
+
+        info_access = {}
+        for key in INFO_ACCESS_LABELS:
+            roles = [r for r in form.getlist(f"access_{key}") if r in COALITION_ROLES]
+            if "leader" not in roles:
+                roles.append("leader")
+            info_access[key] = sorted(roles, key=COALITION_ROLES.index)
+
+        db.execute(
+            "UPDATE colNames SET share_builds_default=%s, bank_require_requests=%s, "
+            "bank_self_approve=%s, info_access=%s::jsonb WHERE id=%s",
+            (
+                share_default,
+                require_requests,
+                self_approve,
+                json.dumps(info_access),
+                coalition_id,
+            ),
+        )
+
+        # Turning the sharing default on changes what members who never made
+        # a choice are sharing, so tell them and how to opt out.
+        if share_default and not before["share_builds_default"]:
+            db.execute(
+                f"""
+                SELECT m.userid FROM {_members_tbl()} m
+                JOIN users u ON u.id = m.userid
+                WHERE m.colid = %s AND m.userid <> %s
+                  AND NOT u.coalition_builds_choice_set
+                """,
+                (coalition_id, cId),
+            )
+            affected = [r[0] for r in db.fetchall()]
+            if affected:
+                message = (
+                    "Your coalition leader turned on Share Build Access by default. "
+                    "Coalition roles your leader picks can now plan builds in your "
+                    "provinces and see your Revenue breakdown. You can turn this "
+                    "off any time from the General tab on your coalition page."
+                )
+                db.executemany(
+                    "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+                    [(uid, message) for uid in affected],
+                )
+
+    _invalidate_bank_caches(coalition_id)
+    flash("Coalition settings saved.")
+    return redirect(f"/coalition/{coalition_id}")
+
+
+# Leader-only: rename the coalition's roles (display names only).
+def update_role_names(coalition_id):
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        guard = _leader_guard(db, cId, coalition_id)
+        if guard:
+            return guard
+
+        for role in COALITION_ROLES:
+            raw = request.form.get(f"role_{role}")
+            if raw is None:
+                continue
+            name = " ".join(raw.split())[:ROLE_LABEL_MAX_LEN]
+            if not name or name == DEFAULT_ROLE_LABELS[role]:
+                db.execute(
+                    "DELETE FROM col_role_names WHERE coalition_id=%s AND role=%s",
+                    (coalition_id, role),
+                )
+            else:
+                db.execute(
+                    """
+                    INSERT INTO col_role_names (coalition_id, role, display_name)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (coalition_id, role)
+                    DO UPDATE SET display_name = EXCLUDED.display_name
+                    """,
+                    (coalition_id, role, name),
+                )
+
+    _invalidate_bank_caches(coalition_id)
+    flash("Role names saved.")
+    return redirect(f"/coalition/{coalition_id}")
+
+
+def _bank_log_access(db, user_id, coalition_id, kind):
+    """(error_response, only_user_id) for viewing/exporting a bank log."""
+    members_tbl = _coalition_members_sql()
+    if not members_tbl:
+        return error(500, "Coalition system unavailable"), None
+    db.execute(
+        f"SELECT role FROM {members_tbl} WHERE userid=%s AND colid=%s",
+        (user_id, coalition_id),
+    )
+    row = db.fetchone()
+    if not row:
+        return error(400, "You are not in this coalition"), None
+    role = row[0]
+    settings = get_coalition_settings(db, coalition_id)
+    if kind == "tax":
+        if not role_can_see(settings, "tax_logs", role):
+            return error(403, "Your coalition doesn't let your role see the tax log"), None
+        return None, None
+    return None, (None if role_can_see(settings, "bank_logs", role) else user_id)
+
+
+def _bank_log_kind():
+    kind = request.args.get("kind", "bank")
+    return kind if kind in BANK_LOG_KINDS else "bank"
+
+
+# Full, paginated bank / tax log (the coalition page only shows the latest 50).
+def bank_log(coalition_id):
+    cId = session["user_id"]
+    kind = _bank_log_kind()
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    with get_request_cursor() as db:
+        denied, only_user_id = _bank_log_access(db, cId, coalition_id, kind)
+        if denied:
+            return denied
+        db.execute("SELECT name FROM colNames WHERE id=%s", (coalition_id,))
+        name_row = db.fetchone()
+        rows = _fetch_bank_log(
+            db,
+            coalition_id,
+            kind,
+            only_user_id,
+            limit=FULL_LOG_PAGE_SIZE + 1,
+            offset=(page - 1) * FULL_LOG_PAGE_SIZE,
+        )
+
+    has_next = len(rows) > FULL_LOG_PAGE_SIZE
+    return render_template(
+        "coalition_bank_log.html",
+        colId=coalition_id,
+        coalition_name=name_row[0] if name_row else "Coalition",
+        kind=kind,
+        rows=rows[:FULL_LOG_PAGE_SIZE],
+        page=page,
+        has_next=has_next,
+        own_only=only_user_id is not None,
+    )
+
+
+# CSV export of a bank / tax log, so bankers can stop copy-pasting.
+def bank_log_csv(coalition_id):
+    cId = session["user_id"]
+    kind = _bank_log_kind()
+
+    with get_request_cursor() as db:
+        denied, only_user_id = _bank_log_access(db, cId, coalition_id, kind)
+        if denied:
+            return denied
+        rows = _fetch_bank_log(
+            db, coalition_id, kind, only_user_id, limit=CSV_EXPORT_MAX_ROWS
+        )
+
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(
+        ["time_utc", "type", "member", "member_id", "resource", "amount", "by", "by_id"]
+    )
+    for created_at, uname, uid, actor_uname, actor_id, direction, res, amt in rows:
+        if kind == "tax":
+            row_type = "tax"
+            res = "money"
+        else:
+            row_type = direction
+        writer.writerow(
+            [
+                created_at.strftime("%Y-%m-%d %H:%M:%S") if created_at else "",
+                row_type,
+                _csv_safe(uname),
+                uid,
+                res,
+                amt,
+                _csv_safe(actor_uname),
+                actor_id,
+            ]
+        )
+
+    filename = f"coalition_{int(coalition_id)}_{kind}_log.csv"
+    return Response(
+        out.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+def _csv_safe(value):
+    """Stop spreadsheet formula injection via usernames (=, +, -, @ prefixes)."""
+    value = "" if value is None else str(value)
+    if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
+# A sharing member's Revenue breakdown, for roles the coalition allows.
+def member_revenue(coalition_id, member_id):
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(db, cId, coalition_id)
+        if guard:
+            return guard
+        members_tbl = _members_tbl()
+        db.execute(
+            f"SELECT u.username FROM {members_tbl} m JOIN users u ON u.id = m.userid "
+            "WHERE m.userid=%s AND m.colid=%s",
+            (member_id, coalition_id),
+        )
+        member_row = db.fetchone()
+        if not member_row:
+            return error(404, "That nation isn't in this coalition")
+        if not can_view_member_revenue(db, cId, member_id):
+            return error(
+                403,
+                "That member isn't sharing with the coalition, or your role "
+                "can't view member revenue.",
+            )
+        from countries import get_revenue
+
+        revenue = get_revenue(int(member_id), db=db)
+
+    resources = ["money"] + list(variables.RESOURCES)
+    rows = [
+        (
+            res,
+            (revenue.get("gross") or {}).get(res, 0) or 0,
+            (revenue.get("net") or {}).get(res, 0) or 0,
+        )
+        for res in resources
+    ]
+    return render_template(
+        "coalition_member_revenue.html",
+        colId=coalition_id,
+        member_id=member_id,
+        member_name=member_row[0],
+        rows=rows,
+        coalition_tax=revenue.get("coalition_tax", 0) or 0,
+    )
+
+
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
 
@@ -2417,6 +2812,13 @@ def register_coalitions_routes(app_instance):
     remove_bank_request_wrapped = login_required(require_post_origin(remove_bank_request))
     accept_bank_request_wrapped = login_required(require_post_origin(accept_bank_request))
     set_tax_rate_wrapped = login_required(set_tax_rate)
+    update_coalition_settings_wrapped = login_required(
+        require_post_origin(update_coalition_settings)
+    )
+    update_role_names_wrapped = login_required(require_post_origin(update_role_names))
+    bank_log_wrapped = login_required(bank_log)
+    bank_log_csv_wrapped = login_required(bank_log_csv)
+    member_revenue_wrapped = login_required(member_revenue)
     offer_treaty_wrapped = login_required(offer_treaty)
     accept_treaty_wrapped = login_required(accept_treaty)
     break_treaty_wrapped = login_required(break_treaty)
@@ -2531,6 +2933,31 @@ def register_coalitions_routes(app_instance):
         "/set_tax_rate/<coalition_id>",
         view_func=set_tax_rate_wrapped,
         methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/settings",
+        view_func=update_coalition_settings_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/role_names",
+        view_func=update_role_names_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/bank_log",
+        view_func=bank_log_wrapped,
+        methods=["GET"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/bank_log.csv",
+        view_func=bank_log_csv_wrapped,
+        methods=["GET"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/member/<int:member_id>/revenue",
+        view_func=member_revenue_wrapped,
+        methods=["GET"],
     )
     app_instance.add_url_rule(
         "/offer_treaty", view_func=offer_treaty_wrapped, methods=["POST"]

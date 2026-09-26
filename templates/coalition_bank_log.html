@@ -1,0 +1,102 @@
+{% extends "layout.html" %} {% block title %} {{ coalition_name }} · {{ "Tax Log" if kind == "tax" else "Bank Log" }} {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<style>
+.banklog-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.banklog-toolbar .banklog-tabs,
+.banklog-pager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.banklog-pager {
+    justify-content: center;
+    margin-top: 14px;
+}
+.templateoutertablediv {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+</style>
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalitions.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero(coalition_name, badge_icon='receipt_long', badge_text=("Tax Log" if kind == "tax" else "Bank Log")) }}
+
+    <div class="templatedivcontent">
+        <div class="infodiv">
+
+        <div class="banklog-toolbar">
+            <div class="banklog-tabs">
+                <a href="/coalition/{{ colId }}" class="game-btn game-btn-sm">
+                    <span class="material-icons-outlined">arrow_back</span>Coalition
+                </a>
+                <a href="/coalition/{{ colId }}/bank_log?kind=bank" class="game-btn game-btn-sm {% if kind == 'bank' %}game-btn-primary{% endif %}">Bank transactions</a>
+                <a href="/coalition/{{ colId }}/bank_log?kind=tax" class="game-btn game-btn-sm {% if kind == 'tax' %}game-btn-primary{% endif %}">Tax income</a>
+            </div>
+            <a href="/coalition/{{ colId }}/bank_log.csv?kind={{ kind }}" class="game-btn game-btn-sm">
+                <span class="material-icons-outlined">download</span>Download CSV
+            </a>
+        </div>
+
+        <p class="text-muted" style="margin-bottom:12px; font-size:0.9em;">
+            {% if kind == "tax" %}Hourly alliance tax paid into the bank, newest first.
+            {% elif own_only %}Your own deposits and withdrawals, newest first.
+            {% else %}Every deposit and withdrawal across the coalition, newest first.{% endif %}
+            Page {{ page }}, {{ rows|length }} row{{ '' if rows|length == 1 else 's' }}.
+        </p>
+
+        {% if not rows %}
+        <p class="text-muted text-center mt-sm">Nothing logged here yet.</p>
+        {% else %}
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Time (UTC)</th>
+                    {% if kind != "tax" %}<th>Type</th>{% endif %}
+                    <th>Member</th>
+                    <th>Resource</th>
+                    <th>Amount</th>
+                    {% if kind != "tax" %}<th>By</th>{% endif %}
+                </tr>
+                {% for created_at, uname, uid, actor_uname, actor_id, direction, res, amt in rows %}
+                <tr>
+                    <td>{{ created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    {% if kind != "tax" %}<td>{{ "Deposit" if direction == "deposit" else "Withdraw" }}</td>{% endif %}
+                    <td>{% if uname %}<a href="/country/id={{ uid }}">{{ uname }}</a>{% else %}Deleted nation{% endif %}</td>
+                    <td>{{ "Money" if kind == "tax" else (res | replace('_', ' ') | title) }}</td>
+                    <td>{{ amt | commas }}</td>
+                    {% if kind != "tax" %}<td>{% if actor_id != uid and actor_uname %}<a href="/country/id={{ actor_id }}">{{ actor_uname }}</a>{% else %}—{% endif %}</td>{% endif %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="banklog-pager">
+            {% if page > 1 %}
+            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}&page={{ page - 1 }}" class="game-btn game-btn-sm">
+                <span class="material-icons-outlined">chevron_left</span>Newer
+            </a>
+            {% endif %}
+            {% if has_next %}
+            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}&page={{ page + 1 }}" class="game-btn game-btn-sm">
+                Older<span class="material-icons-outlined">chevron_right</span>
+            </a>
+            {% endif %}
+        </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
