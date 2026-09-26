@@ -1223,10 +1223,13 @@ body.game-shell-active .dropdown-content a.active {
 
 /* Six tiles (Population breakdown) in a wrapping flex row left the 6th
    stranded alone on a second line at desktop widths. Even grid instead:
-   6 / 3 / 2 columns, with the divider dropped on each row's first tile. */
+   3 / 2 columns, with the divider dropped on each row's first tile. */
 .game-stat-row.game-stat-row--grid6 {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    /* 3 across at every desktop width: the page content is capped at ~1100px, so
+       six columns squeezed each stat to ~180px on ANY monitor (a 1500px viewport
+       breakpoint didn't help players on wide screens). */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 12px;
 }
 
@@ -1235,25 +1238,9 @@ body.game-shell-active .dropdown-content a.active {
     padding: 4px 14px;
 }
 
-.game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+.game-stat-row--grid6 .game-stat:nth-child(3n+1) {
     border-left: none;
     padding-left: 4px;
-}
-
-/* Six across only fits on wide screens; below ~1500px each cell got ~180px and
-   values like "11.19M (12.7%)" wrapped into a squished two-line mess. */
-@media (max-width: 1500px) {
-    .game-stat-row.game-stat-row--grid6 {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .game-stat-row--grid6 .game-stat:nth-child(6n+1) {
-        border-left: 1px solid var(--game-glass-border);
-        padding-left: 14px;
-    }
-    .game-stat-row--grid6 .game-stat:nth-child(3n+1) {
-        border-left: none;
-        padding-left: 4px;
-    }
 }
 
 @media (max-width: 620px) {
