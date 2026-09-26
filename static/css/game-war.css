@@ -297,6 +297,10 @@ body.page-military .templatedivcontent .infodiv {
     .wars-action-strip .smallactionbutton {
         width: 100% !important;
         margin: 0 !important;
+        box-sizing: border-box;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        justify-content: center;
         white-space: nowrap;
     }
 }
